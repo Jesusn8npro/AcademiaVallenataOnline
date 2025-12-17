@@ -31,7 +31,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     // Configurar smooth scroll global
     document.documentElement.style.scrollBehavior = 'smooth';
-    
+
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
@@ -42,23 +42,23 @@ const Home: React.FC = () => {
       {/* Meta tags para SEO */}
       <title>Academia Vallenata Online - Aprende Acordeón desde Cero | Simulador Gaming</title>
       <meta name="description" content="🎵 La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de 5,000+ estudiantes. Primera canción en 7 días garantizado." />
-      
+
       {paginaCargada ? (
         <main style={styles.homePrincipal}>
 
-          
+
           {/* Hero Principal */}
           <HeroHome mostrarModal={mostrarModal} scrollToSection={scrollToSection} />
-          
+
           {/* Sección de Opciones de Aprendizaje */}
           <SeccionOpciones />
-          
+
           {/* Sección del Instructor - Jesús González */}
           <SeccionInstructor />
-          
+
           {/* Sección de Estadísticas y Social Proof */}
           <SeccionStats />
-          
+
           {/* Sección CTA Final - Conversión */}
           <SeccionCTAFinal />
         </main>

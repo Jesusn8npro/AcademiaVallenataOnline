@@ -20,7 +20,8 @@
 }
 
 /* Estilos globales básicos */
-html, body {
+html,
+body {
   background-color: #fff;
   margin: 0 !important;
   padding: 0 !important;
@@ -37,6 +38,7 @@ html, body {
 
 /* ✅ NUEVO: CSS específico para Android WebView */
 @supports (-webkit-appearance: none) {
+
   /* Detectar WebKit (Android) */
   .barra-superior-negra,
   .barra-principal-navegacion {
@@ -44,7 +46,7 @@ html, body {
     display: flex !important;
     flex-direction: column;
   }
-  
+
   .contenedor-barra-superior,
   .contenedor-barra-principal {
     /* Forzar layout en Android */
@@ -63,6 +65,21 @@ html, body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100%;
+}
+
+/* Home Principal Styles with Responsive Padding */
+.home-principal {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-top: 0;
+}
+
+@media (max-width: 768px) {
+  .home-principal {
+    padding-top: 90px;
+    /* Space for header on mobile */
+  }
 }
 
 /* Layout principal */
@@ -110,11 +127,11 @@ html, body {
     width: 100%;
     padding: 0;
   }
-  
+
   .main-content.sidebar-colapsado {
     margin-left: 0;
   }
-  
+
   .layout-autenticado {
     margin-top: 60px;
   }
@@ -129,8 +146,10 @@ html, body {
 /* 🚫 OCULTAR BARRAS DE SCROLL EN PÁGINAS DE PANTALLA COMPLETA */
 .tutorial-pantalla-completa,
 .curso-pantalla-completa {
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE/Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE/Edge */
 }
 
 .tutorial-pantalla-completa::-webkit-scrollbar,
@@ -162,11 +181,11 @@ html, body {
 }
 
 /* 🚫 ASEGURAR QUE NO HAYA ESPACIOS EXTRA */
-body > *:last-child {
+body>*:last-child {
   margin-bottom: 0 !important;
 }
 
-#svelte > *:last-child {
+#svelte>*:last-child {
   margin-bottom: 0 !important;
 }
 
@@ -188,7 +207,7 @@ body > *:last-child {
     position: relative;
     overflow-x: hidden;
   }
-  
+
   .main-content.perfil-sin-padding .contenedor-portada,
   .main-content.perfil-sin-padding .info-usuario {
     width: 100vw;
@@ -203,7 +222,7 @@ body > *:last-child {
     width: 100%;
     max-width: 100vw;
   }
-  
+
   .main-content.perfil-sin-padding {
     padding: 0;
     margin: 0;
@@ -230,7 +249,10 @@ html {
 
 /* Prevenir zoom automático en iOS */
 @media (max-width: 768px) {
-  input, select, textarea {
+
+  input,
+  select,
+  textarea {
     font-size: 16px;
   }
 }
@@ -323,12 +345,12 @@ img {
 }
 
 /* Elementos que NO deben tener cursor de texto (solo básicos) */
-img, 
-svg, 
-canvas, 
-video, 
+img,
+svg,
+canvas,
+video,
 audio,
-button, 
+button,
 [role="button"],
 .btn,
 .boton,
@@ -387,8 +409,13 @@ textarea,
 }
 
 /* Texto seleccionable */
-p, 
-h1, h2, h3, h4, h5, h6,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .texto-seleccionable,
 .contenido-articulo,
 .descripcion-curso,
@@ -402,6 +429,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* Mejorar experiencia táctil en móviles */
 @media (max-width: 768px) {
+
   button,
   [role="button"],
   .btn,
@@ -410,10 +438,11 @@ h1, h2, h3, h4, h5, h6,
   .clickeable {
     -webkit-tap-highlight-color: rgba(255, 102, 0, 0.1);
     tap-highlight-color: rgba(255, 102, 0, 0.1);
-    min-height: 44px; /* Mínimo recomendado para táctil */
+    min-height: 44px;
+    /* Mínimo recomendado para táctil */
     min-width: 44px;
   }
-  
+
   /* Asegurar que los elementos táctiles sean accesibles */
   .ranking-item,
   .curso-card,
@@ -423,7 +452,7 @@ h1, h2, h3, h4, h5, h6,
     min-height: 44px;
     position: relative;
   }
-  
+
   /* Mejorar área táctil para avatares */
   .avatar-container {
     min-height: 44px;

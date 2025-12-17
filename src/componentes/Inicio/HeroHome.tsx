@@ -25,7 +25,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
 
   return (
     <>
-      <section style={styles.heroSection}>
+      <section className="hero-section-container" style={styles.heroSection}>
         {/* Fondo animado con partículas */}
         <div style={styles.heroParticles}>
           <div style={styles.particles}></div>
@@ -206,6 +206,13 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
         @media (min-width: 769px) {
           .hero-buttons {
             flex-direction: row !important;
+          }
+        }
+        
+        /* Mobile Top Padding Fix */
+        @media (max-width: 768px) {
+          .hero-section-container {
+            padding-top: 80px !important;
           }
         }
       `}</style>
