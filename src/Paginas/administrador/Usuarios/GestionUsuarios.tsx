@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import DetalleUsuario from './componentes/DetalleUsuario';
-import CrearUsuario from './componentes/CrearUsuario';
+import DetalleUsuario from './Componentes/DetalleUsuario';
+import CrearUsuario from './Componentes/CrearUsuario';
 import { cargarUsuarios, calcularEstadisticas, type UsuarioAdmin } from '../../../servicios/usuariosAdminService';
 import './GestionUsuarios.css';
 
