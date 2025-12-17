@@ -3,10 +3,10 @@
 nixPkgs = ["nodejs_23"]
 
 [phases.install]
-cmds = ["npm ci --legacy-peer-deps"]
+cmds = ["npm ci --include=dev --legacy-peer-deps"]
 
 [phases.build]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npm run preview"
+cmd = "npx serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"
