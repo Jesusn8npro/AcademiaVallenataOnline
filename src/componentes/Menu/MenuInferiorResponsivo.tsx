@@ -84,7 +84,7 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
             icono: 'cursos',
             texto: 'Mis Cursos',
             ruta: '/mis-cursos',
-            badge: '75%'
+            badge: null
         },
         {
             id: 'blog',

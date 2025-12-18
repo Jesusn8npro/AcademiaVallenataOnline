@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/supabaseCliente';
 import { useUsuario } from '../../../contextos/UsuarioContext';
-import { generateSlug } from '../../../utils/utilidadesSlug';
+// import { generarSlug } from '../../../utilidades/slug'; // Usamos versión local copiada de LandingCurso
 import Avatar from './Avatar';
 import './ContinuarAprendiendo.css';
 
@@ -155,6 +155,16 @@ const ContinuarAprendiendo: React.FC = () => {
     }, [todasLasActividades.length, isPaused, iniciarAutoPlay]);
 
 
+    // Función para generar slug (Copiada de LandingCurso.tsx para consistencia exacta)
+    const generarSlug = (texto: string): string => {
+        return texto
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    };
+
     // 🎯 LÓGICA EXACTA DE "MIS CURSOS" - COPIADA COMPLETA
     const cargarUltimaActividad = async () => {
         if (!usuario?.id) {
@@ -235,7 +245,7 @@ const ContinuarAprendiendo: React.FC = () => {
                         // 1. Obtener módulos del curso
                         const { data: modulosData } = await supabase
                             .from('modulos')
-                            .select('id, titulo, slug, orden, curso_id') // Seleccionar columnas explícitas
+                            .select('id, titulo, orden, curso_id') // REMOVIDO: slug
                             .eq('curso_id', contenidoId)
                             .order('orden', { ascending: true });
 
@@ -245,7 +255,7 @@ const ContinuarAprendiendo: React.FC = () => {
                             // 2. Obtener lecciones de esos módulos (separado para evitar error 400 en relación)
                             const { data: leccionesData } = await supabase
                                 .from('lecciones')
-                                .select('id, titulo, slug, orden, modulo_id')
+                                .select('id, titulo, orden, modulo_id') // REMOVIDO: slug
                                 .in('modulo_id', moduloIds)
                                 .order('orden', { ascending: true });
 
@@ -299,7 +309,7 @@ const ContinuarAprendiendo: React.FC = () => {
                         }
                     }
 
-                    const slugFinal = contenido.slug || generateSlug(contenido.titulo);
+                    const slugFinal = contenido.slug || generarSlug(contenido.titulo);
 
                     cursosConProgreso.push({
                         id: contenido.id,
@@ -336,7 +346,7 @@ const ContinuarAprendiendo: React.FC = () => {
                             // 1. Obtener módulos
                             const { data: modulosData } = await supabase
                                 .from('modulos')
-                                .select('id, titulo, slug, orden')
+                                .select('id, titulo, orden') // REMOVIDO: slug
                                 .eq('curso_id', curso.id)
                                 .order('orden');
 
@@ -346,7 +356,7 @@ const ContinuarAprendiendo: React.FC = () => {
                                 // 2. Obtener lecciones
                                 const { data: leccionesData } = await supabase
                                     .from('lecciones')
-                                    .select('id, titulo, slug, orden, modulo_id')
+                                    .select('id, titulo, orden, modulo_id') // REMOVIDO: slug
                                     .in('modulo_id', moduloIds)
                                     .order('orden');
 
@@ -392,15 +402,18 @@ const ContinuarAprendiendo: React.FC = () => {
                                 }
 
                                 if (leccionFinal && moduloFinal) {
-                                    const cursoSlug = curso.slug;
-                                    const moduloSlug = moduloFinal.slug || generateSlug(moduloFinal.titulo);
-                                    const leccionSlug = leccionFinal.slug || generateSlug(leccionFinal.titulo);
+                                    const cursoSlug = curso.slug || generarSlug(curso.titulo);
+                                    // ⚠️ IMPORTANTE: ClaseCurso.tsx fuerza la generación del slug desde el título.
+                                    // Debemos hacer lo mismo aquí para que coincidan los URLs.
+                                    const moduloSlug = generarSlug(moduloFinal.titulo);
+                                    const leccionSlug = generarSlug(leccionFinal.titulo);
+
                                     rutaEspecifica = `/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`;
                                     leccionTexto = leccionFinal.titulo;
                                     moduloTexto = moduloFinal.titulo;
                                 }
                             }
-                            if (!rutaEspecifica) rutaEspecifica = `/cursos/${curso.slug}`;
+                            if (!rutaEspecifica) rutaEspecifica = `/cursos/${curso.slug || generarSlug(curso.titulo)}`;
 
                         } else if (curso.tipo === 'tutorial') {
                             const { data: partes } = await supabase
@@ -433,13 +446,13 @@ const ContinuarAprendiendo: React.FC = () => {
                                 }
 
                                 if (claseFinal) {
-                                    const tutorialSlug = curso.slug;
-                                    const claseSlug = claseFinal.slug || generateSlug(claseFinal.titulo);
+                                    const tutorialSlug = curso.slug || generarSlug(curso.titulo);
+                                    const claseSlug = generarSlug(claseFinal.titulo); // Force generation
                                     rutaEspecifica = `/tutoriales/${tutorialSlug}/clase/${claseSlug}`;
                                     leccionTexto = claseFinal.titulo;
                                 }
                             }
-                            if (!rutaEspecifica) rutaEspecifica = `/tutoriales/${curso.slug}`;
+                            if (!rutaEspecifica) rutaEspecifica = `/tutoriales/${curso.slug || generarSlug(curso.titulo)}`;
                         }
 
                         nuevasActividades.push({
