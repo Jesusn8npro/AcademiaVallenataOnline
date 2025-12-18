@@ -81,10 +81,10 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
       const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: eventosActividad } = await supabase
         .from('eventos_actividad')
-        .select('id, tipo_evento, pagina, duracion_minutos, timestamp_evento, created_at, usuario_id')
+        .select('*')
         .eq('usuario_id', usuario.id)
-        .gte('timestamp_evento', hace30Dias)
-        .order('timestamp_evento', { ascending: false })
+        .gte('created_at', hace30Dias)
+        .order('created_at', { ascending: false })
         .limit(100);
 
       // 3ï¸âƒ£ OBTENER PROGRESO EN CURSOS
@@ -169,7 +169,7 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
       const fechaISO = fecha.toISOString().split('T')[0];
 
       const sesionDia = sesiones?.find(s => s.fecha === fechaISO);
-      const eventosDia = eventos?.filter(e => e.timestamp_evento?.startsWith(fechaISO)) || [];
+      const eventosDia = eventos?.filter(e => e.created_at?.startsWith(fechaISO)) || [];
 
       actividadPorDia.push({
         fecha: fechaISO,
