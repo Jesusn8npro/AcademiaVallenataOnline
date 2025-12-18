@@ -3,6 +3,7 @@ import { supabase, supabaseAnon } from '../../servicios/supabaseCliente';
 import HeroBlog from '../../componentes/Blog/HeroBlog';
 import TarjetaArticulo from '../../componentes/Blog/TarjetaArticulo';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
+import SEO from '../../componentes/common/SEO';
 
 // Interfaz basada en la estructura COMPLETA (Rich Schema)
 interface ArticuloDB {
@@ -266,9 +267,10 @@ const Blog: React.FC = () => {
   return (
     <>
       {/* SEO Head */}
-      <title>Blog - Academia Vallenata Online | Aprende Acordeón</title>
-      <meta name="description" content="Descubre historias inspiradoras, técnicas profesionales y consejos de expertos en acordeón vallenato. Únete a nuestra comunidad de músicos apasionados." />
-      <meta name="keywords" content="blog acordeón, vallenato, música, tutoriales, acordeonistas, comunidad musical" />
+      <SEO
+        title="Blog - Academia Vallenata Online | Aprende Acordeón"
+        description="Descubre historias inspiradoras, técnicas profesionales y consejos de expertos en acordeón vallenato. Únete a nuestra comunidad de músicos apasionados."
+      />
 
       <main style={styles.paginaBlog} className="pagina-blog">
         <HeroBlog onCta={scrollToArticulos} />

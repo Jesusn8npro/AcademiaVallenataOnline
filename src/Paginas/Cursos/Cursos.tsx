@@ -3,6 +3,7 @@ import './Cursos.css'
 import HeroCursos from '../../componentes/Cursos/HeroCursos'
 import FiltrosCursos, { type FiltrosCursos as TFiltros } from '../../componentes/Cursos/FiltrosCursos'
 import GridCursos from '../../componentes/Cursos/GridCursos'
+import SEO from '../../componentes/common/SEO'
 import { obtenerCatalogo } from '../../servicios/cursosServicio'
 
 export default function Cursos() {
@@ -51,6 +52,10 @@ export default function Cursos() {
 
   return (
     <main>
+      <SEO
+        title="Cursos de Acordeón Vallenato | Niveles Principiante a Avanzado"
+        description="Explora nuestro catálogo de cursos de acordeón. Desde 'Cero a Rey Vallenato' hasta tutoriales de canciones específicas. Empieza hoy mismo."
+      />
       <HeroCursos />
       <section id="catalogo-section" className="cp-catalogo-section">
         <div className="cp-container">

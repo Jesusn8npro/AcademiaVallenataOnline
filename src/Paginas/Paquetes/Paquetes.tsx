@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerPaquetesPublicados, buscarPaquetes, formatearPrecio, type PaqueteTutorial } from '../../servicios/paquetesService';
+import SEO from '../../componentes/common/SEO';
 import './Paquetes.css';
 
 interface Stats {
@@ -142,6 +143,10 @@ const Paquetes: React.FC = () => {
 
     return (
         <div className="paq-main-container">
+            <SEO
+                title="Paquetes de Tutoriales Vallenatos | Ahorra Aprendiendo"
+                description="Compra paquetes de canciones y tutoriales de acordeón a precios especiales. Packs por nivel y por ritmo vallenato."
+            />
             {/* Hero */}
             <header className="paq-main-hero">
                 <div className="paq-main-hero-content">

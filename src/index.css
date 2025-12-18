@@ -116,24 +116,29 @@ body.vista-premium-activa .app {
 /* ========================================
    SCROLLBAR PERSONALIZADO "MORADO"
    ======================================== */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+/* ========================================
+   SCROLLBAR PERSONALIZADO "MORADO" - SOLO DESKTOP
+   ======================================== */
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #8b5cf6;
-  /* Violeta-500 */
-  border-radius: 5px;
-}
+  ::-webkit-scrollbar-thumb {
+    background: #8b5cf6;
+    /* Violeta-500 */
+    border-radius: 5px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #7c3aed;
-  /* Violeta-600 */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed;
+    /* Violeta-600 */
+  }
 }
 
 /* ========================================

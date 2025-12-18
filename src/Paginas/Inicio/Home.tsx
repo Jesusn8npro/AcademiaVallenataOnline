@@ -5,6 +5,7 @@ import SeccionOpciones from '../../componentes/Inicio/SeccionOpciones';
 import SeccionInstructor from '../../componentes/Inicio/SeccionInstructor';
 import SeccionStats from '../../componentes/Inicio/SeccionStats';
 import SeccionCTAFinal from '../../componentes/Inicio/SeccionCTAFinal';
+import SEO from '../../componentes/common/SEO';
 
 const Home: React.FC = () => {
   const [paginaCargada, setPaginaCargada] = useState(false);
@@ -40,8 +41,10 @@ const Home: React.FC = () => {
   return (
     <>
       {/* Meta tags para SEO */}
-      <title>Academia Vallenata Online - Aprende Acordeón desde Cero | Simulador Gaming</title>
-      <meta name="description" content="🎵 La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de 5,000+ estudiantes. Primera canción en 7 días garantizado." />
+      <SEO
+        title="Academia Vallenata Online - Aprende Acordeón desde Cero | Simulador Gaming"
+        description="🎵 La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de 5,000+ estudiantes. Primera canción en 7 días garantizado."
+      />
 
       {paginaCargada ? (
         <main style={styles.homePrincipal}>
