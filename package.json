@@ -11,9 +11,10 @@
     "build": "vite build",
     "type-check": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview --host 0.0.0.0 --port 3000"
+    "preview": "serve -s dist -l tcp://0.0.0.0:${PORT:-80}"
   },
   "dependencies": {
+    "serve": "^14.2.4",
     "@supabase/supabase-js": "^2.49.8",
     "@types/howler": "^2.2.12",
     "date-fns": "^4.1.0",
