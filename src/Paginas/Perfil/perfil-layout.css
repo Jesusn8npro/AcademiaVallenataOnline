@@ -9,14 +9,57 @@
     background-color: transparent;
 }
 
-/* Contenedor del Encabezado (Portada + InfoUsuario) */
-.encabezado-fijo {
-    position: relative;
-    z-index: 10;
-    background: #ffffff;
-    border-radius: 16px;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+/* === FORZAR ANCHO COMPLETO === */
+/* Forzar que el contenido dinámico ocupe TODO el ancho */
+.contenido-dinamico,
+.contenido-dinamico>*,
+.contenido-mi-perfil,
+.contenido-mis-cursos,
+.contenido-mis-eventos,
+.contenedor-grabaciones,
+.contenido-publicaciones,
+.contenido-configuracion {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Forzar que los layouts internos ocupen TODO el ancho */
+.layout-info-perfil,
+.layout-mis-cursos,
+.ipp-info-perfil,
+.ipp-formulario-perfil {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Eliminar TODOS los márgenes de headers */
+.encabezado,
+.header-seccion,
+.encabezado-seccion,
+.header {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Asegurar que las secciones de acordeón ocupen todo el ancho */
+.ipp-seccion-acordeon {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Grid de publicaciones sin padding */
+.timeline-grid {
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* Estilos para estado de carga del encabezado */
@@ -47,27 +90,6 @@
     to {
         transform: rotate(360deg);
     }
-}
-
-/* Pestañas (sticky debajo del encabezado) */
-.pestanas-fijas {
-    background: #ffffff;
-    /* position: sticky; REMOVED per user request */
-    /* top: 80px; */
-    z-index: 20;
-    border-radius: 16px;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.pestanas-fijas.ocultar-pestanas {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
-    height: 0;
-    margin: 0;
-    overflow: hidden;
 }
 
 /* Contenido Dinámico (Las rutas hijas) */
@@ -141,24 +163,53 @@
         max-width: 100%;
     }
 
-    .encabezado-fijo {
-        border-radius: 0;
-        margin-bottom: 0;
-    }
-
-    .pestanas-fijas {
-        top: 60px;
-        border-radius: 0;
-        margin-bottom: 0;
-    }
-
     .contenido-dinamico {
         border-radius: 0;
     }
+
+    /* Mantener ancho completo en móvil pero con padding lateral */
+    .contenido-dinamico,
+    .contenido-dinamico>*,
+    .layout-info-perfil,
+    .layout-mis-cursos {
+        padding: 0 1rem !important;
+        /* Agregar padding lateral */
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 🚀 CORRECCIÓN DE COLUMNAS DEL PERFIL Y MIS CURSOS (<900px) */
+    .layout-info-perfil,
+    .layout-mis-cursos {
+        grid-template-columns: 1fr !important;
+        /* Una sola columna */
+        gap: 1.5rem !important;
+    }
+
+    .columna-widget-lateral,
+    .columna-lateral {
+        width: 100% !important;
+        position: static !important;
+        /* Quitar sticky en móvil */
+        margin-top: 1rem !important;
+        max-width: 100% !important;
+    }
+
+    .widgets-contenedor {
+        width: 100% !important;
+    }
 }
 
-@media (max-width: 768px) {
-    .pestanas-fijas {
-        top: 60px;
-    }
+/* 🚀 GRID DE ESCRITORIO (Por defecto > 900px) */
+.layout-info-perfil,
+.layout-mis-cursos {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.layout-mis-cursos {
+    overflow: hidden;
+    /* Maintain the overflow hidden property */
 }

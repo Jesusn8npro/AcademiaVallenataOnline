@@ -38,6 +38,16 @@ body {
     width: 100%;
 }
 
+/* Modo Enfoque: Centrar contenido cuando no hay sidebar */
+.area-video.modo-enfoque>.reproductor-container {
+    max-width: 1250px;
+    /* Ancho ideal para foco */
+    margin: 0 auto;
+    width: 100%;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    /* Sutil sombra para resaltar */
+}
+
 .tutorial-scroll-container {
     display: flex;
     flex-direction: column;
@@ -46,7 +56,8 @@ body {
 
 /* Sidebar lateral (Desktop/General) */
 .leccion-sidebar {
-    width: 320px;
+    width: 600px;
+    /* Aumentado de 320px para mejor visibilidad en escritorio */
     background-color: #1a1a1a;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
     display: none;
@@ -131,6 +142,8 @@ body {
 /* Responsive Sidebar (< 1024px) */
 @media (max-width: 1024px) {
     .leccion-sidebar {
+        width: 320px;
+        /* Mantener ancho original en tablets/móviles */
         position: absolute;
         right: 0;
         top: 0;

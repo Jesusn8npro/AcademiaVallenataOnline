@@ -4,6 +4,7 @@ import PorcentajePerfil from '../../componentes/Perfil/PorcentajePerfil'
 import BannerSlider from '../../componentes/Banners/BannerSlider'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { supabase } from '../../servicios/supabaseCliente'
+import SkeletonMisCursos from '../../componentes/Skeletons/SkeletonMisCursos'
 
 import { useUsuario } from '../../contextos/UsuarioContext'
 
@@ -61,17 +62,22 @@ export default function MisCursos() {
     }
   }, [usuario])
 
+  // Mostrar skeleton mientras carga
+  if (cargandoCursos) {
+    return <SkeletonMisCursos />
+  }
+
   return (
     <div className="contenido-mis-cursos">
-      <div className="layout-mis-cursos" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem', alignItems: 'start', overflow: 'hidden' }}>
+      <div className="layout-mis-cursos">
         <div className="columna-principal" style={{ minWidth: 0, overflow: 'hidden' }}>
           <div className="header-mis-cursos" style={{ marginBottom: '2rem', display: 'block' }}>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1f2937', margin: '0 0 .5rem 0' }}>Mis Cursos</h1>
             <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>Continúa con tu aprendizaje de acordeón vallenato</p>
           </div>
-          <GridMisCursos inscripciones={inscripciones} isLoading={cargandoCursos} error={errorCursos} />
+          <GridMisCursos inscripciones={inscripciones} isLoading={false} error={errorCursos} />
         </div>
-        <aside className="columna-lateral" style={{ width: 320, maxWidth: 320 }}>
+        <aside className="columna-lateral">
           <div className="widgets-contenedor" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
             {perfil && (<PorcentajePerfil perfil={perfil} />)}
             <BannerSlider />

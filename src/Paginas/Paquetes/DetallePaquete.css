@@ -140,9 +140,12 @@
 
 .paq-det-hero-image img {
     width: 100%;
-    max-width: 250px;
+    max-width: 280px;
+    height: auto;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: block;
+    margin: 0 auto;
 }
 
 .paq-det-placeholder {

@@ -1,6 +1,6 @@
 /* Contenedor principal de la lección */
 .leccion-contenido {
-    padding: 16px 24px 0 24px !important;
+    padding: 0 !important;
     margin: 0 !important;
     background-color: #fff !important;
     color: #222;
@@ -27,7 +27,8 @@
 .encabezados-pestañas {
     display: flex;
     border-bottom: 1px solid #e5e7eb;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+    padding: 0 2rem;
     flex-shrink: 0;
     position: sticky;
     top: 0;
@@ -91,7 +92,6 @@
 .panel-pestaña {
     display: none;
     height: 100%;
-    padding-bottom: 20px;
 }
 
 .panel-pestaña.active {

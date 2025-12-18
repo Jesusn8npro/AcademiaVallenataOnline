@@ -324,7 +324,7 @@ const LogrosDesafios: React.FC = () => {
         <section className="academia-progreso-semanal">
             {cargando ? (
                 <div className="academia-loading-skeleton">
-                    <h3>🏆 Estadísticas Gaming</h3>
+                    <h3>🏆 Estadísticas De Mi Perfil</h3>
                     <div className="academia-stats-grid">
                         <div className="academia-stat-card academia-skeleton">
                             <span className="academia-logros-icon">📚</span>
@@ -353,7 +353,7 @@ const LogrosDesafios: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    <h3>🏆 Estadísticas Gaming</h3>
+                    <h3>🏆 Estadísticas De Mi Perfil</h3>
 
                     <div className="academia-stats-grid">
                         <div className="academia-stat-card">

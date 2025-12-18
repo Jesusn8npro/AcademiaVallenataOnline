@@ -169,6 +169,10 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
         )}
 
         <span className="ep-icono-camara-portada" onClick={(e) => { e.stopPropagation(); setMostrarMenuPortada(true) }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
           <span className="ep-texto-cambiar-portada">Cambiar portada</span>
         </span>
         <input type="file" className="ep-input-oculto" ref={refInputPortada} onChange={(e) => seleccionarArchivo(e, 'portada')} />
@@ -180,7 +184,12 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
             ) : (
               <img src={vistaAvatarTemporal || urlAvatar || ''} alt="Avatar" className="ep-imagen-avatar" onClick={verFotoAvatar} style={{ cursor: 'pointer' }} />
             )}
-            <span className="ep-icono-camara-avatar" onClick={(e) => { e.stopPropagation(); setMostrarMenuAvatar(true) }} />
+            <span className="ep-icono-camara-avatar" onClick={(e) => { e.stopPropagation(); setMostrarMenuAvatar(true) }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </span>
           </div>
           <input type="file" className="ep-input-oculto" ref={refInputAvatar} onChange={(e) => seleccionarArchivo(e, 'avatar')} />
           {modoEdicion === 'avatar' && (

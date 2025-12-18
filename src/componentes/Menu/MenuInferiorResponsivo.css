@@ -273,3 +273,11 @@
 .cursor-hover {
     cursor: pointer;
 }
+
+/* Ocultar menú cuando el visor de imágenes está abierto */
+body.modal-visor-abierto .menu-inferior-responsivo {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}

@@ -698,18 +698,28 @@
 
   .ep-menu-flotante-portada {
     top: auto;
-    bottom: 80px;
+    bottom: 50px;
+    /* Pegadito al icono de portada que está bottom: 16px */
     right: 16px;
-    transform: translateX(-50%);
-    min-width: 95vw;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    left: 50%;
+    transform: none;
+    min-width: 200px;
+    /* Ancho razonable, no pantalla completa */
+    width: auto;
+    background: white;
+    left: auto;
+    /* Quitar el centrado */
   }
 
   .ep-menu-flotante-avatar {
-    min-width: 95vw;
+    min-width: 200px;
+    width: auto;
+    bottom: 30px;
+    /* Mas abajo, cerca del icono */
+    right: -10px;
+    /* Alineado a la derecha */
+    left: auto;
+    /* Quitar centrado */
+    transform: none;
   }
 
   .ep-nombre-usuario {

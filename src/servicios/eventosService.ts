@@ -24,6 +24,7 @@ export interface EventoCompleto {
   total_visualizaciones: number
   calificacion_promedio: number
   total_calificaciones?: number
+  enlace_grabacion?: string
   // Campos adicionales requeridos por la UI
   es_gratuito?: boolean
   es_destacado?: boolean
@@ -133,6 +134,47 @@ export const eventosService = {
       return { success: true }
     } catch (e: any) {
       return { success: false, error: e.message }
+    }
+  },
+
+  async obtenerEventosUsuario(usuarioId: string): Promise<EventoCompleto[]> {
+    try {
+      // Obtener inscripciones del usuario
+      const { data: inscripciones, error: errorInsc } = await supabase
+        .from('inscripciones_eventos')
+        .select('evento_id')
+        .eq('usuario_id', usuarioId)
+        .eq('estado', 'activo')
+
+      if (errorInsc) throw errorInsc
+      if (!inscripciones || inscripciones.length === 0) return []
+
+      const eventosIds = inscripciones.map(i => i.evento_id)
+
+      // Obtener detalles de los eventos
+      const { data: eventos, error: errorEventos } = await supabase
+        .from('eventos')
+        .select('*')
+        .in('id', eventosIds)
+        .order('fecha_inicio', { ascending: false })
+
+      if (errorEventos) throw errorEventos
+
+      // Mapeo con campos adicionales
+      const eventosMapeados = (eventos || []).map((e: any) => ({
+        ...e,
+        es_gratuito: e.es_gratuito ?? (e.precio === 0),
+        moneda: e.moneda || 'COP',
+        participantes_inscritos: e.participantes_inscritos || 0,
+        calificacion_promedio: e.calificacion_promedio || 0,
+        total_visualizaciones: e.total_visualizaciones || 0,
+        enlace_grabacion: e.enlace_grabacion || e.link_grabacion || null
+      })) as EventoCompleto[]
+
+      return eventosMapeados
+    } catch (e: any) {
+      console.error('Error obteniendo eventos del usuario:', e)
+      return []
     }
   },
 

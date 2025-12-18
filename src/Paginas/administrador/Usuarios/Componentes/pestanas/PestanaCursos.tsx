@@ -78,7 +78,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   // Estados principales
   const [cursosInscritos, setCursosInscritos] = useState<Inscripcion[]>([]);
   const [tutorialesDisponibles, setTutorialesDisponibles] = useState<Tutorial[]>([]);
-  const [paquetesInscritos] = useState<Inscripcion[]>([]);
+  const [paquetesInscritos, setPaquetesInscritos] = useState<Inscripcion[]>([]);
   const [paquetesDisponibles, setPaquetesDisponibles] = useState<Paquete[]>([]);
 
   // Estados de carga
@@ -109,10 +109,13 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
       // Cargar cursos inscritos del usuario (como en Svelte original)
       await cargarCursosInscritos();
 
+      // Cargar paquetes inscritos
+      await cargarPaquetesInscritos();
+
       // Cargar tutoriales disponibles desde Supabase
-      console.log('ðŸ” Cargando tutoriales desde Supabase...');
+      console.log('🔍 Cargando tutoriales desde Supabase...');
       const tutorialesResult = await obtenerTutorialesDisponibles();
-      console.log('ðŸ“Š Resultado tutoriales:', tutorialesResult);
+      console.log('📊 Resultado tutoriales:', tutorialesResult);
 
       if (tutorialesResult.success && tutorialesResult.data) {
         const tutoriales = tutorialesResult.data.map((tutorial: any) => ({
@@ -125,16 +128,16 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           descripcion: tutorial.descripcion || '',
           precio: tutorial.precio_rebajado || tutorial.precio_normal || 0
         }));
-        console.log('âœ… Tutoriales procesados:', tutoriales);
+        console.log('✅ Tutoriales procesados:', tutoriales);
         setTutorialesDisponibles(tutoriales);
       } else {
-        console.log('âŒ Error cargando tutoriales:', tutorialesResult.error);
+        console.log('❌ Error cargando tutoriales:', tutorialesResult.error);
       }
 
       // Cargar paquetes disponibles desde Supabase
-      console.log('ðŸ” Cargando paquetes desde Supabase...');
+      console.log('🔍 Cargando paquetes desde Supabase...');
       const paquetesResult = await obtenerTodosPaquetes();
-      console.log('ðŸ“Š Resultado paquetes:', paquetesResult);
+      console.log('📊 Resultado paquetes:', paquetesResult);
 
       if (paquetesResult.success && paquetesResult.data) {
         const paquetes = paquetesResult.data.map((paquete: any) => ({
@@ -148,10 +151,10 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           nivel: paquete.nivel || 'Principiante',
           categoria: paquete.categoria || 'General'
         }));
-        console.log('âœ… Paquetes procesados:', paquetes);
+        console.log('✅ Paquetes procesados:', paquetes);
         setPaquetesDisponibles(paquetes);
       } else {
-        console.log('âŒ Error cargando paquetes:', paquetesResult.error);
+        console.log('❌ Error cargando paquetes:', paquetesResult.error);
       }
 
     } catch (err) {
@@ -166,7 +169,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   // Cargar cursos inscritos del usuario (exactamente como en Svelte original)
   const cargarCursosInscritos = async () => {
     try {
-      console.log('ðŸ” Cargando cursos inscritos para usuario:', _usuario.id);
+      console.log('🔍 Cargando cursos inscritos para usuario:', _usuario.id);
 
       // Cargar inscripciones básicas primero (como en Svelte)
       const { data: inscripciones, error: inscripcionesError } = await supabase
@@ -175,11 +178,11 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         .eq('usuario_id', _usuario.id);
 
       if (inscripcionesError) {
-        console.error('âŒ Error cargando inscripciones:', inscripcionesError);
+        console.error('❌ Error cargando inscripciones:', inscripcionesError);
         return;
       }
 
-      console.log('ðŸ“‹ Inscripciones encontradas:', inscripciones);
+      console.log('📋 Inscripciones encontradas:', inscripciones);
       const cursosInscritosTemp: Inscripcion[] = [];
 
       // Para cada inscripción, cargar los detalles del curso o tutorial (como en Svelte)
@@ -229,18 +232,229 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         }
       }
 
-      console.log('âœ… Cursos inscritos cargados:', cursosInscritosTemp);
+      console.log('✅ Cursos inscritos cargados:', cursosInscritosTemp);
       setCursosInscritos(cursosInscritosTemp);
     } catch (error) {
-      console.error('âŒ Error cargando cursos inscritos:', error);
+      console.error('❌ Error cargando cursos inscritos:', error);
       setCursosInscritos([]);
     }
   };
 
+  // Cargar paquetes inscritos del usuario
+  const cargarPaquetesInscritos = async () => {
+    try {
+      console.log('📦 Cargando paquetes inscritos para usuario:', _usuario.id);
+
+      // Cargar inscripciones de paquetes
+      const { data: inscripciones, error: inscripcionesError } = await supabase
+        .from('inscripciones')
+        .select(`
+          *,
+          paquetes_tutoriales (
+            id,
+            titulo,
+            descripcion_corta,
+            imagen_url,
+            precio_normal,
+            precio_rebajado,
+            total_tutoriales,
+            nivel,
+            categoria
+          )
+        `)
+        .eq('usuario_id', _usuario.id)
+        .not('paquete_id', 'is', null);
+
+      if (inscripcionesError) {
+        console.error('❌ Error cargando paquetes inscritos:', inscripcionesError);
+        return;
+      }
+
+      console.log('📋 Paquetes inscritos encontrados:', inscripciones);
+      setPaquetesInscritos(inscripciones || []);
+    } catch (error) {
+      console.error('❌ Error cargando paquetes inscritos:', error);
+      setPaquetesInscritos([]);
+    }
+  };
+
+  // Resetear paginación cuando cambia la búsqueda
+  useEffect(() => {
+    if (busquedaCursos) {
+      setPaginaActualTutoriales(1);
+    }
+  }, [busquedaCursos]);
+
+  // ========================================
+  // FUNCIONES DE GESTIÓN DE INSCRIPCIONES
+  // ========================================
+
+  // Función para agregar tutorial a usuario
+  const agregarTutorialAUsuario = async (tutorialId: string) => {
+    try {
+      setCargandoCursos(true);
+      console.log('📝 Agregando tutorial al usuario:', tutorialId);
+
+      // Insertar inscripción en Supabase
+      const { data, error } = await supabase
+        .from('inscripciones')
+        .insert({
+          usuario_id: _usuario.id,
+          tutorial_id: tutorialId,
+          fecha_inscripcion: new Date().toISOString(),
+          estado: 'activo',
+          porcentaje_completado: 0,
+          completado: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error insertando inscripción:', error);
+        throw error;
+      }
+
+      console.log('✅ Tutorial agregado exitosamente:', data);
+
+      // Recargar cursos inscritos
+      await cargarCursosInscritos();
+
+    } catch (error) {
+      console.error('❌ Error agregando tutorial:', error);
+      alert('Error al agregar el tutorial. Por favor intenta de nuevo.');
+    } finally {
+      setCargandoCursos(false);
+    }
+  };
+
+  // Función para agregar paquete a usuario
+  const agregarPaqueteAUsuario = async (paqueteId: string) => {
+    try {
+      setCargandoPaquetes(true);
+      console.log('📦 Agregando paquete al usuario:', paqueteId);
+
+      // Insertar inscripción en Supabase
+      const { data, error } = await supabase
+        .from('inscripciones')
+        .insert({
+          usuario_id: _usuario.id,
+          paquete_id: paqueteId,
+          fecha_inscripcion: new Date().toISOString(),
+          estado: 'activo',
+          porcentaje_completado: 0,
+          completado: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error insertando inscripción de paquete:', error);
+        throw error;
+      }
+
+      console.log('✅ Paquete agregado exitosamente:', data);
+
+      // Recargar paquetes inscritos
+      await cargarPaquetesInscritos();
+
+    } catch (error) {
+      console.error('❌ Error agregando paquete:', error);
+      alert('Error al agregar el paquete. Por favor intenta de nuevo.');
+    } finally {
+      setCargandoPaquetes(false);
+    }
+  };
+
+  // Función para quitar curso/tutorial de usuario
+  const quitarCursoDeUsuario = async (inscripcionId: string) => {
+    if (!confirm('¿Estás seguro de quitar este curso del usuario?')) {
+      return;
+    }
+
+    try {
+      setCargandoCursos(true);
+      console.log('🗑️ Eliminando inscripción:', inscripcionId);
+
+      const { error } = await supabase
+        .from('inscripciones')
+        .delete()
+        .eq('id', inscripcionId);
+
+      if (error) {
+        console.error('❌ Error eliminando inscripción:', error);
+        throw error;
+      }
+
+      console.log('✅ Curso eliminado exitosamente');
+
+      // Recargar cursos inscritos
+      await cargarCursosInscritos();
+
+    } catch (error) {
+      console.error('❌ Error eliminando curso:', error);
+      alert('Error al eliminar el curso. Por favor intenta de nuevo.');
+    } finally {
+      setCargandoCursos(false);
+    }
+  };
+
+  // Función para quitar paquete de usuario
+  const quitarPaqueteDeUsuario = async (inscripcionId: string) => {
+    if (!confirm('¿Estás seguro de quitar este paquete del usuario?')) {
+      return;
+    }
+
+    try {
+      setCargandoPaquetes(true);
+      console.log('🗑️ Eliminando paquete:', inscripcionId);
+
+      const { error } = await supabase
+        .from('inscripciones')
+        .delete()
+        .eq('id', inscripcionId);
+
+      if (error) {
+        console.error('❌ Error eliminando paquete:', error);
+        throw error;
+      }
+
+      console.log('✅ Paquete eliminado exitosamente');
+
+      // Recargar paquetes inscritos
+      await cargarPaquetesInscritos();
+
+    } catch (error) {
+      console.error('❌ Error eliminando paquete:', error);
+      alert('Error al eliminar el paquete. Por favor intenta de nuevo.');
+    } finally {
+      setCargandoPaquetes(false);
+    }
+  };
+
   // Funciones de filtrado
-  const tutorialesDisponiblesFiltrados = tutorialesDisponibles.filter(tutorial =>
-    tutorial.titulo.toLowerCase().includes(busquedaCursos.toLowerCase())
-  );
+  const tutorialesDisponiblesFiltrados = tutorialesDisponibles
+    .filter(tutorial => {
+      // Excluir tutoriales ya inscritos
+      const yaInscrito = cursosInscritos.some(
+        inscripcion => inscripcion.tutorial_id === tutorial.id
+      );
+      return !yaInscrito;
+    })
+    .filter(tutorial =>
+      tutorial.titulo.toLowerCase().includes(busquedaCursos.toLowerCase())
+    );
+
+  const paquetesDisponiblesFiltrados = paquetesDisponibles
+    .filter(paquete => {
+      // Excluir paquetes ya inscritos
+      const yaInscrito = paquetesInscritos.some(
+        inscripcion => inscripcion.paquete_id === paquete.id
+      );
+      return !yaInscrito;
+    })
+    .filter(paquete =>
+      paquete.titulo.toLowerCase().includes(busquedaCursos.toLowerCase())
+    );
 
   // Paginación
   const totalPaginasTutoriales = Math.ceil(tutorialesDisponiblesFiltrados.length / elementosPorPagina);
@@ -254,13 +468,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
       setPaginaActualTutoriales(nuevaPagina);
     }
   };
-
-  // Resetear paginación cuando cambia la búsqueda
-  useEffect(() => {
-    if (busquedaCursos) {
-      setPaginaActualTutoriales(1);
-    }
-  }, [busquedaCursos]);
 
   // Funciones de utilidad
   const formatearFecha = (fecha: string) => {
@@ -288,7 +495,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           <div className="pestana-cursos-zona-drop">
             <div className="pestana-cursos-seccion">
               <div className="pestana-cursos-header-seccion">
-                <h3>ðŸ“š Cursos Inscritos</h3>
+                <h3>📚 Cursos Inscritos</h3>
                 <span className="pestana-cursos-contador-cursos">{cursosInscritos.length}</span>
               </div>
 
@@ -300,7 +507,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor" />
                   </svg>
                   <p>Sin cursos inscritos</p>
-                  <small>ðŸ’¡ Agrega cursos desde la derecha</small>
+                  <small>💡 Agrega cursos desde la derecha</small>
                 </div>
               ) : (
                 <div className="pestana-cursos-lista-cursos-compacta">
@@ -314,7 +521,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                       <div className="pestana-cursos-curso-info-mini">
                         <h4>{inscripcion.curso?.titulo || 'Curso sin título'}</h4>
                         <p className="pestana-cursos-tipo">
-                          {inscripcion.curso?.tipo === 'curso' ? 'ðŸ“š Curso' : 'ðŸŽ¯ Tutorial'}
+                          {inscripcion.curso?.tipo === 'curso' ? '📚 Curso' : '🎯 Tutorial'}
                         </p>
                         <p className="pestana-cursos-fecha">
                           {formatearFecha(inscripcion.fecha_inscripcion)}
@@ -327,6 +534,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                         <button
                           className="pestana-cursos-btn-quitar-mini"
                           title="Quitar curso"
+                          onClick={() => quitarCursoDeUsuario(inscripcion.id)}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" />
@@ -342,7 +550,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
             {/* Paquetes Inscritos */}
             <div className="pestana-cursos-seccion">
               <div className="pestana-cursos-header-seccion">
-                <h3>ðŸŽ Paquetes Inscritos</h3>
+                <h3>🎁 Paquetes Inscritos</h3>
                 <span className="pestana-cursos-contador-cursos">{paquetesInscritos.length}</span>
               </div>
 
@@ -360,7 +568,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                   {paquetesInscritos.map((paquete) => (
                     <div key={paquete.id} className="pestana-cursos-paquete-inscrito-expandido">
                       <div className="pestana-cursos-paquete-header">
-                        <div className="pestana-cursos-paquete-icon-grande">ðŸ“¦</div>
+                        <div className="pestana-cursos-paquete-icon-grande">📦</div>
                         <div className="pestana-cursos-paquete-info-principal">
                           <h5>{paquete.paquetes_tutoriales?.titulo || 'Paquete'}</h5>
                           <p className="pestana-cursos-paquete-descripcion">
@@ -368,13 +576,13 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                           </p>
                           <div className="pestana-cursos-paquete-meta">
                             <span className="pestana-cursos-fecha-inscripcion">
-                              ðŸ“… {formatearFecha(paquete.fecha_inscripcion)}
+                              📅 {formatearFecha(paquete.fecha_inscripcion)}
                             </span>
                             <span className="pestana-cursos-total-tutoriales">
-                              ðŸŽ¯ {paquete.paquetes_tutoriales?.total_tutoriales || 0} tutoriales
+                              🎯 {paquete.paquetes_tutoriales?.total_tutoriales || 0} tutoriales
                             </span>
                             <span className="pestana-cursos-nivel-paquete">
-                              ðŸ“Š {paquete.paquetes_tutoriales?.nivel || 'Principiante'}
+                              📊 {paquete.paquetes_tutoriales?.nivel || 'Principiante'}
                             </span>
                           </div>
                         </div>
@@ -389,13 +597,14 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                               className="pestana-cursos-btn-ver-paquete-detalle"
                               title="Ver paquete completo"
                             >
-                              ðŸ‘ï¸ Ver
+                              👁️ Ver
                             </button>
                             <button
                               className="pestana-cursos-btn-eliminar-paquete"
                               title="Eliminar paquete"
+                              onClick={() => quitarPaqueteDeUsuario(paquete.id)}
                             >
-                              ðŸ—‘ï¸ Eliminar
+                              🗑️ Eliminar
                             </button>
                           </div>
                         </div>
@@ -412,7 +621,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         <div className="pestana-cursos-columna-derecha">
           <div className="pestana-cursos-seccion pestana-cursos-seccion-agregar">
             <div className="pestana-cursos-header-seccion">
-              <h3>ðŸ” Agregar Cursos y Tutoriales</h3>
+              <h3>🔍 Agregar Cursos y Tutoriales</h3>
             </div>
 
             {/* Buscador */}
@@ -434,25 +643,25 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                 className={`pestana-cursos-filtro-btn ${filtroTipoContenido === 'todos' ? 'activo' : ''}`}
                 onClick={() => setFiltroTipoContenido('todos')}
               >
-                ðŸŽ¯ Todos
+                🎯 Todos
               </button>
               <button
                 className={`pestana-cursos-filtro-btn ${filtroTipoContenido === 'cursos' ? 'activo' : ''}`}
                 onClick={() => setFiltroTipoContenido('cursos')}
               >
-                ðŸ“š Cursos
+                📚 Cursos
               </button>
               <button
                 className={`pestana-cursos-filtro-btn ${filtroTipoContenido === 'tutoriales' ? 'activo' : ''}`}
                 onClick={() => setFiltroTipoContenido('tutoriales')}
               >
-                ðŸŽ¯ Tutoriales
+                🎯 Tutoriales
               </button>
               <button
                 className={`pestana-cursos-filtro-btn ${filtroTipoContenido === 'paquetes' ? 'activo' : ''}`}
                 onClick={() => setFiltroTipoContenido('paquetes')}
               >
-                ðŸŽ Paquetes
+                🎁 Paquetes
               </button>
             </div>
 
@@ -460,13 +669,13 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
               <div className="pestana-cursos-cargando">Cargando contenido disponible...</div>
             ) : (
               <>
-                {/* Mostrar contenido segÃºn filtro */}
+                {/* Mostrar contenido según filtro */}
                 {(filtroTipoContenido === 'todos' || filtroTipoContenido === 'tutoriales') && (
                   <>
                     {tutorialesDisponiblesFiltrados.length > 0 && (
                       <div className="pestana-cursos-categoria-cursos">
                         <div className="pestana-cursos-header-categoria">
-                          <h4>ðŸŽ¯ Tutoriales Disponibles</h4>
+                          <h4>🎯 Tutoriales Disponibles</h4>
                           <span className="pestana-cursos-contador-resultados">
                             {tutorialesDisponiblesFiltrados.length} tutoriales
                           </span>
@@ -479,12 +688,16 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                               </div>
                               <div className="pestana-cursos-curso-info-mini">
                                 <h5>{tutorial.titulo}</h5>
-                                <p className="pestana-cursos-duracion">â±ï¸ {tutorial.duracion} min</p>
+                                <p className="pestana-cursos-duracion">⏱️ {tutorial.duracion} min</p>
                                 {tutorial.precio && (
                                   <p className="pestana-cursos-precio">{formatearPrecio(tutorial.precio)}</p>
                                 )}
                               </div>
-                              <button className="pestana-cursos-btn-agregar-curso">
+                              <button
+                                className="pestana-cursos-btn-agregar-curso"
+                                onClick={() => agregarTutorialAUsuario(tutorial.id)}
+                                disabled={cargandoCursos}
+                              >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                   <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="2" />
                                 </svg>
@@ -536,15 +749,15 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                 {(filtroTipoContenido === 'todos' || filtroTipoContenido === 'paquetes') && (
                   <div className="pestana-cursos-categoria-cursos">
                     <div className="pestana-cursos-header-categoria">
-                      <h4>ðŸŽ Paquetes Disponibles</h4>
+                      <h4>🎁 Paquetes Disponibles</h4>
                       <span className="pestana-cursos-contador-resultados">
-                        {paquetesDisponibles.length} paquetes
+                        {paquetesDisponiblesFiltrados.length} paquetes
                       </span>
                     </div>
 
                     {cargandoPaquetes ? (
                       <div className="pestana-cursos-cargando">Cargando paquetes...</div>
-                    ) : paquetesDisponibles.length === 0 ? (
+                    ) : paquetesDisponiblesFiltrados.length === 0 ? (
                       <div className="pestana-cursos-vacio">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                           <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke="currentColor" strokeWidth="2" />
@@ -553,10 +766,10 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                       </div>
                     ) : (
                       <div className="pestana-cursos-grid-cursos-disponibles">
-                        {paquetesDisponibles.map((paquete) => (
+                        {paquetesDisponiblesFiltrados.map((paquete) => (
                           <div key={paquete.id} className="pestana-cursos-curso-disponible pestana-cursos-paquete-item">
                             <div className="pestana-cursos-curso-imagen-mini">
-                              <div className="pestana-cursos-paquete-icon">ðŸ“¦</div>
+                              <div className="pestana-cursos-paquete-icon">📦</div>
                             </div>
                             <div className="pestana-cursos-curso-info-mini">
                               <h5>{paquete.titulo}</h5>
@@ -567,6 +780,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                             </div>
                             <button
                               className="pestana-cursos-btn-agregar-curso"
+                              onClick={() => agregarPaqueteAUsuario(paquete.id)}
                               disabled={cargandoPaquetes}
                               aria-label="Agregar paquete completo"
                             >
@@ -580,7 +794,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                 )}
 
                 {/* Mostrar mensaje de vacío si no hay contenido */}
-                {tutorialesDisponiblesFiltrados.length === 0 && paquetesDisponibles.length === 0 && (
+                {tutorialesDisponiblesFiltrados.length === 0 && paquetesDisponiblesFiltrados.length === 0 && (
                   <div className="pestana-cursos-vacio">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                       <path d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" stroke="currentColor" strokeWidth="2" />

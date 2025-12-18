@@ -53,22 +53,22 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
   useEffect(() => { setTimeout(actualizarScroll, 100); window.addEventListener('resize', actualizarScroll); return () => window.removeEventListener('resize', actualizarScroll) }, [])
 
   return (
-    <div className={`pp-contenedor-pestañas-wrapper ${modalAbierto ? 'pp-modal-abierto' : ''}`}>
-      <div className="pp-nav-container-interno">
-        <button className={`pp-boton-scroll pp-izquierda ${puedeIzq ? 'pp-visible' : ''}`} aria-label="Desplazar a la izquierda" onClick={() => scroll('izq')}>
+    <div className={`perfil-tabs-contenedor-wrapper ${modalAbierto ? 'perfil-tabs-modal-abierto' : ''}`}>
+      <div className="perfil-tabs-nav-container-interno">
+        <button className={`perfil-tabs-boton-scroll perfil-tabs-izquierda ${puedeIzq ? 'perfil-tabs-visible' : ''}`} aria-label="Desplazar a la izquierda" onClick={() => scroll('izq')}>
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
-        <nav className="pp-navegacion-pestañas" ref={contenedorNav} onScroll={actualizarScroll}>
+        <nav className="perfil-tabs-navegacion" ref={contenedorNav} onScroll={actualizarScroll}>
           {pestañas.map((p, i) => (
-            <Link key={p.route} to={p.route} className={`pp-pestaña-item ${indiceActivo === i ? 'pp-activo' : ''}`} aria-label={p.label} role="tab">
-              <div className="pp-contenido-pestaña">
-                {p.icon && <div className="pp-icono" dangerouslySetInnerHTML={{ __html: p.icon }} />}
-                <span className="pp-etiqueta">{p.label}</span>
+            <Link key={p.route} to={p.route} className={`perfil-tabs-item ${indiceActivo === i ? 'perfil-tabs-activo' : ''}`} aria-label={p.label} role="tab">
+              <div className="perfil-tabs-contenido">
+                {p.icon && <div className="perfil-tabs-icono" dangerouslySetInnerHTML={{ __html: p.icon }} />}
+                <span className="perfil-tabs-etiqueta">{p.label}</span>
               </div>
             </Link>
           ))}
         </nav>
-        <button className={`pp-boton-scroll pp-derecha ${puedeDer ? 'pp-visible' : ''}`} aria-label="Desplazar a la derecha" onClick={() => scroll('der')}>
+        <button className={`perfil-tabs-boton-scroll perfil-tabs-derecha ${puedeDer ? 'perfil-tabs-visible' : ''}`} aria-label="Desplazar a la derecha" onClick={() => scroll('der')}>
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>
         </button>
       </div>

@@ -1,410 +1,452 @@
-/* Contenedor principal */
-.contenedor-principal {
+/* ============================================================
+   TAB CONTENIDO - VERSIÓN DEFINITIVA
+   Prefijo: tbc- (Tab Content)
+   ============================================================ */
+
+/* CONTENEDOR PRINCIPAL - ESTRICTO */
+.tbc-wrapper {
     width: 100%;
-    height: 100%;
-    min-height: 400px;
+    max-width: 100vw;
+    /* Nunca más ancho que la pantalla */
+    padding: 0;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
     overflow: hidden;
+    /* Cortar todo lo que se salga */
     position: relative;
 }
 
-/* Navegación de módulos */
-.navegacion-modulos {
+/* NAVEGACIÓN DE MÓDULOS - SIEMPRE VISIBLE */
+.tbc-module-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
+    padding: 1.5rem 2rem;
     background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-    color: white;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25);
+    flex-shrink: 0;
+    z-index: 100;
+    position: relative;
 }
 
-.btn-navegacion {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    padding: 0.5rem;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* BOTONES DE NAVEGACIÓN - MUY VISIBLES */
+.tbc-nav-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    background: #ffffff !important;
+    /* Fondo blanco sólido */
+    border: 3px solid #ffffff !important;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn-navegacion:hover:not(.deshabilitado) {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
+.tbc-nav-btn:hover:not(.tbc-nav-btn--disabled) {
+    background: #f5f5f5 !important;
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-.btn-navegacion.deshabilitado {
-    opacity: 0.5;
+.tbc-nav-btn--disabled {
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-.info-modulo {
-    text-align: center;
+/* ICONOS DE FLECHAS - NEGRO SÓLIDO */
+.tbc-nav-btn svg {
+    color: #000000 !important;
+    stroke: #000000 !important;
+    fill: none !important;
+}
+
+.tbc-module-info {
     flex: 1;
-    padding: 0 1rem;
+    text-align: center;
+    padding: 0 2rem;
 }
 
-.titulo-modulo {
-    font-size: 1.2rem;
-    font-weight: 600;
+.tbc-module-title {
+    font-size: 1.4rem;
+    font-weight: 800;
     margin: 0 0 0.25rem 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.contador-modulo {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    font-weight: 500;
+.tbc-module-counter {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
 }
 
-/* Contenedor de scroll */
-.contenedor-scroll {
-    flex: 1 1 auto;
+/* ÁREA DE SCROLL - CONTENIDA */
+.tbc-scroll-area {
+    flex: 1;
     overflow-x: auto;
     overflow-y: hidden;
+    background: #f8f9fa;
     position: relative;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f1f5f9;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+    /* Scrollbar visible y atractivo */
+    scrollbar-width: auto;
+    scrollbar-color: #ff9800 #e0e0e0;
 }
 
-.contenedor-scroll::-webkit-scrollbar {
-    height: 8px;
+.tbc-scroll-area::-webkit-scrollbar {
+    height: 16px;
 }
 
-.contenedor-scroll::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+.tbc-scroll-area::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 10px;
 }
 
-.contenedor-scroll::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
+.tbc-scroll-area::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border-radius: 10px;
+    border: 3px solid #e0e0e0;
 }
 
-.contenedor-scroll::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+.tbc-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
 }
 
-/* Contenedor de lecciones */
-.lecciones-contenedor {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem 1rem 2rem 1rem;
-    width: max-content;
+/* CONTENEDOR DE LECCIONES */
+.tbc-lessons-track {
+    display: inline-flex;
+    /* inline-flex para que respete width: max-content */
+    gap: 2rem;
+    padding: 2.5rem 2rem;
     min-height: 100%;
     align-items: stretch;
 }
 
-/* Lección Item */
-.leccion-item {
+/* TARJETA DE LECCIÓN */
+.tbc-lesson-card {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
+    width: 340px;
+    min-width: 340px;
+    max-width: 340px;
     background: #ffffff;
-    color: #1f2937;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    position: relative;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
     overflow: hidden;
-    flex: 0 0 280px;
-    max-height: 320px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
-.leccion-item:hover {
-    background: #e3f2fd;
-    border-color: #2196f3;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(33, 150, 243, 0.2);
+.tbc-lesson-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    border-color: #ff9800;
 }
 
-.leccion-item.activa {
-    background: #e8f5e8;
-    border-color: #4CAF50;
-    color: #2e7d32;
+.tbc-lesson-card--active {
+    background: linear-gradient(to bottom, #fff7ed 0%, #ffffff 100%);
+    border-color: #ff9800;
+    border-width: 3px;
+    box-shadow: 0 8px 16px rgba(255, 152, 0, 0.3);
 }
 
-.leccion-item.completada:not(.activa) {
-    background: #f3e5f5;
-    border-color: #9c27b0;
+.tbc-lesson-card--completed {
+    background: linear-gradient(to bottom, #f0fdf4 0%, #ffffff 100%);
+    border-color: #22c55e;
 }
 
-/* Thumbnail */
-.leccion-thumbnail {
+/* THUMBNAIL */
+.tbc-lesson-thumb {
     position: relative;
     width: 100%;
-    height: 160px;
-    border-radius: 8px;
+    height: 190px;
+    background: #000000;
     overflow: hidden;
-    background: #000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
 }
 
-.leccion-thumbnail img {
+.tbc-lesson-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.thumbnail-placeholder {
+.tbc-lesson-card:hover .tbc-lesson-thumb img {
+    transform: scale(1.15);
+}
+
+.tbc-thumb-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
-    background: #374151;
-    color: #9ca3af;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: rgba(255, 255, 255, 0.7);
 }
 
-.leccion-play-icon {
+.tbc-play-icon {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 152, 0, 0.95);
     border-radius: 50%;
-    background: rgba(255, 140, 0, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.leccion-item:hover .leccion-play-icon {
-    background: rgba(255, 140, 0, 1);
-    transform: translate(-50%, -50%) scale(1.1);
+.tbc-lesson-card:hover .tbc-play-icon {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+    background: #ff9800;
 }
 
-.duracion-badge {
+.tbc-duration-badge {
     position: absolute;
-    bottom: 6px;
-    right: 6px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-weight: 500;
+    bottom: 12px;
+    right: 12px;
+    padding: 0.5rem 0.8rem;
+    background: rgba(0, 0, 0, 0.85);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
 }
 
-/* Tipo de parte container */
-.tipo-parte-container {
+/* TIPO PARTE */
+.tbc-part-type-wrapper {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: 2rem 1.5rem;
     text-align: center;
 }
 
-.tipo-parte {
+.tbc-part-type-content {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.75rem;
 }
 
-.tipo-texto {
-    font-size: 0.7rem;
-    font-weight: 600;
+.tbc-part-type-label {
+    font-size: 0.85rem;
+    font-weight: 800;
     color: #fbbf24;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
 }
 
-.titulo-texto {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.9);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    line-height: 1.3;
+.tbc-part-type-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
 }
 
-/* Información de lección */
-.leccion-info {
-    flex: 1;
-    min-width: 0;
+/* INFO LECCIÓN */
+.tbc-lesson-info {
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    flex: 1;
 }
 
-.leccion-titulo {
-    font-size: 1rem;
-    font-weight: 600;
-    color: inherit;
-    line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.tbc-lesson-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #1f2937;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.leccion-estado {
-    display: flex;
-    align-items: center;
-    font-size: 0.8rem;
+.tbc-lesson-status {
     margin-top: auto;
-}
-
-/* Estados */
-.estado-completado,
-.estado-pendiente,
-.estado-progreso {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 
-.estado-completado {
-    color: #22c55e;
+/* ESTADOS */
+.tbc-status--completed {
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.estado-pendiente {
-    color: #64748b;
+.tbc-status--progress {
+    color: #ea580c;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
 }
 
-.estado-progreso {
-    color: #f59e0b;
+.tbc-status--pending {
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.progreso-mini-bar {
-    width: 60px;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 2px;
+.tbc-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #fed7aa;
+    border-radius: 10px;
     overflow: hidden;
 }
 
-.progreso-mini-fill {
+.tbc-progress-fill {
     height: 100%;
-    background: currentColor;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+    transition: width 0.4s ease;
 }
 
-/* Contador de lecciones */
-.contador-lecciones {
-    padding: 1rem 1rem 1.5rem 1rem;
+/* FOOTER */
+.tbc-footer-counter {
+    padding: 1.5rem 2rem;
     text-align: center;
-    background: rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    border-top: 2px solid #f3f4f6;
     color: #6b7280;
-    font-size: 0.9rem;
-    border-radius: 0 0 12px 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    flex-shrink: 0;
 }
 
-/* Sin contenido */
-.sin-contenido {
+/* ESTADO VACÍO */
+.tbc-empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem 2rem;
+    padding: 5rem 2rem;
     text-align: center;
-    color: #64748b;
-    height: 100%;
-    min-height: 300px;
+    color: #9ca3af;
+    min-height: 400px;
 }
 
-.sin-contenido-icon {
-    margin-bottom: 1rem;
-    opacity: 0.5;
+.tbc-empty-icon {
+    margin-bottom: 2rem;
+    opacity: 0.4;
 }
 
-/* RESPONSIVE: Mobile */
+.tbc-empty-text {
+    font-size: 1.1rem;
+    color: #6b7280;
+}
+
+/* ============================================================
+   RESPONSIVE: MOBILE (< 768px)
+   ============================================================ */
 @media (max-width: 768px) {
-    .contenedor-principal {
-        min-height: 400px;
+    .tbc-module-nav {
+        padding: 1rem 1.25rem;
     }
 
-    .contenedor-scroll {
+    .tbc-nav-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .tbc-module-title {
+        font-size: 1.15rem;
+    }
+
+    .tbc-module-counter {
+        font-size: 0.85rem;
+    }
+
+    .tbc-scroll-area {
         overflow-x: hidden;
         overflow-y: auto;
-        min-height: 400px;
-        flex: 1 1 auto;
-        overscroll-behavior-y: contain;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        max-height: 600px;
     }
 
-    .contenedor-scroll::-webkit-scrollbar {
+    .tbc-scroll-area::-webkit-scrollbar {
         display: none;
     }
 
-    .lecciones-contenedor {
+    .tbc-lessons-track {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
-        padding: 1rem 0 2rem 0;
         width: 100%;
+        padding: 1.5rem 1rem;
+        gap: 1.25rem;
     }
 
-    .leccion-item {
+    .tbc-lesson-card {
         flex-direction: row;
-        align-items: center;
-        gap: 1rem;
-        flex: 0 0 auto;
         width: 100%;
-        max-height: none;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
     }
 
-    .leccion-thumbnail {
-        width: 100px;
-        height: 56px;
+    .tbc-lesson-thumb {
+        width: 130px;
+        height: 73px;
         flex-shrink: 0;
     }
 
-    .leccion-play-icon {
-        width: 28px;
-        height: 28px;
+    .tbc-play-icon {
+        width: 40px;
+        height: 40px;
     }
 
-    .leccion-play-icon svg {
-        width: 12px;
-        height: 12px;
+    .tbc-play-icon svg {
+        width: 14px;
+        height: 14px;
     }
 
-    .duracion-badge {
-        font-size: 0.7rem;
-        padding: 0.15rem 0.3rem;
+    .tbc-duration-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.5rem;
     }
 
-    .tipo-parte-container {
-        padding: 8px;
+    .tbc-lesson-info {
+        padding: 1rem;
     }
 
-    .tipo-texto {
-        font-size: 0.6rem;
-    }
-
-    .titulo-texto {
-        font-size: 0.55rem;
+    .tbc-lesson-title {
+        font-size: 1rem;
         -webkit-line-clamp: 2;
     }
 
-    .leccion-titulo {
+    .tbc-footer-counter {
+        padding: 1rem;
         font-size: 0.9rem;
-        -webkit-line-clamp: 1;
     }
 }

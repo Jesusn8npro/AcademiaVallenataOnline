@@ -2,13 +2,18 @@
 .blc-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    max-width: 320px;
+    height: 100vh;
+    width: 100%;
+    /* Ocupar todo el ancho del padre (.leccion-sidebar) */
+    max-width: none;
+    /* Eliminar restricción interna */
     background-color: #1a1a1a;
     color: #fff;
-    overflow-y: auto;
     border-left: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: -2px 0 15px rgba(0, 0, 0, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
 
 /* Header del sidebar */
@@ -204,12 +209,13 @@
 /* Thumbnail de lección */
 .blc-lesson-thumbnail {
     position: relative !important;
-    width: 120px !important;
-    height: 68px !important;
-    min-width: 120px !important;
-    min-height: 68px !important;
-    max-width: 120px !important;
-    max-height: 68px !important;
+    width: 160px !important;
+    /* Aumentado para desktop (600px sidebar) */
+    height: 90px !important;
+    min-width: 160px !important;
+    min-height: 90px !important;
+    max-width: 160px !important;
+    max-height: 90px !important;
     border-radius: 6px !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
@@ -283,12 +289,18 @@
 }
 
 .blc-lesson-title {
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    margin-bottom: 4px !important;
-    white-space: nowrap !important;
+    font-size: 16px !important;
+    /* Aumentado para desktop */
+    font-weight: 500 !important;
+    /* Un poco más grueso */
+    margin-bottom: 6px !important;
+    white-space: normal !important;
+    /* Permitir 2 líneas si es necesario */
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
 }
 
 .blc-lesson-status {

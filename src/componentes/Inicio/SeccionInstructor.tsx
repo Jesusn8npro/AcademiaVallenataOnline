@@ -45,26 +45,27 @@ const SeccionInstructor: React.FC = () => {
           )}
 
           {/* Contenido principal split */}
-          <div style={styles.contenidoSplit}>
+          <div className="contenido-split" style={styles.contenidoSplit}>
 
             {/* Lado izquierdo - Foto y credenciales */}
             {visible && (
-              <div style={{ ...styles.ladoIzquierdo, animation: 'scaleIn 1s ease-out 0.3s both' }}>
+              <div className="lado-izquierdo" style={{ ...styles.ladoIzquierdo, animation: 'scaleIn 1s ease-out 0.3s both' }}>
 
                 {/* Collage de fotos profesionales */}
-                <div style={styles.collageMaestro}>
-                  <div style={styles.fotoPrincipal}>
+                <div className="collage-maestro" style={styles.collageMaestro}>
+                  <div className="foto-principal" style={styles.fotoPrincipal}>
                     <img
                       src="/imagenes/Inicio/Home/Foto maestro oficial JESUS GONZALEZ.jpg"
                       alt="Maestro Jesús González"
+                      className="img-maestro"
                       style={styles.imgMaestro}
                     />
                     <div style={styles.overlayProfesional}></div>
                   </div>
 
-                  <div style={styles.badgeExperiencia}>
-                    <span style={styles.numeroAnos}>10+</span>
-                    <span style={styles.textoAnos}>Años de Experiencia</span>
+                  <div className="badge-experiencia" style={styles.badgeExperiencia}>
+                    <span className="numero-anos" style={styles.numeroAnos}>10+</span>
+                    <span className="texto-anos" style={styles.textoAnos}>Años de Experiencia</span>
                   </div>
                 </div>
 
@@ -74,7 +75,7 @@ const SeccionInstructor: React.FC = () => {
 
             {/* Lado derecho - Historia personal */}
             {visible && (
-              <div style={{ ...styles.ladoDerecho, animation: 'flyInFromRight 1s ease-out 0.5s both' }}>
+              <div className="lado-derecho" style={{ ...styles.ladoDerecho, animation: 'flyInFromRight 1s ease-out 0.5s both' }}>
 
                 <div style={styles.presentacionPersonal}>
                   <h3 style={styles.saludoPersonal}>Hola, soy Jesús González</h3>
@@ -165,6 +166,103 @@ const SeccionInstructor: React.FC = () => {
         .img-maestro:hover {
           transform: scale(1.05);
         }
+
+        /* === RESPONSIVE MOBILE === */
+        @media (max-width: 900px) {
+          .seccion-instructor {
+            padding: 4rem 0 !important;
+          }
+
+          .contenido-split {
+            grid-template-columns: 1fr !important;
+            gap: 3rem !important;
+          }
+
+          .lado-izquierdo {
+            order: 1;
+          }
+
+          .lado-derecho {
+            order: 2;
+          }
+
+          .foto-principal {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto;
+          }
+
+          .img-maestro {
+            width: 100% !important;
+            height: auto !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+          }
+
+          .collage-maestro {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .badge-experiencia {
+            top: 10px !important;
+            right: 10px !important;
+            padding: 0.75rem !important;
+          }
+
+          .numero-anos {
+            font-size: 1.5rem !important;
+          }
+
+          .texto-anos {
+            font-size: 0.7rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .seccion-instructor {
+            padding: 3rem 0 !important;
+          }
+
+          .contenedor {
+            padding: 0 1rem !important;
+          }
+
+          .header-emocional {
+            margin-bottom: 3rem !important;
+          }
+
+          .badge-question {
+            font-size: 0.75rem !important;
+            padding: 0.6rem 1.5rem !important;
+          }
+
+          .titulo-emocional {
+            font-size: 2rem !important;
+          }
+
+          .saludo-personal {
+            font-size: 1.75rem !important;
+          }
+
+          .subtitulo-personal {
+            font-size: 1.1rem !important;
+          }
+
+          .parrafo-principal,
+          .parrafo-garantia,
+          .parrafo-diferencia,
+          .parrafo-urgencia {
+            font-size: 1rem !important;
+          }
+
+          .cta-principal {
+            padding: 1.5rem !important;
+            font-size: 1rem !important;
+          }
+        }
       `}</style>
     </>
   );
@@ -243,7 +341,7 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '1fr 1.2fr',
     gap: '5rem',
-    alignItems: 'start',
+    alignItems: 'center',
   },
   ladoIzquierdo: {},
   collageMaestro: {

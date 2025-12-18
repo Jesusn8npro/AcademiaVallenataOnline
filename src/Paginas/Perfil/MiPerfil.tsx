@@ -29,7 +29,7 @@ export default function MiPerfil() {
 
   return (
     <div className="contenido-mi-perfil">
-      <div className="layout-info-perfil" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', alignItems: 'start' }}>
+      <div className="layout-info-perfil">
         <div className="columna-formulario-principal" style={{ minWidth: 0 }}>
           <InfoPestanaPerfil perfil={perfilVisualizar as any} onActualizar={actualizarPerfil} />
         </div>

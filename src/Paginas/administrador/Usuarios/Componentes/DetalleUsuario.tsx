@@ -6,7 +6,7 @@ import PestanaCursos from './pestanas/PestanaCursos';
 import PestanaConfiguracion from './pestanas/PestanaConfiguracion';
 import './DetalleUsuario.css';
 
-// Definir la interfaz Usuario directamente aquÃ­ como en Svelte
+// Definir la interfaz Usuario directamente aquí como en Svelte
 interface Usuario {
   id: string;
   nombre: string;
@@ -28,7 +28,7 @@ interface Usuario {
   profesion?: string;
   documento_tipo?: string;
   instrumento?: string;
-  // Campos de geolocalizaciÃ³n
+  // Campos de geolocalización
   latitud?: string;
   longitud?: string;
   zona_horaria?: string;
@@ -146,7 +146,7 @@ const DetalleUsuario: React.FC<Props> = ({
   const [cargandoPaquetes, setCargandoPaquetes] = useState(false);
   const [cargandoGeo, setCargandoGeo] = useState(false);
 
-  // Estados para gestiÃ³n de cursos
+  // Estados para gestión de cursos
   const [mostrarAgregarCursos, setMostrarAgregarCursos] = useState(false);
   const [busquedaCursos, setBusquedaCursos] = useState('');
   const [mostrarGestionMembresia, setMostrarGestionMembresia] = useState(false);
@@ -176,13 +176,13 @@ const DetalleUsuario: React.FC<Props> = ({
     try {
       setCargando(true);
 
-      // Cargar datos crÃ­ticos primero
+      // Cargar datos críticos primero
       await Promise.all([
         cargarCursosInscritos(),
         cargarPaquetesInscritos()
       ]);
 
-      // Cargar datos especÃ­ficos de la pestaÃ±a activa
+      // Cargar datos específicos de la pestaña activa
       if (pestanaActiva === 'cursos') {
         await Promise.all([
           cargarCursosDisponibles(),
@@ -191,7 +191,7 @@ const DetalleUsuario: React.FC<Props> = ({
       } else if (pestanaActiva === 'configuracion') {
         await cargarHistorialPagos();
       } else if (pestanaActiva === 'actividad') {
-        // La pestaÃ±a de actividad se maneja con el componente PestanaActividad
+        // La pestaña de actividad se maneja con el componente PestanaActividad
       } else if (pestanaActiva === 'geolocalizacion') {
         await cargarHistorialGeolocalizacion();
       }
@@ -275,11 +275,11 @@ const DetalleUsuario: React.FC<Props> = ({
   };
 
 
-  // Cargar historial de geolocalizaciÃ³n
+  // Cargar historial de geolocalización
   const cargarHistorialGeolocalizacion = async () => {
     try {
       setCargandoGeo(true);
-      // Simular datos de geolocalizaciÃ³n por ahora
+      // Simular datos de geolocalización por ahora
       const datos = {
         ubicaciones: [
           {
@@ -303,17 +303,17 @@ const DetalleUsuario: React.FC<Props> = ({
         timestamp: ubicacion.fecha
       })));
     } catch (err) {
-      console.error('Error cargando historial de geolocalizaciÃ³n:', err);
+      console.error('Error cargando historial de geolocalización:', err);
     } finally {
       setCargandoGeo(false);
     }
   };
 
-  // Cambiar pestaÃ±a
+  // Cambiar pestaña
   const cambiarPestana = async (pestana: string) => {
     setPestanaActiva(pestana);
 
-    // Cargar datos especÃ­ficos de la pestaÃ±a bajo demanda
+    // Cargar datos específicos de la pestaña bajo demanda
     if (pestana === 'cursos') {
       if (cursosDisponibles.length === 0) {
         await cargarCursosDisponibles();
@@ -326,7 +326,7 @@ const DetalleUsuario: React.FC<Props> = ({
         await cargarHistorialPagos();
       }
     } else if (pestana === 'actividad') {
-      // La pestaÃ±a de actividad se maneja con el componente PestanaActividad
+      // La pestaña de actividad se maneja con el componente PestanaActividad
     } else if (pestana === 'geolocalizacion') {
       if (historialGeo.length === 0) {
         await cargarHistorialGeolocalizacion();
@@ -334,13 +334,13 @@ const DetalleUsuario: React.FC<Props> = ({
     }
   };
 
-  // Activar ediciÃ³n
+  // Activar edición
   const activarEdicion = () => {
     setEditando(true);
     setDatosEditables({ ...usuario });
   };
 
-  // Cancelar ediciÃ³n
+  // Cancelar edición
   const cancelarEdicion = () => {
     setEditando(false);
     setDatosEditables({ ...usuario });
@@ -376,7 +376,7 @@ const DetalleUsuario: React.FC<Props> = ({
 
   // Eliminar usuario
   const eliminarUsuarioHandler = async () => {
-    if (!confirm('Â¿EstÃ¡s seguro de que quieres eliminar este usuario? Esta acciÃ³n no se puede deshacer.')) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.')) {
       return;
     }
 
@@ -420,7 +420,7 @@ const DetalleUsuario: React.FC<Props> = ({
     return `${nombre?.charAt(0) || ''}${apellido?.charAt(0) || ''}`.toUpperCase();
   };
 
-  // Manejar actualizaciÃ³n de usuario desde PestanaConfiguracion
+  // Manejar actualización de usuario desde PestanaConfiguracion
   const handleUsuarioActualizado = (usuarioActualizado: Usuario) => {
     // Actualizar el usuario local
     Object.assign(usuario, usuarioActualizado);
@@ -477,7 +477,7 @@ const DetalleUsuario: React.FC<Props> = ({
             </button>
           )}
           <button className="detalle-usuario-btn-cerrar" onClick={onCerrar}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -503,7 +503,7 @@ const DetalleUsuario: React.FC<Props> = ({
         </div>
       )}
 
-      {/* PestaÃ±as */}
+      {/* Pestañas */}
       <div className="detalle-usuario-pestanas">
         {pestanas.map((pestana) => (
           <button
@@ -549,9 +549,9 @@ const DetalleUsuario: React.FC<Props> = ({
         ))}
       </div>
 
-      {/* Contenido de las pestaÃ±as */}
+      {/* Contenido de las pestañas */}
       <div className="detalle-usuario-contenido-pestanas">
-        {/* PestaÃ±a General */}
+        {/* Pestaña General */}
         {pestanaActiva === 'general' && (
           <div className="detalle-usuario-pestana-contenido">
             <div className="detalle-usuario-seccion">
@@ -611,14 +611,14 @@ const DetalleUsuario: React.FC<Props> = ({
                   )}
                 </div>
                 <div className="detalle-usuario-campo">
-                  <label>Suscripciòn:</label>
+                  <label>Suscripción:</label>
                   {editando ? (
                     <select
                       value={datosEditables.suscripcion || ''}
                       onChange={(e) => setDatosEditables({ ...datosEditables, suscripcion: e.target.value })}
                     >
                       <option value="free">Gratuita</option>
-                      <option value="basic">BÃ¡sica</option>
+                      <option value="basic">Básica</option>
                       <option value="premium">Premium</option>
                       <option value="pro">Profesional</option>
                     </select>
@@ -647,7 +647,7 @@ const DetalleUsuario: React.FC<Props> = ({
                   )}
                 </div>
                 <div className="detalle-usuario-campo">
-                  <label>Paìs:</label>
+                  <label>País:</label>
                   {editando ? (
                     <input
                       type="text"
@@ -700,7 +700,7 @@ const DetalleUsuario: React.FC<Props> = ({
                   )}
                 </div>
                 <div className="detalle-usuario-campo">
-                  <label>Profesion:</label>
+                  <label>Profesión:</label>
                   {editando ? (
                     <input
                       type="text"
@@ -722,13 +722,13 @@ const DetalleUsuario: React.FC<Props> = ({
                   <span>{formatearFecha(usuario.fecha_creacion)}</span>
                 </div>
                 <div className="detalle-usuario-campo">
-                  <label>Ultima Actualizaciòn:</label>
+                  <label>Última Actualización:</label>
                   <span>{formatearFecha(usuario.fecha_actualizacion)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Acciones de ediciÃ³n */}
+            {/* Acciones de edición */}
             {editando ? (
               <div className="detalle-usuario-acciones-edicion">
                 <button
@@ -760,22 +760,22 @@ const DetalleUsuario: React.FC<Props> = ({
           </div>
         )}
 
-        {/* PestaÃ±a Cursos */}
+        {/* Pestaña Cursos */}
         {pestanaActiva === 'cursos' && (
           <PestanaCursos usuario={usuario} />
         )}
 
-        {/* PestaÃ±a Actividad */}
+        {/* Pestaña Actividad */}
         {pestanaActiva === 'actividad' && (
           <PestanaActividad usuario={usuario} />
         )}
 
-        {/* PestaÃ±a GeolocalizaciÃ³n */}
+        {/* Pestaña Geolocalización */}
         {pestanaActiva === 'geolocalizacion' && (
           <PestanaGeolocalizacion usuario={usuario} />
         )}
 
-        {/* PestaÃ±a ConfiguraciÃ³n */}
+        {/* Pestaña Configuración */}
         {pestanaActiva === 'configuracion' && (
           <PestanaConfiguracion
             usuario={usuario}

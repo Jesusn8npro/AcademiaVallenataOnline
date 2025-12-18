@@ -196,19 +196,24 @@
 }
 
 .detalle-usuario-btn-cerrar {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--detalle-usuario-color-borde);
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
   border-radius: var(--detalle-usuario-border-radius-pequeño);
-  color: var(--detalle-usuario-color-texto);
+  color: white;
   font-size: 1.125rem;
   font-weight: bold;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   transition: var(--detalle-usuario-transicion);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .detalle-usuario-btn-cerrar:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(244, 67, 54, 0.4);
   transform: scale(1.05);
 }
 
@@ -285,7 +290,7 @@
 /* ===== CONTENIDO DE PESTAÑAS ===== */
 .detalle-usuario-contenido-pestanas {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
   padding: 2rem;
   min-height: 0;
 }

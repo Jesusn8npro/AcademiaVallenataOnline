@@ -132,7 +132,7 @@ const SeccionOpciones: React.FC = () => {
             </div>
           )}
 
-          <div style={styles.gridOpciones}>
+          <div className="grid-opciones" style={styles.gridOpciones}>
             {opciones.map((opcion, index) => (
               visible && (
                 <div
@@ -207,11 +207,11 @@ const SeccionOpciones: React.FC = () => {
             <div style={{ ...styles.ctaAdicional, animation: 'flyIn 1s ease-out 1s both' }}>
               <div style={styles.ctaContenido}>
                 <div style={styles.ctaIcono}>🎯</div>
-                <h3>{t('seccionOpciones.asesoria.titulo')}</h3>
-                <p>
+                <h3 style={{ color: 'white', fontSize: '1.5rem', marginBottom: '1rem', fontWeight: 800 }}>{t('seccionOpciones.asesoria.titulo')}</h3>
+                <p style={{ color: '#cbd5e1', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
                   <Trans
                     i18nKey="seccionOpciones.asesoria.descripcion"
-                    components={{ 1: <strong /> }}
+                    components={{ 1: <strong style={{ color: '#fbbf24' }} /> }}
                   />
                 </p>
                 <button style={styles.botonAsesoria} onClick={() => window.location.href = '/contacto'}>
@@ -221,9 +221,9 @@ const SeccionOpciones: React.FC = () => {
                   <Trans
                     i18nKey="seccionOpciones.asesoria.garantia"
                     components={{
-                      1: <strong />,
-                      3: <strong />,
-                      5: <strong />
+                      1: <strong style={{ color: '#e2e8f0' }} />,
+                      3: <strong style={{ color: '#e2e8f0' }} />,
+                      5: <strong style={{ color: '#e2e8f0' }} />
                     }}
                   />
                 </div>
@@ -271,11 +271,6 @@ const SeccionOpciones: React.FC = () => {
           50% { transform: scale(1.05); }
         }
 
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-
         .tarjeta-opcion:hover {
           transform: translateY(-8px);
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
@@ -297,6 +292,39 @@ const SeccionOpciones: React.FC = () => {
         .boton-asesoria:hover {
           transform: translateY(-3px);
           box-shadow: 0 12px 35px rgba(251, 191, 36, 0.5);
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 900px) {
+          .seccion-opciones {
+            padding: 4rem 0 !important;
+          }
+          
+          .grid-opciones {
+             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+             gap: 1.5rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .seccion-opciones {
+            padding: 3rem 0 !important;
+          }
+
+          .grid-opciones {
+             grid-template-columns: 1fr !important;
+             gap: 2rem !important;
+             display: flex !important;
+             flex-direction: column !important;
+          }
+
+          .titulo-seccion {
+            font-size: 2rem !important;
+          }
+          
+          .tarjeta-opcion {
+            margin: 0 0.5rem;
+          }
         }
       `}</style>
     </>
@@ -362,7 +390,7 @@ const styles = {
   },
   gridOpciones: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
     gap: '2rem',
     marginBottom: '4rem',
   },

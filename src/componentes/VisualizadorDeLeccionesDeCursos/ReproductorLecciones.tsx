@@ -24,7 +24,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   tipo = 'leccion',
   completada = false,
   cargandoCompletar = false,
-  marcarComoCompletada = () => {},
+  marcarComoCompletada = () => { },
   errorCompletar = '',
   autoplay = false
 }) => {
@@ -58,19 +58,19 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
 
   const procesarUrl = (url: string): string => {
     console.log('🎥 [REPRODUCTOR] Procesando URL:', url);
-    
+
     if (!url || url.trim() === '') {
       console.warn('⚠️ [REPRODUCTOR] URL vacía o nula');
       setTieneError(true);
       return '';
     }
-    
+
     // Detectar si es YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       console.log('📺 [REPRODUCTOR] URL de YouTube detectada');
       setEsYouTube(true);
       setEsBunny(false);
-      
+
       // Extraer ID de YouTube
       let videoId = '';
       const patterns = [
@@ -78,7 +78,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         /youtu\.be\/([^?]+)/,
         /youtube\.com\/embed\/([^?]+)/
       ];
-      
+
       for (const pattern of patterns) {
         const match = url.match(pattern);
         if (match) {
@@ -87,7 +87,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
           break;
         }
       }
-      
+
       if (videoId) {
         // URL mejorada con parámetros optimizados
         const youtubeUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&controls=1&enablejsapi=1&origin=${window.location.origin}`;
@@ -100,20 +100,20 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         return '';
       }
     }
-    
+
     // Si es Bunny.net - ARREGLO CRÍTICO
     if (url.includes('iframe.mediadelivery.net') || url.includes('bunnycdn.com') || url.includes('mediadelivery.net')) {
       console.log('🐰 [REPRODUCTOR] URL de Bunny.net detectada:', url);
       setEsYouTube(false);
       setEsBunny(true);
-      
+
       // Extraer libraryId y videoId con patrones MEJORADOS para /play/ y /embed/
       const bunnyPatterns = [
         /iframe\.mediadelivery\.net\/(?:play|embed)\/([0-9]+)\/([a-zA-Z0-9-]+)/,
         /mediadelivery\.net\/(?:play|embed)\/([0-9]+)\/([a-zA-Z0-9-]+)/,
         /bunnycdn\.com\/.*\/([0-9]+)\/([a-zA-Z0-9-]+)/
       ];
-      
+
       let match = null;
       for (const pattern of bunnyPatterns) {
         match = url.match(pattern);
@@ -123,7 +123,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
           console.log('🐰 [REPRODUCTOR] IDs de Bunny extraídos:', { libraryId, videoId });
           setLibraryId(libraryId);
           setVideoId(videoId);
-          
+
           // CRÍTICO: Construir URL correcta para iframe
           const bunnyUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=0&controls=1&responsive=1`;
           console.log('✅ [REPRODUCTOR] URL de Bunny.net construida:', bunnyUrl);
@@ -131,12 +131,12 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
           return bunnyUrl;
         }
       }
-      
+
       console.error('❌ [REPRODUCTOR] No se pudieron extraer los IDs de Bunny.net');
       setTieneError(true);
       return '';
     }
-    
+
     // Para otras URLs (directo HTML5)
     console.log('🎬 [REPRODUCTOR] URL directa detectada');
     setEsYouTube(false);
@@ -152,11 +152,11 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       // Resetear estados
       setTieneError(false);
       setCargando(true);
-      
+
       const urlLimpia = limpiarUrlVideo(videoUrl);
       setUrlVideoLimpia(urlLimpia);
       detectarTipoVideo(videoUrl);
-      
+
       console.log('🔍 [REPRODUCTOR] Tipo detectado:', { esYouTube, esBunny, esEmbed });
     }
   }, [videoUrl]);
@@ -170,9 +170,9 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   // MEJORADO: Funciones de utilidad para limpiar URLs
   const limpiarUrlVideo = (url: string): string => {
     if (!url) return '';
-    
+
     console.log('🔍 [LIMPIEZA] Procesando URL:', url);
-    
+
     // Detectar si es una URL de Bunny.net - SINCRONIZADO CON procesarUrl
     if (url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com') || url.includes('mediadelivery.net')) {
       console.log('🐰 [LIMPIEZA] Detectada URL de Bunny.net:', url);
@@ -186,7 +186,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         /mediadelivery\.net\/(?:play|embed)\/([0-9]+)\/([a-zA-Z0-9-]+)/,
         /bunnycdn\.com\/.*\/([0-9]+)\/([a-zA-Z0-9-]+)/
       ];
-      
+
       for (const pattern of bunnyPatterns) {
         const matches = url.match(pattern);
         if (matches) {
@@ -228,14 +228,14 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       setEsYouTube(true);
       setEsBunny(false);
       setEsEmbed(false);
-      
+
       // Extraer ID de YouTube
       const regexps = [
         /youtube\.com\/watch\?v=([^&]+)/,
         /youtu\.be\/([^?]+)/,
         /youtube\.com\/embed\/([^?]+)/
       ];
-      
+
       for (const regex of regexps) {
         const match = url.match(regex);
         if (match) {
@@ -244,7 +244,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
           break;
         }
       }
-      
+
       return `https://www.youtube.com/embed/${idYouTube}?autoplay=1&rel=0`;
     }
 
@@ -263,7 +263,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   // MEJORADO: Cargar el script de Bunny.net con fallback a iframe directo
   const cargarScriptBunny = () => {
     console.log('🐰 [BUNNY] Intentando cargar reproductor de Bunny.net');
-    
+
     // Para Bunny.net, usar iframe directo es más confiable que el script player
     if (esBunny) {
       console.log('🐰 [BUNNY] Usando iframe directo para Bunny.net');
@@ -283,7 +283,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     console.log('📺 URL a reintentar:', videoUrl);
     setTieneError(false);
     setCargando(true);
-    
+
     // Reprocesar completamente
     setEsYouTube(false);
     setEsBunny(false);
@@ -291,20 +291,20 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     setLibraryId('');
     setVideoId('');
     setIdYouTube('');
-    
+
     // Detectar tipo de nuevo
     detectarTipoVideo(videoUrl);
     const urlLimpia = limpiarUrlVideo(videoUrl);
     setUrlVideoLimpia(urlLimpia);
-    
-    console.log('🔄 [REINTENTAR] Nuevos valores:', { 
-      esYouTube, 
-      esBunny, 
-      libraryId, 
-      videoId, 
-      urlVideoLimpia: urlLimpia.substring(0, 100) + '...' 
+
+    console.log('🔄 [REINTENTAR] Nuevos valores:', {
+      esYouTube,
+      esBunny,
+      libraryId,
+      videoId,
+      urlVideoLimpia: urlLimpia.substring(0, 100) + '...'
     });
-    
+
     console.log('✅ Reinicio completo del reproductor');
   };
 
@@ -325,7 +325,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   // Detectar tipo de video
   const detectarTipoVideo = (url: string): void => {
     console.log('🔍 DETECTANDO TIPO DE VIDEO:', url);
-    
+
     if (!url) {
       setEsEmbed(false);
       setEsYouTube(false);
@@ -337,7 +337,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     // Detectar YouTube
     const regexYouTube = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
     const coincidenciaYouTube = url.match(regexYouTube);
-    
+
     if (coincidenciaYouTube && coincidenciaYouTube[1]) {
       setEsYouTube(true);
       setEsBunny(false);
@@ -353,7 +353,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       setEsYouTube(false);
       setEsEmbed(true);
       console.log('✅ [DETECTOR] Bunny.net detectado');
-      
+
       // Extraer IDs para debugging
       const bunnyPattern = /(?:iframe\.)?mediadelivery\.net\/embed\/([0-9]+)\/([a-zA-Z0-9-]+)/;
       const match = url.match(bunnyPattern);
@@ -364,7 +364,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         setVideoId(videoId);
         console.log('📊 [DETECTOR] IDs de Bunny detectados:', { libraryId, videoId });
       }
-      
+
       return;
     }
 
@@ -387,18 +387,18 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   // Extraer URL de código de embed
   const extraerUrlEmbed = (codigoEmbed: string): string => {
     console.log('📝 EXTRAYENDO URL DE EMBED:', codigoEmbed);
-    
+
     if (!codigoEmbed.includes('<iframe')) {
       console.log('🔄 No es iframe, devolviendo original');
       return codigoEmbed;
     }
-    
+
     const coincidenciaSrc = codigoEmbed.match(/src=["'](.+?)["']/i);
     if (coincidenciaSrc && coincidenciaSrc[1]) {
       console.log('✅ URL extraída del iframe:', coincidenciaSrc[1]);
       return coincidenciaSrc[1];
     }
-    
+
     console.log('❌ No se pudo extraer URL del iframe');
     return codigoEmbed;
   };
@@ -439,21 +439,40 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   };
 
   // Funciones para navegación
+  // Funciones para navegación
   const navegarAnterior = () => {
     if (leccionAnterior) {
-      // Navegar a la lección anterior
-      const tutorialSlug = window.location.pathname.split('/')[2];
+      const parentSlug = window.location.pathname.split('/')[2];
       const leccionSlug = leccionAnterior.slug || leccionAnterior.id;
-      window.location.href = `/tutoriales/${tutorialSlug}/clase/${leccionSlug}`;
+
+      if (tipo === 'leccion') {
+        const moduloSlug = leccionAnterior.moduloSlug;
+        if (moduloSlug) {
+          window.location.href = `/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`;
+        } else {
+          console.error('[NAVEGACION] Falta moduloSlug para lección anterior de curso');
+        }
+      } else {
+        window.location.href = `/tutoriales/${parentSlug}/clase/${leccionSlug}`;
+      }
     }
   };
 
   const navegarSiguiente = () => {
     if (leccionSiguiente) {
-      // Navegar a la lección siguiente
-      const tutorialSlug = window.location.pathname.split('/')[2];
+      const parentSlug = window.location.pathname.split('/')[2];
       const leccionSlug = leccionSiguiente.slug || leccionSiguiente.id;
-      window.location.href = `/tutoriales/${tutorialSlug}/clase/${leccionSlug}`;
+
+      if (tipo === 'leccion') {
+        const moduloSlug = leccionSiguiente.moduloSlug;
+        if (moduloSlug) {
+          window.location.href = `/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`;
+        } else {
+          console.error('[NAVEGACION] Falta moduloSlug para lección siguiente de curso');
+        }
+      } else {
+        window.location.href = `/tutoriales/${parentSlug}/clase/${leccionSlug}`;
+      }
     }
   };
 
@@ -464,9 +483,9 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
           <div className="error-overlay">
             <div className="error-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <h3>Video no disponible</h3>
               <p>
@@ -485,13 +504,13 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
                 <details>
                   <summary>Información de depuración</summary>
                   <pre>
-URL original: {videoUrl || 'No proporcionada'}
-URL procesada: {urlProcesada || 'No procesada'}
-YouTube: {esYouTube}
-Bunny: {esBunny}
-Library ID: {libraryId || 'No detectado'}
-Video ID: {videoId || 'No detectado'}
-YouTube ID: {idYouTube || 'No detectado'}
+                    URL original: {videoUrl || 'No proporcionada'}
+                    URL procesada: {urlProcesada || 'No procesada'}
+                    YouTube: {esYouTube}
+                    Bunny: {esBunny}
+                    Library ID: {libraryId || 'No detectado'}
+                    Video ID: {videoId || 'No detectado'}
+                    YouTube ID: {idYouTube || 'No detectado'}
                   </pre>
                 </details>
               </div>
@@ -537,8 +556,8 @@ YouTube ID: {idYouTube || 'No detectado'}
       </div>
 
       <div className="barra-navegacion">
-        <button 
-          className="boton-nav anterior" 
+        <button
+          className="boton-nav anterior"
           onClick={navegarAnterior}
           disabled={!leccionAnterior}
         >
@@ -549,9 +568,9 @@ YouTube ID: {idYouTube || 'No detectado'}
           <span className="texto-corto">Anterior</span>
         </button>
 
-        <button 
+        <button
           className={`boton-completar ${completada ? 'completada' : ''}`}
-          disabled={cargandoCompletar} 
+          disabled={cargandoCompletar}
           onClick={marcarComoCompletada}
         >
           {cargandoCompletar ? (

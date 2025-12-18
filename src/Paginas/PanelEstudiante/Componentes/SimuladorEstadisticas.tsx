@@ -255,8 +255,7 @@ const SimuladorEstadisticas: React.FC = () => {
                     <h4 className="academia-lanzamiento-titulo">GRAN LANZAMIENTO</h4>
                 </div>
                 <div className="academia-lanzamiento-fecha">
-                    <span className="academia-fecha-destacada">10 de Septiembre</span>
-                    <span className="academia-fecha-ano">2025</span>
+                    <span className="academia-fecha-destacada">15 de enero de 2026</span>
                 </div>
                 <div className="academia-lanzamiento-subtitulo">
                     ¡Prepárate para la revolución del acordeón!

@@ -83,15 +83,18 @@ export default function ModalVisorImagenPerfil({
     obtenerUsuario()
   }, [])
 
-  // Efecto para bloquear scroll del body
+  // Efecto para bloquear scroll del body y ocultar menú inferior
   useEffect(() => {
     if (abierto) {
       document.body.style.overflow = 'hidden'
+      document.body.classList.add('modal-visor-abierto')
     } else {
       document.body.style.overflow = ''
+      document.body.classList.remove('modal-visor-abierto')
     }
     return () => {
       document.body.style.overflow = ''
+      document.body.classList.remove('modal-visor-abierto')
     }
   }, [abierto])
 
@@ -358,27 +361,27 @@ export default function ModalVisorImagenPerfil({
 
   return (
     <div
-      className="modal-overlay"
+      className="visor-imagen-overlay"
       ref={modalRef}
       onClick={(e) => e.target === modalRef.current && onCerrar()}
       role="dialog"
       aria-modal="true"
     >
-      <div className="modal-container">
-        <button className="btn-cerrar" onClick={onCerrar} aria-label="Cerrar">
+      <div className="visor-imagen-container">
+        <button className="visor-imagen-btn-cerrar" onClick={onCerrar} aria-label="Cerrar">
           <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <div className="modal-content">
-          <div className="imagen-container">
-            <img src={imagenUrl} alt="Imagen de perfil" className="imagen-principal" />
+        <div className="visor-imagen-content">
+          <div className="visor-imagen-area">
+            <img src={imagenUrl} alt="Imagen de perfil" className="visor-imagen-principal" />
 
             {todasLasImagenes.length > 1 && (
               <>
                 <button
-                  className={`btn-navegacion btn-anterior ${indiceImagenActual === 0 ? 'disabled' : ''}`}
+                  className={`visor-imagen-nav visor-imagen-nav-prev ${indiceImagenActual === 0 ? 'disabled' : ''}`}
                   onClick={navegarImagenAnterior}
                   disabled={indiceImagenActual === 0}
                 >
@@ -388,7 +391,7 @@ export default function ModalVisorImagenPerfil({
                 </button>
 
                 <button
-                  className={`btn-navegacion btn-siguiente ${indiceImagenActual === todasLasImagenes.length - 1 ? 'disabled' : ''}`}
+                  className={`visor-imagen-nav visor-imagen-nav-next ${indiceImagenActual === todasLasImagenes.length - 1 ? 'disabled' : ''}`}
                   onClick={navegarImagenSiguiente}
                   disabled={indiceImagenActual === todasLasImagenes.length - 1}
                 >
@@ -397,31 +400,31 @@ export default function ModalVisorImagenPerfil({
                   </svg>
                 </button>
 
-                <div className="indicador-posicion">
+                <div className="visor-imagen-indicador">
                   {indiceImagenActual + 1} de {todasLasImagenes.length} fotos
                 </div>
               </>
             )}
           </div>
 
-          <div className="panel-interacciones">
-            <div className="header-propietario">
+          <div className="visor-imagen-panel">
+            <div className="visor-imagen-header">
               <img
                 src={usuarioPropietario.avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                 alt="Avatar"
-                className="avatar-pequeno"
+                className="visor-imagen-avatar"
               />
-              <div className="info-propietario">
-                <h3 className="nombre-propietario">{usuarioPropietario.nombre}</h3>
-                <p className="tiempo-subida">
+              <div className="visor-imagen-info">
+                <h3 className="visor-imagen-nombre">{usuarioPropietario.nombre}</h3>
+                <p className="visor-imagen-tipo">
                   {tipoImagen === 'avatar' ? 'Foto de perfil' : tipoImagen === 'portada' ? 'Foto de portada' : 'Imagen'}
                 </p>
               </div>
             </div>
 
-            <div className="acciones-principales">
+            <div className="visor-imagen-acciones">
               <button
-                className={`btn-like ${yaLikee ? 'activo' : ''} ${dandoLike ? 'cargando' : ''}`}
+                className={`visor-imagen-btn-like ${yaLikee ? 'activo' : ''} ${dandoLike ? 'cargando' : ''}`}
                 onClick={toggleLike}
                 disabled={!usuarioActual || dandoLike}
               >
@@ -432,7 +435,7 @@ export default function ModalVisorImagenPerfil({
               </button>
 
               <button
-                className="btn-comentar"
+                className="visor-imagen-btn-comentar"
                 onClick={() => comentarioInputRef.current?.focus()}
               >
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -443,38 +446,38 @@ export default function ModalVisorImagenPerfil({
             </div>
 
             {totalLikes > 0 && (
-              <div className="contador-likes">
-                <span className="emoji-like">❤️</span>
-                <span className="texto-likes">
+              <div className="visor-imagen-likes">
+                <span className="visor-imagen-emoji">❤️</span>
+                <span className="visor-imagen-likes-texto">
                   {totalLikes === 1 ? '1 persona le gusta esto' : `${totalLikes} personas les gusta esto`}
                 </span>
               </div>
             )}
 
-            <div className="seccion-comentarios">
+            <div className="visor-imagen-comentarios">
               {cargandoComentarios ? (
-                <div className="cargando-comentarios">
-                  <div className="spinner"></div>
+                <div className="visor-imagen-loading">
+                  <div className="visor-imagen-spinner"></div>
                   <span>Cargando comentarios...</span>
                 </div>
               ) : (
-                <div className="lista-comentarios">
+                <div className="visor-imagen-lista">
                   {comentariosPrincipales.map(comentario => (
-                    <div key={comentario.id} className="comentario-item">
+                    <div key={comentario.id} className="visor-imagen-comentario">
                       <img
                         src={comentario.usuario_avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                         alt="Avatar"
-                        className="avatar-comentario"
+                        className="visor-imagen-comentario-avatar"
                       />
-                      <div className="contenido-comentario">
-                        <div className="burbuja-comentario">
-                          <strong className="nombre-comentarista">{comentario.usuario_nombre}</strong>
-                          <p className="texto-comentario">{comentario.comentario}</p>
+                      <div className="visor-imagen-comentario-contenido">
+                        <div className="visor-imagen-comentario-burbuja">
+                          <strong className="visor-imagen-comentario-nombre">{comentario.usuario_nombre}</strong>
+                          <p className="visor-imagen-comentario-texto">{comentario.comentario}</p>
                         </div>
-                        <div className="acciones-comentario">
-                          <span className="tiempo-comentario">{formatearFecha(comentario.fecha_creacion)}</span>
+                        <div className="visor-imagen-comentario-acciones">
+                          <span className="visor-imagen-comentario-tiempo">{formatearFecha(comentario.fecha_creacion)}</span>
                           <button
-                            className="btn-responder"
+                            className="visor-imagen-btn-responder"
                             onClick={() => {
                               setRespondiendo(comentario.id)
                               setRespuestaTexto('')
@@ -485,14 +488,14 @@ export default function ModalVisorImagenPerfil({
                         </div>
 
                         {obtenerRespuestas(comentario.id).map(respuesta => (
-                          <div key={respuesta.id} className="respuesta-item">
+                          <div key={respuesta.id} className="visor-imagen-respuesta">
                             <img
                               src={respuesta.usuario_avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                               alt="Avatar"
                               className="avatar-respuesta"
                             />
-                            <div className="contenido-respuesta">
-                              <div className="burbuja-respuesta">
+                            <div className="visor-imagen-respuesta-contenido">
+                              <div className="visor-imagen-respuesta-burbuja">
                                 <strong className="nombre-comentarista">{respuesta.usuario_nombre}</strong>
                                 <p className="texto-comentario">{respuesta.comentario}</p>
                               </div>
@@ -502,25 +505,25 @@ export default function ModalVisorImagenPerfil({
                         ))}
 
                         {respondiendo === comentario.id && (
-                          <div className="input-respuesta">
+                          <div className="visor-imagen-input-respuesta">
                             <img
                               src={usuarioActual?.url_foto_perfil || 'https://randomuser.me/api/portraits/women/44.jpg'}
                               alt="Tu avatar"
                               className="avatar-respuesta"
                             />
-                            <div className="input-container-respuesta">
+                            <div className="visor-imagen-input-container-respuesta">
                               <textarea
                                 value={respuestaTexto}
                                 onChange={(e) => setRespuestaTexto(e.target.value)}
                                 placeholder="Escribe una respuesta..."
-                                className="textarea-respuesta"
+                                className="visor-imagen-textarea-respuesta"
                                 onKeyDown={(e) => manejarTeclaEnter(e, true)}
                                 rows={1}
                                 autoFocus
                               ></textarea>
-                              <div className="botones-respuesta">
+                              <div className="visor-imagen-botones-respuesta">
                                 <button
-                                  className="btn-cancelar-respuesta"
+                                  className="visor-imagen-btn-cancelar-respuesta"
                                   onClick={() => {
                                     setRespondiendo(null)
                                     setRespuestaTexto('')
@@ -529,7 +532,7 @@ export default function ModalVisorImagenPerfil({
                                   Cancelar
                                 </button>
                                 <button
-                                  className="btn-enviar-respuesta"
+                                  className="visor-imagen-btn-enviar-respuesta"
                                   onClick={responderComentario}
                                   disabled={!respuestaTexto.trim() || enviandoComentario}
                                 >
@@ -544,7 +547,7 @@ export default function ModalVisorImagenPerfil({
                   ))}
 
                   {comentarios.length === 0 && (
-                    <div className="sin-comentarios">
+                    <div className="visor-imagen-sin-comentarios">
                       <p>Sé el primero en comentar esta foto</p>
                     </div>
                   )}
@@ -553,24 +556,24 @@ export default function ModalVisorImagenPerfil({
             </div>
 
             {usuarioActual ? (
-              <div className="input-comentario">
+              <div className="visor-imagen-input-comentario">
                 <img
                   src={usuarioActual.url_foto_perfil || 'https://randomuser.me/api/portraits/women/44.jpg'}
                   alt="Tu avatar"
-                  className="avatar-comentario"
+                  className="visor-imagen-input-avatar"
                 />
-                <div className="input-container">
+                <div className="visor-imagen-input-container">
                   <textarea
                     ref={comentarioInputRef}
                     value={nuevoComentario}
                     onChange={(e) => setNuevoComentario(e.target.value)}
                     placeholder="Escribe un comentario..."
-                    className="textarea-comentario"
+                    className="visor-imagen-textarea-comentario"
                     onKeyDown={(e) => manejarTeclaEnter(e, false)}
                     rows={1}
                   ></textarea>
                   <button
-                    className="btn-enviar"
+                    className="visor-imagen-btn-enviar"
                     onClick={enviarComentario}
                     disabled={!nuevoComentario.trim() || enviandoComentario}
                   >
@@ -581,7 +584,7 @@ export default function ModalVisorImagenPerfil({
                 </div>
               </div>
             ) : (
-              <div className="login-requerido">
+              <div className="visor-imagen-login-requerido">
                 <p>Inicia sesión para comentar y dar me gusta</p>
               </div>
             )}

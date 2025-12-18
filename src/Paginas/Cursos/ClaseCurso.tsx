@@ -108,12 +108,12 @@ export default function ClaseCurso() {
                 // Progreso de esta lección
                 const { data: prog } = await supabase
                     .from('progreso_lecciones')
-                    .select('completada')
+                    .select('estado, porcentaje_completado')
                     .eq('usuario_id', user.id)
                     .eq('leccion_id', leccionEncontrada.id)
                     .maybeSingle()
 
-                setCompletada(!!prog?.completada)
+                setCompletada(prog?.estado === 'completada' || prog?.porcentaje_completado === 100)
 
                 // Recopilar IDs de todas las lecciones del curso
                 const idLeccionesCurso = new Set()
@@ -126,9 +126,10 @@ export default function ClaseCurso() {
 
                 // Progreso general del curso para el mapa y estadísticas
                 // Corregido: Obtenemos todo el progreso del usuario y filtramos en memoria para evitar errores de URL muy larga
+                // Corregido: Obtenemos todo el progreso del usuario y filtramos en memoria
                 const { data: progAll } = await supabase
                     .from('progreso_lecciones')
-                    .select('leccion_id, completada')
+                    .select('leccion_id, estado, porcentaje_completado')
                     .eq('usuario_id', user.id)
 
                 const map: Record<string, number> = {}
@@ -136,7 +137,8 @@ export default function ClaseCurso() {
 
                 if (progAll) {
                     progAll.forEach((p: any) => {
-                        if (idLeccionesCurso.has(p.leccion_id) && p.completada) {
+                        const isCompleted = p.estado === 'completada' || p.porcentaje_completado === 100;
+                        if (idLeccionesCurso.has(p.leccion_id) && isCompleted) {
                             map[p.leccion_id] = 100
                             completadasCount++
                         }
@@ -189,8 +191,10 @@ export default function ClaseCurso() {
                 const { error: errUpd } = await supabase
                     .from('progreso_lecciones')
                     .update({
-                        completada: true,
-                        fecha_completada: new Date().toISOString()
+                        estado: 'completada',
+                        porcentaje_completado: 100,
+                        updated_at: new Date().toISOString(),
+                        ultima_actividad: new Date().toISOString()
                     })
                     .eq('id', existente.id)
                 if (errUpd) setErrorCompletar(errUpd.message)
@@ -204,14 +208,21 @@ export default function ClaseCurso() {
                     })
                 }
             } else {
+                const payload = {
+                    usuario_id: user.id,
+                    leccion_id: leccion.id,
+                    estado: 'completada',
+                    porcentaje_completado: 100,
+                    tiempo_total: 0,
+                    ultima_actividad: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
                 const { error: errIns } = await supabase
                     .from('progreso_lecciones')
-                    .insert({
-                        usuario_id: user.id,
-                        leccion_id: leccion.id,
-                        completada: true,
-                        fecha_completada: new Date().toISOString()
-                    })
+                    .insert(payload)
+
                 if (errIns) setErrorCompletar(errIns.message)
                 else {
                     setCompletada(true)
@@ -259,7 +270,7 @@ export default function ClaseCurso() {
                 leccionSiguiente={nextLeccion}
             />
             <div className="contenedor-clase">
-                <div className="area-video">
+                <div className={`area-video ${!mostrarSidebar ? 'modo-enfoque' : ''}`}>
                     <ReproductorLecciones
                         leccionAnterior={prevLeccion}
                         leccionSiguiente={nextLeccion}

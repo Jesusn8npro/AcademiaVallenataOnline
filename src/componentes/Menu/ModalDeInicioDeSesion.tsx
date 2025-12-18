@@ -155,8 +155,8 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
         console.log('🚀 [LOGIN] Navegando a panel admin');
         navigate('/administrador');
       } else {
-        console.log('🚀 [LOGIN] Navegando a panel estudiante');
-        navigate('/panel-estudiante');
+        console.log('🚀 [LOGIN] Navegando a mis cursos');
+        navigate('/mis-cursos');
       }
 
     } catch (error) {
@@ -193,7 +193,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
       if (data.user) {
         console.log('✅ [REGISTRO] Usuario registrado:', data.user.email);
         cerrarModal();
-        window.location.href = '/panel-estudiante';
+        window.location.href = '/mis-cursos';
       }
 
     } catch (error) {
@@ -246,7 +246,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/panel-estudiante`,
+          redirectTo: `${window.location.origin}/mis-cursos`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

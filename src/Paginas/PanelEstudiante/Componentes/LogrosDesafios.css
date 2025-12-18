@@ -1,148 +1,165 @@
 /* LogrosDesafios.css */
 
 .academia-progreso-semanal {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border-radius: 16px;
-    padding: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Purple Gradient Premium */
+    border-radius: 20px;
+    padding: 20px;
     margin: 20px 0;
-    border: 1px solid #475569;
-}
-
-.academia-loading-skeleton {
-    padding: 1.5rem;
-    background: #1e293b;
-    /* Fallback simplified */
-    border-radius: 12px;
-    border: 1px solid #475569;
-}
-
-.academia-loading-skeleton h3 {
-    margin-bottom: 1rem;
-    color: #f1f5f9;
-}
-
-.academia-skeleton {
-    opacity: 0.6;
-    animation: academia-pulse 1.5s ease-in-out infinite;
-}
-
-.academia-skeleton .academia-logros-value {
-    background: linear-gradient(90deg, #444 25%, #555 50%, #444 75%);
-    background-size: 200% 100%;
-    animation: academia-shimmer 1.5s infinite;
-    border-radius: 4px;
-    display: inline-block;
-    width: 20px;
-    height: 16px;
-}
-
-.academia-loading-text {
-    text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #94a3b8;
-    font-weight: 500;
-}
-
-@keyframes academia-pulse {
-
-    0%,
-    100% {
-        opacity: 0.6;
-    }
-
-    50% {
-        opacity: 0.8;
-    }
-}
-
-@keyframes academia-shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    color: white;
 }
 
 .academia-progreso-semanal h3 {
-    color: #f1f5f9;
-    font-size: 24px;
+    color: white;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: 20px;
     text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
+/* 🔄 LOADING */
+.academia-loading-skeleton {
+    padding: 20px;
+    text-align: center;
+}
+
+.academia-loading-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* 📊 GRID DE ESTADÍSTICAS */
 .academia-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+    /* Siempre 2 columnas */
     gap: 16px;
     margin-bottom: 24px;
 }
 
+/* 🃏 TARJETA DE ESTADÍSTICA */
 .academia-stat-card {
-    background: rgba(30, 41, 59, 0.8);
-    border: 1px solid #475569;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    /* Glass Effect */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    /* Apilar verticalmente SIEMPRE */
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    transition: transform 0.2s ease;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    min-height: 140px;
+    /* Asegurar altura consistente */
 }
 
 .academia-stat-card:hover {
-    transform: translateY(-2px);
-    border-color: #3b82f6;
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .academia-logros-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-    display: block;
+    font-size: 2rem;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
 .academia-logros-value {
     display: block;
-    font-size: 28px;
-    font-weight: 700;
-    color: #3b82f6;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
     margin-bottom: 4px;
+    line-height: 1.1;
+    text-shadow: 0 2px 4px #000000, 0 0 8px rgba(0, 0, 0, 0.5);
+    /* Sombra negra fuerte solicitada */
 }
 
 .academia-logros-label {
-    color: #94a3b8;
-    font-size: 14px;
-    font-weight: 500;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px #000000;
+    /* Sombra negra fuerte */
 }
 
+/* 🔘 ACCIONES */
 .academia-acciones {
     display: flex;
+    flex-direction: column;
+    /* Botones uno debajo del otro en móvil */
     gap: 12px;
-    justify-content: center;
 }
 
 .academia-btn-accion {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: rgba(255, 255, 255, 0.2);
     color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    width: 100%;
 }
 
 .academia-btn-accion:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    background: white;
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-@media (max-width: 768px) {
-    .academia-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+/* 📱 RESPONSIVE */
+@media (min-width: 640px) {
+
+    /* En pantallas más grandes, los botones pueden ir lado a lado */
+    .academia-acciones {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 480px) {
+    .academia-stat-card {
+        padding: 12px 8px;
+        min-height: 120px;
     }
 
-    .academia-acciones {
-        flex-direction: column;
+    .academia-logros-icon {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .academia-logros-value {
+        font-size: 1.3rem;
+    }
+
+    .academia-logros-label {
+        font-size: 0.7rem;
+    }
+
+    /* Asegurar que el grid mantenga 2 columnas incluso en pantallas muy pequeñas */
+    .academia-stats-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 const SeccionStats: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [contadorIniciado, setContadorIniciado] = useState(false);
-  
+
   // Estados para contadores
   const [estudiantesCount, setEstudiantesCount] = useState(0);
   const [satisfaccionCount, setSatisfaccionCount] = useState(0);
@@ -36,12 +36,12 @@ const SeccionStats: React.FC = () => {
 
   const animarNumero = (objetivo: number, duracion: number, callback: (valor: number) => void) => {
     const inicio = performance.now();
-    
+
     const actualizar = (tiempoActual: number) => {
       const progreso = Math.min((tiempoActual - inicio) / duracion, 1);
       const easeOut = 1 - Math.pow(1 - progreso, 4);
       const valorActual = objetivo * easeOut;
-      
+
       callback(Math.floor(valorActual));
       if (progreso < 1) requestAnimationFrame(actualizar);
       else callback(objetivo);
@@ -95,7 +95,7 @@ const SeccionStats: React.FC = () => {
     <>
       <section className="seccion-stats" style={styles.seccionStats}>
         <div style={styles.contenedor}>
-          
+
           {/* Header vendedor */}
           {visible && (
             <div style={{ ...styles.header, animation: 'flyIn 1s ease-out' }}>
@@ -109,10 +109,10 @@ const SeccionStats: React.FC = () => {
           )}
 
           {/* Grid de estadísticas principales */}
-          <div style={styles.gridStats}>
+          <div className="grid-stats" style={styles.gridStats}>
             {estadisticas.map((stat, index) => (
               visible && (
-                <div 
+                <div
                   key={index}
                   style={{
                     ...styles.statCard,
@@ -125,13 +125,13 @@ const SeccionStats: React.FC = () => {
                     {stat.numero()}<span style={styles.sufijo}>{stat.sufijo}</span>
                   </div>
                   <div style={styles.tituloStat}>{stat.titulo}</div>
-                  
+
                   {/* Testimonio sutil */}
                   <div style={styles.testimonioSutil}>
                     <div style={styles.comillasMini}>"</div>
                     <p style={styles.textoTestimonio}>{stat.testimonio}</p>
                   </div>
-                  
+
                   {stat.destacado && (
                     <div style={styles.badgeDestacado}>✨ MÁS POPULAR</div>
                   )}
@@ -144,10 +144,10 @@ const SeccionStats: React.FC = () => {
           {visible && (
             <div style={{ ...styles.logrosComprobados, animation: 'flyIn 1s ease-out 0.8s both' }}>
               <h3 style={styles.tituloLogros}>Métricas que Importan de Verdad</h3>
-              
-              <div style={styles.gridLogros}>
+
+              <div className="grid-logros" style={styles.gridLogros}>
                 {logrosExtras.map((logro, index) => (
-                  <div 
+                  <div
                     key={index}
                     style={{
                       ...styles.logroCard,
@@ -169,7 +169,7 @@ const SeccionStats: React.FC = () => {
               <div style={styles.contenidoVendedor}>
                 <h3>¿Aún Tienes Dudas?</h3>
                 <p>
-                  <strong>{estudiantesCount.toLocaleString()}+ estudiantes</strong> confiaron en nosotros y 
+                  <strong>{estudiantesCount.toLocaleString()}+ estudiantes</strong> confiaron en nosotros y
                   <strong> NO se arrepintieron.</strong> Sus vidas musicales cambiaron para siempre.
                 </p>
                 <div style={styles.fraseImpacto}>
@@ -229,6 +229,56 @@ const SeccionStats: React.FC = () => {
           background: rgba(255, 255, 255, 0.08);
           transform: translateY(-5px);
           border-color: rgba(251, 191, 36, 0.3);
+        }
+        .logro-card:hover {
+          background: rgba(255, 255, 255, 0.08);
+          transform: translateY(-5px);
+          border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        /* === RESPONSIVE MOBILE === */
+        @media (max-width: 900px) {
+          .seccion-stats {
+            padding: 4rem 0 !important;
+          }
+          
+          .grid-stats {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+            gap: 1.5rem !important;
+          }
+
+          .grid-logros {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+          }
+
+          .titulo, .titulo-logros {
+            font-size: 2.5rem !important;
+          }
+
+          .logro-card {
+            padding: 1.5rem !important;
+          }
+
+          .valor-logro {
+            font-size: 2rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .seccion-stats {
+            padding: 3rem 0 !important;
+          }
+
+          .titulo, .titulo-logros {
+            font-size: 2rem !important;
+          }
+
+          .numero {
+            font-size: 3rem !important;
+          }
         }
       `}</style>
     </>
