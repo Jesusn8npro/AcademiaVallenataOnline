@@ -108,12 +108,14 @@ const AppContent = () => {
 
 
 
+  const esLandingVenta = pathname === '/curso-acordeon-desde-cero';
+
   return (
     <>
       <CursorPersonalizado />
-      {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado 
-          OCULTAR si estamos en vista de clase */}
-      {!esModoLectura && (
+      {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado
+          OCULTAR si estamos en vista de clase o landing venta */}
+      {!esModoLectura && !esLandingVenta && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -121,11 +123,11 @@ const AppContent = () => {
         )
       )}
 
-      {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase */}
-      {estaAutenticado && !esModoLectura && <SidebarAdmin />}
+      {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase NI landing venta */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && <SidebarAdmin />}
 
-      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase */}
-      {estaAutenticado && !esModoLectura && <MenuInferiorResponsivo />}
+      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase NI landing venta */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && <MenuInferiorResponsivo />}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -198,7 +200,7 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esModoLectura && !location.pathname.includes('/mensajes') && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && (
         <>
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}
