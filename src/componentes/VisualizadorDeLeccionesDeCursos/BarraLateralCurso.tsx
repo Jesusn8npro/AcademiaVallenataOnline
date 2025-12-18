@@ -5,7 +5,7 @@ interface BarraLateralCursoProps {
   curso: any
   moduloActivo: string
   leccionActiva: string
-  progreso?: Record<string, number>
+  progreso?: Record<string, number | boolean>
   tipo?: 'curso' | 'tutorial'
   mostrarSidebar?: boolean
   onCerrarSidebar?: () => void
@@ -150,7 +150,9 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
   }
 
   function esLeccionCompletada(leccionId: string): boolean {
-    return (progreso[leccionId] || 0) >= 90
+    const p = progreso[leccionId]
+    // Soporte para boolean (tutoriales) o porcentaje (cursos)
+    return p === true || p >= 90 || p === 100
   }
 
   function esLeccionActiva(leccion: any): boolean {
@@ -282,12 +284,12 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
                                 </svg>
                                 <span>Completada</span>
                               </div>
-                            ) : progreso[leccion.id] > 0 ? (
+                            ) : (typeof progreso[leccion.id] === 'number' && progreso[leccion.id] > 0) ? (
                               <div className="blc-status-progress">
                                 <div className="blc-progress-bar">
                                   <div className="blc-progress-fill" style={{ width: `${progreso[leccion.id]}%` }}></div>
                                 </div>
-                                <span>{Math.round(progreso[leccion.id])}%</span>
+                                <span>{Math.round(progreso[leccion.id] as number)}%</span>
                               </div>
                             ) : (
                               <div className="blc-status-pending">

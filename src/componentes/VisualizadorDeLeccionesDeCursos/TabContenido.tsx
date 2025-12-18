@@ -111,7 +111,8 @@ const TabContenido: React.FC<TabContenidoProps> = ({
     }
 
     function esLeccionCompletada(leccionId: string): boolean {
-        return (progreso[leccionId] || 0) >= 90
+        const p = progreso[leccionId]
+        return p === true || (typeof p === 'number' && p >= 90)
     }
 
     function irALeccion(leccion: any) {

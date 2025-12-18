@@ -29,6 +29,7 @@ import ChatPage from './Paginas/Mensajes/ChatPage'
 import PanelEstudiante from './Paginas/PanelEstudiante/PanelEstudiante'
 import RankingPage from './Paginas/Ranking/RankingPage'
 import CursoAcordeonDesdeCero from './Paginas/Cursos/CursoAcordeonDesdeCero'
+import ClaseCurso from './Paginas/Cursos/ClaseCurso'
 import NuestraAcademia from './Paginas/NuestraAcademia/NuestraAcademia'
 import Contacto from './Paginas/Contacto/Contacto'
 import PagoError from './Paginas/Pagos/PagoError/PagoError'
@@ -77,9 +78,11 @@ const AppContent = () => {
   useSeguridadConsola();
   // useEfectosSonido(); // Reemplazado por CursorPersonalizado + AudioManager
 
-  // Verificar si estamos en la vista de una clase de tutorial
-  // Patrón: /tutoriales/:slug/clase/:claseSlug
-  const esClaseTutorial = location.pathname.includes('/tutoriales/') && location.pathname.includes('/clase/');
+  // Verificar si estamos en una vista de lectura/reproducción (Tutoriales o Cursos)
+  const pathname = location.pathname;
+  const esClaseTutorial = pathname.includes('/tutoriales/') && pathname.includes('/clase/');
+  const esClaseCurso = pathname.startsWith('/cursos/') && pathname.split('/').filter(Boolean).length >= 4;
+  const esModoLectura = esClaseTutorial || esClaseCurso;
 
   // Función para cerrar sesión
   const cerrarSesion = async () => {
@@ -110,7 +113,7 @@ const AppContent = () => {
       <CursorPersonalizado />
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado 
           OCULTAR si estamos en vista de clase */}
-      {!esClaseTutorial && (
+      {!esModoLectura && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -119,10 +122,10 @@ const AppContent = () => {
       )}
 
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase */}
-      {estaAutenticado && !esClaseTutorial && <SidebarAdmin />}
+      {estaAutenticado && !esModoLectura && <SidebarAdmin />}
 
       {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase */}
-      {estaAutenticado && !esClaseTutorial && <MenuInferiorResponsivo />}
+      {estaAutenticado && !esModoLectura && <MenuInferiorResponsivo />}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -136,12 +139,17 @@ const AppContent = () => {
         <Route path="/cursos/:slug" element={<LandingCurso />} />
         <Route path="/tutoriales/:slug" element={<LandingCurso />} />
         <Route path="/nuestra-academia" element={<NuestraAcademia />} />
+        <Route path="/curso-acordeon-desde-cero" element={<CursoAcordeonDesdeCero />} />
         <Route path="/usuarios/:slug" element={<PerfilPublicoLayout />}>
           <Route index element={<PerfilPublicoPage />} />
           <Route path="actividad" element={<ActividadUsuarioPage />} />
           <Route path="publicaciones" element={<PublicacionesUsuarioPage />} />
           <Route path="grabaciones" element={<GrabacionesUsuarioPage />} />
         </Route>
+
+        {/* Ruta para Clases de Cursos (Igual que Tutoriales) */}
+        <Route path="/cursos/:slug/:moduloSlug/:leccionSlug" element={<ClaseCurso />} />
+
         <Route element={<ProteccionRuta />}>
           <Route path="/panel-estudiante" element={<PanelEstudiante />} />
           <Route element={<PerfilLayout />}>
@@ -154,7 +162,6 @@ const AppContent = () => {
           </Route>
           <Route path="/tutoriales/:slug/contenido" element={<ContenidoTutorial />} />
           <Route path="/tutoriales/:slug/clase/:claseSlug" element={<ClaseTutorial />} />
-          <Route path="/curso-acordeon-desde-cero" element={<CursoAcordeonDesdeCero />} />
           <Route path="/simulador-gaming" element={<SimuladorGaming />} />
           <Route path="/mensajes" element={<MensajesPage />} />
           <Route path="/mensajes/:chatId" element={<ChatPage />} />
@@ -191,9 +198,9 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esClaseTutorial && !location.pathname.includes('/mensajes') && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && (
         <>
-          <ChatEnVivo />
+          {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}
         </>
       )}

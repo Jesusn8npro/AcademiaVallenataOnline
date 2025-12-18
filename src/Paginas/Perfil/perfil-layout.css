@@ -52,8 +52,8 @@
 /* Pestañas (sticky debajo del encabezado) */
 .pestanas-fijas {
     background: #ffffff;
-    position: sticky;
-    top: 80px;
+    /* position: sticky; REMOVED per user request */
+    /* top: 80px; */
     z-index: 20;
     border-radius: 16px;
     margin-bottom: 1rem;

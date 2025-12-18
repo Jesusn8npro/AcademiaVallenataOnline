@@ -130,35 +130,42 @@ const LandingCurso = () => {
                     .single();
 
                 if (curso && !errorCurso) {
-                    // Cargar módulos y lecciones del curso
+                    // Cargar módulos Y lecciones al mismo tiempo (Nested Query)
                     const { data: modulos } = await supabase
                         .from('modulos')
-                        .select('id, titulo, descripcion, orden, slug')
+                        .select('id, titulo, descripcion, orden') // Removido 'slug' que no existe en DB
                         .eq('curso_id', curso.id)
                         .order('orden');
 
-                    if (modulos) {
-                        // Cargar lecciones para cada módulo
-                        for (const modulo of modulos) {
-                            const { data: lecciones } = await supabase
-                                .from('lecciones')
-                                .select('id, titulo, slug, orden')
-                                .eq('modulo_id', modulo.id)
-                                .order('orden');
+                    // Cargar lecciones por separado y generar slugs
+                    const modulosConLecciones = await Promise.all((modulos || []).map(async (modulo) => {
+                        const { data: lecciones } = await supabase
+                            .from('lecciones')
+                            .select('id, titulo, orden') // Removido 'slug'
+                            .eq('modulo_id', modulo.id)
+                            .order('orden');
 
-                            modulo.lecciones = lecciones || [];
-                        }
-                    }
+                        return {
+                            ...modulo,
+                            slug: generarSlug(modulo.titulo),
+                            lecciones: (lecciones || []).map(l => ({
+                                ...l,
+                                slug: generarSlug(l.titulo)
+                            })).sort((a, b) => a.orden - b.orden)
+                        };
+                    }));
 
                     setContenido({
                         ...curso,
                         tipo: 'curso',
-                        modulos: modulos || [],
-                        modulos_preview: modulos || []
+                        modulos: modulosConLecciones,
+                        modulos_preview: modulosConLecciones
                     });
                     setCargando(false);
                     return;
                 }
+
+
             }
 
             // Si es tutorial, solo buscar en tutoriales
@@ -275,12 +282,15 @@ const LandingCurso = () => {
     };
 
     const verContenido = () => {
+        console.log('Ejecutando verContenido', contenido);
         if (!contenido) return;
 
         if (contenido.tipo === 'curso') {
             // Buscar módulos y lecciones
             const modulos = contenido.modulos || contenido.modulos_preview || [];
+            console.log('Módulos encontrados:', modulos);
             const primerModulo = modulos.find((m: Modulo) => m.lecciones && m.lecciones.length > 0);
+            console.log('Primer módulo con lecciones:', primerModulo);
             const leccionesSueltas = contenido.lecciones_sueltas || [];
 
             if (primerModulo && primerModulo.lecciones && primerModulo.lecciones.length > 0) {
@@ -357,7 +367,10 @@ const LandingCurso = () => {
             data={{
                 contenido,
                 estaInscrito,
-                instructor: instructorInfo
+                instructor: instructorInfo ? {
+                    full_name: instructorInfo.full_name || '',
+                    avatar_url: instructorInfo.avatar_url || ''
+                } : undefined
             }}
             handleInscripcion={manejarInscripcion}
             verContenido={verContenido}

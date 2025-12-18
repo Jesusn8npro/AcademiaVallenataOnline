@@ -99,11 +99,11 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
 
                 <button
                   className="hero-btn-gaming"
-                  onClick={irASimulador}
+                  onClick={() => scrollToSection('opciones')}
                   style={styles.heroBtnGaming}
                 >
-                  🎮 {t('hero.simuladorBoton.titulo')} {t('hero.simuladorBoton.subtitulo')}
-                  <span style={styles.btnSubtitle}>{t('hero.simuladorBoton.lanzamiento')}</span>
+                  🤔 {t('hero.simuladorBoton.titulo') || '¿Por dónde empiezo?'}
+                  <span style={styles.btnSubtitle}>6 formas poderosas de aprender</span>
                 </button>
               </div>
 

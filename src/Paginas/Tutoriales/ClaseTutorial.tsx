@@ -28,19 +28,12 @@ export default function ClaseTutorial() {
   })
   const [estadisticasProgreso, setEstadisticasProgreso] = useState({ completadas: 0, total: 0, porcentaje: 0 })
 
+  const [progresoMap, setProgresoMap] = useState<Record<string, boolean>>({})
+
   useEffect(() => {
     document.body.classList.add('tutorial-pantalla-completa')
     return () => { document.body.classList.remove('tutorial-pantalla-completa') }
   }, [])
-
-  useEffect(() => {
-    if (mostrarSidebar) {
-      document.body.classList.add('sidebar-visible-tutorial')
-    } else {
-      document.body.classList.remove('sidebar-visible-tutorial')
-    }
-  }, [mostrarSidebar])
-
   useEffect(() => { cargar() }, [slug, claseSlug])
 
   async function cargar() {
@@ -49,36 +42,65 @@ export default function ClaseTutorial() {
     try {
       const { data: tuts, error: errT } = await supabase.from('tutoriales').select('*')
       if (errT) { setError(errT.message); return }
+
       let tut = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug) || (tuts || []).find((t: any) => t.slug === slug)
       if (!tut) { setError('Tutorial no encontrado'); return }
       setTutorial(tut)
-      const { data: partes, error: errP } = await supabase.from('partes_tutorial').select('id, titulo, slug, video_url, orden, descripcion').eq('tutorial_id', tut.id).order('orden', { ascending: true })
+
+      const { data: partes, error: errP } = await supabase
+        .from('partes_tutorial')
+        .select('id, titulo, slug, video_url, orden, descripcion')
+        .eq('tutorial_id', tut.id)
+        .order('orden', { ascending: true })
+
       if (errP) { setError(errP.message); return }
       const lista = partes || []
       setClases(lista)
+
       const actual = lista.find((p: any) => (p.slug || generarSlug(p.titulo)) === claseSlug) || lista[0]
       setClase(actual)
+
       const { data: { user } } = await supabase.auth.getUser()
       if (user && actual) {
-        const { data: prog } = await supabase.from('progreso_tutorial').select('completado').eq('usuario_id', user.id).eq('tutorial_id', tut.id).eq('parte_tutorial_id', actual.id).single()
+        const { data: prog } = await supabase
+          .from('progreso_tutorial')
+          .select('completado')
+          .eq('usuario_id', user.id)
+          .eq('parte_tutorial_id', actual.id)
+          .maybeSingle()
         setCompletada(!!prog?.completado)
-      }
-      // Progreso general del tutorial
-      const { data: { user: userForStats } } = await supabase.auth.getUser()
-      const total = lista.length
-      if (userForStats && total > 0) {
+
+        // Cargar mapa de progreso completo
         const { data: progAll } = await supabase
           .from('progreso_tutorial')
           .select('parte_tutorial_id, completado')
-          .eq('usuario_id', userForStats.id)
+          .eq('usuario_id', user.id)
           .eq('tutorial_id', tut.id)
-        const completadas = (progAll || []).filter((p: any) => p.completado).length
+
+        const map: Record<string, boolean> = {}
+        let completadas = 0
+        if (progAll) {
+          progAll.forEach((p: any) => {
+            if (p.completado) {
+              map[p.parte_tutorial_id] = true
+              completadas++
+            }
+          })
+        }
+        setProgresoMap(map)
+
+        const total = lista.length
         const porcentaje = total ? Math.round((completadas / total) * 100) : 0
         setEstadisticasProgreso({ completadas, total, porcentaje })
       } else {
-        setEstadisticasProgreso({ completadas: 0, total, porcentaje: 0 })
+        setEstadisticasProgreso({ completadas: 0, total: lista.length, porcentaje: 0 })
       }
-    } catch (e: any) { setError(e?.message || 'Error cargando clase') } finally { setCargando(false) }
+    } catch (e: any) {
+      console.error(e)
+      setError(e.message || 'Error cargando clase')
+    } finally {
+      setCargando(false)
+    }
   }
 
   const indice = useMemo(() => clases.findIndex((p: any) => p.id === clase?.id), [clases, clase])
@@ -90,8 +112,46 @@ export default function ClaseTutorial() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !tutorial || !clase) return
-      const { error: err } = await supabase.from('progreso_tutorial').upsert({ usuario_id: user.id, tutorial_id: tutorial.id, parte_tutorial_id: clase.id, completado: true }, { onConflict: 'usuario_id,tutorial_id,parte_tutorial_id' })
-      if (err) { setErrorCompletar(err.message) } else { setCompletada(true) }
+      // Buscar si ya existe el registro (Lógica replicada de Svelte para evitar error 400 en upsert)
+      const { data: existente } = await supabase
+        .from('progreso_tutorial')
+        .select('id')
+        .eq('usuario_id', user.id)
+        .eq('parte_tutorial_id', clase.id)
+        .maybeSingle()
+
+      if (existente) {
+        const { error: errUpd } = await supabase
+          .from('progreso_tutorial')
+          .update({
+            completado: true,
+            fecha_actualizacion: new Date().toISOString()
+          })
+          .eq('id', existente.id)
+        if (errUpd) setErrorCompletar(errUpd.message)
+        else {
+          setCompletada(true)
+          setProgresoMap(prev => ({ ...prev, [clase.id]: true }))
+        }
+      } else {
+        const { error: errIns } = await supabase
+          .from('progreso_tutorial')
+          .insert({
+            usuario_id: user.id,
+            tutorial_id: tutorial.id,
+            parte_tutorial_id: clase.id,
+            completado: true,
+            fecha_inicio: new Date().toISOString(),
+            fecha_actualizacion: new Date().toISOString()
+          })
+        if (errIns) setErrorCompletar(errIns.message)
+        else {
+          setCompletada(true)
+          setProgresoMap(prev => ({ ...prev, [clase.id]: true }))
+        }
+      }
+    } catch (e: any) {
+      setErrorCompletar(e.message)
     } finally { setCargandoCompletar(false) }
   }
 
@@ -110,7 +170,7 @@ export default function ClaseTutorial() {
         onToggleSidebar={() => setMostrarSidebar((v) => !v)}
         curso={{ ...tutorial, clases_tutorial: clases }}
         moduloActivo={''}
-        progreso={{}}
+        progreso={progresoMap}
         estadisticasProgreso={estadisticasProgreso}
         usuarioActual={null}
         leccionAnterior={claseAnterior}
@@ -138,7 +198,7 @@ export default function ClaseTutorial() {
               tipo="clase"
               curso={{ ...tutorial, clases_tutorial: clases }}
               clases={clases}
-              progreso={{}}
+              progreso={progresoMap}
               mostrarSidebar={mostrarSidebar}
               usuarioActual={null}
             />
@@ -149,7 +209,7 @@ export default function ClaseTutorial() {
             curso={{ ...tutorial, clases_tutorial: clases }}
             moduloActivo={''}
             leccionActiva={clase?.id}
-            progreso={{}}
+            progreso={progresoMap}
             tipo="tutorial"
             mostrarSidebar={mostrarSidebar}
             onCerrarSidebar={() => setMostrarSidebar(false)}
