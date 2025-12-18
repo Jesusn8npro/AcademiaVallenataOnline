@@ -512,8 +512,10 @@
         bottom: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        height: 100% !important;
-        z-index: 10000;
+        height: 100dvh !important;
+        /* Use dynamic viewport height */
+        z-index: 1000000;
+        /* Ensure it's on top of everything */
         position: fixed !important;
     }
 
@@ -529,19 +531,24 @@
     }
 
     .academia-chat-header {
-        padding-top: max(1rem, env(safe-area-inset-top));
+        padding-top: max(1.5rem, env(safe-area-inset-top, 20px));
+        /* Ensure enough top padding */
+        padding-bottom: 1rem;
         flex-shrink: 0;
+        min-height: 60px;
     }
 
     .academia-chat-messages {
         flex: 1;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scrolling on iOS */
     }
 
     .academia-chat-form {
         flex-shrink: 0;
         padding: 1rem;
-        padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 1rem));
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 20px));
         background: white;
         flex-direction: row !important;
     }
