@@ -354,6 +354,7 @@ const PanelContenido = () => {
                             cursos={itemsFiltrados.filter(item => item.tipo === 'curso')}
                             tutoriales={itemsFiltrados.filter(item => item.tipo === 'tutorial')}
                             modoVista={modoVista}
+                            onUpdate={cargarContenido}
                         />
                     )}
                 </div>

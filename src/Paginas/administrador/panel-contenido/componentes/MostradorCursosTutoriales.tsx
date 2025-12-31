@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../../servicios/supabaseCliente';
+import ModalInscripciones from './ModalInscripciones';
 import './MostradorCursosTutoriales.css';
 
 interface Contenido {
@@ -13,6 +14,21 @@ interface Contenido {
     nivel?: string;
     categoria?: string;
     created_at: string;
+    precio_normal?: number;
+    precio_rebajado?: number;
+    estudiantes_inscritos_real?: number;
+    estudiantes_inscritos?: number;
+    modulos_count_real?: number;
+    modulos_count?: number;
+    lecciones_count_real?: number;
+    lecciones_count?: number;
+    conteo_lecciones?: number;
+    duracion_estimada?: number;
+    partes_count_real?: number;
+    partes_count?: number;
+    duracion?: number;
+    artista?: string;
+    tonalidad?: string;
     tipo?: 'curso' | 'tutorial';
     [key: string]: any;
 }
@@ -21,12 +37,22 @@ interface Props {
     cursos: Contenido[];
     tutoriales: Contenido[];
     modoVista: 'cuadricula' | 'lista';
+    onUpdate?: () => void;
 }
 
-const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => {
+const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista, onUpdate }: Props) => {
     const navigate = useNavigate();
     const [procesandoAccion, setProcesandoAccion] = useState(false);
     const [itemProcesando, setItemProcesando] = useState('');
+
+    // Estados para el Modal de Inscripciones
+    const [modalInscripcionesOpen, setModalInscripcionesOpen] = useState(false);
+    const [itemSeleccionado, setItemSeleccionado] = useState<Contenido | null>(null);
+
+    // Estado para el hover de estudiantes
+    const [hoverEstudiantesId, setHoverEstudiantesId] = useState<string | null>(null);
+    const [listaEstudiantesRapida, setListaEstudiantesRapida] = useState<{ id: string, nombre: string }[]>([]);
+    const [cargandoListaRapida, setCargandoListaRapida] = useState(false);
 
     // Unificar y ordenar contenido
     const contenidoUnificado = [
@@ -164,6 +190,47 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
         }
     };
 
+    const cargarListaRapida = async (itemId: string, tipo: 'curso' | 'tutorial') => {
+        try {
+            setCargandoListaRapida(true);
+            const foreignKey = tipo === 'curso' ? 'curso_id' : 'tutorial_id';
+
+            const { data, error } = await supabase
+                .from('inscripciones')
+                .select(`
+                    perfiles:usuario_id (
+                        nombre_completo
+                    )
+                `)
+                .eq(foreignKey, itemId)
+                .limit(10);
+
+            if (error) throw error;
+
+            setListaEstudiantesRapida((data as any[] || []).map(i => ({
+                id: i.perfiles.id,
+                nombre: i.perfiles.nombre_completo
+            })));
+        } catch (error) {
+            console.error('Error lista rapida:', error);
+        } finally {
+            setCargandoListaRapida(false);
+        }
+    };
+
+    const abrirModalInscripciones = (item: Contenido) => {
+        setItemSeleccionado(item);
+        setModalInscripcionesOpen(true);
+    };
+
+    const formatearMoneda = (valor: number) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    };
+
     if (contenidoUnificado.length === 0) {
         return (
             <div className="mostrador-estado-vacio">
@@ -258,7 +325,18 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
 
                             {/* Estadísticas */}
                             <div className="mostrador-estadisticas">
-                                <div className="mostrador-stat-item">
+                                <div
+                                    className="mostrador-stat-item mostrador-stat-estudiantes"
+                                    onMouseEnter={() => {
+                                        setHoverEstudiantesId(item.id);
+                                        cargarListaRapida(item.id, item.tipo!);
+                                    }}
+                                    onMouseLeave={() => setHoverEstudiantesId(null)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        abrirModalInscripciones(item);
+                                    }}
+                                >
                                     <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m7-7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                     </svg>
@@ -268,6 +346,26 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
                                             : (item.estudiantes_inscritos_real ?? 0)}
                                     </span>
                                     <span className="mostrador-stat-label">Estudiantes</span>
+
+                                    {/* Lista Hover Rapida */}
+                                    {hoverEstudiantesId === item.id && (
+                                        <div className="mostrador-hover-lista">
+                                            {cargandoListaRapida ? (
+                                                <div className="hover-item mini">Cargando...</div>
+                                            ) : listaEstudiantesRapida.length === 0 ? (
+                                                <div className="hover-item mini">Sin inscritos</div>
+                                            ) : (
+                                                <>
+                                                    {listaEstudiantesRapida.map(est => (
+                                                        <div key={est.id} className="hover-item">{est.nombre}</div>
+                                                    ))}
+                                                    {((item.estudiantes_inscritos_real ?? 0) > 10) && (
+                                                        <div className="hover-item-ver-mas">Ver todos...</div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {item.tipo === 'curso' ? (
@@ -287,14 +385,6 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
                                             <span className="mostrador-stat-numero">{item.lecciones_count_real ?? item.lecciones_count ?? item.conteo_lecciones ?? 0}</span>
                                             <span className="mostrador-stat-label">Lecciones</span>
                                         </div>
-
-                                        <div className="mostrador-stat-item">
-                                            <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <span className="mostrador-stat-numero">{item.duracion_estimada || 0}</span>
-                                            <span className="mostrador-stat-label">Min</span>
-                                        </div>
                                     </>
                                 ) : (
                                     <>
@@ -305,35 +395,29 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
                                             <span className="mostrador-stat-numero">{item.partes_count_real ?? item.partes_count ?? 0}</span>
                                             <span className="mostrador-stat-label">Partes</span>
                                         </div>
-
-                                        <div className="mostrador-stat-item">
-                                            <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <span className="mostrador-stat-numero">{item.duracion || item.duracion_estimada || 0}</span>
-                                            <span className="mostrador-stat-label">Minutos</span>
-                                        </div>
-
-                                        {item.artista && (
+                                        {item.duracion && (
                                             <div className="mostrador-stat-item">
                                                 <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <span className="mostrador-stat-numero">{item.artista}</span>
-                                                <span className="mostrador-stat-label">Artista</span>
-                                            </div>
-                                        )}
-
-                                        {item.tonalidad && (
-                                            <div className="mostrador-stat-item">
-                                                <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
-                                                </svg>
-                                                <span className="mostrador-stat-numero">{item.tonalidad}</span>
-                                                <span className="mostrador-stat-label">Tono</span>
+                                                <span className="mostrador-stat-numero">{item.duracion}</span>
+                                                <span className="mostrador-stat-label">Minutos</span>
                                             </div>
                                         )}
                                     </>
+                                )}
+
+                                {/* NUEVO: Mostrar Precio */}
+                                {(item.precio_normal || item.precio_rebajado) && (
+                                    <div className="mostrador-stat-item mostrador-stat-precio">
+                                        <svg className="mostrador-stat-icono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span className="mostrador-stat-numero">
+                                            {formatearMoneda(item.precio_rebajado || item.precio_normal || 0)}
+                                        </span>
+                                        <span className="mostrador-stat-label">Valor</span>
+                                    </div>
                                 )}
                             </div>
 
@@ -388,6 +472,17 @@ const MostradorCursosTutoriales = ({ cursos, tutoriales, modoVista }: Props) => 
                     </div>
                 ))}
             </div>
+
+            {itemSeleccionado && (
+                <ModalInscripciones
+                    isOpen={modalInscripcionesOpen}
+                    onClose={() => setModalInscripcionesOpen(false)}
+                    itemId={itemSeleccionado.id}
+                    itemTitulo={itemSeleccionado.titulo}
+                    itemTipo={itemSeleccionado.tipo!}
+                    onUpdate={onUpdate}
+                />
+            )}
         </div>
     );
 };

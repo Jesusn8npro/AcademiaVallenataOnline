@@ -106,6 +106,13 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
 
     // Verificar si una ruta está activa
     const esRutaActiva = (ruta: string): boolean => {
+        // Para la ruta base de admin, solo marcar activa si es exactamente esa o subrutas que NO tienen su propia entrada en el menú
+        if (ruta === '/administrador') {
+            return rutaActual === '/administrador' ||
+                (rutaActual.startsWith('/administrador/') && !rutaActual.includes('panel-contenido'));
+        }
+
+        // Para las demás rutas
         return rutaActual === ruta || rutaActual.startsWith(ruta + '/');
     };
 
@@ -195,7 +202,7 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
 
     // Obtener ícono SVG por tipo
     const obtenerIcono = (tipo: string) => {
-        const iconos: { [key: string]: JSX.Element } = {
+        const iconos: { [key: string]: React.ReactElement } = {
             dashboard: (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="7" height="9" />

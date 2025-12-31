@@ -11,22 +11,22 @@
 .pestana-cursos-layout-horizontal {
   display: flex;
   gap: 20px;
+  width: 100%;
+  flex: 1;
 }
 
-/* Columna izquierda: Cursos inscritos */
 .pestana-cursos-columna-izquierda {
   flex: 1;
   min-width: 0;
-  min-height: 500px;
   display: flex;
   flex-direction: column;
 }
 
 /* Columna derecha: Buscador y cursos disponibles */
 .pestana-cursos-columna-derecha {
-  flex: 1;
+  flex: 1.2;
+  /* Ligeramente más ancha para el grid */
   min-width: 0;
-  min-height: 500px;
   display: flex;
   flex-direction: column;
 }
@@ -342,8 +342,8 @@
 /* Grid de cursos disponibles */
 .pestana-cursos-grid-cursos-disponibles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
 }
 
 /* Curso disponible (draggable) */
@@ -434,7 +434,8 @@
 }
 
 /* Estados de carga y vacío */
-.pestana-cursos-cargando, .pestana-cursos-vacio {
+.pestana-cursos-cargando,
+.pestana-cursos-vacio {
   text-align: center;
   padding: 40px;
   color: rgba(255, 255, 255, 0.7);

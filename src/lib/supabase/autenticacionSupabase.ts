@@ -20,13 +20,41 @@ export const registrarUsuario = async (
   contrasena: string,
   datosPerfil: { nombre?: string; apellido?: string; whatsapp?: string }
 ) => {
-  const { data, error } = await supabase.auth.signUp({ email: correoElectronico, password: contrasena });
+  // 1. Verificar si el correo ya existe en perfiles (un solo perfil por correo)
+  const { data: existePerfil, error: errorCheck } = await supabase
+    .from('perfiles')
+    .select('id')
+    .eq('correo_electronico', correoElectronico.trim().toLowerCase())
+    .maybeSingle();
+
+  if (errorCheck) {
+    console.error('Error verificando perfil existente:', errorCheck);
+  }
+
+  if (existePerfil) {
+    return { usuario: null, error: 'Ya existe un perfil asociado a este correo electrónico.' };
+  }
+
+  // 2. Proceder con el registro en Auth
+  const { data, error } = await supabase.auth.signUp({
+    email: correoElectronico,
+    password: contrasena
+  });
+
   if (error) return { usuario: null, error: error.message };
+
   if (data.user) {
-    const perfilData = { id: data.user.id, correo_electronico: correoElectronico, rol: 'estudiante', ...datosPerfil };
+    const perfilData = {
+      id: data.user.id,
+      correo_electronico: correoElectronico.trim().toLowerCase(),
+      rol: 'estudiante',
+      ...datosPerfil
+    };
+
     const resultado = await supabase
       .from('perfiles')
       .insert([perfilData]);
+
     if (resultado.error) {
       console.error('FALLA SUPABASE PERFIL:', {
         errorPerfil: resultado.error,
@@ -36,7 +64,6 @@ export const registrarUsuario = async (
       return { usuario: null, error: resultado.error.message };
     }
     return { usuario: perfilData, error: null };
-
   }
   return { usuario: null, error: 'No se pudo registrar el usuario' };
 };
@@ -46,21 +73,21 @@ export const cerrarSesion = async () => {
   try {
     // 1️⃣ OBTENER USUARIO ACTUAL ANTES DE CERRAR SESIÓN
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
       console.log('🚪 [LOGOUT] Marcando usuario como desconectado:', user.id);
-      
+
       // 2️⃣ MARCAR COMO INACTIVO EN SESIONES_USUARIO
       const ahora = new Date().toISOString();
       await supabase
         .from('sesiones_usuario')
-        .update({ 
+        .update({
           esta_activo: false,
           ultima_actividad: ahora,
           updated_at: ahora
         })
         .eq('usuario_id', user.id);
-      
+
       // 3️⃣ REGISTRAR EVENTO DE LOGOUT
       try {
         await supabase
@@ -79,20 +106,20 @@ export const cerrarSesion = async () => {
       } catch (eventoError) {
         console.warn('⚠️ [LOGOUT] Error registrando evento:', eventoError);
       }
-      
+
       console.log('✅ [LOGOUT] Usuario marcado como desconectado correctamente');
     }
-    
+
     // 4️⃣ PROCEDER CON EL LOGOUT DE SUPABASE
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('❌ [LOGOUT] Error en signOut:', error);
       return error.message;
     }
-    
+
     console.log('✅ [LOGOUT] Sesión cerrada exitosamente');
     return null;
-    
+
   } catch (error) {
     console.error('❌ [LOGOUT] Error general:', error);
     // Intentar cerrar sesión de todas formas

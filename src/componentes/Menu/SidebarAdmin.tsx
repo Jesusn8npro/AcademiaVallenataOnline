@@ -83,6 +83,26 @@ const SidebarAdmin = () => {
 
     // Función para verificar si una ruta está activa
     const esRutaActiva = (ruta: string): boolean => {
+        // Caso especial para la ruta base de administrador
+        if (ruta === '/administrador') {
+            const rutasPrincipales = [
+                '/administrador/usuarios',
+                '/administrador/pagos',
+                '/administrador/notificaciones',
+                '/administrador/chats',
+                '/administrador/panel-contenido',
+                '/administrador/paquetes',
+                '/administrador/crear-contenido',
+                '/administrador/blog',
+                '/administrador/eventos'
+            ];
+
+            // Solo marcar activa si es la ruta exacta /administrador
+            // o una subruta que NO pertence a las otras secciones principales
+            const esSubrutaDeOtra = rutasPrincipales.some(r => location.pathname.startsWith(r));
+            return location.pathname === ruta || (location.pathname.startsWith(ruta + '/') && !esSubrutaDeOtra);
+        }
+
         return location.pathname === ruta || location.pathname.startsWith(ruta + '/');
     };
 
@@ -361,7 +381,7 @@ const SidebarAdmin = () => {
                                 <div className="sidebar-admin-section-title">Principal</div>
                             )}
 
-                            <a href="/administrador" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador') && !esRutaActiva('/administrador/panel-contenido') && !esRutaActiva('/administrador/crear-contenido') ? 'sidebar-admin-destacado' : ''}`}>
+                            <a href="/administrador" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador') ? 'sidebar-admin-destacado' : ''}`}>
                                 <div className="sidebar-admin-nav-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <rect x="3" y="3" width="7" height="9" />

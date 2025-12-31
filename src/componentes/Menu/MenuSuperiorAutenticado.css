@@ -257,11 +257,10 @@
     font-size: 0.7rem;
     font-weight: 700;
     border-radius: 50%;
-    /* width: 16px; Removed fixed width */
-    /* height: 16px; Removed fixed height */
     min-width: 18px;
     height: 18px;
-    padding: 0 4px;
+    padding: 0 6px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -318,12 +317,14 @@
     font-size: 0.65rem;
     font-weight: 700;
     border-radius: 50%;
-    width: 18px;
+    min-width: 18px;
     height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #fff;
+    border: 1px solid #fff;
     animation: nav-auth-pulse 2s infinite;
 }
 
@@ -701,7 +702,7 @@
     }
 
     .nav-auth-right {
-        gap: 0.75rem;
+        gap: 1.25rem;
     }
 
     .dropdown-usuario-menu {

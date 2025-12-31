@@ -28,35 +28,39 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   const mostrarCarga = cargando && !perfil && !inicializado
 
   return (
-    <div className="layout-perfil-fijo">
-      {/* Encabezado con skeleton */}
-      {perfil ? (
-        <EncabezadoPerfil
-          nombreCompleto={perfil.nombre_completo}
-          urlAvatar={perfil.url_foto_perfil}
-          urlPortada={perfil.portada_url}
-          posicionPortadaY={Number(perfil.posicion_img_portada || 50)}
-          userId={perfil.id}
-          stats={stats}
-          onModalStateChange={onModalStateChange}
-        />
-      ) : mostrarCarga ? (
-        <SkeletonEncabezadoPerfil />
-      ) : (
-        <div className="encabezado-error">
-          <p>Falló la carga</p>
-          <button className="btn-reintentar" onClick={() => cargarDatosPerfil(true)}>Reintentar</button>
-        </div>
-      )}
+    <div className="layout-perfil-fijo" translate="no">
+      {/* Área del Encabezado - Contenedor estable */}
+      <div className="perfil-layout-header-wrapper">
+        {mostrarCarga ? (
+          <SkeletonEncabezadoPerfil />
+        ) : perfil ? (
+          <EncabezadoPerfil
+            nombreCompleto={perfil.nombre_completo}
+            urlAvatar={perfil.url_foto_perfil}
+            urlPortada={perfil.portada_url}
+            posicionPortadaY={Number(perfil.posicion_img_portada || 50)}
+            userId={perfil.id}
+            stats={stats}
+            onModalStateChange={onModalStateChange}
+          />
+        ) : (
+          <div className="encabezado-error">
+            <p>Falló la carga</p>
+            <button className="btn-reintentar" onClick={() => cargarDatosPerfil(true)}>Reintentar</button>
+          </div>
+        )}
+      </div>
 
-      {/* Pestañas SIN clase pestanas-fijas */}
-      <div style={{ marginBottom: '1rem' }}>
+      {/* Área de Pestañas - Contenedor estable */}
+      <div className="perfil-layout-tabs-wrapper" style={{ marginBottom: '1rem' }}>
         <PestanasPerfil modalAbierto={modalAbierto} />
       </div>
 
-      {/* Contenido dinámico */}
+      {/* Área de Contenido - Contenedor estable */}
       <div className="contenido-dinamico">
-        {perfil || inicializado ? children : (
+        {perfil || inicializado ? (
+          <div className="perfil-content-actual">{children}</div>
+        ) : (
           <div className="contenido-cargando">
             <div className="spinner" />
             <p>Preparando tu perfil...</p>
