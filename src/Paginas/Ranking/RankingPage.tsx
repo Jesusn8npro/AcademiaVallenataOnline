@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { supabase } from '../../servicios/supabaseCliente'
-import GamificacionServicio from '../../servicios/gamificacionServicio'
+import { GamificacionServicio } from '../../servicios/gamificacionServicio'
 import type { RankingGlobal } from '../../servicios/gamificacionServicio'
 import './ranking.css'
 
@@ -98,7 +98,7 @@ const Ranking: React.FC = () => {
       // }
 
       console.log(`✅ Ranking cargado: ${ranking.length} usuarios total, mostrando ${usuariosMostrados}`);
-      
+
     } catch (err) {
       console.error('💥 Error cargando ranking:', err);
       setError('Error al cargar el ranking: ' + ((err as any)?.message || 'Error desconocido'));
@@ -117,13 +117,13 @@ const Ranking: React.FC = () => {
   // Cargar más usuarios
   const cargarMasUsuarios = useCallback(() => {
     const rankingFiltrado = filtrarRanking();
-    
+
     if (usuariosMostrados >= rankingFiltrado.length) {
       return;
     }
-    
+
     setCargandoMas(true);
-    
+
     setTimeout(() => {
       const nuevaCantidad = usuariosMostrados + incrementoPorScroll;
       setUsuariosMostrados(nuevaCantidad);
@@ -141,44 +141,44 @@ const Ranking: React.FC = () => {
   // Filtrar ranking
   const filtrarRanking = (ranking?: RankingGlobal[]): RankingGlobal[] => {
     const datos = ranking || rankingCompleto;
-    
+
     if (!datos || !Array.isArray(datos) || datos.length === 0) {
       return [];
     }
-    
+
     let rankingFiltrado = datos;
-    
+
     // Filtro por búsqueda
     if (busqueda) {
-      rankingFiltrado = rankingFiltrado.filter(item => 
+      rankingFiltrado = rankingFiltrado.filter(item =>
         item.perfiles?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
         item.perfiles?.apellido?.toLowerCase().includes(busqueda.toLowerCase())
       );
     }
-    
+
     // Filtro por nivel
     if (filtroNivel !== 'todos') {
-      rankingFiltrado = rankingFiltrado.filter(item => 
+      rankingFiltrado = rankingFiltrado.filter(item =>
         item.metricas?.nivel?.toString().toLowerCase() === filtroNivel.toLowerCase()
       );
     }
-    
+
     // Mostrar solo top 10 si está activado
     if (mostrarSoloTop) {
       rankingFiltrado = rankingFiltrado.slice(0, 10);
     }
-    
+
     return rankingFiltrado;
   };
 
-  // Utilidades de estilo
+  // Utilidades de estilo SCOPED
   const obtenerColorPosicion = (posicion: number): string => {
-    if (posicion === 1) return 'text-yellow-400';
-    if (posicion === 2) return 'text-gray-400';
-    if (posicion === 3) return 'text-orange-400';
-    if (posicion <= 10) return 'text-blue-400';
-    if (posicion <= 50) return 'text-green-400';
-    return 'text-gray-500';
+    if (posicion === 1) return 'pr-text-gold';
+    if (posicion === 2) return 'pr-text-silver';
+    if (posicion === 3) return 'pr-text-bronze';
+    if (posicion <= 10) return 'pr-text-blue';
+    if (posicion <= 50) return 'pr-text-green';
+    return 'pr-text-gray';
   };
 
   const obtenerIconoPosicion = (posicion: number): string => {
@@ -190,11 +190,11 @@ const Ranking: React.FC = () => {
   };
 
   const obtenerEstiloTarjeta = (posicion: number): string => {
-    if (posicion === 1) return 'tarjeta-oro';
-    if (posicion === 2) return 'tarjeta-plata';
-    if (posicion === 3) return 'tarjeta-bronce';
-    if (posicion <= 10) return 'tarjeta-top10';
-    return 'tarjeta-normal';
+    if (posicion === 1) return 'pr-card-gold';
+    if (posicion === 2) return 'pr-card-silver';
+    if (posicion === 3) return 'pr-card-bronze';
+    if (posicion <= 10) return 'pr-card-top10';
+    return '';
   };
 
   const formatearPuntuacion = (puntos: number): string => {
@@ -235,27 +235,26 @@ const Ranking: React.FC = () => {
       <title>Ranking Gaming - Academia Vallenata Online</title>
       <meta name="description" content="Ranking de estudiantes de Academia Vallenata Online. Compite, mejora y alcanza la cima del ranking musical." />
 
-      <div className="ranking-container">
-        <header className="ranking-header">
-          <h1 className="ranking-titulo">🏆 Ranking Gaming</h1>
-          <p className="ranking-descripcion">
-            Selecciona una categoría, usa la búsqueda y desplázate para cargar más resultados. 
-            La puntuación refleja tu actividad, progreso y XP en la academia; el listado se 
-            actualiza de forma progresiva y muestra el nivel y los puntos de cada usuario.
+      <div className="page-ranking-container">
+        <header className="page-ranking-header-section">
+          <h1 className="page-ranking-title">🏆 Ranking Gaming</h1>
+          <p className="page-ranking-description">
+            Selecciona una categoría, usa la búsqueda y desplázate para cargar más resultados.
+            La puntuación refleja tu actividad, progreso y XP en la academia.
           </p>
         </header>
 
         {/* CATEGORÍAS */}
-        <section className="categorias-section">
-          <div className="categorias-grid">
+        <section className="page-ranking-categories-section">
+          <div className="page-ranking-categories-grid">
             {categorias.map((categoria) => (
               <button
                 key={categoria.id}
                 onClick={() => cambiarCategoria(categoria.id)}
-                className={`categoria-btn ${categoriaActiva === categoria.id ? 'activa' : ''}`}
+                className={`page-ranking-cat-btn ${categoriaActiva === categoria.id ? 'active' : ''}`}
               >
-                <span className="categoria-icono">{categoria.icono}</span>
-                <div className="categoria-info">
+                <span className="page-ranking-cat-icon">{categoria.icono}</span>
+                <div className="page-ranking-cat-info">
                   <h3>{categoria.nombre}</h3>
                   <p>{categoria.descripcion}</p>
                 </div>
@@ -265,23 +264,23 @@ const Ranking: React.FC = () => {
         </section>
 
         {/* FILTROS */}
-        <section className="filtros-section">
-          <div className="filtros-container">
-            <div className="busqueda-container">
+        <section className="page-ranking-filters-section">
+          <div className="page-ranking-filters-wrapper">
+            <div className="page-ranking-search-box">
               <input
                 type="text"
-                placeholder="Buscar usuario..."
+                placeholder="Buscar estudiante..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="busqueda-input"
+                className="page-ranking-search-input"
               />
             </div>
-            
-            <div className="filtros-opciones">
+
+            <div className="page-ranking-opts">
               <select
                 value={filtroNivel}
                 onChange={(e) => setFiltroNivel(e.target.value)}
-                className="filtro-select"
+                className="page-ranking-select"
               >
                 <option value="todos">Todos los niveles</option>
                 <option value="principiante">Principiante</option>
@@ -289,8 +288,8 @@ const Ranking: React.FC = () => {
                 <option value="avanzado">Avanzado</option>
                 <option value="experto">Experto</option>
               </select>
-              
-              <label className="toggle-container">
+
+              <label className="page-ranking-toggle">
                 <input
                   type="checkbox"
                   checked={mostrarSoloTop}
@@ -303,11 +302,11 @@ const Ranking: React.FC = () => {
         </section>
 
         {/* RANKING */}
-        <section className="ranking-section">
+        <section className="page-ranking-list-section">
           {cargando ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>Cargando ranking...</p>
+            <div className="page-ranking-loader">
+              <div className="page-ranking-spinner"></div>
+              <p>Cargando tabla de líderes...</p>
             </div>
           ) : error ? (
             <div className="error-container">
@@ -316,48 +315,47 @@ const Ranking: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="ranking-lista">
+              <div className="page-ranking-list-wrapper">
                 {rankingMostrado.map((usuario, index) => (
                   <div
                     key={usuario.id}
-                    className={`usuario-card ${obtenerEstiloTarjeta(usuario.posicion)}`}
+                    className={`page-ranking-user-card ${obtenerEstiloTarjeta(usuario.posicion)}`}
                   >
-                    <div className="usuario-posicion">
-                      <span className={`posicion-numero ${obtenerColorPosicion(usuario.posicion)}`}>
+                    <div className="pr-pos-wrapper">
+                      <span className={`pr-pos-num ${obtenerColorPosicion(usuario.posicion)}`}>
                         #{usuario.posicion}
                       </span>
-                      <span className="posicion-icono">
+                      <span className="pr-pos-icon">
                         {obtenerIconoPosicion(usuario.posicion)}
                       </span>
                     </div>
-                    
-                    <div className="usuario-avatar">
+
+                    <div className="pr-avatar-wrapper">
                       <img
                         src={usuario.perfiles?.url_foto_perfil || `https://api.dicebear.com/7.x/avataaars/svg?seed=${usuario.usuario_id}`}
                         alt={`Avatar de ${usuario.perfiles?.nombre}`}
-                        className="avatar-img"
                       />
                     </div>
-                    
-                    <div className="usuario-info">
-                      <h3 className="usuario-nombre">
+
+                    <div className="pr-user-info">
+                      <h3 className="pr-user-name">
                         {usuario.perfiles?.nombre} {usuario.perfiles?.apellido}
                       </h3>
-                      <p className="usuario-nivel">Nivel {usuario.metricas?.nivel || 1}</p>
+                      <p className="pr-user-level">Nivel {usuario.metricas?.nivel || 1}</p>
                     </div>
-                    
-                    <div className="usuario-stats">
-                      <div className="stat-item">
-                        <span className="stat-label">Puntos</span>
-                        <span className="stat-value">
+
+                    <div className="pr-stats-wrapper">
+                      <div className="pr-stat-box">
+                        <span className="pr-stat-val">
                           {formatearPuntuacion(usuario.puntuacion)}
                         </span>
+                        <span className="pr-stat-label">Puntos</span>
                       </div>
-                      <div className="stat-item">
-                        <span className="stat-label">XP</span>
-                        <span className="stat-value">
+                      <div className="pr-stat-box">
+                        <span className="pr-stat-val">
                           {formatearPuntuacion(usuario.metricas?.xp_total || 0)}
                         </span>
+                        <span className="pr-stat-label">XP Total</span>
                       </div>
                     </div>
                   </div>
@@ -365,11 +363,11 @@ const Ranking: React.FC = () => {
               </div>
 
               {/* TRIGGER PARA SCROLL INFINITO */}
-              <div ref={elementoTriggerRef} className="scroll-trigger">
+              <div ref={elementoTriggerRef} className="page-ranking-scroll-trigger">
                 {cargandoMas && (
                   <div className="loading-mas">
-                    <div className="spinner-small"></div>
-                    <p>Cargando más usuarios...</p>
+                    <div className="page-ranking-spinner-sm"></div>
+                    <p>Cargando más...</p>
                   </div>
                 )}
               </div>
@@ -381,4 +379,4 @@ const Ranking: React.FC = () => {
   );
 };
 
-export default Ranking; 
+export default Ranking;

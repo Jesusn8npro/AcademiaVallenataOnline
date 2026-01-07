@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/supabaseCliente';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { TiempoService } from '../../../servicios/tiempoService';
-import GamificacionService, { type RankingGlobal } from '../../../servicios/gamificacionServicio';
+import { GamificacionServicio as GamificacionService, type RankingGlobal } from '../../../servicios/gamificacionServicio';
 import './LogrosDesafios.css';
 
 const LogrosDesafios: React.FC = () => {

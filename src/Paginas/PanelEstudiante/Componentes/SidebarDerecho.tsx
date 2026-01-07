@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/supabaseCliente';
 import Avatar from './Avatar';
-import GamificacionService from '../../../servicios/gamificacionServicio';
+import { GamificacionServicio as GamificacionService } from '../../../servicios/gamificacionServicio';
 import { obtenerSlugUsuario } from '../../../utils/utilidadesSlug';
 import './SidebarDerecho.css';
 

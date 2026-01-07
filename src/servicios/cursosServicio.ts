@@ -1,4 +1,4 @@
-import { supabaseAnon } from './supabaseCliente' // Usamos el cliente anónimo para el catálogo público
+import { supabaseAnon, supabase } from './supabaseCliente' // Usamos el cliente anónimo para el catálogo público y el autenticado para admin
 
 // ... interfaces ...
 
@@ -78,3 +78,20 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
     return { items: [], error: err.message || 'Error desconocido al cargar el catálogo' }
   }
 }
+
+export async function obtenerCursosDisponibles(): Promise<{ success: boolean; data: any[]; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('cursos')
+      .select('*')
+      .eq('estado', 'publicado')
+      .order('titulo')
+
+    if (error) throw error
+    return { success: true, data: data || [] }
+  } catch (e: any) {
+    console.error('Error al obtener cursos disponibles:', e)
+    return { success: false, data: [], error: e.message }
+  }
+}
+

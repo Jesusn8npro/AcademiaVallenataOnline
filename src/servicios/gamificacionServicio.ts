@@ -141,7 +141,7 @@ const CONFIGURACION_NIVELES = {
   nivel_maximo: 100
 };
 
-export default class GamificacionServicio {
+export class GamificacionServicio {
 
   // =====================================================
   // 📊 EXPERIENCIA Y NIVELES

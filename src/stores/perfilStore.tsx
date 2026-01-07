@@ -90,20 +90,43 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
         console.warn('⚠️ Fallo carga BD, manteniendo perfil optimista:', error.message)
       }
 
-      // 5. Cargar stats en paralelo (solo tablas que existen)
-      // NOTA: publicaciones y tutoriales_usuario comentadas porque no existen en BD
-      const resultados = await Promise.allSettled([
-        supabase.from('inscripciones').select('id', { count: 'exact', head: true }).eq('usuario_id', user.id),
-        // supabase.from('publicaciones').select('id', { count: 'exact', head: true }).eq('usuario_id', user.id),
-        // supabase.from('tutoriales_usuario').select('id', { count: 'exact', head: true }).eq('usuario_id', user.id)
-      ])
+      // 5. Cargar stats en paralelo
+      const { data: inscripciones } = await supabase
+        .from('inscripciones')
+        .select('curso_id, tutorial_id')
+        .eq('usuario_id', user.id);
 
-      const [cursosRes] = resultados
+      const cursosCount = inscripciones?.filter(i => i.curso_id).length || 0;
+      const tutorialesCount = inscripciones?.filter(i => i.tutorial_id).length || 0;
+
+      // Cargar ranking desde GamificacionServicio
+      let rankingValue = 0;
+      try {
+        const { GamificacionServicio } = await import('../servicios/gamificacionServicio');
+        const rankingList = await GamificacionServicio.obtenerRanking('general', 100);
+        const rankingUser = rankingList.find(r => r.usuario_id === user.id);
+
+        if (rankingUser) {
+          rankingValue = rankingUser.posicion;
+        } else {
+          const rankingData = await GamificacionServicio.obtenerPosicionUsuario(user.id, 'general');
+          if (rankingData && rankingData.posicion) rankingValue = rankingData.posicion;
+        }
+      } catch (err) {
+        console.error('Error cargando ranking en store:', err);
+      }
+
+      // Cargar publicaciones
+      const { count: publicacionesCount } = await supabase
+        .from('comunidad_publicaciones')
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', user.id);
+
       setStats({
-        publicaciones: 0, // Tabla no existe aún
-        cursos: cursosRes.status === 'fulfilled' ? (cursosRes.value.count || 0) : 0,
-        tutoriales: 0, // Tabla no existe aún
-        ranking: 0
+        publicaciones: publicacionesCount || 0,
+        cursos: cursosCount,
+        tutoriales: tutorialesCount,
+        ranking: rankingValue
       })
 
     } catch (error) {

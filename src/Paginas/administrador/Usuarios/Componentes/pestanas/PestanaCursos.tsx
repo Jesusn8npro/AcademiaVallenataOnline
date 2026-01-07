@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PestanaCursos.css';
-import { obtenerTodosPaquetes, obtenerTutorialesDisponibles } from '../../../../../servicios/paquetesService';
+import { obtenerTodosPaquetes, obtenerTutorialesDisponibles, obtenerItemsPaquete } from '../../../../../servicios/paquetesService';
+import { obtenerCursosDisponibles } from '../../../../../servicios/cursosServicio';
 import { supabase } from '../../../../../servicios/supabaseCliente';
 
 // Interfaces
@@ -77,6 +78,7 @@ interface Props {
 const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   // Estados principales
   const [cursosInscritos, setCursosInscritos] = useState<Inscripcion[]>([]);
+  const [cursosDisponibles, setCursosDisponibles] = useState<Curso[]>([]);
   const [tutorialesDisponibles, setTutorialesDisponibles] = useState<Tutorial[]>([]);
   const [paquetesInscritos, setPaquetesInscritos] = useState<Inscripcion[]>([]);
   const [paquetesDisponibles, setPaquetesDisponibles] = useState<Paquete[]>([]);
@@ -111,6 +113,28 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
 
       // Cargar paquetes inscritos
       await cargarPaquetesInscritos();
+
+      // Cargar cursos disponibles desde Supabase
+      console.log('🔍 Cargando cursos desde Supabase...');
+      const cursosResult = await obtenerCursosDisponibles();
+      console.log('📊 Resultado cursos:', cursosResult);
+
+      if (cursosResult.success && cursosResult.data) {
+        const cursos = cursosResult.data.map((curso: any) => ({
+          id: curso.id,
+          titulo: curso.titulo,
+          imagen_url: curso.imagen_url || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop',
+          precio_normal: curso.precio_normal || 0,
+          precio_rebajado: curso.precio_rebajado,
+          descripcion: curso.descripcion || '',
+          tipo: 'curso' as const,
+          precio: curso.precio_rebajado || curso.precio_normal || 0
+        }));
+        console.log('✅ Cursos procesados:', cursos);
+        setCursosDisponibles(cursos);
+      } else {
+        console.log('❌ Error cargando cursos:', cursosResult.error);
+      }
 
       // Cargar tutoriales disponibles desde Supabase
       console.log('🔍 Cargando tutoriales desde Supabase...');
@@ -327,14 +351,52 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
     }
   };
 
+  // Función para agregar curso a usuario
+  const agregarCursoAUsuario = async (cursoId: string) => {
+    try {
+      setCargandoCursos(true);
+      console.log('📝 Agregando curso al usuario:', cursoId);
+
+      // Insertar inscripción en Supabase
+      const { data, error } = await supabase
+        .from('inscripciones')
+        .insert({
+          usuario_id: _usuario.id,
+          curso_id: cursoId,
+          fecha_inscripcion: new Date().toISOString(),
+          estado: 'activo',
+          porcentaje_completado: 0,
+          completado: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error insertando inscripción:', error);
+        throw error;
+      }
+
+      console.log('✅ Curso agregado exitosamente:', data);
+
+      // Recargar cursos inscritos
+      await cargarCursosInscritos();
+
+    } catch (error) {
+      console.error('❌ Error agregando curso:', error);
+      alert('Error al agregar el curso. Por favor intenta de nuevo.');
+    } finally {
+      setCargandoCursos(false);
+    }
+  };
+
   // Función para agregar paquete a usuario
   const agregarPaqueteAUsuario = async (paqueteId: string) => {
     try {
       setCargandoPaquetes(true);
       console.log('📦 Agregando paquete al usuario:', paqueteId);
 
-      // Insertar inscripción en Supabase
-      const { data, error } = await supabase
+      // 1. Insertar inscripción del PAQUETE
+      const { data: paqueteData, error: paqueteError } = await supabase
         .from('inscripciones')
         .insert({
           usuario_id: _usuario.id,
@@ -347,15 +409,62 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Error insertando inscripción de paquete:', error);
-        throw error;
+      if (paqueteError) {
+        console.error('❌ Error insertando inscripción de paquete:', paqueteError);
+        throw paqueteError;
       }
 
-      console.log('✅ Paquete agregado exitosamente:', data);
+      console.log('✅ Paquete agregado exitosamente:', paqueteData);
 
-      // Recargar paquetes inscritos
-      await cargarPaquetesInscritos();
+      // 2. Obtener los tutoriales individuales del paquete
+      const { success, data: tutorialIds } = await obtenerItemsPaquete(paqueteId);
+
+      if (success && tutorialIds && tutorialIds.length > 0) {
+        console.log(`📝 Encontrados ${tutorialIds.length} tutoriales en el paquete.`);
+
+        // Filtrar tutoriales que el usuario ya tiene inscritos
+        const tutorialesYaInscritos = cursosInscritos
+          .filter(inscripcion => inscripcion.tutorial_id && tutorialIds.includes(inscripcion.tutorial_id))
+          .map(i => i.tutorial_id);
+
+        const tutorialesNuevos = tutorialIds.filter(id => !tutorialesYaInscritos.includes(id));
+
+        console.log(`📝 ${tutorialesYaInscritos.length} ya inscritos, agregando ${tutorialesNuevos.length} nuevos...`);
+
+        if (tutorialesNuevos.length > 0) {
+          // Crear array de inscripciones SOLO para los nuevos
+          const inscripcionesTutoriales = tutorialesNuevos.map(tutorialId => ({
+            usuario_id: _usuario.id,
+            tutorial_id: tutorialId,
+            fecha_inscripcion: new Date().toISOString(),
+            estado: 'activo',
+            porcentaje_completado: 0,
+            completado: false
+          }));
+
+          // Insertar solo los nuevos (usando insert normal, ya que garantizamos que no existen)
+          const { error: tutorialesError } = await supabase
+            .from('inscripciones')
+            .insert(inscripcionesTutoriales);
+
+          if (tutorialesError) {
+            console.error('⚠️ Error agregando tutoriales individuales:', tutorialesError);
+            alert('El paquete se agregó, pero hubo un problema agregando algunos tutoriales individuales.');
+          } else {
+            console.log('✅ Tutoriales individuales agregados exitosamente');
+          }
+        } else {
+          console.log('✅ El usuario ya tenía todos los tutoriales del paquete');
+        }
+      }
+
+      // Recargar datos
+      await Promise.all([
+        cargarPaquetesInscritos(),
+        cargarCursosInscritos() // Recargamos también cursos/tutoriales para ver los nuevos
+      ]);
+
+      alert('Paquete y tutoriales agregados exitosamente');
 
     } catch (error) {
       console.error('❌ Error agregando paquete:', error);
@@ -432,6 +541,18 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   };
 
   // Funciones de filtrado
+  const cursosDisponiblesFiltrados = cursosDisponibles
+    .filter(curso => {
+      // Excluir cursos ya inscritos
+      const yaInscrito = cursosInscritos.some(
+        inscripcion => inscripcion.curso_id === curso.id
+      );
+      return !yaInscrito;
+    })
+    .filter(curso =>
+      curso.titulo.toLowerCase().includes(busquedaCursos.toLowerCase())
+    );
+
   const tutorialesDisponiblesFiltrados = tutorialesDisponibles
     .filter(tutorial => {
       // Excluir tutoriales ya inscritos
@@ -670,6 +791,46 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
             ) : (
               <>
                 {/* Mostrar contenido según filtro */}
+                {(filtroTipoContenido === 'todos' || filtroTipoContenido === 'cursos') && (
+                  <>
+                    {cursosDisponiblesFiltrados.length > 0 && (
+                      <div className="pestana-cursos-categoria-cursos">
+                        <div className="pestana-cursos-header-categoria">
+                          <h4>📚 Cursos Disponibles</h4>
+                          <span className="pestana-cursos-contador-resultados">
+                            {cursosDisponiblesFiltrados.length} cursos
+                          </span>
+                        </div>
+                        <div className="pestana-cursos-grid-cursos-disponibles">
+                          {cursosDisponiblesFiltrados.map((curso) => (
+                            <div key={curso.id} className="pestana-cursos-curso-disponible">
+                              <div className="pestana-cursos-curso-imagen-mini">
+                                <img src={curso.imagen_url} alt={curso.titulo} />
+                              </div>
+                              <div className="pestana-cursos-curso-info-mini">
+                                <h5>{curso.titulo}</h5>
+                                <p className="pestana-cursos-tipo">📚 Curso Completo</p>
+                                {curso.precio && (
+                                  <p className="pestana-cursos-precio">{formatearPrecio(curso.precio)}</p>
+                                )}
+                              </div>
+                              <button
+                                className="pestana-cursos-btn-agregar-curso"
+                                onClick={() => agregarCursoAUsuario(curso.id)}
+                                disabled={cargandoCursos}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="2" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {(filtroTipoContenido === 'todos' || filtroTipoContenido === 'tutoriales') && (
                   <>
                     {tutorialesDisponiblesFiltrados.length > 0 && (
@@ -794,7 +955,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
                 )}
 
                 {/* Mostrar mensaje de vacío si no hay contenido */}
-                {tutorialesDisponiblesFiltrados.length === 0 && paquetesDisponiblesFiltrados.length === 0 && (
+                {cursosDisponiblesFiltrados.length === 0 && tutorialesDisponiblesFiltrados.length === 0 && paquetesDisponiblesFiltrados.length === 0 && (
                   <div className="pestana-cursos-vacio">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                       <path d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" stroke="currentColor" strokeWidth="2" />

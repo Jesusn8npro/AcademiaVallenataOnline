@@ -4,6 +4,7 @@ import { supabase } from '../../servicios/supabaseCliente'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
 import { generarSlug } from '../../utilidades/slug'
+import { GamificacionServicio } from '../../servicios/gamificacionServicio'
 import './perfil-publico-layout.css'
 
 interface PerfilPublico {
@@ -74,18 +75,54 @@ export default function PerfilPublicoLayout() {
       setUsuarioPublico(usuario)
 
       const usuarioId = usuario.id
-      const [cursosRes, publicacionesRes, inscripcionesRes] = await Promise.all([
-        supabase.from('cursos').select('*', { count: 'exact' }).eq('creado_por', usuarioId),
-        supabase.from('comunidad_publicaciones').select('*', { count: 'exact' }).eq('usuario_id', usuarioId),
-        supabase.from('inscripciones').select('*', { count: 'exact' }).eq('usuario_id', usuarioId)
-      ])
 
-      const cursosCount = (cursosRes.count as number | null) || 0
-      const publicacionesCount = (publicacionesRes.count as number | null) || 0
-      const inscripcionesCount = (inscripcionesRes.count as number | null) || 0
-      setStats({ publicaciones: publicacionesCount, cursos: cursosCount, tutoriales: 0, ranking: 0 })
+      // Cargar inscripciones para contar cursos y tutoriales
+      const { data: inscripciones } = await supabase
+        .from('inscripciones')
+        .select('curso_id, tutorial_id')
+        .eq('usuario_id', usuarioId);
+
+      const cursosCount = inscripciones?.filter(i => i.curso_id).length || 0;
+      const tutorialesCount = inscripciones?.filter(i => i.tutorial_id).length || 0;
+
+      // Cargar ranking - Usamos la misma lógica que en la página de Ranking
+      let ranking = 0;
+      try {
+        // Obtenemos el ranking global (top 100) y buscamos al usuario
+        // Esto asegura que el número coincida exactamente con lo que se ve en la tabla de líderes
+        const rankingList = await GamificacionServicio.obtenerRanking('general', 100);
+        const rankingUser = rankingList.find(r => r.usuario_id === usuarioId);
+
+        if (rankingUser) {
+          ranking = rankingUser.posicion;
+        } else {
+          // Fallback: Si no está en el top 100, intentamos buscarlo individualmente
+          // aunque obtenerPosicionUsuario consulta la tabla directa y puede diferir del RPC
+          const rankingData = await GamificacionServicio.obtenerPosicionUsuario(usuarioId, 'general');
+          if (rankingData && rankingData.posicion) {
+            ranking = rankingData.posicion;
+          }
+        }
+      } catch (e) {
+        console.error('Error cargando ranking:', e);
+      }
+
+      // Cargar publicaciones (si se mantiene esta métrica)
+      const { count: publicacionesCount } = await supabase
+        .from('comunidad_publicaciones')
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', usuarioId);
+
+      setStats({
+        publicaciones: publicacionesCount || 0,
+        cursos: cursosCount,
+        tutoriales: tutorialesCount,
+        ranking: ranking
+      })
+
       setCargando(false)
     } catch (e) {
+      console.error('Error cargando perfil:', e);
       setError('Error cargando perfil público'); setCargando(false)
     }
   }

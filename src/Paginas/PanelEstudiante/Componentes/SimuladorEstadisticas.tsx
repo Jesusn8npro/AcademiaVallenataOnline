@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../servicios/supabaseCliente';
 import { useUsuario } from '../../../contextos/UsuarioContext';
-import GamificacionService, { type RankingGlobal } from '../../../servicios/gamificacionServicio';
+import { GamificacionServicio as GamificacionService, type RankingGlobal } from '../../../servicios/gamificacionServicio';
 import './SimuladorEstadisticas.css';
 
 // 🚀 Características del simulador próximo

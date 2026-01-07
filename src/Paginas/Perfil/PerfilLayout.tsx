@@ -4,7 +4,9 @@ import { PerfilProvider, usePerfilStore } from '../../stores/perfilStore'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
 import SkeletonEncabezadoPerfil from '../../componentes/Skeletons/SkeletonEncabezadoPerfil'
+import '../../componentes/Skeletons/SkeletonBase.css'
 import './perfil-layout.css'
+import { Outlet } from 'react-router-dom'
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const { perfil, stats, cargando, inicializado, cargarDatosPerfil, forzarInicializacion } = usePerfilStore()
@@ -25,7 +27,8 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
 
   function onModalStateChange(abierto: boolean) { setModalAbierto(abierto) }
 
-  const mostrarCarga = cargando && !perfil && !inicializado
+  // Mostrar carga si no está inicializado O si está cargando y no hay perfil
+  const mostrarCarga = !inicializado || (cargando && !perfil)
 
   return (
     <div className="layout-perfil-fijo" translate="no">
@@ -61,17 +64,16 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         {perfil || inicializado ? (
           <div className="perfil-content-actual">{children}</div>
         ) : (
-          <div className="contenido-cargando">
-            <div className="spinner" />
-            <p>Preparando tu perfil...</p>
+          <div className="contenido-cargando" style={{ padding: '2rem', width: '100%' }}>
+            {/* Skeleton simple para el cuerpo */}
+            <div className="skeleton-box" style={{ height: '40px', width: '300px', marginBottom: '2rem', borderRadius: '8px' }} />
+            <div className="skeleton-box" style={{ height: '200px', width: '100%', borderRadius: '12px' }} />
           </div>
         )}
       </div>
     </div>
   )
 }
-
-import { Outlet } from 'react-router-dom'
 
 export default function PerfilLayout({ children }: { children?: React.ReactNode }) {
   return (
