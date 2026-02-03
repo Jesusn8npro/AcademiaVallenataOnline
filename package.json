@@ -1,0 +1,50 @@
+{
+  "name": "mi-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "type-check": "tsc -b",
+    "lint": "eslint .",
+    "preview": "serve -s dist -l tcp://0.0.0.0:${PORT:-80}"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "@types/howler": "^2.2.12",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.22",
+    "date-fns": "^4.1.0",
+    "howler": "^2.2.4",
+    "i18next": "^25.7.3",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.561.0",
+    "postcss": "^8.5.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.8",
+    "react-helmet-async": "^2.0.5",
+    "react-i18next": "^16.5.0",
+    "react-router-dom": "^7.10.1",
+    "serve": "^14.2.5",
+    "tailwindcss": "^4.1.17",
+    "typescript": "~5.9.3",
+    "vite": "^6.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/postcss": "^4.1.17",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.46.4"
+  }
+}

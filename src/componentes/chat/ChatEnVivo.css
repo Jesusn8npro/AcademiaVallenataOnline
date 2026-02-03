@@ -1,0 +1,561 @@
+/* CHAT ACADEMIA - ESTILOS AISLADOS */
+:root {
+    --academia-chat-primary: #ff6600;
+    --academia-chat-gradient: linear-gradient(135deg, #ff6600 0%, #ff8533 100%);
+    --academia-chat-bg-bot: #f1f5f9;
+    --academia-chat-text: #1e293b;
+    --academia-chat-text-light: #64748b;
+    --academia-chat-border: #e2e8f0;
+    --academia-chat-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --academia-chat-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --academia-chat-shadow-hover: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Animaciones */
+@keyframes academiaEntrada {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        filter: blur(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes academiaPulso {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: var(--academia-chat-shadow);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: var(--academia-chat-shadow-hover);
+    }
+}
+
+@keyframes academiaTyping {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 0.7;
+    }
+
+    30% {
+        transform: translateY(-6px) scale(1.1);
+        opacity: 1;
+    }
+}
+
+@keyframes academiaShine {
+    0% {
+        left: -100%;
+    }
+
+    50%,
+    100% {
+        left: 100%;
+    }
+}
+
+/* Widget Container */
+.academia-widget-chat {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 9998;
+    transition: var(--academia-chat-transition);
+    font-family: inherit;
+    /* Heredar fuente del sitio */
+}
+
+/* Toggle Button */
+.academia-chat-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--academia-chat-gradient);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(255, 102, 0, 0.3);
+    transition: var(--academia-chat-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.academia-chat-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.academia-chat-toggle:hover::before {
+    left: 100%;
+}
+
+.academia-chat-toggle:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 15px 40px rgba(255, 102, 0, 0.5);
+}
+
+/* Badge */
+.academia-chat-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    background: #ff4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    animation: academiaPulso 2s infinite;
+}
+
+/* Chat Window */
+.academia-chat-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px;
+    height: 600px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: academiaEntrada 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Header */
+.academia-chat-header {
+    background: var(--academia-chat-gradient);
+    color: white;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 10;
+}
+
+.academia-chat-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.academia-chat-avatar {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.academia-chat-title h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.academia-chat-title p {
+    margin: 0;
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.academia-chat-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.academia-chat-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Messages Area */
+.academia-chat-messages {
+    flex: 1;
+    padding: 1.25rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #f8fafc;
+    scroll-behavior: smooth;
+}
+
+.academia-chat-msg {
+    display: flex;
+    max-width: 85%;
+    animation: academiaEntrada 0.3s ease-out;
+}
+
+.academia-chat-msg.msg-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.academia-chat-msg.msg-bot {
+    align-self: flex-start;
+}
+
+.academia-msg-content {
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    font-size: 0.925rem;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.academia-chat-msg.msg-user .academia-msg-content {
+    background: var(--academia-chat-gradient);
+    color: white;
+    border-top-right-radius: 4px;
+}
+
+.academia-chat-msg.msg-bot .academia-msg-content {
+    background: white;
+    color: var(--academia-chat-text);
+    border: 1px solid var(--academia-chat-border);
+    border-top-left-radius: 4px;
+}
+
+/* Typing Indicator */
+.academia-chat-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    border: 1px solid var(--academia-chat-border);
+    width: fit-content;
+}
+
+.academia-typing-dot {
+    width: 6px;
+    height: 6px;
+    background: #cbd5e1;
+    border-radius: 50%;
+    animation: academiaTyping 1.4s infinite ease-in-out both;
+}
+
+.academia-typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.academia-typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Input Area */
+.academia-chat-form {
+    padding: 0.8rem 1rem;
+    background: white;
+    border-top: 1px solid var(--academia-chat-border);
+    display: flex;
+    flex-direction: row !important;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: nowrap !important;
+    /* Ensure button stays on the side */
+}
+
+.academia-chat-input {
+    flex: 1;
+    min-width: 0;
+    /* Allow shrinking if needed */
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+    background: #f8fafc;
+}
+
+.academia-chat-input:focus {
+    border-color: var(--academia-chat-primary);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+}
+
+.academia-chat-send {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ff6600;
+    /* Solid orange as requested */
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.academia-chat-send:hover:not(:disabled) {
+    transform: scale(1.05);
+    background: #e65c00;
+    /* Darker orange on hover */
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+}
+
+.academia-chat-send:disabled {
+    opacity: 0.5;
+    cursor: default;
+    background: #ff6600;
+    /* Keep it orange but transparent via opacity */
+}
+
+/* Images within Chat */
+.academia-chat-img-container {
+    margin-top: 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--academia-chat-border);
+}
+
+.academia-chat-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 250px;
+    object-fit: cover;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+
+.academia-chat-img:hover {
+    transform: scale(1.02);
+}
+
+/* Modals & Overlays */
+.academia-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(2px);
+    animation: academiaEntrada 0.2s ease-out;
+}
+
+.academia-modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.academia-modal-content h3 {
+    margin-top: 0;
+    color: #1e293b;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.academia-input-group {
+    margin-bottom: 1.25rem;
+}
+
+.academia-input-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.academia-input-group input,
+.academia-input-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.academia-input-group input:focus,
+.academia-input-group select:focus {
+    border-color: var(--academia-chat-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+}
+
+.academia-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 2rem;
+}
+
+.academia-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.academia-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.academia-btn-primary {
+    background: var(--academia-chat-gradient);
+    color: white;
+}
+
+.academia-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Image Popup */
+.academia-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.academia-popup-content {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.academia-popup-img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.academia-popup-close {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .academia-widget-chat.academia-open {
+        inset: 0;
+        bottom: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 100dvh !important;
+        /* Use dynamic viewport height */
+        z-index: 1000000;
+        /* Ensure it's on top of everything */
+        position: fixed !important;
+    }
+
+    .academia-chat-window {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .academia-chat-header {
+        padding-top: max(1.5rem, env(safe-area-inset-top, 20px));
+        /* Ensure enough top padding */
+        padding-bottom: 1rem;
+        flex-shrink: 0;
+        min-height: 60px;
+    }
+
+    .academia-chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scrolling on iOS */
+    }
+
+    .academia-chat-form {
+        flex-shrink: 0;
+        padding: 1rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 20px));
+        background: white;
+        flex-direction: row !important;
+    }
+
+    .academia-popup-close {
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+}

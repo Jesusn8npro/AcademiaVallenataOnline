@@ -1,0 +1,266 @@
+/* InfoPestanaPerfil.css */
+/* Variables locales para InfoPestañaPerfil (ipp-*) */
+:root {
+    --ipp-color-primario: #4f46e5;
+    --ipp-color-secundario: #6d28d9;
+    --ipp-bg-gradiente-start: #ffffff;
+    --ipp-bg-gradiente-end: #f8fafc;
+    --ipp-borde: #e2e8f0;
+}
+
+.ipp-info-perfil {
+    width: 100%;
+}
+
+.ipp-formulario-perfil {
+    max-width: 100%;
+    margin: 0;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ipp-seccion-acordeon {
+    border: 1px solid var(--ipp-borde);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    background-color: white;
+    /* Asegurar fondo blanco */
+}
+
+.ipp-header-seccion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 1.25rem;
+    cursor: pointer;
+    text-align: left;
+}
+
+.ipp-titulo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ipp-icono-seccion {
+    font-size: 1.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    background: linear-gradient(135deg, #f0f2ff 0%, #e6e9ff 100%);
+    color: var(--ipp-color-primario);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.ipp-header-seccion:hover .ipp-icono-seccion {
+    transform: scale(1.1);
+}
+
+.ipp-titulo-seccion {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.ipp-icono-cheveron {
+    color: #64748b;
+    transition: transform 0.3s ease;
+}
+
+.ipp-icono-cheveron.ipp-rotado {
+    transform: rotate(180deg);
+}
+
+.ipp-contenido-seccion {
+    padding: 0 1.25rem 1.25rem 1.25rem;
+    border-top: 1px solid var(--ipp-borde);
+    overflow: hidden;
+    /* Animación suave al abrir */
+    animation: ipp-slideDown 0.3s ease-out forwards;
+}
+
+@keyframes ipp-slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ipp-grid-form {
+    display: grid;
+    gap: 1.5rem;
+    padding-top: 1.25rem;
+}
+
+.ipp-grid-3-columnas {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.ipp-campo {
+    display: flex;
+    flex-direction: column;
+}
+
+.ipp-campo-completo {
+    grid-column: 1 / -1;
+}
+
+.ipp-campo label {
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.ipp-input-principal,
+.ipp-textarea-principal,
+.ipp-select-indicativo,
+.ipp-input-whatsapp {
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: white;
+    width: 100%;
+    /* Asegurar ancho completo en su contenedor */
+}
+
+.ipp-input-principal:focus,
+.ipp-textarea-principal:focus,
+.ipp-select-indicativo:focus,
+.ipp-input-whatsapp:focus {
+    outline: none;
+    border-color: var(--ipp-color-primario);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.ipp-textarea-principal {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.ipp-seccion-whatsapp {
+    margin-top: 1rem;
+}
+
+.ipp-whatsapp-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.ipp-icono-whatsapp {
+    font-size: 1.1rem;
+}
+
+.ipp-whatsapp-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ipp-select-indicativo {
+    flex: 0 0 130px;
+}
+
+.ipp-input-whatsapp {
+    flex: 1;
+}
+
+.ipp-acciones-form {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.ipp-btn-guardar {
+    background: linear-gradient(135deg, var(--ipp-color-primario) 0%, var(--ipp-color-secundario) 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+    min-width: 200px;
+    justify-content: center;
+}
+
+.ipp-btn-guardar:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
+}
+
+.ipp-btn-guardar:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.ipp-icono-guardar {
+    font-size: 1.1rem;
+}
+
+.ipp-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: ipp-spin 1s linear infinite;
+}
+
+@keyframes ipp-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ipp-formulario-perfil {
+        padding: 0.5rem;
+    }
+
+    .ipp-header-seccion {
+        padding: 1rem;
+    }
+
+    .ipp-contenido-seccion {
+        padding: 0 1rem 1rem 1rem;
+    }
+
+    .ipp-grid-3-columnas {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,12 @@
+
+[phases.setup]
+nixPkgs = ["nodejs_23"]
+
+[phases.install]
+cmds = ["npm ci --include=dev --legacy-peer-deps"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run preview"

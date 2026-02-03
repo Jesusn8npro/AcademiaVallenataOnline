@@ -1,0 +1,256 @@
+/* PorcentajePerfil.css */
+.pop-widget-progreso {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    padding: 2rem;
+    max-width: 320px;
+    margin-left: auto;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.pop-widget-progreso::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+    background-size: 200% 100%;
+    animation: pop-shimmer 3s linear infinite;
+}
+
+@keyframes pop-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.pop-header-widget {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.pop-emoji-estado {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    animation: pop-bounce 2s infinite;
+}
+
+@keyframes pop-bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-10px);
+    }
+
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.pop-titulo-progreso {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+}
+
+.pop-subtitulo {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+.pop-contenedor-circulo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.pop-progreso-circular {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.pop-circulo-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.pop-fondo-circulo {
+    opacity: 0.3;
+}
+
+.pop-barra-progreso {
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pop-contenido-centro {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.pop-porcentaje-numero {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
+.pop-simbolo-porcentaje {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: 2px;
+}
+
+.pop-texto-completado {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+}
+
+.pop-lista-progreso {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pop-item-progreso {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pop-item-progreso.pop-completado {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-color: #a7f3d0;
+    transform: scale(1.02);
+}
+
+.pop-icono-item {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+    color: #64748b;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.pop-item-progreso.pop-completado .pop-icono-item {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.pop-circulo-vacio {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+}
+
+.pop-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+}
+
+.pop-nombre-item {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.pop-item-progreso.pop-completado .pop-nombre-item {
+    color: #065f46;
+}
+
+.pop-progreso-item {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6b7280;
+    background: #ffffff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    min-width: 40px;
+    text-align: center;
+}
+
+.pop-item-progreso.pop-completado .pop-progreso-item {
+    background: #ffffff;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.pop-motivacion {
+    margin-top: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 12px;
+    border: 1px solid #bfdbfe;
+}
+
+.pop-texto-motivacion {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .pop-widget-progreso {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+
+    .pop-progreso-circular {
+        width: 120px;
+        height: 120px;
+    }
+
+    .pop-porcentaje-numero {
+        font-size: 2rem;
+    }
+}

@@ -1,0 +1,874 @@
+/* ========================================
+   SIDEBAR ADMIN - ESTILOS ÚNICOS
+   Prefijo: sidebar-admin-*
+   ======================================== */
+
+/* Contenedor Principal */
+.sidebar-admin-moderno {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    height: calc(100vh - 70px);
+    min-height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+    border-right: 1px solid #e1e5e9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1100;
+    width: 280px;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-admin-moderno.sidebar-admin-colapsado {
+    width: 80px;
+}
+
+/* Header */
+.sidebar-admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 10px 0px 24px;
+    border-bottom: 1px solid #f0f2f5;
+    background: #fff;
+}
+
+.sidebar-admin-icon-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-admin-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.sidebar-admin-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-admin-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+}
+
+.sidebar-admin-btn-toggle {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f8fafc;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #64748b;
+}
+
+.sidebar-admin-btn-toggle:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.sidebar-admin-toggle-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-admin-toggle-icon.sidebar-admin-rotado {
+    transform: rotate(180deg);
+}
+
+/* Search */
+.sidebar-admin-search-container {
+    padding: 10px 24px;
+}
+
+.sidebar-admin-moderno.sidebar-admin-colapsado .sidebar-admin-search-container {
+    padding: 10px 20px;
+}
+
+.sidebar-admin-search-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #64748b;
+}
+
+.sidebar-admin-search-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.sidebar-admin-search-btn.sidebar-admin-search-colapsado {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar-admin-search-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar-admin-search-text {
+    flex: 1;
+    text-align: left;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.sidebar-admin-search-shortcut {
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Navigation */
+.sidebar-admin-navegacion {
+    flex: 1;
+    padding: 2px 0;
+    overflow-y: auto;
+}
+
+.sidebar-admin-nav-section {
+    margin-bottom: 12px;
+}
+
+.sidebar-admin-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 24px 6px;
+}
+
+.sidebar-admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 18px;
+    margin: 1px 16px;
+    text-decoration: none;
+    color: #475569;
+    font-weight: 500;
+    font-size: 14px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: calc(100% - 32px);
+    text-align: left;
+}
+
+.sidebar-admin-nav-item:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    transform: translateX(4px);
+}
+
+.sidebar-admin-nav-item.sidebar-admin-destacado {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
+
+.sidebar-admin-nav-item.sidebar-admin-destacado:hover {
+    transform: translateX(4px) translateY(-1px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+}
+
+.sidebar-admin-moderno.sidebar-admin-colapsado .sidebar-admin-nav-item {
+    justify-content: center;
+    padding: 8px 16px;
+}
+
+.sidebar-admin-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.sidebar-admin-nav-text {
+    flex: 1;
+}
+
+.sidebar-admin-nav-badge {
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.sidebar-admin-nav-badge.sidebar-admin-badge-activo {
+    background: #ef4444;
+    color: white;
+    animation: sidebar-admin-pulse-badge 2s infinite;
+}
+
+.sidebar-admin-nav-badge.sidebar-admin-badge-nuevo {
+    background: #22c55e;
+    color: white;
+}
+
+.sidebar-admin-nav-badge.sidebar-admin-badge-progreso {
+    background: #3b82f6;
+    color: white;
+}
+
+.sidebar-admin-nav-badge.sidebar-admin-badge-gratis {
+    background: #10b981;
+    color: white;
+    font-weight: 800;
+}
+
+.sidebar-admin-nav-item.sidebar-admin-destacado .sidebar-admin-nav-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Stats Card - Admin (Premium Dark Design) */
+.sidebar-admin-stats-card {
+    margin: 0 16px 20px;
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+    /* Slate 800 -> Slate 900 */
+    border-radius: 16px;
+    padding: 20px 16px;
+    color: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto de brillo sutil en el fondo */
+.sidebar-admin-stats-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.sidebar-admin-stats-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-admin-stats-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(59, 130, 246, 0.2);
+    /* Azul transparente */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    /* Azul claro */
+}
+
+.sidebar-admin-stats-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+    /* Slate 100 */
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.sidebar-admin-stats-content {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    /* Remove gap, handle spacing via padding/border */
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-admin-stats-content::after {
+    /* We can't use pseudo element effectively on grid container for a middle column without trickery.
+       Instead, we can just use border-right on the first item if we only have two.
+       But let's stick to the grid definition above: 1fr 1px 1fr.
+       We need a real element or use the first item border.
+       Let's simplify: Use Flex, standard divider.
+       Actually, grid-template-columns: 1fr 1fr; with border-right on first child is easier.
+    */
+    content: none;
+}
+
+.sidebar-admin-stat-item:first-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-admin-stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    /* Prevent spill */
+    min-width: 0;
+}
+
+.sidebar-admin-stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    color: #ffffff;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.sidebar-admin-stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    /* Slate 400 */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-admin-stats-progress {
+    margin-top: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-admin-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-admin-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+    /* Gradiente Azul Vibrante */
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    /* Glow azul */
+}
+
+.sidebar-admin-progress-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: #cbd5e1;
+    /* Slate 300 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Motivational Card */
+.sidebar-admin-motivational-card {
+    margin: 0 16px 8px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-admin-motivational-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sidebar-admin-motivational-icon {
+    width: 18px;
+    height: 18px;
+    color: #1a1a1a;
+}
+
+.sidebar-admin-motivational-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.sidebar-admin-motivational-content {
+    text-align: center;
+}
+
+.sidebar-admin-motivational-message {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1a1a1a;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Tarjeta de Estadísticas del Estudiante */
+.sidebar-admin-stats-card-student {
+    margin: 0 16px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-admin-stats-header-student {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.sidebar-admin-stats-icon-student {
+    width: 14px;
+    height: 14px;
+    color: #8b5cf6;
+}
+
+.sidebar-admin-stats-title-student {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.sidebar-admin-stats-content-student {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.sidebar-admin-stat-item-student {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2px;
+}
+
+.sidebar-admin-stat-icon-emoji {
+    font-size: 14px;
+}
+
+.sidebar-admin-stat-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar-admin-stat-value-student {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.sidebar-admin-stat-label-student {
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Botones Funcionales */
+.sidebar-admin-stats-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.sidebar-admin-stats-btn-left,
+.sidebar-admin-stats-btn-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.sidebar-admin-stats-btn-left {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-admin-stats-btn-left:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.sidebar-admin-stats-btn-right {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.3);
+}
+
+.sidebar-admin-stats-btn-right:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+.sidebar-admin-stats-btn-left svg,
+.sidebar-admin-stats-btn-right svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Perfil Usuario */
+.sidebar-admin-perfil-usuario {
+    margin-top: auto;
+    position: relative;
+    padding: 12px;
+    border-top: 1px solid #f0f2f5;
+}
+
+.sidebar-admin-perfil-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-admin-perfil-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-admin-perfil-btn.sidebar-admin-perfil-colapsado {
+    justify-content: center;
+    padding: 10px;
+}
+
+.sidebar-admin-avatar-container {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-admin-avatar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.sidebar-admin-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sidebar-admin-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.sidebar-admin-status-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: #22c55e;
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.sidebar-admin-perfil-info {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.sidebar-admin-perfil-nombre {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-admin-perfil-rol {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-admin-perfil-chevron {
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.sidebar-admin-perfil-btn:hover .sidebar-admin-perfil-chevron {
+    transform: rotate(180deg);
+}
+
+/* Menu Perfil */
+.sidebar-admin-menu-perfil {
+    position: absolute;
+    bottom: 100%;
+    left: 16px;
+    right: 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    margin-bottom: 8px;
+    z-index: 50;
+    overflow: hidden;
+}
+
+.sidebar-admin-perfil-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-admin-avatar-header {
+    position: relative;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-admin-avatar-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sidebar-admin-avatar-placeholder-large {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.sidebar-admin-status-indicator-header {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    border: 3px solid white;
+    border-radius: 50%;
+}
+
+.sidebar-admin-info-header {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.sidebar-admin-nombre-header {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-admin-correo-header {
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-admin-menu-opciones {
+    padding: 8px;
+}
+
+.sidebar-admin-opcion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.sidebar-admin-opcion:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.sidebar-admin-opcion.sidebar-admin-logout {
+    color: #dc2626;
+}
+
+.sidebar-admin-opcion.sidebar-admin-logout:hover {
+    background: #fef2f2;
+}
+
+.sidebar-admin-opcion-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar-admin-opcion-text {
+    flex: 1;
+}
+
+.sidebar-admin-menu-divider {
+    height: 1px;
+    background: #f0f2f5;
+    margin: 8px 0;
+}
+
+/* Animations */
+@keyframes sidebar-admin-pulse-badge {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar-admin-moderno:not(.sidebar-admin-colapsado) {
+        width: 260px;
+    }
+
+    .sidebar-admin-stats-card,
+    .sidebar-admin-motivational-card,
+    .sidebar-admin-stats-card-student {
+        display: none;
+    }
+}
+
+/* Ocultar sidebar en pantallas menores a 900px */
+@media (max-width: 900px) {
+    .sidebar-admin-moderno {
+        display: none;
+    }
+}
+
+/* Para pantallas muy pequeñas, asegurar que esté oculto */
+@media (max-width: 768px) {
+    .sidebar-admin-moderno {
+        display: none !important;
+    }
+}

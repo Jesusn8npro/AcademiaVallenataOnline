@@ -1,0 +1,348 @@
+/* PestanaReportes.css - Ported from Svelte with 'prp-' namespace */
+
+.prp-container {
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.prp-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.prp-header h2 {
+    margin: 0 0 0.5rem 0;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.prp-header p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+/* MÉTRICAS DE NEGOCIO */
+.prp-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.prp-metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.prp-metric-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.prp-metric-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+    color: #a78bfa;
+}
+
+.prp-metric-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.prp-metric-label {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.prp-metric-period {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+}
+
+/* CONTENIDO */
+.prp-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+/* REPORTE SEMANAL */
+.prp-weekly-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 2rem;
+}
+
+.prp-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.prp-section-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.prp-actions-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.prp-btn-export {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.prp-btn-export.csv:hover {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.prp-btn-export.pdf:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.prp-btn-export.whatsapp:hover {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+/* TABLA REPORTE */
+.prp-table-container {
+    background: rgba(255, 255, 255, 0.05);
+    /* inner container */
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prp-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    font-weight: 600;
+    color: white;
+    font-size: 0.85rem;
+}
+
+.prp-table-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.prp-table-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.prp-date {
+    color: white;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.prp-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.prp-badge.active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.prp-badge.new {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.prp-time {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+}
+
+.prp-engagement {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.prp-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.prp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.prp-engagement-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* INSIGHTS */
+.prp-insights-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 2rem;
+}
+
+.prp-insights-h3 {
+    margin: 0 0 1.5rem 0;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.prp-insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.prp-insight-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.prp-insight-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+.prp-insight-icon {
+    font-size: 1.5rem;
+    opacity: 0.8;
+}
+
+.prp-insight-title {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.prp-insight-desc {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.prp-insight-action {
+    color: #60a5fa;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.prp-loading {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.prp-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #8b5cf6;
+    border-radius: 50%;
+    animation: prp-spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes prp-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .prp-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .prp-content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .prp-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .prp-table-header,
+    .prp-table-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .prp-table-row {
+        padding: 1.5rem 1rem;
+    }
+}

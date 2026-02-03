@@ -1,0 +1,6 @@
+node_modules
+.git
+.env
+src/referencias_migracion
+.agent
+npm-debug.log

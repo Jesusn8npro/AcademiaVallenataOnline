@@ -1,0 +1,478 @@
+/* PESTANA CONFIGURACION - Namespaced uconf- */
+
+.uconf-container {
+  padding: 0;
+  /* Removed max-height and overflow to fix scroll issue */
+  color: #e5e7eb;
+}
+
+/* Mensajes de estado */
+.uconf-error-message {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.uconf-success-message {
+  background: rgba(5, 150, 105, 0.1);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  color: #6ee7b7;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Secciones Generales */
+.uconf-section {
+  background-color: #1f2937;
+  /* bg-gray-800 */
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #374151;
+  /* border-gray-700 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.uconf-section-membership {
+  background: linear-gradient(to bottom right, #1f2937, #111827);
+  border-left: 4px solid #8b5cf6;
+  /* violet-500 */
+}
+
+.uconf-section-password {
+  background: linear-gradient(to bottom right, #1f2937, #111827);
+  border-left: 4px solid #10b981;
+  /* emerald-500 */
+}
+
+/* Headers de sección */
+.uconf-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.uconf-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.uconf-section-title {
+  color: #f3f4f6;
+  /* text-gray-100 */
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Botones de acción */
+.uconf-btn-primary,
+.uconf-btn-action {
+  background-color: #7c3aed;
+  /* violet-600 */
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.uconf-btn-primary:hover,
+.uconf-btn-action:hover {
+  background-color: #6d28d9;
+  /* violet-700 */
+  transform: translateY(-1px);
+}
+
+.uconf-btn-success {
+  background-color: #059669;
+  /* emerald-600 */
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.uconf-btn-success:hover {
+  background-color: #047857;
+  /* emerald-700 */
+  transform: translateY(-1px);
+}
+
+.uconf-btn-secondary {
+  background-color: #4b5563;
+  /* gray-600 */
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.uconf-btn-secondary:hover {
+  background-color: #374151;
+  /* gray-700 */
+  transform: translateY(-1px);
+}
+
+.uconf-btn-action:disabled,
+.uconf-btn-primary:disabled,
+.uconf-btn-success:disabled,
+.uconf-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Membresía Card */
+.uconf-membership-card {
+  background: linear-gradient(145deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.95));
+  backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid rgba(75, 85, 99, 0.4);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.uconf-membership-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.1), transparent 40%);
+  pointer-events: none;
+}
+
+.uconf-membership-icon-wrapper {
+  width: 4.5rem;
+  height: 4.5rem;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.9));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+}
+
+.uconf-membership-icon-wrapper svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.uconf-membership-title {
+  color: #9ca3af;
+  /* text-gray-400 */
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.25rem 0;
+}
+
+.uconf-membership-value {
+  color: #f3f4f6;
+  /* text-gray-100 */
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  text-transform: capitalize;
+}
+
+.uconf-membership-date {
+  color: #6b7280;
+  /* text-gray-500 */
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Selector Membresía */
+.uconf-membership-selector {
+  margin-top: 1.5rem;
+  background-color: #111827;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #374151;
+}
+
+.uconf-selector-title {
+  color: #e5e7eb;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.uconf-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.uconf-membership-option {
+  background-color: #1f2937;
+  border: 2px solid #374151;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #9ca3af;
+}
+
+.uconf-membership-option:hover:not(:disabled) {
+  background-color: #374151;
+  border-color: #8b5cf6;
+  color: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+.uconf-membership-option.active {
+  background-color: rgba(139, 92, 246, 0.1);
+  border-color: #8b5cf6;
+  color: #f3f4f6;
+}
+
+.uconf-membership-option svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.uconf-membership-option span {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.uconf-membership-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Formulario Contraseña */
+.uconf-password-form {
+  background-color: #111827;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid #374151;
+  margin-top: 1.5rem;
+}
+
+.uconf-info-box {
+  background-color: rgba(59, 130, 246, 0.1);
+  /* blue-500/10 */
+  border-left: 3px solid #3b82f6;
+  /* blue-500 */
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.uconf-info-box p {
+  color: #bfdbfe;
+  /* blue-200 */
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.uconf-form-group {
+  margin-bottom: 1rem;
+}
+
+.uconf-label {
+  display: block;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.uconf-input {
+  width: 100%;
+  background-color: #1f2937;
+  border: 1px solid #4b5563;
+  color: #f3f4f6;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.uconf-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.uconf-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Historial Pagos */
+.uconf-loading-wrapper {
+  padding: 3rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.uconf-empty-state {
+  text-align: center;
+  padding: 3rem;
+  background-color: rgba(17, 24, 39, 0.4);
+  border-radius: 0.75rem;
+  border: 1px dashed #4b5563;
+  color: #9ca3af;
+}
+
+.uconf-payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.uconf-payment-item {
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.uconf-payment-item:hover {
+  border-color: #4b5563;
+  background-color: #1a202c;
+}
+
+.uconf-payment-info h4 {
+  color: #f3f4f6;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.uconf-payment-date {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.uconf-payment-ref {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-family: monospace;
+  margin: 0;
+}
+
+.uconf-payment-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.uconf-payment-amount {
+  color: #f3f4f6;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.uconf-payment-status {
+  display: inline-flex;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.uconf-status-aprobado,
+.uconf-status-aceptado {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.uconf-status-pendiente {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+.uconf-status-rechazado,
+.uconf-status-fallido {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .uconf-payment-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .uconf-payment-right {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #374151;
+  }
+}

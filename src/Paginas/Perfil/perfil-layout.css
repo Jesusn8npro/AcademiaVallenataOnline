@@ -1,0 +1,215 @@
+/* Layout Principal del Perfil */
+.layout-perfil-fijo {
+    max-width: 1500px;
+    margin: 2rem auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: transparent;
+}
+
+/* === FORZAR ANCHO COMPLETO === */
+/* Forzar que el contenido dinámico ocupe TODO el ancho */
+.contenido-dinamico,
+.contenido-dinamico>*,
+.contenido-mi-perfil,
+.contenido-mis-cursos,
+.contenido-mis-eventos,
+.contenedor-grabaciones,
+.contenido-publicaciones,
+.contenido-configuracion {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Forzar que los layouts internos ocupen TODO el ancho */
+.layout-info-perfil,
+.layout-mis-cursos,
+.ipp-info-perfil,
+.ipp-formulario-perfil {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Eliminar TODOS los márgenes de headers */
+.encabezado,
+.header-seccion,
+.encabezado-seccion,
+.header {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Asegurar que las secciones de acordeón ocupen todo el ancho */
+.ipp-seccion-acordeon {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Grid de publicaciones sin padding */
+.timeline-grid {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Estilos para estado de carga del encabezado */
+.encabezado-cargando,
+.encabezado-error {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    color: #64748b;
+    gap: 1rem;
+    border-radius: 16px;
+}
+
+/* Spinner genérico */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(37, 99, 235, 0.1);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Contenido Dinámico (Las rutas hijas) */
+.contenido-dinamico {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 16px;
+    min-height: 500px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+/* Estado de carga del contenido */
+.contenido-cargando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    color: #64748b;
+    gap: 1rem;
+}
+
+/* Fallback (cuando tarda mucho) */
+.contenido-fallback {
+    width: 100%;
+}
+
+.fallback-mensaje {
+    text-align: center;
+    padding: 2rem;
+    background: #f0f9ff;
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 600px;
+    border: 1px solid #bae6fd;
+}
+
+.fallback-mensaje h2 {
+    color: #0369a1;
+    margin-bottom: 0.5rem;
+}
+
+.fallback-mensaje p {
+    color: #0c4a6e;
+}
+
+/* Botón reintentar */
+.btn-reintentar {
+    padding: 8px 16px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-reintentar:hover {
+    background: #1d4ed8;
+}
+
+/* Ajustes Responsivos */
+@media (max-width: 900px) {
+    .layout-perfil-fijo {
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .contenido-dinamico {
+        border-radius: 0;
+    }
+
+    /* Mantener ancho completo en móvil pero con padding lateral */
+    .contenido-dinamico,
+    .contenido-dinamico>*,
+    .layout-info-perfil,
+    .layout-mis-cursos {
+        padding: 0 1rem !important;
+        /* Agregar padding lateral */
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 🚀 CORRECCIÓN DE COLUMNAS DEL PERFIL Y MIS CURSOS (<900px) */
+    .layout-info-perfil,
+    .layout-mis-cursos {
+        grid-template-columns: 1fr !important;
+        /* Una sola columna */
+        gap: 1.5rem !important;
+    }
+
+    .columna-widget-lateral,
+    .columna-lateral {
+        width: 100% !important;
+        position: static !important;
+        /* Quitar sticky en móvil */
+        margin-top: 1rem !important;
+        max-width: 100% !important;
+    }
+
+    .widgets-contenedor {
+        width: 100% !important;
+    }
+}
+
+/* 🚀 GRID DE ESCRITORIO (Por defecto > 900px) */
+.layout-info-perfil,
+.layout-mis-cursos {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.layout-mis-cursos {
+    overflow: hidden;
+    /* Maintain the overflow hidden property */
+}

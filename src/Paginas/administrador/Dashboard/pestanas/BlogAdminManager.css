@@ -1,0 +1,236 @@
+/* BlogAdminManager.css */
+.gestor-blog {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    /* Remove padding here, let container handle it or add internal padding */
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.encabezado-gestor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 3px solid #10b981;
+    padding-bottom: 1.5rem;
+    background: white;
+    /* Keep white if theme requires, or adjust transparency */
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.encabezado-gestor h1 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    color: #059669;
+    margin: 0;
+}
+
+.boton-primario {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.boton-primario:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Estado general */
+.estado-general {
+    text-align: center;
+    padding: 4rem;
+    color: rgba(255, 255, 255, 0.7);
+    /* Adjusted for dark mode compatibility if needed, or stick to gray */
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+.spinner-blog {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #10b981;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Grid de Artículos */
+.grid-articulos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    width: 100%;
+}
+
+.tarjeta-articulo {
+    background: white;
+    /* Or dark depending on theme, using white for now as per previous css */
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.tarjeta-articulo:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+.imagen-articulo {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    background: #f3f4f6;
+}
+
+.imagen-articulo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-imagen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+}
+
+.badge-estado {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-estado.publicado {
+    background: #10b981;
+    color: white;
+}
+
+.badge-estado.borrador {
+    background: #f59e0b;
+    color: white;
+}
+
+.contenido-articulo {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.contenido-articulo h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.resumen {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.meta-articulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 1rem;
+}
+
+.meta-articulo .autor,
+.meta-articulo .fecha {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.acciones-articulo {
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn-accion {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6b7280;
+    background: white;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-accion:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-accion.editar:hover {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.btn-accion.eliminar:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}

@@ -1,0 +1,325 @@
+/* ===== BOTÓN PRINCIPAL DE WHATSAPP ===== */
+.boton-whatsapp {
+    position: fixed;
+    left: 25px;
+    bottom: 25px;
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 8px 25px rgba(37, 211, 102, 0.4),
+        0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+    user-select: none;
+}
+
+/* Animación principal de pulso */
+.boton-whatsapp.animacion-activa {
+    animation: pulsoVendedor 2s infinite;
+}
+
+@keyframes pulsoVendedor {
+    0% {
+        transform: scale(1);
+        box-shadow:
+            0 8px 25px rgba(37, 211, 102, 0.4),
+            0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+        transform: scale(1.1);
+        box-shadow:
+            0 12px 35px rgba(37, 211, 102, 0.6),
+            0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow:
+            0 8px 25px rgba(37, 211, 102, 0.4),
+            0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Efectos hover súper llamativos */
+.boton-whatsapp:hover {
+    transform: scale(1.15) rotate(5deg);
+    background: linear-gradient(135deg, #2EE86C 0%, #1BA55C 100%);
+    box-shadow:
+        0 15px 40px rgba(37, 211, 102, 0.7),
+        0 8px 25px rgba(0, 0, 0, 0.3);
+    animation: reboteVendedor 0.6s ease-in-out;
+}
+
+@keyframes reboteVendedor {
+
+    0%,
+    100% {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    25% {
+        transform: scale(1.25) rotate(-3deg);
+    }
+
+    50% {
+        transform: scale(1.2) rotate(7deg);
+    }
+
+    75% {
+        transform: scale(1.18) rotate(-2deg);
+    }
+}
+
+/* ===== ONDAS DE ANIMACIÓN ===== */
+.ondas-whatsapp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.onda {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(37, 211, 102, 0.6);
+    border-radius: 50%;
+    animation: ondaExpansion 2s infinite;
+}
+
+.onda-1 {
+    animation-delay: 0s;
+}
+
+.onda-2 {
+    animation-delay: 0.7s;
+}
+
+.onda-3 {
+    animation-delay: 1.4s;
+}
+
+@keyframes ondaExpansion {
+    0% {
+        width: 65px;
+        height: 65px;
+        opacity: 1;
+    }
+
+    100% {
+        width: 120px;
+        height: 120px;
+        opacity: 0;
+    }
+}
+
+/* ===== ICONO DE WHATSAPP ===== */
+.icono-whatsapp {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.boton-whatsapp:hover .icono-whatsapp {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* ===== BADGE DE NOTIFICACIÓN ===== */
+.badge-notificacion {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(255, 107, 107, 0.5);
+    animation: parpadeoVendedor 1.5s infinite;
+    z-index: 3;
+}
+
+@keyframes parpadeoVendedor {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+
+
+/* ===== MENSAJE PROMOCIONAL FLOTANTE ===== */
+.mensaje-promocional {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    animation: flotarMensaje 3s infinite;
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.mensaje-contenido {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mensaje-icono {
+    animation: rotarIcono 2s infinite;
+}
+
+@keyframes rotarIcono {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-10deg);
+    }
+
+    75% {
+        transform: rotate(10deg);
+    }
+}
+
+@keyframes flotarMensaje {
+
+    0%,
+    100% {
+        opacity: 0.9;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .boton-whatsapp {
+        left: 15px;
+        bottom: 25px;
+        /* Alineado con el chat */
+        width: 55px;
+        height: 55px;
+    }
+
+    .mensaje-promocional {
+        font-size: 10px;
+        padding: 6px 10px;
+        display: none;
+        /* Ocultar mensaje promocional en móvil para limpiar espacio */
+    }
+}
+
+/* ===== EFECTOS ADICIONALES VENDEDORES ===== */
+
+/* Efecto de brillo periódico */
+.boton-whatsapp::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 50%;
+    animation: brilloVendedor 4s infinite;
+    z-index: -1;
+}
+
+@keyframes brilloVendedor {
+
+    0%,
+    90%,
+    100% {
+        opacity: 0;
+    }
+
+    5%,
+    85% {
+        opacity: 1;
+    }
+}
+
+/* Efecto de partículas en hover */
+.boton-whatsapp:hover::after {
+    content: '✨';
+    position: absolute;
+    top: -20px;
+    right: -15px;
+    font-size: 16px;
+    animation: particulas 0.8s ease-out;
+    pointer-events: none;
+}
+
+@keyframes particulas {
+    0% {
+        opacity: 1;
+        transform: scale(0) rotate(0deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.5) rotate(180deg);
+    }
+}
+
+/* Animación de entrada inicial */
+.boton-whatsapp {
+    animation: entradaVendedor 1s ease-out;
+}
+
+@keyframes entradaVendedor {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(-180deg);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(-90deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}

@@ -1,0 +1,1462 @@
+/* ========================================
+   VISTA PREMIUM - ESTILOS ÚNICOS
+   Prefijo: vista-premium-*
+   ======================================== */
+
+/* Ocultar navegación cuando está activa */
+:global(body.vista-premium-activa) {
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    background-color: #000 !important;
+}
+
+/* Remover clases del body que afectan el layout */
+:global(body.vista-premium-activa.con-sidebar),
+:global(body.vista-premium-activa.con-sidebar-colapsado) {
+    padding-left: 0 !important;
+}
+
+/* Ocultar TODOS los menús y navegación con selectores específicos */
+:global(.vista-premium-activa) :global(footer),
+:global(.vista-premium-activa) :global(nav),
+:global(.vista-premium-activa) :global(header),
+:global(.vista-premium-activa) :global(.sidebar),
+:global(.vista-premium-activa) :global(.sidebar-admin-moderno),
+:global(.vista-premium-activa) :global(.menu-inferior-responsivo),
+:global(.vista-premium-activa) :global(.menu-superior-autenticado),
+:global(.vista-premium-activa) :global(.nav-publico-container),
+:global(.vista-premium-activa) :global([class*="menu"]),
+:global(.vista-premium-activa) :global([class*="Menu"]),
+:global(.vista-premium-activa) :global([class*="nav"]),
+:global(.vista-premium-activa) :global([class*="Nav"]),
+:global(.vista-premium-activa) :global([class*="sidebar"]),
+:global(.vista-premium-activa) :global([class*="Sidebar"]) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Selectores adicionales ultra específicos para el sidebar */
+:global(body.vista-premium-activa) :global(.sidebar-admin-moderno),
+:global(body.vista-premium-activa) :global(aside),
+:global(body.vista-premium-activa) :global([role="navigation"]),
+:global(body.vista-premium-activa) :global(#sidebar),
+:global(body.vista-premium-activa) :global(#menu),
+:global(body.vista-premium-activa) :global(#nav),
+:global(body.vista-premium-activa) :global(.nav-auth-container),
+:global(body.vista-premium-activa) :global(.nav-publico-container),
+:global(body.vista-premium-activa) nav {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -99999px !important;
+    top: -99999px !important;
+}
+
+/* Selectores adicionales para asegurar ocultación completa */
+:global(.vista-premium-activa)> :global(*:not(.vista-premium-container)) {
+    /* Ocultar todo excepto el contenedor de vista premium */
+}
+
+:global(body.vista-premium-activa)> :global(*:not(#root)) {
+    display: none !important;
+}
+
+:global(body.vista-premium-activa) :global(#root)> :global(*:not(.vista-premium-container)) {
+    display: none !important;
+}
+
+/* Asegurar que el contenido principal ocupe todo el ancho */
+:global(body.vista-premium-activa) :global(main),
+:global(body.vista-premium-activa) :global(#root),
+:global(body.vista-premium-activa) :global(.app) {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Contenedor principal */
+.vista-premium-container {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ========================================
+   BANNER DE OFERTA
+   ======================================== */
+.vista-premium-banner-oferta {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: linear-gradient(to right, #7c3aed, #4f46e5);
+    color: white;
+    padding: 0.5rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.vista-premium-banner-contenido {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.vista-premium-banner-izquierda {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.vista-premium-btn-volver {
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0.25rem 0.5rem;
+}
+
+.vista-premium-btn-volver:hover {
+    color: #fde047;
+}
+
+.vista-premium-icono-volver {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.vista-premium-badge-oferta {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.vista-premium-icono-reloj {
+    width: 1rem;
+    height: 1rem;
+    color: #fde047;
+    animation: vista-premium-pulse 2s infinite;
+}
+
+.vista-premium-texto-oferta {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.vista-premium-badge-descuento {
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Contador */
+.vista-premium-contador-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.vista-premium-contador-label {
+    font-size: 0.75rem;
+    color: #fde047;
+    margin-bottom: 0.25rem;
+}
+
+.vista-premium-contador-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.vista-premium-contador-item {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    text-align: center;
+}
+
+.vista-premium-contador-valor {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.vista-premium-contador-unidad {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.vista-premium-espaciador {
+    height: 3.5rem;
+    background: #000;
+}
+
+/* ========================================
+   HERO PRINCIPAL
+   ======================================== */
+.vista-premium-hero {
+    position: relative;
+    color: white;
+    background: #000;
+}
+
+.vista-premium-hero-espaciador {
+    height: 10rem;
+    width: 100%;
+    background: #000;
+}
+
+.vista-premium-hero-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #000;
+}
+
+.vista-premium-hero-gradiente {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(88, 28, 135, 0.1), rgba(67, 56, 202, 0.1));
+    animation: vista-premium-pulse 3s infinite;
+}
+
+.vista-premium-hero-overflow {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.vista-premium-hero-svg-container {
+    position: absolute;
+    inset: -10%;
+    opacity: 0.05;
+}
+
+.vista-premium-hero-svg {
+    transform: rotate(12deg);
+    animation: vista-premium-spin 60s linear infinite;
+}
+
+.vista-premium-hero-contenido {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 8rem;
+    position: relative;
+    z-index: 10;
+}
+
+.vista-premium-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+/* Columna izquierda */
+.vista-premium-hero-izquierda {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.vista-premium-hero-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.vista-premium-categoria {
+    background: #7c3aed;
+    backdrop-filter: blur(4px);
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.vista-premium-estudiantes-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vista-premium-avatares {
+    display: flex;
+    margin-left: -0.5rem;
+}
+
+.vista-premium-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid white;
+    margin-left: -0.5rem;
+}
+
+.vista-premium-estudiantes-texto {
+    font-size: 0.875rem;
+    color: #d1d5db;
+}
+
+.vista-premium-titulo {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: white;
+    text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0;
+}
+
+.vista-premium-descripcion {
+    font-size: 1.125rem;
+    color: #e5e7eb;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.vista-premium-objetivos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.vista-premium-objetivo {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    animation: vista-premium-fade-in 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.vista-premium-objetivo-icono {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #10b981;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.vista-premium-objetivo-texto {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9375rem;
+}
+
+/* CTA y Precio */
+.vista-premium-cta-container {
+    padding-top: 1rem;
+}
+
+.vista-premium-precio-container {
+    margin-bottom: 1rem;
+}
+
+.vista-premium-precio-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.vista-premium-precio-tachado {
+    text-decoration: line-through;
+    color: #9ca3af;
+    font-size: 1rem;
+}
+
+.vista-premium-precio-rebajado {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #fde047, #facc15);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vista-premium-precio-gratis {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #86efac, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vista-premium-precio-premium {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #fde047, #facc15);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vista-premium-precio-detalle {
+    font-size: 0.875rem;
+    color: #10b981;
+    margin-top: 0.25rem;
+}
+
+.vista-premium-botones-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vista-premium-btn-principal {
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.vista-premium-btn-principal:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3);
+}
+
+.vista-premium-btn-principal:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.vista-premium-btn-secundario {
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.vista-premium-btn-secundario:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.vista-premium-btn-continuar {
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.vista-premium-btn-continuar:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.vista-premium-spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    animation: vista-premium-spin-fast 1s linear infinite;
+}
+
+.vista-premium-spinner-circulo {
+    opacity: 0.25;
+}
+
+.vista-premium-spinner-path {
+    opacity: 0.75;
+}
+
+.vista-premium-garantia {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #e5e7eb;
+}
+
+.vista-premium-garantia-icono {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #22c55e;
+    flex-shrink: 0;
+}
+
+/* Columna derecha */
+.vista-premium-hero-derecha {
+    position: relative;
+}
+
+.vista-premium-video-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vista-premium-video-preview {
+    position: relative;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #374151, #1f2937);
+}
+
+.vista-premium-video-imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s;
+}
+
+.vista-premium-video-imagen:hover {
+    transform: scale(1.05);
+}
+
+.vista-premium-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vista-premium-play-btn {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vista-premium-play-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+.vista-premium-play-icono {
+    width: 2rem;
+    height: 2rem;
+    color: white;
+}
+
+.vista-premium-preview-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.vista-premium-rating-card {
+    position: relative;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vista-premium-rating-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #000;
+}
+
+.vista-premium-rating-contenido {
+    position: relative;
+    z-index: 10;
+}
+
+.vista-premium-rating-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vista-premium-estrellas {
+    display: flex;
+    gap: 0.125rem;
+}
+
+.vista-premium-estrella {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #fbbf24;
+}
+
+.vista-premium-rating-texto {
+    font-size: 0.875rem;
+    color: #d1d5db;
+}
+
+.vista-premium-rating-numero {
+    font-weight: 600;
+}
+
+.vista-premium-rating-estudiantes {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.vista-premium-testimonio {
+    color: #e5e7eb;
+    font-style: italic;
+    margin: 0;
+    line-height: 1.5;
+    font-size: 0.875rem;
+    border-left: 3px solid #7c3aed;
+    padding-left: 0.75rem;
+}
+
+.vista-premium-testimonio-autor {
+    display: block;
+    color: #fde047;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    font-style: normal;
+}
+
+/* ========================================
+   ANIMACIONES
+   ======================================== */
+@keyframes vista-premium-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes vista-premium-spin {
+    from {
+        transform: rotate(12deg);
+    }
+
+    to {
+        transform: rotate(372deg);
+    }
+}
+
+@keyframes vista-premium-spin-fast {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes vista-premium-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1024px) {
+    .vista-premium-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .vista-premium-titulo {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .vista-premium-banner-contenido {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .vista-premium-contador-container {
+        align-items: center;
+        width: 100%;
+    }
+
+    .vista-premium-hero-contenido {
+        padding: 1.5rem 1rem 6rem;
+    }
+
+    .vista-premium-titulo {
+        font-size: 2rem;
+    }
+
+    .vista-premium-objetivos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vista-premium-botones-container {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .vista-premium-titulo {
+        font-size: 1.75rem;
+    }
+
+    .vista-premium-precio-rebajado,
+    .vista-premium-precio-gratis,
+    .vista-premium-precio-premium {
+        font-size: 2rem;
+    }
+}
+
+/* ========================================
+   SECCIÓN DE VENTAJAS
+   ======================================== */
+.vista-premium-ventajas {
+    background: white;
+    color: #1f2937;
+    padding: 5rem 0;
+}
+
+.vista-premium-ventajas-contenedor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.vista-premium-ventajas-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.vista-premium-ventajas-titulo {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #7c3aed;
+    margin-bottom: 1rem;
+}
+
+.vista-premium-ventajas-subtitulo {
+    font-size: 1.125rem;
+    color: #4b5563;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.vista-premium-ventajas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.vista-premium-ventaja-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 2px solid;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.vista-premium-ventaja-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.vista-premium-ventaja-morado {
+    border-color: #7c3aed;
+}
+
+.vista-premium-ventaja-morado:hover {
+    box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.2);
+}
+
+.vista-premium-ventaja-azul {
+    border-color: #2563eb;
+}
+
+.vista-premium-ventaja-azul:hover {
+    box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.2);
+}
+
+.vista-premium-ventaja-ambar {
+    border-color: #f59e0b;
+}
+
+.vista-premium-ventaja-ambar:hover {
+    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2);
+}
+
+.vista-premium-ventaja-verde {
+    border-color: #22c55e;
+}
+
+.vista-premium-ventaja-verde:hover {
+    box-shadow: 0 20px 25px -5px rgba(34, 197, 94, 0.2);
+}
+
+.vista-premium-ventaja-rosa {
+    border-color: #ec4899;
+}
+
+.vista-premium-ventaja-rosa:hover {
+    box-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.2);
+}
+
+.vista-premium-ventaja-indigo {
+    border-color: #6366f1;
+}
+
+.vista-premium-ventaja-indigo:hover {
+    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.2);
+}
+
+.vista-premium-ventaja-icono {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.vista-premium-ventaja-morado .vista-premium-ventaja-icono {
+    background: #7c3aed;
+}
+
+.vista-premium-ventaja-azul .vista-premium-ventaja-icono {
+    background: #2563eb;
+}
+
+.vista-premium-ventaja-ambar .vista-premium-ventaja-icono {
+    background: #f59e0b;
+}
+
+.vista-premium-ventaja-verde .vista-premium-ventaja-icono {
+    background: #22c55e;
+}
+
+.vista-premium-ventaja-rosa .vista-premium-ventaja-icono {
+    background: #ec4899;
+}
+
+.vista-premium-ventaja-indigo .vista-premium-ventaja-icono {
+    background: #6366f1;
+}
+
+.vista-premium-ventaja-svg {
+    width: 2rem;
+    height: 2rem;
+    color: white;
+}
+
+.vista-premium-ventaja-titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.vista-premium-ventaja-morado .vista-premium-ventaja-titulo {
+    color: #6d28d9;
+}
+
+.vista-premium-ventaja-azul .vista-premium-ventaja-titulo {
+    color: #1d4ed8;
+}
+
+.vista-premium-ventaja-ambar .vista-premium-ventaja-titulo {
+    color: #d97706;
+}
+
+.vista-premium-ventaja-verde .vista-premium-ventaja-titulo {
+    color: #16a34a;
+}
+
+.vista-premium-ventaja-rosa .vista-premium-ventaja-titulo {
+    color: #db2777;
+}
+
+.vista-premium-ventaja-indigo .vista-premium-ventaja-titulo {
+    color: #4f46e5;
+}
+
+.vista-premium-ventaja-descripcion {
+    color: #4b5563;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.vista-premium-ventaja-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.vista-premium-ventaja-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.vista-premium-ventaja-check {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.vista-premium-ventaja-morado .vista-premium-ventaja-check {
+    color: #7c3aed;
+}
+
+.vista-premium-ventaja-azul .vista-premium-ventaja-check {
+    color: #2563eb;
+}
+
+.vista-premium-ventaja-ambar .vista-premium-ventaja-check {
+    color: #f59e0b;
+}
+
+.vista-premium-ventaja-verde .vista-premium-ventaja-check {
+    color: #22c55e;
+}
+
+.vista-premium-ventaja-rosa .vista-premium-ventaja-check {
+    color: #ec4899;
+}
+
+.vista-premium-ventaja-indigo .vista-premium-ventaja-check {
+    color: #6366f1;
+}
+
+.vista-premium-ventaja-item span {
+    color: #4b5563;
+}
+
+.vista-premium-ventajas-cta {
+    margin-top: 4rem;
+    text-align: center;
+}
+
+.vista-premium-ventajas-cta-texto {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #7c3aed;
+    margin-bottom: 1.5rem;
+}
+
+.vista-premium-ventajas-cta-garantia {
+    margin-top: 1rem;
+    color: #6b7280;
+}
+
+.vista-premium-ventajas-cta-destacado {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+/* ========================================
+   SECCIÓN DE PRECIOS
+   ======================================== */
+.vista-premium-precios {
+    background: #000;
+    color: white;
+    padding: 6rem 0 4rem;
+}
+
+.vista-premium-precios-contenedor {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.vista-premium-precios-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.vista-premium-precios-mensaje {
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.vista-premium-precios-destacado {
+    color: #22c55e;
+    font-weight: 700;
+    animation: vista-premium-pulse 2s infinite;
+}
+
+.vista-premium-precios-card {
+    background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+    border: 2px solid #22c55e;
+    border-radius: 1rem;
+    padding: 0;
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.3);
+}
+
+.vista-premium-precios-card-contenido {
+    padding: 2rem;
+}
+
+.vista-premium-precios-titulo-container {
+    margin-bottom: 2rem;
+}
+
+.vista-premium-precios-titulo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.vista-premium-precios-descripcion {
+    color: #9ca3af;
+    line-height: 1.5;
+}
+
+.vista-premium-precios-objetivos {
+    margin-bottom: 2rem;
+}
+
+.vista-premium-precios-objetivo {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.vista-premium-precios-check {
+    color: #22c55e;
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.vista-premium-precios-objetivo-texto {
+    color: white;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.vista-premium-precios-modulos {
+    margin-bottom: 2rem;
+}
+
+.vista-premium-precios-modulos-titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.vista-premium-precios-modulos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.vista-premium-precios-modulo {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #22c55e;
+}
+
+.vista-premium-precios-modulo-titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.vista-premium-precios-modulo-descripcion {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0;
+}
+
+.vista-premium-precios-divisor {
+    height: 2px;
+    background: linear-gradient(to right, transparent, #22c55e, transparent);
+    margin: 2rem 0;
+}
+
+.vista-premium-precios-precio-container {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.vista-premium-precios-precio-antes {
+    color: #9ca3af;
+    text-decoration: line-through;
+    margin-bottom: 0.5rem;
+}
+
+.vista-premium-precios-precio-label {
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+}
+
+.vista-premium-precios-precio-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.vista-premium-precios-precio-final {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #22c55e;
+}
+
+.vista-premium-precios-descuento-badge {
+    background: #ef4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.vista-premium-precios-precio-gratis {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #22c55e;
+}
+
+.vista-premium-precios-detalle {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.vista-premium-precios-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 1.5rem;
+}
+
+.vista-premium-precios-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+}
+
+.vista-premium-precios-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.vista-premium-precios-metodos {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.vista-premium-precios-metodo {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* ========================================
+   SECCIÓN DE MENTOR
+   ======================================== */
+.vista-premium-mentor {
+    background: white;
+    color: #1f2937;
+    padding: 5rem 0;
+}
+
+.vista-premium-mentor-contenedor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.vista-premium-mentor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.vista-premium-mentor-imagen-container {
+    position: relative;
+}
+
+.vista-premium-mentor-imagen-fondo {
+    position: absolute;
+    inset: -1rem;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 1rem;
+    filter: blur(20px);
+    opacity: 0.3;
+}
+
+.vista-premium-mentor-imagen-wrapper {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 4px solid #22c55e;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.vista-premium-mentor-imagen {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.7s;
+}
+
+.vista-premium-mentor-imagen:hover {
+    transform: scale(1.05);
+}
+
+.vista-premium-mentor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.vista-premium-mentor-nombre {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #22c55e;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.vista-premium-mentor-titulo {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.vista-premium-mentor-descripcion {
+    color: #4b5563;
+    line-height: 1.6;
+    font-size: 1.125rem;
+}
+
+.vista-premium-mentor-logros {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.vista-premium-mentor-logro {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    transition: transform 0.2s;
+}
+
+.vista-premium-mentor-logro:hover {
+    transform: translateX(4px);
+}
+
+.vista-premium-mentor-check {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #22c55e;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.vista-premium-mentor-logro p {
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.vista-premium-mentor-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+    transition: all 0.3s;
+    margin-top: 1rem;
+}
+
+.vista-premium-mentor-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(34, 197, 94, 0.4);
+}
+
+.vista-premium-mentor-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   RESPONSIVE - SECCIONES ADICIONALES
+   ======================================== */
+@media (max-width: 1024px) {
+    .vista-premium-ventajas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .vista-premium-mentor-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .vista-premium-ventajas {
+        padding: 3rem 0;
+    }
+
+    .vista-premium-ventajas-titulo {
+        font-size: 1.875rem;
+    }
+
+    .vista-premium-ventajas-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .vista-premium-precios {
+        padding: 4rem 0 3rem;
+    }
+
+    .vista-premium-precios-mensaje {
+        font-size: 1.25rem;
+    }
+
+    .vista-premium-precios-precio-final {
+        font-size: 2.5rem;
+    }
+
+    .vista-premium-mentor {
+        padding: 3rem 0;
+    }
+
+    .vista-premium-mentor-contenedor {
+        padding: 0 1rem;
+    }
+
+    .vista-premium-mentor-nombre {
+        font-size: 1.5rem;
+    }
+
+    .vista-premium-mentor-titulo {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .vista-premium-ventajas-titulo {
+        font-size: 1.5rem;
+    }
+
+    .vista-premium-ventajas-subtitulo {
+        font-size: 1rem;
+    }
+
+    .vista-premium-precios-precio-final {
+        font-size: 2rem;
+    }
+
+    .vista-premium-mentor-nombre {
+        font-size: 1.25rem;
+    }
+
+    .vista-premium-mentor-titulo {
+        font-size: 1.25rem;
+    }
+
+    .vista-premium-mentor-descripcion {
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,66 @@
+/* LAYOUT SECCION CATALOGO (Centered Version) */
+.cp-catalogo-section {
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    padding: 4rem 0;
+    width: 100%;
+}
+
+.cp-container {
+    margin: 0 auto;
+    padding: 0 2rem;
+    max-width: 1400px;
+}
+
+/* Header Centrado Verticalmente */
+.cp-header {
+    display: flex;
+    flex-direction: column;
+    /* Apila verticalmente */
+    align-items: center;
+    /* Centra horizontalmente */
+    justify-content: center;
+    margin-bottom: 4rem;
+    text-align: center;
+    width: 100%;
+}
+
+.cp-titulo {
+    font-size: clamp(3rem, 6vw, 5rem);
+    /* Muy grande como se pidió */
+    font-weight: 900;
+    color: #1f2937;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    /* Espacio entre titulo y descripcion */
+    letter-spacing: -0.02em;
+    max-width: 900px;
+    /* Ancho maximo para que no se estire demasiado */
+}
+
+.cp-highlight {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+}
+
+.cp-subtitulo {
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    color: #6b7280;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .cp-catalogo-section {
+        padding: 3rem 0;
+    }
+
+    .cp-header {
+        margin-bottom: 2rem;
+    }
+}

@@ -1,0 +1,525 @@
+/* Estilos para Calendario de Eventos - Namespaced evt-cal- */
+
+.evt-cal-container {
+    width: 100%;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: white;
+}
+
+/* Header */
+.evt-cal-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .evt-cal-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.evt-cal-title-section {
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .evt-cal-title-section {
+        margin-bottom: 0;
+    }
+}
+
+.evt-cal-title {
+    font-size: 1.875rem;
+    /* text-3xl */
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.evt-cal-subtitle {
+    color: #4b5563;
+    /* text-gray-600 */
+}
+
+/* Selector de Vista */
+.evt-cal-view-toggle {
+    display: flex;
+    background-color: #f3f4f6;
+    /* bg-gray-100 */
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+}
+
+.evt-cal-view-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    /* text-sm */
+    font-weight: 500;
+    color: #4b5563;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.evt-cal-view-btn:hover {
+    color: #111827;
+}
+
+.evt-cal-view-btn.active {
+    background-color: white;
+    color: #2563eb;
+    /* text-blue-600 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Filtros */
+.evt-cal-filters-container {
+    background-color: #f9fafb;
+    /* bg-gray-50 */
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.evt-cal-filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.evt-cal-filters-title {
+    font-size: 1.125rem;
+    /* text-lg */
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.evt-cal-clear-filters {
+    font-size: 0.875rem;
+    /* text-sm */
+    color: #2563eb;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.evt-cal-clear-filters:hover {
+    color: #1e40af;
+}
+
+.evt-cal-filters-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .evt-cal-filters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-cal-filters-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .evt-cal-filters-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+.evt-cal-filter-group-wide {
+    grid-column: span 1;
+}
+
+@media (min-width: 1280px) {
+    .evt-cal-filter-group-wide {
+        grid-column: span 2;
+    }
+}
+
+.evt-cal-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    /* text-gray-700 */
+    margin-bottom: 0.5rem;
+}
+
+.evt-cal-input,
+.evt-cal-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    /* border-gray-300 */
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.evt-cal-input:focus,
+.evt-cal-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6;
+    /* ring-blue-500 */
+    border-color: #3b82f6;
+}
+
+.evt-cal-checkbox-group {
+    display: flex;
+    align-items: center;
+    padding-top: 1.5rem;
+}
+
+.evt-cal-checkbox {
+    width: 1rem;
+    height: 1rem;
+    color: #2563eb;
+    border-radius: 0.25rem;
+    border-color: #d1d5db;
+}
+
+.evt-cal-checkbox-label {
+    margin-left: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Grid de Eventos */
+.evt-cal-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .evt-cal-grid-layout {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-cal-grid-layout {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .evt-cal-grid-layout {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Tarjeta de Evento (Grid) */
+.evt-cal-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.evt-cal-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* shadow-xl */
+}
+
+.evt-cal-card-img-container {
+    position: relative;
+    height: 12rem;
+    /* h-48 */
+    background: linear-gradient(to bottom right, #3b82f6, #9333ea);
+    overflow: hidden;
+}
+
+.evt-cal-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.evt-cal-card:hover .evt-cal-card-img {
+    transform: scale(1.05);
+}
+
+.evt-cal-badges {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.evt-cal-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    /* text-xs */
+    font-weight: 500;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.evt-cal-badge-free {
+    background-color: #22c55e;
+    /* bg-green-500 */
+    color: white;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+}
+
+.evt-cal-badge-featured {
+    background-color: #eab308;
+    /* bg-yellow-500 */
+    color: white;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.evt-cal-level-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+}
+
+.evt-cal-card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.evt-cal-card-title {
+    font-size: 1.125rem;
+    /* text-lg */
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s;
+}
+
+.evt-cal-card:hover .evt-cal-card-title {
+    color: #2563eb;
+}
+
+.evt-cal-card-desc {
+    color: #4b5563;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.evt-cal-card-info {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.evt-cal-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.evt-cal-card-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.evt-cal-price-free {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #16a34a;
+    /* text-green-600 */
+}
+
+.evt-cal-price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #2563eb;
+    /* text-blue-600 */
+}
+
+.evt-cal-price-original {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-decoration: line-through;
+}
+
+.evt-cal-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Vista Lista */
+.evt-cal-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.evt-cal-list-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.evt-cal-list-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.evt-cal-list-body {
+    padding: 1.5rem;
+}
+
+.evt-cal-list-flex {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.evt-cal-list-img {
+    flex-shrink: 0;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: linear-gradient(to bottom right, #3b82f6, #9333ea);
+}
+
+.evt-cal-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.evt-cal-list-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+/* Paginación */
+.evt-cal-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.evt-cal-page-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #374151;
+    cursor: pointer;
+}
+
+.evt-cal-page-btn:hover:not(:disabled) {
+    background-color: #f9fafb;
+}
+
+.evt-cal-page-btn.active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.evt-cal-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Estados Vacíos/Loading */
+.evt-cal-empty,
+.evt-cal-loading {
+    text-align: center;
+    padding: 3rem 0;
+}
+
+.evt-cal-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.evt-cal-error-container {
+    background-color: #fef2f2;
+    /* bg-red-50 */
+    border: 1px solid #fecaca;
+    /* border-red-200 */
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    color: #dc2626;
+    /* text-red-600 */
+}

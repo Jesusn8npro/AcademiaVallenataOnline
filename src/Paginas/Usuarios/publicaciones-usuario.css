@@ -1,0 +1,15 @@
+.publicaciones-contenido { padding: 2rem; max-width: 900px; margin: 0 auto; min-height: 60vh }
+.seccion { background:#ffffff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #f1f5f9 }
+.seccion-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; gap:1rem }
+.seccion-header h2 { margin:0; font-size:1.5rem; font-weight:700; color:#1f2937; display:flex; align-items:center; gap:.5rem }
+.estadisticas-publicaciones { display:flex; align-items:center; gap:1rem }
+.contador-publicaciones { font-size:.875rem; color:#6b7280; font-weight:600; background:#f8fafc; padding:.5rem 1rem; border-radius:20px; border:1px solid #e2e8f0 }
+.feed-container { display:flex; flex-direction:column; gap:1.5rem }
+.publicacion-placeholder { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1rem }
+.estado-carga,.estado-error,.estado-vacio { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4rem 2rem; min-height:50vh; gap:1rem }
+.spinner { width:50px; height:50px; border:4px solid #e5e7eb; border-top-color:#3b82f6; border-radius:50%; animation: spin 1s linear infinite }
+@keyframes spin { to { transform: rotate(360deg) } }
+.error-icono,.vacio-icono { font-size:4rem; margin-bottom:1rem; opacity:.6 }
+.btn-reintentar { padding:.6rem 1rem; border-radius:10px; border:1px solid #e5e7eb; background:#fff }
+.btn-comunidad { display:inline-block; background:linear-gradient(135deg,#3b82f6,#6366F1); color:white; padding:.6rem 1rem; border-radius:10px; text-decoration:none }
+.vacio-decoracion { display:flex; gap:.5rem; opacity:.4; font-size:1.25rem }

@@ -1,0 +1,945 @@
+/* ===== GESTIÓN DE USUARIOS - CSS ROBUSTO CON PREFIJOS ÚNICOS ===== */
+
+/* Variables CSS únicas para gestión de usuarios */
+:root {
+  --gestion-usuarios-color-primario: #667eea;
+  --gestion-usuarios-color-secundario: #764ba2;
+  --gestion-usuarios-color-fondo: rgba(255, 255, 255, 0.1);
+  --gestion-usuarios-color-borde: rgba(255, 255, 255, 0.2);
+  --gestion-usuarios-color-texto: white;
+  --gestion-usuarios-color-texto-secundario: rgba(255, 255, 255, 0.7);
+  --gestion-usuarios-color-error: #f44336;
+  --gestion-usuarios-color-exito: #4CAF50;
+  --gestion-usuarios-color-advertencia: #ff9800;
+  --gestion-usuarios-sombra: 0 4px 15px rgba(0, 0, 0, 0.2);
+  --gestion-usuarios-sombra-hover: 0 8px 25px rgba(0, 0, 0, 0.3);
+  --gestion-usuarios-transicion: all 0.3s ease;
+  --gestion-usuarios-border-radius: 15px;
+  --gestion-usuarios-border-radius-pequeño: 8px;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.gestion-usuarios-contenedor {
+  padding: 2rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: var(--gestion-usuarios-color-texto);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ===== HEADER PRINCIPAL ===== */
+.gestion-usuarios-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: var(--gestion-usuarios-color-fondo);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius);
+  box-shadow: var(--gestion-usuarios-sombra);
+}
+
+.gestion-usuarios-titulo h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gestion-usuarios-color-primario), var(--gestion-usuarios-color-secundario));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gestion-usuarios-titulo p {
+  margin: 0;
+  color: var(--gestion-usuarios-color-texto-secundario);
+  font-size: 1rem;
+}
+
+.gestion-usuarios-btn-crear {
+  background: linear-gradient(135deg, var(--gestion-usuarios-color-primario), var(--gestion-usuarios-color-secundario));
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  box-shadow: var(--gestion-usuarios-sombra);
+}
+
+.gestion-usuarios-btn-crear:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--gestion-usuarios-sombra-hover);
+}
+
+.gestion-usuarios-btn-crear:active {
+  transform: translateY(0);
+}
+
+/* ===== ESTADÍSTICAS ===== */
+.gestion-usuarios-estadisticas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.gestion-usuarios-stat-card {
+  background: var(--gestion-usuarios-color-fondo);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--gestion-usuarios-transicion);
+  box-shadow: var(--gestion-usuarios-sombra);
+}
+
+.gestion-usuarios-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--gestion-usuarios-sombra-hover);
+  border-color: var(--gestion-usuarios-color-primario);
+}
+
+.gestion-usuarios-stat-icono {
+  font-size: 2rem;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gestion-usuarios-color-primario), var(--gestion-usuarios-color-secundario));
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.gestion-usuarios-stat-contenido {
+  flex: 1;
+}
+
+.gestion-usuarios-stat-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gestion-usuarios-color-texto);
+  margin-bottom: 0.25rem;
+}
+
+.gestion-usuarios-stat-label {
+  font-size: 0.875rem;
+  color: var(--gestion-usuarios-color-texto-secundario);
+  font-weight: 500;
+}
+
+/* ===== MENSAJES DE ESTADO ===== */
+.gestion-usuarios-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid var(--gestion-usuarios-color-error);
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--gestion-usuarios-color-error);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(244, 67, 54, 0.2);
+}
+
+.gestion-usuarios-exito {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid var(--gestion-usuarios-color-exito);
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--gestion-usuarios-color-exito);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(76, 175, 80, 0.2);
+}
+
+/* ===== CONTENIDO PRINCIPAL ===== */
+.gestion-usuarios-contenido {
+  background: var(--gestion-usuarios-color-fondo);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius);
+  overflow: hidden;
+  box-shadow: var(--gestion-usuarios-sombra);
+}
+
+/* ===== CONTROLES Y FILTROS ===== */
+.gestion-usuarios-controles {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gestion-usuarios-color-borde);
+}
+
+.gestion-usuarios-campo-busqueda {
+  position: relative;
+  min-width: 300px;
+  flex: 1;
+}
+
+.gestion-usuarios-campo-busqueda svg {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gestion-usuarios-color-texto-secundario);
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.gestion-usuarios-campo-busqueda input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  color: var(--gestion-usuarios-color-texto);
+  font-size: 0.875rem;
+  transition: var(--gestion-usuarios-transicion);
+}
+
+.gestion-usuarios-campo-busqueda input:focus {
+  outline: none;
+  border-color: var(--gestion-usuarios-color-primario);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.gestion-usuarios-campo-busqueda input::placeholder {
+  color: var(--gestion-usuarios-color-texto-secundario);
+}
+
+.gestion-usuarios-filtros {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gestion-usuarios-filtros select {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  color: var(--gestion-usuarios-color-texto);
+  font-size: 0.875rem;
+  transition: var(--gestion-usuarios-transicion);
+  cursor: pointer;
+}
+
+.gestion-usuarios-filtros select:focus {
+  outline: none;
+  border-color: var(--gestion-usuarios-color-primario);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.gestion-usuarios-filtros option {
+  background: #333;
+  color: var(--gestion-usuarios-color-texto);
+}
+
+.gestion-usuarios-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gestion-usuarios-color-texto);
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gestion-usuarios-toggle input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--gestion-usuarios-color-primario);
+}
+
+/* ===== TABLA DE USUARIOS ===== */
+.gestion-usuarios-contenedor-tabla {
+  overflow-x: auto;
+}
+
+.gestion-usuarios-cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--gestion-usuarios-color-texto);
+}
+
+.gestion-usuarios-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid var(--gestion-usuarios-color-primario);
+  border-radius: 50%;
+  animation: gestion-usuarios-girar 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes gestion-usuarios-girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gestion-usuarios-sin-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--gestion-usuarios-color-texto);
+  text-align: center;
+}
+
+.gestion-usuarios-sin-resultados svg {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.gestion-usuarios-sin-resultados h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.gestion-usuarios-sin-resultados p {
+  margin: 0;
+  color: var(--gestion-usuarios-color-texto-secundario);
+}
+
+.gestion-usuarios-tabla-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.gestion-usuarios-tabla-usuarios th {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--gestion-usuarios-color-borde);
+  color: var(--gestion-usuarios-color-texto);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gestion-usuarios-fila-usuario {
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gestion-usuarios-fila-usuario:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gestion-usuarios-fila-usuario.eliminado {
+  opacity: 0.6;
+}
+
+.gestion-usuarios-tabla-usuarios td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: var(--gestion-usuarios-color-texto);
+}
+
+.gestion-usuarios-celda-usuario {
+  min-width: 250px;
+}
+
+.gestion-usuarios-info-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gestion-usuarios-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gestion-usuarios-color-borde);
+}
+
+.gestion-usuarios-avatar-placeholder {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gestion-usuarios-color-primario), var(--gestion-usuarios-color-secundario));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 2px solid var(--gestion-usuarios-color-borde);
+}
+
+.gestion-usuarios-datos-usuario {
+  display: flex;
+  flex-direction: column;
+}
+
+.gestion-usuarios-nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gestion-usuarios-color-texto);
+  margin-bottom: 0.25rem;
+}
+
+.gestion-usuarios-ubicacion {
+  font-size: 0.75rem;
+  color: var(--gestion-usuarios-color-texto-secundario);
+}
+
+/* ===== BADGES ===== */
+.gestion-usuarios-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.gestion-usuarios-badge-admin {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+}
+
+.gestion-usuarios-badge-estudiante {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.gestion-usuarios-badge-suscripcion-free {
+  background: rgba(156, 156, 156, 0.2);
+  color: #ccc;
+  border: 1px solid #999;
+}
+
+.gestion-usuarios-badge-suscripcion-basic {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.gestion-usuarios-badge-suscripcion-premium {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+  color: white;
+}
+
+.gestion-usuarios-badge-suscripcion-pro {
+  background: linear-gradient(135deg, #FF5722, #D84315);
+  color: white;
+}
+
+/* ===== ESTADOS ===== */
+.gestion-usuarios-estado {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gestion-usuarios-estado.activo {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--gestion-usuarios-color-exito);
+  border: 1px solid var(--gestion-usuarios-color-exito);
+}
+
+.gestion-usuarios-estado.inactivo {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--gestion-usuarios-color-error);
+  border: 1px solid var(--gestion-usuarios-color-error);
+}
+
+/* ===== ACCIONES ===== */
+.gestion-usuarios-celda-acciones {
+  text-align: center;
+}
+
+.gestion-usuarios-btn-accion {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  color: var(--gestion-usuarios-color-texto);
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gestion-usuarios-btn-accion:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== DETALLE Y CREAR USUARIO ===== */
+.gestion-usuarios-detalle,
+.gestion-usuarios-crear {
+  padding: 2rem;
+}
+
+.gestion-usuarios-detalle-placeholder,
+.gestion-usuarios-crear-placeholder {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--gestion-usuarios-color-borde);
+  border-radius: var(--gestion-usuarios-border-radius);
+  padding: 2rem;
+  text-align: center;
+}
+
+.gestion-usuarios-detalle-placeholder h3,
+.gestion-usuarios-crear-placeholder h3 {
+  margin: 0 0 1rem 0;
+  color: var(--gestion-usuarios-color-texto);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.gestion-usuarios-detalle-placeholder p,
+.gestion-usuarios-crear-placeholder p {
+  margin: 0 0 1.5rem 0;
+  color: var(--gestion-usuarios-color-texto-secundario);
+}
+
+.gestion-usuarios-detalle-placeholder button,
+.gestion-usuarios-crear-placeholder button {
+  background: var(--gestion-usuarios-color-primario);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--gestion-usuarios-border-radius-pequeño);
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  font-weight: 600;
+}
+
+.gestion-usuarios-detalle-placeholder button:hover,
+.gestion-usuarios-crear-placeholder button:hover {
+  background: var(--gestion-usuarios-color-secundario);
+  transform: translateY(-1px);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .gestion-usuarios-estadisticas {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .gestion-usuarios-contenedor {
+    padding: 1rem;
+  }
+
+  .gestion-usuarios-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .gestion-usuarios-titulo h1 {
+    font-size: 1.5rem;
+  }
+
+  .gestion-usuarios-estadisticas {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .gestion-usuarios-stat-card {
+    padding: 1rem;
+  }
+
+  .gestion-usuarios-stat-icono {
+    font-size: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .gestion-usuarios-controles {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .gestion-usuarios-campo-busqueda {
+    min-width: auto;
+  }
+
+  .gestion-usuarios-filtros {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .gestion-usuarios-contenedor-tabla {
+    overflow-x: auto;
+  }
+
+  .gestion-usuarios-tabla-usuarios {
+    min-width: 600px;
+  }
+
+  .gestion-usuarios-celda-usuario {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gestion-usuarios-estadisticas {
+    grid-template-columns: 1fr;
+  }
+
+  .gestion-usuarios-filtros {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .gestion-usuarios-filtros select {
+    width: 100%;
+  }
+
+  .gestion-usuarios-toggle {
+    justify-content: center;
+  }
+}
+
+/* ===== ANIMACIONES ADICIONALES ===== */
+.gestion-usuarios-contenedor {
+  animation: gestion-usuarios-fadeIn 0.5s ease-out;
+}
+
+@keyframes gestion-usuarios-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gestion-usuarios-stat-card {
+  animation: gestion-usuarios-slideInUp 0.6s ease-out;
+}
+
+@keyframes gestion-usuarios-slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== ESTADOS DE HOVER Y FOCUS MEJORADOS ===== */
+.gestion-usuarios-btn-crear:focus,
+.gestion-usuarios-btn-accion:focus,
+.gestion-usuarios-filtros select:focus,
+.gestion-usuarios-campo-busqueda input:focus {
+  outline: 2px solid var(--gestion-usuarios-color-primario);
+  outline-offset: 2px;
+}
+
+.gestion-usuarios-fila-usuario:focus-within {
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 3px solid var(--gestion-usuarios-color-primario);
+}
+
+/* ===== SCROLLBAR PERSONALIZADO ===== */
+.gestion-usuarios-contenedor-tabla::-webkit-scrollbar {
+  height: 8px;
+}
+
+.gestion-usuarios-contenedor-tabla::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.gestion-usuarios-contenedor-tabla::-webkit-scrollbar-thumb {
+  background: var(--gestion-usuarios-color-primario);
+  border-radius: 4px;
+}
+
+.gestion-usuarios-contenedor-tabla::-webkit-scrollbar-thumb:hover {
+  background: var(--gestion-usuarios-color-secundario);
+}
+
+/* ===== SELECCIÓN MÚLTIPLE ===== */
+.gestion-usuarios-acciones-seleccion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.gestion-usuarios-info-seleccion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gestion-usuarios-contador-seleccion {
+  color: var(--gestion-usuarios-color-texto);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.gestion-usuarios-botones-seleccion {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.gestion-usuarios-btn-eliminar-masivo {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.gestion-usuarios-btn-eliminar-masivo:hover {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.gestion-usuarios-btn-eliminar-masivo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.gestion-usuarios-btn-limpiar-seleccion {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--gestion-usuarios-color-texto);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.gestion-usuarios-btn-limpiar-seleccion:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ===== CHECKBOXES ===== */
+.gestion-usuarios-celda-checkbox {
+  width: 50px;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.gestion-usuarios-checkbox-principal,
+.gestion-usuarios-checkbox-usuario {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--gestion-usuarios-color-primario);
+}
+
+.gestion-usuarios-checkbox-principal:checked,
+.gestion-usuarios-checkbox-usuario:checked {
+  background: var(--gestion-usuarios-color-primario);
+}
+
+/* ===== FILAS SELECCIONADAS ===== */
+.gestion-usuarios-fila-usuario.seleccionado {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-left: 4px solid var(--gestion-usuarios-color-primario);
+}
+
+.gestion-usuarios-fila-usuario.seleccionado:hover {
+  background: rgba(102, 126, 234, 0.15) !important;
+}
+
+/* ===== FILAS CLICKEABLES ===== */
+.gestion-usuarios-fila-usuario {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gestion-usuarios-fila-usuario:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(2px);
+}
+
+.gestion-usuarios-info-usuario {
+  transition: all 0.2s ease;
+}
+
+.gestion-usuarios-info-usuario:hover {
+  transform: translateX(4px);
+}
+
+/* ===== CHECKBOXES MEJORADOS ===== */
+.gestion-usuarios-celda-checkbox {
+  width: 50px;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  position: relative;
+}
+
+.gestion-usuarios-checkbox-principal,
+.gestion-usuarios-checkbox-usuario {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--gestion-usuarios-color-primario);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+.gestion-usuarios-checkbox-principal:hover,
+.gestion-usuarios-checkbox-usuario:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.gestion-usuarios-checkbox-principal:checked,
+.gestion-usuarios-checkbox-usuario:checked {
+  background: var(--gestion-usuarios-color-primario);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+}
+
+/* ===== MENÚ CONTEXTUAL ===== */
+.gestion-usuarios-menu-contextual {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  min-width: 220px;
+  animation: gestion-usuarios-menuAparecer 0.2s ease-out;
+  transform-origin: top left;
+}
+
+@keyframes gestion-usuarios-menuAparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.gestion-usuarios-menu-contextual-contenido {
+  display: flex;
+  flex-direction: column;
+}
+
+.gestion-usuarios-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--gestion-usuarios-color-texto);
+  cursor: pointer;
+  transition: var(--gestion-usuarios-transicion);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+}
+
+.gestion-usuarios-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gestion-usuarios-menu-item-peligroso {
+  color: #f44336;
+}
+
+.gestion-usuarios-menu-item-peligroso:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #d32f2f;
+}
+
+.gestion-usuarios-menu-separador {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0.25rem 0;
+}
+
+/* ===== RESPONSIVE PARA NUEVAS FUNCIONALIDADES ===== */
+@media (max-width: 768px) {
+  .gestion-usuarios-acciones-seleccion {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .gestion-usuarios-botones-seleccion {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .gestion-usuarios-botones-seleccion {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .gestion-usuarios-btn-eliminar-masivo,
+  .gestion-usuarios-btn-limpiar-seleccion {
+    width: 100%;
+    justify-content: center;
+  }
+}

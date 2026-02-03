@@ -1,0 +1,283 @@
+/* Menú Inferior Responsivo - Solo Móvil */
+.menu-inferior-responsivo {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    z-index: 999999 !important;
+    padding: 0 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Comportamiento inteligente solo en páginas de clases */
+@media (max-width: 900px) {
+    .menu-inferior-responsivo {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        /* Visible por defecto */
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999999 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(20px) !important;
+        border-top: 1px solid #e2e8f0 !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+        min-height: 60px !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Comportamiento inteligente: Mostrar/ocultar con transform */
+    .menu-inferior-responsivo.visible {
+        transform: translateY(0) !important;
+        /* Visible */
+        opacity: 1 !important;
+    }
+
+    .menu-inferior-responsivo:not(.visible) {
+        transform: translateY(100%) !important;
+        /* Oculto */
+        opacity: 0 !important;
+    }
+}
+
+/* En escritorio - Siempre oculto */
+@media (min-width: 901px) {
+    .menu-inferior-responsivo {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        transform: translateY(100%) !important;
+        pointer-events: none !important;
+    }
+}
+
+.menu-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 4px 8px;
+    max-width: 100%;
+    margin: 0 auto;
+    gap: 2px;
+}
+
+.menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    position: relative;
+    min-width: 50px;
+    flex: 1;
+    max-width: 70px;
+}
+
+.menu-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.menu-item.activo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.menu-item.activo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.item-icon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 2px;
+    color: #64748b;
+    transition: color 0.3s ease;
+}
+
+.menu-item.activo .item-icon {
+    color: white;
+}
+
+.menu-item:hover .item-icon {
+    color: #667eea;
+}
+
+.menu-item.activo:hover .item-icon {
+    color: white;
+}
+
+.item-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.1;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.menu-item.activo .item-text {
+    color: white;
+}
+
+.menu-item:hover .item-text {
+    color: #667eea;
+}
+
+.menu-item.activo:hover .item-text {
+    color: white;
+}
+
+.item-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+    line-height: 1.2;
+    transform: scale(0.9);
+    animation: badge-pulse 2s infinite;
+}
+
+.item-badge.progreso {
+    background: #3b82f6;
+    animation: none;
+}
+
+.item-badge.nuevo {
+    background: #22c55e;
+    animation: badge-bounce 1s ease-in-out infinite alternate;
+}
+
+.menu-item.activo .item-badge {
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+}
+
+/* Animaciones */
+@keyframes badge-pulse {
+    0% {
+        transform: scale(0.9);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(0.9);
+    }
+}
+
+@keyframes badge-bounce {
+    0% {
+        transform: scale(0.9) translateY(0);
+    }
+
+    100% {
+        transform: scale(1) translateY(-2px);
+    }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .menu-container {
+        padding: 6px 8px;
+        gap: 2px;
+    }
+
+    .menu-item {
+        padding: 6px 8px;
+        min-width: 50px;
+        max-width: 70px;
+    }
+
+    .item-icon {
+        width: 20px;
+        height: 20px;
+        margin-bottom: 2px;
+    }
+
+    .item-text {
+        font-size: 10px;
+    }
+
+    .item-badge {
+        font-size: 8px;
+        padding: 1px 4px;
+        top: 2px;
+        right: 4px;
+    }
+}
+
+/* Padding efectivo para evitar que el contenido se oculte detrás del menú - Solo en móvil y SI está autenticado */
+@media (max-width: 900px) {
+    body.con-sidebar {
+        padding-bottom: 80px !important;
+    }
+
+    /* Asegurar padding en containers principales SOLO si hay sidebar/auth */
+    body.con-sidebar .pantalla-completa,
+    body.con-sidebar .main-content,
+    body.con-sidebar main,
+    body.con-sidebar .contenido-principal {
+        padding-bottom: 60px !important;
+    }
+
+    /* Específico para páginas de clases y lecciones */
+    .pantalla-completa {
+        min-height: calc(100vh - 60px) !important;
+    }
+}
+
+/* En escritorio - Sin padding adicional */
+@media (min-width: 901px) {
+    body {
+        padding-bottom: 0 !important;
+    }
+
+    .pantalla-completa,
+    .main-content,
+    main,
+    .contenido-principal {
+        padding-bottom: 0 !important;
+    }
+}
+
+/* Cursor hover effect */
+.cursor-hover {
+    cursor: pointer;
+}
+
+/* Ocultar menú cuando el visor de imágenes está abierto */
+body.modal-visor-abierto .menu-inferior-responsivo {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}

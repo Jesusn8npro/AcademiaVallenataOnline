@@ -1,0 +1,686 @@
+/* RecomendacionesCursos.css */
+
+/* 🚀 CONTENEDOR PRINCIPAL */
+.academia-recomendaciones-cursos {
+    width: 100%;
+    height: auto;
+    /* 🚀 Cambiar de 100% a auto */
+    min-height: 480px;
+    /* 🚀 Altura mínima igual al simulador */
+}
+
+/* 🎯 TARJETA DE RECOMENDACIONES */
+.academia-tarjeta-recomendaciones {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+    border-radius: 20px;
+    padding: 16px;
+    color: white;
+    position: relative;
+    overflow: visible;
+    /* 🚀 Cambiar de hidden a visible para que se vea completo */
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    height: auto;
+    /* 🚀 Cambiar de 100% a auto */
+    min-height: 480px;
+    /* 🚀 Altura mínima igual al simulador */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.academia-tarjeta-recomendaciones::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* 🚀 HEADER */
+.academia-recomendaciones-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.academia-header-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.academia-subtitulo {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #ffffff !important;
+    /* BLANCO PURO FORZADO */
+    opacity: 1 !important;
+    /* OPACIDAD AL 100% FORZADA */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    /* Sombra para resaltar */
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.academia-header-stats {
+    display: flex;
+    gap: 6px;
+}
+
+.academia-stat-badge {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 🎯 GRID DE RECOMENDACIONES */
+.academia-recomendaciones-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    flex: 1;
+}
+
+/* 📚 CONTENIDO DE RECOMENDACIONES */
+.academia-contenido-recomendaciones {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: visible;
+    /* 🚀 NUNCA scroll */
+    max-height: none;
+    /* 🚀 Sin altura máxima */
+    height: auto;
+    /* 🚀 Altura automática */
+}
+
+/* 🎯 TARJETAS DE CURSO (Basado en GridCursos) */
+.academia-curso-card {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.academia-curso-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.academia-curso-imagen-container {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.academia-curso-imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.academia-curso-card:hover .academia-curso-imagen {
+    transform: scale(1.05);
+}
+
+.academia-tipo-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.academia-tipo-badge.curso {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+}
+
+.academia-tipo-badge.tutorial {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.academia-descuento-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+}
+
+.academia-imagen-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+.academia-curso-card:hover .academia-imagen-overlay {
+    opacity: 1;
+}
+
+.academia-btn-ver-curso {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.academia-btn-ver-curso:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
+.academia-curso-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.academia-curso-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.academia-curso-titulo {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: white;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.academia-curso-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.academia-rating,
+.academia-estudiantes {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.academia-curso-descripcion {
+    margin: 0;
+    font-size: 0.7rem;
+    opacity: 0.8;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.academia-nivel-container {
+    margin: 4px 0;
+}
+
+.academia-nivel-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.academia-nivel-badge.nivel-principiante {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.academia-nivel-badge.nivel-intermedio {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.academia-nivel-badge.nivel-avanzado {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.academia-nivel-badge.nivel-profesional {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.academia-curso-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    gap: 8px;
+}
+
+.academia-precio-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.academia-precio-gratis {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 0.7rem;
+}
+
+.academia-precio-original {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.6rem;
+    text-decoration: line-through;
+}
+
+.academia-precio-actual {
+    color: #fbbf24;
+    font-weight: 700;
+    font-size: 0.7rem;
+}
+
+.academia-btn-acceder {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.academia-btn-acceder:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.academia-btn-acceder.curso {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.academia-btn-acceder.tutorial {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* 🚫 SIN RECOMENDACIONES */
+.academia-sin-recomendaciones {
+    text-align: center;
+    padding: 40px 20px;
+    opacity: 0.8;
+}
+
+.academia-sin-recomendaciones h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: white;
+}
+
+.academia-sin-recomendaciones p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* 👀 ACCIONES */
+.academia-acciones-container {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.academia-ver-mas-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.academia-ver-mas-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.academia-ver-todos-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.academia-ver-todos-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.academia-ver-todos-btn svg {
+    width: 12px;
+    height: 12px;
+    transition: transform 0.3s ease;
+}
+
+.academia-ver-todos-btn:hover svg {
+    transform: translateX(2px);
+}
+
+/* 🔄 LOADING */
+.academia-cargando-recomendaciones {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.academia-skeleton-recomendaciones {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+    border-radius: 20px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.academia-skeleton-recomendaciones::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 100%);
+    animation: academia-shimmer 2s infinite;
+}
+
+@keyframes academia-shimmer {
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 900px) {
+    .academia-contenido-recomendaciones {
+        overflow-y: visible;
+        /* Sin scroll en móvil */
+        max-height: none;
+        /* Sin altura máxima en móvil */
+        height: auto;
+        /* Altura automática */
+    }
+
+    .academia-tarjeta-recomendaciones {
+        height: auto;
+        /* Altura automática en móvil */
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+        padding: 20px;
+        /* Padding mayor en móvil para mejor legibilidad */
+    }
+
+    .academia-recomendaciones-grid {
+        grid-template-columns: 1fr;
+        /* Una columna en móvil */
+        gap: 16px;
+        /* Espaciado mayor en móvil */
+    }
+
+    /* 🚀 NUEVO: Asegurar que las tarjetas se muestren completas */
+    .academia-curso-card {
+        height: auto;
+        /* Altura automática */
+        min-height: auto;
+        /* Sin altura mínima */
+        padding: 12px;
+        /* Padding mayor en móvil */
+    }
+
+    /* 🚀 NUEVO: Ajustar el contenedor principal para móvil */
+    .academia-recomendaciones-cursos {
+        height: auto;
+        /* Altura automática en móvil */
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+    }
+
+    /* 🚀 NUEVO: Ajustar header para móvil */
+    .academia-recomendaciones-header {
+        flex-direction: column;
+        /* Stack vertical en móvil */
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .academia-header-stats {
+        width: 100%;
+        /* Ocupar todo el ancho */
+        justify-content: space-between;
+        /* Distribuir badges */
+    }
+
+    /* 🚀 NUEVO: Ajustar botones de acción para móvil */
+    .academia-acciones-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .academia-ver-mas-btn,
+    .academia-ver-todos-btn {
+        width: 100%;
+        /* Botones de ancho completo en móvil */
+        padding: 12px 16px;
+        /* Padding mayor para mejor touch */
+    }
+
+    .academia-curso-imagen-container {
+        height: 70px;
+        /* Imagen ligeramente más alta en móvil */
+    }
+
+    .academia-curso-meta {
+        flex-direction: column;
+        /* Stack vertical para mejor legibilidad */
+        gap: 4px;
+    }
+
+    .academia-nivel-container {
+        margin: 6px 0;
+        /* Margen mayor para mejor separación */
+    }
+
+    .academia-imagen-overlay {
+        opacity: 1;
+        /* Siempre visible en móvil para mejor UX */
+        background: rgba(0, 0, 0, 0.3);
+        /* Fondo más sutil */
+    }
+
+    .academia-btn-ver-curso {
+        font-size: 0.65rem;
+        /* Botón más pequeño */
+        padding: 4px 8px;
+        /* Padding ajustado */
+    }
+}
+
+/* 🚀 NUEVO: BREAKPOINT PARA TABLETS - TRANSICIÓN SUAVE */
+@media (max-width: 1300px) {
+    .academia-contenido-recomendaciones {
+        overflow-y: visible;
+        /* Sin scroll en tablets */
+        max-height: none;
+        /* Sin altura máxima en tablets */
+        height: auto;
+        /* Altura automática */
+    }
+
+    .academia-tarjeta-recomendaciones {
+        height: auto;
+        /* Altura automática en tablets */
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+    }
+
+    .academia-recomendaciones-cursos {
+        height: auto;
+        /* Altura automática en tablets */
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+    }
+
+    /* 🚀 NUEVO: Ajustar grid para tablets */
+    .academia-recomendaciones-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* Mantener 2 columnas en tablets */
+        gap: 16px;
+        /* Espaciado ligeramente mayor */
+    }
+}
+
+/* 🚀 NUEVO: BREAKPOINT PARA MÓVILES MUY PEQUEÑOS */
+@media (max-width: 480px) {
+    .academia-tarjeta-recomendaciones {
+        padding: 16px;
+        /* Padding ajustado para móviles muy pequeños */
+        border-radius: 16px;
+        /* Border radius menor */
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+    }
+
+    .academia-recomendaciones-cursos {
+        min-height: 480px;
+        /* 🚀 Mantener altura mínima igual al simulador */
+    }
+
+    .academia-recomendaciones-header h3 {
+        font-size: 1rem;
+        /* Título más pequeño */
+    }
+
+    .academia-subtitulo {
+        font-size: 0.7rem;
+        /* Subtítulo más pequeño */
+    }
+
+    .academia-stat-badge {
+        font-size: 0.65rem;
+        /* Badges más pequeños */
+        padding: 3px 6px;
+        /* Padding menor */
+    }
+
+    .academia-curso-card {
+        padding: 10px;
+        /* Padding menor en móviles muy pequeños */
+    }
+
+    .academia-curso-titulo {
+        font-size: 0.7rem;
+        /* Título más pequeño */
+    }
+
+    .academia-curso-descripcion {
+        font-size: 0.65rem;
+        /* Descripción más pequeña */
+    }
+
+    .academia-btn-acceder {
+        font-size: 0.6rem;
+        /* Botón más pequeño */
+        padding: 3px 6px;
+        /* Padding menor */
+    }
+
+    .academia-ver-mas-btn,
+    .academia-ver-todos-btn {
+        font-size: 0.7rem;
+        /* Botones más pequeños */
+        padding: 10px 14px;
+        /* Padding ajustado */
+    }
+}

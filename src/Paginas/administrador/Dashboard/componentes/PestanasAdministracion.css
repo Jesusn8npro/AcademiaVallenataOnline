@@ -1,0 +1,228 @@
+/* PestanasAdministracion.css */
+
+.contenedor-pestañas-admin {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.nav-container-admin {
+    position: relative;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+}
+
+.navegacion-pestañas-admin {
+    display: flex;
+    justify-content: flex-start;
+    /* Changed to flex-start for scroll behavior */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 0.5rem;
+    box-shadow: 0 6px 32px -4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+    scroll-behavior: smooth;
+}
+
+.navegacion-pestañas-admin::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.pestaña-item-admin {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.contenido-pestaña-admin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 10px;
+    width: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.pestaña-item-admin.activo {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pestaña-item-admin.activo .contenido-pestaña-admin {
+    color: white;
+}
+
+.pestaña-item-admin:hover:not(.activo) {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.icono-admin {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icono-admin svg {
+    width: 24px;
+    height: 24px;
+}
+
+.etiqueta-admin {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.pestaña-item-admin::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 25%;
+    width: 50%;
+    height: 3px;
+    background: #8b5cf6;
+    border-radius: 6px;
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+.pestaña-item-admin.activo::after {
+    transform: scaleX(1);
+}
+
+/* BOTONES DE SCROLL */
+.boton-scroll {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #8b5cf6;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: none;
+    /* Hidden by default, shown via class */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 25;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    transition: all 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.boton-scroll.visible {
+    display: flex;
+    /* Override display: none */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.boton-scroll:hover {
+    background-color: #7c3aed;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.boton-scroll.izquierda {
+    left: -20px;
+}
+
+.boton-scroll.derecha {
+    right: -20px;
+}
+
+.boton-scroll svg {
+    width: 18px;
+    height: 18px;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.contenido-pestañas-admin {
+    min-height: 500px;
+    width: 100%;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .navegacion-pestañas-admin {
+        justify-content: flex-start;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 0.5rem;
+    }
+
+    .pestaña-item-admin {
+        flex: 0 0 auto;
+        min-width: 100px;
+        scroll-snap-align: center;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .contenido-pestaña-admin {
+        gap: 0.25rem;
+        padding: 0.25rem;
+    }
+
+    .icono-admin {
+        width: 20px;
+        height: 20px;
+    }
+
+    .icono-admin svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .etiqueta-admin {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pestaña-item-admin {
+        min-width: 70px;
+        padding: 0.4rem;
+    }
+
+    .contenido-pestaña-admin {
+        gap: 0.2rem;
+        padding: 0.3rem;
+    }
+
+    .etiqueta-admin {
+        font-size: 0.65rem;
+    }
+}

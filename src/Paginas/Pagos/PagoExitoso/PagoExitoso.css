@@ -1,0 +1,391 @@
+.pago-exitoso-container {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    /* bg-gradient-to-br from-gray-900 via-slate-800 to-zinc-900 equivalent */
+    background: linear-gradient(to bottom right, #111827, #1e293b, #18181b);
+}
+
+.fondo-celebracion {
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+}
+
+.particulas-celebracion {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.particula {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #facc15;
+    /* yellow-400 */
+    border-radius: 9999px;
+    animation: particula-flotante 3s infinite ease-in-out;
+}
+
+@keyframes particula-flotante {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+    }
+}
+
+.contenedor-principal {
+    position: relative;
+    z-index: 10;
+    max-width: 1200px;
+    /* container */
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Loading Card */
+.tarjeta-carga {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+    max-width: 28rem;
+    margin: 0 auto;
+}
+
+.icono-carga svg {
+    color: #facc15;
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto;
+    animation: spin 1s linear infinite;
+}
+
+.texto-carga {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.descripcion-carga {
+    color: #e9d5ff;
+    /* purple-200 */
+}
+
+/* Success Card */
+.tarjeta-exito {
+    max-width: 56rem;
+    /* 4xl */
+    margin: 0 auto;
+    width: 100%;
+}
+
+.encabezado-exito {
+    text-align: center;
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    border: 4px solid #22c55e;
+    /* green-500 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.icono-exito svg {
+    color: #16a34a;
+    /* green-600 */
+    width: 6rem;
+    height: 6rem;
+    margin: 0 auto;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
+}
+
+.titulo-principal {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #16a34a, #2563eb, #9333ea);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.subtitulo-principal {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.descripcion-principal {
+    font-size: 1.25rem;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+/* Payment Section */
+.seccion-pago {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 4px solid #22c55e;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.titulo-seccion {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.detalles-pago {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .detalles-pago {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.detalle-item {
+    background: #f3f4f6;
+    /* gray-100 */
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.etiqueta-detalle {
+    color: #4b5563;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.valor-detalle {
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+/* Account Section */
+.seccion-cuenta {
+    background: linear-gradient(to right, #eff6ff, #e0e7ff);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 4px solid #3b82f6;
+    /* blue-500 */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.mensaje-bienvenida {
+    background: #dbeafe;
+    /* blue-100 */
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 2px solid #bfdbfe;
+    margin-bottom: 1rem;
+}
+
+.texto-bienvenida {
+    color: #1e3a8a;
+    /* blue-900 */
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.detalles-cuenta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .detalles-cuenta {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.detalle-cuenta {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 2px solid #bfdbfe;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.etiqueta-cuenta {
+    color: #1d4ed8;
+    /* blue-700 */
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.valor-cuenta {
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.estado-acceso {
+    background: #dcfce7;
+    /* green-100 */
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 2px solid #86efac;
+}
+
+.texto-acceso {
+    text-align: center;
+    color: #166534;
+    /* green-800 */
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* Action Buttons */
+.botones-accion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.boton-principal {
+    background: linear-gradient(to right, #9333ea, #2563eb);
+    color: white;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+}
+
+.boton-principal:hover {
+    transform: scale(1.05);
+}
+
+.boton-secundario {
+    background: linear-gradient(to right, #16a34a, #0d9488);
+    color: white;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    transition: transform 0.3s;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.boton-secundario:hover {
+    transform: scale(1.05);
+}
+
+.boton-compartir {
+    background: linear-gradient(to right, #22c55e, #16a34a);
+    color: white;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    transition: transform 0.3s;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.boton-compartir:hover {
+    transform: scale(1.05);
+}
+
+/* Support Section */
+.seccion-soporte {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    border: 2px solid #d1d5db;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.texto-soporte {
+    color: #374151;
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+.contacto-soporte {
+    color: #111827;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .titulo-principal {
+        font-size: 2.25rem;
+    }
+
+    .subtitulo-principal {
+        font-size: 1.25rem;
+    }
+
+    .botones-accion {
+        flex-direction: column;
+    }
+
+    .boton-principal,
+    .boton-secundario,
+    .boton-compartir {
+        width: 100%;
+        justify-content: center;
+    }
+}

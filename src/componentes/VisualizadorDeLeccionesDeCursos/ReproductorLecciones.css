@@ -1,0 +1,262 @@
+.reproductor-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #000;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+
+
+.video-wrapper {
+  position: relative;
+  padding-top: 56.25%;
+  background: #000;
+}
+
+.video-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 2rem;
+}
+
+.error-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-content svg {
+  color: #ff6b6b;
+  margin-bottom: 1rem;
+}
+
+.error-content h3 {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.error-content p {
+  color: #ccc;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.debug-info {
+  margin-top: 1rem;
+}
+
+.debug-info details {
+  cursor: pointer;
+}
+
+.debug-info summary {
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.debug-info pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #aaa;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.btn-reintentar {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.btn-reintentar:hover {
+  background: #43A047;
+  transform: translateY(-2px);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top: 3px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-boton {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.barra-navegacion {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+}
+
+.boton-nav,
+.boton-completar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  min-height: 44px;
+}
+
+.boton-nav {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.boton-nav:hover:not(:disabled) {
+  background: #3a3a3a;
+  transform: translateY(-2px);
+}
+
+.boton-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.boton-completar {
+  background: #4CAF50;
+  color: white;
+  font-weight: 600;
+}
+
+.boton-completar:hover:not(:disabled) {
+  background: #43A047;
+  transform: translateY(-2px);
+}
+
+.boton-completar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.boton-completar.completada {
+  background: #1E88E5;
+}
+
+.boton-completar.completada:hover:not(:disabled) {
+  background: #1976D2;
+}
+
+.texto-corto {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .barra-navegacion {
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .boton-nav,
+  .boton-completar {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+
+  .texto-completo {
+    display: none;
+  }
+
+  .texto-corto {
+    display: inline;
+  }
+
+  .boton-completar {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 480px) {
+  .barra-navegacion {
+    grid-template-columns: 1fr 1.5fr 1fr;
+    padding: 0.5rem;
+  }
+
+  .boton-completar {
+    font-size: 0.7rem;
+  }
+
+  .boton-nav {
+    font-size: 0.7rem;
+  }
+}

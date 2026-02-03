@@ -1,0 +1,180 @@
+/* CONTENEDOR PRINCIPAL */
+.fc-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+/* DESKTOP LAYOUT */
+.fc-desktop {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+/* MOBILE LAYOUT */
+.fc-mobile {
+    display: none;
+}
+
+/* INPUT BUSCADOR */
+.fc-buscador-item {
+    flex: 1;
+    min-width: 300px;
+}
+
+.fc-input-buscar {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.fc-input-buscar:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* SELECTS */
+.fc-select {
+    min-width: 140px;
+    padding: 0.875rem 2.5rem 0.875rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+}
+
+.fc-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* BOTON LIMPIAR */
+.fc-btn-limpiar {
+    padding: 0.875rem 1.25rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.fc-btn-limpiar:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+/* RESULTADOS DESKTOP */
+.fc-resultados-desktop {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.fc-count {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+.fc-text {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* RESPONSIVE STYLES */
+@media (max-width: 768px) {
+    .fc-desktop {
+        display: none;
+    }
+
+    .fc-mobile {
+        display: block;
+    }
+
+    .fc-container {
+        padding: 1rem;
+    }
+
+    .fc-buscador-completo {
+        margin-bottom: 1rem;
+    }
+
+    .fc-filtros-fila {
+        display: flex;
+        flex-wrap: wrap;
+        /* PERMITIR WRAP */
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Version Mobile de Selects */
+    .fc-select-mobile {
+        flex: 1;
+        padding: 0.75rem 2rem 0.75rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #f9fafb;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        background-size: 0.9em;
+    }
+
+    .fc-select-mobile:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .fc-limpiar-mobile {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .fc-limpiar-mobile .fc-btn-limpiar {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .fc-resultados-mobile {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        justify-content: center;
+        padding-top: 1rem;
+        border-top: 1px solid #f3f4f6;
+    }
+}

@@ -1,0 +1,199 @@
+/* BurbujaMensaje.css - Copy Exacto de Svelte con Tailwind Values */
+
+/* Reset de caja para asegurar consistencia */
+.bm-group,
+.bm-bubble,
+.bm-avatar-container,
+.bm-meta {
+    box-sizing: border-box;
+}
+
+/* Contenedor del grupo (mb-1 = 4px) */
+.bm-group {
+    display: flex;
+    width: 100%;
+    margin-bottom: 4px;
+    position: relative;
+    padding: 0 4px;
+    /* Un poco de padding lateral */
+}
+
+/* Alineación (justify-end / start) */
+.bm-group.bm-own {
+    justify-content: flex-end;
+}
+
+.bm-group.bm-other {
+    justify-content: flex-start;
+}
+
+/* Avatar Container (w-8 h-8 = 32px) */
+.bm-avatar-container {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    /* mb-1 aligned to bottom */
+    display: flex;
+    align-items: flex-end;
+    margin-right: 8px;
+    /* space-x-2 */
+}
+
+.bm-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.bm-avatar-spacer {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    margin-right: 8px;
+    /* space placeholder */
+}
+
+/* Contenedor de contenido (Flex col) */
+.bm-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+    /* max-w-xs / lg:max-w-md aprox */
+}
+
+/* Alineación interna */
+.bm-own .bm-content-wrapper {
+    align-items: flex-end;
+}
+
+.bm-other .bm-content-wrapper {
+    align-items: flex-start;
+}
+
+/* Nombre de usuario (text-xs font-semibold mb-1 px-3) */
+.bm-username {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    padding: 0 12px;
+    color: #6b7280;
+    /* text-gray-500 fallback */
+}
+
+
+/* --------------------------------------------------------------------------
+   LA BURBUJA (Estilos Base Svelte: p-3 rounded-2xl shadow-sm)
+   -------------------------------------------------------------------------- */
+.bm-bubble {
+    position: relative;
+    padding: 12px;
+    border-radius: 16px;
+    /* rounded-2xl */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    word-break: break-word;
+    font-size: 14.5px;
+    line-height: 1.5;
+}
+
+/* Estilos MIO (bg-blue-600 text-white) */
+.bm-own .bm-bubble {
+    background-color: #2563eb;
+    /* Tailwind blue-600 */
+    color: #ffffff;
+}
+
+/* Estilos OTRO (bg-gray-100 text-gray-900) */
+.bm-other .bm-bubble {
+    background-color: #f3f4f6;
+    /* Tailwind gray-100 */
+    color: #111827;
+    /* Tailwind gray-900 */
+}
+
+
+/* --------------------------------------------------------------------------
+   LÓGICA DE BORDES (Svelte Exact Logic)
+   -------------------------------------------------------------------------- */
+
+/* MIO: Si siguiente es mio -> rounded-br-md (6px) */
+/* Nota: En React pasamos la clase .bm-next-own si cumple la condicion */
+.bm-bubble.bm-round-br-md {
+    border-bottom-right-radius: 6px !important;
+}
+
+/* MIO: Si anterior es mio -> rounded-tr-md */
+.bm-bubble.bm-round-tr-md {
+    border-top-right-radius: 6px !important;
+}
+
+/* OTRO: Si siguiente es otro (mismo usuario) -> rounded-bl-md */
+.bm-bubble.bm-round-bl-md {
+    border-bottom-left-radius: 6px !important;
+}
+
+/* OTRO: Si anterior es otro (mismo usuario) -> rounded-tl-md */
+.bm-bubble.bm-round-tl-md {
+    border-top-left-radius: 6px !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   METADATA
+   -------------------------------------------------------------------------- */
+.bm-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 0 2px;
+}
+
+/* Texto de hora (text-xs opacity-75 approx) */
+.bm-time {
+    font-size: 0.70rem;
+    opacity: 0.8;
+    color: inherit;
+    /* Hereda color (blanco en own, negro en other) */
+}
+
+/* Checks w-3 h-3 */
+.bm-checks svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Color Checks */
+.bm-own .bm-checks {
+    color: rgba(255, 255, 255, 0.9);
+    /* Blanco en azul */
+}
+
+/* Si fuera visto (azul), pero sobre fondo azul se ve blanco. 
+   Svelte usa check gris o azul segun estado.
+   Sobre fondo azul, el check azul no se ve. Svelte lo pone blanco o gris claro?
+   En el codigo Svelte: text-blue-500.
+   Si el fondo es azul-600, text-blue-500 no contrasta bien. 
+   Posiblemente Svelte usa burbuja blanca para propios?
+   Revisando codigo Svelte: `bg-blue-600 text-white`.
+   Checks: `text-blue-500` (Visto).
+   Esto es raro. Blue-500 sobre Blue-600.
+   Asumiremos que para "Own" los checks deben ser Blancos o Azul Claro muy brillante.
+   Forzaremos blanco para contraste.
+*/
+.bm-own .bm-check-visto {
+    color: #93c5fd;
+    /* blue-300 lighter */
+}
+
+.bm-own .bm-check-enviado {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.bm-other .bm-time {
+    color: #6b7280;
+}

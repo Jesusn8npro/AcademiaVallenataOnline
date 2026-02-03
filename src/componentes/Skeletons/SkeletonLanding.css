@@ -1,0 +1,105 @@
+/* src/componentes/Skeletons/SkeletonLanding.css */
+.skeleton-landing-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #111827;
+    /* Fondo oscuro global */
+    color: white;
+    padding-top: 80px;
+    /* Espacio para navbar si es fija */
+}
+
+.skeleton-landing-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    .skeleton-landing-hero {
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        min-height: 80vh;
+    }
+}
+
+/* Columna Izquierda */
+.skeleton-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.skeleton-badge-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.skeleton-badge {
+    width: 100px;
+    height: 30px;
+}
+
+.skeleton-title {
+    width: 90%;
+    height: 60px;
+    /* Título grande */
+}
+
+.skeleton-description {
+    width: 100%;
+    height: 80px;
+    /* Párrafo */
+}
+
+.skeleton-benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.skeleton-benefit-item {
+    height: 40px;
+    width: 100%;
+}
+
+.skeleton-cta-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.skeleton-btn {
+    width: 180px;
+    height: 50px;
+    border-radius: 8px;
+}
+
+/* Columna Derecha */
+.skeleton-right-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.skeleton-video-card {
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+}
+
+.skeleton-rating-row {
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 500px;
+    height: 60px;
+    border-radius: 8px;
+}

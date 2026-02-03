@@ -1,0 +1,235 @@
+/* Variables para Pestañas Perfil */
+:root {
+    --perfil-tabs-color-activo: #2563eb;
+    --perfil-tabs-color-hover: #f3f4f6;
+    --perfil-tabs-texto-claro: #4b5563;
+    --perfil-tabs-scroll-bg: #2563eb;
+    --perfil-tabs-fondo-blanco: #ffffff;
+}
+
+.perfil-tabs-contenedor-wrapper {
+    position: relative;
+    width: 100%;
+    margin-top: -20px;
+    z-index: 20;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Ocultar suavemente cuando el modal está abierto */
+.perfil-tabs-contenedor-wrapper.perfil-tabs-modal-abierto {
+    transform: translateY(-20px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.perfil-tabs-nav-container-interno {
+    position: relative;
+    margin-top: 25px;
+}
+
+.perfil-tabs-navegacion {
+    display: flex;
+    justify-content: center;
+    background: var(--perfil-tabs-fondo-blanco);
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 6px 32px -4px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    margin: 0;
+}
+
+.perfil-tabs-item {
+    display: flex;
+    justify-content: center;
+    padding: 6px 8px;
+    color: var(--perfil-tabs-texto-claro);
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1;
+    min-width: 70px;
+    text-align: center;
+}
+
+.perfil-tabs-contenido {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 3px;
+    border-radius: 10px;
+    width: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    top: 0;
+}
+
+.perfil-tabs-item.perfil-tabs-activo .perfil-tabs-contenido {
+    color: var(--perfil-tabs-color-activo);
+    transform: translateY(-4px);
+}
+
+.perfil-tabs-item:hover:not(.perfil-tabs-activo) .perfil-tabs-contenido {
+    background-color: var(--perfil-tabs-color-hover);
+    transform: translateY(-2px);
+}
+
+.perfil-tabs-icono {
+    width: 22px;
+    height: 22px;
+}
+
+.perfil-tabs-etiqueta {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.perfil-tabs-item::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 25%;
+    width: 50%;
+    height: 3px;
+    background: var(--perfil-tabs-color-activo);
+    border-radius: 6px;
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+.perfil-tabs-item.perfil-tabs-activo::after {
+    transform: scaleX(1);
+}
+
+/* === BOTONES DE SCROLL RESPONSIVOS === */
+.perfil-tabs-boton-scroll {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--perfil-tabs-scroll-bg);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 25;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.perfil-tabs-boton-scroll.perfil-tabs-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.perfil-tabs-boton-scroll:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.perfil-tabs-boton-scroll.perfil-tabs-izquierda {
+    left: -15px;
+}
+
+.perfil-tabs-boton-scroll.perfil-tabs-derecha {
+    right: -15px;
+}
+
+.perfil-tabs-boton-scroll svg {
+    width: 16px;
+    height: 16px;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* === DISEÑO RESPONSIVO PARA MÓVILES === */
+@media (max-width: 768px) {
+    .perfil-tabs-navegacion {
+        justify-content: flex-start;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 0;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .perfil-tabs-navegacion::-webkit-scrollbar {
+        display: none;
+    }
+
+    .perfil-tabs-item {
+        flex: 0 0 auto;
+        width: 32%;
+        scroll-snap-align: center;
+        padding: 4px 6px;
+    }
+
+    .perfil-tabs-contenido {
+        padding: 4px 2px;
+        gap: 2px;
+    }
+
+    .perfil-tabs-icono {
+        width: 20px;
+        height: 20px;
+    }
+
+    .perfil-tabs-etiqueta {
+        font-size: 0.6rem;
+    }
+
+    .perfil-tabs-boton-scroll {
+        display: flex;
+    }
+
+    .perfil-tabs-contenedor-wrapper {
+        margin-top: -20px;
+        z-index: 10;
+        width: 100%;
+    }
+
+    .perfil-tabs-nav-container-interno {
+        width: 100%;
+        padding: 0;
+        margin-top: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .perfil-tabs-item {
+        width: 35%;
+        padding: 3px 4px;
+    }
+
+    .perfil-tabs-contenido {
+        padding: 10px 1px;
+    }
+
+    .perfil-tabs-icono {
+        width: 18px;
+        height: 18px;
+    }
+
+    .perfil-tabs-etiqueta {
+        font-size: 0.8rem;
+        margin-top: 10px;
+    }
+
+    .perfil-tabs-contenedor-wrapper {
+        margin-top: -30px;
+    }
+
+    .perfil-tabs-nav-container-interno {
+        margin-top: 10px;
+    }
+}

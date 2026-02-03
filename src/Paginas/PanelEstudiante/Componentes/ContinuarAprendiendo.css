@@ -1,0 +1,1019 @@
+/* ContinuarAprendiendo.css */
+
+/* 🎵 ACADEMIA CONTINUAR APRENDIENDO */
+.academia-continuar-aprendiendo {
+    margin-bottom: 32px;
+}
+
+/* 🎠 SLIDER CONTAINER */
+.academia-slider-container {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+    border-radius: 20px;
+    padding: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+}
+
+.academia-slider-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* 🎯 HERO CON ACTIVIDAD */
+.academia-hero-actividad {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+    border-radius: 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.academia-hero-actividad.academia-changing {
+    opacity: 0.5;
+}
+
+.academia-hero-actividad::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1px);
+}
+
+.academia-contenido-izquierdo,
+.academia-contenido-derecho {
+    position: relative;
+    z-index: 2;
+}
+
+.academia-etiqueta-continuar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.academia-titulo-principal {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.academia-info-actividad {
+    margin-bottom: 24px;
+}
+
+.academia-descripcion {
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.academia-modulo,
+.academia-artista,
+.academia-leccion {
+    color: #fbbf24;
+    /* Amber-400 - Vibrant Orange */
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.academia-separador {
+    opacity: 0.6;
+}
+
+.academia-estadisticas {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.academia-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.academia-stat .academia-valor {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.academia-stat .academia-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.academia-progreso-visual {
+    margin-bottom: 16px;
+}
+
+.academia-barra-progreso {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.academia-progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+}
+
+.academia-progreso-texto {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.academia-ultima-sesion {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.academia-boton-continuar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.academia-boton-continuar:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+
+.academia-botones-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.academia-boton-mis-cursos {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 0;
+}
+
+.academia-boton-mis-cursos:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
+}
+
+.academia-icono-flecha {
+    width: 20px;
+    height: 20px;
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+/* 🖼️ IMAGEN Y PROGRESO CIRCULAR */
+.academia-contenido-derecho {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.academia-imagen-contenedor {
+    position: relative;
+    width: 350px;
+    height: 280px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.academia-imagen-curso {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.academia-overlay-progreso {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+}
+
+.academia-progreso-circular {
+    width: 80px;
+    height: 80px;
+}
+
+.academia-circular-chart-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.academia-circle-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 2;
+}
+
+.academia-circle {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.8s ease;
+}
+
+.academia-percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 🌟 SIN ACTIVIDAD */
+.academia-hero-sin-actividad {
+    padding: 60px 40px;
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 20px;
+    border: 2px dashed rgba(100, 116, 139, 0.3);
+    text-align: center;
+}
+
+.academia-contenido-vacio {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.academia-icono-vacio {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.academia-contenido-vacio h2 {
+    font-size: 1.8rem;
+    margin: 0 0 12px 0;
+    color: white;
+}
+
+.academia-contenido-vacio p {
+    color: #94a3b8;
+    margin: 0 0 24px 0;
+    font-size: 1.1rem;
+}
+
+.academia-botones-accion {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.academia-boton-principal,
+.academia-boton-secundario {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.academia-boton-principal {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+}
+
+.academia-boton-secundario {
+    background: transparent;
+    color: #6366f1;
+    border: 2px solid #6366f1;
+}
+
+.academia-boton-principal:hover,
+.academia-boton-secundario:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 900px) {
+    .academia-hero-actividad {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .academia-titulo-principal {
+        font-size: 1.8rem;
+    }
+
+    .academia-estadisticas {
+        gap: 16px;
+    }
+
+    .academia-imagen-contenedor {
+        width: 200px;
+        height: 150px;
+        margin: 0 auto;
+    }
+
+    .academia-botones-accion {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .academia-boton-principal,
+    .academia-boton-secundario {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    /* 🎠 SLIDER MÓVIL */
+    .academia-slider-header {
+        padding: 0 10px;
+        margin-bottom: 15px;
+    }
+
+    .academia-usuario-info {
+        gap: 8px;
+    }
+
+    .academia-saludo {
+        font-size: 1rem;
+    }
+
+    .academia-submensaje {
+        font-size: 0.8rem;
+    }
+
+    .academia-navegacion-externa {
+        gap: 12px;
+    }
+
+    .academia-nav-btn-external {
+        width: 35px;
+        height: 35px;
+    }
+
+    .academia-nav-btn-external svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .academia-contador-externo {
+        font-size: 0.9rem;
+        min-width: 40px;
+        gap: 6px;
+    }
+
+    .academia-slider-indicators {
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .academia-indicator {
+        width: 40px;
+        height: 40px;
+    }
+
+    .academia-tipo-indicator {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 750px) {
+    .academia-contador-externo {
+        display: none !important;
+    }
+}
+
+/* 📱 HEADER DEL SLIDER */
+.academia-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.academia-usuario-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.academia-usuario-info :global(.academia-avatar) {
+    width: 50px !important;
+    height: 50px !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.academia-usuario-info :global(.academia-avatar:hover) {
+    border-color: rgba(255, 255, 255, 0.7) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2) !important;
+}
+
+.academia-saludo-usuario {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.academia-saludo {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.academia-submensaje {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-style: italic;
+    color: #fbbf24;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-weight: 500;
+}
+
+.academia-navegacion-externa {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.academia-nav-btn-external {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    justify-content: center;
+}
+
+.academia-nav-btn-external:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.academia-nav-btn-external:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: scale(0.9);
+}
+
+.academia-nav-btn-external svg {
+    width: 20px;
+    height: 20px;
+}
+
+.academia-contador-externo {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    min-width: 50px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.academia-auto-indicator {
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.academia-auto-indicator.academia-active {
+    color: #10b981;
+    animation: academia-autoPlayPulse 3s infinite;
+}
+
+.academia-auto-indicator.academia-paused {
+    color: #f59e0b;
+    opacity: 0.8;
+}
+
+@keyframes academia-autoPlayPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(0.9);
+    }
+}
+
+/* 🎯 MENSAJE MOTIVACIONAL MIENTRAS CARGA */
+.academia-hero-motivacional {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 24px;
+    padding: 40px;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+}
+
+.academia-hero-motivacional::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.academia-motivacion-container {
+    text-align: center;
+    color: white;
+    max-width: 600px;
+    z-index: 1;
+    position: relative;
+}
+
+/* 🎵 ICONO ACORDEÓN ANIMADO */
+.academia-icono-acordeon {
+    margin-bottom: 32px;
+    position: relative;
+}
+
+.academia-acordeon-animado {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 16px;
+    animation: academia-acordeon-float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.academia-notas-musicales {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.academia-nota {
+    font-size: 1.5rem;
+    opacity: 0.8;
+    animation: academia-nota-bounce 2s ease-in-out infinite;
+}
+
+.academia-nota:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.academia-nota:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.academia-nota:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+/* 🚀 MENSAJE PRINCIPAL */
+.academia-mensaje-principal {
+    margin-bottom: 32px;
+}
+
+.academia-titulo-bienvenida {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0 0 16px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #ffffff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: academia-titulo-glow 2s ease-in-out infinite alternate;
+}
+
+.academia-subtitulo-motivacional {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.6;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ✨ CARACTERÍSTICAS DESTACADAS */
+.academia-caracteristicas-destacadas {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.academia-caracteristica {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.academia-caracteristica:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.academia-icono-caracteristica {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.academia-texto-caracteristica {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0.9;
+}
+
+/* 🔄 INDICADOR DE CARGA SUTIL */
+.academia-indicador-carga {
+    margin-top: 24px;
+}
+
+.academia-puntos-carga {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.academia-punto {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    animation: academia-punto-pulse 1.5s ease-in-out infinite;
+}
+
+.academia-punto:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.academia-punto:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.academia-punto:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.academia-texto-carga {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin: 0;
+    font-style: italic;
+}
+
+/* 🎭 ANIMACIONES */
+@keyframes academia-acordeon-float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes academia-nota-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes academia-titulo-glow {
+    0% {
+        filter: brightness(1) drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+    }
+
+    100% {
+        filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+}
+
+@keyframes academia-punto-pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* 📱 RESPONSIVE ADICIONAL */
+@media (max-width: 768px) {
+    .academia-hero-motivacional {
+        padding: 24px;
+        min-height: 350px;
+    }
+
+    .academia-titulo-bienvenida {
+        font-size: 2rem;
+    }
+
+    .academia-subtitulo-motivacional {
+        font-size: 1rem;
+    }
+
+    .academia-caracteristicas-destacadas {
+        gap: 16px;
+    }
+
+    .academia-caracteristica {
+        min-width: 100px;
+        padding: 12px;
+    }
+
+    .academia-acordeon-animado {
+        font-size: 3rem;
+    }
+
+    .academia-slider-container {
+        padding: 16px;
+    }
+
+    .academia-hero-actividad {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .academia-titulo-principal {
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+
+    .academia-botones-container {
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .academia-boton-continuar {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .academia-boton-mis-cursos {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .academia-imagen-contenedor {
+        width: 280px;
+        height: 210px;
+    }
+
+    .academia-nav-btn-external {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    .academia-icono-flecha {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .academia-slider-container {
+        padding: 12px;
+    }
+
+    .academia-hero-actividad {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .academia-titulo-principal {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .academia-boton-continuar {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .academia-boton-mis-cursos {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        margin-left: 6px;
+    }
+
+    .academia-imagen-contenedor {
+        width: 220px;
+        height: 165px;
+    }
+
+    .academia-estadisticas {
+        gap: 16px;
+    }
+
+    .academia-stat .academia-valor {
+        font-size: 1.2rem;
+    }
+
+    .academia-nav-btn-external {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    .academia-icono-flecha {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    .academia-botones-container {
+        flex-direction: row;
+        gap: 6px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .academia-boton-continuar {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 10px;
+    }
+
+    .academia-boton-mis-cursos {
+        flex: 1;
+        min-width: 0;
+        padding: 5px 8px;
+    }
+}
+
+@media (min-width: 400px) and (max-width: 500px) {
+    .academia-botones-container {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .academia-boton-continuar {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .academia-boton-mis-cursos {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.8rem;
+        padding: 5px 8px;
+    }
+
+    .academia-imagen-contenedor {
+        width: 300px;
+        height: 225px;
+    }
+}
+
+.academia-slider-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 0 20px;
+}
+
+.academia-indicator {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.academia-indicator:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.academia-indicator.academia-active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.15);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+}
+
+.academia-tipo-indicator {
+    font-size: 1.2rem;
+}
+
+.academia-contador {
+    opacity: 0.8;
+    font-size: 0.85rem;
+    margin-left: 8px;
+}

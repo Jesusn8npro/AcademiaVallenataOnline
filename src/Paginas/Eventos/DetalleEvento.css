@@ -1,0 +1,494 @@
+/* Estilos para Detalle de Evento - Namespaced evt-det- */
+
+.evt-det-page {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    /* bg-gray-50 */
+    padding-bottom: 2rem;
+}
+
+/* Loading / Error */
+.evt-det-loading,
+.evt-det-error {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: #f9fafb;
+}
+
+.evt-det-spinner {
+    width: 8rem;
+    /* h-32 w-32 */
+    height: 8rem;
+    border-bottom: 2px solid #2563eb;
+    /* border-blue-600 */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.evt-det-error-icon {
+    font-size: 3.75rem;
+    /* text-6xl */
+    margin-bottom: 1rem;
+}
+
+.evt-det-btn-back {
+    background-color: #2563eb;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.evt-det-btn-back:hover {
+    background-color: #1d4ed8;
+}
+
+/* Hero Section */
+.evt-det-hero {
+    position: relative;
+    background-color: #111827;
+    /* bg-gray-900 */
+    color: white;
+    min-height: 400px;
+}
+
+.evt-det-hero-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.evt-det-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.4;
+    /* opacity-60 in generic tailwind often implies seeing roughly 60% of image, reversed here for readibility */
+    filter: brightness(0.6);
+}
+
+.evt-det-hero-content {
+    position: relative;
+    z-index: 10;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 4rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .evt-det-hero-content {
+        padding: 4rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-det-hero-content {
+        padding: 4rem 2rem;
+    }
+}
+
+.evt-det-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+@media (min-width: 1024px) {
+    .evt-det-hero-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* lg:grid-cols-2 */
+}
+
+/* Hero Info */
+.evt-det-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.evt-det-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    /* text-sm */
+    font-weight: 500;
+}
+
+.evt-det-title {
+    font-size: 2.25rem;
+    /* text-4xl */
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+    .evt-det-title {
+        font-size: 3rem;
+        /* text-5xl */
+    }
+}
+
+.evt-det-desc-short {
+    font-size: 1.25rem;
+    /* text-xl */
+    color: #bfdbfe;
+    /* text-blue-100 */
+    margin-bottom: 1.5rem;
+}
+
+.evt-det-key-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+    .evt-det-key-info {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.evt-det-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.evt-det-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #93c5fd;
+    /* text-blue-300 */
+}
+
+.evt-det-label {
+    font-size: 0.875rem;
+    color: #bfdbfe;
+    /* text-blue-200 */
+}
+
+.evt-det-value {
+    font-weight: 600;
+}
+
+.evt-det-price-section {
+    margin-bottom: 1.5rem;
+}
+
+.evt-det-price-main {
+    font-size: 1.875rem;
+    /* text-3xl */
+    font-weight: 700;
+}
+
+.evt-det-price-currency {
+    font-size: 0.875rem;
+    color: #bfdbfe;
+    margin-left: 0.5rem;
+}
+
+.evt-det-price-old {
+    font-size: 1.125rem;
+    color: #bfdbfe;
+    text-decoration: line-through;
+}
+
+/* Action Area (Card in Hero) */
+.evt-det-action-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+}
+
+.evt-det-btn-primary {
+    width: 100%;
+    background-color: #2563eb;
+    /* bg-blue-600 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.evt-det-btn-primary:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.evt-det-btn-green {
+    width: 100%;
+    background-color: #16a34a;
+    /* bg-green-600 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.evt-det-btn-green:hover:not(:disabled) {
+    background-color: #15803d;
+}
+
+.evt-det-btn-red {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background-color: #dc2626;
+    /* bg-red-600 */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+    text-decoration: none;
+}
+
+.evt-det-btn-red:hover {
+    background-color: #b91c1c;
+}
+
+.evt-det-btn-secondary {
+    width: 100%;
+    background-color: #4b5563;
+    /* bg-gray-600 */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+}
+
+.evt-det-btn-secondary:hover:not(:disabled) {
+    background-color: #374151;
+}
+
+/* Main Content */
+.evt-det-content-wrapper {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .evt-det-content-wrapper {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-det-content-wrapper {
+        padding: 2rem 2rem;
+    }
+}
+
+/* Tabs Navigation */
+.evt-det-tabs-nav {
+    border-bottom: 1px solid #e5e7eb;
+    /* border-gray-200 */
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 2rem;
+}
+
+.evt-det-tab-btn {
+    padding: 0.5rem 0.25rem;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #6b7280;
+    /* text-gray-500 */
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.evt-det-tab-btn:hover {
+    color: #374151;
+    /* hover:text-gray-700 */
+    border-bottom-color: #d1d5db;
+    /* hover:border-gray-300 */
+}
+
+.evt-det-tab-btn.active {
+    color: #2563eb;
+    /* text-blue-600 */
+    border-bottom-color: #3b82f6;
+    /* border-blue-500 */
+}
+
+/* Grid Layout (Content + Sidebar) */
+.evt-det-main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .evt-det-main-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+
+    /* lg:col-span-2 vs 1 */
+}
+
+/* Card Style for Content Blocks */
+.evt-det-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 2rem;
+}
+
+.evt-det-section-title {
+    font-size: 1.5rem;
+    /* text-2xl */
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.5rem;
+}
+
+/* Description Prose */
+.evt-det-prose {
+    color: #374151;
+    line-height: 1.625;
+}
+
+/* Sidebar Details */
+.evt-det-sidebar-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    position: sticky;
+    top: 1.5rem;
+}
+
+.evt-det-sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.evt-det-dt {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.evt-det-dd {
+    color: #111827;
+    font-weight: 500;
+}
+
+/* Comments Section */
+.evt-det-comment-form {
+    margin-bottom: 2rem;
+}
+
+.evt-det-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.evt-det-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    resize: none;
+    font-family: inherit;
+}
+
+.evt-det-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.evt-det-comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.evt-det-comment-item {
+    display: flex;
+    gap: 1rem;
+}
+
+.evt-det-comment-name {
+    font-weight: 600;
+    color: #111827;
+}
+
+.evt-det-comment-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-left: 0.5rem;
+}
+
+.evt-det-comment-text {
+    color: #374151;
+}
+
+/* Materiales */
+.evt-det-material-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.evt-det-material-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}

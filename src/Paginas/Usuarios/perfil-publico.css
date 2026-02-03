@@ -1,0 +1,23 @@
+.perfil-contenido { padding: 2rem; min-height: 60vh; max-width: 1100px; margin: 0 auto }
+.seccion { background:#ffffff; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #f1f5f9; margin-bottom:2rem }
+.estadisticas-rapidas .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem }
+.stat-card { border-radius:16px; padding:1.25rem; text-align:center; color:#fff }
+.card-morado { background: linear-gradient(135deg, #8B5CF6, #6366F1) }
+.card-oro { background: linear-gradient(135deg, #F59E0B, #D97706) }
+.card-celeste { background: linear-gradient(135deg, #22D3EE, #06B6D4) }
+.stat-numero { font-weight:800; font-size:1.6rem }
+.stat-label { font-size:.9rem; opacity:.95 }
+.informacion-personal .info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem }
+.info-item { display:flex; gap:.75rem; align-items:flex-start; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1rem }
+.info-item.full-width { grid-column:1 / -1 }
+.info-icon { font-size:1.25rem }
+.info-label { font-weight:600; color:#1f2937 }
+.info-valor { color:#374151 }
+.badge { display:inline-block; background:#f8fafc; border:1px solid #e2e8f0; border-radius:999px; padding:.25rem .6rem; font-size:.85rem; font-weight:600 }
+.badge-habilidad { background:#eef2ff; border-color:#c7d2fe }
+.detalles-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem }
+.detalle-item { display:flex; gap:.75rem; background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:1rem; align-items:center }
+.detalle-icon { font-size:1.25rem }
+.barra-progreso { height:8px; background:#f1f5f9; border-radius:999px; overflow:hidden; margin-top:.25rem; width:100% }
+.barra-relleno { height:8px; background:#3b82f6; width:0 }
+.porcentaje { font-size:.85rem; color:#6b7280; margin-left:.5rem }

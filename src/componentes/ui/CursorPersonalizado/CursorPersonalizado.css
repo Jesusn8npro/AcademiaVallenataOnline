@@ -1,0 +1,173 @@
+body.cursor-personalizado-activo {
+    cursor: none !important;
+}
+
+body.cursor-personalizado-activo * {
+    cursor: none !important;
+}
+
+/* Asegurar que el cursor esté visible incluso sobre modales y overlays */
+.modal-overlay {
+    cursor: none !important;
+}
+
+.modal-overlay * {
+    cursor: none !important;
+}
+
+/* Punto central del cursor */
+.cursor-punto-central {
+    position: fixed;
+    top: -4px;
+    left: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999999;
+    /* Máximo z-index para estar sobre modales */
+    will-change: transform;
+    transition: background-color 0.15s ease;
+    box-shadow:
+        0 0 10px currentColor,
+        0 0 20px rgba(99, 102, 241, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+/* Anillo externo con seguimiento suave */
+.cursor-anillo-externo {
+    position: fixed;
+    top: -18px;
+    left: -18px;
+    width: 36px;
+    height: 36px;
+    border: 3px solid;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999998;
+    /* Máximo z-index para estar sobre modales */
+    will-change: transform, opacity;
+    transition:
+        opacity 0.2s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+    /* Transform manejado por JS para performance o CSS transition si se prefiere lag */
+    /* transition: transform 0.1s ease-out;  <-- Si queremos lag por CSS */
+    box-shadow:
+        0 0 15px rgba(99, 102, 241, 0.3),
+        0 0 30px rgba(99, 102, 241, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Estados contextuales del anillo */
+.cursor-anillo-externo.hover {
+    border-width: 4px;
+    box-shadow:
+        0 0 25px rgba(139, 92, 246, 0.6),
+        0 0 40px rgba(139, 92, 246, 0.3),
+        0 0 60px rgba(139, 92, 246, 0.1),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.cursor-anillo-externo.texto {
+    border-radius: 8px;
+    transform-origin: center;
+    border-width: 4px;
+    box-shadow:
+        0 0 20px rgba(55, 65, 81, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.cursor-anillo-externo.arrastrar {
+    border-style: dashed;
+    border-width: 4px;
+    animation: cursor-rotate 2s linear infinite;
+    box-shadow:
+        0 0 30px rgba(245, 158, 11, 0.6),
+        0 0 50px rgba(245, 158, 11, 0.3);
+}
+
+.cursor-anillo-externo.presionado {
+    border-width: 5px;
+    box-shadow:
+        0 0 35px rgba(139, 92, 246, 0.8),
+        0 0 60px rgba(139, 92, 246, 0.4),
+        inset 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Efecto Ripple al hacer clic */
+.cursor-ripple {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80px;
+    /* Aumentado para mejor visibilidad */
+    height: 80px;
+    /* Aumentado para mejor visibilidad */
+    border: 3px solid;
+    /* Más delgado y elegante */
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999997;
+    /* Máximo z-index para estar sobre modales */
+    opacity: 1;
+    animation: cursor-ripple-expand 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border-color: var(--color-accent, #8b5cf6);
+    box-shadow:
+        0 0 20px rgba(139, 92, 246, 0.4),
+        0 0 40px rgba(139, 92, 246, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Animaciones */
+@keyframes cursor-ripple-expand {
+    0% {
+        transform: scale(0.1);
+        opacity: 1;
+        border-width: 3px;
+        box-shadow:
+            0 0 15px rgba(139, 92, 246, 0.8),
+            0 0 30px rgba(139, 92, 246, 0.4),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+
+    20% {
+        transform: scale(0.4);
+        opacity: 0.9;
+        border-width: 4px;
+        box-shadow:
+            0 0 25px rgba(139, 92, 246, 0.7),
+            0 0 50px rgba(139, 92, 246, 0.3),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    60% {
+        transform: scale(1.5);
+        opacity: 0.4;
+        border-width: 2px;
+        box-shadow:
+            0 0 40px rgba(139, 92, 246, 0.3),
+            0 0 80px rgba(139, 92, 246, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+        border-width: 1px;
+        box-shadow:
+            0 0 60px rgba(139, 92, 246, 0),
+            0 0 120px rgba(139, 92, 246, 0),
+            inset 0 0 0 1px rgba(255, 255, 255, 0);
+    }
+}
+
+@keyframes cursor-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
