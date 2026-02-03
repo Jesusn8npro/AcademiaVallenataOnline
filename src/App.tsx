@@ -62,6 +62,7 @@ import AdminNotificaciones from './Paginas/administrador/notificaciones/AdminNot
 import Pagina404 from './Paginas/404/Pagina404'
 import SimuladorGaming from './Paginas/SimuladorDeAcordeon/SimuladorGaming';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
+import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/supabaseCliente'
@@ -195,6 +196,7 @@ const AppContent = () => {
           <Route path="/administrador/crear-articulo" element={<CreadorArticulos />} />
           <Route path="/administrador/blog/editar/:slug" element={<CreadorArticulos />} />
           <Route path="/administrador/chats" element={<AdminChats />} />
+          <Route path="/administrador/objetivos" element={<PanelDeObjetivos />} />
         </Route>
         <Route path="/notificaciones" element={<Notificaciones />} />
         {/* Catch all - 404 */}

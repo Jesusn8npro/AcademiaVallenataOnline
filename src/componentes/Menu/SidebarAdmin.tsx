@@ -86,6 +86,7 @@ const SidebarAdmin = () => {
         // Caso especial para la ruta base de administrador
         if (ruta === '/administrador') {
             const rutasPrincipales = [
+                '/administrador/objetivos',
                 '/administrador/usuarios',
                 '/administrador/pagos',
                 '/administrador/notificaciones',
@@ -399,6 +400,18 @@ const SidebarAdmin = () => {
                                             </div>
                                         )}
                                     </>
+                                )}
+                            </a>
+
+                            <a href="/administrador/objetivos" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador/objetivos') ? 'sidebar-admin-destacado' : ''}`}>
+                                <div className="sidebar-admin-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                    </svg>
+                                </div>
+                                {!colapsado && (
+                                    <span className="sidebar-admin-nav-text">Tareas Pendientes</span>
                                 )}
                             </a>
 
