@@ -5,26 +5,28 @@
     text-align: center;
     background: var(--imagen-fondo-acordeon) no-repeat center center;
     background-size: contain;
-    width: 95vh;
-    height: 95vh;
+    width: var(--sim-tamano, 82vh);
+    height: var(--sim-tamano, 82vh);
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-70%, -47%);
+    left: var(--sim-x, 53.5%);
+    top: var(--sim-y, 50%);
+    transform: translate(-50%, -50%);
+    transition: none;
+    /* Desactivar transición durante el arrastre */
 }
 
 .lado-teclas {
     position: absolute;
-    left: 5.05%;
-    top: 13%;
+    left: var(--sim-teclas-left, 5.05%);
+    top: var(--sim-teclas-top, 13%);
     display: flex;
     z-index: 10;
 }
 
 .lado-bajos {
     position: absolute;
-    left: 82.5%;
-    top: 30%;
+    left: var(--sim-bajos-left, 82.5%);
+    top: var(--sim-bajos-top, 30%);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -32,7 +34,7 @@
 }
 
 .lado-bajos .fila.uno {
-    margin-right: 0.3vh;
+    margin-right: 0.25vh;
 }
 
 .lado-bajos .fila.dos {
@@ -45,21 +47,30 @@
     align-items: center;
 }
 
+.lado-teclas .boton {
+    height: var(--sim-pitos-boton-tamano, 4.4vh);
+    width: var(--sim-pitos-boton-tamano, 4.4vh);
+    font-size: var(--sim-pitos-fuente-tamano, 1.6vh);
+}
+
+.lado-bajos .boton {
+    height: var(--sim-bajos-boton-tamano, 4.4vh);
+    width: var(--sim-bajos-boton-tamano, 4.4vh);
+    font-size: var(--sim-bajos-fuente-tamano, 1.6vh);
+}
+
 .boton {
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    height: 4.8vh;
-    width: 4.8vh;
-    margin-right: 0.5vh;
+    margin-right: 0.45vh;
     background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
     background-size: cover;
     background-position: center;
     box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.6), 0px 6px rgba(0, 0, 0, 0.3);
     color: #222;
     font-weight: 600;
-    font-size: 1.8vh;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -135,7 +146,7 @@
 }
 
 .lado-teclas .fila.tres {
-    margin-top: 3vh;
+    margin-top: 2.6vh;
 }
 
 .lado-teclas .fila.dos {
@@ -143,16 +154,16 @@
 }
 
 .lado-teclas .fila.uno {
-    margin-top: 3vh;
+    margin-top: 2.6vh;
 }
 
 .fila .boton {
-    margin-bottom: 1vh;
+    margin-bottom: 0.9vh;
 }
 
 .fila h4 {
-    margin-top: 0.4vh;
-    font-size: 1.2vh;
+    margin-top: 0.35vh;
+    font-size: 1vh;
     text-align: center;
     color: #efeaea;
 }
@@ -177,123 +188,67 @@
     }
 }
 
-/* 🚀 ESTILOS PARA EFECTO BOTÓN VOLADOR REAL */
-/* =========================================== */
-
-.notas-voladoras-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 9999;
+/* 🛠️ PANEL DE PERSONALIZACIÓN - SOLUCIÓN RADICAL CURSOR */
+body.diseno-activo,
+body.diseno-activo *,
+body.diseno-activo div,
+body.diseno-activo button,
+body.diseno-activo input,
+body.diseno-activo label,
+body.diseno-activo .disposicion-acordeon,
+body.diseno-activo .panel-ajustes {
+    cursor: auto !important;
 }
 
-.nota-voladora-real {
-    position: absolute !important;
-    z-index: 9999 !important;
+body.diseno-activo .cursor-punto-central,
+body.diseno-activo .cursor-anillo-externo,
+body.diseno-activo .cursor-ripple {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
     pointer-events: none !important;
-    transition: transform 1.5s ease-out, opacity 1.5s linear !important;
-
-    /* Preservar apariencia de botón real */
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 600 !important;
-    cursor: default !important;
-    user-select: none !important;
-
-    /* Efecto glow y pulso más intenso */
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
 }
 
-/* 🟢 Estilos para fuelle empujar (verde) */
-.nota-voladora-real.color-verde {
-    background: rgba(34, 139, 34, 0.95) !important;
-    border: 3px solid rgba(34, 139, 34, 1) !important;
-    box-shadow:
-        0 0 25px rgba(34, 139, 34, 0.9),
-        inset 2px 2px 5px rgba(255, 255, 255, 0.3) !important;
-    color: #ffffff !important;
-    animation: pulsoVoladorVerde 0.8s ease-in-out infinite alternate;
+.panel-ajustes {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
-/* 🔴 Estilos para fuelle halar (rojo) */
-.nota-voladora-real.color-rojo {
-    background: rgba(220, 20, 60, 0.95) !important;
-    border: 3px solid rgba(220, 20, 60, 1) !important;
-    box-shadow:
-        0 0 25px rgba(220, 20, 60, 0.9),
-        inset 2px 2px 5px rgba(255, 255, 255, 0.3) !important;
-    color: #ffffff !important;
-    animation: pulsoVoladorRojo 0.8s ease-in-out infinite alternate;
+
+.boton-accion-panel {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    transition: transform 0.1s;
 }
 
-/* 🎯 Animaciones de pulso mejoradas */
-@keyframes pulsoVoladorVerde {
-    0% {
-        box-shadow:
-            0 0 25px rgba(34, 139, 34, 0.9),
-            inset 2px 2px 5px rgba(255, 255, 255, 0.3);
-        filter: drop-shadow(0 0 15px rgba(34, 139, 34, 0.8));
-        transform: translateY(4px) scale(1.0);
-    }
-
-    100% {
-        box-shadow:
-            0 0 35px rgba(34, 139, 34, 1),
-            inset 2px 2px 5px rgba(255, 255, 255, 0.5);
-        filter: drop-shadow(0 0 20px rgba(34, 139, 34, 1));
-        transform: translateY(4px) scale(1.05);
-    }
+.boton-accion-panel:active {
+    transform: scale(0.95);
 }
 
-@keyframes pulsoVoladorRojo {
-    0% {
-        box-shadow:
-            0 0 25px rgba(220, 20, 60, 0.9),
-            inset 2px 2px 5px rgba(255, 255, 255, 0.3);
-        filter: drop-shadow(0 0 15px rgba(220, 20, 60, 0.8));
-        transform: translateY(4px) scale(1.0);
-    }
-
-    100% {
-        box-shadow:
-            0 0 35px rgba(220, 20, 60, 1),
-            inset 2px 2px 5px rgba(255, 255, 255, 0.5);
-        filter: drop-shadow(0 0 20px rgba(220, 20, 60, 1));
-        transform: translateY(4px) scale(1.05);
-    }
+.grupo-ajuste input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    height: 6px;
+    outline: none;
 }
 
-/* 🎨 Efecto de destello para notas voladoras */
-.nota-voladora-real::before {
-    content: '';
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -3px;
-    bottom: -3px;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+
+.grupo-ajuste input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3b82f6;
     border-radius: 50%;
-    animation: destelloVolador 2s linear infinite;
-    z-index: -1;
-}
-
-@keyframes destelloVolador {
-    0% {
-        transform: rotate(0deg);
-        opacity: 0.3;
-    }
-
-    50% {
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: rotate(360deg);
-        opacity: 0.3;
-    }
+    cursor: pointer !important;
+    border: 2px solid white;
 }

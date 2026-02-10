@@ -38,14 +38,24 @@ export default function ClaseTutorial() {
 
   async function cargar() {
     if (!slug || !claseSlug) return
+    console.log('🔍 [CLASE TUTORIAL] Cargando tutorial:', slug, 'clase:', claseSlug);
     setCargando(true); setError(null)
     try {
       const { data: tuts, error: errT } = await supabase.from('tutoriales').select('*')
-      if (errT) { setError(errT.message); return }
+      if (errT) {
+        console.error('❌ [CLASE TUTORIAL] Error tutoriales:', errT);
+        setError(errT.message);
+        return
+      }
 
-      let tut = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug) || (tuts || []).find((t: any) => t.slug === slug)
-      if (!tut) { setError('Tutorial no encontrado'); return }
+      let tut = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug) || (tuts || []).find((t: any) => (t as any).slug === slug)
+      if (!tut) {
+        console.error('❌ [CLASE TUTORIAL] Tutorial no encontrado:', slug);
+        setError('Tutorial no encontrado');
+        return
+      }
       setTutorial(tut)
+      console.log('✅ [CLASE TUTORIAL] Tutorial:', tut.titulo);
 
       const { data: partes, error: errP } = await supabase
         .from('partes_tutorial')
@@ -53,12 +63,31 @@ export default function ClaseTutorial() {
         .eq('tutorial_id', tut.id)
         .order('orden', { ascending: true })
 
-      if (errP) { setError(errP.message); return }
+      if (errP) {
+        console.error('❌ [CLASE TUTORIAL] Error partes:', errP);
+        setError(errP.message);
+        return
+      }
       const lista = partes || []
       setClases(lista)
 
-      const actual = lista.find((p: any) => (p.slug || generarSlug(p.titulo)) === claseSlug) || lista[0]
-      setClase(actual)
+      // Búsqueda robusta de la clase actual
+      const safeGenerateSlug = (text: string) => {
+        try { return generarSlug(text || ''); } catch (e) { return ''; }
+      };
+
+      const actual = lista.find((p: any) =>
+        p.slug === claseSlug ||
+        safeGenerateSlug(p.titulo) === claseSlug ||
+        p.id === claseSlug
+      ) || lista[0]
+
+      if (actual) {
+        console.log('✅ [CLASE TUTORIAL] Clase actual encontrada:', actual.titulo, actual.id);
+        setClase(actual)
+      } else {
+        console.warn('⚠️ [CLASE TUTORIAL] No se encontró la clase para el slug:', claseSlug);
+      }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user && actual) {
@@ -78,25 +107,25 @@ export default function ClaseTutorial() {
           .eq('tutorial_id', tut.id)
 
         const map: Record<string, boolean> = {}
-        let completadas = 0
+        let completadasCount = 0
         if (progAll) {
           progAll.forEach((p: any) => {
             if (p.completado) {
               map[p.parte_tutorial_id] = true
-              completadas++
+              completadasCount++
             }
           })
         }
         setProgresoMap(map)
 
         const total = lista.length
-        const porcentaje = total ? Math.round((completadas / total) * 100) : 0
-        setEstadisticasProgreso({ completadas, total, porcentaje })
+        const porcentaje = total ? Math.round((completadasCount / total) * 100) : 0
+        setEstadisticasProgreso({ completadas: completadasCount, total, porcentaje })
       } else {
         setEstadisticasProgreso({ completadas: 0, total: lista.length, porcentaje: 0 })
       }
     } catch (e: any) {
-      console.error(e)
+      console.error('💥 [CLASE TUTORIAL] Error FATAL:', e)
       setError(e.message || 'Error cargando clase')
     } finally {
       setCargando(false)
@@ -159,7 +188,7 @@ export default function ClaseTutorial() {
   if (error || !tutorial || !clase) return (<div className="estado-error"><div className="error-icono">⚠</div><h2>¡Oops! Algo salió mal</h2><p>{error || 'No se encontró contenido'}</p><div className="botones-error"><a href={`/tutoriales/${slug}/contenido`} className="boton-volver">Volver</a></div></div>)
 
   return (
-    <div className="contenido-detalle-tutorial">
+    <div className="contenido-detalle-tutorial-legacy">
       <EncabezadoLeccion
         cursoTitulo={tutorial.titulo}
         leccionTitulo={clase.titulo}

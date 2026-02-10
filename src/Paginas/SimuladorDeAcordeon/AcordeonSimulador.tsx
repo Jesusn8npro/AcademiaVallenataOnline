@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { mapaTeclas } from './mapaTecladoYFrecuencias';
+import { motion } from 'framer-motion';
+import { Settings, Save, RotateCcw, Move, Type, Maximize2, GripHorizontal, Mic, Music, Plus, Trash2, Loader2, X } from 'lucide-react';
+import { useGestionDeSonidos } from './hooks/useGestionDeSonidos';
+import { useGrabadoraAudio } from './hooks/useGrabadoraAudio';
 import {
+    primeraFila,
+    segundaFila,
+    terceraFila,
     mapaTeclasBajos,
     disposicion,
     disposicionBajos,
@@ -8,13 +15,13 @@ import {
     filas,
     filasBajos,
     tonosFilas,
-    cambiarFuelle,
-    type BotonNota
+    cambiarFuelle
 } from './notasAcordeonDiatonico';
+import type { BotonNota } from './notasAcordeonDiatonico';
 import './AcordeonSimulador.css';
-import bgAcordeonDefault from './Acordeon PRO MAX.png'; // Import default image
+import bgAcordeonDefault from './Acordeon PRO MAX.png';
 
-// Tipos
+// --- TIPOS Y COMPONENTES ---
 export interface AcordeonSimuladorProps {
     direccion?: 'halar' | 'empujar';
     afinacion?: string;
@@ -49,7 +56,7 @@ export interface AcordeonSimuladorHandle {
     actualizarBotonActivo: (id: string, accion?: 'add' | 'remove') => void;
     manejarEventoTeclado: (e: KeyboardEvent | React.KeyboardEvent, esPresionada: boolean) => void;
     limpiarTodasLasNotas: () => void;
-    reproducirTono: (id: string) => { oscillator: OscillatorNode | OscillatorNode[] | null };
+    reproducirTono: (id: string) => { oscillator?: OscillatorNode | OscillatorNode[] | null, source?: AudioBufferSourceNode | null };
     simularActivacionNota: (notaId: string, fuelleDireccion: 'halar' | 'empujar', duracionMs?: number) => void;
     simularDesactivacionNota: (notaId: string) => number;
 }
@@ -60,11 +67,9 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
     modoEditor = false,
     grabando = false,
     pausado = false,
-    // reproduciendo = false,
     deshabilitarInteraccion = false,
     prefijoIdBoton = '',
     imagenFondo = bgAcordeonDefault,
-    anticipacionAcordeonGuia = 2000,
     onGrabarNota,
     onFinalizarNota,
     onCambiarFuelle,
@@ -73,137 +78,234 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
     onCambioFuelle
 }, ref) => {
 
-    // Estado local para UI
     const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
     const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
 
-    // Refs para lógica interna (mutable sin re-render)
     const audioRef = useRef<AudioContext | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
-    const ultimasTeclasPulsadas = useRef<Map<string, number>>(new Map());
-    const botonesActivosRef = useRef<Record<string, any>>({}); // Espejo de estado para acceso síncrono
-    const teclasFisicasPresionadas = useRef<Set<string>>(new Set());
-    const mousePresionado = useRef<boolean>(false);
-    const ultimoCambioFuelle = useRef<number>(0);
-    const contenedorNotasVoladorasRef = useRef<HTMLDivElement>(null);
-    const intervalLimpiezaRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const botonesActivosRef = useRef<Record<string, any>>({});
+    const [modoAjuste, setModoAjuste] = useState(false);
+    const [pestanaActiva, setPestanaActiva] = useState<'estilo' | 'grabacion'>('estilo');
 
-    // Refs para estado "fresco" en event listeners y callbacks
+    // Gestión de sonidos reales
+    const {
+        instrumentos,
+        instrumentoSeleccionado,
+        setInstrumentoSeleccionado,
+        subirMuestraReal,
+        crearInstrumento,
+        eliminarInstrumento,
+        estaProcesando,
+        mensajeEstado,
+        muestrasCargadas,
+        recargarMuestras
+    } = useGestionDeSonidos();
+
+    const [botonParaGrabar, setBotonParaGrabar] = useState<string | null>(null);
+    const [mostrarCrearIns, setMostrarCrearIns] = useState(false);
+    const [nuevoNombreIns, setNuevoNombreIns] = useState('');
+    const [nuevaAfinacionIns, setNuevaAfinacionIns] = useState('FBE');
+
+    // --- NUEVOS ESTADOS DE VISUALIZACIÓN ---
+    const [modoVista, setModoVista] = useState<'teclas' | 'numeros' | 'notas' | 'cifrado'>('notas');
+    const [mostrarDobleNota, setMostrarDobleNota] = useState(false);
+
+    // Estados para personalización de nota antes de subir/grabar
+    const [nombreNotaPersonalizada, setNombreNotaPersonalizada] = useState('');
+    const [octavaPersonalizada, setOctavaPersonalizada] = useState(4);
+    const [tipoBajoPersonalizado, setTipoBajoPersonalizado] = useState<'ninguno' | 'M' | 'm'>('ninguno');
+    const [ultimoBlobGrabado, setUltimoBlobGrabado] = useState<Blob | null>(null);
+
+    // Integración de grabadora
+    const callbackGrabacion = async (blob: Blob) => {
+        setUltimoBlobGrabado(blob); // Guardamos para preview y confirmación
+    };
+
+    const subirNotaConfirmada = async () => {
+        if (ultimoBlobGrabado && botonParaGrabar) {
+            const btnData = mapaBotonesPorId[botonParaGrabar];
+            const fuelleBoton = botonParaGrabar.includes('halar') ? 'halar' : 'empujar';
+
+            const sufijo = tipoBajoPersonalizado !== 'ninguno' ? tipoBajoPersonalizado : '';
+            let nombreFinal = nombreNotaPersonalizada || btnData.nombre;
+
+            // Si el nombre ya termina en M o m, lo quitamos antes de añadir el sufijo para evitar duplicados como LabMM
+            if (nombreFinal.endsWith('M') || nombreFinal.endsWith('m')) {
+                nombreFinal = nombreFinal.slice(0, -1);
+            }
+            nombreFinal += sufijo;
+
+            await subirMuestraReal(ultimoBlobGrabado, botonParaGrabar, {
+                fuelle: fuelleBoton,
+                esBajo: botonParaGrabar.includes('bajo'),
+                nombreNota: nombreFinal,
+                octava: octavaPersonalizada
+            });
+            setUltimoBlobGrabado(null);
+            limpiarPreview(); // Limpiamos el hook también
+            recargarMuestras?.();
+        }
+    };
+
+    // 🔄 REINICIO TOTAL AL CAMBIAR DE INSTRUMENTO (Evita sonidos fantasma)
+    useEffect(() => {
+        limpiarTodasLasNotas();
+        setBotonesActivos({});
+        botonesActivosRef.current = {};
+    }, [instrumentoSeleccionado]);
+
+    const { iniciarGrabacion, detenerGrabacionManual, limpiarPreview, estaGrabando, segundosRestantes, conteoAtras, intensidad, historialIntensidad, urlPreview } = useGrabadoraAudio(callbackGrabacion);
+
+    // 🔄 Sincronizar nota por defecto al seleccionar un botón para grabar
+    useEffect(() => {
+        if (botonParaGrabar) {
+            const btnData = mapaBotonesPorId[botonParaGrabar];
+            if (btnData) {
+                const key = `${botonParaGrabar}_${botonParaGrabar.includes('halar') ? 'halar' : 'empujar'}`;
+                const notaExistente = muestrasCargadas[key]?.nombre;
+
+                let nombreLimpio = notaExistente || btnData.nombre.replace(/[0-9]/g, '');
+                let tipoDetec: 'ninguno' | 'M' | 'm' = 'ninguno';
+
+                // Detectar si ya tenía M o m al final y extraerlo para el selector
+                if (nombreLimpio.endsWith('M')) {
+                    tipoDetec = 'M';
+                    nombreLimpio = nombreLimpio.slice(0, -1);
+                } else if (nombreLimpio.endsWith('m')) {
+                    tipoDetec = 'm';
+                    nombreLimpio = nombreLimpio.slice(0, -1);
+                }
+
+                setNombreNotaPersonalizada(nombreLimpio);
+                setTipoBajoPersonalizado(tipoDetec);
+
+                const octaveMatch = (notaExistente || btnData.nombre).match(/\d+/);
+                setOctavaPersonalizada(octaveMatch ? parseInt(octaveMatch[0]) : (botonParaGrabar.includes('bajo') ? 2 : 4));
+            }
+        }
+    }, [botonParaGrabar]);
+
+    // --- REFS PARA SINCRONIZACIÓN CRÍTICA ---
+    const instrumentoRef = useRef(instrumentoSeleccionado);
+    const muestrasRef = useRef(muestrasCargadas);
+
+    useEffect(() => { instrumentoRef.current = instrumentoSeleccionado; }, [instrumentoSeleccionado]);
+    useEffect(() => { muestrasRef.current = muestrasCargadas; }, [muestrasCargadas]);
+
+    // Obtener info del instrumento actual para el UI
+    const infoInsActual = instrumentoSeleccionado
+        ? instrumentos.find(i => i.id === instrumentoSeleccionado)
+        : { nombre: 'Acordeón Digital', afinacion: 'Fa-Sib-Mib (Base)' };
+
+    // Ajustes del simulador
+    const [ajustes, setAjustes] = useState({
+        tamano: '82vh',
+        x: '53.5%',
+        y: '50%',
+        pitosBotonTamano: '4.4vh',
+        pitosFuenteTamano: '1.6vh',
+        bajosBotonTamano: '4.2vh',
+        bajosFuenteTamano: '1.3vh',
+        teclasLeft: '5.05%',
+        teclasTop: '13%',
+        bajosLeft: '82.5%',
+        bajosTop: '28%'
+    });
+
+    // --- SOLUCIÓN MAESTRA PARA EL CURSOR ---
+    useEffect(() => {
+        if (modoAjuste) {
+            document.body.classList.add('diseno-activo');
+            document.body.classList.remove('cursor-personalizado-activo');
+        } else {
+            document.body.classList.remove('diseno-activo');
+        }
+        return () => {
+            document.body.classList.remove('diseno-activo');
+        };
+    }, [modoAjuste]);
+
+    useEffect(() => {
+        const guardados = localStorage.getItem('ajustes_acordeon_vPRO');
+        if (guardados) {
+            try { setAjustes(JSON.parse(guardados)); } catch (e) { console.error(e); }
+        }
+    }, []);
+
+    const guardarAjustes = () => {
+        localStorage.setItem('ajustes_acordeon_vPRO', JSON.stringify(ajustes));
+        setModoAjuste(false);
+        alert('✅ ¡Diseño Pro Guardado!');
+    };
+
+    const resetearAjustes = () => {
+        const defaults = { tamano: '82vh', x: '53.5%', y: '50%', pitosBotonTamano: '4.4vh', pitosFuenteTamano: '1.6vh', bajosBotonTamano: '4.4vh', bajosFuenteTamano: '1.6vh', teclasLeft: '5.05%', teclasTop: '13%', bajosLeft: '82.5%', bajosTop: '30%' };
+        setAjustes(defaults);
+        localStorage.removeItem('ajustes_acordeon_vPRO');
+    };
+
     const direccionRef = useRef(direccion);
     const deshabilitarRef = useRef(deshabilitarInteraccion);
 
-    // Callbacks externos
-    const funcionObtenerCoordenadasJugador = useRef<any>(null);
-    const funcionActivarNotaEnJugador = useRef<any>(null);
+    useEffect(() => { direccionRef.current = direccion; }, [direccion]);
+    useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
+    useEffect(() => { if (direccionProp !== direccion) setDireccion(direccionProp); }, [direccionProp]);
+    useEffect(() => { botonesActivosRef.current = botonesActivos; }, [botonesActivos]);
 
-    // Sincronizar refs
-    useEffect(() => {
-        direccionRef.current = direccion;
-    }, [direccion]);
-
-    useEffect(() => {
-        deshabilitarRef.current = deshabilitarInteraccion;
-    }, [deshabilitarInteraccion]);
-
-    // Sincronizar prop direccion con estado si cambia externamente (pero cuidado con loops)
-    useEffect(() => {
-        if (direccionProp !== direccion) {
-            setDireccion(direccionProp);
-        }
-    }, [direccionProp]);
-
-    // Sincronizar ref con estado
-    useEffect(() => {
-        botonesActivosRef.current = botonesActivos;
-    }, [botonesActivos]);
-
-
-    // --- Inicialización de Audio ---
     useEffect(() => {
         const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioCtor) {
-            audioRef.current = new AudioCtor();
+            audioRef.current = new AudioCtor({ latencyHint: 'interactive' });
             gainNodeRef.current = audioRef.current.createGain();
-            gainNodeRef.current.gain.value = 0.1;
+            gainNodeRef.current.gain.value = 0.8; // Volumen puro sin compresión
             gainNodeRef.current.connect(audioRef.current.destination);
         }
-
-        if (modoEditor) {
-            iniciarLimpiezaAutomatica();
-        }
-
-        // Event listeners globales
-        const handleKeyDown = (e: KeyboardEvent) => manejarEventoTeclado(e, true);
-        const handleKeyUp = (e: KeyboardEvent) => manejarEventoTeclado(e, false);
-
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
-        // window.addEventListener('keyup', manejarTeclaGlobalLiberada); // redundancy check: manejarEventoTeclado handles keyup logic too? No, separated logic for global release.
-        window.addEventListener('keyup', manejarTeclaGlobalLiberada);
-        window.addEventListener('mouseup', manejarMouseGlobalLiberado);
-        window.addEventListener('blur', manejarPerdidaFoco);
-
+        const hKD = (e: KeyboardEvent) => manejarEventoTeclado(e, true);
+        const hKU = (e: KeyboardEvent) => manejarEventoTeclado(e, false);
+        window.addEventListener('keydown', hKD);
+        window.addEventListener('keyup', hKU);
         return () => {
-            detenerLimpiezaAutomatica();
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-            window.removeEventListener('keyup', manejarTeclaGlobalLiberada);
-            window.removeEventListener('mouseup', manejarMouseGlobalLiberado);
-            window.removeEventListener('blur', manejarPerdidaFoco);
-            if (audioRef.current) {
-                audioRef.current.close();
-            }
+            window.removeEventListener('keydown', hKD);
+            window.removeEventListener('keyup', hKU);
+            if (audioRef.current) audioRef.current.close();
         };
     }, []);
 
-    // --- Funciones Helper ---
+    const reproducirTono = (id: string) => {
+        if (!audioRef.current || !gainNodeRef.current) return { oscillator: null, source: null };
+        if (audioRef.current.state === 'suspended') audioRef.current.resume();
 
-    const getFilaClase = (filaNombre: string) => ({
-        'primeraFila': 'tres',
-        'segundaFila': 'dos',
-        'terceraFila': 'uno'
-    }[filaNombre] || filaNombre);
+        // 🔍 1. DETERMINAR SONIDO REAL (PRIORIDAD ABSOLUTA)
+        const keyMuestra = `${id}_${direccionRef.current}`;
+        const muestraReal = muestrasRef.current?.[keyMuestra];
+        const bufferReal = muestraReal?.buffer;
 
-    const obtenerNombreBoton = (id: string) => {
-        return mapaBotonesPorId[id]?.nombre || id;
-    };
+        // SI HAY UN INSTRUMENTO SELECCIONADO -> BLOQUEAR SINTETIZADOR
+        const hayInstrumento = !!instrumentoRef.current;
 
-    // --- Lógica de Negocio ---
-
-    const detenerTono = (id: string) => {
-        const botonActivo = botonesActivosRef.current[id];
-        if (!botonActivo?.oscillator) return;
-
-        try {
-            if (Array.isArray(botonActivo.oscillator)) {
-                botonActivo.oscillator.forEach((osc: any) => {
-                    if (osc && osc.stop) osc.stop();
-                });
+        if (hayInstrumento) {
+            if (bufferReal) {
+                const source = audioRef.current.createBufferSource();
+                source.buffer = bufferReal;
+                source.loop = true;
+                source.connect(gainNodeRef.current);
+                source.start();
+                return { source };
             } else {
-                if (botonActivo.oscillator && botonActivo.oscillator.stop) {
-                    botonActivo.oscillator.stop();
-                }
+                // Si el instrumento está activo pero no hay grabación para este botón, silencio total (evita sonar digital por accidente)
+                return { oscillator: null, source: null };
             }
-        } catch (error) {
-            console.warn(`⚠️ Error al detener tono ${id}:`, error);
-        }
-    };
-
-    const reproducirTono = (id: string): { oscillator: OscillatorNode | OscillatorNode[] | null } => {
-        if (!audioRef.current || !gainNodeRef.current || !mapaBotonesPorId[id]) return { oscillator: null };
-
-        // Resume audio context if suspended (browser autoplay policy)
-        if (audioRef.current.state === 'suspended') {
-            audioRef.current.resume();
         }
 
+        // --- MODO DIGITAL (Solo si no hay instrumento real seleccionado) ---
+        if (!mapaBotonesPorId[id]) return { oscillator: null };
         const { frecuencia } = mapaBotonesPorId[id];
         let oscillator: OscillatorNode | OscillatorNode[];
 
         if (Array.isArray(frecuencia)) {
             oscillator = frecuencia.map(hz => {
                 const osc = audioRef.current!.createOscillator();
-                osc.type = 'sawtooth';
+                osc.type = hayInstrumento ? 'sawtooth' : 'sawtooth'; // Mantener sawtooth pero dejar claro el flujo
                 osc.connect(gainNodeRef.current!);
                 osc.frequency.value = hz;
                 osc.start();
@@ -216,553 +318,921 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
             oscillator.frequency.value = frecuencia as number;
             oscillator.start();
         }
-
         return { oscillator };
     };
 
+    const detenerTono = (id: string) => {
+        const b = botonesActivosRef.current[id];
+        if (!b) return;
+
+        try {
+            // Detener muestras reales
+            if (b.source) {
+                b.source.stop();
+            }
+            // Detener osciladores sintetizados
+            if (b.oscillator) {
+                if (Array.isArray(b.oscillator)) b.oscillator.forEach((o: any) => o?.stop());
+                else b.oscillator.stop();
+            }
+        } catch (e) { }
+    };
+
     const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add') => {
-        if (deshabilitarRef.current) return;
-
-        const ahora = Date.now();
-        const dirActual = direccionRef.current; // Usar ref para evitar estado stale
-
+        if (deshabilitarRef.current || (modoAjuste && pestanaActiva === 'grabacion')) return;
         if (accion === 'add') {
-            if (ahora - ultimoCambioFuelle.current < 100) {
-                console.log(`🚫 Ignorando activación muy cerca del cambio de fuelle: ${id}`);
-                return;
-            }
+            if (botonesActivosRef.current[id]) return;
+            const { oscillator, source } = reproducirTono(id);
+            // Solo añadir si realmente está sonando algo (evitar estados vacíos por silencio de usuario)
+            if (!oscillator && !source) return;
 
-            if (botonesActivosRef.current[id]) return; // Ya activo
-
-            // Finalizar nota previa si existe y modo editor
-            if (botonesActivosRef.current[id] && modoEditor) {
-                onNotaLiberada?.({ idBoton: id, nombre: obtenerNombreBoton(id) });
-                if (onFinalizarNota) onFinalizarNota(id);
-                detenerTono(id);
-            }
-
-            const { oscillator } = reproducirTono(id);
-            const colorFuelle = dirActual === 'empujar' ? 'verde' : 'rojo';
-
-            const nuevaNota = {
-                oscillator,
-                ...mapaBotonesPorId[id],
-                colorFuelle,
-                direccionFuelle: dirActual,
-                tiempoActivacion: ahora
-            };
-
-            // update state and ref
-            const newState = { ...botonesActivosRef.current, [id]: nuevaNota };
+            const newState = { ...botonesActivosRef.current, [id]: { oscillator, source, ...mapaBotonesPorId[id] } };
             botonesActivosRef.current = newState;
             setBotonesActivos(newState);
-
-            mousePresionado.current = true;
-
-            onNotaPresionada?.({ idBoton: id, nombre: obtenerNombreBoton(id) });
-            if (modoEditor && onGrabarNota) onGrabarNota(id, 'mouse');
-
-        } else if (accion === 'remove' && botonesActivosRef.current[id]) {
-            onNotaLiberada?.({ idBoton: id, nombre: obtenerNombreBoton(id) });
-            if (modoEditor && onFinalizarNota) onFinalizarNota(id);
-
+            onNotaPresionada?.({ idBoton: id, nombre: id });
+        } else {
             detenerTono(id);
-
             const newState = { ...botonesActivosRef.current };
             delete newState[id];
-            botonesActivosRef.current = newState;
             setBotonesActivos(newState);
+            onNotaLiberada?.({ idBoton: id, nombre: id });
         }
-    }, [deshabilitarInteraccion, modoEditor, onFinalizarNota, onGrabarNota, onNotaLiberada, onNotaPresionada]); // Deps still relevant for callback identity, but internal logic uses refs.
+    }, [modoAjuste, pestanaActiva, onNotaPresionada, onNotaLiberada]);
 
-
-    const detenerTodosLosSonidos = () => {
+    const limpiarTodasLasNotas = () => {
         Object.keys(botonesActivosRef.current).forEach(id => detenerTono(id));
         botonesActivosRef.current = {};
         setBotonesActivos({});
     };
 
-    const limpiarBotonesActivos = () => {
-        botonesActivosRef.current = {};
-        setBotonesActivos({});
-    }
-
-    const cambiarDireccionFunc = (nuevaDireccion: 'halar' | 'empujar') => {
-        if (direccionRef.current === nuevaDireccion) return;
-
-        const notasActivas = Object.keys(botonesActivosRef.current);
-        if (notasActivas.length > 0) {
-            detenerTodosLosSonidos();
-        }
-
-        setDireccion(nuevaDireccion); // This triggers ref update in useEffect
-        direccionRef.current = nuevaDireccion; // Immediate update for synchronous logic following calling code
-        ultimoCambioFuelle.current = Date.now();
-
-        onCambioFuelle?.({ direccion: nuevaDireccion });
-
-        teclasFisicasPresionadas.current.clear();
-        mousePresionado.current = false;
-    };
-
-    const manejarCambioFuelle = (nuevaDireccion: 'halar' | 'empujar') => {
-        if (direccionRef.current === nuevaDireccion) return;
-
-        if (deshabilitarRef.current) {
-            setDireccion(nuevaDireccion);
-            return;
-        }
-
-        setDireccion(nuevaDireccion);
-        const nuevosBotonesActivos: Record<string, any> = {};
-
-        for (const [keyId, keyValues] of Object.entries(botonesActivosRef.current)) {
-            if (modoEditor && grabando && !pausado) {
-                onFinalizarNota?.(keyId);
-            }
-
-            // Detener osciladores viejos
-            const val = keyValues as any;
-            if (Array.isArray(val.oscillator)) {
-                val.oscillator.forEach((hz: any) => { try { hz?.stop() } catch (e) { } })
-            } else {
-                try { val.oscillator?.stop() } catch (e) { }
-            }
-
-            // Calcular nueva nota equivalente
-            // const parts = keyId.split('-');
-            // [fila, columna, direccion, opcional 'bajo']
-            // keyId format: "1-1-halar" or "1-1-halar-bajo"
-
-            // Reconstruir ID invirtiendo dirección
-            // Esto asume formato estricto: fila-columna-DIR[-bajo]
-            const esBajo = keyId.includes('-bajo');
-            const baseId = keyId.replace('-halar', '').replace('-empujar', '').replace('-bajo', '');
-            // baseId might be "1-1"
-
-            const nuevoKeyId = `${baseId}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
-
-            if (mapaBotonesPorId[nuevoKeyId]) {
-                const { oscillator } = reproducirTono(nuevoKeyId);
-                nuevosBotonesActivos[nuevoKeyId] = { oscillator, ...mapaBotonesPorId[nuevoKeyId] };
-
-                if (modoEditor && grabando && !pausado) {
-                    onGrabarNota?.(nuevoKeyId, 'fuelle');
-                }
-            }
-        }
-
-        botonesActivosRef.current = nuevosBotonesActivos;
-        setBotonesActivos(nuevosBotonesActivos);
-
-        onCambioFuelle?.({ direccion: nuevaDireccion, botonesActivos: nuevosBotonesActivos });
-        if (onCambiarFuelle) onCambiarFuelle(nuevaDireccion, nuevosBotonesActivos);
-    };
-
-
     const manejarEventoTeclado = (e: KeyboardEvent | React.KeyboardEvent, esPresionada: boolean) => {
         if (deshabilitarRef.current) return;
-        if (!e.target) return;
-        const target = e.target as HTMLElement;
-        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-
         const tecla = e.key.toLowerCase();
 
+        // --- LÓGICA DE FUELLE MOMENTÁNEO (Q = CERRAR / SOLTAR = ABRIR) ---
         if (tecla === cambiarFuelle) {
-            manejarCambioFuelle(esPresionada ? 'empujar' : 'halar');
+            const nuevaDireccion = esPresionada ? 'empujar' : 'halar';
+
+            if (nuevaDireccion !== direccionRef.current) {
+                // 🔄 MIGRACIÓN DE NOTAS (Fluidez Total)
+                const botonesPrevios = { ...botonesActivosRef.current };
+
+                // 1. Efectuar el cambio de dirección global
+                setDireccion(nuevaDireccion);
+                direccionRef.current = nuevaDireccion;
+
+                // 2. Encender automáticamente las notas equivalentes en la nueva dirección (PRIMERO)
+                const nuevosBotones: Record<string, any> = {};
+                Object.keys(botonesPrevios).forEach(idViejo => {
+                    const esBajo = idViejo.includes('bajo');
+                    const partes = idViejo.split('-'); // [fila, col, dir, (bajo)]
+                    const idNuevo = `${partes[0]}-${partes[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+
+                    const { oscillator, source } = reproducirTono(idNuevo);
+                    if (oscillator || source) {
+                        nuevosBotones[idNuevo] = { oscillator, source, ...mapaBotonesPorId[idNuevo] };
+                        onNotaPresionada?.({ idBoton: idNuevo, nombre: idNuevo });
+                    }
+                });
+
+                // 3. Apagar sonidos de la dirección anterior (DESPUÉS)
+                Object.keys(botonesPrevios).forEach(id => {
+                    detenerTono(id);
+                    onNotaLiberada?.({ idBoton: id, nombre: id });
+                });
+
+                botonesActivosRef.current = nuevosBotones;
+                setBotonesActivos(nuevosBotones);
+            }
             return;
         }
+        const d = mapaTeclas[tecla] || mapaTeclasBajos[tecla];
+        if (!d) return;
+        const id = `${d.fila}-${d.columna}-${direccionRef.current}${mapaTeclasBajos[tecla] ? '-bajo' : ''}`;
+        if (esPresionada) actualizarBotonActivo(id, 'add');
+        else actualizarBotonActivo(id, 'remove');
+    };
 
-        const datoBoton = mapaTeclas[tecla] || mapaTeclasBajos[tecla];
-        if (!datoBoton) return;
+    // --- UTILIDADES DE CONVERSIÓN DE NOTAS ---
+    const notasPosibles = ['Do', 'Do#', 'Reb', 'Re', 'Re#', 'Mib', 'Mi', 'Fa', 'Fa#', 'Solb', 'Sol', 'Sol#', 'Lab', 'La', 'La#', 'Sib', 'Si'];
 
-        const { fila, columna } = datoBoton;
-        const esBajo = !!mapaTeclasBajos[tecla];
-        const dirActual = direccionRef.current;
-        const id = `${fila}-${columna}-${dirActual}${esBajo ? '-bajo' : ''}`;
+    const cifradoAmericano: Record<string, string> = {
+        'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
+        'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
+    };
 
-        if (modoEditor && esPresionada) {
-            // Debounce simple
-            const ahora = Date.now();
-            const ultimaTecla = ultimasTeclasPulsadas.current.get(tecla);
-            if (ultimaTecla && (ahora - ultimaTecla) < 20) return;
-            ultimasTeclasPulsadas.current.set(tecla, ahora);
+    const formatearNota = (nombre: string) => {
+        if (!nombre) return '';
 
-            if (botonesActivosRef.current[id]) {
-                onFinalizarNota?.(id);
-                detenerTono(id);
-            }
+        const base = nombre.trim();
+        const lowerBase = base.toLowerCase();
 
-            const { oscillator } = reproducirTono(id);
-            const newState = {
-                ...botonesActivosRef.current,
-                [id]: { oscillator, ...mapaBotonesPorId[id] }
-            };
-            botonesActivosRef.current = newState;
-            setBotonesActivos(newState);
+        // 1. EXTRAER LA NOTA BASE (ej: "Sol" de "sol menor")
+        let notaPura = base.split(' ')[0];
+        if (lowerBase.startsWith('la bemol')) notaPura = 'Lab';
+        else if (lowerBase.startsWith('si bemol')) notaPura = 'Sib';
+        else if (lowerBase.startsWith('mi bemol')) notaPura = 'Mib';
+        else if (lowerBase.startsWith('re bemol')) notaPura = 'Reb';
+        else if (lowerBase.startsWith('sol bemol')) notaPura = 'Solb';
+        else if (lowerBase.startsWith('do bemol')) notaPura = 'Dob';
 
-            onNotaPresionada?.({ id, tipo: 'teclado' });
-            onGrabarNota?.(id, 'teclado');
-            e.preventDefault();
+        // Asegurar que la nota base empiece con Mayúscula (Sol, Do, Reb...)
+        notaPura = notaPura.charAt(0).toUpperCase() + notaPura.slice(1).toLowerCase();
 
-        } else {
-            // Modo normal
-            if (esPresionada) {
-                onNotaPresionada?.({ id, tipo: 'teclado' });
-                actualizarBotonActivo(id, 'add');
-            } else {
-                onNotaLiberada?.({ id, tipo: 'teclado' });
-                actualizarBotonActivo(id, 'remove');
-            }
+        // 2. DETECTAR SI ES MAYOR O MENOR (Para Bajos) - Sensible a Mayúsculas
+        const esMenor = lowerBase.includes('menor') || base.endsWith('m') || lowerBase.includes(' m');
+        const esMayor = lowerBase.includes('mayor') || base.endsWith('M') || lowerBase.includes(' M');
+
+        // IMPORTANTE: Si ya detectamos Mayor/Menor, limpiamos la nota base de la letra extra para el visual
+        if (notaPura.endsWith('M') || notaPura.endsWith('m')) {
+            notaPura = notaPura.slice(0, -1);
+        }
+
+        const cifrado = cifradoAmericano[notaPura] || notaPura;
+
+        if (modoVista === 'cifrado') {
+            let resultado = cifrado;
+            if (esMenor) resultado += 'm';
+            else if (esMayor) resultado += 'M';
+            return resultado;
+        }
+
+        if (modoVista === 'notas') {
+            let resultado = notaPura;
+            if (esMenor) resultado += 'm';
+            else if (esMayor) resultado += 'M';
+            return resultado;
+        }
+
+        // Para la vista por defecto, si tiene sufijo M/m, lo formateamos bonito
+        if (esMenor || esMayor) {
+            const tempBase = (base.endsWith('M') || base.endsWith('m')) ? base.slice(0, -1) : base;
+            return tempBase.charAt(0).toUpperCase() + tempBase.slice(1).toLowerCase() + (esMenor ? 'm' : 'M');
         }
     };
 
-    const limpiarTodasLasNotas = () => {
-        if (deshabilitarRef.current) return;
+    const getContenidoBoton = (idOriginal: string, esHalar: boolean) => {
+        const key = `${idOriginal}_${esHalar ? 'halar' : 'empujar'}`;
+        const muestra = muestrasCargadas[key];
 
-        Object.values(botonesActivosRef.current).forEach((keyValues: any) => {
-            if (Array.isArray(keyValues.oscillator)) {
-                keyValues.oscillator.forEach((hz: any) => hz?.stop());
-            } else {
-                keyValues.oscillator?.stop();
-            }
-        });
-
-        botonesActivosRef.current = {};
-        setBotonesActivos({});
-    };
-
-    function manejarTeclaGlobalLiberada(event: KeyboardEvent) {
-        if (!modoEditor || !grabando) return;
-        if (event.key === 'Escape') forzarLiberacionTeclas();
-    }
-
-    function manejarMouseGlobalLiberado(event: MouseEvent) {
-        if (!modoEditor || !grabando) return;
-        mousePresionado.current = false;
-        const acordeonElement = document.querySelector('.disposicion-acordeon');
-        if (acordeonElement && !acordeonElement.contains(event.target as Node)) {
-            forzarLiberacionTeclas();
-        }
-    }
-
-    function manejarPerdidaFoco() {
-        if (!modoEditor || !grabando) return;
-        console.log('🔍 Pérdida de foco detectada - Liberando teclas');
-        forzarLiberacionTeclas();
-    }
-
-    const forzarLiberacionTeclas = () => {
-        Object.keys(botonesActivosRef.current).forEach(id => {
-            actualizarBotonActivo(id, 'remove');
-        });
-        teclasFisicasPresionadas.current.clear();
-        mousePresionado.current = false;
-    };
-
-    const verificarNotasColgadas = () => {
-        const ahora = Date.now();
-        const tiempoMaximo = 5000;
-        const notasColgadas = Object.entries(botonesActivosRef.current).filter(([_, nota]: [string, any]) => {
-            return nota.tiempoActivacion && (ahora - nota.tiempoActivacion) > tiempoMaximo;
-        });
-
-        if (notasColgadas.length > 0) {
-            console.log(`🧹 Limpiando ${notasColgadas.length} notas colgadas`);
-            notasColgadas.forEach(([id]) => actualizarBotonActivo(id, 'remove'));
-        }
-        return notasColgadas.length;
-    };
-
-    const iniciarLimpiezaAutomatica = () => {
-        if (intervalLimpiezaRef.current) clearInterval(intervalLimpiezaRef.current);
-        intervalLimpiezaRef.current = setInterval(() => {
-            if (modoEditor && grabando) verificarNotasColgadas();
-        }, 1000);
-    };
-
-    const detenerLimpiezaAutomatica = () => {
-        if (intervalLimpiezaRef.current) {
-            clearInterval(intervalLimpiezaRef.current);
-            intervalLimpiezaRef.current = null;
-        }
-    };
-
-    // --- Funciones para Botones Voladores ---
-
-    const encontrarNotaCompleta = (notaId: string, fuelleDireccion: string) => {
-        // Intenta encontrar la ID exacta en el mapa
-        const posiblesIds = Object.keys(mapaBotonesPorId).filter(id =>
-            id.includes(notaId) && id.includes(fuelleDireccion)
-        );
-        if (posiblesIds.length > 0) return posiblesIds[0];
-
-        // búsqueda laxa
-        const idsSinDireccion = Object.keys(mapaBotonesPorId).filter(id => id.includes(notaId));
-        return idsSinDireccion[0] || null;
-    };
-
-    const crearBotonVolador = (notaCompleta: string, colorFuelle: string, fuelleDireccion: string, duracionMs: number = 300, anticipacionGuia: number = 2000) => {
-        if (!contenedorNotasVoladorasRef.current) return;
-
-        try {
-            const idBusqueda = prefijoIdBoton ? `${prefijoIdBoton}-${notaCompleta}` : notaCompleta;
-            const botonOriginal = document.getElementById(idBusqueda);
-
-            if (!botonOriginal) {
-                console.warn('⚠️ Botón original no encontrado:', idBusqueda);
-                return;
-            }
-
-            const rectBoton = botonOriginal.getBoundingClientRect();
-
-            // Clonar
-            const botonClon = botonOriginal.cloneNode(true) as HTMLElement;
-            botonClon.style.position = 'fixed';
-            botonClon.style.left = `${rectBoton.left}px`;
-            botonClon.style.top = `${rectBoton.top}px`;
-            botonClon.style.width = `${rectBoton.width}px`;
-            botonClon.style.height = `${rectBoton.height}px`;
-            botonClon.style.zIndex = '9999';
-            botonClon.style.pointerEvents = 'none';
-            botonClon.style.transform = 'scale(1)';
-            botonClon.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.8)';
-            botonClon.style.border = `3px solid ${colorFuelle === 'verde' ? '#4ade80' : '#ef4444'}`;
-            botonClon.style.backgroundColor = colorFuelle === 'verde' ? '#22c55e' : '#dc2626';
-            botonClon.style.transition = 'all 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-
-            contenedorNotasVoladorasRef.current.appendChild(botonClon);
-
-            // Calcular destino
-            let posicionFinal = {
-                left: window.innerWidth - 200,
-                top: rectBoton.top
-            };
-
-            if (funcionObtenerCoordenadasJugador.current) {
-                const coords = funcionObtenerCoordenadasJugador.current(notaCompleta);
-                if (coords) {
-                    posicionFinal = {
-                        left: coords.centerX - (rectBoton.width / 2),
-                        top: coords.centerY - (rectBoton.height / 2)
-                    };
-                }
-            }
-
-            requestAnimationFrame(() => {
-                if (botonClon) {
-                    botonClon.style.left = `${posicionFinal.left}px`;
-                    botonClon.style.top = `${posicionFinal.top}px`;
-                    botonClon.style.transform = 'scale(0.8)';
-                    botonClon.style.opacity = '0.8';
-                }
-            });
-
-            // Timing
-            const tiempoAnimacion = 1500;
-            const retrasoCorrector = anticipacionGuia - tiempoAnimacion; // Puede ser negativo si la anticipación es corta
-
-            setTimeout(() => {
-                if (funcionActivarNotaEnJugador.current) {
-                    funcionActivarNotaEnJugador.current(notaCompleta, fuelleDireccion, duracionMs);
-                }
-                if (botonClon && botonClon.parentNode) {
-                    botonClon.parentNode.removeChild(botonClon);
-                }
-            }, tiempoAnimacion + retrasoCorrector);
-
-
-        } catch (error) {
-            console.error('💥 Error creando botón volador:', error);
-        }
-    };
-
-
-    const simularActivacionNota = (notaId: string, fuelleDireccion: 'halar' | 'empujar', duracionMs: number = 400) => {
-        // Force short duration to avoid sticking
-        const duracion = Math.min(duracionMs || 400, 800);
-
-        console.log('🎮 ACTIVANDO NOTA:', notaId, fuelleDireccion, 'Duración:', duracion, 'ms');
-
-        simularDesactivacionNota(notaId);
-
-        if (fuelleDireccion && fuelleDireccion !== direccionRef.current) {
-            setDireccion(fuelleDireccion);
-            // Ojo: cambiarDireccion aquí es async en React, pero `direccion` se usa abajo?
-            // En Svelte era síncrono.
-            // Aquí `direccion` variable local no cambiará a tiempo para logic abajo si depende de estado.
-            // Pero `fuelleDireccion` se pasa explicitamente a `crearBotonVolador` etc.
+        // Si hay una nota grabada con nombre personalizado, tiene prioridad máxima
+        if (muestra?.nombre) {
+            return formatearNota(muestra.nombre);
         }
 
-        const notaCompleta = encontrarNotaCompleta(notaId, fuelleDireccion);
-        if (!notaCompleta) return;
-
-        const colorFuelle = fuelleDireccion === 'empujar' ? 'verde' : 'rojo';
-        let oscillator: OscillatorNode | OscillatorNode[] | null = null;
-
-        if (!deshabilitarRef.current) {
-            const res = reproducirTono(notaCompleta);
-            oscillator = res.oscillator;
-        }
-
-        const nuevaNota = {
-            oscillator,
-            ...mapaBotonesPorId[notaCompleta],
-            colorFuelle,
-            direccionFuelle: fuelleDireccion,
-            duracionMs: duracion,
-            tiempoActivacion: Date.now()
-        };
-
-        const newState = { ...botonesActivosRef.current, [notaCompleta]: nuevaNota };
-        botonesActivosRef.current = newState;
-        setBotonesActivos(newState);
-
-        if (deshabilitarRef.current) {
-            crearBotonVolador(notaCompleta, colorFuelle, fuelleDireccion, duracion, anticipacionAcordeonGuia);
-        }
-
-        if (!deshabilitarRef.current) {
-            setTimeout(() => {
-                simularDesactivacionNota(notaId);
-            }, duracion);
-        }
+        // Fallback al mapa base
+        const btnBase = mapaBotonesPorId[idOriginal];
+        return formatearNota(btnBase?.nombre || '');
     };
 
-    const simularDesactivacionNota = (notaId: string) => {
-        let notasADesactivar: string[] = [];
-        if (botonesActivosRef.current[notaId]) notasADesactivar.push(notaId);
+    // --- COMPONENTE SELECTOR DE NOTAS VISUAL ---
+    const SelectorDeNotas = () => (
+        <div style={{ marginTop: '10px' }}>
+            <label style={{ fontSize: '10px', color: '#aaa', display: 'block', textAlign: 'left', marginBottom: '8px' }}>SELECCIONAR NOTA (CIFRADO AMERICANO DISPONIBLE)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '12px' }}>
+                {notasPosibles.map(n => (
+                    <button
+                        key={n}
+                        onClick={() => setNombreNotaPersonalizada(n)}
+                        style={{
+                            background: nombreNotaPersonalizada === n ? '#3b82f6' : '#1a1a1a',
+                            color: 'white', border: '1px solid #333', borderRadius: '4px',
+                            padding: '6px 0', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {n}
+                        <div style={{ fontSize: '8px', opacity: 0.6 }}>{cifradoAmericano[n]}</div>
+                    </button>
+                ))}
+            </div>
 
-        if (notasADesactivar.length === 0) {
-            notasADesactivar = Object.keys(botonesActivosRef.current).filter(id => {
-                const notaBase = notaId.replace(/-empujar|-halar/g, '');
-                const idBase = id.replace(/-empujar|-halar/g, '');
-                return idBase === notaBase;
-            });
-        }
+            {/* SELECTOR DE TIPO PARA BAJOS */}
+            <label style={{ fontSize: '10px', color: '#aaa', display: 'block', textAlign: 'left', marginBottom: '8px' }}>TIPO DE ARMONÍA (PARA BAJOS)</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                {[
+                    { val: 'ninguno', label: 'SOLO NOTA', desc: 'Nota Única' },
+                    { val: 'M', label: 'MAYOR (M)', desc: 'Acorde Mayor' },
+                    { val: 'm', label: 'MENOR (m)', desc: 'Acorde Menor' }
+                ].map(tipo => (
+                    <button
+                        key={tipo.val}
+                        onClick={() => setTipoBajoPersonalizado(tipo.val as any)}
+                        style={{
+                            flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #333',
+                            background: tipoBajoPersonalizado === tipo.val ? 'linear-gradient(45deg, #3b82f6, #6366f1)' : '#1a1a1a',
+                            color: 'white', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                    >
+                        <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{tipo.label}</div>
+                        <div style={{ fontSize: '8px', opacity: 0.5 }}>{tipo.desc}</div>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 
-        notasADesactivar.forEach(notaCompleta => {
-            if (!deshabilitarRef.current && botonesActivosRef.current[notaCompleta]) {
-                detenerTono(notaCompleta);
-            }
-        });
+    // --- COMPONENTE DE BARRA DE VISTA (AHORA PARA EL LATERAL) ---
+    const ToolbarVisualizacion = () => (
+        <div style={{
+            background: 'rgba(0,0,0,0.5)', padding: '15px', borderRadius: '18px',
+            display: 'flex', flexDirection: 'column', gap: '12px',
+            border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
+            width: '100%'
+        }}>
+            <p style={{ margin: 0, fontSize: '9px', color: '#888', fontWeight: '900', textAlign: 'center', letterSpacing: '1px', textTransform: 'uppercase' }}>Configuración de Vista</p>
 
-        const newState = { ...botonesActivosRef.current };
-        notasADesactivar.forEach(id => delete newState[id]);
-        botonesActivosRef.current = newState;
-        setBotonesActivos(newState);
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <button onClick={() => setModoVista('teclas')} style={{ ...estiloIconoVista, background: modoVista === 'teclas' ? '#3b82f6' : '#222' }}>
+                        <Type size={16} color="white" />
+                    </button>
+                    <span style={{ fontSize: '7px', color: '#aaa', fontWeight: 'bold' }}>TEC.</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <button onClick={() => setModoVista('numeros')} style={{ ...estiloIconoVista, background: modoVista === 'numeros' ? '#3b82f6' : '#222' }}>
+                        <span style={{ color: 'white', fontWeight: '900', fontSize: '11px' }}>123</span>
+                    </button>
+                    <span style={{ fontSize: '7px', color: '#aaa', fontWeight: 'bold' }}>POS.</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <button onClick={() => setModoVista('notas')} style={{ ...estiloIconoVista, background: modoVista === 'notas' ? '#3b82f6' : '#222' }}>
+                        <Music size={16} color="white" />
+                    </button>
+                    <span style={{ fontSize: '7px', color: '#aaa', fontWeight: 'bold' }}>NOT.</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <button onClick={() => setModoVista('cifrado')} style={{ ...estiloIconoVista, background: modoVista === 'cifrado' ? '#3b82f6' : '#222' }}>
+                        <span style={{ color: 'white', fontWeight: '900', fontSize: '11px' }}>ABC</span>
+                    </button>
+                    <span style={{ fontSize: '7px', color: '#aaa', fontWeight: 'bold' }}>CIF.</span>
+                </div>
+            </div>
 
-        return notasADesactivar.length;
+            <button
+                onClick={() => setMostrarDobleNota(!mostrarDobleNota)}
+                style={{
+                    border: '1px solid rgba(255,255,255,0.2)', background: mostrarDobleNota ? 'linear-gradient(45deg, #3b82f6, #8b5cf6)' : '#222',
+                    color: 'white', padding: '8px', borderRadius: '12px', fontSize: '9px', fontWeight: '900',
+                    cursor: 'pointer', boxShadow: mostrarDobleNota ? '0 0 15px rgba(59, 130, 246, 0.4)' : 'none',
+                    transition: 'all 0.3s', textTransform: 'uppercase'
+                }}
+            >
+                {mostrarDobleNota ? '✅ Vista Doble ON' : '❌ Vista Doble OFF'}
+            </button>
+        </div>
+    );
+
+    const estiloIconoVista = {
+        width: '38px', height: '38px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
     };
 
-
-    // Exponer métodos
     useImperativeHandle(ref, () => ({
-        establecerCoordenadasAcordeonJugador: (fn) => { funcionObtenerCoordenadasJugador.current = fn; },
-        establecerCallbackActivacionJugador: (fn) => { funcionActivarNotaEnJugador.current = fn; },
-        resetearEstado: () => {
-            detenerTodosLosSonidos();
-            botonesActivosRef.current = {};
-            setBotonesActivos({});
-            teclasFisicasPresionadas.current.clear();
-            mousePresionado.current = false;
-            ultimasTeclasPulsadas.current.clear();
-        },
-        detenerTodosLosSonidos,
-        limpiarBotonesActivos,
-        cambiarDireccion: cambiarDireccionFunc,
-        forzarLiberacionTeclas,
-        verificarNotasColgadas,
-        iniciarLimpiezaAutomatica,
-        detenerLimpiezaAutomatica,
+        establecerCoordenadasAcordeonJugador: () => { },
+        establecerCallbackActivacionJugador: () => { },
+        resetearEstado: limpiarTodasLasNotas,
+        detenerTodosLosSonidos: limpiarTodasLasNotas,
+        limpiarBotonesActivos: () => setBotonesActivos({}),
+        cambiarDireccion: (d) => setDireccion(d),
+        forzarLiberacionTeclas: limpiarTodasLasNotas,
+        verificarNotasColgadas: () => 0,
+        iniciarLimpiezaAutomatica: () => { },
+        detenerLimpiezaAutomatica: () => { },
         detenerTono,
         actualizarBotonActivo,
         manejarEventoTeclado,
         limpiarTodasLasNotas,
         reproducirTono,
-        simularActivacionNota,
-        simularDesactivacionNota
+        simularActivacionNota: () => { },
+        simularDesactivacionNota: () => 0
     }));
 
-    // --- Render ---
+    const getFilaDisplay = (f: string) => f === 'primeraFila' ? 'Afuera (1)' : f === 'segundaFila' ? 'Medio (2)' : f === 'terceraFila' ? 'Adentro (3)' : f;
+
+    // --- COMPONENTE SELECTOR RÁPIDO ---
+    const SelectorAcordeonRapido = () => (
+        <div style={{
+            background: 'rgba(0,0,0,0.85)', padding: '12px', borderRadius: '18px',
+            borderLeft: '4px solid #3b82f6', backdropFilter: 'blur(15px)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)', width: '240px'
+        }}>
+            <p style={{ margin: '0 0 8px 0', fontSize: '10px', color: '#3b82f6', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                🪗 ACORDEÓN ACTIVO
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <select
+                    value={instrumentoSeleccionado || ''}
+                    onChange={(e) => setInstrumentoSeleccionado(e.target.value === '' ? null : e.target.value)}
+                    style={{
+                        width: '100%', background: '#111', color: 'white', border: '1px solid #333',
+                        padding: '8px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold',
+                        cursor: 'pointer', outline: 'none'
+                    }}
+                >
+                    <option value="">🎹 Acordeón Digital (Base)</option>
+                    {instrumentos.map(ins => (
+                        <option key={ins.id} value={ins.id}>{ins.nombre}</option>
+                    ))}
+                </select>
+
+                {instrumentoSeleccionado && (
+                    <div style={{ fontSize: '10px', color: '#22c55e', display: 'flex', alignItems: 'center', gap: '5px', padding: '0 5px' }}>
+                        <div style={{ width: '6px', height: '6px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 5px #22c55e' }} />
+                        SONIDOS REALES ACTIVOS
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     return (
-        <>
-            {/* Event Listeners en el body no funcionan en React igual que Svelte:body, 
-          usamos useEffect global ya definido. */}
+        <div className={modoAjuste ? 'modo-diseno-activo' : ''} style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
 
-            <div
-                className="disposicion-acordeon"
-                style={{ '--imagen-fondo-acordeon': `url('${imagenFondo}')` } as React.CSSProperties}
-                onMouseUp={limpiarTodasLasNotas} // Global mouse up en el contendor
+            {/* 🔘 BOTÓN FLOTANTE PRINCIPAL (GESTOR) */}
+            <button
+                onClick={() => setModoAjuste(!modoAjuste)}
+                style={{
+                    position: 'fixed', top: '90px', right: '40px', zIndex: 9999999,
+                    background: modoAjuste ? '#ef4444' : '#3b82f6', color: 'white',
+                    border: '3px solid white', borderRadius: '50%', width: '80px', height: '80px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', transition: 'all 0.2s'
+                }}
             >
-                {/* Teclado lado derecho */}
-                <div className="lado-teclas">
-                    {filas.map(filaNombre => (
-                        <div key={filaNombre} className={`fila ${getFilaClase(filaNombre)}`}>
-                            {disposicion[filaNombre].map(boton => {
-                                const esActivo = botonesActivos[boton.id];
-                                const direccionBoton = esActivo?.direccionFuelle || direccion;
-                                const colorFuelle = esActivo?.colorFuelle || (direccionBoton === 'empujar' ? 'verde' : 'rojo');
+                <Settings size={30} style={{ animation: (modoAjuste || estaProcesando) ? 'spin 3s linear infinite' : 'none' }} />
+                <span style={{ fontSize: '10px', fontWeight: 'bold' }}>GESTOR</span>
+            </button>
 
-                                if (!boton.id.includes(direccion)) return null;
+            {/* 🆕 SELECTOR INSTANTÁNEO DE ACORDEÓN (ACCESO DIRECTO) */}
+            <div style={{
+                position: 'fixed', top: '180px', right: '40px', zIndex: 999999,
+                textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '12px',
+                alignItems: 'flex-end'
+            }}>
+                <SelectorAcordeonRapido />
 
-                                return (
-                                    <div
-                                        key={boton.id}
-                                        className={`boton ${esActivo ? 'activo' : ''} ${direccionBoton} color-${colorFuelle} ${deshabilitarInteraccion ? 'no-interaccion' : ''} ${direccionBoton === 'empujar' ? 'fuelle-empujar' : ''} ${direccionBoton === 'halar' ? 'fuelle-halar' : ''}`}
-                                        id={prefijoIdBoton ? `${prefijoIdBoton}-${boton.id}` : boton.id}
-                                        onMouseDown={() => !deshabilitarInteraccion && actualizarBotonActivo(boton.id, 'add')}
-                                        onMouseUp={() => !deshabilitarInteraccion && modoEditor ? actualizarBotonActivo(boton.id, 'remove') : undefined}
-                                        role="button"
-                                        tabIndex={deshabilitarInteraccion ? -1 : 0}
-                                        aria-pressed={!!esActivo}
-                                        aria-label={`Nota: ${boton.nombre} - ${direccionBoton} - ${colorFuelle}`}
-                                    >
-                                        {boton.nombre}
-                                    </div>
-                                );
-                            })}
-                            <h4>{tonosFilas[afinacion] && tonosFilas[afinacion][filaNombre]}<br />{filaNombre}</h4>
-                        </div>
-                    ))}
-                </div>
+                <button
+                    onClick={() => {
+                        const nDir = direccion === 'halar' ? 'empujar' : 'halar';
+                        setDireccion(nDir);
+                        direccionRef.current = nDir;
+                        limpiarTodasLasNotas();
+                    }}
+                    style={{
+                        background: direccion === 'halar' ? 'linear-gradient(to right, #ef4444, #991b1b)' : 'linear-gradient(to right, #22c55e, #166534)',
+                        color: 'white', border: '2px solid white', borderRadius: '15px',
+                        padding: '12px', fontWeight: '900', cursor: 'pointer',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.4)', transition: 'all 0.3s',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                    }}
+                >
+                    <RotateCcw size={20} />
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: '9px', opacity: 0.8, textTransform: 'uppercase' }}>Fuelle Actual</div>
+                        <div style={{ fontSize: '12px' }}>{direccion === 'halar' ? 'ABRIENDO (HALAR)' : 'CERRANDO (EMPUJAR)'}</div>
+                    </div>
+                </button>
 
-                {/* Bajos lado izquierdo */}
-                <div className="lado-bajos">
-                    {filasBajos.map(filaBajoNombre => (
-                        <div key={filaBajoNombre} className={`fila ${filaBajoNombre}`}>
-                            {disposicionBajos[filaBajoNombre].map(botonBajo => {
-                                const esActivoBajo = botonesActivos[botonBajo.id];
-                                const direccionBotonBajo = esActivoBajo?.direccionFuelle || direccion;
-                                const colorFuelleBajo = esActivoBajo?.colorFuelle || (direccionBotonBajo === 'empujar' ? 'verde' : 'rojo');
-
-                                if (!botonBajo.id.includes(direccion)) return null;
-
-                                return (
-                                    <div
-                                        key={botonBajo.id}
-                                        className={`boton ${esActivoBajo ? 'activo' : ''} ${direccionBotonBajo} color-${colorFuelleBajo} ${deshabilitarInteraccion ? 'no-interaccion' : ''} ${direccionBotonBajo === 'empujar' ? 'fuelle-empujar' : ''} ${direccionBotonBajo === 'halar' ? 'fuelle-halar' : ''}`}
-                                        id={prefijoIdBoton ? `${prefijoIdBoton}-${botonBajo.id}` : botonBajo.id}
-                                        onMouseDown={() => !deshabilitarInteraccion && actualizarBotonActivo(botonBajo.id, 'add')}
-                                        onMouseUp={() => !deshabilitarInteraccion && modoEditor ? actualizarBotonActivo(botonBajo.id, 'remove') : undefined}
-                                        role="button"
-                                        tabIndex={deshabilitarInteraccion ? -1 : 0}
-                                        aria-pressed={!!esActivoBajo}
-                                        aria-label={`Bajo: ${botonBajo.nombre} - ${direccionBotonBajo}`}
-                                    >
-                                        {botonBajo.nombre}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
+                {/* BOTÓN RÁPIDO PARA TECLAS */}
+                <button
+                    onClick={() => setModoVista(modoVista === 'teclas' ? 'notas' : 'teclas')}
+                    style={{
+                        background: modoVista === 'teclas' ? '#3b82f6' : 'rgba(0,0,0,0.5)',
+                        color: 'white', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px',
+                        padding: '10px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '8px', backdropFilter: 'blur(5px)'
+                    }}
+                >
+                    <Type size={14} />
+                    {modoVista === 'teclas' ? 'OCULTAR TECLADO' : 'MOSTRAR TECLADO'}
+                </button>
+                {/* BARRA DE VISTA (INYECTADA EN SIDEBAR) */}
+                <ToolbarVisualizacion />
             </div>
 
-            {/* Contenedor notas voladoras */}
-            <div ref={contenedorNotasVoladorasRef} className="notas-voladoras-container"></div>
-        </>
+            {/* 🛠️ PANEL DE CONFIGURACIÓN MOVIBLE */}
+            {modoAjuste && (
+                <motion.div
+                    drag
+                    dragMomentum={false}
+                    className="panel-ajustes visible"
+                    style={{
+                        position: 'fixed', top: '140px', right: '140px', zIndex: 9999999,
+                        background: '#0a0a0ae6', padding: '25px', borderRadius: '24px',
+                        color: 'white', width: '360px', border: '1px solid #3b82f6',
+                        boxShadow: '0 0 80px rgba(0,0,0,1)', backdropFilter: 'blur(20px)'
+                    }}
+                >
+                    {/* ZONA DE ARRASTRE DEL PANEL */}
+                    <div style={{ width: '100%', height: '24px', cursor: 'move', display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                        <GripHorizontal color="#3b82f6" />
+                    </div>
+
+                    {/* SELECTOR DE PESTAÑAS */}
+                    <div style={{ display: 'flex', gap: '5px', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '12px' }}>
+                        <button
+                            onClick={() => setPestanaActiva('estilo')}
+                            style={{
+                                flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+                                background: pestanaActiva === 'estilo' ? '#3b82f6' : 'transparent',
+                                color: 'white', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer'
+                            }}
+                        >🎨 ESTILO</button>
+                        <button
+                            onClick={() => setPestanaActiva('grabacion')}
+                            style={{
+                                flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+                                background: pestanaActiva === 'grabacion' ? '#ef4444' : 'transparent',
+                                color: 'white', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer'
+                            }}
+                        >🎙️ GRABACIÓN</button>
+                    </div>
+
+                    {pestanaActiva === 'estilo' ? (
+                        <>
+                            <h3 style={{ marginBottom: '20px', color: '#3b82f6', textAlign: 'center', fontSize: '16px', fontWeight: 'bold' }}>HERRAMIENTAS DE ESTILO</h3>
+
+                            <div className="grupo-ajuste" style={{ marginBottom: '20px' }}>
+                                <label style={{ fontSize: '11px', color: '#aaa', display: 'block' }}>ESCALA ACORDEÓN: {ajustes.tamano}</label>
+                                <input type="range" min="40" max="110" value={parseFloat(ajustes.tamano)} onChange={(e) => setAjustes({ ...ajustes, tamano: `${e.target.value}vh` })} style={{ width: '100%' }} />
+
+                                <div style={{ display: 'flex', gap: '15px', marginTop: '12px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '10px' }}>HORIZONTAL (X)</label>
+                                        <input type="range" min="0" max="100" step="0.1" value={parseFloat(ajustes.x)} onChange={(e) => setAjustes({ ...ajustes, x: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '10px' }}>VERTICAL (Y)</label>
+                                        <input type="range" min="0" max="100" step="0.1" value={parseFloat(ajustes.y)} onChange={(e) => setAjustes({ ...ajustes, y: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ background: 'rgba(34, 197, 94, 0.08)', padding: '15px', borderRadius: '18px', marginBottom: '15px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                                <p style={{ color: '#22c55e', fontSize: '11px', fontWeight: 'bold' }}>🎹 PITOS (DERECHA)</p>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>BOTÓN</label>
+                                        <input type="range" min="1" max="10" step="0.1" value={parseFloat(ajustes.pitosBotonTamano)} onChange={(e) => setAjustes({ ...ajustes, pitosBotonTamano: `${e.target.value}vh` })} style={{ width: '100%' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>LETRA</label>
+                                        <input type="range" min="0.5" max="5" step="0.1" value={parseFloat(ajustes.pitosFuenteTamano)} onChange={(e) => setAjustes({ ...ajustes, pitosFuenteTamano: `${e.target.value}vh` })} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>POS. H</label>
+                                        <input type="range" min="-100" max="200" step="0.1" value={parseFloat(ajustes.teclasLeft)} onChange={(e) => setAjustes({ ...ajustes, teclasLeft: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>POS. V</label>
+                                        <input type="range" min="-100" max="200" step="0.1" value={parseFloat(ajustes.teclasTop)} onChange={(e) => setAjustes({ ...ajustes, teclasTop: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ background: 'rgba(234, 179, 8, 0.08)', padding: '15px', borderRadius: '18px', marginBottom: '20px', border: '1px solid rgba(234, 179, 8, 0.2)' }}>
+                                <p style={{ color: '#eab308', fontSize: '11px', fontWeight: 'bold' }}>🎸 BAJOS (IZQUIERDA)</p>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>BOTÓN</label>
+                                        <input type="range" min="1" max="10" step="0.1" value={parseFloat(ajustes.bajosBotonTamano)} onChange={(e) => setAjustes({ ...ajustes, bajosBotonTamano: `${e.target.value}vh` })} style={{ width: '100%' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>LETRA</label>
+                                        <input type="range" min="0.5" max="5" step="0.1" value={parseFloat(ajustes.bajosFuenteTamano)} onChange={(e) => setAjustes({ ...ajustes, bajosFuenteTamano: `${e.target.value}vh` })} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>POS. H</label>
+                                        <input type="range" min="-100" max="200" step="0.1" value={parseFloat(ajustes.bajosLeft)} onChange={(e) => setAjustes({ ...ajustes, bajosLeft: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '9px' }}>POS. V</label>
+                                        <input type="range" min="-100" max="200" step="0.1" value={parseFloat(ajustes.bajosTop)} onChange={(e) => setAjustes({ ...ajustes, bajosTop: `${e.target.value}%` })} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div style={{ animation: 'fadeIn 0.3s ease' }}>
+                            <h3 style={{ marginBottom: '15px', color: '#ef4444', textAlign: 'center', fontSize: '16px', fontWeight: 'bold' }}>GESTOR DE SONIDOS REALES</h3>
+
+                            {/* SELECTOR Y CREACIÓN DE INSTRUMENTOS */}
+                            <div style={{ marginBottom: '15px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <label style={{ fontSize: '10px', color: '#aaa' }}>ACORDEÓN ACTUAL:</label>
+                                    <button
+                                        onClick={() => setMostrarCrearIns(!mostrarCrearIns)}
+                                        style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                    >
+                                        {mostrarCrearIns ? <X size={12} /> : <Plus size={12} />}
+                                        {mostrarCrearIns ? 'CANCELAR' : 'NUEVO ACORDEÓN'}
+                                    </button>
+                                </div>
+
+                                {mostrarCrearIns ? (
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #333' }}>
+                                        <input
+                                            placeholder="Nombre (ej. Corona III)"
+                                            value={nuevoNombreIns}
+                                            onChange={(e) => setNuevoNombreIns(e.target.value)}
+                                            style={{ width: '100%', background: '#111', color: 'white', border: '1px solid #444', padding: '6px', borderRadius: '5px', fontSize: '11px', marginBottom: '5px' }}
+                                        />
+                                        <input
+                                            placeholder="Afinación (ej. GCF)"
+                                            value={nuevaAfinacionIns}
+                                            onChange={(e) => setNuevaAfinacionIns(e.target.value)}
+                                            style={{ width: '100%', background: '#111', color: 'white', border: '1px solid #444', padding: '6px', borderRadius: '5px', fontSize: '11px', marginBottom: '8px' }}
+                                        />
+                                        <button
+                                            disabled={estaProcesando || !nuevoNombreIns}
+                                            onClick={async () => {
+                                                const res = await crearInstrumento(nuevoNombreIns, nuevaAfinacionIns);
+                                                if (res) {
+                                                    setNuevoNombreIns('');
+                                                    setMostrarCrearIns(false);
+                                                }
+                                            }}
+                                            style={{ width: '100%', background: '#3b82f6', color: 'white', border: 'none', padding: '6px', borderRadius: '5px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                                        >
+                                            {estaProcesando ? 'CREANDO...' : 'CONFIRMAR CREACIÓN'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <select
+                                            value={instrumentoSeleccionado || ''}
+                                            onChange={(e) => setInstrumentoSeleccionado(e.target.value === '' ? null : e.target.value)}
+                                            style={{ flex: 1, background: '#222', color: 'white', border: '1px solid #444', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold' }}
+                                        >
+                                            <option value="">🎹 Acordeón Digital (Base)</option>
+                                            {instrumentos.map(ins => <option key={ins.id} value={ins.id}>{ins.nombre} ({ins.afinacion})</option>)}
+                                        </select>
+
+                                        {instrumentoSeleccionado && (
+                                            <button
+                                                onClick={() => eliminarInstrumento(instrumentoSeleccionado)}
+                                                style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '0 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                title="Eliminar este acordeón"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '15px', borderRadius: '15px', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '15px' }}>
+                                <p style={{ fontSize: '11px', color: '#ef4444', fontWeight: 'bold', marginBottom: '10px' }}>📋 PASOS PARA GRABAR:</p>
+                                <ul style={{ fontSize: '10px', color: '#ccc', paddingLeft: '15px' }}>
+                                    <li>Toca un botón del simulador.</li>
+                                    <li>Presiona el botón de micrófono.</li>
+                                    <li>¡Toca tu acordeón real al terminar el conteo!</li>
+                                </ul>
+                            </div>
+
+                            {botonParaGrabar ? (
+                                <div style={{ background: '#22c55e22', padding: '15px', borderRadius: '15px', border: '2px dashed #22c55e', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#22c55e' }}>CONFIGURANDO: {botonParaGrabar}</p>
+
+                                    {/* CAMPOS DE PERSONALIZACIÓN DE NOTA */}
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '15px' }}>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', marginBottom: '10px' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ fontSize: '10px', color: '#aaa', display: 'block', textAlign: 'left', marginBottom: '5px' }}>NOTA ACTUAL</label>
+                                                <div style={{ background: '#000', padding: '10px', borderRadius: '6px', border: '1px solid #3b82f6', color: '#3b82f6', fontWeight: '900', fontSize: '16px', textAlign: 'center' }}>
+                                                    {nombreNotaPersonalizada || '—'}
+                                                    {tipoBajoPersonalizado !== 'ninguno' ? tipoBajoPersonalizado : ''}
+                                                    {cifradoAmericano[nombreNotaPersonalizada] && (
+                                                        <span style={{ fontSize: '11px', opacity: 0.6, marginLeft: '5px' }}>
+                                                            ({cifradoAmericano[nombreNotaPersonalizada]}{tipoBajoPersonalizado !== 'ninguno' ? tipoBajoPersonalizado : ''})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div style={{ width: '80px' }}>
+                                                <label style={{ fontSize: '10px', color: '#aaa', display: 'block', textAlign: 'left', marginBottom: '5px' }}>OCTAVA</label>
+                                                <input
+                                                    type="number" min="1" max="8"
+                                                    value={octavaPersonalizada}
+                                                    onChange={(e) => setOctavaPersonalizada(parseInt(e.target.value))}
+                                                    style={{ width: '100%', background: '#111', color: 'white', border: '1px solid #444', padding: '10px', borderRadius: '6px', fontSize: '14px', textAlign: 'center' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <SelectorDeNotas />
+                                    </div>
+
+                                    {/* INDICADORES DE GRABACIÓN */}
+                                    {conteoAtras > 0 && (
+                                        <div style={{ background: '#ef4444', color: 'white', padding: '10px', borderRadius: '10px', marginBottom: '10px', animation: 'pulse 1s infinite' }}>
+                                            <p style={{ fontSize: '14px', fontWeight: 'bold' }}>¡CONCENTRACIÓN! Grabando en {conteoAtras}...</p>
+                                        </div>
+                                    )}
+
+                                    {estaGrabando && (
+                                        <div style={{ background: '#1a1a1a', color: 'white', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #22c55e' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>🔴 CAPTURANDO AUDIO...</p>
+                                                <p style={{ fontSize: '14px', fontWeight: '900', color: '#22c55e', margin: 0 }}>{segundosRestantes}s</p>
+                                            </div>
+
+                                            {/* LÍNEA DE TIEMPO / WAVEFORM DE INTENSIDAD */}
+                                            <div style={{
+                                                width: '100%', height: '60px', background: '#000', borderRadius: '8px',
+                                                marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '1px',
+                                                padding: '0 5px', overflow: 'hidden'
+                                            }}>
+                                                {historialIntensidad.map((val, i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        initial={{ height: 0 }}
+                                                        animate={{ height: `${Math.max(2, val)}%` }}
+                                                        style={{
+                                                            flex: 1,
+                                                            background: val > 80 ? '#ef4444' : '#22c55e',
+                                                            borderRadius: '1px'
+                                                        }}
+                                                    />
+                                                ))}
+                                                {/* Espaciador para empujar hacia la izquierda */}
+                                                <div style={{ flex: 100 - historialIntensidad.length }} />
+                                            </div>
+
+                                            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                                <motion.div
+                                                    style={{ height: '100%', background: '#22c55e' }}
+                                                    animate={{ width: `${intensidad}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* MODO PREVIEW / CONFIRMACIÓN */}
+                                    {urlPreview && !estaGrabando && (
+                                        <div style={{ background: '#1a1a1a', padding: '15px', borderRadius: '15px', border: '1px solid #3b82f6', marginBottom: '10px' }}>
+                                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#3b82f6', marginBottom: '10px' }}>👂 REVISAR GRABACIÓN</p>
+
+                                            <audio src={urlPreview} controls style={{ width: '100%', marginBottom: '10px', height: '35px' }} />
+
+                                            {/* ✅ NOTA DE CONSULTA TÉCNICA APLICADA */}
+                                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
+                                                <p style={{ fontSize: '9px', color: '#888', fontStyle: 'italic', margin: 0 }}>
+                                                    ℹ️ <strong>Verificado:</strong> Se aplica normalización a -1.0dB para mantener el "headroom" profesional, permitiendo polifonía sin distorsión digital.
+                                                </p>
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                    onClick={() => {
+                                                        setUltimoBlobGrabado(null);
+                                                        limpiarPreview();
+                                                    }}
+                                                    style={{ flex: 1, padding: '10px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}
+                                                >
+                                                    DESCARTAR
+                                                </button>
+                                                <button
+                                                    onClick={subirNotaConfirmada}
+                                                    disabled={estaProcesando}
+                                                    style={{ flex: 2, padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                                                >
+                                                    {estaProcesando ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                                                    CONFIRMAR Y GUARDAR
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                        <button
+                                            onClick={iniciarGrabacion}
+                                            disabled={estaProcesando || estaGrabando || conteoAtras > 0}
+                                            style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                        >
+                                            <Mic size={18} /> {estaGrabando ? 'GRABANDO' : 'GRABAR MIC'}
+                                        </button>
+
+                                        <button
+                                            onClick={() => document.getElementById('subir-audio')?.click()}
+                                            disabled={estaProcesando || estaGrabando}
+                                            style={{ flex: 1, padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                        >
+                                            <Plus size={18} /> SUBIR AUDIO
+                                        </button>
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        accept="audio/*"
+                                        id="subir-audio"
+                                        style={{ display: 'none' }}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file && botonParaGrabar) {
+                                                const btnData = mapaBotonesPorId[botonParaGrabar];
+                                                const fuelleBoton = botonParaGrabar.includes('halar') ? 'halar' : 'empujar';
+
+                                                const sufijo = tipoBajoPersonalizado !== 'ninguno' ? tipoBajoPersonalizado : '';
+                                                let nombreFinal = nombreNotaPersonalizada || btnData.nombre;
+
+                                                if (nombreFinal.endsWith('M') || nombreFinal.endsWith('m')) {
+                                                    nombreFinal = nombreFinal.slice(0, -1);
+                                                }
+                                                nombreFinal += sufijo;
+
+                                                await subirMuestraReal(file, botonParaGrabar, {
+                                                    fuelle: fuelleBoton,
+                                                    esBajo: botonParaGrabar.includes('bajo'),
+                                                    nombreNota: nombreFinal,
+                                                    octava: octavaPersonalizada
+                                                });
+                                                recargarMuestras?.();
+                                            }
+                                        }}
+                                    />
+
+                                    {mensajeEstado && (
+                                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                            <Loader2 size={12} className="anima-spin" />
+                                            <p style={{ fontSize: '9px', color: '#aaa' }}>{mensajeEstado}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed #444', borderRadius: '15px' }}>
+                                    <Mic size={30} color="#444" style={{ marginBottom: '10px' }} />
+                                    <p style={{ fontSize: '11px', color: '#888' }}>Haz clic en un pito o bajo para seleccionarlo...</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
+                        <button onClick={guardarAjustes} className="boton-accion-panel" style={{ background: '#22c55e', color: 'white' }}>GUARDAR CAMBIOS</button>
+                        <button onClick={resetearAjustes} className="boton-accion-panel" style={{ background: '#444', color: 'white' }}>REINICIAR</button>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* 🪗 CUERPO DEL ACORDEÓN (SIMULADOR) */}
+            <motion.div
+                className={`disposicion-acordeon ${modoAjuste ? 'en-ajuste' : ''}`}
+                style={{
+                    '--imagen-fondo-acordeon': `url('${imagenFondo}')`,
+                    '--sim-tamano': ajustes.tamano,
+                    '--sim-x': ajustes.x,
+                    '--sim-y': ajustes.y,
+                    '--sim-pitos-boton-tamano': ajustes.pitosBotonTamano,
+                    '--sim-pitos-fuente-tamano': ajustes.pitosFuenteTamano,
+                    '--sim-bajos-boton-tamano': ajustes.bajosBotonTamano,
+                    '--sim-bajos-fuente-tamano': ajustes.bajosFuenteTamano,
+                    '--sim-teclas-left': ajustes.teclasLeft,
+                    '--sim-teclas-top': ajustes.teclasTop,
+                    '--sim-bajos-left': ajustes.bajosLeft,
+                    '--sim-bajos-top': ajustes.bajosTop
+                } as any}
+            >
+                {/* 🎹 LADO PITOS (DERECHA) */}
+                <div className={`lado-teclas ${modoAjuste ? 'en-ajuste' : ''}`}>
+                    {filas.map(f => (
+                        <div key={f} className={`fila ${f === 'primeraFila' ? 'tres' : f === 'segundaFila' ? 'dos' : 'uno'}`}>
+                            {disposicion[f].filter(b => b.id.includes(direccion)).map(b => (
+                                <div
+                                    key={b.id}
+                                    className={`boton ${botonesActivos[b.id] ? 'activo' : ''} ${direccion}`}
+                                    onMouseDown={() => {
+                                        if (modoAjuste && pestanaActiva === 'grabacion') {
+                                            setBotonParaGrabar(b.id);
+                                        } else {
+                                            actualizarBotonActivo(b.id, 'add');
+                                        }
+                                    }}
+                                    onMouseUp={() => actualizarBotonActivo(b.id, 'remove')}
+                                    onMouseLeave={() => actualizarBotonActivo(b.id, 'remove')}
+                                >
+                                    {mostrarDobleNota ? (() => {
+                                        const idHalar = b.id.replace(direccion, 'halar');
+                                        const idEmpujar = b.id.replace(direccion, 'empujar');
+
+                                        // Filtrar notas que no existan en el instrumento grabado (basura visual)
+                                        const tieneHalar = !instrumentoSeleccionado || muestrasCargadas[`${idHalar}_halar`];
+                                        const tieneEmpujar = !instrumentoSeleccionado || muestrasCargadas[`${idEmpujar}_empujar`];
+
+                                        if (!tieneHalar && !tieneEmpujar) return null;
+
+                                        return (
+                                            <div style={{
+                                                display: 'flex', flexDirection: 'column', height: '100%',
+                                                justifyContent: 'center', gap: '2px', fontSize: '0.7em', lineHeight: '1'
+                                            }}>
+                                                {tieneHalar && (
+                                                    <span style={{ color: '#3b82f6', fontWeight: '900', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>
+                                                        {getContenidoBoton(idHalar, true)}
+                                                    </span>
+                                                )}
+
+                                                {tieneHalar && tieneEmpujar && (
+                                                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '60%', margin: '0 auto' }} />
+                                                )}
+
+                                                {tieneEmpujar && (
+                                                    <span style={{ color: '#f97316', fontWeight: '900', textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>
+                                                        {getContenidoBoton(idEmpujar, false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })() : (
+                                        <span style={{
+                                            color: direccion === 'halar' ? '#3b82f6' : '#f97316',
+                                            fontWeight: '900', letterSpacing: '-0.3px'
+                                        }}>
+                                            {(modoVista === 'teclas') ? (Object.keys(mapaTeclas).find(k => mapaTeclas[k].fila === parseInt(b.id.split('-')[0]) && mapaTeclas[k].columna === parseInt(b.id.split('-')[1])) || '').toUpperCase() :
+                                                (modoVista === 'numeros') ? b.id.split('-')[1] :
+                                                    (!instrumentoSeleccionado || muestrasCargadas[`${b.id}_${direccion}`]) ? getContenidoBoton(b.id, direccion === 'halar') : ''}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                            <span style={{ fontSize: '9px', fontWeight: 'bold', textShadow: '1px 1px 2px #000', color: 'white', opacity: 0.9 }}>{getFilaDisplay(f)}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 🎸 LADO BAJOS (IZQUIERDA) */}
+                <div className={`lado-bajos ${modoAjuste ? 'en-ajuste' : ''}`}>
+                    {filasBajos.map(f => (
+                        <div key={f} className={`fila ${f}`}>
+                            {disposicionBajos[f].filter(b => b.id.includes(direccion)).map(b => (
+                                <div
+                                    key={b.id}
+                                    className={`boton ${botonesActivos[b.id] ? 'activo' : ''} ${direccion}`}
+                                    onMouseDown={() => {
+                                        if (modoAjuste && pestanaActiva === 'grabacion') {
+                                            setBotonParaGrabar(b.id);
+                                        } else {
+                                            actualizarBotonActivo(b.id, 'add');
+                                        }
+                                    }}
+                                    onMouseUp={() => actualizarBotonActivo(b.id, 'remove')}
+                                    onMouseLeave={() => actualizarBotonActivo(b.id, 'remove')}
+                                >
+                                    {mostrarDobleNota ? (() => {
+                                        const idHalar = b.id.replace(direccion, 'halar');
+                                        const idEmpujar = b.id.replace(direccion, 'empujar');
+
+                                        // Filtrar notas de bajos inexistentes
+                                        const tieneHalar = !instrumentoSeleccionado || muestrasCargadas[`${idHalar}_halar`];
+                                        const tieneEmpujar = !instrumentoSeleccionado || muestrasCargadas[`${idEmpujar}_empujar`];
+
+                                        if (!tieneHalar && !tieneEmpujar) return null;
+
+                                        return (
+                                            <div style={{
+                                                display: 'flex', flexDirection: 'column', height: '100%',
+                                                justifyContent: 'center', gap: '0px', lineHeight: '0.9'
+                                            }}>
+                                                {tieneHalar && (
+                                                    <span style={{ color: '#3b82f6', fontWeight: '900', fontSize: '0.55em' }}>
+                                                        {getContenidoBoton(idHalar, true)}
+                                                    </span>
+                                                )}
+
+                                                {tieneHalar && tieneEmpujar && (
+                                                    <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.15)', width: '40%', margin: '1px auto' }} />
+                                                )}
+
+                                                {tieneEmpujar && (
+                                                    <span style={{ color: '#f97316', fontWeight: '900', fontSize: '0.55em' }}>
+                                                        {getContenidoBoton(idEmpujar, false)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })() : (
+                                        <span style={{
+                                            color: direccion === 'halar' ? '#3b82f6' : '#f97316',
+                                            fontWeight: '900', letterSpacing: '-0.3px'
+                                        }}>
+                                            {(modoVista === 'teclas') ? (Object.keys(mapaTeclasBajos).find(k => mapaTeclasBajos[k].fila === parseInt(b.id.split('-')[0]) && mapaTeclasBajos[k].columna === parseInt(b.id.split('-')[1])) || '').toUpperCase() :
+                                                (modoVista === 'numeros') ? b.id.split('-')[1] :
+                                                    (!instrumentoSeleccionado || muestrasCargadas[`${b.id}_${direccion}`]) ? getContenidoBoton(b.id, direccion === 'halar') : ''}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
+        </div>
     );
 });
 
