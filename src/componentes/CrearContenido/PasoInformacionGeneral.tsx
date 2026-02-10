@@ -108,15 +108,27 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
   }
 
   function continuar() {
+    if (!titulo.trim()) {
+      alert('Por favor, ingresa un título para el ' + (tipo === 'curso' ? 'curso' : 'tutorial'))
+      return
+    }
+
     const datosCompletos: any = {
-      titulo, descripcion, nivel, estado,
+      titulo: titulo.trim(),
+      descripcion,
+      nivel,
+      estado,
       ...(tipo === 'curso' ? { es_destacado } : { destacado: es_destacado }),
       tipo_acceso,
       precio_normal: tipo_acceso === 'pago' ? precio_normal : '',
       precio_rebajado: tipo_acceso === 'pago' ? precio_rebajado : '',
       fecha_expiracion: tipo_acceso === 'pago' ? fecha_expiracion : '',
-      descripcion_corta, categoria, plantilla_vista, imagen_url,
-      ...(tipo === 'curso' && { requisitos: requisitos_curso, objetivos: objetivos_curso, duracion_estimada, con_modulos }),
+      descripcion_corta,
+      categoria,
+      plantilla_vista,
+      imagen_url,
+      duracion_estimada,
+      ...(tipo === 'curso' && { requisitos: requisitos_curso, objetivos: objetivos_curso, con_modulos }),
       ...(tipo === 'tutorial' && { artista, tonalidad, acordeonista, video_url, requisitos: requisitos_tutorial, objetivos: objetivos_tutorial })
     }
     onContinuar(datosCompletos)

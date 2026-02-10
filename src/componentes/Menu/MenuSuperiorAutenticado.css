@@ -281,7 +281,11 @@
     }
 }
 
-/* Iconos Móvil */
+/* Notificaciones Móvil */
+.nav-auth-notif-mobile-container {
+    display: none;
+}
+
 .nav-auth-btn-icon-mobile {
     display: none;
     align-items: center;
@@ -682,6 +686,10 @@
 
     .nav-auth-icons-desktop {
         display: none;
+    }
+
+    .nav-auth-notif-mobile-container {
+        display: flex;
     }
 
     .nav-auth-btn-icon-mobile {

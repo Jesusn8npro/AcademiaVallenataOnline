@@ -5,6 +5,7 @@ import './FeedPublicaciones.css';
 interface Usuario {
   id: string;
   nombre: string;
+  rol: string;
 }
 
 interface FeedPublicacionesProps {
@@ -24,6 +25,7 @@ interface FeedPublicacionesProps {
   total_comentarios: number;
   total_compartidos: number;
   usuario: Usuario | null;
+  onEliminar?: (id: string) => void;
 }
 
 const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
@@ -42,7 +44,8 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
   me_gusta,
   total_comentarios,
   total_compartidos,
-  usuario
+  usuario,
+  onEliminar
 }) => {
   // Estados locales
   const [contadorComentarios, setContadorComentarios] = useState(total_comentarios);
@@ -53,9 +56,14 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
   const [enfoqueAutomaticoComentario, setEnfoqueAutomaticoComentario] = useState(false);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [cargandoComentario, setCargandoComentario] = useState(false);
+  const [mostrarMenu, setMostrarMenu] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   // Saber si el usuario actual ya dio like
   const yaDioMeGusta = usuario && meGusta.includes(usuario.id);
+
+  // Saber si el usuario es dueño de la publicación o admin
+  const esDuenioOAdmin = usuario && (usuario.id === usuario_id || usuario.rol === 'admin');
 
   // Cargar contador de comentarios y likes reales desde Supabase
   useEffect(() => {
@@ -173,6 +181,35 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
     }
   };
 
+  // Eliminar publicación
+  const manejarEliminar = async () => {
+    if (!esDuenioOAdmin || eliminando) return;
+
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    setEliminando(true);
+    try {
+      const { error } = await supabase
+        .from('comunidad_publicaciones')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      if (onEliminar) {
+        onEliminar(id);
+      }
+    } catch (error) {
+      console.error('Error eliminando publicación:', error);
+      alert('Error al eliminar la publicación');
+    } finally {
+      setEliminando(false);
+      setMostrarMenu(false);
+    }
+  };
+
   // Navegar al perfil
   const navegarAlPerfil = () => {
     console.log(`🔗 Navegando al perfil de: ${usuario_nombre} `);
@@ -235,11 +272,44 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
           </div>
         </div >
         <div className="feed-publicaciones-acciones-encabezado">
-          <button className="feed-publicaciones-boton-menu" title="Más opciones" aria-label="Opciones de publicación">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-            </svg>
-          </button>
+          <div className="feed-publicaciones-contenedor-menu">
+            <button
+              className={`feed-publicaciones-boton-menu ${mostrarMenu ? 'activo' : ''}`}
+              title="Más opciones"
+              aria-label="Opciones de publicación"
+              onClick={() => setMostrarMenu(!mostrarMenu)}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+              </svg>
+            </button>
+
+            {mostrarMenu && (
+              <>
+                <div className="feed-publicaciones-menu-overlay" onClick={() => setMostrarMenu(false)}></div>
+                <div className="feed-publicaciones-menu-dropdown">
+                  {esDuenioOAdmin && (
+                    <button className="feed-publicaciones-opcion-menu eliminar" onClick={manejarEliminar} disabled={eliminando}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                      </svg>
+                      {eliminando ? 'Eliminando...' : 'Eliminar publicación'}
+                    </button>
+                  )}
+                  <button className="feed-publicaciones-opcion-menu" onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/comunidad#publicacion-${id}`);
+                    alert('Enlace copiado al portapapeles');
+                    setMostrarMenu(false);
+                  }}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                      <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                    </svg>
+                    Copiar enlace
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header >
 

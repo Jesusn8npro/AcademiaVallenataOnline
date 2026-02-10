@@ -8,9 +8,12 @@ interface Props {
   tipo: 'curso' | 'tutorial'
   datosIniciales?: any
   estructuraInicial?: any[]
+  onBack?: () => void
+  tituloEdicion?: string
+  modoEdicion?: boolean
 }
 
-export default function WizardContenido({ tipo: tipoProp, datosIniciales, estructuraInicial }: Props) {
+export default function WizardContenido({ tipo: tipoProp, datosIniciales, estructuraInicial, onBack, tituloEdicion, modoEdicion: modoEdicionProp }: Props) {
   const [tipo, setTipo] = useState<'curso' | 'tutorial'>(tipoProp || 'tutorial')
   const [pasoActual, setPasoActual] = useState(1)
   const [animandoCambio, setAnimandoCambio] = useState(false)
@@ -18,23 +21,23 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
   const [estructuraContenido, setEstructuraContenido] = useState<any[]>([])
   const [cursoCreado, setCursoCreado] = useState<any>(null)
 
-  const modoEdicion = !!(datosIniciales && datosIniciales.id)
+  const modoEdicion = modoEdicionProp ?? !!(datosIniciales && (datosIniciales.id || datosIniciales.slug))
 
+  // ... (rest of useEffects same as before)
   // Actualizar datos cuando llegan los iniciales
   useEffect(() => {
     if (datosIniciales && Object.keys(datosIniciales).length > 0) {
-      console.log('🔄 [WIZARD] Actualizando datosGenerales con:', datosIniciales);
       setDatosGenerales({ ...datosIniciales });
     }
   }, [datosIniciales])
 
   useEffect(() => {
     if (estructuraInicial && estructuraInicial.length > 0) {
-      console.log('🔄 [WIZARD] Actualizando estructura con:', estructuraInicial);
       setEstructuraContenido([...estructuraInicial]);
     }
   }, [estructuraInicial])
 
+  // ... (useMemo pasos same as before)
   const pasos = useMemo(() => {
     return tipo === 'curso'
       ? [
@@ -50,6 +53,7 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
         { id: 4, titulo: '🎉 Finalización', descripcion: 'Proceso completado' }
       ]
   }, [tipo])
+
   const totalPasos = pasos.length
   const porcentajeProgreso = ((pasoActual - 1) / (totalPasos - 1)) * 100
 
@@ -80,15 +84,32 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
   return (
     <div className="wizard-futurista">
       <header className="wizard-header">
+        <div className="header-top-bar">
+          {onBack && (
+            <button className="wizard-btn-panel" onClick={onBack} title="Volver al Panel">
+              <span className="icono">📊</span>
+              <span>Panel</span>
+            </button>
+          )}
+
+          {modoEdicion && (
+            <div className="wizard-status-badge">
+              <span className="dot"></span>
+              MODO EDICIÓN
+            </div>
+          )}
+        </div>
+
         <div className="header-content">
           <h1 className="titulo-principal">
             <span className="icono-creator">🚀</span>
-            <span className="texto-titulo">Creator Studio</span>
+            <span className="texto-titulo">{tituloEdicion || 'Creator Studio'}</span>
             <span className="subtitulo">Sistema Avanzado de Creación de Contenido</span>
           </h1>
+
           <div className="selector-tipo">
             <button className={`tipo-btn ${tipo === 'tutorial' ? 'activo' : ''}`} onClick={() => cambiarTipoContenido('tutorial')} disabled={pasoActual > 1}>
-              <span className="icono">📚</span>
+              <span className="icono">🎥</span>
               Tutorial
             </button>
             <button className={`tipo-btn ${tipo === 'curso' ? 'activo' : ''}`} onClick={() => cambiarTipoContenido('curso')} disabled={pasoActual > 1}>
@@ -163,16 +184,18 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
         )}
       </main>
 
-      <footer className="controles-navegacion">
-        <button className={`boton-navegacion anterior ${pasoActual === 1 ? 'deshabilitado' : ''}`} onClick={retrocederPaso} disabled={pasoActual === 1}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Anterior
-        </button>
-        <button className={`boton-navegacion siguiente ${pasoActual === totalPasos ? 'deshabilitado' : ''}`} onClick={avanzarPaso} disabled={pasoActual === totalPasos}>
-          Siguiente
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-        </button>
-      </footer>
+      {pasoActual < totalPasos && (
+        <footer className="controles-navegacion">
+          <button className={`boton-navegacion anterior ${pasoActual === 1 ? 'deshabilitado' : ''}`} onClick={retrocederPaso} disabled={pasoActual === 1}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Anterior
+          </button>
+          <button className={`boton-navegacion siguiente ${pasoActual === totalPasos ? 'deshabilitado' : ''}`} onClick={avanzarPaso} disabled={pasoActual === totalPasos}>
+            Siguiente
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </footer>
+      )}
     </div>
   )
 }

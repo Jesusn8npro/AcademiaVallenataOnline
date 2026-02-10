@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../servicios/supabaseCliente';
+import { useLocation } from 'react-router-dom';
 import BannerComunidad from '../ComponentesComunidad/BannerComunidad';
 import ComunidadPublicar from '../ComponentesComunidad/ComunidadPublicar';
 import FeedPublicaciones from '../ComponentesComunidad/FeedPublicaciones';
@@ -28,6 +29,8 @@ const ComunidadPage: React.FC = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [perfilCompleto, setPerfilCompleto] = useState<any>(null);
+  const [viendoUnica, setViendoUnica] = useState(false);
+  const location = useLocation();
 
   // Cargar usuario actual
   useEffect(() => {
@@ -73,8 +76,25 @@ const ComunidadPage: React.FC = () => {
         setCargando(true);
         setError(null);
 
-        const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
-        setPublicaciones(publicacionesData);
+        // Verificar si hay una publicación específica en la URL (#publicacion-id)
+        const hash = window.location.hash || location.hash;
+        const idEspecifico = hash.includes('publicacion-') ? hash.split('publicacion-')[1] : null;
+
+        if (idEspecifico) {
+          const publicacionData = await ComunidadService.obtenerPublicacionPorId(idEspecifico);
+          if (publicacionData) {
+            setPublicaciones([publicacionData]);
+            setViendoUnica(true);
+          } else {
+            const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
+            setPublicaciones(publicacionesData);
+            setViendoUnica(false);
+          }
+        } else {
+          const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
+          setPublicaciones(publicacionesData);
+          setViendoUnica(false);
+        }
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
         // Si hay error de conexión, usar datos de ejemplo
@@ -132,10 +152,13 @@ const ComunidadPage: React.FC = () => {
     };
 
     cargarPublicaciones();
-  }, []);
+  }, [location.hash]);
 
   // Manejar nueva publicación
   const manejarNuevaPublicacion = () => {
+    setViendoUnica(false);
+    window.location.hash = '';
+
     // Recargar publicaciones
     const recargarPublicaciones = async () => {
       try {
@@ -199,20 +222,41 @@ const ComunidadPage: React.FC = () => {
                     Reintentar
                   </button>
                 </div>
-              ) : publicaciones.length === 0 ? (
-                <div className="comunidad-page-estado-vacio">
-                  <div className="comunidad-page-icono-vacio">🎵</div>
-                  <h3>No hay publicaciones aún</h3>
-                  <p>¡Sé el primero en compartir algo con la comunidad!</p>
-                </div>
               ) : (
-                publicaciones.map((publicacion) => (
-                  <FeedPublicaciones
-                    key={publicacion.id}
-                    {...publicacion}
-                    usuario={usuario}
-                  />
-                ))
+                <>
+                  {viendoUnica && (
+                    <div className="comunidad-page-filtro-info">
+                      <p>Mostrando una publicación específica</p>
+                      <button
+                        className="comunidad-page-btn-ver-todo"
+                        onClick={() => {
+                          window.location.hash = '';
+                          if (!location.hash) window.location.reload();
+                        }}
+                      >
+                        Ver todas las publicaciones
+                      </button>
+                    </div>
+                  )}
+                  {publicaciones.length === 0 ? (
+                    <div className="comunidad-page-estado-vacio">
+                      <div className="comunidad-page-icono-vacio">🎵</div>
+                      <h3>No hay publicaciones aún</h3>
+                      <p>¡Sé el primero en compartir algo con la comunidad!</p>
+                    </div>
+                  ) : (
+                    publicaciones.map((publicacion) => (
+                      <FeedPublicaciones
+                        key={publicacion.id}
+                        {...publicacion}
+                        usuario={usuario}
+                        onEliminar={(id) => {
+                          setPublicaciones(prev => prev.filter(p => p.id !== id));
+                        }}
+                      />
+                    ))
+                  )}
+                </>
               )}
             </div>
           </div>

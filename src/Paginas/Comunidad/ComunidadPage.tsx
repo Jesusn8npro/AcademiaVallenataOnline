@@ -28,6 +28,7 @@ const ComunidadPage: React.FC = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [perfilCompleto, setPerfilCompleto] = useState<any>(null);
+  const [viendoUnica, setViendoUnica] = useState(false);
 
   // Cargar usuario actual
   useEffect(() => {
@@ -72,9 +73,27 @@ const ComunidadPage: React.FC = () => {
       try {
         setCargando(true);
         setError(null);
-        
-        const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
-        setPublicaciones(publicacionesData);
+
+        // Verificar si hay una publicación específica en la URL (#publicacion-id)
+        const hash = window.location.hash;
+        const idEspecifico = hash.includes('publicacion-') ? hash.split('publicacion-')[1] : null;
+
+        if (idEspecifico) {
+          const publicacionData = await ComunidadService.obtenerPublicacionPorId(idEspecifico);
+          if (publicacionData) {
+            setPublicaciones([publicacionData]);
+            setViendoUnica(true);
+          } else {
+            // Si no existe, cargar todas por defecto
+            const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
+            setPublicaciones(publicacionesData);
+            setViendoUnica(false);
+          }
+        } else {
+          const publicacionesData = await ComunidadService.obtenerPublicaciones(20, 0);
+          setPublicaciones(publicacionesData);
+          setViendoUnica(false);
+        }
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
         // Si hay error de conexión, usar datos de ejemplo
@@ -136,6 +155,9 @@ const ComunidadPage: React.FC = () => {
 
   // Manejar nueva publicación
   const manejarNuevaPublicacion = () => {
+    setViendoUnica(false); // Volver al feed completo
+    window.location.hash = ''; // Limpiar el hash
+
     // Recargar publicaciones
     const recargarPublicaciones = async () => {
       try {
@@ -151,78 +173,83 @@ const ComunidadPage: React.FC = () => {
 
   return (
     <div className="comunidad-page-contenedor">
-      {/* Banner superior */}
       <BannerComunidad />
 
-      {/* Contenido principal con estructura idéntica a Svelte */}
       <div className="comunidad-page-contenido">
         <div className="comunidad-page-timeline-grid">
-          {/* Columna Izquierda - EXACTAMENTE COMO SVELTE */}
           <div className="comunidad-page-columna-timeline comunidad-page-columna-izquierda">
-            {/* Widget de progreso del perfil */}
             <div className="comunidad-page-bloque-ranking">
               {perfilCompleto && (
                 <PorcentajePerfil perfil={perfilCompleto} />
               )}
             </div>
-            
-            {/* Widget de artículos del blog */}
             <UltimosArticulosBlog />
           </div>
 
-          {/* Columna Central - EXACTAMENTE COMO SVELTE */}
           <div className="comunidad-page-columna-timeline comunidad-page-columna-central">
-            {/* Componente de publicar */}
             <div className="comunidad-page-contenedor-publicar">
               {usuario && (
-                <ComunidadPublicar 
-                  usuario={usuario} 
+                <ComunidadPublicar
+                  usuario={usuario}
                   onPublicar={manejarNuevaPublicacion}
                 />
               )}
             </div>
-            
-            {/* Feed de Publicaciones */}
+
             <div className="comunidad-page-feed-publicaciones">
               {cargando ? (
                 <div className="comunidad-page-estado-carga">
                   <div className="comunidad-page-spinner"></div>
                   <p>Cargando publicaciones...</p>
                 </div>
-              ) : error ? (
+              ) : error && !viendoUnica ? (
                 <div className="comunidad-page-estado-error">
                   <p>{error}</p>
-                  <button 
-                    className="comunidad-page-btn-reintentar"
-                    onClick={() => window.location.reload()}
-                  >
+                  <button className="comunidad-page-btn-reintentar" onClick={() => window.location.reload()}>
                     Reintentar
                   </button>
                 </div>
-              ) : publicaciones.length === 0 ? (
-                <div className="comunidad-page-estado-vacio">
-                  <div className="comunidad-page-icono-vacio">🎵</div>
-                  <h3>No hay publicaciones aún</h3>
-                  <p>¡Sé el primero en compartir algo con la comunidad!</p>
-                </div>
               ) : (
-                publicaciones.map((publicacion) => (
-                  <FeedPublicaciones
-                    key={publicacion.id}
-                    {...publicacion}
-                    usuario={usuario}
-                  />
-                ))
+                <>
+                  {viendoUnica && (
+                    <div className="comunidad-page-filtro-info">
+                      <p>Mostrando una publicación específica</p>
+                      <button
+                        className="comunidad-page-btn-ver-todo"
+                        onClick={() => {
+                          window.location.hash = '';
+                          window.location.reload();
+                        }}
+                      >
+                        Ver todas las publicaciones
+                      </button>
+                    </div>
+                  )}
+                  {publicaciones.length === 0 ? (
+                    <div className="comunidad-page-estado-vacio">
+                      <div className="comunidad-page-icono-vacio">🎵</div>
+                      <h3>No hay publicaciones aún</h3>
+                      <p>¡Sé el primero en compartir algo con la comunidad!</p>
+                    </div>
+                  ) : (
+                    publicaciones.map((publicacion) => (
+                      <FeedPublicaciones
+                        key={publicacion.id}
+                        {...publicacion}
+                        usuario={usuario}
+                        onEliminar={(id) => {
+                          setPublicaciones(prev => prev.filter(p => p.id !== id));
+                        }}
+                      />
+                    ))
+                  )}
+                </>
               )}
             </div>
           </div>
 
-          {/* Columna Derecha - EXACTAMENTE COMO SVELTE */}
           <div className="comunidad-page-columna-timeline comunidad-page-columna-derecha">
-            {/* Widget de ranking */}
             <RankingComunidadNuevo />
-            
-            {/* Widget de cursos pendientes */}
             <SliderCursos />
           </div>
         </div>

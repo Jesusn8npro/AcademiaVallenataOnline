@@ -61,6 +61,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
     const [cerrandoSesion, setCerrandoSesion] = useState(false);
     const menuUsuarioRef = useRef<HTMLDivElement>(null);
     const notificacionesRef = useRef<HTMLButtonElement>(null);
+    const notificacionesMobileRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);      // [NEW]
 
 
@@ -94,11 +95,14 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                 setMostrarMenu(false);
             }
             // [NEW] Cerrar notificaciones si click fuera
+            const clicEnBotonNotif =
+                (notificacionesRef.current && notificacionesRef.current.contains(event.target as Node)) ||
+                (notificacionesMobileRef.current && notificacionesMobileRef.current.contains(event.target as Node));
+
             if (
                 dropdownRef.current &&
                 !dropdownRef.current.contains(event.target as Node) &&
-                notificacionesRef.current &&
-                !notificacionesRef.current.contains(event.target as Node)
+                !clicEnBotonNotif
             ) {
                 setMostrarNotificaciones(false);
             }
@@ -381,19 +385,34 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
 
 
                     {/* Notificaciones Móvil */}
-                    <button
-                        className="nav-auth-btn-icon-mobile nav-auth-badge"
-                        aria-label="Notificaciones"
-                        onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)} // Reusa la lógica desktop por ahora
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                        </svg>
-                        {conteoNotificaciones > 0 && (
-                            <span className="nav-auth-badge-num-mobile">{conteoNotificaciones}</span>
+                    <div className="nav-auth-notif-mobile-container" style={{ position: 'relative' }}>
+                        <button
+                            ref={notificacionesMobileRef}
+                            className="nav-auth-btn-icon-mobile nav-auth-badge"
+                            aria-label="Notificaciones"
+                            onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            {conteoNotificaciones > 0 && (
+                                <span className="nav-auth-badge-num-mobile">{conteoNotificaciones}</span>
+                            )}
+                        </button>
+
+                        {/* [NEW] Dropdown para móvil rendered aquí también para que sea visible en este contexto */}
+                        {mostrarNotificaciones && (
+                            <div ref={dropdownRef}>
+                                <NotificacionesDropdown
+                                    onCerrar={() => setMostrarNotificaciones(false)}
+                                    onNotificacionLeida={() => {
+                                        if (conteoNotificaciones > 0) setConteoNotificaciones(c => c - 1);
+                                    }}
+                                />
+                            </div>
                         )}
-                    </button>
+                    </div>
 
                     {/* Menú Usuario */}
                     <div className="nav-auth-user-menu" ref={menuUsuarioRef}>
