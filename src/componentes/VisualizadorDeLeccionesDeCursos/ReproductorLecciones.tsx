@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ReproductorLecciones.css';
 
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: any;
+  }
+}
+
 interface ReproductorLeccionesProps {
   leccionAnterior?: any;
   leccionSiguiente?: any;
@@ -55,6 +62,54 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
 
   const elementoVideoRef = useRef<HTMLVideoElement>(null);
   const elementoIframeRef = useRef<HTMLIFrameElement>(null);
+  const [mostrarAvisoYT, setMostrarAvisoYT] = useState(false);
+
+  // EFECTO: Detectar si es YouTube y mostrar aviso preventivo
+  useEffect(() => {
+    if (esYouTube && !tieneError && !cargando) {
+      setMostrarAvisoYT(true);
+      const timer = setTimeout(() => setMostrarAvisoYT(false), 12000);
+      return () => clearTimeout(timer);
+    }
+  }, [esYouTube, tieneError, cargando, videoUrl]);
+
+  // EFECTO: Cargar YouTube IFrame API para detección de errores PROFUNDA
+  useEffect(() => {
+    if (esYouTube && !window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+  }, [esYouTube]);
+
+  // EFECTO: Vincular el iframe existente con la API de YouTube para escuchar eventos
+  useEffect(() => {
+    let player: any = null;
+
+    // Solo intentar si la API está lista y tenemos una URL de YouTube
+    if (esYouTube && urlProcesada && !cargando && window.YT && window.YT.Player) {
+      try {
+        player = new window.YT.Player(elementoIframeRef.current, {
+          events: {
+            'onError': (event: any) => {
+              console.warn('⚠️ [REPRODUCTOR] YouTube API reportó error:', event.data);
+              // 101/150 son los códigos de error de "prohibido insertar" o "bloqueado por UMPG"
+              if ([5, 100, 101, 150].includes(event.data)) {
+                setTieneError(true);
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('⚠️ [REPRODUCTOR] Error vinculando YouTube API:', e);
+      }
+    }
+
+    return () => {
+      // No destruimos para no romper el iframe si sigue vivo
+    };
+  }, [esYouTube, urlProcesada, cargando]);
 
   const procesarUrl = (url: string): string => {
     console.log('🎥 [REPRODUCTOR] Procesando URL:', url);
@@ -72,25 +127,27 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       setEsBunny(false);
 
       // Extraer ID de YouTube
-      let videoId = '';
+      let idVideoYT = '';
       const patterns = [
         /youtube\.com\/watch\?v=([^&]+)/,
+        /youtube\.com\/shorts\/([^?]+)/,
         /youtu\.be\/([^?]+)/,
-        /youtube\.com\/embed\/([^?]+)/
+        /youtube\.com\/embed\/([^?]+)/,
+        /youtube-nocookie\.com\/embed\/([^?]+)/
       ];
 
       for (const pattern of patterns) {
         const match = url.match(pattern);
         if (match) {
-          videoId = match[1];
-          console.log('📺 [REPRODUCTOR] ID de YouTube extraído:', videoId);
+          idVideoYT = match[1];
+          console.log('📺 [REPRODUCTOR] ID de YouTube extraído:', idVideoYT);
           break;
         }
       }
 
-      if (videoId) {
-        // URL mejorada con parámetros optimizados
-        const youtubeUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&controls=1&enablejsapi=1&origin=${window.location.origin}`;
+      if (idVideoYT) {
+        // Usar youtube.com estándar (a veces es más compatible que nocookie) y quitar origin
+        const youtubeUrl = `https://www.youtube.com/embed/${idVideoYT}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`;
         console.log('✅ [REPRODUCTOR] URL de YouTube procesada:', youtubeUrl);
         setTieneError(false);
         return youtubeUrl;
@@ -223,8 +280,8 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       return url;
     }
 
-    // Detectar YouTube (sin cambios, ya funciona)
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    // Detectar YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube-nocookie.com')) {
       setEsYouTube(true);
       setEsBunny(false);
       setEsEmbed(false);
@@ -232,20 +289,23 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       // Extraer ID de YouTube
       const regexps = [
         /youtube\.com\/watch\?v=([^&]+)/,
+        /youtube\.com\/shorts\/([^?]+)/,
         /youtu\.be\/([^?]+)/,
-        /youtube\.com\/embed\/([^?]+)/
+        /youtube\.com\/embed\/([^?]+)/,
+        /youtube-nocookie\.com\/embed\/([^?]+)/
       ];
 
+      let idEncontrado = '';
       for (const regex of regexps) {
         const match = url.match(regex);
         if (match) {
-          const idYouTube = match[1];
-          setIdYouTube(idYouTube);
+          idEncontrado = match[1];
+          setIdYouTube(idEncontrado);
           break;
         }
       }
 
-      return `https://www.youtube.com/embed/${idYouTube}?autoplay=1&rel=0`;
+      return `https://www.youtube.com/embed/${idEncontrado}?autoplay=${autoplay ? 1 : 0}&rel=0&enablejsapi=1&origin=${window.location.origin}`;
     }
 
     console.log('🎬 [LIMPIEZA] URL directa detectada');
@@ -478,39 +538,74 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
 
   return (
     <div className="reproductor-container">
+      {esYouTube && mostrarAvisoYT && (
+        <div className="aviso-compatibilidad">
+          <span className="aviso-texto">⚠️ Si el video parece bloqueado, haz clic en el botón de YouTube de abajo.</span>
+          <button className="aviso-btn" onClick={() => setMostrarAvisoYT(false)}>Entendido</button>
+        </div>
+      )}
+
       <div className="video-wrapper">
         {tieneError || !urlProcesada ? (
           <div className="error-overlay">
             <div className="error-content">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <h3>Video no disponible</h3>
-              <p>
-                {!videoUrl ? (
-                  'Esta clase aún no tiene un video asignado.'
-                ) : (
-                  'Hubo un problema al cargar el video. Por favor, inténtalo más tarde.'
-                )}
-              </p>
-              {videoUrl && (
-                <button className="btn-reintentar" onClick={reintentar}>
-                  🔄 Reintentar carga
-                </button>
+              {esYouTube ? (
+                <>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📺</div>
+                  <h3>Video con restricción de YouTube</h3>
+                  <p>
+                    YouTube bloqueó la reproducción automática de este video en este sitio web (común en videos con derechos de autor fuertes).
+                  </p>
+                  <p style={{ fontWeight: '600', color: '#ff6b6b' }}>
+                    ¡No te preocupes! Puedes verlo directamente en YouTube y luego regresar aquí para marcarlo como completado.
+                  </p>
+
+                  <a
+                    href={videoUrl?.includes('watch?v=') ? videoUrl : `https://www.youtube.com/watch?v=${idYouTube}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-youtube"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                    Ver en YouTube
+                  </a>
+
+                  <button className="btn-reintentar" onClick={reintentar} style={{ opacity: 0.7 }}>
+                    Reintentar carga
+                  </button>
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <h3>Video no disponible</h3>
+                  <p>
+                    {!videoUrl ? (
+                      'Esta clase aún no tiene un video asignado.'
+                    ) : (
+                      'Hubo un problema al cargar el video. Por favor, inténtalo más tarde.'
+                    )}
+                  </p>
+                  {videoUrl && (
+                    <button className="btn-reintentar" onClick={reintentar}>
+                      🔄 Reintentar carga
+                    </button>
+                  )}
+                </>
               )}
+
               <div className="debug-info">
                 <details>
-                  <summary>Información de depuración</summary>
+                  <summary>Detalles técnicos</summary>
                   <pre>
-                    URL original: {videoUrl || 'No proporcionada'}
-                    URL procesada: {urlProcesada || 'No procesada'}
-                    YouTube: {esYouTube}
-                    Bunny: {esBunny}
-                    Library ID: {libraryId || 'No detectado'}
-                    Video ID: {videoId || 'No detectado'}
                     YouTube ID: {idYouTube || 'No detectado'}
+                    URL procesada: {urlProcesada}
+                    Tipo: {esYouTube ? 'YouTube' : esBunny ? 'Bunny.net' : 'Directo'}
                   </pre>
                 </details>
               </div>
@@ -526,7 +621,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowFullScreen
               frameBorder="0"
-              referrerPolicy={esBunny ? "no-referrer-when-downgrade" : "strict-origin-when-cross-origin"}
+              referrerPolicy="no-referrer-when-downgrade"
               loading="eager"
               onLoad={() => {
                 console.log('✅ [REPRODUCTOR] Video iframe cargado exitosamente');
@@ -556,51 +651,62 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
       </div>
 
       <div className="barra-navegacion">
-        <button
-          className="boton-nav anterior"
-          onClick={navegarAnterior}
-          disabled={!leccionAnterior}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span className="texto-completo">{tipo === 'clase' ? 'Anterior Clase' : 'Anterior Lección'}</span>
-          <span className="texto-corto">Anterior</span>
-        </button>
+        <div className="nav-bloque-izq">
+          <button
+            className="boton-nav anterior"
+            onClick={navegarAnterior}
+            disabled={!leccionAnterior}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span className="texto-completo">{tipo === 'clase' ? 'Anterior' : 'Anterior'}</span>
+            <span className="texto-corto">Ant.</span>
+          </button>
+        </div>
 
-        <button
-          className={`boton-completar ${completada ? 'completada' : ''}`}
-          disabled={cargandoCompletar}
-          onClick={marcarComoCompletada}
-        >
-          {cargandoCompletar ? (
-            <>
-              <div className="spinner-boton"></div>
-              <span>Marcando...</span>
-            </>
-          ) : completada ? (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>Completada</span>
-            </>
-          ) : (
-            <span>Marcar como completada</span>
+        <div className="nav-bloque-der">
+          {esYouTube && (
+            <a
+              href={videoUrl?.includes('watch?v=') ? videoUrl : `https://www.youtube.com/watch?v=${idYouTube}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-youtube"
+              style={{ padding: '0.6rem 1rem', margin: 0, fontSize: '0.85rem' }}
+            >
+              Youtube
+            </a>
           )}
-        </button>
 
-        <button
-          className="boton-nav siguiente"
-          onClick={navegarSiguiente}
-          disabled={!leccionSiguiente}
-        >
-          <span className="texto-completo">{tipo === 'clase' ? 'Siguiente Clase' : 'Siguiente Lección'}</span>
-          <span className="texto-corto">Siguiente</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
+          <button
+            className={`boton-completar ${completada ? 'completada' : ''}`}
+            disabled={cargandoCompletar}
+            onClick={marcarComoCompletada}
+          >
+            {cargandoCompletar ? (
+              <>
+                <div className="spinner-boton"></div>
+                <span>...</span>
+              </>
+            ) : completada ? (
+              <span>Completada</span>
+            ) : (
+              <span>Completar</span>
+            )}
+          </button>
+
+          <button
+            className="boton-nav siguiente"
+            onClick={navegarSiguiente}
+            disabled={!leccionSiguiente}
+          >
+            <span className="texto-completo">{tipo === 'clase' ? 'Siguiente' : 'Siguiente'}</span>
+            <span className="texto-corto">Sig.</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -31,7 +31,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,21 +106,43 @@
   white-space: pre-wrap;
 }
 
-.btn-reintentar {
-  background: #4CAF50;
-  color: white;
-  border: none;
+.btn-reintentar,
+.btn-youtube {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  margin: 1rem 0;
+  margin: 0.5rem;
   transition: all 0.3s ease;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.btn-reintentar {
+  background: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
 }
 
 .btn-reintentar:hover {
-  background: #43A047;
+  background: #3a3a3a;
   transform: translateY(-2px);
+}
+
+.btn-youtube {
+  background: #ff0000;
+  color: white;
+  border: none;
+}
+
+.btn-youtube:hover {
+  background: #cc0000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
 }
 
 .spinner {
@@ -143,17 +165,76 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .barra-navegacion {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   padding: 1rem;
   background: #1a1a1a;
   border-top: 1px solid #333;
+  flex-wrap: wrap;
+}
+
+.nav-bloque-izq,
+.nav-bloque-der {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.aviso-compatibilidad {
+  background: #2a2a2a;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  animation: slideDown 0.4s ease-out;
+}
+
+.aviso-texto {
+  color: #fbbf24;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.aviso-btn {
+  background: transparent;
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.aviso-btn:hover {
+  background: #fbbf24;
+  color: #000;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .boton-nav,
@@ -218,16 +299,22 @@
 
 @media (max-width: 768px) {
   .barra-navegacion {
-    grid-template-columns: 1fr 1.2fr 1fr;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .nav-bloque-izq,
+  .nav-bloque-der {
+    width: 100%;
+    justify-content: center;
   }
 
   .boton-nav,
   .boton-completar {
+    flex: 1;
     padding: 0.5rem;
     font-size: 0.8rem;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .texto-completo {
