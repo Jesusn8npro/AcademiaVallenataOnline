@@ -11,19 +11,19 @@ export enum TipoEfectoUI {
   POP = 'ui/pop',
   POWER = 'ui/power',  // Agregado para compatibilidad
   SUCCESS = 'ui/flourish',  // Mapeado a flourish para éxito
-  
+
   // Navegación
   SLIDE_1 = 'ui/slide1',
   SLIDE_2 = 'ui/slide2',
   HOVER_NAVEGACION = 'ui/ta',
-  
+
   // Modales y alertas
   MODAL_ABRIR = 'ui/mopen',
   MODAL_CERRAR = 'ui/mclose',
   ALERTA_PING = 'ui/ping',
   ALERTA_BONK = 'ui/bonk',
   ALERTA_LOOSE = 'ui/loose',
-  
+
   // Eventos especiales
   EVENTO_IMPORTANTE = 'ui/event',
   FLOURISH = 'ui/flourish',
@@ -31,7 +31,7 @@ export enum TipoEfectoUI {
   TELETRANSPORTE = 'ui/teleport',
   PROFUNDO = 'ui/deep',
   INICIO = 'ui/boot',
-  
+
   // Errores y negaciones
   DENEGAR = 'ui/deny',
   DENEGAR_2 = 'ui/deny2',
@@ -44,7 +44,7 @@ export enum TipoEfectoUI2 {
   CHECKBOX_OFF = 'ui2/pop-up-off',
   BOTON_GENERAL = 'ui2/button',
   BOTON_ATRAS = 'ui2/back',
-  
+
   // Feedback
   EXITO = 'ui2/success',
   ERROR = 'ui2/error',
@@ -58,19 +58,19 @@ export enum TipoEfectoJuego {
   NOTA_DU = 'du',
   NOTA_DU2 = 'du2',
   NOTA_TA = 'ta',
-  
+
   // Explosiones y efectos dramáticos
   EXPLOSION = 'explode',
   EXPLOSION_LARGA = 'explode-long',
-  
+
   // Transiciones
   WHOOSH = 'whoosh',
   CRISTAL = 'glass',
-  
+
   // Celebraciones
   WOW = 'wow',
   EXITO_GENERAL = 'success',
-  
+
   // Errores del juego
   ERROR_JUEGO = 'error',
 }
@@ -210,7 +210,7 @@ export class AudioManager {
   // Reproducir efectos de sonido (exacto como Rhythm Plus)
   playEffect(name: string) {
     if (!browser) return; // No ejecutar en el servidor
-    
+
     try {
       // Usar cache para mejor rendimiento
       if (this.efectosCache.has(name)) {
@@ -227,11 +227,11 @@ export class AudioManager {
         loop: false,
         preload: true,
       });
-      
+
       effectPlayer.on('loaderror', () => {
         console.warn(`No se pudo cargar el efecto de sonido: ${name}`);
       });
-      
+
       // Guardar en cache
       this.efectosCache.set(name, effectPlayer);
       effectPlayer.play();
@@ -243,7 +243,7 @@ export class AudioManager {
   // Efectos de hover solo en desktop (exacto como Rhythm Plus)
   playHoverEffect(name: string) {
     if (!browser) return; // No ejecutar en el servidor
-    
+
     if (window.innerWidth > 1000) {
       this.playEffect(name);
     }
@@ -252,19 +252,19 @@ export class AudioManager {
   // Reproducir música de fondo automáticamente (exacto como Rhythm Plus)
   playBgm(songToExclude?: string) {
     if (!browser) return; // No ejecutar en el servidor
-    
+
     // Lista de canciones de fondo de Rhythm Plus
     let bgmUrlArr = [
       '/audio/bgm/aurora.mp3',
       '/audio/bgm/beyond.mp3',
     ];
-    
+
     if (songToExclude && !bgmUrlArr.includes(songToExclude)) return; // is playing result bgm
-    
+
     // Mezclar aleatoriamente
     this.shuffle(bgmUrlArr);
     bgmUrlArr = bgmUrlArr.filter((e) => e !== songToExclude);
-    
+
     this.stop();
     console.log('Reproduciendo música de fondo:', bgmUrlArr);
     this.loadSong(bgmUrlArr[0], true);
@@ -279,7 +279,7 @@ export class AudioManager {
     errorCallback?: () => void
   ) {
     if (!browser) return; // No ejecutar en el servidor
-    
+
     try {
       this.player?.unload();
       this.asBackground = asBackground;
@@ -349,7 +349,7 @@ export class AudioManager {
 
   stop(stopBackground?: boolean) {
     if (!browser) return; // No ejecutar en el servidor
-    
+
     if (!stopBackground && this.asBackground) return;
     this.player?.stop();
     if (this.asBackground) {
@@ -396,10 +396,7 @@ export class AudioManager {
     return this.player?.duration() || 0;
   }
 
-  setRate(rate: number) {
-    if (!browser) return; // No ejecutar en el servidor
-    this.player?.rate(rate);
-  }
+
 }
 
 // Instancia global del audio manager

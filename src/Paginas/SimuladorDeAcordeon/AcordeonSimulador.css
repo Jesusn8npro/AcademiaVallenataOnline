@@ -12,7 +12,6 @@
     top: var(--sim-y, 50%);
     transform: translate(-50%, -50%);
     transition: none;
-    /* Desactivar transición durante el arrastre */
 }
 
 .lado-teclas {
@@ -80,16 +79,6 @@
     transform: scale(1.05);
 }
 
-.boton.no-interaccion {
-    cursor: default;
-    user-select: none;
-}
-
-.boton.no-interaccion:hover {
-    filter: none;
-    transform: none;
-}
-
 .boton.activo {
     transform: translateY(4px);
     box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.6), 0px 2px rgba(0, 0, 0, 0.3);
@@ -97,52 +86,16 @@
     color: #ffffff;
 }
 
-/* 🎨 Colores por dirección de fuelle */
-.boton.halar.activo,
-.boton.color-rojo.activo {
+.boton.halar.activo {
     background: rgba(220, 20, 60, 0.8) !important;
     border: 2px solid rgba(220, 20, 60, 0.9) !important;
-    box-shadow: 0px 6px 15px rgba(220, 20, 60, 0.5) !important;
     color: #ffffff !important;
 }
 
-.boton.empujar.activo,
-.boton.color-verde.activo {
+.boton.empujar.activo {
     background: rgba(34, 139, 34, 0.8) !important;
     border: 2px solid rgba(34, 139, 34, 0.9) !important;
-    box-shadow: 0px 6px 15px rgba(34, 139, 34, 0.5) !important;
     color: #ffffff !important;
-}
-
-/* 🎵 Efectos hover para fuelle */
-.boton.fuelle-empujar:not(.activo):hover {
-    background: rgba(34, 139, 34, 0.2);
-    border: 1px solid rgba(34, 139, 34, 0.3);
-}
-
-.boton.fuelle-halar:not(.activo):hover {
-    background: rgba(220, 20, 60, 0.2);
-    border: 1px solid rgba(220, 20, 60, 0.3);
-}
-
-/* 🎮 Estilos para acordeón guía */
-.boton.no-interaccion.activo {
-    animation: pulsoGuia 0.5s ease-in-out;
-    transform: translateY(4px) scale(1.1);
-}
-
-@keyframes pulsoGuia {
-    0% {
-        transform: translateY(4px) scale(1.0);
-    }
-
-    50% {
-        transform: translateY(4px) scale(1.15);
-    }
-
-    100% {
-        transform: translateY(4px) scale(1.1);
-    }
 }
 
 .lado-teclas .fila.tres {
@@ -168,45 +121,10 @@
     color: #efeaea;
 }
 
-@media (max-width: 1200px) {
-    .disposicion-acordeon {
-        width: 90vh;
-        height: 90vh;
-    }
-}
-
-@media (max-width: 992px) {
-    .disposicion-acordeon {
-        width: 85vh;
-        height: 85vh;
-    }
-
-    .boton {
-        height: 5vh;
-        width: 5vh;
-        font-size: 1.6vh;
-    }
-}
-
-/* 🛠️ PANEL DE PERSONALIZACIÓN - SOLUCIÓN RADICAL CURSOR */
+/* 🛠️ PANEL DE PERSONALIZACIÓN */
 body.diseno-activo,
-body.diseno-activo *,
-body.diseno-activo div,
-body.diseno-activo button,
-body.diseno-activo input,
-body.diseno-activo label,
-body.diseno-activo .disposicion-acordeon,
-body.diseno-activo .panel-ajustes {
+body.diseno-activo * {
     cursor: auto !important;
-}
-
-body.diseno-activo .cursor-punto-central,
-body.diseno-activo .cursor-anillo-externo,
-body.diseno-activo .cursor-ripple {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
 }
 
 .panel-ajustes {
@@ -214,7 +132,6 @@ body.diseno-activo .cursor-ripple {
     opacity: 1 !important;
     pointer-events: auto !important;
 }
-
 
 .boton-accion-panel {
     padding: 8px 16px;
@@ -240,7 +157,6 @@ body.diseno-activo .cursor-ripple {
     height: 6px;
     outline: none;
 }
-
 
 .grupo-ajuste input[type="range"]::-webkit-slider-thumb {
     appearance: none;
