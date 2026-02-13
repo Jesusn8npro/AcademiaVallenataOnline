@@ -165,7 +165,6 @@ const AppContent = () => {
           </Route>
           <Route path="/tutoriales/:slug/contenido" element={<ContenidoTutorial />} />
           <Route path="/tutoriales/:slug/clase/:claseSlug" element={<ClaseTutorial />} />
-          <Route path="/simulador-gaming" element={<SimuladorGaming />} />
           <Route path="/mensajes" element={<MensajesPage />} />
           <Route path="/mensajes/:chatId" element={<ChatPage />} />
           <Route path="/comunidad" element={<ComunidadPage />} />
@@ -181,6 +180,7 @@ const AppContent = () => {
 
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
+          <Route path="/simulador-gaming" element={<SimuladorGaming />} />
           <Route path="/administrador" element={<DashboardAdmin />} />
           <Route path="/administrador/contenido" element={<PanelContenido />} />
           <Route path="/administrador/panel-contenido" element={<PanelContenido />} />

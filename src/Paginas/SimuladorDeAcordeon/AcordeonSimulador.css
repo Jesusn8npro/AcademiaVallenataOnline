@@ -121,32 +121,140 @@
     color: #efeaea;
 }
 
-/* 🛠️ PANEL DE PERSONALIZACIÓN */
-body.diseno-activo,
-body.diseno-activo * {
-    cursor: auto !important;
+/* 🛠️ CONTROLES FLOTANTES */
+
+.simulador-controles-capa {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+.boton-gestor-flotante {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    width: 70px;
+    height: 70px;
+}
+
+.boton-gestor-flotante:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.controles-derecha-flotantes {
+    transition: all 0.3s ease;
+}
+
+.boton-fuelle-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.boton-fuelle-control:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.boton-fuelle-control:active {
+    transform: scale(0.96);
+}
+
+.contenedor-vistas-control {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    background: rgba(10, 10, 10, 0.85) !important;
+}
+
+.etiqueta-vistas {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #3b82f6;
+    margin: 0;
+    font-weight: 900;
+    text-align: center;
+}
+
+.btn-vista {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    border-radius: 10px;
+    cursor: pointer !important;
+    font-size: 11px;
+    font-weight: 800;
+    transition: all 0.2s;
+}
+
+.btn-vista:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-vista.activo {
+    background: #3b82f6;
+    color: white;
+    border-color: #60a5fa;
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.5);
+    transform: scale(1.05);
+}
+
+/* 🛠️ PANEL DE PERSONALIZACIÓN */
 
 .panel-ajustes {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 1 !important;
-    pointer-events: auto !important;
 }
 
-.boton-accion-panel {
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer !important;
-    text-transform: uppercase;
+.tab-ajuste {
+    transition: all 0.2s;
+}
+
+.tab-ajuste:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tab-ajuste.activa {
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* 🛠️ CURSOR HANDLING */
+.cursor-punto-central,
+.cursor-anillo-externo,
+.cursor-ripple {
+    z-index: 1000000 !important;
+}
+
+body.diseno-activo .cursor-punto-central,
+body.diseno-activo .cursor-anillo-externo {
+    z-index: 1000000 !important;
+}
+
+/* Clases utilitarias */
+.grupo-ajuste label {
+    font-weight: 600;
     letter-spacing: 0.5px;
-    border: none;
-    transition: transform 0.1s;
-}
-
-.boton-accion-panel:active {
-    transform: scale(0.95);
+    color: #e2e8f0;
 }
 
 .grupo-ajuste input[type="range"] {
@@ -167,4 +275,12 @@ body.diseno-activo * {
     border-radius: 50%;
     cursor: pointer !important;
     border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.boton.seleccionado-ajuste {
+    box-shadow: 0 0 20px gold, inset 0 0 10px gold !important;
+    border: 3px solid gold !important;
+    transform: scale(1.15);
+    z-index: 999;
 }
