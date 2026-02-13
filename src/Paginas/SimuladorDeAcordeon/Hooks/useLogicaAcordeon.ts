@@ -177,10 +177,18 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
                     // Cargar lista de tonalidades persistente y mezclar con nuevas disponibles
                     const guardadas = ajustesData.lista_tonalidades_activa || [];
                     const disponibles = Object.keys(TONALIDADES);
-
-                    // Unir ambas listas sin duplicados para asegurar que aparezcan las nuevas (como ADG)
                     const listaFinal = Array.from(new Set([...guardadas, ...disponibles]));
                     setListaTonalidades(listaFinal);
+
+                    // Cargar ajustes específicos de la tonalidad seleccionada (Prioridad Supabase)
+                    const activeKey = ajustesData.tonalidad_activa || tonalidadSeleccionada;
+                    const mappingKey = `ajustes_acordeon_vPRO_${activeKey}`;
+                    const customSettings = ajustesData.tonalidades_configuradas?.[mappingKey] ||
+                        ajustesData.tonalidades_configuradas?.[mappingKey.replace('F-Bb-Eb', 'FBE')]; // Fallback migración
+
+                    if (customSettings) {
+                        setAjustes(customSettings);
+                    }
                 } else {
                     setListaTonalidades(Object.keys(TONALIDADES));
                 }
@@ -555,25 +563,33 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
                     .eq('usuario_id', usuarioId)
                     .maybeSingle();
 
-                if (data?.tonalidades_configuradas?.[mappingKey]) {
-                    setAjustes(data.tonalidades_configuradas[mappingKey]);
+                // Verificamos si existe la configuración con el nombre nuevo o el antiguo
+                const configEnNube = data?.tonalidades_configuradas?.[mappingKey] ||
+                    data?.tonalidades_configuradas?.[mappingKey.replace('F-Bb-Eb', 'FBE')];
+
+                if (configEnNube) {
+                    setAjustes(configEnNube);
                     return;
                 }
             }
 
-            // Fallback localStorage
-            const guardados = localStorage.getItem(mappingKey);
-            if (guardados) {
-                try {
-                    setAjustes(JSON.parse(guardados));
-                } catch {
-                    setAjustes(prev => ({ ...prev, mapeoPersonalizado: {} }));
+            // Si no hay usuario o no hay datos en nube, buscar en LocalStorage SOLO si no hay usuario
+            if (!usuarioId) {
+                const guardados = localStorage.getItem(mappingKey);
+                if (guardados) {
+                    try {
+                        setAjustes(JSON.parse(guardados));
+                        return;
+                    } catch { }
                 }
-            } else {
-                const defaultAjustes = configuracionUsuario.tonalidades?.[mappingKey as keyof typeof configuracionUsuario.tonalidades] as any;
-                if (defaultAjustes) setAjustes(defaultAjustes);
-                else setAjustes(prev => ({ ...prev, mapeoPersonalizado: {} }));
             }
+
+            // Fallback final: Datos estáticos de TonosUsuario o Limpios
+            const fallbackKey = mappingKey.includes('F-Bb-Eb') ? 'ajustes_acordeon_vPRO_FBE' : mappingKey;
+            const defaultAjustes = configuracionUsuario.tonalidades?.[fallbackKey as keyof typeof configuracionUsuario.tonalidades] as any;
+
+            if (defaultAjustes) setAjustes(defaultAjustes);
+            else setAjustes(prev => ({ ...prev, mapeoPersonalizado: {} }));
         };
         cargarSpecificos();
     }, [tonalidadSeleccionada, usuarioId]);
