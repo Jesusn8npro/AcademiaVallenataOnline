@@ -16,6 +16,24 @@ const NOMBRES_INGLES: Record<string, string> = {
     'fa': 'F', 'fa#': 'Gb', 'solb': 'Gb', 'sol': 'G', 'sol#': 'Ab', 'lab': 'Ab', 'la': 'A', 'la#': 'Bb', 'sib': 'Bb', 'si': 'B'
 };
 
+const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
+    const filename = ruta.split('/').pop() || '';
+    // Busca patrones como F-6 o Eb-4
+    const match = filename.match(/([a-zA-Z#]+)-(\d+)/);
+    if (match) {
+        return { nota: match[1], octava: parseInt(match[2]) };
+    }
+    // Caso especial para Bajos: BajoC-3-cm.mp3
+    if (filename.startsWith('Bajo')) {
+        const notaMatch = filename.replace('Bajo', '').match(/([a-zA-Z#]+)/);
+        const octMatch = filename.match(/-(\d+)-/);
+        if (notaMatch) {
+            return { nota: notaMatch[1], octava: octMatch ? parseInt(octMatch[1]) : 3 };
+        }
+    }
+    return null;
+};
+
 const VOL_PITOS = 0.55;
 const VOL_BAJOS = 0.35;
 const FADE_OUT = 150; // Restaurado a 150ms para un sonido natural sin chasquidos digitales
@@ -30,9 +48,69 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         onNotaLiberada
     } = props;
 
+    // --- 1. ESTADOS (Siempre al principio) ---
+    const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69'); // Acordeón Original
+    const [listaInstrumentos, setListaInstrumentos] = useState<any[]>([]);
+    const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
+    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<Muestra[]>([]);
+    const [cargandoCloud, setCargandoCloud] = useState(false);
+    const [midiActivado, setMidiActivado] = useState(false);
+    const [usuarioId, setUsuarioId] = useState<string | null>(null);
     const [samplesPitos, setSamplesPitos] = useState<string[]>([]);
     const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
 
+    const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
+    const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
+    const [modoAjuste, setModoAjuste] = useState(false);
+    const [modoVista, setModoVista] = useState<ModoVista>('notas');
+    const [vistaDoble, setVistaDoble] = useState(false);
+    const [botonSeleccionado, setBotonSeleccionado] = useState<string | null>(null);
+    const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
+    const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
+    const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
+    const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
+
+    // --- ESTADOS DE CONTROL DE CARGA Y VISIBILIDAD ---
+    const [disenoCargado, setDisenoCargado] = useState(false);
+    const isInitialLoad = useRef(true);
+
+    // --- ESTADO PRINCIPAL DE DISEÑO CON CARGA INSTANTÁNEA (Lazy Initializer) ---
+    const [ajustes, setAjustes] = useState<AjustesAcordeon>(() => {
+        const defaults: AjustesAcordeon = {
+            tamano: '88vh',
+            x: '50%',
+            y: '50%',
+            pitosBotonTamano: '4.4vh',
+            pitosFuenteTamano: '1.6vh',
+            bajosBotonTamano: '4.2vh',
+            bajosFuenteTamano: '1.3vh',
+            teclasLeft: '5.05%',
+            teclasTop: '13%',
+            bajosLeft: '82.5%',
+            bajosTop: '28%',
+            mapeoPersonalizado: {},
+            pitchPersonalizado: {},
+            pitchGlobal: 0,
+            bancoId: 'acordeon'
+        };
+
+        try {
+            // Intentamos recuperar el "Master Mirror" del diseño para carga inmediata
+            const saved = localStorage.getItem('SIM_VISUAL_MASTER_V11'); // Incremento versión para limpieza
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Validación de seguridad para evitar datos corruptos
+                if (parsed.x && parsed.y) {
+                    return { ...defaults, ...parsed };
+                }
+            }
+        } catch (e) {
+            console.warn('Error en carga inicial de localStorage:', e);
+        }
+        return defaults;
+    });
+
+    // --- 2. CALLBACKS Y EFECTOS ---
     const cargarMuestrasLocales = useCallback(async (manual = false) => {
         try {
             const res = await fetch('/muestrasLocales.json?t=' + Date.now());
@@ -46,18 +124,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         } catch (e) {
             console.warn('No se pudo cargar muestrasLocales.json');
         }
-    }, []);
+    }, [instrumentoId]);
 
     useEffect(() => {
         cargarMuestrasLocales();
     }, [cargarMuestrasLocales]);
-
-    // --- ESTADOS NUBE/SAMPLER ---
-    const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69'); // Acordeón Original (ID correcto de Supabase)
-    const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
-    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<Muestra[]>([]);
-    const [cargandoCloud, setCargandoCloud] = useState(false);
-    const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
     // Transformar nombres de archivos locales en objetos Muestra para el motor universal
     useEffect(() => {
@@ -118,45 +189,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         };
     }, []);
 
-    // --- ESTADOS UI ---
-    const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
-    const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
-    const [modoAjuste, setModoAjuste] = useState(false);
-    const [modoVista, setModoVista] = useState<ModoVista>('notas');
-    const [vistaDoble, setVistaDoble] = useState(false);
-    const [botonSeleccionado, setBotonSeleccionado] = useState<string | null>(null);
-    const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
-    const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
-    const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
-
-    const [ajustes, setAjustes] = useState<AjustesAcordeon>({
-        tamano: '82vh',
-        x: '53.5%',
-        y: '50%',
-        pitosBotonTamano: '4.4vh',
-        pitosFuenteTamano: '1.6vh',
-        bajosBotonTamano: '4.2vh',
-        bajosFuenteTamano: '1.3vh',
-        teclasLeft: '5.05%',
-        teclasTop: '13%',
-        bajosLeft: '82.5%',
-        bajosTop: '28%',
-        mapeoPersonalizado: {},
-        pitchPersonalizado: {},
-        pitchGlobal: 0,
-        bancoId: 'acordeon'
-    });
-
     // 🚩 Referencia maestra para sincronizar con estados
     const ajustesRef = useRef(ajustes);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
-
-    // Sincronizar bancoId (audio) sin romper instrumentoId (DB)
-    useEffect(() => {
-        // No cambiamos instrumentoId para no romper la FK de Supabase
-    }, [ajustes.bancoId]);
-
-    const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
 
     // --- REFS ---
     const botonesActivosRef = useRef<Record<string, any>>({});
@@ -170,6 +205,10 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
     // --- CARGA INTEGRADA DE SUPABASE ---
     useEffect(() => {
         const checkUserAndLoad = async () => {
+            // Cargar lista de instrumentos siempre
+            const { data: instData } = await supabase.from('sim_instrumentos').select('*');
+            if (instData) setListaInstrumentos(instData);
+
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setUsuarioId(user.id);
@@ -196,6 +235,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
                         setTonalidadSeleccionada(ajustesData.tonalidad_activa);
                     }
                 } else {
+                    setSonidosVirtuales(configuracionUsuario.sonidosVirtuales as SonidoVirtual[] || []);
                     setListaTonalidades(Object.keys(TONALIDADES));
                 }
             } else {
@@ -211,13 +251,20 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
             if (!instrumentoId) return;
             setCargandoCloud(true);
             try {
-                const { data } = await supabase
+                const { data, error } = await supabase
                     .from('sim_muestras')
                     .select('*')
                     .eq('instrumento_id', instrumentoId);
-                if (data) setMuestrasDB(data);
+
+                if (error) throw error;
+                setMuestrasDB(data || []);
+
+                // Limpiar caché de sonidos para forzar recarga con el nuevo instrumento
+                motorAudioPro.limpiarBanco(instrumentoId);
+                soundsPerKeyRef.current = {};
+
             } catch (e) {
-                console.warn('Error cargando muestras desde Supabase, usando locales.');
+                console.warn('Error cargando muestras desde Supabase:', e);
             } finally {
                 setCargandoCloud(false);
             }
@@ -225,14 +272,31 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         cargarMuestras();
     }, [instrumentoId]);
 
-    // --- UTILIDADES ---
     const obtenerOctava = (nombre: string, freq: number) => {
-        const n = nombre.toLowerCase();
-        const claveOriginal = Object.keys(tono).find(k => k.toLowerCase() === n);
-        if (!claveOriginal) return 4;
+        // Normalizar nombre para búsqueda en tabla maestra
+        const n = nombre.toLowerCase()
+            .replace('do#', 'reb')
+            .replace('re#', 'mib')
+            .replace('fa#', 'solb')
+            .replace('sol#', 'lab')
+            .replace('la#', 'sib');
+
+        const claveOriginal = Object.keys(tono).find(k => k.toLowerCase() === n) || 'Do';
         const freqs = (tono as any)[claveOriginal];
-        const idx = freqs.findIndex((f: number) => Math.abs(f - freq) < 1.5);
-        return idx !== -1 ? idx : 4;
+
+        // Buscamos el índice que tenga la frecuencia más cercana para determinar la octava real
+        let mejorIdx = 4;
+        let minDiff = Infinity;
+
+        freqs.forEach((f: number, idx: number) => {
+            const diff = Math.abs(f - freq);
+            if (diff < minDiff) {
+                minDiff = diff;
+                mejorIdx = idx;
+            }
+        });
+
+        return mejorIdx;
     };
 
     const encontrarMejorOctava = (nota: string, octavaDeseada: number) => {
@@ -263,51 +327,54 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         mapaBotonesActual.current = todos.reduce((acc, btn) => ({ ...acc, [btn.id]: btn }), {});
     }, [configTonalidad]);
 
-    const obtenerRutasAudio = useCallback((id: string, ajustesOverride?: AjustesAcordeon) => {
-        const map = (ajustesOverride || ajustesRef.current).mapeoPersonalizado || {};
-        if (map[id]) return map[id];
-
-        const btn = mapaBotonesActual.current[id];
+    const obtenerRutasAudio = useCallback((idBoton: string, ajustesOverride?: AjustesAcordeon) => {
+        const currentAjustes = ajustesOverride || ajustesRef.current;
+        const map = currentAjustes.mapeoPersonalizado || {};
+        const btn = mapaBotonesActual.current[idBoton];
         if (!btn) return [];
 
-        const esBajo = id.includes('bajo');
+        const esAcordeonOriginal = instrumentoId === '4e9f2a94-21c0-4029-872e-7cb1c314af69';
+        const esBajo = idBoton.includes('bajo');
 
-        // --- PRIORIDAD: SAMPLES LOCALES (Muestras de alta calidad cargadas directamente) ---
-        const muestrasLocalesCompatibles = esBajo ? muestrasLocalesDB.filter(m => m.url_audio.includes('/Bajos/')) : muestrasLocalesDB.filter(m => m.url_audio.includes('/Brillante/'));
-        const samplesLocalesList = esBajo ? samplesBajos : samplesPitos;
+        // --- 1. DETERMINAR QUÉ NOTA DEBE SONAR (Mapeo Manual o Definición) ---
+        let notaTarget = btn.nombre;
+        let octavaTarget = obtenerOctava(btn.nombre, btn.frecuencia as number);
 
-        if (samplesLocalesList.length > 0) {
-            if (Array.isArray(btn.frecuencia)) {
-                const nombreLower = btn.nombre.toLowerCase();
-                const notaBase = nombreLower.includes('sol') ? 'G' : nombreLower.includes('re') ? 'D' : nombreLower.includes('do') ? 'C' : nombreLower.includes('fa') ? 'F' : nombreLower.includes('si') ? 'Bb' : nombreLower.includes('mi') ? 'Eb' : nombreLower.includes('la') ? 'Ab' : 'C';
-                const esMenor = nombreLower.includes('menor');
-                const fileSuffix = esMenor ? 'm(acorde)-cm.mp3' : '(acorde)-cm.mp3';
-                const fileNameBajo = `Bajo${notaBase}${fileSuffix}`;
+        // Si hay un mapeo manual, lo usamos para definir qué nota buscar en otros instrumentos
+        if (map[idBoton] && map[idBoton].length > 0) {
+            const infoManual = EXTRAER_NOTA_OCTAVA(map[idBoton][0]);
+            if (infoManual) {
+                notaTarget = infoManual.nota;
+                octavaTarget = infoManual.octava;
+            }
+        }
 
-                if (samplesLocalesList.includes(fileNameBajo)) {
-                    return [`/audio/Muestras_Cromaticas/Bajos/${fileNameBajo}`];
-                }
-            } else {
-                const n = btn.nombre.toLowerCase();
-                const nEng = NOMBRES_INGLES[n] || 'C';
-                const oct = esBajo ? 3 : obtenerOctava(btn.nombre, btn.frecuencia);
-                const best = encontrarMejorMuestra(nEng, oct, muestrasLocalesCompatibles);
+        // --- 2. PRIORIDAD: INSTRUMENTO PERSONALIZADO (Supabase) ---
+        if (!esAcordeonOriginal && muestrasDB && muestrasDB.length > 0) {
+            const filtrarMuestras = muestrasDB.filter(m => esBajo ? m.tipo === 'bajos' : m.tipo === 'pitos');
+            if (filtrarMuestras.length > 0) {
+                const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
+                const best = encontrarMejorMuestra(nEng, octavaTarget, filtrarMuestras);
                 if (best) return [`pitch:${best.pitch}|${best.url}`];
             }
         }
 
-        // --- FALLBACK: NUBE (Si no hay locales o fallan) ---
-        if (muestrasDB.length > 0) {
-            const filtrarMuestras = muestrasDB.filter(m => esBajo ? m.tipo === 'bajos' : m.tipo === 'pitos');
-            const n = btn.nombre.toLowerCase();
-            const nEng = NOMBRES_INGLES[n] || 'C';
-            const oct = esBajo ? 3 : obtenerOctava(btn.nombre, btn.frecuencia);
-            const best = encontrarMejorMuestra(nEng, oct, filtrarMuestras);
-            if (best) return [`pitch:${best.pitch}|${best.url}`];
+        // --- 3. FALLBACK: ACORDEÓN ORIGINAL (Solo si es el activo) ---
+        if (esAcordeonOriginal) {
+            if (map[idBoton]) return map[idBoton];
+
+            if (muestrasLocalesDB.length > 0) {
+                const filtrarLocales = muestrasLocalesDB.filter((m: Muestra) =>
+                    esBajo ? m.url_audio.includes('Bajos') : m.url_audio.includes('Brillante')
+                );
+                const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
+                const best = encontrarMejorMuestra(nEng, octavaTarget, filtrarLocales);
+                if (best) return [`pitch:${best.pitch}|${best.url}`];
+            }
         }
 
         return [];
-    }, [muestrasDB]);
+    }, [muestrasDB, muestrasLocalesDB, instrumentoId]);
 
     // --- AUDIO ---
     const detenerTono = useCallback((id: string) => {
@@ -509,40 +576,62 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
     }, [manejarEventoTeclado]);
 
     // Cargar ajustes por tonalidad (de Supabase o Local)
-    // Cargar ajustes por tonalidad (de Supabase o Local) solo al cambiar de tono o usuario
+    // --- 3. CARGA DE CONFIGURACIÓN (Supabase) ---
     useEffect(() => {
         const mappingKey = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
 
-        const cargarSpecificos = async () => {
-            // 🛡️ Si estamos en medio de una carga inicial de usuario, esperar
+        const cargarTodo = async () => {
             if (usuarioId === null) return;
-
-            if (usuarioId) {
+            // Carga totalmente silenciosa
+            try {
                 const { data } = await supabase
                     .from('sim_ajustes_usuario')
-                    .select('tonalidades_configuradas')
+                    .select('ajustes_visuales, tonalidades_configuradas, instrumento_id')
                     .eq('usuario_id', usuarioId)
                     .maybeSingle();
 
-                if (data?.tonalidades_configuradas?.[mappingKey]) {
-                    const nuevosAjustes = data.tonalidades_configuradas[mappingKey];
-                    setAjustes(nuevosAjustes);
-                    ajustesRef.current = nuevosAjustes;
-                    return;
-                }
-            }
+                // 1. Cargamos el Diseño Global (Si existe)
+                const disenoGlobalNube = data?.ajustes_visuales || {};
+                const rawConfigMusical = data?.tonalidades_configuradas?.[mappingKey] || {};
 
-            // Fallback directo a la configuración maestra del código
-            const defaultAjustes = configuracionUsuario.tonalidades?.[mappingKey as keyof typeof configuracionUsuario.tonalidades] as any;
-            if (defaultAjustes) {
-                setAjustes(defaultAjustes);
-                ajustesRef.current = defaultAjustes;
-            } else {
-                // Si no hay nada, inicializar limpio para esta nota
-                setAjustes(prev => ({ ...prev, mapeoPersonalizado: {}, pitchPersonalizado: {} }));
+                const configMusical: Partial<AjustesAcordeon> = {
+                    mapeoPersonalizado: rawConfigMusical.mapeoPersonalizado,
+                    pitchPersonalizado: rawConfigMusical.pitchPersonalizado,
+                    pitchGlobal: rawConfigMusical.pitchGlobal,
+                };
+
+                // 🏗️ CONSTRUCCIÓN INTELIGENTE:
+                // Priorizamos lo que el usuario YA tiene en pantalla (ajustesRef.current)
+                // Solo usamos lo de la nube si el usuario no ha movido nada o es la carga inicial
+                const ajustesFinales: AjustesAcordeon = {
+                    ...ajustesRef.current, // Lo que ya ves en pantalla
+                    ...configMusical,      // Notas musicales del nuevo tono
+                };
+
+                // Si es la carga inicial, o si el usuario no ha movido el acordeón, aplicamos el diseño de la nube.
+                // Esto evita el "salto asqueroso" si el usuario ya ha movido el acordeón y luego cambia de tonalidad.
+                if (isInitialLoad.current || (ajustesRef.current.x === '50%' && ajustesRef.current.y === '50%')) {
+                    Object.assign(ajustesFinales, disenoGlobalNube);
+                }
+
+                // 🛑 FILTRO FINAL: Si por algún error la nube trae el valor "maldito" de 53.5%, lo corregimos al 50%
+                if (ajustesFinales.x === '53.5%') ajustesFinales.x = '50%';
+
+                setAjustes(ajustesFinales);
+                ajustesRef.current = ajustesFinales;
+
+                // Una vez que tenemos los datos de la nube, el diseño es oficial y "limpio"
+                setDisenoCargado(true);
+                isInitialLoad.current = false; // Ya no es la carga inicial
+
+                if (data?.instrumento_id) setInstrumentoId(data.instrumento_id);
+
+            } catch (e) {
+                console.error('Error cargando ajustes:', e);
             }
         };
-        cargarSpecificos();
+
+        cargarTodo();
     }, [tonalidadSeleccionada, usuarioId]);
 
     // Precarga de sonidos
@@ -560,7 +649,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
             });
 
             todosLosIds.forEach(id => {
-                let rutas = ajustes.mapeoPersonalizado[id] || obtenerRutasAudio(id);
+                // LLAMAMOS DIRECTAMENTE a obtenerRutasAudio para usar la protección anti-mezcla
+                let rutas = obtenerRutasAudio(id);
                 if (rutas.length > 0) {
                     soundsPerKeyRef.current[id] = rutas;
                     rutas.forEach(rRaw => {
@@ -599,48 +689,164 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         return () => clearTimeout(timer);
     }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB]);
 
+    // --- MIDI ENGINE ---
+    useEffect(() => {
+        if (!navigator.requestMIDIAccess) return;
+
+        let midiAccess: any = null;
+        const midiToButtonMap: Record<number, string> = {}; // Cache de mapeo dinámico
+
+        const onMIDIMessage = (msg: any) => {
+            const [status, note, velocity] = msg.data;
+            const command = status & 0xf0;
+            const channel = status & 0x0f;
+
+            // --- 🚨 DETERMINAR ID DEL BOTÓN (Mapeo de Espejo Secuencial) ---
+            // Este mapeo asume una secuencia lógica común en acordeones MIDI:
+            // Hilera 1 (Afuera): Notas 60-69
+            // Hilera 2 (Medio): Notas 70-80
+            // Hilera 3 (Adentro): Notas 81-91
+
+            let idBoton: string | null = null;
+
+            if (channel === 0) { // Canal MIDI 1 (Pitos)
+                // Hilera 1: 10 botones (Mapeo: MIDI 60 -> 1-1)
+                if (note >= 60 && note <= 69) {
+                    idBoton = `1-${note - 59}-${direccion}`;
+                }
+                // Hilera 2: 11 botones (Mapeo: MIDI 70 -> 2-1)
+                else if (note >= 70 && note <= 80) {
+                    idBoton = `2-${note - 69}-${direccion}`;
+                }
+                // Hilera 3: 10 botones (Mapeo: MIDI 81 && note <= 90)
+                else if (note >= 81 && note <= 90) {
+                    idBoton = `3-${note - 80}-${direccion}`;
+                }
+
+                // Log para calibración técnica: 
+                // "Brother, si presionas una tecla y no suena, abre la consola y dime qué número sale aquí"
+                console.log(`MIDI Pitos -> Nota: ${note}, Canal: ${channel}, ID Sugerido: ${idBoton}`);
+            }
+            else if (channel === 1 || channel === 2) { // Bajos
+                // Mapeo de bajos secuencial
+                const bajoIndex = (note % 12) + 1;
+                idBoton = `${channel === 1 ? '1' : '2'}-${bajoIndex}-${direccion}-bajo`;
+                console.log(`MIDI Bajos -> Nota: ${note}, Canal: ${channel}, ID Sugerido: ${idBoton}`);
+            }
+
+            // Note ON
+            if (command === 144 && velocity > 0 && idBoton) {
+                reproducirTono(idBoton);
+                actualizarBotonActivo(idBoton, 'add');
+            }
+            // Note OFF
+            if ((command === 128 || (command === 144 && velocity === 0)) && idBoton) {
+                detenerTono(idBoton);
+                actualizarBotonActivo(idBoton, 'remove');
+            }
+
+            // Fuelle (Control Change)
+            if (command === 176 && (note === 11 || note === 1)) {
+                const nuevaDir = velocity > 64 ? 'halar' : 'empujar';
+                if (nuevaDir !== direccion) setDireccion(nuevaDir);
+            }
+        };
+
+        navigator.requestMIDIAccess().then((access) => {
+            midiAccess = access;
+            setMidiActivado(true);
+            access.inputs.forEach((input) => {
+                input.onmidimessage = onMIDIMessage;
+            });
+        }).catch(() => setMidiActivado(false));
+
+        return () => {
+            if (midiAccess) {
+                midiAccess.inputs.forEach((input: any) => {
+                    input.onmidimessage = null;
+                });
+            }
+        };
+    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo]);
+
     // --- ACCIONES ---
     const guardarAjustes = async () => {
         if (!usuarioId) return;
 
         const key = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
-        const currentAjustes = ajustesRef.current;
+        const cur = ajustesRef.current;
+
+        // Separación de responsabilidades:
+        const disenoGlobal = {
+            x: cur.x, y: cur.y, tamano: cur.tamano,
+            pitosBotonTamano: cur.pitosBotonTamano, pitosFuenteTamano: cur.pitosFuenteTamano,
+            bajosBotonTamano: cur.bajosBotonTamano, bajosFuenteTamano: cur.bajosFuenteTamano,
+            teclasLeft: cur.teclasLeft, teclasTop: cur.teclasTop,
+            bajosLeft: cur.bajosLeft, bajosTop: cur.bajosTop
+        };
+
+        const configMusical = {
+            mapeoPersonalizado: cur.mapeoPersonalizado,
+            pitchPersonalizado: cur.pitchPersonalizado,
+            pitchGlobal: cur.pitchGlobal,
+            bancoId: cur.bancoId
+        };
 
         try {
-            // 1. Obtener la lista actual para no borrar otros tonos (Merge local rápido)
             const { data } = await supabase
                 .from('sim_ajustes_usuario')
                 .select('tonalidades_configuradas')
                 .eq('usuario_id', usuarioId)
                 .maybeSingle();
 
-            const nuevasTonalidades = { ...(data?.tonalidades_configuradas || {}), [key]: currentAjustes };
+            const nuevasTonalidades = {
+                ...(data?.tonalidades_configuradas || {}),
+                [key]: configMusical // Solo guardamos la parte musical aquí
+            };
 
-            // 2. Upsert directo
             const { error } = await supabase.from('sim_ajustes_usuario').upsert({
                 usuario_id: usuarioId,
                 tonalidad_activa: tonalidadSeleccionada,
                 instrumento_id: instrumentoId,
+                ajustes_visuales: disenoGlobal,
                 tonalidades_configuradas: nuevasTonalidades,
                 updated_at: new Date().toISOString()
             });
 
             if (error) throw error;
-            console.log('✨ Sincronización exitosa:', tonalidadSeleccionada);
+
+            // 🪞 Guardamos una copia "espejo" del diseño visual para carga inmediata en el próximo refresh
+            localStorage.setItem('SIM_VISUAL_MASTER_V11', JSON.stringify({
+                tamano: ajustes.tamano,
+                x: ajustes.x,
+                y: ajustes.y,
+                pitosBotonTamano: ajustes.pitosBotonTamano,
+                pitosFuenteTamano: ajustes.pitosFuenteTamano,
+                bajosBotonTamano: ajustes.bajosBotonTamano,
+                bajosFuenteTamano: ajustes.bajosFuenteTamano,
+                teclasLeft: ajustes.teclasLeft,
+                teclasTop: ajustes.teclasTop,
+                bajosLeft: ajustes.bajosLeft,
+                bajosTop: ajustes.bajosTop
+            }));
+
+            console.log('✨ Sincronización Global Exitosa');
         } catch (e) {
             console.error('Error en guardado:', e);
-            alert('❌ No se pudo guardar en la nube. Revisa tu conexión.');
         }
     };
 
     const resetearAjustes = () => {
-        const defaults = {
-            tamano: '82vh', x: '53.5%', y: '50%', pitosBotonTamano: '4.4vh', pitosFuenteTamano: '1.6vh',
-            bajosBotonTamano: '4.2vh', bajosFuenteTamano: '1.3vh', teclasLeft: '5.05%', teclasTop: '13%',
-            bajosLeft: '82.5%', bajosTop: '28%', mapeoPersonalizado: {}, pitchPersonalizado: {}, pitchGlobal: 0
-        };
-        setAjustes(defaults as any);
-        // Nota: El reset ya no afecta al almacenamiento local, solo al estado de la app.
+        localStorage.removeItem('SIM_VISUAL_MASTER_V11');
+        setAjustes({
+            tamano: '88vh', x: '50%', y: '50%',
+            pitosBotonTamano: '4.4vh', pitosFuenteTamano: '1.6vh',
+            bajosBotonTamano: '4.2vh', bajosFuenteTamano: '1.3vh',
+            teclasLeft: '5.05%', teclasTop: '13%',
+            bajosLeft: '82.5%', bajosTop: '28%',
+            mapeoPersonalizado: {}, pitchPersonalizado: {}, pitchGlobal: 0,
+            bancoId: 'acordeon'
+        });
     };
 
     const guardarNuevoSonidoVirtual = async (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => {
@@ -706,7 +912,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         configTonalidad, samplesBrillante: samplesPitos, samplesBajos: samplesBajos,
         sincronizarAudios: cargarMuestrasLocales,
         mapaBotonesActual: mapaBotonesActual.current, teclasFastMap: teclasFastMapRef.current,
-        soundsPerKey: soundsPerKeyRef.current, cargando: cargandoCloud, muestrasDB, obtenerRutasAudio
+        soundsPerKey: soundsPerKeyRef.current,
+        basePitch: basePitchesRef.current,
+        muestrasDB, obtenerRutasAudio,
+        instrumentoId, setInstrumentoId, listaInstrumentos,
+        cargando: cargandoCloud,
+        midiActivado, disenoCargado
     };
-
 };

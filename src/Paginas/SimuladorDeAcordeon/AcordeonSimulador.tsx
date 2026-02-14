@@ -1,4 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Music } from 'lucide-react';
 import './AcordeonSimulador.css';
 
 // Hooks
@@ -55,6 +57,42 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
             backgroundColor: '#000',
             userSelect: 'none'
         }}>
+            {/* ✨ CARGADOR PREMIUM (Carga Inicial) */}
+            <AnimatePresence>
+                {!logica.disenoCargado && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6, ease: "easeInOut" }}
+                        style={{
+                            position: 'fixed', inset: 0, zIndex: 10000000,
+                            background: '#0a0a0af2', backdropFilter: 'blur(30px)',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            gap: '20px', color: 'white'
+                        }}
+                    >
+                        <motion.div
+                            animate={{
+                                scale: [1, 1.1, 1],
+                                opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <Music size={60} color="#3b82f6" style={{ filter: 'drop-shadow(0 0 20px #3b82f6)' }} />
+                            <Loader2 size={100} className="animate-spin" style={{ position: 'absolute', opacity: 0.2, color: '#3b82f6' }} />
+                        </motion.div>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: '900', marginBottom: '5px', letterSpacing: '2px', color: '#3b82f6' }}>SIMULADOR V-PRO</h2>
+                            <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#666', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Sincronizando con la nube...
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* 1. Botones de Control Flotantes (Lado Derecho) */}
             <BotonesControl
                 modoAjuste={logica.modoAjuste}
@@ -85,31 +123,8 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
                 vistaDoble={logica.vistaDoble}
                 setBotonSeleccionado={logica.setBotonSeleccionado}
                 actualizarBotonActivo={logica.actualizarBotonActivo}
+                listo={logica.disenoCargado}
             />
-
-            {/* 4. Loader Premium (Supabase / Universal Sampler) */}
-            {logica.cargando && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 1000000,
-                    background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: '20px'
-                }}>
-                    <div style={{
-                        width: '60px', height: '60px', borderRadius: '50%',
-                        border: '3px solid rgba(59, 130, 246, 0.1)',
-                        borderTop: '3px solid #3b82f6',
-                        animation: 'spin 1s linear infinite'
-                    }} />
-                    <div style={{ textAlign: 'center' }}>
-                        <p style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '16px', letterSpacing: '2px', textTransform: 'uppercase', margin: 0 }}>Sincronizando</p>
-                        <p style={{ color: '#555', fontSize: '11px', marginTop: '5px' }}>Conectando con Supabase Cloud</p>
-                    </div>
-                    <style>{`
-                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    `}</style>
-                </div>
-            )}
 
             {/* Overlay para modo ajuste (Feedback visual global) */}
             {logica.modoAjuste && (

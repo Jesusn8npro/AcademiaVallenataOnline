@@ -9,6 +9,7 @@ export interface Muestra {
     nota: string;
     octava: number;
     url_audio: string;
+    pitch_ajuste?: number;
 }
 
 /**
@@ -40,7 +41,9 @@ export const encontrarMejorMuestra = (notaDeseada: string, octavaDeseada: number
 
     for (const m of muestras) {
         const currentVal = notaANumero(m.nota, m.octava);
-        const diff = Math.abs(targetVal - currentVal);
+        // Restamos el pitch_ajuste para saber la nota REAL que suena en el archivo
+        const realVal = currentVal - (m.pitch_ajuste || 0);
+        const diff = Math.abs(targetVal - realVal);
 
         if (diff < minDiff) {
             minDiff = diff;
@@ -49,7 +52,8 @@ export const encontrarMejorMuestra = (notaDeseada: string, octavaDeseada: number
     }
 
     const mVal = notaANumero(mejorMuestra.nota, mejorMuestra.octava);
-    const semitonosAjuste = targetVal - mVal;
+    // El ajuste es la diferencia entre lo que queremos y lo que el archivo ES realmente (incluyendo su ajuste base)
+    const semitonosAjuste = targetVal - (mVal - (mejorMuestra.pitch_ajuste || 0));
 
     return {
         url: mejorMuestra.url_audio,

@@ -34,6 +34,9 @@ interface PanelAjustesProps {
     resetearAjustes: () => void;
     sincronizarAudios: () => void;
     guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => void;
+    instrumentoId: string;
+    setInstrumentoId: (id: string) => void;
+    listaInstrumentos: any[];
 }
 
 const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
@@ -41,7 +44,8 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
         modoAjuste, setModoAjuste, pestanaActiva, setPestanaActiva,
         botonSeleccionado, setBotonSeleccionado, ajustes, setAjustes,
         guardarAjustes, resetearAjustes, sincronizarAudios, playPreview, stopPreview,
-        tonalidadSeleccionada, setTonalidadSeleccionada, sonidosVirtuales, setSonidosVirtuales
+        tonalidadSeleccionada, setTonalidadSeleccionada, sonidosVirtuales, setSonidosVirtuales,
+        instrumentoId, setInstrumentoId, listaInstrumentos
     } = props;
 
     if (!modoAjuste) return null;

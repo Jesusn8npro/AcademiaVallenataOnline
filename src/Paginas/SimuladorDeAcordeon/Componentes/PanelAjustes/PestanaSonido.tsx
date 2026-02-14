@@ -24,6 +24,9 @@ interface PestanaSonidoProps {
     setListaTonalidades: (val: string[]) => void;
     guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => void;
     modoVista?: 'controles' | 'seleccion';
+    instrumentoId: string;
+    setInstrumentoId: (id: string) => void;
+    listaInstrumentos: any[];
 }
 
 const PestanaSonido: React.FC<PestanaSonidoProps> = ({
@@ -34,7 +37,10 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
     obtenerRutasAudio,
     guardarNuevoSonidoVirtual,
     setListaTonalidades,
-    modoVista = 'controles'
+    modoVista = 'controles',
+    instrumentoId,
+    setInstrumentoId,
+    listaInstrumentos
 }) => {
     const activeItemRef = React.useRef<HTMLDivElement>(null);
     const [nickname, setNickname] = React.useState('');
@@ -122,15 +128,20 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
                         </div>
 
                         <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <label style={{ display: 'block', fontSize: '10px', marginBottom: '8px', color: '#888', fontWeight: 'bold' }}>BANCO DE SONIDOS</label>
-                            <select value={ajustes.bancoId || 'acordeon'} onChange={(e) => {
-                                const val = e.target.value;
-                                setAjustes(prev => ({ ...prev, bancoId: val }));
-                            }} style={{ width: '100%', background: '#111', color: '#3b82f6', border: '1px solid #3b82f644', padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold' }}>
-                                <option value="acordeon">🪗 ACORDEÓN REY</option>
-                                <option value="caja">🥁 CAJA VALLENATA</option>
-                                <option value="bajo">🎸 BAJO ELÉCTRICO</option>
+                            <label style={{ display: 'block', fontSize: '10px', marginBottom: '8px', color: '#888', fontWeight: 'bold' }}>INSTRUMENTO MAESTRO</label>
+                            <select
+                                value={instrumentoId}
+                                onChange={(e) => setInstrumentoId(e.target.value)}
+                                style={{ width: '100%', background: '#111', color: '#3b82f6', border: '1px solid #3b82f644', padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold' }}
+                            >
+                                {listaInstrumentos && listaInstrumentos.map(inst => (
+                                    <option key={inst.id} value={inst.id}>
+                                        {inst.nombre.toUpperCase()}
+                                    </option>
+                                ))}
+                                {(!listaInstrumentos || listaInstrumentos.length === 0) && <option value="default">Cargando instrumentos...</option>}
                             </select>
+                            <p style={{ fontSize: '9px', color: '#555', marginTop: '5px', fontStyle: 'italic' }}>Esto cambiará el timbre de todo el acordeón.</p>
                         </div>
                     </div>
 

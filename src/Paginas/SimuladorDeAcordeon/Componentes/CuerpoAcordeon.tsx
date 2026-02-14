@@ -15,6 +15,7 @@ interface CuerpoAcordeonProps {
     vistaDoble: boolean;
     setBotonSeleccionado: (id: string) => void;
     actualizarBotonActivo: (id: string, accion: 'add' | 'remove', inst?: any[] | null) => void;
+    listo?: boolean; // Prop para el fade-in inicial
 }
 
 const CIFRADO_AMERICANO: Record<string, string> = {
@@ -31,7 +32,8 @@ const NOTE_MAPPING: Record<string, string> = {
 const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
     imagenFondo, ajustes, direccion, configTonalidad,
     botonesActivos, modoAjuste, botonSeleccionado,
-    modoVista, vistaDoble, setBotonSeleccionado, actualizarBotonActivo
+    modoVista, vistaDoble, setBotonSeleccionado, actualizarBotonActivo,
+    listo = true
 }) => {
 
     const formatearNota = (nombre: string) => {
@@ -78,14 +80,29 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
     const filasBajos = ['una', 'dos'];
 
     return (
-        <motion.div className="disposicion-acordeon" style={{
-            '--imagen-fondo-acordeon': `url('${imagenFondo}')`,
-            '--sim-tamano': ajustes.tamano, '--sim-x': ajustes.x, '--sim-y': ajustes.y,
-            '--sim-pitos-boton-tamano': ajustes.pitosBotonTamano, '--sim-pitos-fuente-tamano': ajustes.pitosFuenteTamano,
-            '--sim-bajos-boton-tamano': ajustes.bajosBotonTamano, '--sim-bajos-fuente-tamano': ajustes.bajosFuenteTamano,
-            '--sim-teclas-left': ajustes.teclasLeft, '--sim-teclas-top': ajustes.teclasTop,
-            '--sim-bajos-left': ajustes.bajosLeft, '--sim-bajos-top': ajustes.bajosTop
-        } as any}>
+        <motion.div
+            className="disposicion-acordeon"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: listo ? 1 : 0 }}
+            transition={{
+                opacity: { duration: 0.3 },
+                default: { duration: 0 } // Para que x e y cambien INSTANTÁNEAMENTE sin deslizarse
+            }}
+            style={{
+                '--imagen-fondo-acordeon': `url('${imagenFondo}')`,
+                '--sim-tamano': ajustes.tamano,
+                '--sim-x': ajustes.x,
+                '--sim-y': ajustes.y,
+                '--sim-pitos-boton-tamano-val': parseFloat(ajustes.pitosBotonTamano),
+                '--sim-pitos-fuente-tamano-val': parseFloat(ajustes.pitosFuenteTamano),
+                '--sim-bajos-boton-tamano-val': parseFloat(ajustes.bajosBotonTamano),
+                '--sim-bajos-fuente-tamano-val': parseFloat(ajustes.bajosFuenteTamano),
+                '--sim-teclas-left': ajustes.teclasLeft,
+                '--sim-teclas-top': ajustes.teclasTop,
+                '--sim-bajos-left': ajustes.bajosLeft,
+                '--sim-bajos-top': ajustes.bajosTop
+            } as any}
+        >
             <div className="lado-teclas">
                 {filas.map(f => (
                     <div key={f} className={`fila ${f === 'primeraFila' ? 'tres' : f === 'segundaFila' ? 'dos' : 'uno'}`}>
