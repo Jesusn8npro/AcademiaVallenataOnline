@@ -12,6 +12,8 @@ export interface AjustesAcordeon {
     bajosTop: string;
     mapeoPersonalizado: Record<string, string[]>;
     pitchPersonalizado: Record<string, number>;
+    pitchGlobal?: number;
+    bancoId?: string;
 }
 
 export interface SonidoVirtual {

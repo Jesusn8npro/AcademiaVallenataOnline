@@ -90,17 +90,27 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                 {filas.map(f => (
                     <div key={f} className={`fila ${f === 'primeraFila' ? 'tres' : f === 'segundaFila' ? 'dos' : 'uno'}`}>
                         {configTonalidad[f].filter((b: any) => b.id.includes(direccion)).map((b: any) => {
-                            const baseId = b.id.replace('-halar', '').replace('-empujar', '');
-                            const idHalar = `${baseId}-halar`;
-                            const idEmpujar = `${baseId}-empujar`;
+                            const [fila, col, dir] = b.id.split('-');
+                            const idHalar = `${fila}-${col}-halar`;
+                            const idEmpujar = `${fila}-${col}-empujar`;
+
+                            const handleSelect = (id: string) => {
+                                if (modoAjuste) setBotonSeleccionado(id);
+                                actualizarBotonActivo(id, 'add');
+                            };
 
                             return (
                                 <div key={b.id}
                                     className={`boton ${botonesActivos[b.id] ? 'activo' : ''} ${direccion} ${botonSeleccionado === b.id ? 'seleccionado-ajuste' : ''}`}
                                     onPointerDown={(e) => {
                                         e.preventDefault();
-                                        if (modoAjuste) setBotonSeleccionado(b.id);
-                                        actualizarBotonActivo(b.id, 'add');
+                                        if (vistaDoble) {
+                                            // En vista doble, el contenedor no hace nada, dejamos que los spans manejen el clic
+                                            // Pero por si acaso, si clicas en el borde, usamos el ID actual
+                                            handleSelect(b.id);
+                                        } else {
+                                            handleSelect(b.id);
+                                        }
                                     }}
                                     onPointerUp={() => actualizarBotonActivo(b.id, 'remove')}
                                     onPointerLeave={() => actualizarBotonActivo(b.id, 'remove')}
@@ -108,35 +118,32 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                 >
                                     {!vistaDoble ? (
                                         <span style={{ color: direccion === 'halar' ? '#3b82f6' : '#f97316', fontWeight: '900' }}>
-                                            {modoVista === 'teclas' ? (Object.keys(mapaTeclas).find(k => mapaTeclas[k].fila === parseInt(b.id.split('-')[0]) && mapaTeclas[k].columna === parseInt(b.id.split('-')[1])) || '').toUpperCase() :
-                                                modoVista === 'numeros' ? b.id.split('-')[1] : obtenerEtiquetaBoton(b.id, b.nombre)}
+                                            {modoVista === 'teclas' ? (Object.keys(mapaTeclas).find(k => mapaTeclas[k].fila === parseInt(fila) && mapaTeclas[k].columna === parseInt(col)) || '').toUpperCase() :
+                                                modoVista === 'numeros' ? col : obtenerEtiquetaBoton(b.id, b.nombre)}
                                         </span>
                                     ) : (
                                         <div style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            lineHeight: '1.1',
-                                            fontSize: '0.75em',
-                                            gap: '4px',
-                                            justifyContent: 'center',
-                                            height: '100%',
-                                            width: '100%',
-                                            padding: '2px'
+                                            display: 'flex', flexDirection: 'column', lineHeight: '1.2',
+                                            fontSize: '0.75em', justifyContent: 'center', height: '100%', width: '100%'
                                         }}>
-                                            <span style={{
-                                                color: '#3b82f6',
-                                                fontWeight: '900',
-                                                textShadow: '0 0 5px rgba(0,0,0,0.5)',
-                                                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                                                paddingBottom: '2px'
-                                            }}>
+                                            <span
+                                                onPointerDown={(e) => { e.stopPropagation(); handleSelect(idHalar); }}
+                                                style={{
+                                                    color: (modoAjuste && botonSeleccionado === idHalar) ? '#fff' : '#3b82f6',
+                                                    background: (modoAjuste && botonSeleccionado === idHalar) ? '#3b82f6' : 'transparent',
+                                                    fontWeight: '900', borderRadius: '4px', cursor: 'pointer'
+                                                }}
+                                            >
                                                 {obtenerEtiquetaBoton(idHalar, configTonalidad[f].find((x: any) => x.id === idHalar)?.nombre || '')}
                                             </span>
-                                            <span style={{
-                                                color: '#f97316',
-                                                fontWeight: '900',
-                                                textShadow: '0 0 5px rgba(0,0,0,0.5)'
-                                            }}>
+                                            <span
+                                                onPointerDown={(e) => { e.stopPropagation(); handleSelect(idEmpujar); }}
+                                                style={{
+                                                    color: (modoAjuste && botonSeleccionado === idEmpujar) ? '#fff' : '#f97316',
+                                                    background: (modoAjuste && botonSeleccionado === idEmpujar) ? '#f97316' : 'transparent',
+                                                    fontWeight: '900', borderRadius: '4px', cursor: 'pointer'
+                                                }}
+                                            >
                                                 {obtenerEtiquetaBoton(idEmpujar, configTonalidad[f].find((x: any) => x.id === idEmpujar)?.nombre || '')}
                                             </span>
                                         </div>
@@ -152,17 +159,21 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                 {filasBajos.map(f => (
                     <div key={f} className={`fila ${f}`}>
                         {(configTonalidad.disposicionBajos as any)[f].filter((b: any) => b.id.includes(direccion)).map((b: any) => {
-                            const baseId = b.id.replace('-halar-bajo', '').replace('-empujar-bajo', '');
-                            const idHalar = `${baseId}-halar-bajo`;
-                            const idEmpujar = `${baseId}-empujar-bajo`;
+                            const [fila, col, dir] = b.id.split('-');
+                            const idHalar = `${fila}-${col}-halar-bajo`;
+                            const idEmpujar = `${fila}-${col}-empujar-bajo`;
+
+                            const handleSelect = (id: string) => {
+                                if (modoAjuste) setBotonSeleccionado(id);
+                                actualizarBotonActivo(id, 'add');
+                            };
 
                             return (
                                 <div key={b.id}
                                     className={`boton ${botonesActivos[b.id] ? 'activo' : ''} ${direccion} ${botonSeleccionado === b.id ? 'seleccionado-ajuste' : ''}`}
                                     onPointerDown={(e) => {
                                         e.preventDefault();
-                                        if (modoAjuste) setBotonSeleccionado(b.id);
-                                        actualizarBotonActivo(b.id, 'add');
+                                        handleSelect(b.id);
                                     }}
                                     onPointerUp={() => actualizarBotonActivo(b.id, 'remove')}
                                     onPointerLeave={() => actualizarBotonActivo(b.id, 'remove')}
@@ -174,26 +185,27 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                         </span>
                                     ) : (
                                         <div style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            lineHeight: '1',
-                                            fontSize: '0.7em',
-                                            gap: '3px',
-                                            justifyContent: 'center',
-                                            padding: '2px'
+                                            display: 'flex', flexDirection: 'column', lineHeight: '1.1',
+                                            fontSize: '0.7em', justifyContent: 'center', height: '100%', width: '100%'
                                         }}>
-                                            <span style={{
-                                                color: '#3b82f6',
-                                                fontWeight: '900',
-                                                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                                                paddingBottom: '1px'
-                                            }}>
+                                            <span
+                                                onPointerDown={(e) => { e.stopPropagation(); handleSelect(idHalar); }}
+                                                style={{
+                                                    color: (modoAjuste && botonSeleccionado === idHalar) ? '#fff' : '#3b82f6',
+                                                    background: (modoAjuste && botonSeleccionado === idHalar) ? '#3b82f6' : 'transparent',
+                                                    fontWeight: '900', borderRadius: '3px', padding: '1px'
+                                                }}
+                                            >
                                                 {obtenerEtiquetaBoton(idHalar, (configTonalidad.disposicionBajos as any)[f].find((x: any) => x.id === idHalar)?.nombre || '')}
                                             </span>
-                                            <span style={{
-                                                color: '#f97316',
-                                                fontWeight: '900'
-                                            }}>
+                                            <span
+                                                onPointerDown={(e) => { e.stopPropagation(); handleSelect(idEmpujar); }}
+                                                style={{
+                                                    color: (modoAjuste && botonSeleccionado === idEmpujar) ? '#fff' : '#f97316',
+                                                    background: (modoAjuste && botonSeleccionado === idEmpujar) ? '#f97316' : 'transparent',
+                                                    fontWeight: '900', borderRadius: '3px', padding: '1px'
+                                                }}
+                                            >
                                                 {obtenerEtiquetaBoton(idEmpujar, (configTonalidad.disposicionBajos as any)[f].find((x: any) => x.id === idEmpujar)?.nombre || '')}
                                             </span>
                                         </div>

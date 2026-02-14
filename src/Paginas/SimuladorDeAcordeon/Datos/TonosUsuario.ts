@@ -43,8 +43,8 @@ export const configuracionUsuario = {
             "mapeoPersonalizado": {}
         },
 
-        // 4. ORIGINAL (F-Bb-Eb - Fa Sib Mib) - Referencia Base
-        "ajustes_acordeon_vPRO_F-Bb-Eb": {
+        // 4. ORIGINAL (FBE - Fa Sib Mib) - Referencia Base
+        "ajustes_acordeon_vPRO_FBE": {
             "tamano": "80vh", "x": "50%", "y": "50%", "pitosBotonTamano": "4.4vh", "pitosFuenteTamano": "1.6vh", "bajosBotonTamano": "4.2vh", "bajosFuenteTamano": "1.3vh", "teclasLeft": "5.05%", "teclasTop": "13%", "bajosLeft": "82.5%", "bajosTop": "28%",
             "mapeoPersonalizado": {},
             "pitchPersonalizado": {}

@@ -40,20 +40,20 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
     const {
         modoAjuste, setModoAjuste, pestanaActiva, setPestanaActiva,
         botonSeleccionado, setBotonSeleccionado, ajustes, setAjustes,
-        guardarAjustes, resetearAjustes, sincronizarAudios, playPreview, stopPreview, tonalidadSeleccionada, sonidosVirtuales
+        guardarAjustes, resetearAjustes, sincronizarAudios, playPreview, stopPreview,
+        tonalidadSeleccionada, setTonalidadSeleccionada, sonidosVirtuales, setSonidosVirtuales
     } = props;
 
     if (!modoAjuste) return null;
 
     const exportarConfiguracion = () => {
-        const exportData: any = { sonidosVirtuales, tonalidades: {} };
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('ajustes_acordeon_vPRO_')) {
-                try { exportData.tonalidades[key] = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) { }
+        // Ahora exportamos el estado actual de la aplicación en lugar del localStorage
+        const exportData: any = {
+            sonidosVirtuales,
+            tonalidades: {
+                [`ajustes_acordeon_vPRO_${tonalidadSeleccionada}`]: ajustes
             }
-        });
-        const keyActual = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
-        exportData.tonalidades[keyActual] = ajustes;
+        };
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
         const dl = document.createElement('a');
@@ -67,8 +67,11 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
         <motion.div drag dragMomentum={false} className="panel-ajustes visible" style={{
             position: 'fixed', top: '140px', right: '120px', zIndex: 2000,
             background: '#0a0a0af2', padding: '25px', borderRadius: '32px',
-            color: 'white', width: '380px', border: '1px solid rgba(59, 130, 246, 0.5)', backdropFilter: 'blur(25px)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(59, 130, 246, 0.1)'
+            color: 'white',
+            width: pestanaActiva === 'sonido' ? '780px' : '380px', // 🚀 Panel extendido para sonidos
+            border: '1px solid rgba(59, 130, 246, 0.5)', backdropFilter: 'blur(25px)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(59, 130, 246, 0.1)',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' // Animación suave de apertura
         } as any}>
             <div style={{ width: '100%', height: '28px', cursor: 'grab', display: 'flex', justifyContent: 'center', marginBottom: '15px', position: 'relative' }}>
                 <GripHorizontal color="#3b82f6" />
@@ -81,11 +84,25 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
             </div>
 
 
-            {pestanaActiva === 'diseno' ? (
-                <PestanaDiseno ajustes={ajustes} setAjustes={setAjustes} />
-            ) : (
-                <PestanaSonido {...props} soundsPerKey={props.soundsPerKey} />
-            )}
+            <div style={{
+                display: pestanaActiva === 'sonido' ? 'flex' : 'block',
+                gap: '20px',
+                alignItems: 'flex-start'
+            }}>
+                <div style={{ flex: 1 }}>
+                    {pestanaActiva === 'diseno' ? (
+                        <PestanaDiseno ajustes={ajustes} setAjustes={setAjustes} />
+                    ) : (
+                        <PestanaSonido {...props} soundsPerKey={props.soundsPerKey} modoVista="controles" />
+                    )}
+                </div>
+
+                {pestanaActiva === 'sonido' && (
+                    <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '20px' }}>
+                        <PestanaSonido {...props} soundsPerKey={props.soundsPerKey} modoVista="seleccion" />
+                    </div>
+                )}
+            </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <button onClick={() => { stopPreview(); guardarAjustes(); }} style={{ background: '#22c55e', color: 'white', flex: 2, padding: '12px', borderRadius: '12px', border: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -107,13 +124,19 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
                             try {
                                 const data = JSON.parse(ev.target?.result as string);
                                 if (data.tonalidades) {
-                                    Object.keys(data.tonalidades).forEach(key => localStorage.setItem(key, JSON.stringify(data.tonalidades[key])));
+                                    // Al importar, cargamos la primera tonalidad encontrada en el archivo
+                                    const keys = Object.keys(data.tonalidades);
+                                    if (keys.length > 0) {
+                                        const mappingKey = keys[0];
+                                        const tNombre = mappingKey.replace('ajustes_acordeon_vPRO_', '');
+                                        setAjustes(data.tonalidades[mappingKey]);
+                                        setTonalidadSeleccionada(tNombre);
+                                    }
                                 }
                                 if (data.sonidosVirtuales) {
-                                    localStorage.setItem('sonidos_virtuales_acordeon', JSON.stringify(data.sonidosVirtuales));
+                                    setSonidosVirtuales(data.sonidosVirtuales);
                                 }
-                                alert('✅ ¡Restauración exitosa!');
-                                window.location.reload();
+                                alert('✅ ¡Configuración cargada temporalmente! Dale a GUARDAR para persistir en la nube.');
                             } catch (e) { alert('❌ Error al importar'); }
                         };
                         reader.readAsText(file);
