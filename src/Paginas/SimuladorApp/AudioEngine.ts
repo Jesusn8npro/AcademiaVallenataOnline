@@ -46,8 +46,10 @@ export class MotorAudioPro {
      * Asegura que el contexto esté activo (requerido por navegadores tras interacción)
      */
     async activarContexto() {
-        if (this.contexto.state === 'suspended') {
+        console.log("🔊 Intentando activar contexto. Estado actual:", this.contexto.state);
+        if (this.contexto.state !== 'running') {
             await this.contexto.resume();
+            console.log("✅ Contexto activado. Nuevo estado:", this.contexto.state);
         }
     }
 

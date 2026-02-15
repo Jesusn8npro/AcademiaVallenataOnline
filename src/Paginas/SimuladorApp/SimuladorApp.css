@@ -41,6 +41,22 @@
     margin-top: 20px;
 }
 
+.vpro-debug-bar {
+    position: fixed;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: #f97316;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: monospace;
+    z-index: 10001;
+    border: 1px solid #333;
+    pointer-events: none;
+}
+
 .teclado-pitos {
     display: flex;
     flex-direction: column;
@@ -51,6 +67,17 @@
     border: 1px solid #222;
     /* 🛡️ Asegura que no haya interferencia de gestos */
     touch-action: none;
+    transition: opacity 0.5s ease;
+}
+
+.teclado-pitos.bloqueado {
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.teclado-pitos.activo {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .fila-pitos {

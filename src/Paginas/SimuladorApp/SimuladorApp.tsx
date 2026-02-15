@@ -16,47 +16,64 @@ const FILAS = [
 
 const SimuladorApp: React.FC = () => {
     const [sistemaListo, setSistemaListo] = useState(false);
+    const [samplesCargados, setSamplesCargados] = useState(0);
+    const [estadoAudio, setEstadoAudio] = useState('suspended');
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
     const vocesRef = useRef<{ [key: string]: any }>({});
     const bancoId = 'vpro-ultra';
 
-    // 1. PRECARGA DE AUDIOBUFFERS (No HTML5 Audio)
+    // 1. PRECARGA DE AUDIOBUFFERS
     useEffect(() => {
         const cargarSamples = async () => {
-            const promesas = Object.entries(NOTA_AL_ARCHIVO).map(([nota, archivo]) => {
-                return motorAudioPro.cargarSonidoEnBanco(bancoId, archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+            let contador = 0;
+            const promesas = Object.entries(NOTA_AL_ARCHIVO).map(async ([nota, archivo]) => {
+                try {
+                    await motorAudioPro.cargarSonidoEnBanco(bancoId, archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+                    contador++;
+                    setSamplesCargados(contador);
+                } catch (err) {
+                    console.error(`Error cargando ${archivo}:`, err);
+                }
             });
             await Promise.all(promesas);
-            console.log("✅ Samples cargados en RAM como AudioBuffers");
         };
         cargarSamples();
+
+        // Monitorear el estado del audio
+        const interval = setInterval(() => {
+            setEstadoAudio((motorAudioPro as any).contexto.state);
+        }, 500);
+        return () => clearInterval(interval);
     }, []);
 
-    // 2. ACTIVACIÓN DEL CONTEXTO (Maestro)
+    // 2. ACTIVACIÓN DEL CONTEXTO (Botón Maestro con Click)
     const activarSistema = async () => {
+        console.log("Iniciando activación...");
         await motorAudioPro.activarContexto();
         setSistemaListo(true);
-        console.log("🔊 AudioContext RUNNING");
+        setEstadoAudio((motorAudioPro as any).contexto.state);
     };
 
     const iniciarNota = useCallback((id: string, nota: string) => {
-        // Forzar estado running en cada interacción (seguridad para móviles)
-        if (motorAudioPro.tiempoActual === 0 || !sistemaListo) {
-            motorAudioPro.activarContexto().then(() => setSistemaListo(true));
+        // Si el motor no está corriendo, intentar despertarlo
+        if (estadoAudio !== 'running') {
+            motorAudioPro.activarContexto();
         }
 
         setNotasActivas(prev => ({ ...prev, [id]: true }));
         const archivo = NOTA_AL_ARCHIVO[nota];
 
-        // Detener instancia previa para evitar latencia de superposición
         if (vocesRef.current[id]) {
             try { vocesRef.current[id].fuente.stop(); } catch (e) { }
         }
 
-        // Reproducir directamente desde AudioBufferSourceNode
         const sonido = motorAudioPro.reproducir(archivo, bancoId, 1.0);
-        if (sonido) vocesRef.current[id] = sonido;
-    }, [sistemaListo]);
+        if (sonido) {
+            vocesRef.current[id] = sonido;
+        } else {
+            console.warn(`No se pudo reproducir: ${archivo}. ¿Está cargado?`);
+        }
+    }, [estadoAudio]);
 
     const detenerNota = useCallback((id: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: false }));
@@ -64,9 +81,8 @@ const SimuladorApp: React.FC = () => {
         if (voz) {
             const ahora = motorAudioPro.tiempoActual;
             try {
-                // Fade out ultra-rápido para evitar "pop"
-                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.03);
-                voz.fuente.stop(ahora + 0.04);
+                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.05);
+                voz.fuente.stop(ahora + 0.1);
             } catch (e) { }
             delete vocesRef.current[id];
         }
@@ -74,17 +90,24 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div className="simulador-app-container">
+            {/* Monitor de Estado (Solo visible para debug/pruebas) */}
+            <div className="vpro-debug-bar">
+                SAMPLES: {samplesCargados}/{Object.keys(NOTA_AL_ARCHIVO).length} | AUDIO: {estadoAudio.toUpperCase()}
+            </div>
+
             {!sistemaListo && (
-                <div className="vpro-initializer" onPointerDown={activarSistema}>
+                <div className="vpro-initializer">
                     <div className="vpro-card">
                         <h1>V-PRO ACORDEÓN</h1>
-                        <p>LATENCIA CERO OPTIMIZADA</p>
-                        <button className="vpro-start-btn">ACTIVAR MOTOR</button>
+                        <p>PRE-CARGA: {samplesCargados === Object.keys(NOTA_AL_ARCHIVO).length ? "COMPLETA ✅" : `CARGANDO... (${samplesCargados})`}</p>
+                        <button className="vpro-start-btn" onClick={activarSistema}>
+                            ACTIVAR MOTOR
+                        </button>
                     </div>
                 </div>
             )}
 
-            <div className="teclado-pitos">
+            <div className={`teclado-pitos ${sistemaListo ? 'activo' : 'bloqueado'}`}>
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className="fila-pitos">
                         {fila.map((nota, iNota) => {
@@ -94,18 +117,16 @@ const SimuladorApp: React.FC = () => {
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
                                     onPointerDown={(e) => {
-                                        e.preventDefault(); // 🛡️ Bloquea scroll/zoom
+                                        e.preventDefault();
                                         e.currentTarget.setPointerCapture(e.pointerId);
                                         iniciarNota(id, nota);
                                     }}
                                     onPointerUp={(e) => {
                                         e.preventDefault();
-                                        e.currentTarget.releasePointerCapture(e.pointerId);
                                         detenerNota(id);
                                     }}
                                     onPointerCancel={(e) => {
                                         e.preventDefault();
-                                        e.currentTarget.releasePointerCapture(e.pointerId);
                                         detenerNota(id);
                                     }}
                                 >
