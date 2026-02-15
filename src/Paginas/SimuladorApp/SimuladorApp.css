@@ -1,114 +1,145 @@
 .simulador-app-container {
-    width: 100vw;
+    width: 100%;
+    min-width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background: #000;
+    /* Fondo base negro */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     overflow: hidden;
+    position: relative;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
 }
 
-.vpro-initializer {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.vpro-card {
-    text-align: center;
-    color: white;
-}
-
-.vpro-start-btn {
-    background: #f97316;
-    border: none;
-    padding: 20px 40px;
-    border-radius: 10px;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
-}
-
+/* EL CUERPO DEL ACORDEÓN (FULL SCREEN LANDSCAPE) */
 .teclado-pitos {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    /* Ahora usamos 100% con fixed */
+
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 25px;
-    background: #111;
-    border-radius: 40px;
-    border: 1px solid #222;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+
+    /* Manejo del notch (iPhone) */
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    padding-top: 25px;
+
+    /* Fondo Azul Anacarado Premium */
+    background: #001a33;
+    /* Fallback */
+    background: radial-gradient(ellipse at center, #003366 0%, #001a33 100%);
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #004080 0%, #001a33 50%, #000d1a 100%);
+
+    border-top: 1px solid #0059b3;
+    border-radius: 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 1);
+    z-index: 5;
+}
+
+/* Efecto de brillo metálico en el borde superior */
+.teclado-pitos::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    pointer-events: none;
 }
 
 .fila-pitos {
     display: flex;
-    gap: 8px;
+    /* Aumentado de 10px a 15px para ensanchar */
     justify-content: center;
 }
 
-/* Offset para la hilera del medio (11 botones) para simular el acordeón real */
 .fila-pitos.fila-2 {
-    margin-left: -15px;
+    margin-left: -20px;
+    /* Desfase real de acordeón */
 }
 
 .boton-pito {
-    width: 52px;
-    height: 52px;
-    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #aaa 100%);
+    width: 62px;
+    /* Aumentado de 55px a 62px */
+    height: 62px;
+    /* Aumentado de 55px a 62px */
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f0f0f0 60%, #c0c0c0 100%);
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     font-weight: 900;
-    color: #333;
+    color: #222;
     position: relative;
-    border: 1px solid #888;
-    box-shadow: 0 5px 0 #666, 0 8px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid #ffffff;
+    box-shadow:
+        0 4px 0 #999,
+        /* Profundidad de la tecla */
+        0 8px 15px rgba(0, 0, 0, 0.6);
     transition: none;
     pointer-events: auto;
-    /* Dejamos que el container capture los toques */
 }
 
-/* Solo aplicamos el efecto cuando React dice que el botón está presionado */
 .boton-pito.presionado {
     transform: translateY(4px);
     background: radial-gradient(circle at 35% 35%, #f97316 0%, #ea580c 100%);
     color: white;
     box-shadow:
-        0 2px 0 #b45309,
-        0 0 20px rgba(249, 115, 22, 0.4),
-        inset 0 4px 8px rgba(0, 0, 0, 0.3);
-    border-color: #f97316;
+        0 1px 0 #92400e,
+        0 0 25px rgba(249, 115, 22, 0.6),
+        inset 0 4px 10px rgba(0, 0, 0, 0.4);
+    border-color: #fb923c;
 }
 
 .boton-pito span {
-    font-size: 10px;
-    line-height: 1;
+    font-size: 11px;
+    letter-spacing: -0.5px;
 }
 
 .boton-pito small {
-    font-size: 7px;
+    font-size: 8px;
     opacity: 0.6;
+    margin-top: -2px;
 }
 
-.boton-pito.presionado small {
-    color: #fff;
-    opacity: 0.8;
+/* LANDSCAPE (HORIZONTAL) OPTIMIZATIONS */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .teclado-pitos {
+        padding: 15px 10px 10px 10px;
+        gap: 12px;
+        /* Un poco más de espacio entre filas */
+    }
+
+    .fila-pitos {
+        gap: 12px;
+        /* Un poco más de espacio entre botones */
+    }
+
+    .boton-pito {
+        width: 55px;
+        /* Aumentado de 48px a 55px en horizontal */
+        height: 55px;
+    }
 }
 
 @media (orientation: portrait) {
     .simulador-app-container::after {
-        content: 'GIRA TU CELULAR 🔄';
+        content: 'VOLTEA EL CELULAR 🔄';
         position: fixed;
         inset: 0;
         background: #000;

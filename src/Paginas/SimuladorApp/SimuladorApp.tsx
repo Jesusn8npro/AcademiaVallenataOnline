@@ -34,10 +34,14 @@ const getFileName = (nota: string, octava: number) => {
     return `${prefijo}-${octava}-cm.mp3`;
 };
 
+import BarraHerramientasVPRO from './Componentes/BarraHerramientasVPRO';
+import MenuOpcionesVPRO from './Componentes/MenuOpcionesVPRO';
+
 const SimuladorApp: React.FC = () => {
     const [samplesCargados, setSamplesCargados] = useState(0);
     const [sistemaListo, setSistemaListo] = useState(false);
     const [notasActivas, setNotasActivas] = useState<Record<string, boolean>>({});
+    const [menuOpcionesAbierto, setMenuOpcionesAbierto] = useState(false);
     const vocesRef = useRef<Record<string, any>>({});
     const gestosRef = useRef<Record<number, string>>({}); // pointerId -> buttonId
     const bancoId = 'vpro-mobile';
@@ -163,6 +167,11 @@ const SimuladorApp: React.FC = () => {
                 </div>
             )}
 
+            <BarraHerramientasVPRO
+                alAlternarMenu={() => setMenuOpcionesAbierto(!menuOpcionesAbierto)}
+                menuAbierto={menuOpcionesAbierto}
+            />
+
             <div className={`teclado-pitos ${sistemaListo ? 'activo' : 'bloqueado'}`}>
                 {FILAS_DATA.map((fila, iFila) => (
                     <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
@@ -183,6 +192,10 @@ const SimuladorApp: React.FC = () => {
                     </div>
                 ))}
             </div>
+            <MenuOpcionesVPRO
+                estaAbierto={menuOpcionesAbierto}
+                alCerrar={() => setMenuOpcionesAbierto(false)}
+            />
         </div>
     );
 };

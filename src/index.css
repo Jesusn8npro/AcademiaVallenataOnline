@@ -121,6 +121,8 @@ body.vista-premium-activa {
   padding-top: 0 !important;
   padding-left: 0 !important;
   background-color: #000 !important;
+  min-width: 100vw !important;
+  width: 100vw !important;
 }
 
 /* Remover clases de sidebar del body */
@@ -128,6 +130,14 @@ body.vista-premium-activa.con-sidebar,
 body.vista-premium-activa.con-sidebar-colapsado {
   padding-left: 0 !important;
   padding-top: 0 !important;
+}
+
+body.vista-premium-activa #root {
+  min-width: 100vw !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: #001a33 !important;
+  /* Mismo azul para esconder barras */
 }
 
 /* Ocultar TODOS los menús, sidebars y navegación */

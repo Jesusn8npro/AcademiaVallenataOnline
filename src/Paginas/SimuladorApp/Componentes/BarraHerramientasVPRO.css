@@ -1,0 +1,87 @@
+.barra-herramientas-vpro-contenedor {
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 250px);
+    z-index: 110;
+    pointer-events: none;
+}
+
+.barra-herramientas-vpro-cuerpo {
+    width: calc(100% - 10px);
+    height: 54px;
+    pointer-events: auto;
+    background: #2a2a2a;
+    background-image: linear-gradient(180deg, #444 0%, #222 50%, #111 51%, #333 100%);
+    border: 2px solid #555;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    position: relative;
+    overflow: visible;
+    /* Para que el menú no se corte si fuera necesario */
+}
+
+.vpro-herramientas-flex-grow {
+    flex-grow: 1;
+}
+
+/* Botón de Tres Puntos Premium */
+.btn-vpro-opciones {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(180deg, #555 0%, #333 100%);
+    border: 1px solid #666;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-vpro-opciones:active,
+.btn-vpro-opciones.activo {
+    background: #222;
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+    border-color: #444;
+}
+
+.puntos-v {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.puntos-v span {
+    width: 4px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 50%;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.btn-vpro-opciones.activo .puntos-v span {
+    background: #fff;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .barra-herramientas-vpro-contenedor {
+        bottom: 200px;
+    }
+
+    .barra-herramientas-vpro-cuerpo {
+        height: 46px;
+    }
+
+    .btn-vpro-opciones {
+        width: 38px;
+        height: 38px;
+    }
+}
