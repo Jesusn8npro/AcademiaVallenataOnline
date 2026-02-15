@@ -2,72 +2,82 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SimuladorApp.css';
 import { motorAudioPro } from './AudioEngine';
 
-const NOTA_AL_ARCHIVO: Record<string, string> = {
-    'Do': 'C-5-cm.mp3', 'Reb': 'Db-5-cm.mp3', 'Re': 'D-5-cm.mp3', 'Mib': 'Eb-5-cm.mp3', 'Mi': 'E-5-cm.mp3',
-    'Fa': 'F-5-cm.mp3', 'Solb': 'Gb-5-cm.mp3', 'Sol': 'G-5-cm.mp3', 'Lab': 'Ab-5-cm.mp3', 'La': 'A-5-cm.mp3',
-    'Sib': 'Bb-5-cm.mp3', 'Si': 'B-4-cm.mp3'
-};
-
-const FILAS = [
-    ['Reb', 'Sol', 'Sib', 'Re', 'Mi', 'Sol', 'Sib', 'Re', 'Mi', 'Sol'],
-    ['Solb', 'La', 'Do', 'Mib', 'Sol', 'La', 'Do', 'Mib', 'Sol', 'La', 'Do'],
-    ['Si', 'Re', 'Fa', 'Lab', 'Do', 'Re', 'Fa', 'Lab', 'Do', 'Re']
+// Mapeo detallado de notas para el simulador V-PRO (Halar - Tonalidad FBE)
+const FILAS_DATA = [
+    [
+        { id: '1-1', n: 'Reb', o: 4 }, { id: '1-2', n: 'Sol', o: 3 }, { id: '1-3', n: 'Sib', o: 3 },
+        { id: '1-4', n: 'Re', o: 4 }, { id: '1-5', n: 'Mi', o: 4 }, { id: '1-6', n: 'Sol', o: 4 },
+        { id: '1-7', n: 'Sib', o: 4 }, { id: '1-8', n: 'Re', o: 5 }, { id: '1-9', n: 'Mi', o: 5 },
+        { id: '1-10', n: 'Sol', o: 5 }
+    ],
+    [
+        { id: '2-1', n: 'Solb', o: 4 }, { id: '2-2', n: 'La', o: 3 }, { id: '2-3', n: 'Do', o: 4 },
+        { id: '2-4', n: 'Mib', o: 4 }, { id: '2-5', n: 'Sol', o: 4 }, { id: '2-6', n: 'La', o: 4 },
+        { id: '2-7', n: 'Do', o: 5 }, { id: '2-8', n: 'Mib', o: 5 }, { id: '2-9', n: 'Sol', o: 5 },
+        { id: '2-10', n: 'La', o: 5 }, { id: '2-11', n: 'Do', o: 6 }
+    ],
+    [
+        { id: '3-1', n: 'Si', o: 4 }, { id: '3-2', n: 'Re', o: 4 }, { id: '3-3', n: 'Fa', o: 4 },
+        { id: '3-4', n: 'Lab', o: 4 }, { id: '3-5', n: 'Do', o: 5 }, { id: '3-6', n: 'Re', o: 5 },
+        { id: '3-7', n: 'Fa', o: 5 }, { id: '3-8', n: 'Lab', o: 5 }, { id: '3-9', n: 'Do', o: 6 },
+        { id: '3-10', n: 'Re', o: 6 }
+    ]
 ];
 
+const NOTA_A_FILE: Record<string, string> = {
+    'Do': 'C', 'Reb': 'Db', 'Re': 'D', 'Mib': 'Eb', 'Mi': 'E', 'Fa': 'F',
+    'Solb': 'Gb', 'Sol': 'G', 'Lab': 'Ab', 'La': 'A', 'Sib': 'Bb', 'Si': 'B'
+};
+
+const getFileName = (nota: string, octava: number) => {
+    const prefijo = NOTA_A_FILE[nota] || nota;
+    return `${prefijo}-${octava}-cm.mp3`;
+};
+
 const SimuladorApp: React.FC = () => {
-    const [sistemaListo, setSistemaListo] = useState(false);
     const [samplesCargados, setSamplesCargados] = useState(0);
-    const [estadoAudio, setEstadoAudio] = useState('suspended');
-    const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
+    const [sistemaListo, setSistemaListo] = useState(false);
+    const [notasActivas, setNotasActivas] = useState<Record<string, boolean>>({});
+    const vocesRef = useRef<Record<string, any>>({});
+    const gestosRef = useRef<Record<number, string>>({}); // pointerId -> buttonId
+    const bancoId = 'vpro-mobile';
 
-    // Referencias para el motor de Glissando
-    const vocesRef = useRef<{ [key: string]: any }>({});
-    const punterosActivos = useRef<{ [key: number]: string }>({}); // pointerId -> buttonId
-    const bancoId = 'vpro-ultra';
-
-    // 1. PRECARGA
+    // 1. CARGA INICIAL (AudioBuffers)
     useEffect(() => {
-        const cargarSamples = async () => {
-            let contador = 0;
-            const promesas = Object.entries(NOTA_AL_ARCHIVO).map(async ([nota, archivo]) => {
-                try {
-                    await motorAudioPro.cargarSonidoEnBanco(bancoId, archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
-                    contador++;
-                    setSamplesCargados(contador);
-                } catch (err) { }
+        const totalNotas: string[] = [];
+        FILAS_DATA.forEach(fila => fila.forEach(b => {
+            totalNotas.push(getFileName(b.n, b.o));
+        }));
+        const unicas = Array.from(new Set(totalNotas));
+
+        const cargar = async () => {
+            let count = 0;
+            const promesas = unicas.map(async (file) => {
+                await motorAudioPro.cargarSonidoEnBanco(bancoId, file, `/audio/Muestras_Cromaticas/Brillante/${file}`);
+                count++;
+                setSamplesCargados(count);
             });
             await Promise.all(promesas);
         };
-        cargarSamples();
-
-        const interval = setInterval(() => {
-            setEstadoAudio((motorAudioPro as any).contexto.state);
-        }, 1000);
-        return () => clearInterval(interval);
+        cargar();
     }, []);
 
-    const activarSistema = async () => {
+    const activarAudio = async () => {
         await motorAudioPro.activarContexto();
         setSistemaListo(true);
-        setEstadoAudio((motorAudioPro as any).contexto.state);
     };
 
-    const iniciarSonido = (id: string, nota: string) => {
-        if (estadoAudio !== 'running') motorAudioPro.activarContexto();
-
+    const playNote = (id: string, fileName: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: true }));
-        const archivo = NOTA_AL_ARCHIVO[nota];
 
-        // Detener si ya estaba sonando por otro dedo (limpieza)
-        if (vocesRef.current[id]) {
-            try { vocesRef.current[id].fuente.stop(); } catch (e) { }
-        }
+        // Stop current if exists
+        stopNote(id);
 
-        const sonido = motorAudioPro.reproducir(archivo, bancoId, 1.0);
+        const sonido = motorAudioPro.reproducir(fileName, bancoId, 1.0);
         if (sonido) vocesRef.current[id] = sonido;
     };
 
-    const detenerSonido = (id: string) => {
+    const stopNote = (id: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: false }));
         const voz = vocesRef.current[id];
         if (voz) {
@@ -80,94 +90,93 @@ const SimuladorApp: React.FC = () => {
         }
     };
 
-    // 🎹 MOTOR DE GLISSANDO: Detecta cambios de botón al deslizar
+    // 🚀 LÓGICA DE GLISSANDO MEJORADA
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!sistemaListo) return;
 
-        // Buscamos qué hay bajo las coordenadas del dedo
-        const element = document.elementFromPoint(e.clientX, e.clientY);
-        const botonElement = element?.closest('.boton-pito') as HTMLElement;
-        const nuevoId = botonElement?.dataset.id;
-        const nota = botonElement?.dataset.nota;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const btn = el?.closest('.boton-pito') as HTMLElement;
+        const nuevoId = btn?.dataset.id;
+        const fileName = btn?.dataset.file;
 
-        const idAnterior = punterosActivos.current[e.pointerId];
+        const idPrevio = gestosRef.current[e.pointerId];
 
-        // Si el dedo se movió a un botón diferente
-        if (nuevoId !== idAnterior) {
-            // Apagar el anterior si existía para este dedo
-            if (idAnterior) detenerSonido(idAnterior);
+        if (nuevoId !== idPrevio) {
+            // Apagar anterior
+            if (idPrevio) stopNote(idPrevio);
 
-            // Encender el nuevo
-            if (nuevoId && nota) {
-                iniciarSonido(nuevoId, nota);
-                punterosActivos.current[e.pointerId] = nuevoId;
+            // Encender nuevo
+            if (nuevoId && fileName) {
+                playNote(nuevoId, fileName);
+                gestosRef.current[e.pointerId] = nuevoId;
             } else {
-                delete punterosActivos.current[e.pointerId];
+                delete gestosRef.current[e.pointerId];
             }
         }
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
         if (!sistemaListo) {
-            activarSistema();
+            activarAudio();
             return;
         }
         e.preventDefault();
-        const botonElement = (e.target as HTMLElement).closest('.boton-pito') as HTMLElement;
-        if (botonElement) {
-            const { id, nota } = botonElement.dataset;
-            if (id && nota) {
-                iniciarSonido(id, nota);
-                punterosActivos.current[e.pointerId] = id;
-            }
+        // Forzamos captura en el contenedor para que Move funcione fuera del botón inicial
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        const btn = (e.target as HTMLElement).closest('.boton-pito') as HTMLElement;
+        const id = btn?.dataset.id;
+        const fileName = btn?.dataset.file;
+
+        if (id && fileName) {
+            playNote(id, fileName);
+            gestosRef.current[e.pointerId] = id;
         }
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        const idAnterior = punterosActivos.current[e.pointerId];
-        if (idAnterior) {
-            detenerSonido(idAnterior);
-            delete punterosActivos.current[e.pointerId];
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        const id = gestosRef.current[e.pointerId];
+        if (id) {
+            stopNote(id);
+            delete gestosRef.current[e.pointerId];
         }
     };
+
+    const totalSamples = 34; // Número aproximado de archivos únicos en el sistema real
 
     return (
         <div
             className="simulador-app-container"
+            onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            style={{ touchAction: 'none' }}
         >
-            <div className="vpro-debug-bar">
-                SAMPLES: {samplesCargados}/{Object.keys(NOTA_AL_ARCHIVO).length} | AUDIO: {estadoAudio.toUpperCase()}
-            </div>
-
             {!sistemaListo && (
                 <div className="vpro-initializer">
-                    <div className="vpro-card" onClick={activarSistema}>
+                    <div className="vpro-card" onClick={activarAudio}>
                         <h1>V-PRO ACORDEÓN</h1>
-                        <p>MODO GLISSANDO ACTIVADO</p>
+                        <p>Cargando sonidos: {samplesCargados} / 34</p>
                         <button className="vpro-start-btn">EMPEZAR</button>
                     </div>
                 </div>
             )}
 
             <div className={`teclado-pitos ${sistemaListo ? 'activo' : 'bloqueado'}`}>
-                {FILAS.map((fila, iFila) => (
-                    <div key={iFila} className="fila-pitos">
-                        {fila.map((nota, iNota) => {
-                            const id = `pito-${iFila}-${iNota}`;
+                {FILAS_DATA.map((fila, iFila) => (
+                    <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
+                        {fila.map((b) => {
+                            const fileName = getFileName(b.n, b.o);
                             return (
                                 <div
-                                    key={id}
-                                    data-id={id}
-                                    data-nota={nota}
-                                    className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
-                                    onPointerDown={handlePointerDown}
+                                    key={b.id}
+                                    data-id={b.id}
+                                    data-file={fileName}
+                                    className={`boton-pito ${notasActivas[b.id] ? 'presionado' : ''}`}
                                 >
-                                    <span>{nota}</span>
+                                    <span>{b.n}</span>
+                                    <small>{b.o}</small>
                                 </div>
                             );
                         })}
