@@ -20,8 +20,7 @@ export class MotorAudioPro {
 
         // 🎧 Configuración de Alta Fidelidad (Standard Profesional)
         this.contexto = new AudioContextClass({
-            latencyHint: 'interactive', // Balance perfecto entre rapidez y calidad
-            sampleRate: 44100
+            latencyHint: 'interactive'
         });
 
         this.bancos = new Map();
