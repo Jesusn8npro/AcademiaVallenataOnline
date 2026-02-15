@@ -19,10 +19,13 @@ const SimuladorApp: React.FC = () => {
     const [samplesCargados, setSamplesCargados] = useState(0);
     const [estadoAudio, setEstadoAudio] = useState('suspended');
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
+
+    // Referencias para el motor de Glissando
     const vocesRef = useRef<{ [key: string]: any }>({});
+    const punterosActivos = useRef<{ [key: number]: string }>({}); // pointerId -> buttonId
     const bancoId = 'vpro-ultra';
 
-    // 1. PRECARGA DE AUDIOBUFFERS
+    // 1. PRECARGA
     useEffect(() => {
         const cargarSamples = async () => {
             let contador = 0;
@@ -31,51 +34,40 @@ const SimuladorApp: React.FC = () => {
                     await motorAudioPro.cargarSonidoEnBanco(bancoId, archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
                     contador++;
                     setSamplesCargados(contador);
-                } catch (err) {
-                    console.error(`Error cargando ${archivo}:`, err);
-                }
+                } catch (err) { }
             });
             await Promise.all(promesas);
         };
         cargarSamples();
 
-        // Monitorear el estado del audio
         const interval = setInterval(() => {
             setEstadoAudio((motorAudioPro as any).contexto.state);
-        }, 500);
+        }, 1000);
         return () => clearInterval(interval);
     }, []);
 
-    // 2. ACTIVACIÓN DEL CONTEXTO (Botón Maestro con Click)
     const activarSistema = async () => {
-        console.log("Iniciando activación...");
         await motorAudioPro.activarContexto();
         setSistemaListo(true);
         setEstadoAudio((motorAudioPro as any).contexto.state);
     };
 
-    const iniciarNota = useCallback((id: string, nota: string) => {
-        // Si el motor no está corriendo, intentar despertarlo
-        if (estadoAudio !== 'running') {
-            motorAudioPro.activarContexto();
-        }
+    const iniciarSonido = (id: string, nota: string) => {
+        if (estadoAudio !== 'running') motorAudioPro.activarContexto();
 
         setNotasActivas(prev => ({ ...prev, [id]: true }));
         const archivo = NOTA_AL_ARCHIVO[nota];
 
+        // Detener si ya estaba sonando por otro dedo (limpieza)
         if (vocesRef.current[id]) {
             try { vocesRef.current[id].fuente.stop(); } catch (e) { }
         }
 
         const sonido = motorAudioPro.reproducir(archivo, bancoId, 1.0);
-        if (sonido) {
-            vocesRef.current[id] = sonido;
-        } else {
-            console.warn(`No se pudo reproducir: ${archivo}. ¿Está cargado?`);
-        }
-    }, [estadoAudio]);
+        if (sonido) vocesRef.current[id] = sonido;
+    };
 
-    const detenerNota = useCallback((id: string) => {
+    const detenerSonido = (id: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: false }));
         const voz = vocesRef.current[id];
         if (voz) {
@@ -86,23 +78,78 @@ const SimuladorApp: React.FC = () => {
             } catch (e) { }
             delete vocesRef.current[id];
         }
-    }, []);
+    };
+
+    // 🎹 MOTOR DE GLISSANDO: Detecta cambios de botón al deslizar
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!sistemaListo) return;
+
+        // Buscamos qué hay bajo las coordenadas del dedo
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        const botonElement = element?.closest('.boton-pito') as HTMLElement;
+        const nuevoId = botonElement?.dataset.id;
+        const nota = botonElement?.dataset.nota;
+
+        const idAnterior = punterosActivos.current[e.pointerId];
+
+        // Si el dedo se movió a un botón diferente
+        if (nuevoId !== idAnterior) {
+            // Apagar el anterior si existía para este dedo
+            if (idAnterior) detenerSonido(idAnterior);
+
+            // Encender el nuevo
+            if (nuevoId && nota) {
+                iniciarSonido(nuevoId, nota);
+                punterosActivos.current[e.pointerId] = nuevoId;
+            } else {
+                delete punterosActivos.current[e.pointerId];
+            }
+        }
+    };
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (!sistemaListo) {
+            activarSistema();
+            return;
+        }
+        e.preventDefault();
+        const botonElement = (e.target as HTMLElement).closest('.boton-pito') as HTMLElement;
+        if (botonElement) {
+            const { id, nota } = botonElement.dataset;
+            if (id && nota) {
+                iniciarSonido(id, nota);
+                punterosActivos.current[e.pointerId] = id;
+            }
+        }
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        const idAnterior = punterosActivos.current[e.pointerId];
+        if (idAnterior) {
+            detenerSonido(idAnterior);
+            delete punterosActivos.current[e.pointerId];
+        }
+    };
 
     return (
-        <div className="simulador-app-container">
-            {/* Monitor de Estado (Solo visible para debug/pruebas) */}
+        <div
+            className="simulador-app-container"
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            style={{ touchAction: 'none' }}
+        >
             <div className="vpro-debug-bar">
                 SAMPLES: {samplesCargados}/{Object.keys(NOTA_AL_ARCHIVO).length} | AUDIO: {estadoAudio.toUpperCase()}
             </div>
 
             {!sistemaListo && (
                 <div className="vpro-initializer">
-                    <div className="vpro-card">
+                    <div className="vpro-card" onClick={activarSistema}>
                         <h1>V-PRO ACORDEÓN</h1>
-                        <p>PRE-CARGA: {samplesCargados === Object.keys(NOTA_AL_ARCHIVO).length ? "COMPLETA ✅" : `CARGANDO... (${samplesCargados})`}</p>
-                        <button className="vpro-start-btn" onClick={activarSistema}>
-                            ACTIVAR MOTOR
-                        </button>
+                        <p>MODO GLISSANDO ACTIVADO</p>
+                        <button className="vpro-start-btn">EMPEZAR</button>
                     </div>
                 </div>
             )}
@@ -115,20 +162,10 @@ const SimuladorApp: React.FC = () => {
                             return (
                                 <div
                                     key={id}
+                                    data-id={id}
+                                    data-nota={nota}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
-                                    onPointerDown={(e) => {
-                                        e.preventDefault();
-                                        e.currentTarget.setPointerCapture(e.pointerId);
-                                        iniciarNota(id, nota);
-                                    }}
-                                    onPointerUp={(e) => {
-                                        e.preventDefault();
-                                        detenerNota(id);
-                                    }}
-                                    onPointerCancel={(e) => {
-                                        e.preventDefault();
-                                        detenerNota(id);
-                                    }}
+                                    onPointerDown={handlePointerDown}
                                 >
                                     <span>{nota}</span>
                                 </div>
