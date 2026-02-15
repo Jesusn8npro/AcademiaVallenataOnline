@@ -61,7 +61,6 @@ import Notificaciones from './Paginas/Notificaciones/Notificaciones'
 import AdminNotificaciones from './Paginas/administrador/notificaciones/AdminNotificaciones'
 import Pagina404 from './Paginas/404/Pagina404'
 import SimuladorGaming from './Paginas/SimuladorDeAcordeon/SimuladorGaming';
-import SimuladorApp from './Paginas/SimuladorApp/SimuladorApp';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
 import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
 
@@ -87,7 +86,6 @@ const AppContent = () => {
   const esModoLectura = esClaseTutorial || esClaseCurso;
 
   const esLandingVenta = pathname === '/curso-acordeon-desde-cero';
-  const esSimuladorApp = pathname === '/simulador-app';
 
   // Función para cerrar sesión
   const cerrarSesion = async () => {
@@ -98,26 +96,18 @@ const AppContent = () => {
 
   // Agregar clase al body cuando el usuario está autenticado
   useEffect(() => {
-    if (estaAutenticado && !esSimuladorApp) {
+    if (estaAutenticado) {
       document.body.classList.add('con-sidebar')
     } else {
       document.body.classList.remove('con-sidebar')
       document.body.classList.remove('con-sidebar-colapsado')
     }
 
-    // Usar vista-premium-activa para limpiar todo el espacio en el simulador
-    if (esSimuladorApp) {
-      document.body.classList.add('vista-premium-activa')
-    } else {
-      document.body.classList.remove('vista-premium-activa')
-    }
-
     return () => {
       document.body.classList.remove('con-sidebar')
       document.body.classList.remove('con-sidebar-colapsado')
-      document.body.classList.remove('vista-premium-activa')
     }
-  }, [estaAutenticado, esSimuladorApp])
+  }, [estaAutenticado])
 
 
 
@@ -126,7 +116,7 @@ const AppContent = () => {
       <CursorPersonalizado />
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado
           OCULTAR si estamos en vista de clase, landing venta o SIMULADOR APP */}
-      {!esModoLectura && !esLandingVenta && !esSimuladorApp && (
+      {!esModoLectura && !esLandingVenta && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -135,10 +125,10 @@ const AppContent = () => {
       )}
 
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta NI simulador */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <SidebarAdmin />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && <SidebarAdmin />}
 
-      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta NI simulador */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <MenuInferiorResponsivo />}
+      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && <MenuInferiorResponsivo />}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -191,7 +181,6 @@ const AppContent = () => {
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/simulador-gaming" element={<SimuladorGaming />} />
-          <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />
           <Route path="/administrador/contenido" element={<PanelContenido />} />
           <Route path="/administrador/panel-contenido" element={<PanelContenido />} />

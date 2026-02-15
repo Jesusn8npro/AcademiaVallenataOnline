@@ -111,78 +111,7 @@ footer {
 
 
 
-/* ========================================
-   OCULTAR MENÚS EN LANDING PAGES PREMIUM
-   ======================================== */
-/* Cuando la clase vista-premium-activa está en el body, ocultar TODO */
-body.vista-premium-activa {
-  margin: 0 !important;
-  padding: 0 !important;
-  padding-top: 0 !important;
-  padding-left: 0 !important;
-  background-color: #000 !important;
-  min-width: 100vw !important;
-  width: 100vw !important;
-}
 
-/* Remover clases de sidebar del body */
-body.vista-premium-activa.con-sidebar,
-body.vista-premium-activa.con-sidebar-colapsado {
-  padding-left: 0 !important;
-  padding-top: 0 !important;
-}
-
-body.vista-premium-activa #root {
-  min-width: 100vw !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: #001a33 !important;
-  /* Mismo azul para esconder barras */
-}
-
-/* Ocultar TODOS los menús, sidebars y navegación */
-body.vista-premium-activa .sidebar-admin-moderno,
-body.vista-premium-activa .nav-auth-container,
-body.vista-premium-activa .nav-publico-container,
-body.vista-premium-activa .menu-inferior-responsivo,
-body.vista-premium-activa nav,
-body.vista-premium-activa header,
-body.vista-premium-activa aside,
-body.vista-premium-activa footer,
-body.vista-premium-activa [class*="sidebar"],
-body.vista-premium-activa [class*="Sidebar"],
-body.vista-premium-activa [class*="menu"],
-body.vista-premium-activa [class*="Menu"],
-body.vista-premium-activa [class*="nav"],
-body.vista-premium-activa [class*="Nav"],
-body.vista-premium-activa [role="navigation"],
-body.vista-premium-activa #sidebar,
-body.vista-premium-activa #menu,
-body.vista-premium-activa #nav {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
-  position: absolute !important;
-  left: -99999px !important;
-  top: -99999px !important;
-  pointer-events: none !important;
-  z-index: -9999 !important;
-}
-
-/* Asegurar que el contenido principal ocupe todo el ancho */
-body.vista-premium-activa main,
-body.vista-premium-activa #root,
-body.vista-premium-activa .app {
-  margin: 0 !important;
-  padding: 0 !important;
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-}
 
 /* ========================================
    SCROLLBAR PERSONALIZADO "MORADO"
