@@ -19,24 +19,35 @@ const SimuladorApp: React.FC = () => {
     const [audioListo, setAudioListo] = useState(false);
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
     const [cargando, setCargando] = useState(false);
+    const [statusMsg, setStatusMsg] = useState("SISTEMA LISTO");
 
     // Referencia para guardar las voces activas
     const vocesActivas = useRef<{ [key: string]: { fuente: AudioBufferSourceNode, ganancia: GainNode } }>({});
 
-    const activarAudio = async () => {
+    const activarAudio = async (e: React.PointerEvent | React.MouseEvent) => {
+        // Importante: no llamar a preventDefault aquí para no bloquear el flujo del botón si fuera necesario,
+        // pero sí lo manejamos para asegurar la intención del usuario.
+        if (audioListo || cargando) return;
+
         setCargando(true);
+        setStatusMsg("INICIALIZANDO SONIDOS...");
         try {
             await motorAudioPro.activarContexto();
 
-            // Cargar muestras reales en el banco
+            setStatusMsg("CARGANDO SAMPLES...");
             const promesas = Object.entries(NOTA_AL_ARCHIVO).map(([nota, archivo]) => {
-                return motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+                const url = `/audio/Muestras_Cromaticas/Brillante/${archivo}`;
+                return motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, url);
             });
 
             await Promise.all(promesas);
+
+            // Verificación post-carga
             setAudioListo(true);
+            setStatusMsg("🔥 V-PRO CONECTADO");
         } catch (error) {
             console.error("Error activando audio:", error);
+            setStatusMsg("❌ ERROR AL CARGAR SONIDOS");
         } finally {
             setCargando(false);
         }
@@ -50,12 +61,16 @@ const SimuladorApp: React.FC = () => {
         const archivo = NOTA_AL_ARCHIVO[nota];
         if (!archivo) return;
 
-        // Detener si ya existe
+        // Detener si ya existe por seguridad
         detenerNota(id);
 
-        const sonido = motorAudioPro.reproducir(archivo, 'vpro-mobile', 0.6);
-        if (sonido) {
-            vocesActivas.current[id] = sonido;
+        try {
+            const sonido = motorAudioPro.reproducir(archivo, 'vpro-mobile', 0.8);
+            if (sonido) {
+                vocesActivas.current[id] = sonido;
+            }
+        } catch (e) {
+            setStatusMsg("ERROR AL REPRODUCIR");
         }
     };
 
@@ -65,12 +80,12 @@ const SimuladorApp: React.FC = () => {
         const voz = vocesActivas.current[id];
         if (voz) {
             const ahora = motorAudioPro.tiempoActual;
-
-            voz.ganancia.gain.cancelScheduledValues(ahora);
-            voz.ganancia.gain.setValueAtTime(voz.ganancia.gain.value, ahora);
-            voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.1);
-
-            voz.fuente.stop(ahora + 0.15);
+            try {
+                voz.ganancia.gain.cancelScheduledValues(ahora);
+                voz.ganancia.gain.setValueAtTime(voz.ganancia.gain.value, ahora);
+                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.1);
+                voz.fuente.stop(ahora + 0.15);
+            } catch (e) { }
             delete vocesActivas.current[id];
         }
     };
@@ -78,31 +93,38 @@ const SimuladorApp: React.FC = () => {
     // Bloquear scroll y zoom a nivel de JS como refuerzo
     useEffect(() => {
         const handleTouch = (e: TouchEvent) => {
-            if (e.touches.length > 1) {
-                e.preventDefault(); // Bloquear gestos de varios dedos (zoom)
+            if (e.touches.length > 1 || audioListo) {
+                e.preventDefault();
             }
         };
+        // Opciones de evento pasivos: false es crucial para poder usar preventDefault
         document.addEventListener('touchstart', handleTouch, { passive: false });
-        return () => document.removeEventListener('touchstart', handleTouch);
-    }, []);
+        document.addEventListener('touchmove', handleTouch, { passive: false });
+        return () => {
+            document.removeEventListener('touchstart', handleTouch);
+            document.removeEventListener('touchmove', handleTouch);
+        };
+    }, [audioListo]);
 
     return (
         <div className="simulador-app-container">
             <div className="status-bar">
-                {audioListo ? "🔥 MOTOR V-PRO ACTIVO | LATENCIA < 1ms" : "SISTEMA BLOQUEADO (TOCA EL BOTÓN)"}
+                {statusMsg}
             </div>
 
             {!audioListo && (
-                <div className="overlay-inicio" onClick={activarAudio}>
+                <div className="overlay-inicio" onPointerDown={activarAudio}>
                     <div className="card-inicio">
-                        <h2>ACADEMIA V-PRO</h2>
-                        <p>Simulador de Acordeón Profesional</p>
-                        <button className="btn-activar">INICIAR EXPERIENCIA</button>
+                        <h2>{`ACADEMIA V-PRO ${cargando ? '⌛' : '🪗'}`}</h2>
+                        <p>{cargando ? "Preparando acordeón..." : "Presiona el botón para empezar"}</p>
+                        <button className="btn-activar">
+                            {cargando ? "CARGANDO..." : "INICIAR EXPERIENCIA"}
+                        </button>
                     </div>
                 </div>
             )}
 
-            <div className="teclado-pitos">
+            <div className="teclado-pitos" style={{ opacity: audioListo ? 1 : 0.3 }}>
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
                         {fila.map((nota, iNota) => {
@@ -112,10 +134,12 @@ const SimuladorApp: React.FC = () => {
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
                                     onPointerDown={(e) => {
+                                        e.preventDefault(); // 🛡️ CRITICO PARA MÓVIL
                                         e.currentTarget.setPointerCapture(e.pointerId);
                                         iniciarNota(id, nota);
                                     }}
                                     onPointerUp={(e) => {
+                                        e.preventDefault();
                                         e.currentTarget.releasePointerCapture(e.pointerId);
                                         detenerNota(id);
                                     }}
