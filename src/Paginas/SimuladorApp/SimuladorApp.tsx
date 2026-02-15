@@ -74,18 +74,25 @@ const SimuladorApp: React.FC = () => {
                                 <div
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
+                                    style={{ touchAction: 'none' }} // 🛡️ CRITICO: Bloquea scroll en el botón
                                     onPointerDown={(e) => {
-                                        e.preventDefault();
+                                        // No hacemos preventDefault aquí para permitir que el sistema capture el puntero
                                         e.currentTarget.setPointerCapture(e.pointerId);
                                         iniciarNota(id, nota);
                                     }}
                                     onPointerUp={(e) => {
-                                        e.preventDefault();
                                         e.currentTarget.releasePointerCapture(e.pointerId);
                                         detenerNota(id);
                                     }}
                                     onPointerCancel={(e) => {
                                         e.currentTarget.releasePointerCapture(e.pointerId);
+                                        detenerNota(id);
+                                    }}
+                                    // Soporte para deslizar el dedo (Glissando)
+                                    onPointerEnter={(e) => {
+                                        if (e.buttons === 1) iniciarNota(id, nota);
+                                    }}
+                                    onPointerLeave={() => {
                                         detenerNota(id);
                                     }}
                                 >
