@@ -18,82 +18,41 @@ const FILAS = [
 const SimuladorApp: React.FC = () => {
     const [audioListo, setAudioListo] = useState(false);
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
-    const [cargando, setCargando] = useState(false);
-    const [statusMsg, setStatusMsg] = useState("SISTEMA LISTO");
-
-    // Referencia para guardar las voces activas
     const vocesActivas = useRef<{ [key: string]: { fuente: AudioBufferSourceNode, ganancia: GainNode } }>({});
 
-    const activarAudio = async (e: React.PointerEvent | React.MouseEvent) => {
-        if (audioListo || cargando) return;
+    // Cargar sonidos inmediatamente en segundo plano
+    const inicializarAudio = async () => {
+        if (audioListo) return;
+        await motorAudioPro.activarContexto();
 
-        setCargando(true);
-        setStatusMsg("INICIALIZANDO SONIDOS...");
-
-        try {
-            // 1. Activar el contexto de una vez
-            await motorAudioPro.activarContexto();
-
-            // 2. Cargar cada sonido de forma independiente para que uno no bloquee al otro
-            const pitos = Object.entries(NOTA_AL_ARCHIVO);
-            let cargadosExitosos = 0;
-
-            for (const [nota, archivo] of pitos) {
-                try {
-                    setStatusMsg(`CARGANDO: ${nota}...`);
-                    const url = `/audio/Muestras_Cromaticas/Brillante/${archivo}`;
-                    // Cargamos sin esperar a que TODOS terminen si hay error
-                    await motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, url);
-                    cargadosExitosos++;
-                } catch (err) {
-                    console.warn(`No se pudo cargar nota ${nota}, saltando...`);
-                }
-            }
-
-            setAudioListo(true);
-            setStatusMsg(cargadosExitosos > 0 ? "🔥 V-PRO CONECTADO" : "⚠️ AUDIO LISTO (MODO LIMITADO)");
-        } catch (error) {
-            console.error("Error crítico de audio:", error);
-            setStatusMsg("❌ ERROR CRÍTICO - INTENTA RECARGAR");
-            // Forzamos el listo para que al menos pueda ver la interfaz
-            setAudioListo(true);
-        } finally {
-            setCargando(false);
-        }
+        Object.entries(NOTA_AL_ARCHIVO).forEach(([nota, archivo]) => {
+            motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+        });
+        setAudioListo(true);
     };
 
     const iniciarNota = (id: string, nota: string) => {
-        if (!audioListo) return;
+        if (!audioListo) inicializarAudio();
 
         setNotasActivas(prev => ({ ...prev, [id]: true }));
-
         const archivo = NOTA_AL_ARCHIVO[nota];
         if (!archivo) return;
 
-        // Detener si ya existe por seguridad
         detenerNota(id);
-
-        try {
-            const sonido = motorAudioPro.reproducir(archivo, 'vpro-mobile', 0.8);
-            if (sonido) {
-                vocesActivas.current[id] = sonido;
-            }
-        } catch (e) {
-            setStatusMsg("ERROR AL REPRODUCIR");
-        }
+        const sonido = motorAudioPro.reproducir(archivo, 'vpro-mobile', 0.8);
+        if (sonido) vocesActivas.current[id] = sonido;
     };
 
     const detenerNota = (id: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: false }));
-
         const voz = vocesActivas.current[id];
         if (voz) {
             const ahora = motorAudioPro.tiempoActual;
             try {
                 voz.ganancia.gain.cancelScheduledValues(ahora);
                 voz.ganancia.gain.setValueAtTime(voz.ganancia.gain.value, ahora);
-                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.1);
-                voz.fuente.stop(ahora + 0.15);
+                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.05);
+                voz.fuente.stop(ahora + 0.06);
             } catch (e) { }
             delete vocesActivas.current[id];
         }
@@ -102,38 +61,18 @@ const SimuladorApp: React.FC = () => {
     // Bloquear scroll y zoom a nivel de JS como refuerzo
     useEffect(() => {
         const handleTouch = (e: TouchEvent) => {
-            if (e.touches.length > 1 || audioListo) {
-                e.preventDefault();
-            }
+            if (e.touches.length > 1) e.preventDefault();
         };
         // Opciones de evento pasivos: false es crucial para poder usar preventDefault
         document.addEventListener('touchstart', handleTouch, { passive: false });
-        document.addEventListener('touchmove', handleTouch, { passive: false });
         return () => {
             document.removeEventListener('touchstart', handleTouch);
-            document.removeEventListener('touchmove', handleTouch);
         };
-    }, [audioListo]);
+    }, []);
 
     return (
         <div className="simulador-app-container">
-            <div className="status-bar">
-                {statusMsg}
-            </div>
-
-            {!audioListo && (
-                <div className="overlay-inicio" onPointerDown={activarAudio}>
-                    <div className="card-inicio">
-                        <h2>{`ACADEMIA V-PRO ${cargando ? '⌛' : '🪗'}`}</h2>
-                        <p>{cargando ? "Preparando acordeón..." : "Presiona el botón para empezar"}</p>
-                        <button className="btn-activar">
-                            {cargando ? "CARGANDO..." : "INICIAR EXPERIENCIA"}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <div className="teclado-pitos" style={{ opacity: audioListo ? 1 : 0.3 }}>
+            <div className="teclado-pitos">
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
                         {fila.map((nota, iNota) => {
