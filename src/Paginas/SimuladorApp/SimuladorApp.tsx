@@ -65,6 +65,10 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div className="simulador-app-container">
+            <div style={{ position: 'fixed', top: 10, right: 10, color: '#f97316', zIndex: 1000, fontSize: '10px' }}>
+                Notas: {Object.values(notasActivas).filter(Boolean).length} | {audioListo ? '🔊' : '🔇'}
+            </div>
+
             <div className="teclado-pitos">
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
@@ -74,25 +78,28 @@ const SimuladorApp: React.FC = () => {
                                 <div
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
-                                    style={{ touchAction: 'none' }} // 🛡️ CRITICO: Bloquea scroll en el botón
                                     onPointerDown={(e) => {
-                                        // No hacemos preventDefault aquí para permitir que el sistema capture el puntero
-                                        e.currentTarget.setPointerCapture(e.pointerId);
+                                        e.preventDefault();
                                         iniciarNota(id, nota);
                                     }}
                                     onPointerUp={(e) => {
-                                        e.currentTarget.releasePointerCapture(e.pointerId);
+                                        e.preventDefault();
                                         detenerNota(id);
                                     }}
                                     onPointerCancel={(e) => {
-                                        e.currentTarget.releasePointerCapture(e.pointerId);
+                                        e.preventDefault();
                                         detenerNota(id);
                                     }}
-                                    // Soporte para deslizar el dedo (Glissando)
-                                    onPointerEnter={(e) => {
-                                        if (e.buttons === 1) iniciarNota(id, nota);
-                                    }}
                                     onPointerLeave={() => {
+                                        detenerNota(id);
+                                    }}
+                                    // Touch fallback for older devices
+                                    onTouchStart={(e) => {
+                                        e.preventDefault();
+                                        iniciarNota(id, nota);
+                                    }}
+                                    onTouchEnd={(e) => {
+                                        e.preventDefault();
                                         detenerNota(id);
                                     }}
                                 >
