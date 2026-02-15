@@ -25,29 +25,38 @@ const SimuladorApp: React.FC = () => {
     const vocesActivas = useRef<{ [key: string]: { fuente: AudioBufferSourceNode, ganancia: GainNode } }>({});
 
     const activarAudio = async (e: React.PointerEvent | React.MouseEvent) => {
-        // Importante: no llamar a preventDefault aquí para no bloquear el flujo del botón si fuera necesario,
-        // pero sí lo manejamos para asegurar la intención del usuario.
         if (audioListo || cargando) return;
 
         setCargando(true);
         setStatusMsg("INICIALIZANDO SONIDOS...");
+
         try {
+            // 1. Activar el contexto de una vez
             await motorAudioPro.activarContexto();
 
-            setStatusMsg("CARGANDO SAMPLES...");
-            const promesas = Object.entries(NOTA_AL_ARCHIVO).map(([nota, archivo]) => {
-                const url = `/audio/Muestras_Cromaticas/Brillante/${archivo}`;
-                return motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, url);
-            });
+            // 2. Cargar cada sonido de forma independiente para que uno no bloquee al otro
+            const pitos = Object.entries(NOTA_AL_ARCHIVO);
+            let cargadosExitosos = 0;
 
-            await Promise.all(promesas);
+            for (const [nota, archivo] of pitos) {
+                try {
+                    setStatusMsg(`CARGANDO: ${nota}...`);
+                    const url = `/audio/Muestras_Cromaticas/Brillante/${archivo}`;
+                    // Cargamos sin esperar a que TODOS terminen si hay error
+                    await motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, url);
+                    cargadosExitosos++;
+                } catch (err) {
+                    console.warn(`No se pudo cargar nota ${nota}, saltando...`);
+                }
+            }
 
-            // Verificación post-carga
             setAudioListo(true);
-            setStatusMsg("🔥 V-PRO CONECTADO");
+            setStatusMsg(cargadosExitosos > 0 ? "🔥 V-PRO CONECTADO" : "⚠️ AUDIO LISTO (MODO LIMITADO)");
         } catch (error) {
-            console.error("Error activando audio:", error);
-            setStatusMsg("❌ ERROR AL CARGAR SONIDOS");
+            console.error("Error crítico de audio:", error);
+            setStatusMsg("❌ ERROR CRÍTICO - INTENTA RECARGAR");
+            // Forzamos el listo para que al menos pueda ver la interfaz
+            setAudioListo(true);
         } finally {
             setCargando(false);
         }
