@@ -1,113 +1,102 @@
 .simulador-app-container {
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle, #222 0%, #000 100%);
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    /* 🛡️ PUNTO 2: Elimina el retraso de 300ms de los navegadores móviles */
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
 }
 
-/* OVERLAY ESTILO APP PROFESIONAL */
-.overlay-vpro {
+.vpro-initializer {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 10000;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
+    touch-action: none;
 }
 
-.vpro-loader {
+.vpro-card {
     text-align: center;
     color: white;
-    width: 80%;
-    max-width: 300px;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #333;
-    border-radius: 10px;
-    margin: 20px 0;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: #f97316;
-    transition: width 0.3s ease;
-}
-
-.btn-vpro {
+.vpro-start-btn {
     background: #f97316;
     border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
+    padding: 20px 40px;
+    border-radius: 10px;
     color: white;
-    font-weight: 900;
-    letter-spacing: 1px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
     box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
+    margin-top: 20px;
 }
 
-/* TECLADO */
 .teclado-pitos {
     display: flex;
     flex-direction: column;
     gap: 15px;
     padding: 30px;
-    background: #111;
-    border-radius: 50px;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+    background: #151515;
+    border-radius: 40px;
     border: 1px solid #222;
+    /* 🛡️ Asegura que no haya interferencia de gestos */
+    touch-action: none;
 }
 
 .fila-pitos {
     display: flex;
-    gap: 12px;
+    gap: 10px;
 }
 
 .boton-pito {
-    width: 58px;
-    height: 58px;
-    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #bbb 100%);
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 30% 30%, #fff 0%, #ccc 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px;
     font-weight: 900;
-    color: #333;
-    position: relative;
+    color: #444;
     cursor: pointer;
-    /* LATENCIA CERO: La sombra cambia por CSS nativo */
-    box-shadow: 0 6px 0 #777, 0 10px 20px rgba(0, 0, 0, 0.5);
-    transition: none;
+    position: relative;
+    /* Sombras mecánicas para latencia visual cero */
+    box-shadow: 0 6px 0 #888, 0 10px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid #999;
+    /* 🛡️ Vital: Evita gestos nativos del móvil */
     touch-action: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* EFECTO MECANICO INSTANTANEO */
-.boton-pito:active,
-.boton-pito.presionado {
+/* Respuesta visual inmediata al toque físico */
+.boton-pito:active {
     transform: translateY(4px);
-    box-shadow: 0 2px 0 #994400, 0 0 20px rgba(249, 115, 22, 0.6);
-    background: radial-gradient(circle at 35% 35%, #f97316 0%, #ea580c 100%);
+    box-shadow: 0 2px 0 #c2410c, 0 0 20px rgba(249, 115, 22, 0.4);
+    background: radial-gradient(circle at 30% 30%, #f97316 0%, #ea580c 100%);
     color: white;
 }
 
-.boton-pito span {
-    pointer-events: none;
+.boton-pito.presionado {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c2410c, 0 0 20px rgba(249, 115, 22, 0.4);
+    background: radial-gradient(circle at 30% 30%, #f97316 0%, #ea580c 100%);
+    color: white;
 }
 
 @media (orientation: portrait) {
     .simulador-app-container::after {
-        content: 'VOLTEA EL CELULAR';
+        content: 'VOLTEA TU CELULAR';
         position: fixed;
         inset: 0;
         background: #000;
@@ -115,7 +104,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 900;
-        z-index: 20000;
+        font-weight: bold;
+        z-index: 10000;
     }
 }

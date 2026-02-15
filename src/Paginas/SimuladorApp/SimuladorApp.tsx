@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SimuladorApp.css';
 import { motorAudioPro } from './AudioEngine';
 
@@ -16,80 +16,75 @@ const FILAS = [
 
 const SimuladorApp: React.FC = () => {
     const [sistemaListo, setSistemaListo] = useState(false);
-    const [muestrasCargadas, setMuestrasCargadas] = useState(0);
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
     const vocesRef = useRef<{ [key: string]: any }>({});
-    const totalNotas = Object.keys(NOTA_AL_ARCHIVO).length;
+    const bancoId = 'vpro-ultra';
 
-    // 1. CARGA INMEDIATA AL ENTRAR
+    // 1. PRECARGA DE AUDIOBUFFERS (No HTML5 Audio)
     useEffect(() => {
-        const cargar = async () => {
-            let contador = 0;
-            for (const [nota, archivo] of Object.entries(NOTA_AL_ARCHIVO)) {
-                try {
-                    await motorAudioPro.cargarSonidoEnBanco('vpro', archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
-                    contador++;
-                    setMuestrasCargadas(contador);
-                } catch (e) {
-                    console.error("Fallo nota:", nota);
-                }
-            }
+        const cargarSamples = async () => {
+            const promesas = Object.entries(NOTA_AL_ARCHIVO).map(([nota, archivo]) => {
+                return motorAudioPro.cargarSonidoEnBanco(bancoId, archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+            });
+            await Promise.all(promesas);
+            console.log("✅ Samples cargados en RAM como AudioBuffers");
         };
-        cargar();
+        cargarSamples();
     }, []);
 
-    const desbloquearYSonar = async () => {
+    // 2. ACTIVACIÓN DEL CONTEXTO (Maestro)
+    const activarSistema = async () => {
         await motorAudioPro.activarContexto();
         setSistemaListo(true);
-        // Pequeño sonido de confirmación (opcional)
-        console.log("🔊 SISTEMA V-PRO DESBLOQUEADO");
+        console.log("🔊 AudioContext RUNNING");
     };
 
-    const handlePress = (id: string, nota: string) => {
-        if (!sistemaListo) return;
+    const iniciarNota = useCallback((id: string, nota: string) => {
+        // Forzar estado running en cada interacción (seguridad para móviles)
+        if (motorAudioPro.tiempoActual === 0 || !sistemaListo) {
+            motorAudioPro.activarContexto().then(() => setSistemaListo(true));
+        }
 
         setNotasActivas(prev => ({ ...prev, [id]: true }));
         const archivo = NOTA_AL_ARCHIVO[nota];
 
-        // Parar antes de sonar
+        // Detener instancia previa para evitar latencia de superposición
         if (vocesRef.current[id]) {
-            try {
-                vocesRef.current[id].fuente.stop();
-            } catch (e) { }
+            try { vocesRef.current[id].fuente.stop(); } catch (e) { }
         }
 
-        const sonido = motorAudioPro.reproducir(archivo, 'vpro', 1.0);
+        // Reproducir directamente desde AudioBufferSourceNode
+        const sonido = motorAudioPro.reproducir(archivo, bancoId, 1.0);
         if (sonido) vocesRef.current[id] = sonido;
-    };
+    }, [sistemaListo]);
 
-    const handleRelease = (id: string) => {
+    const detenerNota = useCallback((id: string) => {
         setNotasActivas(prev => ({ ...prev, [id]: false }));
         const voz = vocesRef.current[id];
         if (voz) {
             const ahora = motorAudioPro.tiempoActual;
-            voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.05);
-            voz.fuente.stop(ahora + 0.06);
+            try {
+                // Fade out ultra-rápido para evitar "pop"
+                voz.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.03);
+                voz.fuente.stop(ahora + 0.04);
+            } catch (e) { }
             delete vocesRef.current[id];
         }
-    };
+    }, []);
 
     return (
         <div className="simulador-app-container">
-            {/* OVERLAY DE DESBLOQUEO (OBLIGATORIO PARA MÓVIL) */}
             {!sistemaListo && (
-                <div className="overlay-vpro" onTouchStart={desbloquearYSonar} onClick={desbloquearYSonar}>
-                    <div className="vpro-loader">
-                        <h2>ACADEMIA V-PRO</h2>
-                        <p>Cargando: {muestrasCargadas} / {totalNotas}</p>
-                        <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: `${(muestrasCargadas / totalNotas) * 100}%` }}></div>
-                        </div>
-                        <button className="btn-vpro">TOCA PARA EMPEZAR</button>
+                <div className="vpro-initializer" onPointerDown={activarSistema}>
+                    <div className="vpro-card">
+                        <h1>V-PRO ACORDEÓN</h1>
+                        <p>LATENCIA CERO OPTIMIZADA</p>
+                        <button className="vpro-start-btn">ACTIVAR MOTOR</button>
                     </div>
                 </div>
             )}
 
-            <div className={`teclado-pitos ${sistemaListo ? 'ready' : ''}`}>
+            <div className="teclado-pitos">
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className="fila-pitos">
                         {fila.map((nota, iNota) => {
@@ -98,11 +93,21 @@ const SimuladorApp: React.FC = () => {
                                 <div
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
-                                    onTouchStart={(e) => { e.preventDefault(); handlePress(id, nota); }}
-                                    onTouchEnd={(e) => { e.preventDefault(); handleRelease(id); }}
-                                    onMouseDown={() => handlePress(id, nota)}
-                                    onMouseUp={() => handleRelease(id)}
-                                    onMouseLeave={() => handleRelease(id)}
+                                    onPointerDown={(e) => {
+                                        e.preventDefault(); // 🛡️ Bloquea scroll/zoom
+                                        e.currentTarget.setPointerCapture(e.pointerId);
+                                        iniciarNota(id, nota);
+                                    }}
+                                    onPointerUp={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.releasePointerCapture(e.pointerId);
+                                        detenerNota(id);
+                                    }}
+                                    onPointerCancel={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.releasePointerCapture(e.pointerId);
+                                        detenerNota(id);
+                                    }}
                                 >
                                     <span>{nota}</span>
                                 </div>
