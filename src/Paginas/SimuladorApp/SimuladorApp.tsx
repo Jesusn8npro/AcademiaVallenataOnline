@@ -20,27 +20,46 @@ const SimuladorApp: React.FC = () => {
     const [notasActivas, setNotasActivas] = useState<{ [key: string]: boolean }>({});
     const vocesActivas = useRef<{ [key: string]: { fuente: AudioBufferSourceNode, ganancia: GainNode } }>({});
 
-    // Cargar sonidos inmediatamente en segundo plano
-    const inicializarAudio = async () => {
-        if (audioListo) return;
-        await motorAudioPro.activarContexto();
-
+    // 1. PRE-CARGA (Igual que en PC): Cargar todo en cuanto el componente nace
+    useEffect(() => {
         Object.entries(NOTA_AL_ARCHIVO).forEach(([nota, archivo]) => {
-            motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, `/audio/Muestras_Cromaticas/Brillante/${archivo}`);
+            const url = `/audio/Muestras_Cromaticas/Brillante/${archivo}`;
+            motorAudioPro.cargarSonidoEnBanco('vpro-mobile', archivo, url);
         });
-        setAudioListo(true);
-    };
+
+        // 2. ACTIVACIÓN GLOBAL: Despertar el audio con cualquier toque en la pantalla
+        const despertarAudio = async () => {
+            await motorAudioPro.activarContexto();
+            setAudioListo(true);
+            console.log("🔊 Audio desbloqueado en móvil");
+            window.removeEventListener('touchstart', despertarAudio);
+            window.removeEventListener('click', despertarAudio);
+        };
+
+        window.addEventListener('touchstart', despertarAudio);
+        window.addEventListener('click', despertarAudio);
+
+        return () => {
+            window.removeEventListener('touchstart', despertarAudio);
+            window.removeEventListener('click', despertarAudio);
+        };
+    }, []);
 
     const iniciarNota = (id: string, nota: string) => {
-        if (!audioListo) inicializarAudio();
+        // Asegurar que el contexto esté activo
+        if (!audioListo) motorAudioPro.activarContexto();
 
         setNotasActivas(prev => ({ ...prev, [id]: true }));
         const archivo = NOTA_AL_ARCHIVO[nota];
         if (!archivo) return;
 
+        // Detener sonido previo si existe
         detenerNota(id);
+
         const sonido = motorAudioPro.reproducir(archivo, 'vpro-mobile', 0.8);
-        if (sonido) vocesActivas.current[id] = sonido;
+        if (sonido) {
+            vocesActivas.current[id] = sonido;
+        }
     };
 
     const detenerNota = (id: string) => {
@@ -58,20 +77,20 @@ const SimuladorApp: React.FC = () => {
         }
     };
 
-    // Bloquear scroll y zoom a nivel de JS como refuerzo
+    // Bloqueo de gestos nativos para que no se mueva la pantalla al tocar
     useEffect(() => {
         const handleTouch = (e: TouchEvent) => {
             if (e.touches.length > 1) e.preventDefault();
         };
-        // Opciones de evento pasivos: false es crucial para poder usar preventDefault
         document.addEventListener('touchstart', handleTouch, { passive: false });
-        return () => {
-            document.removeEventListener('touchstart', handleTouch);
-        };
+        return () => document.removeEventListener('touchstart', handleTouch);
     }, []);
 
     return (
         <div className="simulador-app-container">
+            {/* Solo un indicador visual opcional por si quieres saber si ya cargó */}
+            {!audioListo && <div style={{ position: 'fixed', top: 10, left: 10, color: '#f97316', fontSize: '10px', zIndex: 1000 }}>TOCA PARA ACTIVAR SONIDO</div>}
+
             <div className="teclado-pitos">
                 {FILAS.map((fila, iFila) => (
                     <div key={iFila} className={`fila-pitos fila-${iFila + 1}`}>
@@ -82,12 +101,11 @@ const SimuladorApp: React.FC = () => {
                                     key={id}
                                     className={`boton-pito ${notasActivas[id] ? 'presionado' : ''}`}
                                     onPointerDown={(e) => {
-                                        e.preventDefault(); // 🛡️ CRITICO PARA MÓVIL
+                                        // e.preventDefault(); // Quitamos preventDefault aquí para probar si el navegador deja pasar la activación
                                         e.currentTarget.setPointerCapture(e.pointerId);
                                         iniciarNota(id, nota);
                                     }}
                                     onPointerUp={(e) => {
-                                        e.preventDefault();
                                         e.currentTarget.releasePointerCapture(e.pointerId);
                                         detenerNota(id);
                                     }}
