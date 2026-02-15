@@ -1,9 +1,8 @@
 .simulador-app-container {
     width: 100vw;
     height: 100vh;
-    background: #000;
+    background: radial-gradient(circle, #222 0%, #000 100%);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
@@ -12,70 +11,103 @@
     -webkit-user-select: none;
 }
 
+/* OVERLAY ESTILO APP PROFESIONAL */
+.overlay-vpro {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.vpro-loader {
+    text-align: center;
+    color: white;
+    width: 80%;
+    max-width: 300px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 10px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #f97316;
+    transition: width 0.3s ease;
+}
+
+.btn-vpro {
+    background: #f97316;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    color: white;
+    font-weight: 900;
+    letter-spacing: 1px;
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
+}
+
+/* TECLADO */
 .teclado-pitos {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    background: #1a1a1a;
-    border-radius: 40px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-    border: 1px solid #333;
+    gap: 15px;
+    padding: 30px;
+    background: #111;
+    border-radius: 50px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+    border: 1px solid #222;
 }
 
 .fila-pitos {
     display: flex;
-    gap: 15px;
-    justify-content: center;
+    gap: 12px;
 }
 
 .boton-pito {
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #d1d1d1 100%);
+    width: 58px;
+    height: 58px;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #bbb 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #444;
-    cursor: pointer;
+    font-size: 10px;
+    font-weight: 900;
+    color: #333;
     position: relative;
-    border: 1px solid #aaa;
-    box-shadow:
-        0 6px 0 #888,
-        0 8px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    /* LATENCIA CERO: La sombra cambia por CSS nativo */
+    box-shadow: 0 6px 0 #777, 0 10px 20px rgba(0, 0, 0, 0.5);
     transition: none;
     touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
+/* EFECTO MECANICO INSTANTANEO */
+.boton-pito:active,
 .boton-pito.presionado {
-    background: radial-gradient(circle at 30% 30%, #f97316 0%, #ea580c 100%);
-    color: white;
     transform: translateY(4px);
-    box-shadow:
-        0 2px 0 #c2410c,
-        0 0 25px rgba(249, 115, 22, 0.5),
-        inset 0 4px 10px rgba(0, 0, 0, 0.4);
-    border-color: #f97316;
+    box-shadow: 0 2px 0 #994400, 0 0 20px rgba(249, 115, 22, 0.6);
+    background: radial-gradient(circle at 35% 35%, #f97316 0%, #ea580c 100%);
+    color: white;
 }
 
-.nota-label {
+.boton-pito span {
     pointer-events: none;
-    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
-}
-
-.boton-pito.presionado .nota-label {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 @media (orientation: portrait) {
     .simulador-app-container::after {
-        content: 'GIRA TU MÓVIL 🔄';
+        content: 'VOLTEA EL CELULAR';
         position: fixed;
         inset: 0;
         background: #000;
@@ -84,7 +116,6 @@
         align-items: center;
         justify-content: center;
         font-weight: 900;
-        font-size: 1.5rem;
-        z-index: 9999;
+        z-index: 20000;
     }
 }
