@@ -1,0 +1,59 @@
+/* 📱 ESTILOS OPTIMIZADOS PARA MÓVIL - SIMULADOR APP V-PRO */
+.simulador-app-container {
+    width: 100vw;
+    height: 100vh;
+    background-color: #050505;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* ⚡ CRÍTICO: Bloquea gestos del navegador para permitir multitouch real */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.grid-pitos {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    grid-gap: 15px;
+    padding: 20px;
+    max-width: 90vw;
+}
+
+.boton-pito {
+    aspect-ratio: 1/1;
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #d1d1d1 50%, #8a8a8a 100%);
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.05s ease;
+    /* Evita que el toque largo abra menús contextuales */
+    -webkit-touch-callout: none;
+}
+
+.boton-pito.presionado {
+    background: radial-gradient(circle at 30% 30%, #f97316 0%, #ea580c 60%, #9a3412 100%);
+    transform: scale(0.92);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    color: white;
+}
+
+.status-bar {
+    position: absolute;
+    top: 20px;
+    color: #555;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
