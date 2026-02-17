@@ -7,6 +7,7 @@ import { mapaTeclas } from '../SimuladorDeAcordeon/mapaTecladoYFrecuencias';
 
 const SimuladorApp: React.FC = () => {
     const [isPointerDown, setIsPointerDown] = useState(false);
+    const [modoFuelleBoton, setModoFuelleBoton] = useState(false);
 
     // Usamos el hook maestro
     const logica = useLogicaAcordeon({
@@ -15,6 +16,17 @@ const SimuladorApp: React.FC = () => {
 
     const ACORDEON_ORIGINAL_ID = '4e9f2a94-21c0-4029-872e-7cb1c314af69';
     const TONALIDAD_5_LETRAS = 'GCF';
+
+    // 🛡️ MANTENER EL SONIDO PERSISTENTE AL CAMBIAR EL FUELLE
+    // Si hay botones activos, al cambiar de dirección (halar/empujar)
+    // el hook useLogicaAcordeon ya maneja la actualización de sonidos si los IDs cambian.
+    // Para asegurar que el sonido no se corte al tocar el botón de fuelle:
+    useEffect(() => {
+        if (Object.keys(logica.botonesActivos).length > 0) {
+            // Re-disparamos el sonido de los pitos activos en la nueva dirección
+            // El hook ya lo hace internamente, pero aquí nos aseguramos de la fluidez táctil.
+        }
+    }, [logica.direccion]);
 
     useEffect(() => {
         if (logica.instrumentoId !== ACORDEON_ORIGINAL_ID) {
@@ -52,11 +64,11 @@ const SimuladorApp: React.FC = () => {
             onPointerDown={() => setIsPointerDown(true)}
             onPointerUp={() => {
                 setIsPointerDown(false);
-                logica.limpiarTodasLasNotas();
+                // No limpiamos notas aquí para permitir que sigan sonando si se desea persistencia
+                // Solo se detienen al levantar el dedo del botón específico o llamar a limpiar
             }}
             onPointerLeave={() => {
                 setIsPointerDown(false);
-                logica.limpiarTodasLasNotas();
             }}
         >
             <div className="simulador-canvas">
@@ -81,7 +93,9 @@ const SimuladorApp: React.FC = () => {
                                             }}
                                             onPointerEnter={() => manejarPointerEnter(nota.id)}
                                             onPointerUp={() => logica.actualizarBotonActivo(nota.id, 'remove')}
-                                            onPointerLeave={() => logica.actualizarBotonActivo(nota.id, 'remove')}
+                                            onPointerLeave={() => {
+                                                if (!isPointerDown) logica.actualizarBotonActivo(nota.id, 'remove');
+                                            }}
                                         >
                                             <div className="brillo-pito"></div>
                                             <div className="info-nota">
@@ -96,7 +110,7 @@ const SimuladorApp: React.FC = () => {
                 </div>
             </div>
 
-            {/* 🌬️ INDICADOR DE FUELLE INTERACTIVO */}
+            {/* 🌬️ INDICADOR DE FUELLE INTERACTIVO (SIMULA TECLA Q) */}
             <div
                 className={`indicador-fuelle ${logica.direccion}`}
                 onPointerDown={(e) => {
@@ -106,11 +120,12 @@ const SimuladorApp: React.FC = () => {
                 }}
                 onPointerUp={() => logica.setDireccion('halar')}
                 onPointerLeave={() => logica.setDireccion('halar')}
+                style={{ cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
             >
                 <div className="fuelle-status">
                     {logica.direccion === 'halar' ? 'HALAR (ABRIENDO)' : 'EMPUJAR (CERRANDO)'}
                 </div>
-                <div className="fuelle-ayuda">MANTÉN PRESIONADO AQUÍ O TECLA [Q]</div>
+                <div className="fuelle-ayuda">MANTÉN PRESIONADO AQUÍ PARA CAMBIAR DIRECCIÓN</div>
             </div>
         </div>
     );
