@@ -7,7 +7,8 @@ import { mapaTeclas } from '../SimuladorDeAcordeon/mapaTecladoYFrecuencias';
 
 const SimuladorApp: React.FC = () => {
     const [isPointerDown, setIsPointerDown] = useState(false);
-    const [modoFuelleBoton, setModoFuelleBoton] = useState(false);
+    // Rastreamos qué botones físicos (fila-col) están siendo presionados
+    const botonesFisicosPresionados = useRef<Set<string>>(new Set());
 
     // Usamos el hook maestro
     const logica = useLogicaAcordeon({
@@ -17,15 +18,20 @@ const SimuladorApp: React.FC = () => {
     const ACORDEON_ORIGINAL_ID = '4e9f2a94-21c0-4029-872e-7cb1c314af69';
     const TONALIDAD_5_LETRAS = 'GCF';
 
-    // 🛡️ MANTENER EL SONIDO PERSISTENTE AL CAMBIAR EL FUELLE
-    // Si hay botones activos, al cambiar de dirección (halar/empujar)
-    // el hook useLogicaAcordeon ya maneja la actualización de sonidos si los IDs cambian.
-    // Para asegurar que el sonido no se corte al tocar el botón de fuelle:
+    // 🛡️ PERSISTENCIA DE SONIDO AL CAMBIAR EL FUELLE
     useEffect(() => {
-        if (Object.keys(logica.botonesActivos).length > 0) {
-            // Re-disparamos el sonido de los pitos activos en la nueva dirección
-            // El hook ya lo hace internamente, pero aquí nos aseguramos de la fluidez táctil.
-        }
+        // Cuando cambie la dirección (ej: de halar a empujar), 
+        // si hay dedos puestos en botones físicos, actualizamos los sonidos
+        botonesFisicosPresionados.current.forEach(fisicoId => {
+            const [fila, col] = fisicoId.split('-');
+            const oldDir = logica.direccion === 'halar' ? 'empujar' : 'halar';
+            const oldId = `${fila}-${col}-${oldDir}`;
+            const newId = `${fila}-${col}-${logica.direccion}`;
+
+            // Detenemos el anterior y activamos el nuevo
+            logica.actualizarBotonActivo(oldId, 'remove');
+            logica.actualizarBotonActivo(newId, 'add');
+        });
     }, [logica.direccion]);
 
     useEffect(() => {
@@ -45,11 +51,18 @@ const SimuladorApp: React.FC = () => {
         };
     }, []);
 
-    // 👆 LÓGICA DE DESLIZAMIENTO (GLISSANDO)
-    const manejarPointerEnter = (id: string) => {
-        if (isPointerDown) {
-            logica.actualizarBotonActivo(id, 'add');
-        }
+    const manejarEntradaBoton = (notaId: string) => {
+        const [fila, col] = notaId.split('-');
+        const fisicoId = `${fila}-${col}`;
+        botonesFisicosPresionados.current.add(fisicoId);
+        logica.actualizarBotonActivo(notaId, 'add');
+    };
+
+    const manejarSalidaBoton = (notaId: string) => {
+        const [fila, col] = notaId.split('-');
+        const fisicoId = `${fila}-${col}`;
+        botonesFisicosPresionados.current.delete(fisicoId);
+        logica.actualizarBotonActivo(notaId, 'remove');
     };
 
     const hileras = [
@@ -64,11 +77,10 @@ const SimuladorApp: React.FC = () => {
             onPointerDown={() => setIsPointerDown(true)}
             onPointerUp={() => {
                 setIsPointerDown(false);
-                // No limpiamos notas aquí para permitir que sigan sonando si se desea persistencia
-                // Solo se detienen al levantar el dedo del botón específico o llamar a limpiar
-            }}
-            onPointerLeave={() => {
-                setIsPointerDown(false);
+                // Si el usuario levanta todos los dedos, limpiamos
+                if (botonesFisicosPresionados.current.size === 0) {
+                    logica.limpiarTodasLasNotas();
+                }
             }}
         >
             <div className="simulador-canvas">
@@ -89,12 +101,15 @@ const SimuladorApp: React.FC = () => {
                                             className={`pito-boton ${logica.botonesActivos[nota.id] ? 'activo' : ''}`}
                                             onPointerDown={(e) => {
                                                 e.preventDefault();
-                                                logica.actualizarBotonActivo(nota.id, 'add');
+                                                manejarEntradaBoton(nota.id);
                                             }}
-                                            onPointerEnter={() => manejarPointerEnter(nota.id)}
-                                            onPointerUp={() => logica.actualizarBotonActivo(nota.id, 'remove')}
+                                            onPointerEnter={() => {
+                                                if (isPointerDown) manejarEntradaBoton(nota.id);
+                                            }}
+                                            onPointerUp={() => manejarSalidaBoton(nota.id)}
                                             onPointerLeave={() => {
-                                                if (!isPointerDown) logica.actualizarBotonActivo(nota.id, 'remove');
+                                                // En glissando, si salimos del botón pero seguimos con el puntero abajo, quitamos la nota
+                                                manejarSalidaBoton(nota.id);
                                             }}
                                         >
                                             <div className="brillo-pito"></div>
@@ -118,7 +133,10 @@ const SimuladorApp: React.FC = () => {
                     e.stopPropagation();
                     logica.setDireccion('empujar');
                 }}
-                onPointerUp={() => logica.setDireccion('halar')}
+                onPointerUp={(e) => {
+                    e.preventDefault();
+                    logica.setDireccion('halar');
+                }}
                 onPointerLeave={() => logica.setDireccion('halar')}
                 style={{ cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
             >
