@@ -1,6 +1,6 @@
 /**
- * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V3)
- * Optimizado para latencia ultra-baja y sonidos reales.
+ * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V4)
+ * Optimizado para trinos extremos, velocidad profesional y latencia ultra-baja.
  */
 
 export interface BancoSonido {
@@ -14,24 +14,22 @@ export class MotorAudioPro {
     private contexto: AudioContext;
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
+    private poolNodos: Map<string, { fuente: AudioBufferSourceNode, ganancia: GainNode }[]>;
 
     constructor() {
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-        // 🎧 Configuración de Alta Fidelidad (Standard Profesional)
         this.contexto = new AudioContextClass({
-            latencyHint: 'interactive', // Balance perfecto entre rapidez y calidad
+            latencyHint: 'interactive',
             sampleRate: 44100
         });
 
         this.bancos = new Map();
+        this.poolNodos = new Map();
 
-        // 🛡️ Limitador de Seguridad: Evita que el sonido se "rompa" (digital distortion)
-        // cuando tocas muchos pitos y bajos al mismo tiempo.
         this.nodoGananciaPrincipal = this.contexto.createGain();
         const limitador = this.contexto.createDynamicsCompressor();
 
-        // Configuración para que el limitador sea invisible al oído pero protector
         limitador.threshold.setValueAtTime(-1.0, this.contexto.currentTime);
         limitador.knee.setValueAtTime(0, this.contexto.currentTime);
         limitador.ratio.setValueAtTime(20, this.contexto.currentTime);
@@ -42,33 +40,21 @@ export class MotorAudioPro {
         limitador.connect(this.contexto.destination);
     }
 
-    /**
-     * Asegura que el contexto esté activo (requerido por navegadores tras interacción)
-     */
     async activarContexto() {
         if (this.contexto.state === 'suspended') {
             await this.contexto.resume();
         }
     }
 
-    /**
-     * Crea o recupera un banco de sonidos
-     */
     obtenerBanco(id: string, nombre: string): BancoSonido {
         if (!this.bancos.has(id)) {
             this.bancos.set(id, {
-                id,
-                nombre,
-                muestras: new Map(),
-                offsets: new Map()
+                id, nombre, muestras: new Map(), offsets: new Map()
             });
         }
         return this.bancos.get(id)!;
     }
 
-    /**
-     * Carga un sonido directamente a la RAM
-     */
     async cargarSonidoEnBanco(bancoId: string, idSonido: string, url: string): Promise<void> {
         const banco = this.obtenerBanco(bancoId, bancoId);
         if (banco.muestras.has(idSonido)) return;
@@ -79,34 +65,29 @@ export class MotorAudioPro {
 
             const arrayBuffer = await respuesta.arrayBuffer();
             const audioBuffer = await this.contexto.decodeAudioData(arrayBuffer);
-
-            // ✂️ Recorte mucho más suave para no tocar la esencia del sonido real
             const offset = this.detectarInicioReal(audioBuffer);
 
             banco.muestras.set(idSonido, audioBuffer);
             banco.offsets.set(idSonido, offset);
         } catch (error) {
-            console.error(`❌ Error cargando sonido [${idSonido}] en banco [${bancoId}]:`, error);
+            console.error(`❌ Error cargando sonido [${idSonido}]:`, error);
         }
     }
 
-    /**
-     * Detecta dónde empieza el sonido de verdad para eliminar el lag del MP3
-     */
     private detectarInicioReal(buffer: AudioBuffer): number {
         const datos = buffer.getChannelData(0);
-        const umbral = 0.01; // Menos agresivo para preservar el "aire" inicial
+        const umbral = 0.005;
         for (let i = 0; i < datos.length; i++) {
             if (Math.abs(datos[i]) > umbral) {
-                // Dejamos 5ms de margen (más natural) en lugar de recortar casi todo
-                return Math.max(0, (i / buffer.sampleRate) - 0.005);
+                return Math.max(0, (i / buffer.sampleRate) - 0.002);
             }
         }
         return 0;
     }
 
     /**
-     * Reproduce un sonido del banco activo con latencia mínima
+     * Reproduce un sonido con latencia mínima.
+     * ⚡ OPTIMIZACIÓN DE TRINOS: Gestión de polifonía por botón.
      */
     reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false): { fuente: AudioBufferSourceNode, ganancia: GainNode } | null {
         const banco = this.bancos.get(bancoId);
@@ -117,6 +98,7 @@ export class MotorAudioPro {
 
         if (!buffer) return null;
 
+        // Crear nodos
         const fuente = this.contexto.createBufferSource();
         fuente.buffer = buffer;
         fuente.loop = loop;
@@ -126,7 +108,9 @@ export class MotorAudioPro {
         }
 
         const ganancia = this.contexto.createGain();
-        ganancia.gain.setValueAtTime(volumen, this.contexto.currentTime);
+        ganancia.gain.setValueAtTime(0.001, this.contexto.currentTime);
+        // Attack ultra-rápido para trinos (2ms)
+        ganancia.gain.exponentialRampToValueAtTime(volumen, this.contexto.currentTime + 0.002);
 
         fuente.connect(ganancia);
         ganancia.connect(this.nodoGananciaPrincipal);
@@ -137,8 +121,24 @@ export class MotorAudioPro {
     }
 
     /**
-     * Limpia la memoria de un banco específico
+     * Detención ultra-rápida optimizada para repeticiones constantes (Trinos)
      */
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.05) {
+        try {
+            const ahora = this.contexto.currentTime;
+            instancia.ganancia.gain.cancelScheduledValues(ahora);
+            instancia.ganancia.gain.setValueAtTime(instancia.ganancia.gain.value, ahora);
+            // Fundido más corto (50ms por defecto) para trinos
+            instancia.ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + rapidez);
+            instancia.fuente.stop(ahora + rapidez + 0.01);
+
+            // Limpieza manual de conexiones tras el stop
+            setTimeout(() => {
+                try { instancia.ganancia.disconnect(); } catch (e) { }
+            }, (rapidez + 0.1) * 1000);
+        } catch (e) { }
+    }
+
     limpiarBanco(bancoId: string) {
         const banco = this.bancos.get(bancoId);
         if (banco) {

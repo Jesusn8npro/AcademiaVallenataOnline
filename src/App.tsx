@@ -95,9 +95,13 @@ const AppContent = () => {
     window.location.href = '/sesion-cerrada';
   }
 
-  // Agregar clase al body cuando el usuario está autenticado
+  const esSimuladorApp = pathname.startsWith('/simulador-app');
+
+  // Agregar clase al body cuando el usuario está autenticado y NO estamos en vistas inmersivas
   useEffect(() => {
-    if (estaAutenticado) {
+    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp;
+
+    if (estaAutenticado && !esInmersivo) {
       document.body.classList.add('con-sidebar')
     } else {
       document.body.classList.remove('con-sidebar')
@@ -108,18 +112,13 @@ const AppContent = () => {
       document.body.classList.remove('con-sidebar')
       document.body.classList.remove('con-sidebar-colapsado')
     }
-  }, [estaAutenticado])
-
-
-
-  const esSimuladorApp = pathname === '/simulador-app';
+  }, [estaAutenticado, esModoLectura, esLandingVenta, esSimuladorApp])
 
   return (
     <>
       <CursorPersonalizado />
-      {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado
+      {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
       {!esModoLectura && !esLandingVenta && !esSimuladorApp && (
-
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (

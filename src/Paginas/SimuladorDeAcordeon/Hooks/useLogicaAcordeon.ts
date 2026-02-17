@@ -36,7 +36,7 @@ const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
 
 const VOL_PITOS = 0.55;
 const VOL_BAJOS = 0.35;
-const FADE_OUT = 150; // Restaurado a 150ms para un sonido natural sin chasquidos digitales
+const FADE_OUT = 40; // ⚡ Reducido para trinos profesionales y respuesta instantánea
 
 
 
@@ -447,7 +447,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
         }
     }, [stopPreview]);
 
-    const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add', instanciasExternas: any[] | null = null) => {
+    /**
+     * @param silencioso Si es true, no dispara el estado de React (evita re-renders). 
+     * Útil para trinos extremos donde el componente maneja su propia visual.
+     */
+    const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add', instanciasExternas: any[] | null = null, silencioso: boolean = false) => {
         if (deshabilitarRef.current) return;
 
         if (accion === 'add') {
@@ -459,17 +463,21 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
 
             const newState = { ...botonesActivosRef.current, [id]: { instances, ...mapaBotonesActual.current[id] } };
             botonesActivosRef.current = newState;
-            setBotonesActivos(newState);
+
+            if (!silencioso) setBotonesActivos(newState);
+
             onNotaPresionada?.({ idBoton: id, nombre: id });
         } else {
             detenerTono(id);
             const newState = { ...botonesActivosRef.current };
             delete newState[id];
             botonesActivosRef.current = newState;
-            setBotonesActivos(newState);
+
+            if (!silencioso) setBotonesActivos(newState);
+
             onNotaLiberada?.({ idBoton: id, nombre: id });
         }
-    }, [modoAjuste, onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
+    }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
 
     const limpiarTodasLasNotas = useCallback(() => {
         Object.keys(botonesActivosRef.current).forEach(id => detenerTono(id));
