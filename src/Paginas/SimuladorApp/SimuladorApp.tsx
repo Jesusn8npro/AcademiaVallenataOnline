@@ -18,17 +18,38 @@ const SimuladorApp: React.FC = () => {
     const ACORDEON_ORIGINAL_ID = '4e9f2a94-21c0-4029-872e-7cb1c314af69';
     const TONALIDAD_5_LETRAS = 'GCF';
 
+    // 🛡️ BLINDAJE TOTAL: PREVENCIÓN DE GESTOS NATIVOS Y MENÚ CONTEXTUAL
+    useEffect(() => {
+        const prevenirMenu = (e: MouseEvent) => e.preventDefault();
+        const prevenirGestos = (e: TouchEvent) => {
+            if (e.touches.length > 1) {
+                e.preventDefault(); // Bloquea zoom de dos dedos
+            }
+        };
+
+        // Bloqueo de menú contextual (click largo en móvil)
+        window.addEventListener('contextmenu', prevenirMenu);
+        // Bloqueo de gestos táctiles del sistema
+        window.addEventListener('touchstart', prevenirGestos, { passive: false });
+
+        document.body.classList.add('vista-premium-activa');
+        window.scrollTo(0, 0);
+
+        return () => {
+            window.removeEventListener('contextmenu', prevenirMenu);
+            window.removeEventListener('touchstart', prevenirGestos);
+            document.body.classList.remove('vista-premium-activa');
+        };
+    }, []);
+
     // 🛡️ PERSISTENCIA DE SONIDO AL CAMBIAR EL FUELLE
     useEffect(() => {
-        // Cuando cambie la dirección (ej: de halar a empujar), 
-        // si hay dedos puestos en botones físicos, actualizamos los sonidos
         botonesFisicosPresionados.current.forEach(fisicoId => {
             const [fila, col] = fisicoId.split('-');
             const oldDir = logica.direccion === 'halar' ? 'empujar' : 'halar';
             const oldId = `${fila}-${col}-${oldDir}`;
             const newId = `${fila}-${col}-${logica.direccion}`;
 
-            // Detenemos el anterior y activamos el nuevo
             logica.actualizarBotonActivo(oldId, 'remove');
             logica.actualizarBotonActivo(newId, 'add');
         });
@@ -42,14 +63,6 @@ const SimuladorApp: React.FC = () => {
             logica.setTonalidadSeleccionada(TONALIDAD_5_LETRAS);
         }
     }, [logica.instrumentoId, logica.tonalidadSeleccionada]);
-
-    useEffect(() => {
-        document.body.classList.add('vista-premium-activa');
-        window.scrollTo(0, 0);
-        return () => {
-            document.body.classList.remove('vista-premium-activa');
-        };
-    }, []);
 
     const manejarEntradaBoton = (notaId: string) => {
         const [fila, col] = notaId.split('-');
@@ -73,11 +86,13 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div
-            className="simulador-app-root"
-            onPointerDown={() => setIsPointerDown(true)}
-            onPointerUp={() => {
+            className="simulador-app-root capa-blindaje-total"
+            onPointerDown={(e) => {
+                // No llamamos preventDefault aquí para permitir que los hijos reciban el evento
+                setIsPointerDown(true);
+            }}
+            onPointerUp={(e) => {
                 setIsPointerDown(false);
-                // Si el usuario levanta todos los dedos, limpiamos
                 if (botonesFisicosPresionados.current.size === 0) {
                     logica.limpiarTodasLasNotas();
                 }
@@ -101,14 +116,24 @@ const SimuladorApp: React.FC = () => {
                                             className={`pito-boton ${logica.botonesActivos[nota.id] ? 'activo' : ''}`}
                                             onPointerDown={(e) => {
                                                 e.preventDefault();
+                                                e.stopPropagation();
                                                 manejarEntradaBoton(nota.id);
                                             }}
-                                            onPointerEnter={() => {
-                                                if (isPointerDown) manejarEntradaBoton(nota.id);
+                                            onPointerEnter={(e) => {
+                                                if (isPointerDown) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    manejarEntradaBoton(nota.id);
+                                                }
                                             }}
-                                            onPointerUp={() => manejarSalidaBoton(nota.id)}
-                                            onPointerLeave={() => {
-                                                // En glissando, si salimos del botón pero seguimos con el puntero abajo, quitamos la nota
+                                            onPointerUp={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                manejarSalidaBoton(nota.id);
+                                            }}
+                                            onPointerLeave={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
                                                 manejarSalidaBoton(nota.id);
                                             }}
                                         >
@@ -125,7 +150,7 @@ const SimuladorApp: React.FC = () => {
                 </div>
             </div>
 
-            {/* 🌬️ INDICADOR DE FUELLE INTERACTIVO (SIMULA TECLA Q) */}
+            {/* 🌬️ INDICADOR DE FUELLE INTERACTIVO */}
             <div
                 className={`indicador-fuelle ${logica.direccion}`}
                 onPointerDown={(e) => {
@@ -135,9 +160,14 @@ const SimuladorApp: React.FC = () => {
                 }}
                 onPointerUp={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     logica.setDireccion('halar');
                 }}
-                onPointerLeave={() => logica.setDireccion('halar')}
+                onPointerLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    logica.setDireccion('halar');
+                }}
                 style={{ cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
             >
                 <div className="fuelle-status">
@@ -148,5 +178,6 @@ const SimuladorApp: React.FC = () => {
         </div>
     );
 };
+
 
 export default SimuladorApp;
