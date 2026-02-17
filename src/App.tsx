@@ -61,6 +61,7 @@ import Notificaciones from './Paginas/Notificaciones/Notificaciones'
 import AdminNotificaciones from './Paginas/administrador/notificaciones/AdminNotificaciones'
 import Pagina404 from './Paginas/404/Pagina404'
 import SimuladorGaming from './Paginas/SimuladorDeAcordeon/SimuladorGaming';
+import SimuladorApp from './Paginas/SimuladorApp/SimuladorApp';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
 import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
 
@@ -111,12 +112,14 @@ const AppContent = () => {
 
 
 
+  const esSimuladorApp = pathname === '/simulador-app';
+
   return (
     <>
       <CursorPersonalizado />
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado
-          OCULTAR si estamos en vista de clase, landing venta o SIMULADOR APP */}
-      {!esModoLectura && !esLandingVenta && (
+      {!esModoLectura && !esLandingVenta && !esSimuladorApp && (
+
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -124,11 +127,12 @@ const AppContent = () => {
         )
       )}
 
-      {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta NI simulador */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && <SidebarAdmin />}
+      {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta o SIMULADOR */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <SidebarAdmin />}
 
-      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && <MenuInferiorResponsivo />}
+      {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta o SIMULADOR */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <MenuInferiorResponsivo />}
+
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -181,6 +185,7 @@ const AppContent = () => {
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/simulador-gaming" element={<SimuladorGaming />} />
+          <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />
           <Route path="/administrador/contenido" element={<PanelContenido />} />
           <Route path="/administrador/panel-contenido" element={<PanelContenido />} />
@@ -202,7 +207,7 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && (
         <>
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}

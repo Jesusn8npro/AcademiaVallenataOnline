@@ -1,0 +1,152 @@
+/* 🚀 SIMULADOR APP V17 - ACORDEÓN ANCLADO AL FONDO (SISTEMA CASSOLO) */
+
+.simulador-app-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #000;
+    z-index: 99999;
+    overflow: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.simulador-canvas {
+    position: absolute;
+    bottom: 0;
+    /* ✨ ¡PEGADO A LA PARTE DE ABAJO! */
+    left: 0;
+    width: 100%;
+    height: 70%;
+    /* Lo subimos a 82% para que el diapasón se vea imponente */
+    background-image: url('/Diapason%20con%20fondo%20firme.jpg');
+    background-size: 100% 100%;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+}
+
+/* Ocultamos la img anterior para evitar conflictos */
+.img-diapason-full {
+    display: none !important;
+}
+
+/* 🔘 CONTENEDOR DE PITOS (CENTRADO SOBRE ÁREA AZUL) */
+.contenedor-pitos-horizontal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -35%);
+    /* Ajuste fino para centrar en el diapasón */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 0 4%;
+    box-sizing: border-box;
+}
+
+.hilera-pitos {
+    display: flex;
+    justify-content: center;
+    gap: 1.5vw;
+    width: 100%;
+    margin: 0.8vh 0;
+}
+
+/* 📏 ESCALONAMIENTO REAL */
+.hilera-medio {
+    transform: translateY(-0.8vh);
+}
+
+/* 💎 BOTONES DE NÁCAR PREMIUM */
+.pito-boton {
+    width: 9.5vh;
+    height: 9.5vh;
+    min-width: 50px;
+    min-height: 50px;
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f9f9f9 45%, #d1d1d1 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.6),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.05s;
+}
+
+.pito-boton.activo {
+    transform: scale(0.9) translateY(5px);
+    background: radial-gradient(circle at 30% 30%, #e0e0e0 0%, #bbbbbb 45%, #888888 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    border: 3px solid #ffd700;
+}
+
+.nota-etiqueta {
+    font-size: 2.2vh;
+    font-weight: 900;
+    color: #111;
+    text-transform: uppercase;
+}
+
+.tecla-computador {
+    font-size: 1.3vh;
+    font-weight: 800;
+    color: #3b82f6;
+    margin-top: -2px;
+}
+
+/* 🌬️ INDICADOR DE FUELLE (PARTE SUPERIOR LIMPIA) */
+.indicador-fuelle {
+    position: fixed;
+    top: 3dvh;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    padding: 10px 45px;
+    border-radius: 100px;
+    color: #fff;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: center;
+}
+
+.fuelle-status {
+    font-weight: 950;
+    font-size: 1.25rem;
+    letter-spacing: 4px;
+}
+
+.indicador-fuelle.halar {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    color: #3b82f6;
+}
+
+.indicador-fuelle.empujar {
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.4);
+    color: #f97316;
+}
+
+@media (max-height: 480px) {
+    .pito-boton {
+        width: 13vh;
+        height: 13vh;
+    }
+
+    .hilera-pitos {
+        gap: 1vh;
+    }
+}

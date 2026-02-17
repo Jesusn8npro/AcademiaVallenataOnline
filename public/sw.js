@@ -6,7 +6,7 @@ const OFFLINE_PAGE = '/offline.html';
 const URLS_TO_CACHE = [
   '/',
   '/cursos',
-  '/comunidad', 
+  '/comunidad',
   '/simulador-gaming',
   '/manifest.json',
   '/favicon.png',
@@ -17,7 +17,7 @@ const URLS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      		// Cache abierto para Academia Vallenata
+      // Cache abierto para Academia Vallenata
       return cache.addAll(URLS_TO_CACHE);
     })
   );
@@ -31,7 +31,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            			// Eliminando cache antiguo
+            // Eliminando cache antiguo
             return caches.delete(cacheName);
           }
         })
@@ -53,8 +53,14 @@ self.addEventListener('fetch', (event) => {
   if (request.destination === 'document') {
     // Páginas: Network-first, fallback a cache
     event.respondWith(networkFirstStrategy(request));
-  } else if (request.destination === 'image' || request.destination === 'font') {
-    // Imágenes y fuentes: Cache-first
+  } else if (
+    request.destination === 'image' ||
+    request.destination === 'font' ||
+    request.destination === 'audio' ||
+    url.pathname.endsWith('.mp3') ||
+    url.pathname.endsWith('.wav')
+  ) {
+    // Imágenes, fuentes y SONIDOS: Cache-first
     event.respondWith(cacheFirstStrategy(request));
   } else {
     // Otros recursos: Network-first
@@ -66,27 +72,27 @@ self.addEventListener('fetch', (event) => {
 async function networkFirstStrategy(request) {
   try {
     const networkResponse = await fetch(request);
-    
+
     // Solo cachear responses exitosas
     if (networkResponse.status === 200) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
-    	// Red no disponible, usando cache
+    // Red no disponible, usando cache
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Si es una página y no hay cache, mostrar página offline
     if (request.destination === 'document') {
       return caches.match(OFFLINE_PAGE);
     }
-    
+
     throw error;
   }
 }
@@ -94,18 +100,18 @@ async function networkFirstStrategy(request) {
 // 💾 Estrategia Cache-first  
 async function cacheFirstStrategy(request) {
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
     const cache = await caches.open(CACHE_NAME);
     cache.put(request, networkResponse.clone());
     return networkResponse;
   } catch (error) {
-    	// Error al cargar recurso
+    // Error al cargar recurso
     throw error;
   }
 }
@@ -114,7 +120,7 @@ async function cacheFirstStrategy(request) {
 self.addEventListener('push', (event) => {
   if (event.data) {
     const data = event.data.json();
-    
+
     const options = {
       body: data.body,
       icon: '/favicon.png',
@@ -122,7 +128,7 @@ self.addEventListener('push', (event) => {
       data: data.data,
       tag: 'academia-vallenata'
     };
-    
+
     event.waitUntil(
       self.registration.showNotification(data.title, options)
     );
@@ -132,9 +138,9 @@ self.addEventListener('push', (event) => {
 // 📱 Click en notificación
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
+
   const url = event.notification.data?.url || '/';
-  
+
   event.waitUntil(
     clients.openWindow(url)
   );
