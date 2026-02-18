@@ -1,6 +1,6 @@
 /**
- * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V4.2)
- * Optimizado para trinos extremos, velocidad profesional y latencia ultra-baja en móviles.
+ * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V5.0 - BLINDADO)
+ * Optimizado con Voice Pooling (Nodos pre-cargados) para trinos profesionales.
  */
 
 export interface BancoSonido {
@@ -14,8 +14,9 @@ export class MotorAudioPro {
     private contexto: AudioContext;
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
-    private vocesActivas: { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number }[] = [];
-    private MAX_VOCES = 32; // 🛡️ Aumentado para soportar trinos y capas (Brillante + Cassotto)
+    private vocesActivas: Set<any> = new Set();
+    private poolGanancia: GainNode[] = []; // 🚀 POOL DE NODOS PRE-CONECTADOS
+    private MAX_POOL = 64;
 
     constructor() {
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -38,6 +39,14 @@ export class MotorAudioPro {
         this.nodoGananciaPrincipal.connect(limitador);
         limitador.connect(this.contexto.destination);
 
+        // 🚀 PRE-CARGAR POOL DE GANANCIA (Reducción de latencia de instanciación)
+        for (let i = 0; i < this.MAX_POOL; i++) {
+            const g = this.contexto.createGain();
+            g.gain.setValueAtTime(0, this.contexto.currentTime);
+            g.connect(this.nodoGananciaPrincipal);
+            this.poolGanancia.push(g);
+        }
+
         // 🔄 Escuchar cambios de visibilidad para reanimar el sonido
         document.addEventListener('visibilitychange', () => this.activarContexto());
         window.addEventListener('focus', () => this.activarContexto());
@@ -47,10 +56,7 @@ export class MotorAudioPro {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try {
                 await this.contexto.resume();
-                console.log("🔊 AudioContext reanimado con éxito.");
-            } catch (e) {
-                console.error("❌ No se pudo reanimar el AudioContext:", e);
-            }
+            } catch (e) { }
         }
     }
 
@@ -92,7 +98,7 @@ export class MotorAudioPro {
     }
 
     /**
-     * Reproduce un sonido con latencia mínima y gestión de polifonía.
+     * Reproduce un sonido usando el Pool de Nodos pre-conectados.
      */
     reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
         const banco = this.bancos.get(bancoId);
@@ -102,10 +108,14 @@ export class MotorAudioPro {
         const offset = banco.offsets.get(idSonido) || 0;
         if (!buffer) return null;
 
-        // 🛡️ VOICE STEALING: Si excedemos el límite, detenemos la voz más antigua
-        if (this.vocesActivas.length >= this.MAX_VOCES) {
-            const vieja = this.vocesActivas.shift();
-            if (vieja) this.detener(vieja, 0.005);
+        // 🚀 RECUPERAR GANANCIA DEL POOL
+        let ganancia = this.poolGanancia.pop();
+        if (!ganancia) {
+            // Si el pool se agota, robamos la voz más antigua (Voice Stealing)
+            const antigua = Array.from(this.vocesActivas)[0];
+            if (antigua) this.detener(antigua, 0.002);
+            ganancia = this.contexto.createGain();
+            ganancia.connect(this.nodoGananciaPrincipal);
         }
 
         const ahora = this.contexto.currentTime;
@@ -117,29 +127,33 @@ export class MotorAudioPro {
             fuente.playbackRate.setValueAtTime(Math.pow(2, semitonos / 12), ahora);
         }
 
-        const ganancia = this.contexto.createGain();
+        ganancia.gain.cancelScheduledValues(ahora);
         ganancia.gain.setValueAtTime(0.001, ahora);
-        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.003); // Attack ultra-veloz
+        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.003);
 
         fuente.connect(ganancia);
-        ganancia.connect(this.nodoGananciaPrincipal);
-
         fuente.start(ahora, offset);
 
         const voz = { fuente, ganancia, tiempo: ahora };
-        this.vocesActivas.push(voz);
+        this.vocesActivas.add(voz);
 
         fuente.onended = () => {
-            this.vocesActivas = this.vocesActivas.filter(v => v !== voz);
-            fuente.disconnect();
-            ganancia.disconnect();
+            this.vocesActivas.delete(voz);
+            try {
+                fuente.disconnect();
+                // 🚀 DEVOLVER GANANCIA AL POOL
+                ganancia!.gain.setValueAtTime(0, this.contexto.currentTime);
+                if (this.poolGanancia.length < this.MAX_POOL) {
+                    this.poolGanancia.push(ganancia!);
+                }
+            } catch (e) { }
         };
 
         return voz;
     }
 
     /**
-     * Detención ultra-rápida optimizada para repeticiones constantes (Trinos)
+     * Detención ultra-rápida (Fade-out de 15ms)
      */
     detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.015) {
         try {
@@ -147,7 +161,6 @@ export class MotorAudioPro {
             const g = instancia.ganancia.gain;
 
             g.cancelScheduledValues(ahora);
-            // 🛡️ Blindaje contra volumen cero para evitar NaN en exponentialRamp
             const val = Math.max(g.value, 0.001);
             g.setValueAtTime(val, ahora);
             g.exponentialRampToValueAtTime(0.001, ahora + rapidez);

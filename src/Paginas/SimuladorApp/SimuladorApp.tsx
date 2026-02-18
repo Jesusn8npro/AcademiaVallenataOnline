@@ -112,41 +112,47 @@ const SimuladorApp: React.FC = () => {
         }
     };
 
-    // 🖐️ MOTOR DE GLISSANDO ULTRA-RÁPIDO (Caché de Rects)
+    // 🖐️ MOTOR DE INTERACCIÓN MAESTRO (Coalesced Events + Audio Bypass)
     const handleGlobalPointerMove = useCallback((e: PointerEvent) => {
-        const pointerId = e.pointerId;
-        const x = e.clientX;
-        const y = e.clientY;
+        // 🚀 RECUPERAR EVENTOS COALESCIDOS: Captura notas intermedias en movimientos ultra-rápidos
+        const eventos = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() : [e];
 
-        // 🚀 HIT-TESTING MATEMÁTICO: No dispara Reflow de layout
-        let currentPos: string | null = null;
-        for (const [pos, rect] of pitoRectsRef.current.entries()) {
-            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                currentPos = pos;
-                break;
+        for (const ev of eventos) {
+            const pointerId = ev.pointerId;
+            const x = ev.clientX;
+            const y = ev.clientY;
+
+            // 🚀 HIT-TESTING MATEMÁTICO ULTRA-VELOZ
+            let currentPos: string | null = null;
+            for (const [pos, rect] of pitoRectsRef.current.entries()) {
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    currentPos = pos;
+                    break;
+                }
             }
-        }
 
-        const previousData = pointersMap.current.get(pointerId);
-        const previousPos = previousData?.pos || null;
+            const previousData = pointersMap.current.get(pointerId);
+            const previousPos = previousData?.pos || null;
 
-        if (currentPos !== previousPos) {
-            // Reanimar audio por si acaso (latencia móvil)
-            motorAudioPro.activarContexto();
+            if (currentPos !== previousPos) {
+                // ⚡️ BYPASS TOTAL: Disparar audio antes de cualquier otra lógica
+                motorAudioPro.activarContexto();
 
-            if (previousData) {
-                logica.actualizarBotonActivo(previousData.musicalId, 'remove', null, true);
-                actualizarVisualBoton(previousPos!, false);
-                registrarEvento('nota_off', { id: previousData.musicalId, pos: previousPos });
-            }
-            if (currentPos) {
-                const musicalId = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
-                logica.actualizarBotonActivo(musicalId, 'add', null, true);
-                actualizarVisualBoton(currentPos, true);
-                pointersMap.current.set(pointerId, { pos: currentPos, musicalId });
-                registrarEvento('nota_on', { id: musicalId, pos: currentPos });
-            } else {
-                pointersMap.current.delete(pointerId);
+                if (previousData) {
+                    logica.actualizarBotonActivo(previousData.musicalId, 'remove', null, true);
+                    actualizarVisualBoton(previousPos!, false);
+                    registrarEvento('nota_off', { id: previousData.musicalId, pos: previousPos });
+                }
+                if (currentPos) {
+                    const musicalId = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
+                    // 🎹 REPRODUCCIÓN DIRECTA
+                    logica.actualizarBotonActivo(musicalId, 'add', null, true);
+                    actualizarVisualBoton(currentPos, true);
+                    pointersMap.current.set(pointerId, { pos: currentPos, musicalId });
+                    registrarEvento('nota_on', { id: musicalId, pos: currentPos });
+                } else {
+                    pointersMap.current.delete(pointerId);
+                }
             }
         }
     }, [logica]);
