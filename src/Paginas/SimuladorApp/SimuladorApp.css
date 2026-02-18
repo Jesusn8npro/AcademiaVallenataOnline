@@ -58,7 +58,6 @@
     justify-content: center;
     align-items: center;
     transition: height 0.2s ease-out;
-    will-change: transform, opacity;
 }
 
 /* 🛡️ DIAPASÓN MARCO - Con inclinación real Cassoto */
@@ -141,7 +140,6 @@
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
-    will-change: transform, opacity;
     outline: none;
     border: 1px solid rgba(0, 0, 0, 0.15);
     /* Definición de borde */
