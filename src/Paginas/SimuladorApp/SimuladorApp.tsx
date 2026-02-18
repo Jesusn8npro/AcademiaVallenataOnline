@@ -12,13 +12,33 @@ const SimuladorApp: React.FC = () => {
     const marcoRef = useRef<HTMLDivElement>(null);
     const [escala, setEscala] = useState(1.0); // 🎯 Escala base
 
+    // 🎨 Estados de Diseño (Nuevos)
+    const [distanciaH, setDistanciaH] = useState(2.5); // Distancia Horizontal Pitos (vh)
+    const [distanciaV, setDistanciaV] = useState(0.8); // Distancia Vertical Pitos (vh)
+    const [distanciaHBajos, setDistanciaHBajos] = useState(2.5); // Distancia H Bajos
+    const [distanciaVBajos, setDistanciaVBajos] = useState(0.8); // Distancia V Bajos
+    const [alejarIOS, setAlejarIOS] = useState(false); // Toggle iOS bar
+
+    // 👁️ Estados de Vista (Nuevo)
+    const [modoVista, setModoVista] = useState<'notas' | 'cifrado' | 'numeros' | 'teclas'>('notas');
+    const [mostrarOctavas, setMostrarOctavas] = useState(false);
+    const [tamanoFuente, setTamanoFuente] = useState(2.8); // vh
+    const [vistaDoble, setVistaDoble] = useState(false);
+
     // Motion value para el desplazamiento X
     const x = useMotionValue(0);
 
-    // Aplicar escala a nivel raiz para que el CSS la use
+    // Aplicar escala y distancias a nivel raiz para que el CSS las use
     useEffect(() => {
-        document.documentElement.style.setProperty('--escala-acordeon', escala.toString());
-    }, [escala]);
+        const root = document.documentElement;
+        root.style.setProperty('--escala-acordeon', escala.toString());
+        root.style.setProperty('--distancia-h-pitos', `${distanciaH}vh`);
+        root.style.setProperty('--distancia-v-pitos', `${distanciaV}vh`);
+        root.style.setProperty('--distancia-h-bajos', `${distanciaHBajos}vh`);
+        root.style.setProperty('--distancia-v-bajos', `${distanciaVBajos}vh`);
+        root.style.setProperty('--offset-ios', alejarIOS ? '10px' : '0px');
+        root.style.setProperty('--tamano-fuente-pitos', `${tamanoFuente}vh`);
+    }, [escala, distanciaH, distanciaV, distanciaHBajos, distanciaVBajos, alejarIOS, tamanoFuente]);
 
     // Detección de orientación
     useEffect(() => {
@@ -26,6 +46,43 @@ const SimuladorApp: React.FC = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // 🎼 FORMATEO DE NOTAS (Notas / Cifrado / Octavas)
+    const CIFRADO_AMERICANO: Record<string, string> = {
+        'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
+        'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
+    };
+
+    const formatearEtiquetaNota = (notaRaw: any) => {
+        if (!notaRaw) return '';
+        let nombreVal = notaRaw.nombre || '';
+
+        // Limpiar nombres de bajos (ej: "Do Mayor" -> "Do")
+        const soloNota = nombreVal.split(' ')[0];
+        const baseNorm = soloNota.charAt(0).toUpperCase() + soloNota.slice(1).toLowerCase();
+
+        let base = baseNorm;
+        if (modoVista === 'cifrado') {
+            base = CIFRADO_AMERICANO[baseNorm] || baseNorm;
+        }
+
+        if (mostrarOctavas) {
+            let freq = 0;
+            if (Array.isArray(notaRaw.frecuencia)) {
+                freq = notaRaw.frecuencia[0]; // Usar la fundamental para bajos
+            } else {
+                freq = notaRaw.frecuencia;
+            }
+
+            if (freq > 0) {
+                // Cálculo de octava científica: n = 12 * log2(f / 440) + 69
+                const n = 12 * (Math.log(freq / 440) / Math.log(2)) + 69;
+                const octava = Math.floor((n + 0.5) / 12) - 1;
+                return `${base}${octava}`;
+            }
+        }
+        return base;
+    };
 
     // 🎯 ACTUALIZACIÓN VISUAL ULTRA-RÁPIDA (Bypass React)
     const actualizarVisualBoton = (notaId: string, activo: boolean) => {
@@ -90,6 +147,17 @@ const SimuladorApp: React.FC = () => {
     const trenRef = useRef<HTMLDivElement>(null);
 
     // 🚂 TREN DE BOTONES (Contenedor Móvil con Framer Motion)
+    // 🔊 SALVAGUARDA DE SONIDO: Forzar Acordeón si suena otra cosa al inicio
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (logica.instrumentoId !== '4e9f2a94-21c0-4029-872e-7cb1c314af69') {
+                console.log("🎻 Detectado instrumento no-acordeón, forzando acordeón vallenato...");
+                logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69');
+            }
+        }, 1200); // Dar tiempo a que cargue el perfil antes de forzar
+        return () => clearTimeout(timer);
+    }, [logica.instrumentoId]);
+
     return (
         <div className={`simulador-app-root capa-blindaje-total modo-${logica.direccion}`}>
 
@@ -108,10 +176,31 @@ const SimuladorApp: React.FC = () => {
                 <div className="simulador-canvas">
                     {/* Barra de Herramientas con control remoto */}
                     <BarraHerramientas
+                        logica={logica}
                         x={x}
                         marcoRef={marcoRef}
                         escala={escala}
                         setEscala={setEscala}
+                        distanciaH={distanciaH}
+                        setDistanciaH={setDistanciaH}
+                        distanciaV={distanciaV}
+                        setDistanciaV={setDistanciaV}
+                        distanciaHBajos={distanciaHBajos}
+                        setDistanciaHBajos={setDistanciaHBajos}
+                        distanciaVBajos={distanciaVBajos}
+                        setDistanciaVBajos={setDistanciaVBajos}
+                        alejarIOS={alejarIOS}
+                        setAlejarIOS={setAlejarIOS}
+
+                        // Props de Vista
+                        modoVista={modoVista}
+                        setModoVista={setModoVista}
+                        mostrarOctavas={mostrarOctavas}
+                        setMostrarOctavas={setMostrarOctavas}
+                        tamanoFuente={tamanoFuente}
+                        setTamanoFuente={setTamanoFuente}
+                        vistaDoble={vistaDoble}
+                        setVistaDoble={setVistaDoble}
                     />
 
                     {/* Marco del Diapasón (La ventana fija) */}
@@ -124,58 +213,100 @@ const SimuladorApp: React.FC = () => {
                             dragConstraints={marcoRef}
                             dragElastic={0.05}
                         >
-                            {/* HILERA AFUERA */}
-                            <div className="hilera-pitos hilera-afuera">
-                                {pitosAfuera.map((nota: any) => (
-                                    <div
-                                        key={nota.id}
-                                        className="pito-boton"
-                                        data-nota-id={nota.id}
-                                        onPointerDown={() => {
-                                            logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                            actualizarVisualBoton(nota.id, true);
-                                        }}
-                                    >
-                                        <span className="nota-etiqueta">{nota.nombre}</span>
-                                        {nota.tecla && <span className="tecla-computador">{nota.tecla}</span>}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* HILERA MEDIO */}
-                            <div className="hilera-pitos hilera-medio">
-                                {pitosMedio.map((nota: any) => (
-                                    <div
-                                        key={nota.id}
-                                        className="pito-boton"
-                                        data-nota-id={nota.id}
-                                        onPointerDown={() => {
-                                            logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                            actualizarVisualBoton(nota.id, true);
-                                        }}
-                                    >
-                                        <span className="nota-etiqueta">{nota.nombre}</span>
-                                        {nota.tecla && <span className="tecla-computador">{nota.tecla}</span>}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* HILERA ADENTRO */}
+                            {/* HILERA 3 - ADENTRO (ARRIBA) */}
                             <div className="hilera-pitos hilera-adentro">
-                                {pitosAdentro.map((nota: any) => (
-                                    <div
-                                        key={nota.id}
-                                        className="pito-boton"
-                                        data-nota-id={nota.id}
-                                        onPointerDown={() => {
-                                            logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                            actualizarVisualBoton(nota.id, true);
-                                        }}
-                                    >
-                                        <span className="nota-etiqueta">{nota.nombre}</span>
-                                        {nota.tecla && <span className="tecla-computador">{nota.tecla}</span>}
-                                    </div>
-                                ))}
+                                {pitosAdentro.map((nota: any) => {
+                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
+                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const notaHalar = logica.configTonalidad.terceraFila.find((n: any) => n.id === idHalar);
+                                    const notaEmpujar = logica.configTonalidad.terceraFila.find((n: any) => n.id === idEmpujar);
+
+                                    return (
+                                        <div
+                                            key={nota.id}
+                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
+                                            data-nota-id={nota.id}
+                                            onPointerDown={() => {
+                                                logica.actualizarBotonActivo(nota.id, 'add', null, true);
+                                                actualizarVisualBoton(nota.id, true);
+                                            }}
+                                        >
+                                            {!vistaDoble ? (
+                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
+                                            ) : (
+                                                <div className="contenedor-nota-doble">
+                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
+                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
+                                                </div>
+                                            )}
+                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* HILERA 2 - MEDIO */}
+                            <div className="hilera-pitos hilera-medio">
+                                {pitosMedio.map((nota: any) => {
+                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
+                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const notaHalar = logica.configTonalidad.segundaFila.find((n: any) => n.id === idHalar);
+                                    const notaEmpujar = logica.configTonalidad.segundaFila.find((n: any) => n.id === idEmpujar);
+
+                                    return (
+                                        <div
+                                            key={nota.id}
+                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
+                                            data-nota-id={nota.id}
+                                            onPointerDown={() => {
+                                                logica.actualizarBotonActivo(nota.id, 'add', null, true);
+                                                actualizarVisualBoton(nota.id, true);
+                                            }}
+                                        >
+                                            {!vistaDoble ? (
+                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
+                                            ) : (
+                                                <div className="contenedor-nota-doble">
+                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
+                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
+                                                </div>
+                                            )}
+                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* HILERA 1 - AFUERA (ABAJO) */}
+                            <div className="hilera-pitos hilera-afuera">
+                                {pitosAfuera.map((nota: any) => {
+                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
+                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const notaHalar = logica.configTonalidad.primeraFila.find((n: any) => n.id === idHalar);
+                                    const notaEmpujar = logica.configTonalidad.primeraFila.find((n: any) => n.id === idEmpujar);
+
+                                    return (
+                                        <div
+                                            key={nota.id}
+                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
+                                            data-nota-id={nota.id}
+                                            onPointerDown={() => {
+                                                logica.actualizarBotonActivo(nota.id, 'add', null, true);
+                                                actualizarVisualBoton(nota.id, true);
+                                            }}
+                                        >
+                                            {!vistaDoble ? (
+                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
+                                            ) : (
+                                                <div className="contenedor-nota-doble">
+                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
+                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
+                                                </div>
+                                            )}
+                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </motion.div>
                     </div>

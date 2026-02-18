@@ -21,11 +21,17 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
     z-index: 10001;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    max-height: 85vh;
-    /* Evitar que se salga de la pantalla */
+    max-height: 95vh;
+    /* Ajustado para visibilidad total */
     overflow-y: auto;
     overflow-x: visible;
-    transition: opacity 0.2s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ocultar scrollbar en la vista principal */
+.menu-opciones-contenedor:not(.ancho-diseno) {
+    overflow-y: hidden;
 }
 
 /* Ocultar scrollbar pero mantener funcionalidad */
@@ -65,13 +71,15 @@
 /* Estilos internos ULTRA COMPACTOS */
 .menu-banner-superior {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    padding: 6px 12px;
+    padding: 4px 10px;
+    /* ← Más compacto */
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: white;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 10px;
+    /* ← Más pequeño */
     border-radius: 12px 12px 0 0;
 }
 
@@ -82,8 +90,9 @@
 .opcion-menu {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 5px 10px;
+    /* ← Más compacto */
     cursor: pointer;
     transition: background 0.2s;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -98,8 +107,10 @@
 }
 
 .opcion-icono {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    /* ← Reducido de 28px */
+    height: 24px;
+    /* ← Reducido de 28px */
     background: #2d3142;
     border-radius: 6px;
     display: flex;
@@ -116,14 +127,16 @@
 
 .opcion-texto {
     color: #d1d5db;
-    font-size: 12px;
+    font-size: 11px;
+    /* ← Reducido de 12px */
     font-weight: 500;
 }
 
 .menu-redes-sociales {
     display: flex;
     gap: 6px;
-    padding: 8px 12px;
+    padding: 6px 10px;
+    /* ← Más compacto */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -152,9 +165,11 @@
 }
 
 .boton-desbloquear {
-    width: calc(100% - 24px);
-    margin: 8px 12px;
-    padding: 8px;
+    width: calc(100% - 20px);
+    margin: 6px 10px;
+    /* ← Más compacto */
+    padding: 6px;
+    /* ← Más compacto */
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     border: none;
     border-radius: 6px;
@@ -168,4 +183,183 @@
     justify-content: center;
     gap: 4px;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* 🎨 PANEL DE AJUSTES DE DISEÑO */
+.menu-opciones-contenedor.ancho-diseno {
+    width: 320px;
+    /* Más ancho para los sliders */
+}
+
+.panel-ajustes-diseno {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #111;
+}
+
+.cabecera-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.titulo-panel {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.btn-restaurar {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.btn-cerrar-panel {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Secciones */
+.seccion-ajuste {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.seccion-titulo-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.label-seccion {
+    font-size: 9px;
+    color: #888;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.btn-reset-seccion {
+    background: none;
+    border: 1px solid #444;
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Filas de Ajuste */
+.fila-ajuste {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icono-ajuste {
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.texto-con-info {
+    flex: 1;
+    font-size: 11px;
+    color: #ccc;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* Toggle iOS Style */
+.ios-toggle {
+    width: 36px;
+    height: 20px;
+    background: #444;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.ios-toggle.activo {
+    background: #fb923c;
+}
+
+.toggle-circulo {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.3s;
+}
+
+.ios-toggle.activo .toggle-circulo {
+    left: 18px;
+}
+
+/* Sliders Personalizados */
+.control-slider {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.label-slider {
+    font-size: 11px;
+    color: #fff;
+    font-weight: 600;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+    margin-top: 5px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.icono-ayuda-mini {
+    color: #666;
+    cursor: pointer;
 }

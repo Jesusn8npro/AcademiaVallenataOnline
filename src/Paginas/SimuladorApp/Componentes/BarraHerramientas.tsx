@@ -10,22 +10,67 @@ import {
     Clock,
     MoreVertical,
     Star,
-    Download
+    Download,
+    Eye,
+    X
 } from 'lucide-react';
 import { motion, MotionValue } from 'framer-motion';
 import MenuOpciones from './MenuOpciones';
+import ModalContacto from './ModalContacto';
+import ModalTonalidades from './ModalTonalidades';
+import ModalVista from './ModalVista';
 import './BarraHerramientas.css';
 
 interface BarraHerramientasProps {
+    logica: any;
     x?: MotionValue<number>;
     marcoRef?: React.RefObject<HTMLDivElement>;
     escala: number;
     setEscala: React.Dispatch<React.SetStateAction<number>>;
+    distanciaH: number;
+    setDistanciaH: React.Dispatch<React.SetStateAction<number>>;
+    distanciaV: number;
+    setDistanciaV: React.Dispatch<React.SetStateAction<number>>;
+    distanciaHBajos: number;
+    setDistanciaHBajos: React.Dispatch<React.SetStateAction<number>>;
+    distanciaVBajos: number;
+    setDistanciaVBajos: React.Dispatch<React.SetStateAction<number>>;
+    alejarIOS: boolean;
+    setAlejarIOS: React.Dispatch<React.SetStateAction<boolean>>;
+
+    // Props de Vista
+    modoVista: 'notas' | 'cifrado' | 'numeros' | 'teclas';
+    setModoVista: (modo: 'notas' | 'cifrado' | 'numeros' | 'teclas') => void;
+    mostrarOctavas: boolean;
+    setMostrarOctavas: (mostrar: boolean) => void;
+    tamanoFuente: number;
+    setTamanoFuente: (tamano: number) => void;
+    vistaDoble: boolean;
+    setVistaDoble: (doble: boolean) => void;
 }
 
-const BarraHerramientas: React.FC<BarraHerramientasProps> = ({ x, marcoRef, escala, setEscala }) => {
+const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
+    logica,
+    x, marcoRef, escala, setEscala,
+    distanciaH, setDistanciaH,
+    distanciaV, setDistanciaV,
+    distanciaHBajos, setDistanciaHBajos,
+    distanciaVBajos, setDistanciaVBajos,
+    alejarIOS, setAlejarIOS,
+    modoVista, setModoVista,
+    mostrarOctavas, setMostrarOctavas,
+    tamanoFuente, setTamanoFuente,
+    vistaDoble, setVistaDoble
+}) => {
     const [menuVisible, setMenuVisible] = React.useState(false);
+    const [contactoVisible, setContactoVisible] = React.useState(false);
+    const [selectorInstrumentoVisible, setSelectorInstrumentoVisible] = React.useState(false);
+    const [tonalidadesVisible, setTonalidadesVisible] = React.useState(false);
+    const [vistaVisible, setVistaVisible] = React.useState(false);
+
     const botonMenuRef = React.useRef<HTMLDivElement>(null);
+    const botonTonalidadesRef = React.useRef<HTMLDivElement>(null);
+    const botonVistaRef = React.useRef<HTMLDivElement>(null);
     const controlDragRef = useRef<HTMLDivElement>(null);
 
     // 🎯 Sincronizar el arrastre del icono pequeño con el tren de botones grande
@@ -56,9 +101,56 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({ x, marcoRef, esca
                     <span>APRENDE</span>
                 </div>
 
-                <div className="boton-herramienta">
+                <div
+                    className={`boton-herramienta ${selectorInstrumentoVisible ? 'activo' : ''}`}
+                    onClick={() => {
+                        setSelectorInstrumentoVisible(!selectorInstrumentoVisible);
+                        setTonalidadesVisible(false); // Cerrar el otro si está abierto
+                    }}
+                >
                     <Music size={20} />
+                    {/* Feedback visual de carga */}
+                    {logica.cargandoCloud && <div className="loader-mini"></div>}
                 </div>
+
+                {/* 🎹 POPUP SELECTOR DE INSTRUMENTOS */}
+                {selectorInstrumentoVisible && (
+                    <div className="popup-instrumentos">
+                        <div className="popup-flecha"></div>
+                        <div className="popup-cabecera">
+                            <span>TIMBRE DEL ACORDEÓN</span>
+                            <button onClick={() => setSelectorInstrumentoVisible(false)}><X size={14} /></button>
+                        </div>
+                        <div className="lista-instrumentos-mini">
+                            {/* Instrumento Original (Local) */}
+                            <div
+                                className={`item-instrumento ${logica.instrumentoId === '4e9f2a94-21c0-4029-872e-7cb1c314af69' ? 'seleccionado' : ''}`}
+                                onClick={() => {
+                                    logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69');
+                                    setSelectorInstrumentoVisible(false);
+                                }}
+                            >
+                                <span className="inst-nombre">ACORDEÓN ORIGINAL</span>
+                                <span className="inst-tipo">Local (Vallenato)</span>
+                            </div>
+
+                            {/* Otros Instrumentos (Supabase) */}
+                            {logica.listaInstrumentos?.filter((i: any) => i.id !== '4e9f2a94-21c0-4029-872e-7cb1c314af69').map((inst: any) => (
+                                <div
+                                    key={inst.id}
+                                    className={`item-instrumento ${logica.instrumentoId === inst.id ? 'seleccionado' : ''}`}
+                                    onClick={() => {
+                                        logica.setInstrumentoId(inst.id);
+                                        setSelectorInstrumentoVisible(false);
+                                    }}
+                                >
+                                    <span className="inst-nombre">{inst.nombre.toUpperCase()}</span>
+                                    <span className="inst-tipo">Nube (HQ)</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="boton-herramienta">
                     <Circle size={20} strokeWidth={3} />
@@ -68,9 +160,16 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({ x, marcoRef, esca
                     <div className="icono-acordeon-pequeno">🪗</div>
                 </div>
 
-                <div className="boton-herramienta">
-                    <Languages size={20} />
-                    <span>G/C/F</span>
+                <div
+                    ref={botonTonalidadesRef}
+                    className={`boton-herramienta ${tonalidadesVisible ? 'activo' : ''}`}
+                    onClick={() => {
+                        setTonalidadesVisible(!tonalidadesVisible);
+                        setSelectorInstrumentoVisible(false); // Cerrar el otro si está abierto
+                    }}
+                >
+                    <Music size={20} />
+                    <span>{logica.tonalidadSeleccionada}</span>
                 </div>
             </div>
 
@@ -119,11 +218,17 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({ x, marcoRef, esca
                     </motion.div>
                 </div>
 
-                <div className="boton-herramienta">
-                    <div className="grupo-notas-p">
-                        <span style={{ fontSize: '9px', fontWeight: 'bold' }}>C Re</span><br />
-                        <span style={{ fontSize: '9px', fontWeight: 'bold' }}>E Fa</span>
-                    </div>
+                <div
+                    ref={botonVistaRef}
+                    className={`boton-herramienta ${vistaVisible ? 'activo' : ''}`}
+                    onClick={() => {
+                        setVistaVisible(!vistaVisible);
+                        setSelectorInstrumentoVisible(false);
+                        setTonalidadesVisible(false);
+                        setMenuVisible(false);
+                    }}
+                >
+                    <Eye size={20} />
                 </div>
 
                 {/* 🎯 CONTROL DE TAMAÑO (TAM) + INDICADOR */}
@@ -157,6 +262,48 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({ x, marcoRef, esca
                 visible={menuVisible}
                 onCerrar={() => setMenuVisible(false)}
                 botonRef={botonMenuRef}
+                distanciaH={distanciaH}
+                setDistanciaH={setDistanciaH}
+                distanciaV={distanciaV}
+                setDistanciaV={setDistanciaV}
+                distanciaHBajos={distanciaHBajos}
+                setDistanciaHBajos={setDistanciaHBajos}
+                distanciaVBajos={distanciaVBajos}
+                setDistanciaVBajos={setDistanciaVBajos}
+                alejarIOS={alejarIOS}
+                setAlejarIOS={setAlejarIOS}
+                onAbrirContacto={() => {
+                    setMenuVisible(false);
+                    setContactoVisible(true);
+                }}
+            />
+
+            <ModalContacto
+                visible={contactoVisible}
+                onCerrar={() => setContactoVisible(false)}
+            />
+
+            <ModalTonalidades
+                visible={tonalidadesVisible}
+                onCerrar={() => setTonalidadesVisible(false)}
+                botonRef={botonTonalidadesRef}
+                tonalidadSeleccionada={logica.tonalidadSeleccionada}
+                onSeleccionarTonalidad={logica.setTonalidadSeleccionada}
+                listaTonalidades={logica.listaTonalidades}
+            />
+
+            <ModalVista
+                visible={vistaVisible}
+                onCerrar={() => setVistaVisible(false)}
+                botonRef={botonVistaRef}
+                modoVista={modoVista}
+                setModoVista={setModoVista}
+                mostrarOctavas={mostrarOctavas}
+                setMostrarOctavas={setMostrarOctavas}
+                tamanoFuente={tamanoFuente}
+                setTamanoFuente={setTamanoFuente}
+                vistaDoble={vistaDoble}
+                setVistaDoble={setVistaDoble}
             />
 
         </div>

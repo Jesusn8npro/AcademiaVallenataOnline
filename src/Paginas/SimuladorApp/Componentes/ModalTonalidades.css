@@ -1,0 +1,207 @@
+/* 🎹 MODAL DE TONALIDADES - ESTILO PREMIUM CASSOTO CENTRADO */
+
+.modal-tonalidades-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.4);
+    /* Fondo sutil para enfocar el modal */
+    backdrop-filter: blur(1px);
+}
+
+.modal-tonalidades-contenedor {
+    position: fixed;
+    top: 50%;
+    left: 45%;
+    transform: translate(-50%, -50%);
+    /* Centrado absoluto infalible */
+    width: 280px;
+    max-height: 85vh;
+    background: rgba(15, 15, 15, 1);
+    border: 1px solid #3b82f644;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(59, 130, 246, 0.1);
+    z-index: 1001;
+    color: white;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: aparecerModalCentro 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+
+.modal-tonalidades-cabecera {
+    padding: 16px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-tonalidades-titulo {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
+.btn-cerrar-tonalidades {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #888;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cerrar-tonalidades:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.modal-tonalidades-subtitulo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.modal-tonalidades-subtitulo span {
+    font-size: 10px;
+    font-weight: 950;
+    color: #3b82f6;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding-bottom: 5px;
+}
+
+.linea-activa-tab {
+    width: 40px;
+    height: 2px;
+    background: #3b82f6;
+    border-radius: 2px;
+}
+
+/* 🔍 BUSCADOR COMACTO */
+.buscador-tonalidades-contenedor {
+    margin: 12px 16px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+}
+
+.buscador-tonalidades-contenedor:focus-within {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #3b82f699;
+}
+
+.icono-buscar {
+    color: #555;
+    width: 14px;
+}
+
+.input-busqueda-tonalidades {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px 0;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+}
+
+.input-busqueda-tonalidades::placeholder {
+    color: #444;
+}
+
+/* 📜 LISTA DE TONALIDADES */
+.modal-tonalidades-lista {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 0 10px 15px;
+}
+
+.modal-tonalidades-lista::-webkit-scrollbar {
+    width: 3px;
+}
+
+.modal-tonalidades-lista::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.item-tonalidad {
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.item-tonalidad:hover {
+    background: rgba(59, 130, 246, 0.08);
+    transform: translateX(4px);
+}
+
+.item-tonalidad.seleccionado {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: #3b82f644;
+}
+
+.item-tonalidad-icono {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    transition: all 0.3s;
+}
+
+.item-tonalidad.seleccionado .item-tonalidad-icono {
+    background: #3b82f6;
+    color: white;
+}
+
+.item-tonalidad-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.ton-nombre-primario {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.ton-nombre-desc {
+    font-size: 11px;
+    color: #666;
+}
+
+.modal-tonalidades-footer {
+    padding: 10px;
+    text-align: center;
+    opacity: 0.5;
+}
+
+.footer-pregunta {
+    font-size: 10px;
+}

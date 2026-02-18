@@ -2,24 +2,24 @@
 
 .barra-herramientas-contenedor {
     position: absolute;
-    /* Flota dentro del canvas */
+    /* 🎯 VUELVE AL TOPE: El canvas ahora escala con los botones */
     top: 5px;
-    /* ← Pegada arriba dentro del canvas */
+    bottom: auto;
     left: 0;
     right: 0;
-    width: 98%;
-    margin: 5px auto;
-    height: 50px;
-    /* ← Reducido de 65px a 50px (más delgada) */
+    width: 92%;
+    /* ← Menos larga */
+    margin: 0 auto;
+    height: 42px;
+    /* ← Más delgada */
     background: linear-gradient(180deg, #333333 0%, #111111 100%);
     border: 2px solid #555;
-    border-radius: 10px;
-    /* ← Reducido de 12px */
+    border-radius: 8px;
+    /* ← Más redondeado compacto */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 8px;
-    /* ← Reducido de 10px */
+    padding: 0 6px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
     z-index: 200;
     /* Por encima de los botones */
@@ -36,10 +36,10 @@
 
 /* Estilo de botones individuales */
 .boton-herramienta {
-    height: 40px;
-    /* ← Reducido de 50px */
-    min-width: 40px;
-    /* ← Reducido de 50px */
+    height: 34px;
+    /* ← Más pequeño */
+    min-width: 34px;
+    /* ← Más pequeño */
     background: linear-gradient(180deg, #444 0%, #222 100%);
     border: 1px solid #000;
     border-radius: 6px;
@@ -88,28 +88,28 @@
 /* Bloque de Anuncio Central */
 .bloque-anuncio-centro {
     flex: 1;
-    max-width: 300px;
-    /* ← Reducido de 400px (más angosto) */
-    height: 40px;
+    max-width: 250px;
+    /* ← Más angosto */
+    height: 34px;
+    /* ← Más delgado */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 5px;
     display: flex;
     align-items: center;
-    padding: 0 8px;
-    margin: 0 8px;
+    padding: 0 6px;
+    margin: 0 6px;
     overflow: hidden;
 }
 
 .miniatura-acordeon {
-    width: 30px;
-    /* ← Reducido de 35px */
-    height: 30px;
-    /* ← Reducido de 35px */
+    width: 26px;
+    /* ← Más pequeño */
+    height: 26px;
+    /* ← Más pequeño */
     background: #444;
     border-radius: 4px;
-    margin-right: 8px;
-    /* ← Reducido de 10px */
+    margin-right: 6px;
 }
 
 .info-anuncio {
@@ -139,9 +139,10 @@
 
 /* Icono de Instalar (Reemplaza al botón) */
 .boton-icono-instalar {
-    width: 32px;
+    width: 28px;
     /* ← Tamaño compacto */
-    height: 32px;
+    height: 28px;
+    /* ← Tamaño compacto */
     background: #333;
     border: 1px solid #666;
     border-radius: 50%;
@@ -171,9 +172,10 @@
     border-radius: 6px;
     display: flex;
     align-items: center;
-    padding: 0 8px;
-    height: 40px;
-    gap: 5px;
+    padding: 0 6px;
+    height: 34px;
+    /* ← Más delgado */
+    gap: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -264,14 +266,146 @@
     position: relative;
 }
 
+/* 🎹 POPUP DE INSTRUMENTOS */
+.popup-instrumentos {
+    position: absolute;
+    top: 50px;
+    left: 45px;
+    width: 200px;
+    background: rgba(15, 15, 15, 0.98);
+    border: 1px solid #444;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(251, 146, 60, 0.1);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.popup-flecha {
+    position: absolute;
+    top: -6px;
+    left: 15px;
+    width: 12px;
+    height: 12px;
+    background: #444;
+    transform: rotate(45deg);
+    z-index: -1;
+}
+
+.popup-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+}
+
+.popup-cabecera span {
+    font-size: 9px;
+    font-weight: 900;
+    color: #fb923c;
+    letter-spacing: 0.5px;
+}
+
+.popup-cabecera button {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.lista-instrumentos-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.item-instrumento {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-instrumento:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #555;
+}
+
+.item-instrumento.seleccionado {
+    background: rgba(251, 146, 60, 0.15);
+    border-color: #fb923c;
+}
+
+.inst-nombre {
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.item-instrumento.seleccionado .inst-nombre {
+    color: #fb923c;
+}
+
+.inst-tipo {
+    font-size: 8px;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* 🔄 MINI LOADER */
+.loader-mini {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+    border-top-color: #fb923c;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* 🎯 CONTROL DE ARRASTRE DE BOTONES */
 .contenedor-control-drag {
     width: 60px;
-    /* Un poco más ancho para el drag */
+    height: 34px;
     position: relative;
     overflow: hidden;
     background: #111 !important;
     border: 1px solid #333 !important;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
 }
 
 .label-botones {
@@ -282,19 +416,20 @@
     top: 4px;
     pointer-events: none;
     text-transform: uppercase;
+    z-index: 1;
 }
 
 .icono-drag-handle {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: linear-gradient(180deg, #444 0%, #222 100%);
     border: 1px solid #555;
-    border-radius: 6px;
+    border-radius: 4px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: grab;
-    margin-top: 10px;
+    margin-top: 6px;
     color: #fff;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
     z-index: 2;

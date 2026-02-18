@@ -9,20 +9,38 @@
 }
 
 .simulador-app-root {
+    position: fixed;
+    /* ← Obliga a quedarse pegado a la pantalla */
     top: 0;
     left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    /* ← Dinámico para Chrome/Android móvil */
     background-color: #000;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* Cambiado: Ya no usa flex column, los elementos flotan con position absolute */
 }
 
 /* 🪗 CONTENEDOR COMPLETO DEL ACORDEÓN */
 .contenedor-acordeon-completo {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     /* Ocupa toda la pantalla */
     z-index: 500;
-    /* Por encima del fuelle cuando el modal está activo */
+    pointer-events: none;
+    /* ← El contenedor no atrapa clics */
+}
+
+.contenedor-acordeon-completo>* {
+    pointer-events: auto;
+    /* ← Pero sus hijos (canvas, barra) sí */
 }
 
 .simulador-canvas {
@@ -30,9 +48,8 @@
     bottom: 0;
     left: 0;
     width: 100% !important;
-    /* 🎯 ALTURA DINÁMICA: Sube sutilmente con la escala */
-    height: calc(71% * var(--escala-acordeon, 1)) !important;
-    /* Evitar que tape el indicador de fuelle */
+    /* 🎯 ALTURA SINCRONIZADA + ESTIRAMIENTO PARA iOS */
+    height: calc(45vh * var(--escala-acordeon, 1) + 77px + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -41,7 +58,6 @@
     justify-content: center;
     align-items: center;
     transition: height 0.2s ease-out;
-    /* Transición suave al escalar */
 }
 
 /* 🛡️ DIAPASÓN MARCO - Con inclinación real Cassoto */
@@ -55,6 +71,7 @@
     overflow: hidden !important;
     display: flex;
     flex-direction: column;
+    /* 🎯 BOTONES ABAJO SIEMPRE (Petición del usuario) */
     justify-content: flex-end;
     align-items: center;
     pointer-events: none;
@@ -74,22 +91,24 @@
     align-items: center;
     cursor: grab;
     width: auto;
-    /* 🎯 ESPACIO INFERIOR ESCALADO */
-    padding-bottom: calc(10px * var(--escala-acordeon, 1));
+    /* 🎯 SEPARACIÓN VERTICAL DINÁMICA */
+    gap: calc(var(--distancia-v-pitos, 0.8vh) * var(--escala-acordeon, 1));
+    /* 🎯 ESPACIO INFERIOR ESCALADO + OFFSET iOS */
+    padding-bottom: calc(var(--offset-ios, 0px) + 5px * var(--escala-acordeon, 1));
 }
 
 .hilera-pitos {
     display: flex;
     justify-content: center;
-    /* 🎯 SEPARACIÓN ENTRE BOTONES ESCALADA */
-    gap: calc(1.5vh * var(--escala-acordeon, 1));
+    /* 🎯 SEPARACIÓN HORIZONTAL DINÁMICA */
+    gap: calc(var(--distancia-h-pitos, 2.5vh) * var(--escala-acordeon, 1));
 }
 
 /* 💎 BOTONES ESCALADOS */
 .pito-boton {
-    /* 🎯 TAMAÑO DINÁMICO */
-    width: calc(10vh * var(--escala-acordeon, 1));
-    height: calc(10vh * var(--escala-acordeon, 1));
+    /* 🎯 TAMAÑO DINÁMICO LINEAL */
+    width: calc(11vh * var(--escala-acordeon, 1));
+    height: calc(11vh * var(--escala-acordeon, 1));
     min-width: calc(55px * var(--escala-acordeon, 1));
     min-height: calc(55px * var(--escala-acordeon, 1));
     border-radius: 50%;
@@ -136,12 +155,13 @@
 
 
 .nota-etiqueta {
-    font-size: 2.8vh;
+    font-size: var(--tamano-fuente-pitos, 2.8vh);
     /* Un poco más pequeña proporcionalmente */
     font-weight: 900;
     color: #222;
-    text-transform: uppercase;
+    /* text-transform: uppercase; <-- QUITADO para que se vea Bb, Eb, etc */
     pointer-events: none;
+    transition: font-size 0.2s;
 }
 
 .tecla-computador {
@@ -150,6 +170,39 @@
     color: #3b82f6;
     margin-top: -2px;
     pointer-events: none;
+}
+
+/* 🎭 VISTA DOBLE (Halar/Empujar) */
+.pito-boton.vista-doble {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.contenedor-nota-doble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    /* Más compacto */
+    pointer-events: none;
+    width: 100%;
+}
+
+.nota-halar {
+    color: #3b82f6;
+    font-size: calc(var(--tamano-fuente-pitos, 2.8vh) * 0.8);
+    font-weight: 900;
+    margin-bottom: -2px;
+}
+
+.nota-empujar {
+    color: #fb923c;
+    font-size: calc(var(--tamano-fuente-pitos, 2.8vh) * 0.8);
+    font-weight: 900;
+    margin-top: -2px;
 }
 
 /* 📱 OVERLAY DE ORIENTACIÓN */
