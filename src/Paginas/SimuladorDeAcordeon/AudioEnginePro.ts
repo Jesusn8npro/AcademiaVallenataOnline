@@ -15,7 +15,7 @@ export class MotorAudioPro {
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
     private vocesActivas: { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number }[] = [];
-    private MAX_VOCES = 16; // 🛡️ Límite para evitar saturación en móviles
+    private MAX_VOCES = 32; // 🛡️ Aumentado para soportar trinos y capas (Brillante + Cassotto)
 
     constructor() {
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -96,7 +96,7 @@ export class MotorAudioPro {
      */
     reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
         const banco = this.bancos.get(bancoId);
-        if (!banco) return null;
+        if (!banco || !this.contexto) return null;
 
         const buffer = banco.muestras.get(idSonido);
         const offset = banco.offsets.get(idSonido) || 0;
@@ -131,10 +131,8 @@ export class MotorAudioPro {
 
         fuente.onended = () => {
             this.vocesActivas = this.vocesActivas.filter(v => v !== voz);
-            try {
-                fuente.disconnect();
-                ganancia.disconnect();
-            } catch (e) { }
+            fuente.disconnect();
+            ganancia.disconnect();
         };
 
         return voz;
@@ -149,7 +147,9 @@ export class MotorAudioPro {
             const g = instancia.ganancia.gain;
 
             g.cancelScheduledValues(ahora);
-            g.setValueAtTime(g.value, ahora);
+            // 🛡️ Blindaje contra volumen cero para evitar NaN en exponentialRamp
+            const val = Math.max(g.value, 0.001);
+            g.setValueAtTime(val, ahora);
             g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
             instancia.fuente.stop(ahora + rapidez + 0.005);
         } catch (e) { }

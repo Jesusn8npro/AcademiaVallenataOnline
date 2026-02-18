@@ -306,7 +306,8 @@ const SimuladorApp: React.FC = () => {
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
                                             data-pos={idBase} // Posición física estable
                                             onPointerDown={(e) => {
-                                                pointersMap.current.set(e.pointerId, idBase);
+                                                motorAudioPro.activarContexto();
+                                                pointersMap.current.set(e.pointerId, { pos: idBase, musicalId: nota.id });
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
                                                 registrarEvento('nota_on', { id: nota.id, pos: idBase });
@@ -341,7 +342,8 @@ const SimuladorApp: React.FC = () => {
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
                                             data-pos={idBase}
                                             onPointerDown={(e) => {
-                                                pointersMap.current.set(e.pointerId, idBase);
+                                                motorAudioPro.activarContexto();
+                                                pointersMap.current.set(e.pointerId, { pos: idBase, musicalId: nota.id });
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
                                                 registrarEvento('nota_on', { id: nota.id, pos: idBase });
@@ -376,7 +378,8 @@ const SimuladorApp: React.FC = () => {
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
                                             data-pos={idBase}
                                             onPointerDown={(e) => {
-                                                pointersMap.current.set(e.pointerId, idBase);
+                                                motorAudioPro.activarContexto();
+                                                pointersMap.current.set(e.pointerId, { pos: idBase, musicalId: nota.id });
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
                                                 registrarEvento('nota_on', { id: nota.id, pos: idBase });
