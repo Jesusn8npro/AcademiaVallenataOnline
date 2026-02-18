@@ -112,28 +112,58 @@
     min-width: calc(55px * var(--escala-acordeon, 1));
     min-height: calc(55px * var(--escala-acordeon, 1));
     border-radius: 50%;
-    background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+
+    /* 💎 TEXTURA Y ACABADO DE NÁCAR (Domo esférico) */
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #f8f8f8 30%, #e0e0e0 70%, #b0b0b0 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: soft-light;
     background-size: cover;
     background-position: center;
+
+    /* 💎 RELIEVE 3D SEGÚN IMAGEN 1 (Semi-esfera realista) */
     box-shadow:
-        inset 2px 2px 5px rgba(255, 255, 255, 0.6),
-        0px 4px rgba(0, 0, 0, 0.4);
+        inset 0px 2px 4px rgba(255, 255, 255, 1),
+        /* Brillo de borde superior */
+        inset 0px 8px 15px rgba(255, 255, 255, 0.8),
+        /* Cuerpo de luz (Domo) */
+        inset 0px -4px 8px rgba(0, 0, 0, 0.2),
+        /* Sombra de caída inferior */
+        0px 5px 0px #999,
+        /* Cuerpo lateral (Relieve lateral) */
+        0px 8px 20px rgba(0, 0, 0, 0.7);
+    /* Sombra proyectada profunda */
+
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
-    transition: transform 0.05s ease-out;
+    transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+    outline: none;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    /* Definición de borde */
 }
 
 /* 🎨 COLORES DINÁMICOS SEGÚN EL FUELLE */
 
-/* MODO HALAR (Azul) */
+/* MODO HALAR (Azul) - ABIERTO */
 .modo-halar .pito-boton.nota-activa {
-    transform: translateY(3px) scale(0.94) !important;
-    background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca-activa.JPG') !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(4px) scale(0.98) !important;
+    /* 💎 DOMO AZUL CRISTALINO MEJORADO */
+    background: radial-gradient(circle at 35% 30%, #88bbfc 0%, #3b82f6 40%, #1e3a8a 100%) !important;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
+        /* Resplandor interno */
+        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
+        /* Sombra de fondo */
+        0px 2px 0px #1e40af,
+        /* Relieve residual lateral */
+        0px 0px 30px rgba(59, 130, 246, 0.9),
+        /* Brillo ambiental 1 */
+        0px 0px 60px rgba(59, 130, 246, 0.4) !important;
+    /* Brillo ambiental 2 (Volumen) */
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modo-halar .nota-activa .nota-etiqueta {
@@ -141,16 +171,37 @@
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
 }
 
-/* MODO EMPUJAR (Naranja/Oro) */
+/* MODO EMPUJAR (Rojo) - CERRANDO */
 .modo-empujar .pito-boton.nota-activa {
-    transform: translateY(3px) scale(0.94) !important;
-    background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca-activa.JPG') !important;
-    box-shadow: 0 0 15px rgba(251, 146, 60, 0.8), inset 0 0 10px rgba(251, 146, 60, 0.4) !important;
+    transform: translateY(4px) scale(0.98) !important;
+    /* 💎 DOMO ROJO RUBÍ MEJORADO (VOLUMEN REAL) */
+    background: radial-gradient(circle at 35% 30%, #ff8888 0%, #ef4444 40%, #991b1b 100%) !important;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
+        0px 2px 0px #7f1d1d,
+        0px 0px 30px rgba(239, 68, 68, 0.9),
+        0px 0px 60px rgba(239, 68, 68, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modo-empujar .nota-activa .nota-etiqueta {
-    color: #fb923c !important;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    color: #fff !important;
+    /* Blanco para contraste real */
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* 🔥 VOLUMEN DE SOMBREADO ROJO EN BARRA (ATMOSFÉRICO) */
+.modo-empujar .barra-herramientas-contenedor {
+    box-shadow:
+        0px 6px 15px rgba(0, 0, 0, 0.9),
+        inset 0px 1px 1px rgba(255, 255, 255, 0.2),
+        0px 0px 40px rgba(239, 68, 68, 0.6),
+        /* Glow principal */
+        0px 0px 80px rgba(239, 68, 68, 0.3) !important;
+    /* Glow de volumen extendido */
+    background: rgba(18, 18, 18, 0.98);
+    border-color: #ef444488 !important;
 }
 
 

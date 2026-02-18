@@ -438,3 +438,32 @@
 .icono-drag-handle:active {
     cursor: grabbing;
 }
+
+/* 🥁 BOTÓN METRÓNOMO BARRA */
+.metronomo-btn-barra {
+    gap: 0;
+    position: relative;
+}
+
+.label-metronomo-mini {
+    font-size: 6.5px !important;
+    font-weight: 900 !important;
+    color: #fb923c !important;
+    text-transform: uppercase;
+    margin-top: 0px !important;
+    line-height: 1;
+}
+
+.metronomo-btn-barra svg {
+    margin-bottom: -1px;
+    color: #eee;
+}
+
+.metronomo-btn-barra.activo {
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.metronomo-btn-barra.activo .label-metronomo-mini {
+    color: #3b82f6 !important;
+}

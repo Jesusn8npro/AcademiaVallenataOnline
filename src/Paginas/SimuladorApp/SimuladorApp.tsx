@@ -18,6 +18,7 @@ const SimuladorApp: React.FC = () => {
     const [distanciaHBajos, setDistanciaHBajos] = useState(2.5); // Distancia H Bajos
     const [distanciaVBajos, setDistanciaVBajos] = useState(0.8); // Distancia V Bajos
     const [alejarIOS, setAlejarIOS] = useState(false); // Toggle iOS bar
+    const pitoRectsRef = useRef<Map<string, DOMRect>>(new Map()); // 🚀 Caché de posiciones para Hit-Testing
 
     // 👁️ Estados de Vista (Nuevo)
     const [modoVista, setModoVista] = useState<'notas' | 'cifrado' | 'numeros' | 'teclas'>('notas');
@@ -40,12 +41,24 @@ const SimuladorApp: React.FC = () => {
         root.style.setProperty('--tamano-fuente-pitos', `${tamanoFuente}vh`);
     }, [escala, distanciaH, distanciaV, distanciaHBajos, distanciaVBajos, alejarIOS, tamanoFuente]);
 
-    // Detección de orientación
+    // Detección de orientación y actualización de caché de posiciones
     useEffect(() => {
-        const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+        const actualizarRects = () => {
+            setIsLandscape(window.innerWidth > window.innerHeight);
+            // Pequeño delay para dejar que el layout se asiente antes de medir
+            setTimeout(() => {
+                const rects = new Map<string, DOMRect>();
+                document.querySelectorAll('.pito-boton').forEach((el) => {
+                    const pos = (el as HTMLElement).dataset.pos;
+                    if (pos) rects.set(pos, el.getBoundingClientRect());
+                });
+                pitoRectsRef.current = rects;
+            }, 500);
+        };
+        window.addEventListener('resize', actualizarRects);
+        actualizarRects();
+        return () => window.removeEventListener('resize', actualizarRects);
+    }, [escala, distanciaH, distanciaV]); // Recalcular si cambian las escalas
 
     // 🎼 FORMATEO DE NOTAS (Notas / Cifrado / Octavas)
     const CIFRADO_AMERICANO: Record<string, string> = {
@@ -85,32 +98,41 @@ const SimuladorApp: React.FC = () => {
     };
 
     // 🎯 ACTUALIZACIÓN VISUAL ULTRA-RÁPIDA (Bypass React)
-    const actualizarVisualBoton = (notaId: string, activo: boolean) => {
-        const pitoElement = document.querySelector(`[data-nota-id="${notaId}"]`);
+    const actualizarVisualBoton = (pos: string, activo: boolean) => {
+        const pitoElement = document.querySelector(`[data-pos="${pos}"]`);
         if (pitoElement) {
             if (activo) pitoElement.classList.add('nota-activa');
             else pitoElement.classList.remove('nota-activa');
         }
     };
 
-    // 🖐️ MOTOR DE GLISSANDO MEJORADO (Multi-touch)
+    // 🖐️ MOTOR DE GLISSANDO ULTRA-RÁPIDO (Caché de Rects)
     const handleGlobalPointerMove = useCallback((e: PointerEvent) => {
         const pointerId = e.pointerId;
-        const element = document.elementFromPoint(e.clientX, e.clientY);
-        const pitoBoton = element?.closest('.pito-boton') as HTMLElement | null;
+        const x = e.clientX;
+        const y = e.clientY;
 
-        const currentNotaId = pitoBoton?.dataset.notaId || null;
-        const previousNotaId = pointersMap.current.get(pointerId);
-
-        if (currentNotaId !== previousNotaId) {
-            if (previousNotaId) {
-                logica.actualizarBotonActivo(previousNotaId, 'remove', null, true);
-                actualizarVisualBoton(previousNotaId, false);
+        // 🚀 HIT-TESTING MATEMÁTICO: No dispara Reflow de layout
+        let currentPos: string | null = null;
+        for (const [pos, rect] of pitoRectsRef.current.entries()) {
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                currentPos = pos;
+                break;
             }
-            if (currentNotaId) {
-                logica.actualizarBotonActivo(currentNotaId, 'add', null, true);
-                actualizarVisualBoton(currentNotaId, true);
-                pointersMap.current.set(pointerId, currentNotaId);
+        }
+
+        const previousPos = pointersMap.current.get(pointerId);
+        if (currentPos !== previousPos) {
+            if (previousPos) {
+                const idAnterior = `${previousPos}-${logica.direccion}${previousPos.includes('bajo') ? '-bajo' : ''}`;
+                logica.actualizarBotonActivo(idAnterior, 'remove', null, true);
+                actualizarVisualBoton(previousPos, false);
+            }
+            if (currentPos) {
+                const idNuevo = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
+                logica.actualizarBotonActivo(idNuevo, 'add', null, true);
+                actualizarVisualBoton(currentPos, true);
+                pointersMap.current.set(pointerId, currentPos);
             } else {
                 pointersMap.current.delete(pointerId);
             }
@@ -119,10 +141,11 @@ const SimuladorApp: React.FC = () => {
 
     const handlePointerUp = useCallback((e: PointerEvent) => {
         const pointerId = e.pointerId;
-        const lastNotaId = pointersMap.current.get(pointerId);
-        if (lastNotaId) {
-            logica.actualizarBotonActivo(lastNotaId, 'remove', null, true);
-            actualizarVisualBoton(lastNotaId, false);
+        const lastPos = pointersMap.current.get(pointerId);
+        if (lastPos) {
+            const idParaRemover = `${lastPos}-${logica.direccion}${lastPos.includes('bajo') ? '-bajo' : ''}`;
+            logica.actualizarBotonActivo(idParaRemover, 'remove', null, true);
+            actualizarVisualBoton(lastPos, false);
         }
         pointersMap.current.delete(pointerId);
     }, [logica]);
@@ -147,24 +170,16 @@ const SimuladorApp: React.FC = () => {
     const trenRef = useRef<HTMLDivElement>(null);
 
     // 🚂 TREN DE BOTONES (Contenedor Móvil con Framer Motion)
-    // 🔊 SALVAGUARDA DE SONIDO: Forzar Acordeón si suena otra cosa al inicio
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (logica.instrumentoId !== '4e9f2a94-21c0-4029-872e-7cb1c314af69') {
-                console.log("🎻 Detectado instrumento no-acordeón, forzando acordeón vallenato...");
-                logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69');
-            }
-        }, 1200); // Dar tiempo a que cargue el perfil antes de forzar
-        return () => clearTimeout(timer);
-    }, [logica.instrumentoId]);
 
     return (
         <div className={`simulador-app-root capa-blindaje-total modo-${logica.direccion}`}>
 
-            {/* 🌬️ 1. INDICADOR DE FUELLE */}
+            {/* 🌬️ 1. INDICADOR DE FUELLE REACTIVO */}
             <div
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onClick={() => logica.setDireccion(logica.direccion === 'halar' ? 'empujar' : 'halar')}
+                onPointerDown={() => logica.setDireccion('empujar')}
+                onPointerUp={() => logica.setDireccion('halar')}
+                onPointerLeave={() => logica.setDireccion('halar')}
             >
                 <span className="fuelle-status">
                     {logica.direccion === 'empujar' ? 'EMPUJAR (CERRANDO)' : 'HALAR (ABRIENDO)'}
@@ -208,27 +223,27 @@ const SimuladorApp: React.FC = () => {
                         <motion.div
                             ref={trenRef}
                             className="tren-botones-deslizable"
-                            drag="x"
                             style={{ x }}
-                            dragConstraints={marcoRef}
-                            dragElastic={0.05}
+                        // drag="x" removido por petición del usuario para usar solo el control de la barra
                         >
                             {/* HILERA 3 - ADENTRO (ARRIBA) */}
                             <div className="hilera-pitos hilera-adentro">
                                 {pitosAdentro.map((nota: any) => {
-                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
-                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
+                                    const idHalar = `${idBase}-halar`;
+                                    const idEmpujar = `${idBase}-empujar`;
                                     const notaHalar = logica.configTonalidad.terceraFila.find((n: any) => n.id === idHalar);
                                     const notaEmpujar = logica.configTonalidad.terceraFila.find((n: any) => n.id === idEmpujar);
 
                                     return (
                                         <div
-                                            key={nota.id}
+                                            key={idBase} // Key estable para evitar re-renders innecesarios
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-nota-id={nota.id}
-                                            onPointerDown={() => {
+                                            data-pos={idBase} // Posición física estable
+                                            onPointerDown={(e) => {
+                                                pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                                actualizarVisualBoton(nota.id, true);
+                                                actualizarVisualBoton(idBase, true);
                                             }}
                                         >
                                             {!vistaDoble ? (
@@ -248,19 +263,21 @@ const SimuladorApp: React.FC = () => {
                             {/* HILERA 2 - MEDIO */}
                             <div className="hilera-pitos hilera-medio">
                                 {pitosMedio.map((nota: any) => {
-                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
-                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
+                                    const idHalar = `${idBase}-halar`;
+                                    const idEmpujar = `${idBase}-empujar`;
                                     const notaHalar = logica.configTonalidad.segundaFila.find((n: any) => n.id === idHalar);
                                     const notaEmpujar = logica.configTonalidad.segundaFila.find((n: any) => n.id === idEmpujar);
 
                                     return (
                                         <div
-                                            key={nota.id}
+                                            key={idBase}
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-nota-id={nota.id}
-                                            onPointerDown={() => {
+                                            data-pos={idBase}
+                                            onPointerDown={(e) => {
+                                                pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                                actualizarVisualBoton(nota.id, true);
+                                                actualizarVisualBoton(idBase, true);
                                             }}
                                         >
                                             {!vistaDoble ? (
@@ -280,19 +297,21 @@ const SimuladorApp: React.FC = () => {
                             {/* HILERA 1 - AFUERA (ABAJO) */}
                             <div className="hilera-pitos hilera-afuera">
                                 {pitosAfuera.map((nota: any) => {
-                                    const idHalar = nota.id.replace(logica.direccion, 'halar');
-                                    const idEmpujar = nota.id.replace(logica.direccion, 'empujar');
+                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
+                                    const idHalar = `${idBase}-halar`;
+                                    const idEmpujar = `${idBase}-empujar`;
                                     const notaHalar = logica.configTonalidad.primeraFila.find((n: any) => n.id === idHalar);
                                     const notaEmpujar = logica.configTonalidad.primeraFila.find((n: any) => n.id === idEmpujar);
 
                                     return (
                                         <div
-                                            key={nota.id}
+                                            key={idBase}
                                             className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-nota-id={nota.id}
-                                            onPointerDown={() => {
+                                            data-pos={idBase}
+                                            onPointerDown={(e) => {
+                                                pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
-                                                actualizarVisualBoton(nota.id, true);
+                                                actualizarVisualBoton(idBase, true);
                                             }}
                                         >
                                             {!vistaDoble ? (

@@ -12,6 +12,7 @@ import {
     Star,
     Download,
     Eye,
+    Timer,
     X
 } from 'lucide-react';
 import { motion, MotionValue } from 'framer-motion';
@@ -19,6 +20,8 @@ import MenuOpciones from './MenuOpciones';
 import ModalContacto from './ModalContacto';
 import ModalTonalidades from './ModalTonalidades';
 import ModalVista from './ModalVista';
+import ModalMetronomo from './ModalMetronomo';
+import ModalInstrumentos from './ModalInstrumentos';
 import './BarraHerramientas.css';
 
 interface BarraHerramientasProps {
@@ -67,10 +70,14 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     const [selectorInstrumentoVisible, setSelectorInstrumentoVisible] = React.useState(false);
     const [tonalidadesVisible, setTonalidadesVisible] = React.useState(false);
     const [vistaVisible, setVistaVisible] = React.useState(false);
+    const [metronomoVisible, setMetronomoVisible] = React.useState(false);
+    const [instrumentosVisible, setInstrumentosVisible] = React.useState(false);
+    const [bpmMetronomo, setBpmMetronomo] = React.useState(80);
 
     const botonMenuRef = React.useRef<HTMLDivElement>(null);
     const botonTonalidadesRef = React.useRef<HTMLDivElement>(null);
     const botonVistaRef = React.useRef<HTMLDivElement>(null);
+    const botonMetronomoRef = React.useRef<HTMLDivElement>(null);
     const controlDragRef = useRef<HTMLDivElement>(null);
 
     // 🎯 Sincronizar el arrastre del icono pequeño con el tren de botones grande
@@ -102,62 +109,17 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                 </div>
 
                 <div
-                    className={`boton-herramienta ${selectorInstrumentoVisible ? 'activo' : ''}`}
+                    className={`boton-herramienta ${instrumentosVisible ? 'activo' : ''}`}
                     onClick={() => {
-                        setSelectorInstrumentoVisible(!selectorInstrumentoVisible);
-                        setTonalidadesVisible(false); // Cerrar el otro si está abierto
+                        setInstrumentosVisible(!instrumentosVisible);
+                        setTonalidadesVisible(false);
+                        setMetronomoVisible(false);
+                        setVistaVisible(false);
                     }}
                 >
-                    <Music size={20} />
+                    <div className="icono-acordeon-pequeno" style={{ fontSize: '20px' }}>🪗</div>
                     {/* Feedback visual de carga */}
                     {logica.cargandoCloud && <div className="loader-mini"></div>}
-                </div>
-
-                {/* 🎹 POPUP SELECTOR DE INSTRUMENTOS */}
-                {selectorInstrumentoVisible && (
-                    <div className="popup-instrumentos">
-                        <div className="popup-flecha"></div>
-                        <div className="popup-cabecera">
-                            <span>TIMBRE DEL ACORDEÓN</span>
-                            <button onClick={() => setSelectorInstrumentoVisible(false)}><X size={14} /></button>
-                        </div>
-                        <div className="lista-instrumentos-mini">
-                            {/* Instrumento Original (Local) */}
-                            <div
-                                className={`item-instrumento ${logica.instrumentoId === '4e9f2a94-21c0-4029-872e-7cb1c314af69' ? 'seleccionado' : ''}`}
-                                onClick={() => {
-                                    logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69');
-                                    setSelectorInstrumentoVisible(false);
-                                }}
-                            >
-                                <span className="inst-nombre">ACORDEÓN ORIGINAL</span>
-                                <span className="inst-tipo">Local (Vallenato)</span>
-                            </div>
-
-                            {/* Otros Instrumentos (Supabase) */}
-                            {logica.listaInstrumentos?.filter((i: any) => i.id !== '4e9f2a94-21c0-4029-872e-7cb1c314af69').map((inst: any) => (
-                                <div
-                                    key={inst.id}
-                                    className={`item-instrumento ${logica.instrumentoId === inst.id ? 'seleccionado' : ''}`}
-                                    onClick={() => {
-                                        logica.setInstrumentoId(inst.id);
-                                        setSelectorInstrumentoVisible(false);
-                                    }}
-                                >
-                                    <span className="inst-nombre">{inst.nombre.toUpperCase()}</span>
-                                    <span className="inst-tipo">Nube (HQ)</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="boton-herramienta">
-                    <Circle size={20} strokeWidth={3} />
-                </div>
-
-                <div className="boton-herramienta">
-                    <div className="icono-acordeon-pequeno">🪗</div>
                 </div>
 
                 <div
@@ -243,16 +205,29 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     </div>
                 </div>
 
-                {/* 📢 BUZÓN DE AVISO (Para instrucciones del usuario) */}
-                <div className="boton-herramienta boton-aviso">
-                    <Clock size={20} />
-                    <span className="badge-aviso">AVISO</span>
+                <div
+                    ref={botonMetronomoRef}
+                    className={`boton-herramienta metronomo-btn-barra ${metronomoVisible ? 'activo' : ''}`}
+                    onClick={() => {
+                        setMetronomoVisible(!metronomoVisible);
+                        setVistaVisible(false);
+                        setSelectorInstrumentoVisible(false);
+                        setTonalidadesVisible(false);
+                        setMenuVisible(false);
+                    }}
+                >
+                    <Timer size={20} />
+                    <span className="label-metronomo-mini">BPM: {bpmMetronomo}</span>
                 </div>
 
                 <div
                     ref={botonMenuRef}
                     className="boton-herramienta"
-                    onClick={() => setMenuVisible(!menuVisible)}
+                    onClick={() => {
+                        setMenuVisible(!menuVisible);
+                        setMetronomoVisible(false);
+                        setVistaVisible(false);
+                    }}
                 >
                     <MoreVertical size={20} />
                 </div>
@@ -304,6 +279,24 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                 setTamanoFuente={setTamanoFuente}
                 vistaDoble={vistaDoble}
                 setVistaDoble={setVistaDoble}
+            />
+
+            <ModalMetronomo
+                visible={metronomoVisible}
+                onCerrar={() => setMetronomoVisible(false)}
+                botonRef={botonMetronomoRef}
+                bpm={bpmMetronomo}
+                setBpm={setBpmMetronomo}
+            />
+
+            <ModalInstrumentos
+                visible={instrumentosVisible}
+                onCerrar={() => setInstrumentosVisible(false)}
+                botonRef={botonMetronomoRef} // Usamos un ref auxiliar o el mismo de la barra
+                listaInstrumentos={logica.listaInstrumentos}
+                instrumentoId={logica.instrumentoId}
+                onSeleccionarInstrumento={logica.setInstrumentoId}
+                cargando={logica.cargandoCloud}
             />
 
         </div>

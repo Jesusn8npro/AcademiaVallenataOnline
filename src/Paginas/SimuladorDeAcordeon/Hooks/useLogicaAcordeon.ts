@@ -455,25 +455,33 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         if (deshabilitarRef.current) return;
 
         if (accion === 'add') {
-            // Detenemos cualquier rastro previo para evitar notas pegadas y permitir re-disparar con un solo clic
+            // Detenemos cualquier rastro previo para evitar notas pegadas
             if (botonesActivosRef.current[id]) detenerTono(id);
 
             let instances = instanciasExternas || reproducirTono(id).instances;
             if (!instances || instances.length === 0) return;
 
-            const newState = { ...botonesActivosRef.current, [id]: { instances, ...mapaBotonesActual.current[id] } };
-            botonesActivosRef.current = newState;
-
-            if (!silencioso) setBotonesActivos(newState);
+            // 🚀 OPTIMIZACIÓN DE TRINOS: Si es silencioso, mutamos directamente para evitar Garbage Collection masiva
+            if (silencioso) {
+                botonesActivosRef.current[id] = { instances, ...mapaBotonesActual.current[id] };
+            } else {
+                const newState = { ...botonesActivosRef.current, [id]: { instances, ...mapaBotonesActual.current[id] } };
+                botonesActivosRef.current = newState;
+                setBotonesActivos(newState);
+            }
 
             onNotaPresionada?.({ idBoton: id, nombre: id });
         } else {
             detenerTono(id);
-            const newState = { ...botonesActivosRef.current };
-            delete newState[id];
-            botonesActivosRef.current = newState;
 
-            if (!silencioso) setBotonesActivos(newState);
+            if (silencioso) {
+                delete botonesActivosRef.current[id];
+            } else {
+                const newState = { ...botonesActivosRef.current };
+                delete newState[id];
+                botonesActivosRef.current = newState;
+                setBotonesActivos(newState);
+            }
 
             onNotaLiberada?.({ idBoton: id, nombre: id });
         }
@@ -552,7 +560,32 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     }, [actualizarBotonActivo, reproducirTono, detenerTono, modoAjuste, botonSeleccionado]);
 
     // --- EFECTOS DE SINCRONIZACIÓN ---
-    useEffect(() => { direccionRef.current = direccion; }, [direccion]);
+    useEffect(() => {
+        const nuevaDireccion = direccion;
+        if (nuevaDireccion !== direccionRef.current) {
+            // 🔄 SWAP DE NOTAS ACTIVAS: Si hay notas sonando, las cambiamos a la nueva dirección
+            const prev = { ...botonesActivosRef.current };
+            const next: Record<string, any> = {};
+
+            Object.keys(prev).forEach(oldId => {
+                const parts = oldId.split('-');
+                const esBajo = oldId.includes('bajo');
+                // Construimos el nuevo ID manteniendo fila y columna pero cambiando dirección
+                const newId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+
+                const { instances } = reproducirTono(newId);
+                if (instances && instances.length > 0) {
+                    next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                }
+                detenerTono(oldId);
+            });
+
+            botonesActivosRef.current = next;
+            setBotonesActivos(next);
+            direccionRef.current = nuevaDireccion;
+        }
+    }, [direccion, reproducirTono, detenerTono]);
+
     useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
     useEffect(() => { botonesActivosRef.current = botonesActivos; }, [botonesActivos]);
@@ -695,7 +728,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }, 80);
 
         return () => clearTimeout(timer);
-    }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB]);
+    }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId]);
 
     // --- MIDI ENGINE ---
     useEffect(() => {
