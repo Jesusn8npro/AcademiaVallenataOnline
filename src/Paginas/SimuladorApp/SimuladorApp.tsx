@@ -99,10 +99,15 @@ const SimuladorApp: React.FC = () => {
 
     // 🎯 ACTUALIZACIÓN VISUAL ULTRA-RÁPIDA (Bypass React)
     const actualizarVisualBoton = (pos: string, activo: boolean) => {
-        const pitoElement = document.querySelector(`[data-pos="${pos}"]`);
-        if (pitoElement) {
-            if (activo) pitoElement.classList.add('nota-activa');
-            else pitoElement.classList.remove('nota-activa');
+        let el = pitoElementsRef.current.get(pos);
+        if (!el) {
+            el = document.querySelector(`[data-pos="${pos}"]`) as HTMLElement;
+            if (el) pitoElementsRef.current.set(pos, el);
+        }
+
+        if (el) {
+            if (activo) el.classList.add('nota-activa');
+            else el.classList.remove('nota-activa');
         }
     };
 
@@ -167,37 +172,41 @@ const SimuladorApp: React.FC = () => {
 
     // --- 🎙️ MOTOR DE GRABACIÓN DE SECUENCIAS (DEBUG) ---
     const [grabando, setGrabando] = useState(false);
-    const [secuencia, setSecuencia] = useState<any[]>([]);
+    const secuenciaRef = useRef<any[]>([]); // 🚀 USAMOS REF PARA EVITAR RE-RENDERS
     const tiempoInicioRef = useRef<number>(0);
+    const pitoElementsRef = useRef<Map<string, HTMLElement>>(new Map()); // 🚀 CACHÉ DE ELEMENTOS DOM
 
     const toggleGrabacion = () => {
         if (!grabando) {
-            setSecuencia([]);
+            secuenciaRef.current = [];
             tiempoInicioRef.current = Date.now();
             setGrabando(true);
             console.log("🔴 Grabación iniciada...");
         } else {
             setGrabando(false);
-            console.log("⏹️ Grabación terminada. Secuencia:", JSON.stringify(secuencia));
-            // Mostrar en un alert o prompt para que el usuario pueda copiarlo
-            const data = JSON.stringify(secuencia);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `secuencia_acordeon_${Date.now()}.json`;
-            a.click();
-            alert("✅ Secuencia guardada y descargada. Por favor, envíame el contenido del archivo JSON para analizarlo.");
+            const finalSecuencia = secuenciaRef.current;
+            console.log("⏹️ Grabación terminada. Eventos:", finalSecuencia.length);
+
+            if (finalSecuencia.length > 0) {
+                const data = JSON.stringify(finalSecuencia);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `secuencia_acordeon_${Date.now()}.json`;
+                a.click();
+                alert("✅ Secuencia guardada. Por favor, envíame el archivo JSON.");
+            }
         }
     };
 
     const registrarEvento = (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => {
         if (!grabando) return;
-        setSecuencia(prev => [...prev, {
+        secuenciaRef.current.push({
             t: Date.now() - tiempoInicioRef.current,
             tipo,
             ...data
-        }]);
+        });
     };
 
     // Registrar cambios de fuelle en la secuencia

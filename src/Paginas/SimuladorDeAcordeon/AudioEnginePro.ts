@@ -123,7 +123,7 @@ export class MotorAudioPro {
     /**
      * Detención ultra-rápida optimizada para repeticiones constantes (Trinos)
      */
-    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.05) {
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.015) {
         try {
             const ahora = this.contexto.currentTime;
             const g = instancia.ganancia.gain;
@@ -131,11 +131,12 @@ export class MotorAudioPro {
             g.cancelScheduledValues(ahora);
             g.setValueAtTime(g.value, ahora);
 
-            // Fundido logarítmico ultra-rápido para evitar clics (Trinos Pro)
+            // Fundido gausiano ultra-corto para trinos cristalinos (15ms)
+            // Esto elimina la 'bola de sonido' en ejecuciones rápidas
             g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
-            instancia.fuente.stop(ahora + rapidez + 0.01);
+            instancia.fuente.stop(ahora + rapidez + 0.005);
 
-            // 🚀 LIMPIEZA ZERO-OVERHEAD: Usamos el evento nativo del hilo de audio
+            // Limpieza nativa
             instancia.fuente.onended = () => {
                 try {
                     instancia.fuente.disconnect();

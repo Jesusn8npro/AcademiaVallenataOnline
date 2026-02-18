@@ -36,7 +36,7 @@ const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
 
 const VOL_PITOS = 0.55;
 const VOL_BAJOS = 0.35;
-const FADE_OUT = 40; // ⚡ Reducido para trinos profesionales y respuesta instantánea
+const FADE_OUT = 10; // ⚡ Velocidad ultra-extrema para trinos profesionales (10ms)
 
 
 
@@ -382,14 +382,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         if (!b?.instances) return;
 
         b.instances.forEach((inst: any) => {
-            try {
-                const { fuente, ganancia } = inst;
-                const ahora = motorAudioPro.tiempoActual;
-                ganancia.gain.cancelScheduledValues(ahora);
-                ganancia.gain.setValueAtTime(ganancia.gain.value, ahora);
-                ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + (FADE_OUT / 1000));
-                fuente.stop(ahora + (FADE_OUT / 1000) + 0.01);
-            } catch (e) { }
+            motorAudioPro.detener(inst, FADE_OUT / 1000); // Sincronizado con el motor pro
         });
     }, []);
 
