@@ -50,6 +50,10 @@ interface BarraHerramientasProps {
     setTamanoFuente: (tamano: number) => void;
     vistaDoble: boolean;
     setVistaDoble: (doble: boolean) => void;
+
+    // Props de Grabación
+    grabando: boolean;
+    toggleGrabacion: () => void;
 }
 
 const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
@@ -63,7 +67,8 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     modoVista, setModoVista,
     mostrarOctavas, setMostrarOctavas,
     tamanoFuente, setTamanoFuente,
-    vistaDoble, setVistaDoble
+    vistaDoble, setVistaDoble,
+    grabando, toggleGrabacion
 }) => {
     const [menuVisible, setMenuVisible] = React.useState(false);
     const [contactoVisible, setContactoVisible] = React.useState(false);
@@ -132,6 +137,15 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                 >
                     <Music size={20} />
                     <span>{logica.tonalidadSeleccionada}</span>
+                </div>
+
+                <div
+                    className={`boton-herramienta boton-grabadora ${grabando ? 'grabando' : ''}`}
+                    onClick={toggleGrabacion}
+                    title={grabando ? "Detener Grabación" : "Grabar Secuencia (Macro)"}
+                >
+                    <Circle size={20} fill={grabando ? "#ef4444" : "none"} color={grabando ? "#ef4444" : "currentColor"} />
+                    <span style={{ color: grabando ? "#ef4444" : "inherit" }}>{grabando ? 'REC' : 'GRABAR'}</span>
                 </div>
             </div>
 

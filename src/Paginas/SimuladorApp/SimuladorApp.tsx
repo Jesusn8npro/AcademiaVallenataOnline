@@ -127,12 +127,14 @@ const SimuladorApp: React.FC = () => {
                 const idAnterior = `${previousPos}-${logica.direccion}${previousPos.includes('bajo') ? '-bajo' : ''}`;
                 logica.actualizarBotonActivo(idAnterior, 'remove', null, true);
                 actualizarVisualBoton(previousPos, false);
+                registrarEvento('nota_off', { id: idAnterior, pos: previousPos });
             }
             if (currentPos) {
                 const idNuevo = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
                 logica.actualizarBotonActivo(idNuevo, 'add', null, true);
                 actualizarVisualBoton(currentPos, true);
                 pointersMap.current.set(pointerId, currentPos);
+                registrarEvento('nota_on', { id: idNuevo, pos: currentPos });
             } else {
                 pointersMap.current.delete(pointerId);
             }
@@ -146,6 +148,7 @@ const SimuladorApp: React.FC = () => {
             const idParaRemover = `${lastPos}-${logica.direccion}${lastPos.includes('bajo') ? '-bajo' : ''}`;
             logica.actualizarBotonActivo(idParaRemover, 'remove', null, true);
             actualizarVisualBoton(lastPos, false);
+            registrarEvento('nota_off', { id: idParaRemover, pos: lastPos });
         }
         pointersMap.current.delete(pointerId);
     }, [logica]);
@@ -161,6 +164,48 @@ const SimuladorApp: React.FC = () => {
         };
     }, [handleGlobalPointerMove, handlePointerUp]);
 
+
+    // --- 🎙️ MOTOR DE GRABACIÓN DE SECUENCIAS (DEBUG) ---
+    const [grabando, setGrabando] = useState(false);
+    const [secuencia, setSecuencia] = useState<any[]>([]);
+    const tiempoInicioRef = useRef<number>(0);
+
+    const toggleGrabacion = () => {
+        if (!grabando) {
+            setSecuencia([]);
+            tiempoInicioRef.current = Date.now();
+            setGrabando(true);
+            console.log("🔴 Grabación iniciada...");
+        } else {
+            setGrabando(false);
+            console.log("⏹️ Grabación terminada. Secuencia:", JSON.stringify(secuencia));
+            // Mostrar en un alert o prompt para que el usuario pueda copiarlo
+            const data = JSON.stringify(secuencia);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `secuencia_acordeon_${Date.now()}.json`;
+            a.click();
+            alert("✅ Secuencia guardada y descargada. Por favor, envíame el contenido del archivo JSON para analizarlo.");
+        }
+    };
+
+    const registrarEvento = (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => {
+        if (!grabando) return;
+        setSecuencia(prev => [...prev, {
+            t: Date.now() - tiempoInicioRef.current,
+            tipo,
+            ...data
+        }]);
+    };
+
+    // Registrar cambios de fuelle en la secuencia
+    useEffect(() => {
+        if (grabando) {
+            registrarEvento('fuelle', { direccion: logica.direccion });
+        }
+    }, [logica.direccion, grabando]);
 
     // Filtrar hileras por dirección actual
     const pitosAfuera = logica.configTonalidad?.primeraFila?.filter((n: any) => n.id.includes(logica.direccion)) || [];
@@ -216,6 +261,10 @@ const SimuladorApp: React.FC = () => {
                         setTamanoFuente={setTamanoFuente}
                         vistaDoble={vistaDoble}
                         setVistaDoble={setVistaDoble}
+
+                        // Props de Grabación
+                        grabando={grabando}
+                        toggleGrabacion={toggleGrabacion}
                     />
 
                     {/* Marco del Diapasón (La ventana fija) */}
@@ -244,6 +293,7 @@ const SimuladorApp: React.FC = () => {
                                                 pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
+                                                registrarEvento('nota_on', { id: nota.id, pos: idBase });
                                             }}
                                         >
                                             {!vistaDoble ? (
@@ -278,6 +328,7 @@ const SimuladorApp: React.FC = () => {
                                                 pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
+                                                registrarEvento('nota_on', { id: nota.id, pos: idBase });
                                             }}
                                         >
                                             {!vistaDoble ? (
@@ -312,6 +363,7 @@ const SimuladorApp: React.FC = () => {
                                                 pointersMap.current.set(e.pointerId, idBase);
                                                 logica.actualizarBotonActivo(nota.id, 'add', null, true);
                                                 actualizarVisualBoton(idBase, true);
+                                                registrarEvento('nota_on', { id: nota.id, pos: idBase });
                                             }}
                                         >
                                             {!vistaDoble ? (
