@@ -2,13 +2,14 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaAcordeon } from '../SimuladorDeAcordeon/Hooks/useLogicaAcordeon';
+import { motorAudioPro } from '../SimuladorDeAcordeon/AudioEnginePro';
 import BarraHerramientas from './Componentes/BarraHerramientas';
 import './SimuladorApp.css';
 
 const SimuladorApp: React.FC = () => {
     const logica = useLogicaAcordeon();
     const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-    const pointersMap = useRef<Map<number, string | null>>(new Map());
+    const pointersMap = useRef<Map<number, { pos: string, musicalId: string } | null>>(new Map());
     const marcoRef = useRef<HTMLDivElement>(null);
     const [escala, setEscala] = useState(1.0); // 🎯 Escala base
 
@@ -126,20 +127,24 @@ const SimuladorApp: React.FC = () => {
             }
         }
 
-        const previousPos = pointersMap.current.get(pointerId);
+        const previousData = pointersMap.current.get(pointerId);
+        const previousPos = previousData?.pos || null;
+
         if (currentPos !== previousPos) {
-            if (previousPos) {
-                const idAnterior = `${previousPos}-${logica.direccion}${previousPos.includes('bajo') ? '-bajo' : ''}`;
-                logica.actualizarBotonActivo(idAnterior, 'remove', null, true);
-                actualizarVisualBoton(previousPos, false);
-                registrarEvento('nota_off', { id: idAnterior, pos: previousPos });
+            // Reanimar audio por si acaso (latencia móvil)
+            motorAudioPro.activarContexto();
+
+            if (previousData) {
+                logica.actualizarBotonActivo(previousData.musicalId, 'remove', null, true);
+                actualizarVisualBoton(previousPos!, false);
+                registrarEvento('nota_off', { id: previousData.musicalId, pos: previousPos });
             }
             if (currentPos) {
-                const idNuevo = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
-                logica.actualizarBotonActivo(idNuevo, 'add', null, true);
+                const musicalId = `${currentPos}-${logica.direccion}${currentPos.includes('bajo') ? '-bajo' : ''}`;
+                logica.actualizarBotonActivo(musicalId, 'add', null, true);
                 actualizarVisualBoton(currentPos, true);
-                pointersMap.current.set(pointerId, currentPos);
-                registrarEvento('nota_on', { id: idNuevo, pos: currentPos });
+                pointersMap.current.set(pointerId, { pos: currentPos, musicalId });
+                registrarEvento('nota_on', { id: musicalId, pos: currentPos });
             } else {
                 pointersMap.current.delete(pointerId);
             }
@@ -148,12 +153,11 @@ const SimuladorApp: React.FC = () => {
 
     const handlePointerUp = useCallback((e: PointerEvent) => {
         const pointerId = e.pointerId;
-        const lastPos = pointersMap.current.get(pointerId);
-        if (lastPos) {
-            const idParaRemover = `${lastPos}-${logica.direccion}${lastPos.includes('bajo') ? '-bajo' : ''}`;
-            logica.actualizarBotonActivo(idParaRemover, 'remove', null, true);
-            actualizarVisualBoton(lastPos, false);
-            registrarEvento('nota_off', { id: idParaRemover, pos: lastPos });
+        const data = pointersMap.current.get(pointerId);
+        if (data) {
+            logica.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+            actualizarVisualBoton(data.pos, false);
+            registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
         }
         pointersMap.current.delete(pointerId);
     }, [logica]);
@@ -231,7 +235,10 @@ const SimuladorApp: React.FC = () => {
             {/* 🌬️ 1. INDICADOR DE FUELLE REACTIVO */}
             <div
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onPointerDown={() => logica.setDireccion('empujar')}
+                onPointerDown={() => {
+                    motorAudioPro.activarContexto();
+                    logica.setDireccion('empujar');
+                }}
                 onPointerUp={() => logica.setDireccion('halar')}
                 onPointerLeave={() => logica.setDireccion('halar')}
             >
