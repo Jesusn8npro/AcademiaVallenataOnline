@@ -40,7 +40,7 @@ const FADE_OUT = 40; // ⚡ Reducido para trinos profesionales y respuesta insta
 
 
 
-export const useLogicaAcordeon = (props: AcordeonSimuladorProps) => {
+export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
         direccion: direccionProp = 'halar',
         deshabilitarInteraccion = false,

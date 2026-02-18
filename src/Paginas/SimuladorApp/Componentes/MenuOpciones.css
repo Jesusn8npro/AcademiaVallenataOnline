@@ -1,0 +1,171 @@
+/* 🎯 MENÚ DE OPCIONES - Estilo Cassoto Lateral (Ultra Compacto) */
+
+.menu-opciones-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    /* Overlay semi-transparente para foco */
+    z-index: 10000;
+    backdrop-filter: blur(2px);
+}
+
+.menu-opciones-contenedor {
+    position: fixed;
+    width: 250px;
+    /* Un poco más angosto */
+    background: #1a1d29;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+    z-index: 10001;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    max-height: 85vh;
+    /* Evitar que se salga de la pantalla */
+    overflow-y: auto;
+    overflow-x: visible;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+.menu-opciones-contenedor::-webkit-scrollbar {
+    width: 4px;
+}
+
+.menu-opciones-contenedor::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+/* Base de la flecha lateral */
+.menu-opciones-contenedor::before {
+    content: '';
+    position: absolute;
+    top: var(--flecha-top, 50%);
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+}
+
+/* Flecha apuntando a la DERECHA (cuando el menú está a la izquierda) */
+.menu-opciones-contenedor.flecha-derecha::before {
+    right: -10px;
+    border-left: 10px solid #1a1d29;
+}
+
+/* Flecha apuntando a la IZQUIERDA (cuando el menú está a la derecha) */
+.menu-opciones-contenedor.flecha-izquierda::before {
+    left: -10px;
+    border-right: 10px solid #1a1d29;
+}
+
+/* Estilos internos ULTRA COMPACTOS */
+.menu-banner-superior {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-weight: 700;
+    font-size: 11px;
+    border-radius: 12px 12px 0 0;
+}
+
+.menu-opciones-lista {
+    padding: 0;
+}
+
+.opcion-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.opcion-menu:last-child {
+    border-bottom: none;
+}
+
+.opcion-menu:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.opcion-icono {
+    width: 28px;
+    height: 28px;
+    background: #2d3142;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.opcion-icono svg {
+    width: 16px;
+    height: 16px;
+}
+
+.opcion-texto {
+    color: #d1d5db;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.menu-redes-sociales {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.boton-red-social {
+    flex: 1;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+    color: white;
+    transition: transform 0.2s;
+}
+
+.boton-red-social:active {
+    transform: scale(0.95);
+}
+
+.boton-red-social.discord {
+    background: #5865f2;
+}
+
+.boton-red-social.tiktok {
+    background: linear-gradient(135deg, #00f2ea 0%, #ff0050 100%);
+}
+
+.boton-desbloquear {
+    width: calc(100% - 24px);
+    margin: 8px 12px;
+    padding: 8px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 800;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}

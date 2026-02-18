@@ -1,0 +1,305 @@
+/* 🛠️ BARRA DE HERRAMIENTAS - DISEÑO PREMIUM CASSOTO */
+
+.barra-herramientas-contenedor {
+    position: absolute;
+    /* Flota dentro del canvas */
+    top: 5px;
+    /* ← Pegada arriba dentro del canvas */
+    left: 0;
+    right: 0;
+    width: 98%;
+    margin: 5px auto;
+    height: 50px;
+    /* ← Reducido de 65px a 50px (más delgada) */
+    background: linear-gradient(180deg, #333333 0%, #111111 100%);
+    border: 2px solid #555;
+    border-radius: 10px;
+    /* ← Reducido de 12px */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    /* ← Reducido de 10px */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
+    z-index: 200;
+    /* Por encima de los botones */
+    overflow: hidden;
+}
+
+.seccion-barra {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    /* ← Reducido de 4px */
+    height: 100%;
+}
+
+/* Estilo de botones individuales */
+.boton-herramienta {
+    height: 40px;
+    /* ← Reducido de 50px */
+    min-width: 40px;
+    /* ← Reducido de 50px */
+    background: linear-gradient(180deg, #444 0%, #222 100%);
+    border: 1px solid #000;
+    border-radius: 6px;
+    /* ← Reducido de 8px */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #ccc;
+    transition: all 0.2s;
+    box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+}
+
+.boton-herramienta:active {
+    background: #111;
+    transform: translateY(1px);
+}
+
+.boton-herramienta.activo {
+    border-color: #fb923c;
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+.boton-herramienta span {
+    font-size: 7px;
+    /* ← Reducido de 8px */
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 1px;
+    /* ← Reducido de 2px */
+    color: #aaa;
+}
+
+/* Botón Aprende Especial */
+.boton-aprende {
+    background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+    color: #000;
+}
+
+.boton-aprende span {
+    color: #000;
+    font-weight: 900;
+}
+
+/* Bloque de Anuncio Central */
+.bloque-anuncio-centro {
+    flex: 1;
+    max-width: 300px;
+    /* ← Reducido de 400px (más angosto) */
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    margin: 0 8px;
+    overflow: hidden;
+}
+
+.miniatura-acordeon {
+    width: 30px;
+    /* ← Reducido de 35px */
+    height: 30px;
+    /* ← Reducido de 35px */
+    background: #444;
+    border-radius: 4px;
+    margin-right: 8px;
+    /* ← Reducido de 10px */
+}
+
+.info-anuncio {
+    flex: 1;
+}
+
+.info-anuncio h4 {
+    color: #fff;
+    font-size: 10px;
+    /* ← Reducido de 11px */
+    margin: 0;
+}
+
+.estrellas {
+    color: #fbbf24;
+    font-size: 9px;
+    /* ← Reducido de 10px */
+}
+
+.texto-descarga {
+    color: #aaa;
+    font-size: 8px;
+    /* ← Reducido de 9px */
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Icono de Instalar (Reemplaza al botón) */
+.boton-icono-instalar {
+    width: 32px;
+    /* ← Tamaño compacto */
+    height: 32px;
+    background: #333;
+    border: 1px solid #666;
+    border-radius: 50%;
+    /* ← Circular */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    /* No se encoge */
+}
+
+.boton-icono-instalar:hover {
+    background: #444;
+    transform: scale(1.1);
+}
+
+.boton-icono-instalar:active {
+    transform: scale(0.95);
+}
+
+/* Grupo de Tamaño con Indicador */
+.grupo-tamano {
+    background: #222;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    height: 40px;
+    gap: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.label-tam-contenedor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.label-tam {
+    font-size: 6px;
+    color: #888;
+    font-weight: 950;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.valor-tam {
+    font-size: 10px;
+    color: #fb923c;
+    /* Color naranja para destacar el valor */
+    font-weight: 900;
+    font-family: monospace;
+}
+
+.tam-controles {
+    display: flex;
+    align-items: center;
+}
+
+.tam-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 16px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+    transition: all 0.2s;
+}
+
+.tam-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fb923c;
+}
+
+/* Botón de Aviso Especial */
+.boton-aviso {
+    position: relative;
+    border-color: #fb923c !important;
+}
+
+.badge-aviso {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #fb923c;
+    color: #000;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+}
+
+/* Etiqueta Oferta */
+.oferta-tag {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    background: red;
+    color: white;
+    font-size: 7px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 900;
+    transform: rotate(-15deg);
+}
+
+.contenedor-oferta {
+    position: relative;
+}
+
+/* 🎯 CONTROL DE ARRASTRE DE BOTONES */
+.contenedor-control-drag {
+    width: 60px;
+    /* Un poco más ancho para el drag */
+    position: relative;
+    overflow: hidden;
+    background: #111 !important;
+    border: 1px solid #333 !important;
+}
+
+.label-botones {
+    font-size: 7px;
+    font-weight: 950;
+    color: #888;
+    position: absolute;
+    top: 4px;
+    pointer-events: none;
+    text-transform: uppercase;
+}
+
+.icono-drag-handle {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(180deg, #444 0%, #222 100%);
+    border: 1px solid #555;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    margin-top: 10px;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.icono-drag-handle:active {
+    cursor: grabbing;
+}
