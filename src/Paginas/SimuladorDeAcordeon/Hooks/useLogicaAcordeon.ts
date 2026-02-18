@@ -36,7 +36,7 @@ const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
 
 const VOL_PITOS = 0.55;
 const VOL_BAJOS = 0.35;
-const FADE_OUT = 8; // ⚡ Sincronizado con AudioEnginePro V5 (8ms - mínimo sin click)
+const FADE_OUT = 10; // ⚡ Velocidad ultra-extrema para trinos profesionales (10ms)
 
 
 
