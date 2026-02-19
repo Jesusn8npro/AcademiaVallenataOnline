@@ -5,6 +5,8 @@
     touch-action: none !important;
     -webkit-touch-callout: none !important;
     -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    overscroll-behavior: none !important;
     outline: none !important;
 }
 
@@ -19,6 +21,7 @@
     /* ← Dinámico para Chrome/Android móvil */
     background-color: #000;
     overflow: hidden !important;
+    overscroll-behavior: none !important;
     margin: 0 !important;
     padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;

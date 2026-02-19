@@ -1,11 +1,11 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V6.1 (Ultra-Performance)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V7.0 (Zero-Lag & Absolute Tracking)
  * 
- * Arquitectura de alto rendimiento para músicos profesionales:
- * - Mathematical Hit-Testing: Detección instantánea sin consultas al DOM.
- * - Multi-Step Interpolation: Evita saltos en trinos y glissandos de alta velocidad.
- * - Coalesced Events: Aprovecha la máxima tasa de muestreo de los sensores táctiles.
- * - Magnetic Sensitivity: Imanes matemáticos que compensan el tamaño del dedo en móvil.
+ * Basado en tecnología de motores de juego:
+ * - Local Coordinate Space: Hit-testing inmune al scroll/movimiento del acordeón.
+ * - Global Safety Cleanup: Evita que las notas se queden pegadas al soltar fuera.
+ * - Multi-Sample Interpolation: Garantiza que ningún trino "atraviese" un botón sin sonar.
+ * - Gesture Armor: Bloqueo total de pull-to-refresh, zoom y menús de sistema.
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -22,7 +22,7 @@ const SimuladorApp: React.FC = () => {
     const trenRef = useRef<HTMLDivElement>(null);
     const [escala, setEscala] = useState(1.0);
 
-    // 🎨 Estados de Diseño
+    // 🎨 Estados de Diseño (Sincronizados vía CSS Vars)
     const [distanciaH, setDistanciaH] = useState(2.5);
     const [distanciaV, setDistanciaV] = useState(0.8);
     const [distanciaHBajos, setDistanciaHBajos] = useState(2.5);
@@ -37,9 +37,10 @@ const SimuladorApp: React.FC = () => {
 
     const x = useMotionValue(0);
 
-    // 🗺️ REFS ESTRUCTURALES (ALTA VELOCIDAD)
+    // 🗺️ REFS ESTRUCTURALES (MÁXIMA VELOCIDAD)
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; lastX?: number; lastY?: number }>>(new Map());
-    const rectsCache = useRef<Map<string, DOMRect>>(new Map());
+    /** 🎯 CACHÉ GEOMÉTRICO LOCAL: Rectángulos relativos al contenedor 'tren' */
+    const localRectsRef = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const pitoElementsRef = useRef<Map<string, HTMLElement>>(new Map());
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -50,6 +51,7 @@ const SimuladorApp: React.FC = () => {
     const grabandoRef = useRef(false);
     useEffect(() => { grabandoRef.current = grabando; }, [grabando]);
 
+    /** Sincroniza visuales fuera de React para latencia 0 */
     const actualizarVisualBoton = (pos: string, activo: boolean) => {
         let el = pitoElementsRef.current.get(pos);
         if (!el) {
@@ -68,37 +70,51 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT PRO V6.1
+    // 🖐️ MOTOR DE INPUT V7.0 (LOCAL COORDINATES)
     // =====================================================================
     useEffect(() => {
         const tren = trenRef.current;
         if (!tren) return;
 
-        const actualizarMapaColisiones = () => {
+        /** Genera geometría relativa para que el hit-testing sea inmune al scroll/movimiento */
+        const actualizarGeometriaLocal = () => {
             const elPitos = tren.querySelectorAll('.pito-boton');
-            rectsCache.current.clear();
+            const trenBase = tren.getBoundingClientRect();
+            localRectsRef.current.clear();
             pitoElementsRef.current.clear();
+
             elPitos.forEach(el => {
                 const pos = (el as HTMLElement).dataset.pos;
+                const rect = el.getBoundingClientRect();
                 if (pos) {
                     pitoElementsRef.current.set(pos, el as HTMLElement);
-                    rectsCache.current.set(pos, el.getBoundingClientRect());
+                    localRectsRef.current.set(pos, {
+                        left: rect.left - trenBase.left,
+                        right: rect.right - trenBase.left,
+                        top: rect.top - trenBase.top,
+                        bottom: rect.bottom - trenBase.top
+                    });
                 }
             });
         };
 
-        const interval = setInterval(actualizarMapaColisiones, 2000);
-        window.addEventListener('resize', actualizarMapaColisiones);
-        setTimeout(actualizarMapaColisiones, 500);
+        // Recalcular geometría si cambia la escala o el tamaño
+        const interval = setInterval(actualizarGeometriaLocal, 3000);
+        window.addEventListener('resize', actualizarGeometriaLocal);
+        setTimeout(actualizarGeometriaLocal, 500);
 
-        const encontrarBotonEnPunto = (clientX: number, clientY: number): string | null => {
-            const IMAN = 12; // Sensibilidad aumentada para móvil
-            const list = Array.from(rectsCache.current.entries());
-            // Buscamos de atrás hacia adelante (prioridad a los últimos en ser pintados)
-            for (let i = list.length - 1; i >= 0; i--) {
-                const [pos, rect] = list[i];
-                if (clientX >= rect.left - IMAN && clientX <= rect.right + IMAN &&
-                    clientY >= rect.top - IMAN && clientY <= rect.bottom + IMAN) {
+        /** Detección matemática en espacio local */
+        const detectarEnPuntoLocal = (clientX: number, clientY: number): string | null => {
+            const trenRect = tren.getBoundingClientRect();
+            const relX = clientX - trenRect.left;
+            const relY = clientY - trenRect.top;
+            const IMAN = 15; // "Imán" de sensibilidad para trinos y dedos gruesos
+
+            const entries = Array.from(localRectsRef.current.entries());
+            for (let i = entries.length - 1; i >= 0; i--) {
+                const [pos, r] = entries[i];
+                if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
+                    relY >= r.top - IMAN && relY <= r.bottom + IMAN) {
                     return pos;
                 }
             }
@@ -110,10 +126,10 @@ const SimuladorApp: React.FC = () => {
             e.preventDefault();
             motorAudioPro.activarContexto();
 
-            const pos = encontrarBotonEnPunto(e.clientX, e.clientY);
+            const pos = detectarEnPuntoLocal(e.clientX, e.clientY);
             if (!pos) return;
 
-            try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch (err) { console.debug("Pointer capture failed", err); }
+            try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch (err) { }
 
             const musicalId = `${pos}-${logicaRef.current.direccion}`;
             pointersMap.current.set(e.pointerId, { pos, musicalId, lastX: e.clientX, lastY: e.clientY });
@@ -128,19 +144,21 @@ const SimuladorApp: React.FC = () => {
             if (!data) return;
 
             const events = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() : [e];
-
             for (const ev of events) {
                 const checkPoints = [{ x: ev.clientX, y: ev.clientY }];
 
-                // 💎 INTERPOLACIÓN MULTI-SEGMENTO (Anti-saltos)
+                // 💎 INTERPOLACIÓN AGRESIVA (Anti-saltos)
                 if (data.lastX !== undefined && data.lastY !== undefined) {
                     const dx = ev.clientX - data.lastX;
                     const dy = ev.clientY - data.lastY;
-                    const d = Math.hypot(dx, dy);
-                    if (d > 20) {
-                        const steps = Math.min(3, Math.floor(d / 15));
+                    const dist = Math.hypot(dx, dy);
+                    if (dist > 15) { // Si el dedo vuela, rellenamos con muestras intermedias
+                        const steps = Math.min(4, Math.floor(dist / 12));
                         for (let i = 1; i <= steps; i++) {
-                            checkPoints.unshift({ x: data.lastX + (dx * (i / (steps + 1))), y: data.lastY + (dy * (i / (steps + 1))) });
+                            checkPoints.unshift({
+                                x: data.lastX + (dx * (i / (steps + 1))),
+                                y: data.lastY + (dy * (i / (steps + 1)))
+                            });
                         }
                     }
                 }
@@ -149,13 +167,15 @@ const SimuladorApp: React.FC = () => {
                     const latest = pointersMap.current.get(e.pointerId);
                     if (!latest) continue;
 
-                    const newPos = encontrarBotonEnPunto(pt.x, pt.y);
+                    const newPos = detectarEnPuntoLocal(pt.x, pt.y);
                     if (newPos !== latest.pos) {
+                        // OFF
                         if (latest.pos) {
                             logicaRef.current.actualizarBotonActivo(latest.musicalId, 'remove', null, true);
                             actualizarVisualBoton(latest.pos, false);
                             registrarEvento('nota_off', { id: latest.musicalId, pos: latest.pos });
                         }
+                        // ON
                         if (newPos) {
                             const newMusicalId = `${newPos}-${logicaRef.current.direccion}`;
                             pointersMap.current.set(e.pointerId, { pos: newPos, musicalId: newMusicalId, lastX: pt.x, lastY: pt.y });
@@ -167,8 +187,8 @@ const SimuladorApp: React.FC = () => {
                         }
                     }
                 }
-                const fin = pointersMap.current.get(e.pointerId);
-                if (fin) pointersMap.current.set(e.pointerId, { ...fin, lastX: ev.clientX, lastY: ev.clientY });
+                const final = pointersMap.current.get(e.pointerId);
+                if (final) pointersMap.current.set(e.pointerId, { ...final, lastX: ev.clientX, lastY: ev.clientY });
             }
         };
 
@@ -184,42 +204,62 @@ const SimuladorApp: React.FC = () => {
             }
         };
 
+        const onWindowUp = (e: PointerEvent) => {
+            // Limpieza de seguridad si el pointerup no llega al elemento (ej. soltar fuera de ventana)
+            if (pointersMap.current.has(e.pointerId)) onUp(e);
+        };
+
+        // 🛡️ BLINDAJE TOTAL
         tren.addEventListener('pointerdown', onDown, { passive: false });
         tren.addEventListener('pointermove', onMove, { passive: false });
         tren.addEventListener('pointerup', onUp, { passive: false });
         tren.addEventListener('pointercancel', onUp, { passive: false });
+        window.addEventListener('pointerup', onWindowUp);
+        window.addEventListener('pointercancel', onWindowUp);
+
+        // Bloquear menús contextuales en trinos largos
+        const block = (e: Event) => e.preventDefault();
+        window.addEventListener('contextmenu', block);
 
         return () => {
             clearInterval(interval);
-            window.removeEventListener('resize', actualizarMapaColisiones);
+            window.removeEventListener('resize', actualizarGeometriaLocal);
             tren.removeEventListener('pointerdown', onDown);
             tren.removeEventListener('pointermove', onMove);
             tren.removeEventListener('pointerup', onUp);
             tren.removeEventListener('pointercancel', onUp);
+            window.removeEventListener('pointerup', onWindowUp);
+            window.removeEventListener('pointercancel', onWindowUp);
+            window.removeEventListener('contextmenu', block);
         };
     }, []);
 
-    // --- FUELLE ---
+    // --- ACCIONES DE FUELLE (OPTIMIZADO) ---
     const manejarCambioFuelle = (nuevaDireccion: 'halar' | 'empujar') => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         motorAudioPro.activarContexto();
+
         const root = document.querySelector('.simulador-app-root');
         if (root) {
             root.classList.remove('modo-halar', 'modo-empujar');
             root.classList.add(`modo-${nuevaDireccion}`);
         }
-        motorAudioPro.detenerTodo(0.01);
+
+        // 🧹 SILENCIO INSTANTÁNEO Y TRANSICIÓN
+        motorAudioPro.detenerTodo(0.015);
+
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
-                const nMusicalId = `${data.pos}-${nuevaDireccion}`;
-                logicaRef.current.actualizarBotonActivo(nMusicalId, 'add', null, true);
-                pointersMap.current.set(pId, { ...data, musicalId: nMusicalId });
+                const nextId = `${data.pos}-${nuevaDireccion}`;
+                logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
+                pointersMap.current.set(pId, { ...data, musicalId: nextId });
             }
         });
+
         logicaRef.current.setDireccion(nuevaDireccion);
     };
 
-    // --- FORMATEO Y ESTILOS ---
+    // --- FORMATEO ---
     const CIFRADO: Record<string, string> = { 'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E', 'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B' };
     const formatearEtiquetaNota = (notaRaw: any) => {
         if (!notaRaw) return '';
@@ -237,14 +277,14 @@ const SimuladorApp: React.FC = () => {
     };
 
     useEffect(() => {
-        const r = document.documentElement;
-        r.style.setProperty('--escala-acordeon', escala.toString());
-        r.style.setProperty('--distancia-h-pitos', `${distanciaH}vh`);
-        r.style.setProperty('--distancia-v-pitos', `${distanciaV}vh`);
-        r.style.setProperty('--distancia-h-bajos', `${distanciaHBajos}vh`);
-        r.style.setProperty('--distancia-v-bajos', `${distanciaVBajos}vh`);
-        r.style.setProperty('--offset-ios', alejarIOS ? '10px' : '0px');
-        r.style.setProperty('--tamano-fuente-pitos', `${tamanoFuente}vh`);
+        const root = document.documentElement;
+        root.style.setProperty('--escala-acordeon', escala.toString());
+        root.style.setProperty('--distancia-h-pitos', `${distanciaH}vh`);
+        root.style.setProperty('--distancia-v-pitos', `${distanciaV}vh`);
+        root.style.setProperty('--distancia-h-bajos', `${distanciaHBajos}vh`);
+        root.style.setProperty('--distancia-v-bajos', `${distanciaVBajos}vh`);
+        root.style.setProperty('--offset-ios', alejarIOS ? '10px' : '0px');
+        root.style.setProperty('--tamano-fuente-pitos', `${tamanoFuente}vh`);
     }, [escala, distanciaH, distanciaV, distanciaHBajos, distanciaVBajos, alejarIOS, tamanoFuente]);
 
     useEffect(() => {
@@ -285,22 +325,59 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div className={`simulador-app-root capa-blindaje-total modo-${logica.direccion}`}>
-            <div className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`} onPointerDown={() => manejarCambioFuelle('empujar')} onPointerUp={() => manejarCambioFuelle('halar')}>
+            {/* 🌬️ INDICADOR DE FUELLE (Fijado y sin gestos) */}
+            <div
+                className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
+                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
+                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onPointerLeave={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                style={{ touchAction: 'none' }}
+            >
                 <span className="fuelle-status">{logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}</span>
             </div>
+
             <div className="contenedor-acordeon-completo">
                 <div className="simulador-canvas">
                     <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
+
                     <div className="diapason-marco" ref={marcoRef}>
                         <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x }}>
-                            <div className="hilera-pitos hilera-adentro">{h3.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
-                            <div className="hilera-pitos hilera-medio">{h2.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
-                            <div className="hilera-pitos hilera-afuera">{h1.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
+                            {/* HILERAS CON EVENTOS BLOQUEADOS (Manejo por delegado en useEffect) */}
+                            <div className="hilera-pitos hilera-adentro">
+                                {h3.map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="hilera-pitos hilera-medio">
+                                {h2.map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="hilera-pitos hilera-afuera">
+                                {h1.map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
                     </div>
                 </div>
             </div>
-            {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>MODO HORIZONTAL</h2></div>)}
+
+            {!isLandscape && (
+                <div className="overlay-rotacion">
+                    <div className="icono-rotar"><RotateCw size={80} /></div>
+                    <h2>HORIZONTAL</h2>
+                </div>
+            )}
         </div>
     );
 };
