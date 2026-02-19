@@ -3,7 +3,7 @@
 .barra-herramientas-contenedor {
     position: absolute;
     /* 🎯 VUELVE AL TOPE: El canvas ahora escala con los botones */
-    top: 5px;
+    top: 10px;
     bottom: auto;
     left: 0;
     right: 0;

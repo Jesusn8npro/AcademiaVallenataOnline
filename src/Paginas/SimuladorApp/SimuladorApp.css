@@ -46,8 +46,8 @@
 }
 
 .barra-herramientas-contenedor {
-    position: relative;
-    z-index: 200;
+    z-index: 800 !important;
+    /* ← Prioridad absoluta */
     touch-action: auto !important;
     pointer-events: auto !important;
 }
@@ -202,24 +202,13 @@
 
 /* 🔥 VOLUMEN DE SOMBREADO ROJO EN BARRA (ATMOSFÉRICO) */
 .modo-empujar .barra-herramientas-contenedor {
-    box-shadow:
-        0px 6px 15px rgba(0, 0, 0, 0.9),
-        inset 0px 1px 1px rgba(255, 255, 255, 0.2),
-        0px 0px 40px rgba(239, 68, 68, 0.6),
-        /* Glow principal */
-        0px 0px 80px rgba(239, 68, 68, 0.3) !important;
-    /* Glow de volumen extendido */
-    background: rgba(18, 18, 18, 0.98);
-    border-color: #ef444488 !important;
+    box-shadow: 0px 6px 15px rgba(239, 68, 68, 0.4);
 }
-
 
 .nota-etiqueta {
     font-size: var(--tamano-fuente-pitos, 2.8vh);
-    /* Un poco más pequeña proporcionalmente */
     font-weight: 900;
     color: #222;
-    /* text-transform: uppercase; <-- QUITADO para que se vea Bb, Eb, etc */
     pointer-events: none;
     transition: font-size 0.2s;
 }
