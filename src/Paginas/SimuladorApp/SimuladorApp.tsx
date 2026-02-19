@@ -89,10 +89,11 @@ const SimuladorApp: React.FC = () => {
             lastTrenPos.current = { left: trenRect.left - currentX, top: trenRect.top };
             rectsCache.current.clear();
             const botones = tren.querySelectorAll('.pito-boton');
-            botones.forEach(b => {
-                const el = b as HTMLElement;
+            // Usar for loop clásico es más rápido y genera menos basura que forEach
+            for (let i = 0; i < botones.length; i++) {
+                const el = botones[i] as HTMLElement;
                 const pos = el.dataset.pos;
-                if (!pos) return;
+                if (!pos) continue;
                 const r = el.getBoundingClientRect();
                 rectsCache.current.set(pos, {
                     left: r.left - (trenRect.left - currentX),
@@ -100,11 +101,12 @@ const SimuladorApp: React.FC = () => {
                     top: r.top - trenRect.top,
                     bottom: r.bottom - trenRect.top
                 });
-            });
+            }
         };
         actualizarGeometria();
         window.addEventListener('resize', actualizarGeometria);
-        const intervalGeometria = setInterval(actualizarGeometria, 2000);
+        // Reducir frecuencia de chequeo de geometría para salvar CPU
+        const intervalGeometria = setInterval(actualizarGeometria, 5000);
 
         const obtenerBotonEnCoordenadas = (clientX: number, clientY: number): string | null => {
             const currentX = x.get();
@@ -114,7 +116,8 @@ const SimuladorApp: React.FC = () => {
             const offsetY = clientY - trenTop;
             const MARGEN_ERROR = 15;
 
-            for (const [pos, r] of rectsCache.current.entries()) {
+            // Iterador optimizado sin generar objetos entries()
+            for (const [pos, r] of rectsCache.current) {
                 if (offsetX >= r.left - MARGEN_ERROR && offsetX <= r.right + MARGEN_ERROR &&
                     offsetY >= r.top - MARGEN_ERROR && offsetY <= r.bottom + MARGEN_ERROR) {
                     return pos;
@@ -125,6 +128,7 @@ const SimuladorApp: React.FC = () => {
 
         const procesarEvento = (e: PointerEvent, tipo: 'down' | 'move' | 'up') => {
             const target = e.target as HTMLElement;
+            // Filtros rápidos
             if (target.closest('.barra-herramientas-contenedor')) return;
             if (target.closest('.indicador-fuelle')) {
                 if (e.cancelable) e.preventDefault();
@@ -132,52 +136,58 @@ const SimuladorApp: React.FC = () => {
             }
             if (e.cancelable) e.preventDefault();
 
-            const eventos = (tipo === 'move' && e.getCoalescedEvents) ? e.getCoalescedEvents() : [e];
+            // 🚀 OPTIMIZACIÓN GC: Evitar crear arrays con getCoalescedEvents si no es necesario
+            // Solo usar coalesced en movimientos rápidos, pero en móviles viejos puede llenar la memoria
+            // Vamos a procesar solo el evento principal por ahora para probar estabilidad
+            const pId = e.pointerId;
 
-            eventos.forEach(ev => {
-                const pId = ev.pointerId;
-                if (tipo === 'up') {
-                    const data = pointersMap.current.get(pId);
-                    if (data && data.pos) {
+            if (tipo === 'up') {
+                const data = pointersMap.current.get(pId);
+                if (data) {
+                    if (data.pos) {
                         logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
                         actualizarVisualBoton(data.pos, false);
                         activeNotesRef.current.delete(data.musicalId);
                         registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
                     }
                     pointersMap.current.delete(pId);
-                    return;
                 }
+                // Liberar captura si existe
+                try { if (target.hasPointerCapture(pId)) target.releasePointerCapture(pId); } catch (_) { }
+                return;
+            }
 
-                const nuevaPos = obtenerBotonEnCoordenadas(ev.clientX, ev.clientY) || '';
-                const dataPrev = pointersMap.current.get(pId);
-                const posAnterior = dataPrev?.pos || '';
+            const nuevaPos = obtenerBotonEnCoordenadas(e.clientX, e.clientY) || '';
+            const dataPrev = pointersMap.current.get(pId);
+            const posAnterior = dataPrev?.pos || '';
 
-                if (nuevaPos === posAnterior) return;
+            if (nuevaPos === posAnterior) return;
 
-                if (posAnterior && dataPrev) {
-                    logicaRef.current.actualizarBotonActivo(dataPrev.musicalId, 'remove', null, true);
-                    actualizarVisualBoton(posAnterior, false);
-                    activeNotesRef.current.delete(dataPrev.musicalId);
-                    registrarEvento('nota_off', { id: dataPrev.musicalId, pos: posAnterior });
+            // Cambio de botón
+            if (posAnterior && dataPrev) {
+                logicaRef.current.actualizarBotonActivo(dataPrev.musicalId, 'remove', null, true);
+                actualizarVisualBoton(posAnterior, false);
+                activeNotesRef.current.delete(dataPrev.musicalId);
+                registrarEvento('nota_off', { id: dataPrev.musicalId, pos: posAnterior });
+            }
+
+            if (nuevaPos) {
+                const newMId = `${nuevaPos}-${logicaRef.current.direccion}`;
+                if (!activeNotesRef.current.has(newMId)) {
+                    motorAudioPro.activarContexto();
+                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
+                    actualizarVisualBoton(nuevaPos, true);
+                    activeNotesRef.current.add(newMId);
+                    registrarEvento('nota_on', { id: newMId, pos: nuevaPos });
                 }
+                pointersMap.current.set(pId, { pos: nuevaPos, musicalId: newMId });
 
-                if (nuevaPos) {
-                    const newMId = `${nuevaPos}-${logicaRef.current.direccion}`;
-                    if (!activeNotesRef.current.has(newMId)) {
-                        motorAudioPro.activarContexto();
-                        logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
-                        actualizarVisualBoton(nuevaPos, true);
-                        activeNotesRef.current.add(newMId);
-                        registrarEvento('nota_on', { id: newMId, pos: nuevaPos });
-                    }
-                    pointersMap.current.set(pId, { pos: nuevaPos, musicalId: newMId });
-                    if (tipo === 'down' && e.target instanceof Element) {
-                        try { (e.target as Element).setPointerCapture(pId); } catch (_) { }
-                    }
-                } else {
-                    pointersMap.current.set(pId, { pos: '', musicalId: '' });
+                if (tipo === 'down' && target instanceof Element) {
+                    try { target.setPointerCapture(pId); } catch (_) { }
                 }
-            });
+            } else {
+                pointersMap.current.set(pId, { pos: '', musicalId: '' });
+            }
         };
 
         const handleDown = (e: PointerEvent) => procesarEvento(e, 'down');
@@ -190,17 +200,13 @@ const SimuladorApp: React.FC = () => {
         document.addEventListener('pointerup', handleUp, opts);
         document.addEventListener('pointercancel', handleUp, opts);
 
-        // 👻 PHANTOM TOUCH LISTENER (Nivel 3 Gemini)
-        // Listener agresivo en window para matar CUALQUIER intento de scroll/zoom del navegador
-        // antes de que llegue a React o a los elementos.
+        // 👻 PHANTOM TOUCH LISTENER
         const phantomKiller = (e: TouchEvent) => {
             if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
             if (e.cancelable) e.preventDefault();
-            // Hack para despertar AudioContext en el primer touch real si estaba dormido
             motorAudioPro.activarContexto();
         };
         window.addEventListener('touchstart', phantomKiller, { passive: false });
-        // Touchmove también para evitar "pull-to-refresh"
         window.addEventListener('touchmove', phantomKiller, { passive: false });
 
         return () => {
@@ -212,7 +218,11 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointercancel', handleUp, opts);
             window.removeEventListener('touchstart', phantomKiller);
             window.removeEventListener('touchmove', phantomKiller);
+            // 🧹 LIMPIEZA DE EMERGENCIA
+            pointersMap.current.clear();
+            activeNotesRef.current.clear();
         };
+
     }, []);
 
     // ⚡ MANEJO OPTIMIZADO DEL FUELLE (Visual Bypass)
