@@ -25,19 +25,18 @@ export class MotorAudioPro {
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
         // ⚡ OPTIMIZACIÓN DE LATENCIA Y CPU
-        // En móviles bajamos el sampleRate a 22050Hz para reducir la carga de procesamiento
-        // En PC mantenemos 44100Hz o 48000Hz (nativo) para máxima fidelidad
+        // Dejamos que el navegador use su sampleRate nativo (44.1k o 48k).
+        // Forzar 22050Hz causa que el CPU trabaje extra resampleando.
         const opcionesContexto: AudioContextOptions = {
-            latencyHint: 'interactive'
+            latencyHint: 'high-performance' as any // Modo de alto rendimiento si está disponible
         };
 
         if (this.esMovil) {
-            opcionesContexto.sampleRate = 22050;
-            this.MAX_VOCES = 12; // 🛡️ Límite más estricto en móvil para evitar saturación
-            console.log("📱 Modo móvil detectado: Optimizando AudioEngine para bajo consumo");
+            this.MAX_VOCES = 24; // 🛡️ Subimos polifonía para trinos complejos
+            console.log("📱 Modo móvil optimizado: Frecuencia nativa y polifonía aumentada (24)");
         } else {
-            this.MAX_VOCES = 32;
-            console.log("💻 Modo escritorio detectado: AudioEngine en máxima fidelidad");
+            this.MAX_VOCES = 48;
+            console.log("💻 Modo escritorio: Máxima fidelidad y polifonía (48)");
         }
 
         this.contexto = new AudioContextClass(opcionesContexto);
@@ -84,7 +83,7 @@ export class MotorAudioPro {
         try {
             // 🔄 ESTRATEGIA DE CARGA HÍBRIDA:
             // Si en el futuro conviertes a .webm, el motor intentará usar el formato más ligero
-            let urlFinal = url;
+            const urlFinal = url;
 
             // Si quisiéramos forzar WebM en móvil podrías descomentar esto:
             // if (this.esMovil) urlFinal = url.replace('.mp3', '.webm');
@@ -139,8 +138,8 @@ export class MotorAudioPro {
 
         const ganancia = this.contexto.createGain();
         ganancia.gain.setValueAtTime(0.001, ahora);
-        // Attack ultra-veloz para respuesta táctil inmediata
-        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.003);
+        // Ataque instantáneo (1ms) para que sientas el golpe de la nota al tocar
+        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.001);
 
         fuente.connect(ganancia);
         ganancia.connect(this.nodoGananciaPrincipal);
@@ -172,7 +171,9 @@ export class MotorAudioPro {
             g.setValueAtTime(val, ahora);
             g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
             instancia.fuente.stop(ahora + rapidez + 0.005);
-        } catch (e) { }
+        } catch (err) {
+            console.warn("AudioEngine stop error:", err);
+        }
     }
 
     /**
