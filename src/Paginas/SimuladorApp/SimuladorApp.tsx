@@ -39,8 +39,7 @@ const SimuladorApp: React.FC = () => {
     // 🗺️ REFS Y CACHE DE GEOMETRÍA (Nivel Hardware)
     // 🖐️ V18.0: Mapa de PUNTEROS (PointerEvents), no de touches
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
-    const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
-    const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
+    // Cache de geometría eliminada en V20.0 (elementFromPoint es superior)
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -65,187 +64,144 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🚀 MOTOR DE INPUT PRO V18.0 (PointerEvents + setPointerCapture)
+    // 🚀 MOTOR DE INPUT PRO V20.0 (Zero-Lag + Coalesced Events)
     // =====================================================================
+    // Estado mutable fuera de React para rendimiento máximo (60/120 FPS)
+    const activeNotesRef = useRef<Set<string>>(new Set());
+
     useEffect(() => {
         const marco = marcoRef.current;
-        const tren = trenRef.current;
-        if (!marco || !tren) return;
+        if (!marco) return;
 
         /**
-         * 🗺️ CACHÉ ATÓMICA DE GEOMETRÍA
-         * Se ejecuta solo al montar, redimensionar o cuando cambian distancias.
+         * 🎯 HIT-TESTING NATIVO (DOM elementFromPoint)
+         * Mucho más preciso y rápido que cálculos matemáticos manuales,
+         * especialmente con transformaciones CSS (scale, rotate).
          */
-        const actualizarGeometriaBase = () => {
-            if (!tren) return;
-            const elPitos = tren.querySelectorAll('.pito-boton');
-            const currentX = x.get();
-            const trenBase = tren.getBoundingClientRect();
-
-            // Calculamos donde estaría el tren si el scroll fuera 0
-            lastTrenRect.current = {
-                left: trenBase.left - currentX,
-                top: trenBase.top
-            };
-
-            rectsCache.current.clear();
-            elPitos.forEach(el => {
-                const pos = (el as HTMLElement).dataset.pos;
-                const r = el.getBoundingClientRect();
-                if (pos) {
-                    // Guardamos la posición relativa al tren (punto 0 del scroll)
-                    rectsCache.current.set(pos, {
-                        left: r.left - trenBase.left,
-                        right: r.right - trenBase.left,
-                        top: r.top - trenBase.top,
-                        bottom: r.bottom - trenBase.top
-                    });
-                }
-            });
-            console.log("📍 Geometría Atómica Recalculada:", rectsCache.current.size, "pitos");
-        };
-
-        const interval = setInterval(actualizarGeometriaBase, 10000);
-        window.addEventListener('resize', actualizarGeometriaBase);
-        // Pequeño delay para que React termine el layout
-        setTimeout(actualizarGeometriaBase, 1000);
-
-        /**
-         * 🎯 HIT-TESTING MATEMÁTICO (Zero DOM access)
-         */
-        const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
-            if (!lastTrenRect.current) return null;
-
-            // Calculamos posición real del tren usando el MotionValue (Sin Reflow!)
-            const currentX = x.get();
-            const realTrenLeft = lastTrenRect.current.left + currentX;
-            const realTrenTop = lastTrenRect.current.top;
-
-            const relX = clientX - realTrenLeft;
-            const relY = clientY - realTrenTop;
-            const IMAN = 15; // Margen de error para dedos grandes
-
-            for (const [pos, r] of rectsCache.current.entries()) {
-                if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
-                    relY >= r.top - IMAN && relY <= r.bottom + IMAN) {
-                    return pos;
-                }
+        const obtenerBotonBajoPuntero = (clientX: number, clientY: number): { pos: string, id: string } | null => {
+            const el = document.elementFromPoint(clientX, clientY);
+            if (!el) return null;
+            const boton = el.closest('.pito-boton') as HTMLElement;
+            if (boton && boton.dataset.pos) {
+                return { pos: boton.dataset.pos, id: boton.id }; // id no usado, solo pos
             }
             return null;
         };
 
-        /**
-         * 🚀 MOTOR V19.0: PointerEvents CORREGIDO
-         * 
-         * BUG RAÍZ ENCONTRADO (V18 → V19):
-         * 1. `.diapason-marco` tiene `pointer-events: none` en CSS → el marco NUNCA recibe
-         *    el pointerdown directamente. Los eventos burbujean desde los hijos (.pito-boton).
-         * 2. `setPointerCapture(e.currentTarget)` fallaba silenciosamente porque currentTarget
-         *    (el marco) no tenía un puntero activo — el puntero nació en el hijo (el pito).
-         * 3. Con pointer-events:none en el marco, la captura nunca se establecía →
-         *    Chrome mantenía sus heurísticas de scroll para el dedo solitario.
-         *
-         * SOLUCIÓN DEFINITIVA:
-         * - Listeners en `document` fase de CAPTURA: se disparan ANTES que Chrome procese eventos.
-         * - `setPointerCapture` sobre `e.target` (el elemento que RECIBIÓ el toque real).
-         * - Filtro por marcoRect: verificamos coordenadas vs bounding box del marco, evitando
-         *   costosas llamadas a `.closest()` en el hot path táctil.
-         */
-        let marcoRect = marco.getBoundingClientRect();
-        const actualizarMarcoRect = () => { marcoRect = marco.getBoundingClientRect(); };
-        window.addEventListener('resize', actualizarMarcoRect);
-        setTimeout(actualizarMarcoRect, 500);
-
-        const handlePointerDown = (e: PointerEvent) => {
-            // 🎯 FILTRO DE ZONA: Solo procesamos toques dentro del área del acordeón
-            // Esto reemplaza .closest() (lento) con una simple comparación de coordenadas
-            if (e.clientX < marcoRect.left || e.clientX > marcoRect.right ||
-                e.clientY < marcoRect.top || e.clientY > marcoRect.bottom) return;
-
-            const target = e.target as HTMLElement;
-            // Filtrar fuelle y controles UI (tienen su propio manejo)
-            if (target.closest('.indicador-fuelle') ||
-                target.closest('.barra-herramientas-contenedor')) return;
-
-            // ⚡ BUG FIX CRÍTICO: setPointerCapture sobre el TARGET (quien recibió el toque),
-            // NO sobre currentTarget. El target es el .pito-boton que SÍ tiene pointer-events:auto.
-            // Esto es lo que hace que Chrome entre en "modo gaming" para 1 solo dedo.
-            try { target.setPointerCapture(e.pointerId); } catch (_) { }
-
-            if (e.cancelable) e.preventDefault();
-            motorAudioPro.activarContexto();
-
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            if (pos) {
-                const mId = `${pos}-${logicaRef.current.direccion}`;
-                pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
-                actualizarVisualBoton(pos, true);
-                registrarEvento('nota_on', { id: mId, pos });
-            } else {
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
-            }
-        };
-
-        const handlePointerMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
-
+        const procesarEventoPuntero = (e: PointerEvent, tipo: 'down' | 'move' | 'up') => {
             if (e.cancelable) e.preventDefault();
 
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            if (pos !== data.pos) {
-                if (data.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                    actualizarVisualBoton(data.pos, false);
-                    registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+            // Si es move, usamos coalesced events para capturar trazos rápidos
+            const eventos = (tipo === 'move' && e.getCoalescedEvents)
+                ? e.getCoalescedEvents()
+                : [e];
+
+            eventos.forEach(ev => {
+                const pointerId = ev.pointerId;
+
+                // En UP/CANCEL, limpiar todo
+                if (tipo === 'up') {
+                    const data = pointersMap.current.get(pointerId);
+                    if (data && data.pos) {
+
+                        // Apagar nota
+                        logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                        actualizarVisualBoton(data.pos, false);
+                        activeNotesRef.current.delete(data.musicalId);
+                        registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                    }
+                    pointersMap.current.delete(pointerId);
+                    return;
                 }
-                if (pos) {
-                    const newMId = `${pos}-${logicaRef.current.direccion}`;
-                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId });
-                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
-                    actualizarVisualBoton(pos, true);
-                    registrarEvento('nota_on', { id: newMId, pos });
+
+                // En DOWN/MOVE
+                const hit = obtenerBotonBajoPuntero(ev.clientX, ev.clientY);
+                const nuevaPos = hit ? hit.pos : '';
+
+                // Recuperar estado anterior de este puntero
+                const dataPrev = pointersMap.current.get(pointerId);
+                const posAnterior = dataPrev?.pos || '';
+
+                // Si no hay cambio de posición, no hacer nada (optimización)
+                if (nuevaPos === posAnterior) return;
+
+                // 1. Apagar nota anterior si existía
+                if (posAnterior && dataPrev?.musicalId) {
+                    // Solo apagar si el nuevo botón es diferente
+                    logicaRef.current.actualizarBotonActivo(dataPrev.musicalId, 'remove', null, true);
+                    actualizarVisualBoton(posAnterior, false);
+                    activeNotesRef.current.delete(dataPrev.musicalId);
+                    registrarEvento('nota_off', { id: dataPrev.musicalId, pos: posAnterior });
+                }
+
+                // 2. Encender nueva nota si hay botón y no está ya activa
+                if (nuevaPos) {
+                    const newMId = `${nuevaPos}-${logicaRef.current.direccion}`;
+
+                    // Evitar re-disparar si ya está sonando (por otro dedo, p.ej.)
+                    // Aunque en acordeón real puedes poner dos dedos en el mismo botón,
+                    // digitalmente es la misma nota.
+                    if (!activeNotesRef.current.has(newMId)) {
+                        motorAudioPro.activarContexto();
+                        logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
+                        actualizarVisualBoton(nuevaPos, true);
+                        activeNotesRef.current.add(newMId);
+                        registrarEvento('nota_on', { id: newMId, pos: nuevaPos });
+                    }
+
+                    // Actualizar mapa de punteros
+                    pointersMap.current.set(pointerId, { pos: nuevaPos, musicalId: newMId });
+
+                    // CAPTURA DE PUNTERO: Crucial para que el navegador siga enviando eventos
+                    // incluso si el dedo sale del elemento inicial.
+                    if (tipo === 'down' && e.target instanceof Element) {
+                        try { (e.target as Element).setPointerCapture(pointerId); } catch (_) { }
+                    }
                 } else {
-                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
+                    // El dedo está en 'nada' (fuera de botones)
+                    pointersMap.current.set(pointerId, { pos: '', musicalId: '' });
                 }
-            }
+            });
         };
 
-        const handlePointerUp = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
-
-            if (data.pos) {
-                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                actualizarVisualBoton(data.pos, false);
-                registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-            }
-            pointersMap.current.delete(e.pointerId);
+        // Listeners Globales (Document) con { passive: false, capture: true }
+        // Capture phase asegura que interceptamos el evento antes que el browser decida hacer scroll.
+        const handleDown = (e: PointerEvent) => {
+            // Solo procesar si tocamos dentro del área del simulador (o arrastramos desde ella)
+            // Pero los listeners globales capturan todo. Filtramos por target inicial o zona?
+            // Mejor: si no estamos en 'simulador-app-root', ignorar.
+            if (!(e.target as HTMLElement).closest('.simulador-app-root')) return;
+            procesarEventoPuntero(e, 'down');
         };
 
-        // 🎯 LISTENERS EN DOCUMENT - FASE DE CAPTURA
-        // Usar capture:true garantiza que nuestro handler corre ANTES que Chrome
-        // decida si es un gesto de scroll. Esto es equivalente a interceptar la
-        // señal antes del sistema operativo.
-        document.addEventListener('pointerdown', handlePointerDown, { capture: true, passive: false });
-        document.addEventListener('pointermove', handlePointerMove, { capture: true, passive: false });
-        document.addEventListener('pointerup', handlePointerUp, { capture: true });
-        document.addEventListener('pointercancel', handlePointerUp, { capture: true });
+        const handleMove = (e: PointerEvent) => {
+            if (!pointersMap.current.has(e.pointerId)) return; // Solo seguir punteros conocidos
+            procesarEventoPuntero(e, 'move');
+        };
 
-        // 🚫 Bloquear gestos residuales del sistema
-        const blockGesture = (e: Event) => { if (e.cancelable) e.preventDefault(); };
-        window.addEventListener('contextmenu', blockGesture);
+        const handleUp = (e: PointerEvent) => {
+            if (!pointersMap.current.has(e.pointerId)) return;
+            procesarEventoPuntero(e, 'up');
+        };
+
+        const opciones = { capture: true, passive: false };
+
+        document.addEventListener('pointerdown', handleDown, opciones);
+        document.addEventListener('pointermove', handleMove, opciones);
+        document.addEventListener('pointerup', handleUp, opciones);
+        document.addEventListener('pointercancel', handleUp, opciones);
+
+        const preventDefault = (e: Event) => e.preventDefault();
+        window.addEventListener('contextmenu', preventDefault);
+        window.addEventListener('touchstart', preventDefault, { passive: false }); // Bloqueo extra para iOS
 
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('resize', actualizarGeometriaBase);
-            window.removeEventListener('resize', actualizarMarcoRect);
-            document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
-            document.removeEventListener('pointermove', handlePointerMove, { capture: true });
-            document.removeEventListener('pointerup', handlePointerUp, { capture: true });
-            document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
-            window.removeEventListener('contextmenu', blockGesture);
+            document.removeEventListener('pointerdown', handleDown, opciones);
+            document.removeEventListener('pointermove', handleMove, opciones);
+            document.removeEventListener('pointerup', handleUp, opciones);
+            document.removeEventListener('pointercancel', handleUp, opciones);
+            window.removeEventListener('contextmenu', preventDefault);
+            window.removeEventListener('touchstart', preventDefault);
         };
     }, []);
 

@@ -39,10 +39,10 @@ export class MotorAudioPro {
 
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-        // ⚡ latencyHint: 0 (número) = MÍNIMA LATENCIA ABSOLUTA del hardware
-        // Diferencia crítica: latencyHint: 'interactive' puede ser 40ms, latencyHint: 0 es ~5ms
+        // ⚡ latencyHint: 'interactive' = Balance ideal entre latencia y estabilidad
+        // Aunque 0 es teóricamente más rápido, 'interactive' evita glitches en dispositivos gama media.
         const opcionesContexto: AudioContextOptions = {
-            latencyHint: 0
+            latencyHint: 'interactive'
         };
 
         if (this.esMovil) {
@@ -214,15 +214,24 @@ export class MotorAudioPro {
     }
 
     /**
-     * Detención ultra-rápida
+     * Detención con Release Suave (Evita Clics)
      */
-    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.01) {
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.05) {
         try {
             const ahora = this.contexto.currentTime;
             const g = instancia.ganancia.gain;
+
+            // Cancelar cambios programados previos
             g.cancelScheduledValues(ahora);
-            g.setValueAtTime(0, ahora + rapidez);
-            instancia.fuente.stop(ahora + rapidez + 0.002);
+
+            // Fijar el valor actual explícitamente para evitar saltos
+            g.setValueAtTime(g.value, ahora);
+
+            // Release exponencial suave hacia casi cero (0.001)
+            g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
+
+            // Detener el oscilador/fuente un poco después para asegurar silencio total
+            instancia.fuente.stop(ahora + rapidez + 0.01);
         } catch (err) {
             // Silencioso — es normal que falle si ya terminó
         }
