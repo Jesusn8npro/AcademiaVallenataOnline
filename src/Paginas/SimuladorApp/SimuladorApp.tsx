@@ -321,13 +321,27 @@ const SimuladorApp: React.FC = () => {
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`}>
 
-            {/* 🪗 FUELLE OPTIMIZADO: DOM Directo para evitar Lag de Renderizado */}
+            {/* 🪗 FUELLE OPTIMIZADO: Pointer Capture Vital para evitar "Sticky Button" */}
             <div
                 ref={fuelleRef}
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
-                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onPointerCancel={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation(); // Evitar conflictos con listeners globales
+                    (e.target as Element).setPointerCapture(e.pointerId); // 🔒 CAPTURA CRÍTICA: El dedo no escapa
+                    manejarCambioFuelle('empujar');
+                }}
+                onPointerUp={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Liberar captura no es estrictamente necesario (el navegador lo hace), pero es buena práctica
+                    try { (e.target as Element).releasePointerCapture(e.pointerId); } catch (_) { }
+                    manejarCambioFuelle('halar');
+                }}
+                onPointerCancel={(e) => {
+                    e.preventDefault();
+                    manejarCambioFuelle('halar');
+                }}
                 onContextMenu={(e) => e.preventDefault()}
                 style={{ zIndex: 100, touchAction: 'none' }}
             >
