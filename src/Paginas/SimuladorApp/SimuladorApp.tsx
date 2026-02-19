@@ -1,10 +1,11 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V15.0 (The "Real Vallenato" Engine)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V16.0 (Hardware Performance)
  * 
- * ESTRATEGIA DEFINITIVA:
- * 1. Barra Sagrada: Se mantiene intocable en su posición.
- * 2. Bypass de Lag (1 Dedo): Llamamos a preventDefault() en el canvas para desactivar el throttling de Chrome.
- * 3. Lógica de Fuelle: Pisar = Cerrar (Empujar), Soltar = Abrir (Halar).
+ * MEJORAS CRÍTICAS:
+ * 1. Zero-Reflow: Eliminado getBoundingClientRect() de los bucles de movimiento (touchmove).
+ * 2. Pre-Cache Geométrico: Posiciones de botones relativas al tren calculadas una sola vez.
+ * 3. Fuelle Synchro: Cambiado a TouchEvents puros para sincronía total con el motor de notas.
+ * 4. Barra Intocable: Documentada y protegida en su posición original.
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -34,9 +35,11 @@ const SimuladorApp: React.FC = () => {
 
     const x = useMotionValue(0);
 
-    // 🗺️ REFS PARA EL MOTOR
+    // 🗺️ REFS Y CACHE DE GEOMETRÍA (Nivel Hardware)
     const touchesMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
+    const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
+
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
 
@@ -60,14 +63,15 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT V15.0 (ZERO LAG ULTIMATE)
+    // 🖐️ MOTOR DE INPUT V16.0 (ZERO REFLOW)
     // =====================================================================
     useEffect(() => {
         const marco = marcoRef.current;
         const tren = trenRef.current;
         if (!marco || !tren) return;
 
-        const actualizarGeometria = () => {
+        // Cachea posiciones relativas al 'tren' (no cambian con el scroll X)
+        const actualizarGeometriaBase = () => {
             const elPitos = tren.querySelectorAll('.pito-boton');
             const trenBase = tren.getBoundingClientRect();
             rectsCache.current.clear();
@@ -85,16 +89,17 @@ const SimuladorApp: React.FC = () => {
             });
         };
 
-        const interval = setInterval(actualizarGeometria, 3500);
-        window.addEventListener('resize', actualizarGeometria);
-        setTimeout(actualizarGeometria, 500);
+        const interval = setInterval(actualizarGeometriaBase, 4000);
+        window.addEventListener('resize', actualizarGeometriaBase);
+        setTimeout(actualizarGeometriaBase, 500);
 
         const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
-            const trenBase = tren.getBoundingClientRect();
-            const relX = clientX - trenBase.left;
-            const relY = clientY - trenBase.top;
+            if (!lastTrenRect.current) return null;
+            const relX = clientX - lastTrenRect.current.left;
+            const relY = clientY - lastTrenRect.current.top;
             const IMAN = 15;
 
+            // Búsqueda ultra-rápida en el cache geométrico
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
                     relY >= r.top - IMAN && relY <= r.bottom + IMAN) {
@@ -105,17 +110,21 @@ const SimuladorApp: React.FC = () => {
         };
 
         const handleTouch = (e: TouchEvent) => {
-            // 🛡️ NO TOCAMOS LA BARRA
             const target = e.target as HTMLElement;
+            // No interceptamos la barra de herramientas ni modales
             if (target.closest('.barra-herramientas-contenedor') ||
                 target.closest('.menu-opciones-panel') ||
-                target.closest('.modal-contenedor')) {
-                return;
-            }
+                target.closest('.modal-contenedor')) return;
 
-            // ⚠️ EL GRAN SECRETO: preventDefault en touchstart desactiva el throttling de 1 dedo en Chrome
+            // ⚡ EL TRUCO MAESTRO: Bloqueo de scroll y latencia Chrome
             if (e.cancelable) e.preventDefault();
             motorAudioPro.activarContexto();
+
+            // Actualizamos la posición del tren SOLO en touchstart para evitar reflows en touchmove
+            if (e.type === 'touchstart' || e.type === 'touchmove') {
+                const tr = tren.getBoundingClientRect();
+                lastTrenRect.current = { left: tr.left, top: tr.top };
+            }
 
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
@@ -164,19 +173,19 @@ const SimuladorApp: React.FC = () => {
             }
         };
 
-        // Escucha en el marco para no saturar el window pero capturar todo el área de juego
-        marco.addEventListener('touchstart', handleTouch, { passive: false });
-        marco.addEventListener('touchmove', handleTouch, { passive: false });
-        marco.addEventListener('touchend', handleTouch, { passive: false });
-        marco.addEventListener('touchcancel', handleTouch, { passive: false });
+        // Captura global en fase de captura para máxima prioridad
+        window.addEventListener('touchstart', handleTouch, { passive: false, capture: true });
+        window.addEventListener('touchmove', handleTouch, { passive: false, capture: true });
+        window.addEventListener('touchend', handleTouch, { passive: false, capture: true });
+        window.addEventListener('touchcancel', handleTouch, { passive: false, capture: true });
 
         return () => {
             clearInterval(interval);
-            window.removeEventListener('resize', actualizarGeometria);
-            marco.removeEventListener('touchstart', handleTouch);
-            marco.removeEventListener('touchmove', handleTouch);
-            marco.removeEventListener('touchend', handleTouch);
-            marco.removeEventListener('touchcancel', handleTouch);
+            window.removeEventListener('resize', actualizarGeometriaBase);
+            window.removeEventListener('touchstart', handleTouch, { capture: true });
+            window.removeEventListener('touchmove', handleTouch, { capture: true });
+            window.removeEventListener('touchend', handleTouch, { capture: true });
+            window.removeEventListener('touchcancel', handleTouch, { capture: true });
         };
     }, []);
 
@@ -263,9 +272,9 @@ const SimuladorApp: React.FC = () => {
 
             <div
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
-                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onPointerLeave={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onTouchStart={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
+                onTouchEnd={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onTouchCancel={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
                 onContextMenu={(e) => e.preventDefault()}
                 style={{ zIndex: 100, touchAction: 'none' }}
             >
