@@ -5,7 +5,12 @@ body,
   padding: 0;
   height: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden !important;
+  /* Forzar no scroll */
+  overscroll-behavior-y: contain !important;
+  /* Matar Pull-to-refresh */
+  touch-action: none !important;
+  /* Matar gestos del sistema */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

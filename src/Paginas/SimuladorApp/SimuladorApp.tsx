@@ -135,15 +135,19 @@ const SimuladorApp: React.FC = () => {
         const handleTouch = (e: TouchEvent) => {
             const target = e.target as HTMLElement;
 
-            // 🛡️ FILTRO DE INTERFAZ: No interceptamos controles de la barra
+            // ⚡ BYPASS DEFINITIVO DE CHROME ANDROID
+            // Forzamos el preventDefault y stopPropagation para que el navegador detenga toda heurística de scroll.
+            // Esto 'mata' el evento aquí y evita que Chrome intente usarlo para gestos del sistema.
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            motorAudioPro.activarContexto();
+
+            // 🛡️ FILTRO DE INTERFAZ: No interceptamos controles de la barra (permitimos que bajen)
+            // Nota: Si el preventDefault/stopPropagation rompe la barra, ajustaremos este filtro.
             if (target.closest('.barra-herramientas-contenedor') ||
                 target.closest('.menu-opciones-panel') ||
                 target.closest('.modal-contenedor')) return;
-
-            // ⚡ BYPASS DEFINITIVO DE CHROME ANDROID
-            // Forzamos el preventDefault para que el navegador detenga toda heurística de scroll.
-            if (e.cancelable) e.preventDefault();
-            motorAudioPro.activarContexto();
 
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
@@ -198,6 +202,12 @@ const SimuladorApp: React.FC = () => {
         window.addEventListener('touchend', handleTouch, { passive: false, capture: true });
         window.addEventListener('touchcancel', handleTouch, { passive: false, capture: true });
 
+        // 🚫 BLOQUEO DE GESTOS ADICIONALES
+        const block = (e: Event) => { if (e.cancelable) e.preventDefault(); e.stopPropagation(); };
+        window.addEventListener('wheel', block, { passive: false });
+        window.addEventListener('gesturestart', block, { passive: false });
+        window.addEventListener('contextmenu', block);
+
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaBase);
@@ -205,6 +215,9 @@ const SimuladorApp: React.FC = () => {
             window.removeEventListener('touchmove', handleTouch, { capture: true });
             window.removeEventListener('touchend', handleTouch, { capture: true });
             window.removeEventListener('touchcancel', handleTouch, { capture: true });
+            window.removeEventListener('wheel', block);
+            window.removeEventListener('gesturestart', block);
+            window.removeEventListener('contextmenu', block);
         };
     }, []);
 
@@ -304,7 +317,7 @@ const SimuladorApp: React.FC = () => {
                 {/* 🚀 CAPA DE CAPTURA TÁCTIL ULTRA-PRIORITARIA */}
                 <div className="capa-captura-tactil" style={{
                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    zIndex: 600, touchAction: 'none'
+                    zIndex: 600, touchAction: 'none !important'
                 }}></div>
 
                 <div className="simulador-canvas">

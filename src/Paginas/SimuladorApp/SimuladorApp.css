@@ -23,7 +23,8 @@
     margin: 0 !important;
     padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    touch-action: none;
+    touch-action: none !important;
+    /* BLOQUEO TOTAL */
 }
 
 /* 🪗 CONTENEDOR COMPLETO DEL ACORDEÓN */
