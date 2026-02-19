@@ -213,8 +213,15 @@ const SimuladorApp: React.FC = () => {
             if (pointersMap.current.has(e.pointerId)) onUp(e);
         };
 
-        // 🛡️ BLINDAJE TOTAL CONTRA GESTOS (Chrome/Android)
+        // 🛡️ BLINDAJE SELECTIVO: No bloqueamos clics en la barra o menús
         const evitarScroll = (e: TouchEvent) => {
+            const target = e.target as HTMLElement;
+            // Si tocamos la barra de herramientas o cualquier modal/menú, permitimos el evento
+            if (target.closest('.barra-herramientas-contenedor') ||
+                target.closest('.menu-opciones-panel') ||
+                target.closest('.modal-contenedor')) {
+                return;
+            }
             if (e.cancelable) e.preventDefault();
         };
 
@@ -340,13 +347,13 @@ const SimuladorApp: React.FC = () => {
         <div className={`simulador-app-root capa-blindaje-total modo-${logica.direccion}`}>
             {/* 🌬️ INDICADOR DE FUELLE (Fijado y sin gestos) */}
             <div
-                className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
-                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onPointerLeave={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                className={`indicador-fuelle ${logica.direccion === 'halar' ? 'halar' : 'empujar'}`}
+                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
+                onPointerLeave={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
                 style={{ touchAction: 'none' }}
             >
-                <span className="fuelle-status">{logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}</span>
+                <span className="fuelle-status">{logica.direccion === 'halar' ? 'ABRIENDO' : 'CERRANDO'}</span>
             </div>
 
             <div className="contenedor-acordeon-completo">
