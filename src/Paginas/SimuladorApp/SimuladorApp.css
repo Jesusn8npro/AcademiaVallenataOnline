@@ -12,22 +12,18 @@
 
 .simulador-app-root {
     position: fixed;
-    /* ← Obliga a quedarse pegado a la pantalla */
     top: 0;
     left: 0;
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    /* ← Dinámico para Chrome/Android móvil */
     background-color: #000;
-    overflow: clip !important;
-    /* ← Mucho más agresivo que 'hidden' */
+    overflow: hidden !important;
     overscroll-behavior: none !important;
-    contain: layout size style;
-    /* ← Optimización de motor de juegos */
     margin: 0 !important;
     padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    touch-action: none;
 }
 
 /* 🪗 CONTENEDOR COMPLETO DEL ACORDEÓN */
@@ -47,6 +43,13 @@
 .contenedor-acordeon-completo>* {
     pointer-events: auto;
     /* ← Pero sus hijos (canvas, barra) sí */
+}
+
+.barra-herramientas-contenedor {
+    position: relative;
+    z-index: 200;
+    touch-action: auto !important;
+    pointer-events: auto !important;
 }
 
 .simulador-canvas {
