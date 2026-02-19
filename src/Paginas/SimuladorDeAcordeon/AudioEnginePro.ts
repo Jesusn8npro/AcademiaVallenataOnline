@@ -28,7 +28,7 @@ export class MotorAudioPro {
         // Dejamos que el navegador use su sampleRate nativo (44.1k o 48k).
         // Forzar 22050Hz causa que el CPU trabaje extra resampleando.
         const opcionesContexto: AudioContextOptions = {
-            latencyHint: 'high-performance' as any // Modo de alto rendimiento si está disponible
+            latencyHint: 'interactive'
         };
 
         if (this.esMovil) {
