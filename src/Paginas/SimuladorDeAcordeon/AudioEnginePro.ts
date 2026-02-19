@@ -1,12 +1,13 @@
 /**
- * 🚀 MOTOR DE AUDIO - V5.0 (Zero-Latency Mobile)
+ * 🚀 MOTOR DE AUDIO - V24.0 (Zero-Latency Mobile & Hardcore Keep-Alive)
  * 
- * CAMBIOS CRÍTICOS V4.5 → V5.0:
+ * CAMBIOS CRÍTICOS V4.5 → V5.0 → V24.0:
  * PROBLEMA: createBufferSource() + createGain() + connect() en Android tarda 20-80ms.
  * SOLUCIÓN 1: Eliminar DynamicsCompressor (el más costoso en CPU móvil, +15ms por nota).
  * SOLUCIÓN 2: latencyHint: 0 (número cero, NO string) = latencia mínima absoluta del hardware.
  * SOLUCIÓN 3: Ataque de ganancia directo — sin rampas exponenciales, setValueAtTime puro.
  * SOLUCIÓN 4: Pool de GainNodes pre-conectados por voz — no crear en el momento del toque.
+ * SOLUCIÓN 5: Zombie Mode V2.0 (ScriptProcessor) para evitar suspensión en single-touch.
  */
 
 export interface BancoSonido {
@@ -47,10 +48,10 @@ export class MotorAudioPro {
 
         if (this.esMovil) {
             this.MAX_VOCES = 20;
-            console.log("📱 Motor V5.0 Móvil: latencyHint=0, sin compresor, pool pre-conectado (20 voces)");
+            console.log("📱 Motor V24.0 Móvil: latencyHint=interactive, pool pre-conectado (20 voces)");
         } else {
             this.MAX_VOCES = 48;
-            console.log("💻 Motor V5.0 Escritorio: latencyHint=0, pool máximo (48 voces)");
+            console.log("💻 Motor V24.0 Escritorio: pool máximo (48 voces)");
         }
 
         this.contexto = new AudioContextClass(opcionesContexto);
@@ -115,7 +116,7 @@ export class MotorAudioPro {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try {
                 await this.contexto.resume();
-                console.log("🔊 AudioContext V5.0 reanimado.");
+                console.log("🔊 AudioContext V24.0 reanimado.");
                 this.iniciarKeepAlive();
             } catch (e) {
                 console.error("❌ No se pudo reanimar el AudioContext:", e);
@@ -126,33 +127,56 @@ export class MotorAudioPro {
     }
 
     /**
-     * 🧟 ZOMBIE MODE (Audio Keep-Alive)
-     * Truco sucio pero necesario para Móviles:
-     * Reproduce un silencio infinito para que el navegador NUNCA suspenda el AudioContext
-     * ni siquiera cuando el usuario levanta todos los dedos.
+     * 🧟 ZOMBIE MODE V2.0 (HARDCORE KEEP-ALIVE)
+     * El oscilador simple a veces es ignorado por optimizaciones de batería.
+     * Usamos un ScriptProcessor (técnica legacy robusta) para forzar al
+     * hilo de audio a procesar bloques constantemente.
      */
+    private keepAliveNode: ScriptProcessorNode | null = null;
     private keepAliveOscillator: OscillatorNode | null = null;
 
     private iniciarKeepAlive() {
-        if (this.keepAliveOscillator) return; // Ya está vivo
+        if (this.keepAliveNode || this.keepAliveOscillator) return;
 
         try {
-            // Crea un oscilador inaudible
+            // 1. Oscilador base (60Hz para asegurar que pase filtros DC offset)
             const osc = this.contexto.createOscillator();
-            const gain = this.contexto.createGain();
+            osc.type = 'sawtooth'; // Onda más rica que seno para evitar compresión
+            osc.frequency.value = 60;
 
-            osc.type = 'sine';
-            osc.frequency.value = 1; // 1Hz (inaudible en la mayoría de parlantes)
-            gain.gain.value = 0.0001; // Volumen casi cero
+            // 2. Ganancia infinitesimal (inaudible pero matemáticamente significativa)
+            const gain = this.contexto.createGain();
+            gain.gain.value = 0.000001;
+
+            // 3. ScriptProcessor: El "Latido" del Audio
+            // Forzamos al navegador a procesar audio en el hilo principal
+            // Esto evita que Chrome suspenda la actividad de audio por "inactividad"
+            const bufferSize = 4096;
+            const scriptNode = this.contexto.createScriptProcessor(bufferSize, 1, 1);
+
+            scriptNode.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                // Generar ruido blanco aleatorio de muy baja amplitud
+                // Esto asegura que cada buffer sea único y el navegador no optimice "silencio"
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = (Math.random() * 2 - 1) * 0.000001;
+                }
+            };
 
             osc.connect(gain);
+            gain.connect(scriptNode);
+            scriptNode.connect(this.contexto.destination);
+            // Conectar también directo para redundancia
             gain.connect(this.contexto.destination);
+
             osc.start();
 
             this.keepAliveOscillator = osc;
-            console.log("🧟 Audio Zombie Mode ACTIVADO (Keep-Alive)");
+            this.keepAliveNode = scriptNode;
+
+            console.log("🧟 Audio Zombie Mode V2.0 (HARDCORE) ACTIVADO");
         } catch (e) {
-            console.warn("No se pudo iniciar Keep-Alive:", e);
+            console.warn("No se pudo iniciar Keep-Alive V2:", e);
         }
     }
 

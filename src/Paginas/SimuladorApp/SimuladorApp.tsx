@@ -200,14 +200,28 @@ const SimuladorApp: React.FC = () => {
         document.addEventListener('pointerup', handleUp, opts);
         document.addEventListener('pointercancel', handleUp, opts);
 
-        // 👻 PHANTOM TOUCH LISTENER
+        // 👻 PHANTOM TOUCH LISTENER (Nivel 3 Gemini)
+        // Listener agresivo en window para matar CUALQUIER intento de scroll/zoom del navegador
+        // antes de que llegue a React o a los elementos.
         const phantomKiller = (e: TouchEvent) => {
             if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
             if (e.cancelable) e.preventDefault();
+            // Despertar AudioContext constantemente
             motorAudioPro.activarContexto();
         };
         window.addEventListener('touchstart', phantomKiller, { passive: false });
         window.addEventListener('touchmove', phantomKiller, { passive: false });
+
+        // 🔥 PRE-CALENTAMIENTO DE AUDIO (Critical: Iniciar Zombie Mode al primer toque)
+        const warmUpAudio = () => {
+            motorAudioPro.activarContexto().then(() => {
+                console.log("🔥 Motor de Audio Pre-Calentado y Zombie Mode Activo");
+            });
+            window.removeEventListener('pointerdown', warmUpAudio);
+            window.removeEventListener('keydown', warmUpAudio);
+        };
+        window.addEventListener('pointerdown', warmUpAudio);
+        window.addEventListener('keydown', warmUpAudio);
 
         return () => {
             clearInterval(intervalGeometria);
@@ -218,6 +232,8 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointercancel', handleUp, opts);
             window.removeEventListener('touchstart', phantomKiller);
             window.removeEventListener('touchmove', phantomKiller);
+            window.removeEventListener('pointerdown', warmUpAudio);
+            window.removeEventListener('keydown', warmUpAudio);
             // 🧹 LIMPIEZA DE EMERGENCIA
             pointersMap.current.clear();
             activeNotesRef.current.clear();
