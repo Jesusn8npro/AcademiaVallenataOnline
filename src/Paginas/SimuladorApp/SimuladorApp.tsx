@@ -1,10 +1,11 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V9.0 (Pure Touch Interface)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V10.0 (Ghost Capture Engine)
  * 
- * SOLUCIÓN DEFINITIVA CHROME ANDROID:
- * - Abandona PointerEvents por TouchEvents de bajo nivel para saltar la "Sala de Espera".
- * - Manual Multi-Touch Tracking: Seguimiento ultra-veloz de cada dedo por ID.
- * - Anti-Ghosting: Limpieza forzada de notas al perder el contacto.
+ * ESTRATEGIA DE GRADO MILITAR CONTRA EL LAG DE CHROME:
+ * 1. Global Touch Sentinel: Captura de baja latencia en la fase más temprana del navegador.
+ * 2. Multi-Touch Emulation Logic: El sistema trata cada toque como prioritario.
+ * 3. Bellows Sync: Restauración de lógica Pisar = Cerrar.
+ * 4. RAF Sync: Sincronización de visuales a la tasa de refresco del hardware (60/120Hz).
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -36,7 +37,6 @@ const SimuladorApp: React.FC = () => {
 
     // 🗺️ REFS ESTRUCTURALES
     const touchesMap = useRef<Map<number, { pos: string; musicalId: string; lastX?: number; lastY?: number }>>(new Map());
-    /** Geometría local para hit-testing inmune al movimiento */
     const localRectsRef = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const pitoElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
@@ -67,7 +67,7 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT V9.0 (PURE TOUCH ENGINE)
+    // 🖐️ MOTOR DE INPUT V10.0 (GHOST CAPTURE ENGINE)
     // =====================================================================
     useEffect(() => {
         const tren = trenRef.current;
@@ -93,7 +93,7 @@ const SimuladorApp: React.FC = () => {
             });
         };
 
-        const interval = setInterval(actualizarGeometriaLocal, 4000);
+        const interval = setInterval(actualizarGeometriaLocal, 3000);
         window.addEventListener('resize', actualizarGeometriaLocal);
         setTimeout(actualizarGeometriaLocal, 500);
 
@@ -101,7 +101,7 @@ const SimuladorApp: React.FC = () => {
             const trenBase = tren.getBoundingClientRect();
             const relX = clientX - trenBase.left;
             const relY = clientY - trenBase.top;
-            const IMAN = 15;
+            const IMAN = 18; // Sensibilidad ultra-optimizada
 
             const entries = Array.from(localRectsRef.current.entries());
             for (let i = entries.length - 1; i >= 0; i--) {
@@ -114,116 +114,89 @@ const SimuladorApp: React.FC = () => {
             return null;
         };
 
-        const onTouchStart = (e: TouchEvent) => {
-            if (e.cancelable) e.preventDefault();
-            motorAudioPro.activarContexto();
-
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                const pos = detectarEnPuntoLocal(touch.clientX, touch.clientY);
-                if (!pos) continue;
-
-                const musicalId = `${pos}-${logicaRef.current.direccion}`;
-                touchesMap.current.set(touch.identifier, { pos, musicalId, lastX: touch.clientX, lastY: touch.clientY });
-
-                logicaRef.current.actualizarBotonActivo(musicalId, 'add', null, true);
-                actualizarVisualBoton(pos, true);
-                registrarEvento('nota_on', { id: musicalId, pos });
-            }
-        };
-
-        const onTouchMove = (e: TouchEvent) => {
-            if (e.cancelable) e.preventDefault();
-
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                const data = touchesMap.current.get(touch.identifier);
-                if (!data) continue;
-
-                // 💎 INTERPOLACIÓN AGRESIVA
-                const checkPoints = [{ x: touch.clientX, y: touch.clientY }];
-                if (data.lastX !== undefined && data.lastY !== undefined) {
-                    const dx = touch.clientX - data.lastX;
-                    const dy = touch.clientY - data.lastY;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist > 15) {
-                        const steps = Math.min(4, Math.floor(dist / 12));
-                        for (let j = 1; j <= steps; j++) {
-                            checkPoints.unshift({ x: data.lastX + (dx * (j / (steps + 1))), y: data.lastY + (dy * (j / (steps + 1))) });
-                        }
-                    }
-                }
-
-                for (const pt of checkPoints) {
-                    const latest = touchesMap.current.get(touch.identifier);
-                    if (!latest) continue;
-
-                    const newPos = detectarEnPuntoLocal(pt.x, pt.y);
-                    if (newPos !== latest.pos) {
-                        if (latest.pos) {
-                            logicaRef.current.actualizarBotonActivo(latest.musicalId, 'remove', null, true);
-                            actualizarVisualBoton(latest.pos, false);
-                            registrarEvento('nota_off', { id: latest.musicalId, pos: latest.pos });
-                        }
-                        if (newPos) {
-                            const newMusicalId = `${newPos}-${logicaRef.current.direccion}`;
-                            touchesMap.current.set(touch.identifier, { pos: newPos, musicalId: newMusicalId, lastX: pt.x, lastY: pt.y });
-                            logicaRef.current.actualizarBotonActivo(newMusicalId, 'add', null, true);
-                            actualizarVisualBoton(newPos, true);
-                            registrarEvento('nota_on', { id: newMusicalId, pos: newPos });
-                        } else {
-                            touchesMap.current.set(touch.identifier, { ...latest, pos: '', musicalId: '' });
-                        }
-                    }
-                }
-                const final = touchesMap.current.get(touch.identifier);
-                if (final) touchesMap.current.set(touch.identifier, { ...final, lastX: touch.clientX, lastY: touch.clientY });
-            }
-        };
-
-        const onTouchEnd = (e: TouchEvent) => {
-            if (e.cancelable) e.preventDefault();
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                const data = touchesMap.current.get(touch.identifier);
-                if (data) {
-                    if (data.pos) {
-                        logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                        actualizarVisualBoton(data.pos, false);
-                        registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-                    }
-                    touchesMap.current.delete(touch.identifier);
-                }
-            }
-        };
-
-        // 🛡️ REGISTRO DE EVENTOS PUROS
-        tren.addEventListener('touchstart', onTouchStart, { passive: false });
-        tren.addEventListener('touchmove', onTouchMove, { passive: false });
-        tren.addEventListener('touchend', onTouchEnd, { passive: false });
-        tren.addEventListener('touchcancel', onTouchEnd, { passive: false });
-
-        // Bloqueo global de gestos para que NADA se mueva
-        const matarGestos = (e: Event) => {
+        // 🛡️ EL SECRETO: Listener de "Captura Temprana" en la ventana
+        const handleGlobalTouch = (e: TouchEvent) => {
             const target = e.target as HTMLElement;
-            if (!target.closest('.barra-herramientas-contenedor') &&
-                !target.closest('.menu-opciones-panel') &&
-                !target.closest('.modal-contenedor')) {
-                if (e.cancelable) e.preventDefault();
+            // Solo intervenimos si es área de juego
+            if (target.closest('.barra-herramientas-contenedor') ||
+                target.closest('.menu-opciones-panel') ||
+                target.closest('.modal-contenedor')) {
+                return;
+            }
+
+            // ⛔ MATAMOS EL "DESEO" DE CHROME DE HACER OVERSCROLL O ESPERAR
+            if (e.cancelable) e.preventDefault();
+
+            if (e.type === 'touchstart' || e.type === 'touchmove') {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const pos = detectarEnPuntoLocal(touch.clientX, touch.clientY);
+                    const data = touchesMap.current.get(touch.identifier);
+
+                    if (e.type === 'touchstart') {
+                        motorAudioPro.activarContexto();
+                        if (pos) {
+                            const musicalId = `${pos}-${logicaRef.current.direccion}`;
+                            touchesMap.current.set(touch.identifier, { pos, musicalId, lastX: touch.clientX, lastY: touch.clientY });
+                            logicaRef.current.actualizarBotonActivo(musicalId, 'add', null, true);
+                            actualizarVisualBoton(pos, true);
+                            registrarEvento('nota_on', { id: musicalId, pos });
+                        }
+                    } else if (e.type === 'touchmove') {
+                        if (!data) continue;
+
+                        const newPos = detectarEnPuntoLocal(touch.clientX, touch.clientY);
+                        if (newPos !== data.pos) {
+                            if (data.pos) {
+                                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                                actualizarVisualBoton(data.pos, false);
+                                registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                            }
+                            if (newPos) {
+                                const newMusicalId = `${newPos}-${logicaRef.current.direccion}`;
+                                touchesMap.current.set(touch.identifier, { pos: newPos, musicalId: newMusicalId, lastX: touch.clientX, lastY: touch.clientY });
+                                logicaRef.current.actualizarBotonActivo(newMusicalId, 'add', null, true);
+                                actualizarVisualBoton(newPos, true);
+                                registrarEvento('nota_on', { id: newMusicalId, pos: newPos });
+                            } else {
+                                touchesMap.current.set(touch.identifier, { ...data, pos: '', musicalId: '' });
+                            }
+                        }
+                    }
+                }
+            } else if (e.type === 'touchend' || e.type === 'touchcancel') {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const data = touchesMap.current.get(touch.identifier);
+                    if (data) {
+                        if (data.pos) {
+                            logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                            actualizarVisualBoton(data.pos, false);
+                            registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                        }
+                        touchesMap.current.delete(touch.identifier);
+                    }
+                }
             }
         };
-        window.addEventListener('touchstart', matarGestos as any, { passive: false });
-        window.addEventListener('touchmove', matarGestos as any, { passive: false });
+
+        // 🛡️ REGISTRO DE ALTO NIVEL (Capture Phase)
+        window.addEventListener('touchstart', handleGlobalTouch, { passive: false, capture: true });
+        window.addEventListener('touchmove', handleGlobalTouch, { passive: false, capture: true });
+        window.addEventListener('touchend', handleGlobalTouch, { passive: false, capture: true });
+        window.addEventListener('touchcancel', handleGlobalTouch, { passive: false, capture: true });
+
+        const block = (e: Event) => e.preventDefault();
+        window.addEventListener('contextmenu', block);
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaLocal);
-            tren.removeEventListener('touchstart', onTouchStart);
-            tren.removeEventListener('touchmove', onTouchMove);
-            tren.removeEventListener('touchend', onTouchEnd);
-            tren.removeEventListener('touchcancel', onTouchEnd);
-            window.removeEventListener('touchstart', matarGestos as any);
-            window.removeEventListener('touchmove', matarGestos as any);
+            window.removeEventListener('touchstart', handleGlobalTouch, { capture: true });
+            window.removeEventListener('touchmove', handleGlobalTouch, { capture: true });
+            window.removeEventListener('touchend', handleGlobalTouch, { capture: true });
+            window.removeEventListener('touchcancel', handleGlobalTouch, { capture: true });
+            window.removeEventListener('contextmenu', block);
         };
     }, []);
 
@@ -235,7 +208,7 @@ const SimuladorApp: React.FC = () => {
             root.classList.remove('modo-halar', 'modo-empujar');
             root.classList.add(`modo-${nuevaDireccion}`);
         }
-        motorAudioPro.detenerTodo(0.015);
+        motorAudioPro.detenerTodo(0.012);
         touchesMap.current.forEach((data, tId) => {
             if (data.pos) {
                 const nextId = `${data.pos}-${nuevaDireccion}`;
@@ -321,14 +294,14 @@ const SimuladorApp: React.FC = () => {
                 <span className="fuelle-status">{logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}</span>
             </div>
 
-            <div className="contenedor-acordeon-completo">
-                <div className="simulador-canvas">
+            <div className="contenedor-acordeon-completo" style={{ pointerEvents: 'none' }}>
+                <div className="simulador-canvas" style={{ pointerEvents: 'none' }}>
                     <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
-                    <div className="diapason-marco" ref={marcoRef}>
-                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x }}>
-                            <div className="hilera-pitos hilera-adentro">{h3.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
-                            <div className="hilera-pitos hilera-medio">{h2.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
-                            <div className="hilera-pitos hilera-afuera">{h1.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
+                    <div className="diapason-marco" ref={marcoRef} style={{ pointerEvents: 'none' }}>
+                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, pointerEvents: 'none' }}>
+                            <div className="hilera-pitos hilera-adentro" style={{ pointerEvents: 'none' }}>{h3.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
+                            <div className="hilera-pitos hilera-medio" style={{ pointerEvents: 'none' }}>{h2.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
+                            <div className="hilera-pitos hilera-afuera" style={{ pointerEvents: 'none' }}>{h1.map(([pos, n]) => (<div key={pos} className="pito-boton" data-pos={pos} style={{ pointerEvents: 'none' }}><span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span><span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span></div>))}</div>
                         </motion.div>
                     </div>
                 </div>

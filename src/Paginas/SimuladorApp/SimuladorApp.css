@@ -20,8 +20,11 @@
     height: 100dvh !important;
     /* ← Dinámico para Chrome/Android móvil */
     background-color: #000;
-    overflow: hidden !important;
+    overflow: clip !important;
+    /* ← Mucho más agresivo que 'hidden' */
     overscroll-behavior: none !important;
+    contain: layout size style;
+    /* ← Optimización de motor de juegos */
     margin: 0 !important;
     padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
