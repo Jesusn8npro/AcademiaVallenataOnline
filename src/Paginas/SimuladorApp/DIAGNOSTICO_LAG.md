@@ -1,22 +1,48 @@
-# 🚨 DIAGNÓSTICO DE ERROR CRÍTICO: LAG DE UN SOLO DEDO (CHROME ANDROID)
+# DIAGNÓSTICO LAG - Simulador de Acordeón
 
-## 📌 El Problema
-El simulador de acordeón sufre de una degradación de rendimiento masiva bajo las siguientes condiciones:
-1. **Dedo en el Fuelle (Modo Multitáctil)**: Funciona PERFECTO. Respuesta instantánea (~1ms).
-2. **Un Solo Dedo (Modo Abrir/Halar)**: Funciona erráticamente. Después de unos segundos o notas rápidas, el navegador empieza a ignorar toques o los procesa con un lag de 200ms+.
+## ✅ SOLUCIÓN FINAL: MOTOR V18.0 — PointerEvents + setPointerCapture
 
-## 🔍 Análisis Técnico
-1. **Reflow Crítico**: Se identificó que `getBoundingClientRect()` se estaba ejecutando dentro del bucle de `touchmove`. En Chrome Android, un solo dedo + un reflow (layout) es la receta perfecta para el throttling agresivo.
-2. **Heurística de Scroll**: Chrome Android trata el toque de un solo dedo como un posible gesto de sistema. Si el JS tarda más de ~8ms en responder (por el reflow), el navegador toma el control y baja la frecuencia de 120Hz a 10Hz o 0Hz (Throttled Async Touchmove).
-3. **Isolación Multitáctil**: Al poner un segundo dedo (fuelle), Chrome activa el modo "Compositor Touch" o "Gaming Mode" que desactiva las heurísticas de scroll y es más permisivo con el procesado sincrónico.
+### Causa Raíz Identificada
+Chrome Android aplica **"Throttled Async Touchmove"** cuando detecta un único dedo en la pantalla.
+El navegador asume que el gesto puede ser un scroll y retrasa los eventos `touchmove` **hasta 200ms**
+en ciertos contextos (después de levantar un dedo, en la zona del fuelle, etc.).
 
-## 🛠️ Solución Implementada: Motor de Input Pro V17.0 (2026-02-19) - BLINDAJE TOTAL
-1. **Zero-Reflow Matemático**: Eliminamos por completo `getBoundingClientRect` de los bucles.
-2. **Aniquilación de Gestos CSS**: Aplicado `touch-action: none !important` y `overscroll-behavior-y: contain !important` a nivel raíz para matar el Pull-to-refresh y el scroll.
-3. **Bloqueo de Propagación Agresivo**: Añadido `e.stopPropagation()` y `e.preventDefault()` en la entrada del evento. El evento muere en nuestras manos.
-4. **Blindaje de Puntero**: Usamos `onTouchMove` puro con prioridad de hardware en Android.
+### Por qué la solución anterior (V17 - TouchEvents) no era suficiente
+- `preventDefault()` y `stopPropagation()` en TouchEvents no cancelan el delay del compositor.
+- El CSS `touch-action: none` ayuda, pero Chrome aún puede activar throttling en ciertos estados.
+- La capa de captura táctil extra añadía complejidad sin resolver el problema de pipeline.
 
----
-**Documentado por**: Antigravity AI
-**Fecha**: 2026-02-19
-**Estado**: ✅ BLINDAJE TOTAL APLICADO (La página está clavada al piso)
+### Solución Definitiva: PointerEvents (V18.0)
+
+**Pipeline de eventos en Chrome Android:**
+- `TouchEvents` → Hilo del compositor → Heurísticas de scroll → **Posible delay 200ms**
+- `PointerEvents` → Hilo del compositor → **Sin heurísticas** → Entrega inmediata
+
+**Técnicas implementadas:**
+
+1. **`setPointerCapture(e.pointerId)`**: Cada dedo "captura" exclusivamente su puntero.
+   - Equivalente al "Gaming Mode" de Android pero en el nivel del navegador.
+   - El dedo "posee" el puntero — Chrome no puede interceptar esos eventos.
+   - Si el dedo se mueve fuera del elemento, los eventos siguen llegando.
+
+2. **Sin diferenciación 1 dedo vs 2 dedos**: PointerEvents siempre usa el modo interactivo,
+   independientemente de cuántos punteros haya activos.
+
+3. **Listeners en el marco, no en `window`**: Adjuntar al `marcoRef` en lugar de `window`
+   reduce la superficie de interceptación del navegador.
+
+4. **Fuelle migrado a `onPointerDown/Up`**: Coherencia total con el motor V18.
+
+### Estado CSS (sin cambios, sigue siendo necesario)
+- `touch-action: none !important` en `html`, `body`, `#root`, `.simulador-app-root`
+- `overscroll-behavior-y: contain !important` en `body`
+- Estas propiedades siguen siendo necesarias para prevenir gestos del sistema.
+
+### Archivos modificados en V18.0
+- `SimuladorApp.tsx` — Motor completo migrado a PointerEvents
+- `DIAGNOSTICO_LAG.md` — Este archivo
+
+### Para testear en Android
+1. Abrir Chrome DevTools → Remote Debugging → Performance Tab
+2. Buscar "Input Latency" en el timeline
+3. Con V18.0 debería ser < 16ms (1 frame) vs ~200ms anterior

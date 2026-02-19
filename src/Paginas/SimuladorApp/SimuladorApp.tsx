@@ -1,11 +1,12 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V16.0 (Hardware Performance)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V18.0 (PointerEvents)
  * 
- * MEJORAS CRÍTICAS:
- * 1. Zero-Reflow: Eliminado getBoundingClientRect() de los bucles de movimiento (touchmove).
- * 2. Pre-Cache Geométrico: Posiciones de botones relativas al tren calculadas una sola vez.
- * 3. Fuelle Synchro: Cambiado a TouchEvents puros para sincronía total con el motor de notas.
- * 4. Barra Intocable: Documentada y protegida en su posición original.
+ * MIGRACIÓN CRÍTICA (V17→V18):
+ * CAUSA RAÍZ DEL LAG: Chrome Android usa «Throttled Async Touchmove» para 1 solo dedo.
+ * Los TouchEvents de 1 solo dedo son procesados como posibles gestos de scroll (200ms delay).
+ * SOLUCIÓN: Migrar de TouchEvents → PointerEvents.
+ * Los PointerEvents van por el pipeline del Compositor de Chrome y NO tienen throttling.
+ * setPointerCapture(): Cada dedo «captura» su elemento para tracking sin perder eventos.
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -36,7 +37,8 @@ const SimuladorApp: React.FC = () => {
     const x = useMotionValue(0);
 
     // 🗺️ REFS Y CACHE DE GEOMETRÍA (Nivel Hardware)
-    const touchesMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
+    // 🖐️ V18.0: Mapa de PUNTEROS (PointerEvents), no de touches
+    const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
 
@@ -63,7 +65,7 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT PRO V17.0 (ATOMIC CACHE - ZERO REFLOW)
+    // 🚀 MOTOR DE INPUT PRO V18.0 (PointerEvents + setPointerCapture)
     // =====================================================================
     useEffect(() => {
         const marco = marcoRef.current;
@@ -132,92 +134,102 @@ const SimuladorApp: React.FC = () => {
             return null;
         };
 
-        const handleTouch = (e: TouchEvent) => {
+        /**
+         * 🚀 MOTOR V18.0: PointerEvents con setPointerCapture
+         * 
+         * Por qué funciona mejor que TouchEvents:
+         * - Chrome NO aplica "Throttled Async Touchmove" a los PointerEvents.
+         * - setPointerCapture() hace que el dedo "posea" un puntero único.
+         *   Incluso si el dedo se mueve fuera del elemento, los eventos siguen llegando.
+         * - No hay diferenciación entre 1 dedo y 2 dedos: siempre es interactivo.
+         * - El pipeline de PointerEvents va directo al compositor gráfico de Chrome.
+         */
+        const acordeonArea = marco;
+
+        const handlePointerDown = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
-
-            // ⚡ BYPASS DEFINITIVO DE CHROME ANDROID
-            // Forzamos el preventDefault y stopPropagation para que el navegador detenga toda heurística de scroll.
-            // Esto 'mata' el evento aquí y evita que Chrome intente usarlo para gestos del sistema.
-            if (e.cancelable) e.preventDefault();
-            e.stopPropagation();
-
-            motorAudioPro.activarContexto();
-
-            // 🛡️ FILTRO DE INTERFAZ: No interceptamos controles de la barra (permitimos que bajen)
-            // Nota: Si el preventDefault/stopPropagation rompe la barra, ajustaremos este filtro.
+            // Filtrar barra de herramientas, modales y fuelle (tienen sus propios handlers)
             if (target.closest('.barra-herramientas-contenedor') ||
                 target.closest('.menu-opciones-panel') ||
-                target.closest('.modal-contenedor')) return;
+                target.closest('.modal-contenedor') ||
+                target.closest('.indicador-fuelle')) return;
 
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                const identifier = t.identifier;
-                const pos = encontrarPosEnPunto(t.clientX, t.clientY);
-                const data = touchesMap.current.get(identifier);
+            // ⚡ CAPTURA EXCLUSIVA: Este pointerId ya no puede ser interceptado por Chrome
+            // Esto es el equivalente a "Gaming Mode" pero para 1 solo dedo
+            try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch (_) { }
 
-                if (e.type === 'touchstart') {
-                    if (pos) {
-                        const mId = `${pos}-${logicaRef.current.direccion}`;
-                        touchesMap.current.set(identifier, { pos, musicalId: mId });
-                        logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
-                        actualizarVisualBoton(pos, true);
-                        registrarEvento('nota_on', { id: mId, pos });
-                    } else {
-                        touchesMap.current.set(identifier, { pos: '', musicalId: '' });
-                    }
-                } else if (e.type === 'touchmove') {
-                    if (!data) continue;
-                    if (pos !== data.pos) {
-                        if (data.pos) {
-                            logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                            actualizarVisualBoton(data.pos, false);
-                            registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-                        }
-                        if (pos) {
-                            const newMId = `${pos}-${logicaRef.current.direccion}`;
-                            touchesMap.current.set(identifier, { pos, musicalId: newMId });
-                            logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
-                            actualizarVisualBoton(pos, true);
-                            registrarEvento('nota_on', { id: newMId, pos });
-                        } else {
-                            touchesMap.current.set(identifier, { pos: '', musicalId: '' });
-                        }
-                    }
-                } else if (e.type === 'touchend' || e.type === 'touchcancel') {
-                    if (data) {
-                        if (data.pos) {
-                            logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                            actualizarVisualBoton(data.pos, false);
-                            registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-                        }
-                        touchesMap.current.delete(identifier);
-                    }
+            if (e.cancelable) e.preventDefault();
+            motorAudioPro.activarContexto();
+
+            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
+            if (pos) {
+                const mId = `${pos}-${logicaRef.current.direccion}`;
+                pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
+                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
+                actualizarVisualBoton(pos, true);
+                registrarEvento('nota_on', { id: mId, pos });
+            } else {
+                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
+            }
+        };
+
+        const handlePointerMove = (e: PointerEvent) => {
+            const data = pointersMap.current.get(e.pointerId);
+            if (!data) return; // Solo procesamos punteros que ya rastreamos
+
+            if (e.cancelable) e.preventDefault();
+
+            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
+            if (pos !== data.pos) {
+                if (data.pos) {
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    actualizarVisualBoton(data.pos, false);
+                    registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                }
+                if (pos) {
+                    const newMId = `${pos}-${logicaRef.current.direccion}`;
+                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId });
+                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
+                    actualizarVisualBoton(pos, true);
+                    registrarEvento('nota_on', { id: newMId, pos });
+                } else {
+                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
                 }
             }
         };
 
-        // 🚨 PRIORIDAD MÁXIMA: Fase de captura y no pasivo
-        window.addEventListener('touchstart', handleTouch, { passive: false, capture: true });
-        window.addEventListener('touchmove', handleTouch, { passive: false, capture: true });
-        window.addEventListener('touchend', handleTouch, { passive: false, capture: true });
-        window.addEventListener('touchcancel', handleTouch, { passive: false, capture: true });
+        const handlePointerUp = (e: PointerEvent) => {
+            const data = pointersMap.current.get(e.pointerId);
+            if (!data) return;
 
-        // 🚫 BLOQUEO DE GESTOS ADICIONALES
-        const block = (e: Event) => { if (e.cancelable) e.preventDefault(); e.stopPropagation(); };
-        window.addEventListener('wheel', block, { passive: false });
-        window.addEventListener('gesturestart', block, { passive: false });
-        window.addEventListener('contextmenu', block);
+            if (data.pos) {
+                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                actualizarVisualBoton(data.pos, false);
+                registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+            }
+            pointersMap.current.delete(e.pointerId);
+        };
+
+        // 🎯 ADJUNTAR AL MARCO DEL ACORDEÓN (no al window, evita interferencias)
+        acordeonArea.addEventListener('pointerdown', handlePointerDown, { passive: false });
+        acordeonArea.addEventListener('pointermove', handlePointerMove, { passive: false });
+        acordeonArea.addEventListener('pointerup', handlePointerUp);
+        acordeonArea.addEventListener('pointercancel', handlePointerUp);
+        acordeonArea.addEventListener('pointerleave', handlePointerUp);
+
+        // 🚫 Bloquear gestos residuales del sistema
+        const blockGesture = (e: Event) => { if (e.cancelable) e.preventDefault(); };
+        window.addEventListener('contextmenu', blockGesture);
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaBase);
-            window.removeEventListener('touchstart', handleTouch, { capture: true });
-            window.removeEventListener('touchmove', handleTouch, { capture: true });
-            window.removeEventListener('touchend', handleTouch, { capture: true });
-            window.removeEventListener('touchcancel', handleTouch, { capture: true });
-            window.removeEventListener('wheel', block);
-            window.removeEventListener('gesturestart', block);
-            window.removeEventListener('contextmenu', block);
+            acordeonArea.removeEventListener('pointerdown', handlePointerDown);
+            acordeonArea.removeEventListener('pointermove', handlePointerMove);
+            acordeonArea.removeEventListener('pointerup', handlePointerUp);
+            acordeonArea.removeEventListener('pointercancel', handlePointerUp);
+            acordeonArea.removeEventListener('pointerleave', handlePointerUp);
+            window.removeEventListener('contextmenu', blockGesture);
         };
     }, []);
 
@@ -226,11 +238,11 @@ const SimuladorApp: React.FC = () => {
         motorAudioPro.activarContexto();
         motorAudioPro.detenerTodo(0.012);
 
-        touchesMap.current.forEach((data, tId) => {
+        pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
                 const nextId = `${data.pos}-${nuevaDireccion}`;
                 logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
-                touchesMap.current.set(tId, { ...data, musicalId: nextId });
+                pointersMap.current.set(pId, { ...data, musicalId: nextId });
             }
         });
         logicaRef.current.setDireccion(nuevaDireccion);
@@ -302,11 +314,12 @@ const SimuladorApp: React.FC = () => {
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`}>
 
+            {/* 🪗 FUELLE: Migrado a PointerEvents para coherencia con el motor V18 */}
             <div
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onTouchStart={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
-                onTouchEnd={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onTouchCancel={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
+                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
+                onPointerCancel={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
                 onContextMenu={(e) => e.preventDefault()}
                 style={{ zIndex: 100, touchAction: 'none' }}
             >
@@ -314,12 +327,6 @@ const SimuladorApp: React.FC = () => {
             </div>
 
             <div className="contenedor-acordeon-completo">
-                {/* 🚀 CAPA DE CAPTURA TÁCTIL ULTRA-PRIORITARIA */}
-                <div className="capa-captura-tactil" style={{
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    zIndex: 600, touchAction: 'none !important'
-                }}></div>
-
                 <div className="simulador-canvas">
                     <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
                     <div className="diapason-marco" ref={marcoRef} style={{ touchAction: 'none' }}>
