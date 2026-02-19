@@ -85,6 +85,12 @@
     align-items: center;
     pointer-events: none;
 
+    /* 🚀 OPTIMIZACIÓN DE MOTOR DE CARRERAS */
+    contain: layout size style;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+
     /* 📐 INCLINACIÓN INVERTIDA: Se abre hacia afuera arriba */
     clip-path: polygon(0% 0%, 100% 0%, 98.5% 100%, 1.5% 100%);
 }

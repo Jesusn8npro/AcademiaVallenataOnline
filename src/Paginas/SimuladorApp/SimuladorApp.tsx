@@ -63,22 +63,35 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT V16.0 (ZERO REFLOW)
+    // 🖐️ MOTOR DE INPUT PRO V17.0 (ATOMIC CACHE - ZERO REFLOW)
     // =====================================================================
     useEffect(() => {
         const marco = marcoRef.current;
         const tren = trenRef.current;
         if (!marco || !tren) return;
 
-        // Cachea posiciones relativas al 'tren' (no cambian con el scroll X)
+        /**
+         * 🗺️ CACHÉ ATÓMICA DE GEOMETRÍA
+         * Se ejecuta solo al montar, redimensionar o cuando cambian distancias.
+         */
         const actualizarGeometriaBase = () => {
+            if (!tren) return;
             const elPitos = tren.querySelectorAll('.pito-boton');
+            const currentX = x.get();
             const trenBase = tren.getBoundingClientRect();
+
+            // Calculamos donde estaría el tren si el scroll fuera 0
+            lastTrenRect.current = {
+                left: trenBase.left - currentX,
+                top: trenBase.top
+            };
+
             rectsCache.current.clear();
             elPitos.forEach(el => {
                 const pos = (el as HTMLElement).dataset.pos;
                 const r = el.getBoundingClientRect();
                 if (pos) {
+                    // Guardamos la posición relativa al tren (punto 0 del scroll)
                     rectsCache.current.set(pos, {
                         left: r.left - trenBase.left,
                         right: r.right - trenBase.left,
@@ -87,19 +100,29 @@ const SimuladorApp: React.FC = () => {
                     });
                 }
             });
+            console.log("📍 Geometría Atómica Recalculada:", rectsCache.current.size, "pitos");
         };
 
-        const interval = setInterval(actualizarGeometriaBase, 4000);
+        const interval = setInterval(actualizarGeometriaBase, 10000);
         window.addEventListener('resize', actualizarGeometriaBase);
-        setTimeout(actualizarGeometriaBase, 500);
+        // Pequeño delay para que React termine el layout
+        setTimeout(actualizarGeometriaBase, 1000);
 
+        /**
+         * 🎯 HIT-TESTING MATEMÁTICO (Zero DOM access)
+         */
         const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
             if (!lastTrenRect.current) return null;
-            const relX = clientX - lastTrenRect.current.left;
-            const relY = clientY - lastTrenRect.current.top;
-            const IMAN = 15;
 
-            // Búsqueda ultra-rápida en el cache geométrico
+            // Calculamos posición real del tren usando el MotionValue (Sin Reflow!)
+            const currentX = x.get();
+            const realTrenLeft = lastTrenRect.current.left + currentX;
+            const realTrenTop = lastTrenRect.current.top;
+
+            const relX = clientX - realTrenLeft;
+            const relY = clientY - realTrenTop;
+            const IMAN = 15; // Margen de error para dedos grandes
+
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
                     relY >= r.top - IMAN && relY <= r.bottom + IMAN) {
@@ -111,20 +134,16 @@ const SimuladorApp: React.FC = () => {
 
         const handleTouch = (e: TouchEvent) => {
             const target = e.target as HTMLElement;
-            // No interceptamos la barra de herramientas ni modales
+
+            // 🛡️ FILTRO DE INTERFAZ: No interceptamos controles de la barra
             if (target.closest('.barra-herramientas-contenedor') ||
                 target.closest('.menu-opciones-panel') ||
                 target.closest('.modal-contenedor')) return;
 
-            // ⚡ EL TRUCO MAESTRO: Bloqueo de scroll y latencia Chrome
+            // ⚡ BYPASS DEFINITIVO DE CHROME ANDROID
+            // Forzamos el preventDefault para que el navegador detenga toda heurística de scroll.
             if (e.cancelable) e.preventDefault();
             motorAudioPro.activarContexto();
-
-            // Actualizamos la posición del tren SOLO en touchstart para evitar reflows en touchmove
-            if (e.type === 'touchstart' || e.type === 'touchmove') {
-                const tr = tren.getBoundingClientRect();
-                lastTrenRect.current = { left: tr.left, top: tr.top };
-            }
 
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
@@ -173,7 +192,7 @@ const SimuladorApp: React.FC = () => {
             }
         };
 
-        // Captura global en fase de captura para máxima prioridad
+        // 🚨 PRIORIDAD MÁXIMA: Fase de captura y no pasivo
         window.addEventListener('touchstart', handleTouch, { passive: false, capture: true });
         window.addEventListener('touchmove', handleTouch, { passive: false, capture: true });
         window.addEventListener('touchend', handleTouch, { passive: false, capture: true });
@@ -282,6 +301,12 @@ const SimuladorApp: React.FC = () => {
             </div>
 
             <div className="contenedor-acordeon-completo">
+                {/* 🚀 CAPA DE CAPTURA TÁCTIL ULTRA-PRIORITARIA */}
+                <div className="capa-captura-tactil" style={{
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    zIndex: 600, touchAction: 'none'
+                }}></div>
+
                 <div className="simulador-canvas">
                     <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
                     <div className="diapason-marco" ref={marcoRef} style={{ touchAction: 'none' }}>
