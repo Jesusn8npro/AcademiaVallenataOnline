@@ -3,17 +3,26 @@ body,
 #root {
   margin: 0;
   padding: 0;
+  width: 100%;
   height: 100%;
-  max-width: 100%;
+  position: fixed;
+  /* 🔒 BLOQUEO NIVEL SISTEMA: Evita el rebote del viewport */
   overflow: hidden !important;
-  /* Forzar no scroll */
-  overscroll-behavior-y: contain !important;
-  /* Matar Pull-to-refresh */
+
+  /* 🛑 ANTI-LAG TÁCTIL (Chrome/Android/iOS) */
   touch-action: none !important;
-  /* Matar gestos del sistema */
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #000;
+  /* Evita fllash blanco en cargas */
 }
 
 /* Espacio para el menú fijo autenticado (70px de altura) - Solo cuando hay menú */

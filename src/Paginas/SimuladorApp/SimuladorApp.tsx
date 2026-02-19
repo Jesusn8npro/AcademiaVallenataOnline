@@ -66,34 +66,27 @@ const SimuladorApp: React.FC = () => {
     // =====================================================================
     // 🚀 MOTOR DE INPUT PRO V20.0 (Zero-Lag + Coalesced Events)
     // =====================================================================
-    // Estado mutable fuera de React para rendimiento máximo (60/120 FPS)
+    // =====================================================================
+    // 🚀 MOTOR DE INPUT PRO V22.0: PHANTOM TOUCH & VISUAL BYPASS
+    // =====================================================================
     const activeNotesRef = useRef<Set<string>>(new Set());
-    // =====================================================================
-    // 🚀 MOTOR DE INPUT PRO V21.0 (RectCache + TouchBlocking + Inertia)
-    // =====================================================================
-    // Volvemos a caché de geometría para máxima velocidad (solicitud explícita)
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenPos = useRef<{ left: number; top: number }>({ left: 0, top: 0 });
+
+    // ⚡ BYPASS VISUAL: Referencias directas al DOM para evitar re-render de React al tocar fuelle
+    const fuelleRef = useRef<HTMLDivElement>(null);
+    const fuelleTextRef = useRef<HTMLSpanElement>(null);
 
     useEffect(() => {
         const marco = marcoRef.current;
         const tren = trenRef.current;
         if (!marco || !tren) return;
 
-        // 1. CACHÉ DE GEOMETRÍA (10x más rápido que elementFromPoint en loop)
         const actualizarGeometria = () => {
             if (!tren) return;
             const trenRect = tren.getBoundingClientRect();
-            // Guardamos la posición base del tren para restar el scroll (x)
-            // x.get() nos da el desplazamiento actual del framer-motion
             const currentX = x.get();
-
-            // La posición "cero" del tren (sin desplazamiento)
-            lastTrenPos.current = {
-                left: trenRect.left - currentX,
-                top: trenRect.top
-            };
-
+            lastTrenPos.current = { left: trenRect.left - currentX, top: trenRect.top };
             rectsCache.current.clear();
             const botones = tren.querySelectorAll('.pito-boton');
             botones.forEach(b => {
@@ -101,39 +94,26 @@ const SimuladorApp: React.FC = () => {
                 const pos = el.dataset.pos;
                 if (!pos) return;
                 const r = el.getBoundingClientRect();
-                // Guardamos coordenadas relativas al "cero" del tren
                 rectsCache.current.set(pos, {
-                    left: r.left - (trenRect.left - currentX), // Relativo al inicio del tren
+                    left: r.left - (trenRect.left - currentX),
                     right: r.right - (trenRect.left - currentX),
-                    top: r.top - trenRect.top, // Relativo al top del tren
+                    top: r.top - trenRect.top,
                     bottom: r.bottom - trenRect.top
                 });
             });
         };
-
-        // Actualizar geometría al inicio y al redimensionar
         actualizarGeometria();
         window.addEventListener('resize', actualizarGeometria);
-        const intervalGeometria = setInterval(actualizarGeometria, 2000); // Check periódico por si acaso
+        const intervalGeometria = setInterval(actualizarGeometria, 2000);
 
-        // 2. HIT-TESTING MATEMÁTICO PURO (CPU Bound, O(N))
         const obtenerBotonEnCoordenadas = (clientX: number, clientY: number): string | null => {
-            // Calcular posición relativa al tren desplazado
             const currentX = x.get();
             const trenLeft = lastTrenPos.current.left + currentX;
             const trenTop = lastTrenPos.current.top;
-
-            const relX = clientX; // Coordenadas absolutas de pantalla vs rects absolutos cacheados?
-            // Espera, rectsCache guardó offsets relativos al tren "cero".
-            // Para comparar, necesitamos transformar el click a espacio local del tren o transformar los rects a pantalla.
-            // Mejor: Rects cacheados son "Left relativo a Tren[0]".
-            // ClickX - TrenLeftActual = OffsetX dentro del tren.
-
             const offsetX = clientX - trenLeft;
             const offsetY = clientY - trenTop;
-            const MARGEN_ERROR = 15; // Hitbox más generoso
+            const MARGEN_ERROR = 15;
 
-            // Iterar mapa es muy rápido para < 100 elementos
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (offsetX >= r.left - MARGEN_ERROR && offsetX <= r.right + MARGEN_ERROR &&
                     offsetY >= r.top - MARGEN_ERROR && offsetY <= r.bottom + MARGEN_ERROR) {
@@ -145,26 +125,17 @@ const SimuladorApp: React.FC = () => {
 
         const procesarEvento = (e: PointerEvent, tipo: 'down' | 'move' | 'up') => {
             const target = e.target as HTMLElement;
-
-            // 🚫 FILTRO CRÍTICO: Si tocamos la barra de herramientas, NO HACER NADA
             if (target.closest('.barra-herramientas-contenedor')) return;
-            // 🚫 El fuelle tiene sus propios listeners, ignorar aquí para no duplicar lógica
             if (target.closest('.indicador-fuelle')) {
-                // Si es fuelle, solo prevenimos default para evitar scroll, pero no procesamos notas
                 if (e.cancelable) e.preventDefault();
                 return;
             }
-
-            // Bloquear scroll nativo en el área de juego
             if (e.cancelable) e.preventDefault();
 
-            const eventos = (tipo === 'move' && e.getCoalescedEvents)
-                ? e.getCoalescedEvents()
-                : [e];
+            const eventos = (tipo === 'move' && e.getCoalescedEvents) ? e.getCoalescedEvents() : [e];
 
             eventos.forEach(ev => {
                 const pId = ev.pointerId;
-
                 if (tipo === 'up') {
                     const data = pointersMap.current.get(pId);
                     if (data && data.pos) {
@@ -183,7 +154,6 @@ const SimuladorApp: React.FC = () => {
 
                 if (nuevaPos === posAnterior) return;
 
-                // Cambio de botón
                 if (posAnterior && dataPrev) {
                     logicaRef.current.actualizarBotonActivo(dataPrev.musicalId, 'remove', null, true);
                     actualizarVisualBoton(posAnterior, false);
@@ -201,8 +171,6 @@ const SimuladorApp: React.FC = () => {
                         registrarEvento('nota_on', { id: newMId, pos: nuevaPos });
                     }
                     pointersMap.current.set(pId, { pos: nuevaPos, musicalId: newMId });
-
-                    // Captura solo si es DOWN y sobre un elemento válido (aunque sea el document, captura el puntero lógico)
                     if (tipo === 'down' && e.target instanceof Element) {
                         try { (e.target as Element).setPointerCapture(pId); } catch (_) { }
                     }
@@ -213,37 +181,27 @@ const SimuladorApp: React.FC = () => {
         };
 
         const handleDown = (e: PointerEvent) => procesarEvento(e, 'down');
-        const handleMove = (e: PointerEvent) => {
-            if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'move');
-        };
-        const handleUp = (e: PointerEvent) => {
-            if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'up');
-        };
+        const handleMove = (e: PointerEvent) => { if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'move'); };
+        const handleUp = (e: PointerEvent) => { if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'up'); };
 
-        // Listeners en DOCUMENT con capture: true para máxima prioridad
         const opts = { capture: true, passive: false };
         document.addEventListener('pointerdown', handleDown, opts);
         document.addEventListener('pointermove', handleMove, opts);
         document.addEventListener('pointerup', handleUp, opts);
         document.addEventListener('pointercancel', handleUp, opts);
 
-        // 🛑 TOUCH CHOKING (Anti-Scroll Extremo 1 dedo)
-        const bloquearTouch = (e: TouchEvent) => {
-            // Si tocamos la barra de herramientas, permitir la interacción nativa (clicks)
+        // 👻 PHANTOM TOUCH LISTENER (Nivel 3 Gemini)
+        // Listener agresivo en window para matar CUALQUIER intento de scroll/zoom del navegador
+        // antes de que llegue a React o a los elementos.
+        const phantomKiller = (e: TouchEvent) => {
             if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
-
-            // Para todo lo demás (área de juego), matar el evento nativo
             if (e.cancelable) e.preventDefault();
+            // Hack para despertar AudioContext en el primer touch real si estaba dormido
+            motorAudioPro.activarContexto();
         };
-        // passive: false es obligatorio para poder hacer preventDefault
-        window.addEventListener('touchstart', bloquearTouch, { passive: false });
-        window.addEventListener('touchmove', bloquearTouch, { passive: false });
-
-        // Inyecciones CSS de emergencia
-        document.body.style.overscrollBehavior = 'none';
-        document.body.style.userSelect = 'none';
-        (document.body.style as any).webkitUserSelect = 'none';
-        document.body.style.touchAction = 'none';
+        window.addEventListener('touchstart', phantomKiller, { passive: false });
+        // Touchmove también para evitar "pull-to-refresh"
+        window.addEventListener('touchmove', phantomKiller, { passive: false });
 
         return () => {
             clearInterval(intervalGeometria);
@@ -252,29 +210,49 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointermove', handleMove, opts);
             document.removeEventListener('pointerup', handleUp, opts);
             document.removeEventListener('pointercancel', handleUp, opts);
-            window.removeEventListener('touchstart', bloquearTouch);
-            window.removeEventListener('touchmove', bloquearTouch);
-
-            // Limpieza CSS
-            document.body.style.overscrollBehavior = '';
-            document.body.style.userSelect = '';
+            window.removeEventListener('touchstart', phantomKiller);
+            window.removeEventListener('touchmove', phantomKiller);
         };
-
     }, []);
 
+    // ⚡ MANEJO OPTIMIZADO DEL FUELLE (Visual Bypass)
     const manejarCambioFuelle = (nuevaDireccion: 'halar' | 'empujar') => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
-        motorAudioPro.activarContexto();
-        motorAudioPro.detenerTodo(0.012);
 
+        motorAudioPro.activarContexto();
+
+        // CORRECCIÓN: No cortar el audio abruptamente, permitir decaimiento natural
+        // motorAudioPro.detenerTodo(0.012); <--- ELIMINADO para evitar cortes feos
+
+        // Actualizamos estado lógico
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
                 const nextId = `${data.pos}-${nuevaDireccion}`;
+                // Agregamos la nueva nota de inmediato
                 logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
                 pointersMap.current.set(pId, { ...data, musicalId: nextId });
             }
         });
-        logicaRef.current.setDireccion(nuevaDireccion);
+        logicaRef.current.setDireccion(nuevaDireccion); // Esto dispara re-render de React (lento)
+
+        // ⚡ ACTUALIZACIÓN VISUAL INSTANTÁNEA (DOM Directo)
+        // Se adelanta al re-render de React para dar feedback instantáneo
+        if (fuelleRef.current && fuelleTextRef.current) {
+            if (nuevaDireccion === 'empujar') {
+                fuelleRef.current.classList.add('empujar');
+                fuelleRef.current.classList.remove('halar');
+                fuelleTextRef.current.innerText = 'CERRANDO';
+                // Actualizar color de fondo del root para feedback periférico
+                document.querySelector('.simulador-app-root')?.classList.add('modo-empujar');
+                document.querySelector('.simulador-app-root')?.classList.remove('modo-halar');
+            } else {
+                fuelleRef.current.classList.add('halar');
+                fuelleRef.current.classList.remove('empujar');
+                fuelleTextRef.current.innerText = 'ABRIENDO';
+                document.querySelector('.simulador-app-root')?.classList.add('modo-halar');
+                document.querySelector('.simulador-app-root')?.classList.remove('modo-empujar');
+            }
+        }
     };
 
     const CIFRADO: Record<string, string> = { 'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E', 'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B' };
@@ -343,8 +321,9 @@ const SimuladorApp: React.FC = () => {
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`}>
 
-            {/* 🪗 FUELLE: Migrado a PointerEvents para coherencia con el motor V18 */}
+            {/* 🪗 FUELLE OPTIMIZADO: DOM Directo para evitar Lag de Renderizado */}
             <div
+                ref={fuelleRef}
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
                 onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
                 onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
@@ -352,7 +331,9 @@ const SimuladorApp: React.FC = () => {
                 onContextMenu={(e) => e.preventDefault()}
                 style={{ zIndex: 100, touchAction: 'none' }}
             >
-                <span className="fuelle-status">{logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}</span>
+                <span ref={fuelleTextRef} className="fuelle-status">
+                    {logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}
+                </span>
             </div>
 
             <div className="contenedor-acordeon-completo">
