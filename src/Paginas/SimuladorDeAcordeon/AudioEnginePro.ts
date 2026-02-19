@@ -116,9 +116,43 @@ export class MotorAudioPro {
             try {
                 await this.contexto.resume();
                 console.log("🔊 AudioContext V5.0 reanimado.");
+                this.iniciarKeepAlive();
             } catch (e) {
                 console.error("❌ No se pudo reanimar el AudioContext:", e);
             }
+        } else {
+            this.iniciarKeepAlive();
+        }
+    }
+
+    /**
+     * 🧟 ZOMBIE MODE (Audio Keep-Alive)
+     * Truco sucio pero necesario para Móviles:
+     * Reproduce un silencio infinito para que el navegador NUNCA suspenda el AudioContext
+     * ni siquiera cuando el usuario levanta todos los dedos.
+     */
+    private keepAliveOscillator: OscillatorNode | null = null;
+
+    private iniciarKeepAlive() {
+        if (this.keepAliveOscillator) return; // Ya está vivo
+
+        try {
+            // Crea un oscilador inaudible
+            const osc = this.contexto.createOscillator();
+            const gain = this.contexto.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.value = 1; // 1Hz (inaudible en la mayoría de parlantes)
+            gain.gain.value = 0.0001; // Volumen casi cero
+
+            osc.connect(gain);
+            gain.connect(this.contexto.destination);
+            osc.start();
+
+            this.keepAliveOscillator = osc;
+            console.log("🧟 Audio Zombie Mode ACTIVADO (Keep-Alive)");
+        } catch (e) {
+            console.warn("No se pudo iniciar Keep-Alive:", e);
         }
     }
 
