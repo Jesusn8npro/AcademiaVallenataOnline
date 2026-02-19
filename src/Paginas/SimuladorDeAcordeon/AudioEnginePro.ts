@@ -1,5 +1,5 @@
 /**
- * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V4.2)
+ * 🚀 MOTOR DE AUDIO DE ALTO RENDIMIENTO (V4.5)
  * Optimizado para trinos extremos, velocidad profesional y latencia ultra-baja en móviles.
  */
 
@@ -15,19 +15,36 @@ export class MotorAudioPro {
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
     private vocesActivas: { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number }[] = [];
-    private MAX_VOCES = 32; // 🛡️ Aumentado para soportar trinos y capas (Brillante + Cassotto)
+    private MAX_VOCES = 32;
+    private esMovil = false;
 
     constructor() {
+        // 📱 DETECCIÓN DE MÓVIL
+        this.esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-        // ⚡ SIN TASA FIJA: Permitimos que el móvil use su SampleRate nativo para evitar lag de remuestreo
-        this.contexto = new AudioContextClass({
+        // ⚡ OPTIMIZACIÓN DE LATENCIA Y CPU
+        // En móviles bajamos el sampleRate a 22050Hz para reducir la carga de procesamiento
+        // En PC mantenemos 44100Hz o 48000Hz (nativo) para máxima fidelidad
+        const opcionesContexto: AudioContextOptions = {
             latencyHint: 'interactive'
-        });
+        };
 
+        if (this.esMovil) {
+            opcionesContexto.sampleRate = 22050;
+            this.MAX_VOCES = 12; // 🛡️ Límite más estricto en móvil para evitar saturación
+            console.log("📱 Modo móvil detectado: Optimizando AudioEngine para bajo consumo");
+        } else {
+            this.MAX_VOCES = 32;
+            console.log("💻 Modo escritorio detectado: AudioEngine en máxima fidelidad");
+        }
+
+        this.contexto = new AudioContextClass(opcionesContexto);
         this.bancos = new Map();
         this.nodoGananciaPrincipal = this.contexto.createGain();
 
+        // 🛡️ LIMITADOR PARA EVITAR DISTORSIÓN (Clipping)
         const limitador = this.contexto.createDynamicsCompressor();
         limitador.threshold.setValueAtTime(-1.0, this.contexto.currentTime);
         limitador.knee.setValueAtTime(0, this.contexto.currentTime);
@@ -38,7 +55,6 @@ export class MotorAudioPro {
         this.nodoGananciaPrincipal.connect(limitador);
         limitador.connect(this.contexto.destination);
 
-        // 🔄 Escuchar cambios de visibilidad para reanimar el sonido
         document.addEventListener('visibilitychange', () => this.activarContexto());
         window.addEventListener('focus', () => this.activarContexto());
     }
@@ -66,7 +82,14 @@ export class MotorAudioPro {
         if (banco.muestras.has(idSonido)) return;
 
         try {
-            const respuesta = await fetch(url);
+            // 🔄 ESTRATEGIA DE CARGA HÍBRIDA:
+            // Si en el futuro conviertes a .webm, el motor intentará usar el formato más ligero
+            let urlFinal = url;
+
+            // Si quisiéramos forzar WebM en móvil podrías descomentar esto:
+            // if (this.esMovil) urlFinal = url.replace('.mp3', '.webm');
+
+            const respuesta = await fetch(urlFinal);
             if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
 
             const arrayBuffer = await respuesta.arrayBuffer();
@@ -91,9 +114,6 @@ export class MotorAudioPro {
         return 0;
     }
 
-    /**
-     * Reproduce un sonido con latencia mínima y gestión de polifonía.
-     */
     reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
         const banco = this.bancos.get(bancoId);
         if (!banco || !this.contexto) return null;
@@ -102,7 +122,7 @@ export class MotorAudioPro {
         const offset = banco.offsets.get(idSonido) || 0;
         if (!buffer) return null;
 
-        // 🛡️ VOICE STEALING: Si excedemos el límite, detenemos la voz más antigua
+        // 🛡️ VOICE STEALING AVANZADO
         if (this.vocesActivas.length >= this.MAX_VOCES) {
             const vieja = this.vocesActivas.shift();
             if (vieja) this.detener(vieja, 0.005);
@@ -119,7 +139,8 @@ export class MotorAudioPro {
 
         const ganancia = this.contexto.createGain();
         ganancia.gain.setValueAtTime(0.001, ahora);
-        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.003); // Attack ultra-veloz
+        // Attack ultra-veloz para respuesta táctil inmediata
+        ganancia.gain.exponentialRampToValueAtTime(volumen, ahora + 0.003);
 
         fuente.connect(ganancia);
         ganancia.connect(this.nodoGananciaPrincipal);
@@ -139,20 +160,28 @@ export class MotorAudioPro {
     }
 
     /**
-     * Detención ultra-rápida optimizada para repeticiones constantes (Trinos)
+     * Detención ultra-rápida optimizada para evitar clicks
      */
-    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.015) {
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.01) {
         try {
             const ahora = this.contexto.currentTime;
             const g = instancia.ganancia.gain;
 
             g.cancelScheduledValues(ahora);
-            // 🛡️ Blindaje contra volumen cero para evitar NaN en exponentialRamp
             const val = Math.max(g.value, 0.001);
             g.setValueAtTime(val, ahora);
             g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
             instancia.fuente.stop(ahora + rapidez + 0.005);
         } catch (e) { }
+    }
+
+    /**
+     * 🧹 LIMPIEZA TOTAL (Para cambios de fuelle rápidos)
+     */
+    detenerTodo(rapidez: number = 0.015) {
+        const copias = [...this.vocesActivas];
+        this.vocesActivas = [];
+        copias.forEach(v => this.detener(v, rapidez));
     }
 
     limpiarBanco(bancoId: string) {

@@ -556,6 +556,10 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     useEffect(() => {
         const nuevaDireccion = direccion;
         if (nuevaDireccion !== direccionRef.current) {
+            // 🔄 LIMPIEZA TOTAL: Liberamos voces en el motor de audio antes de cambiar
+            // Esto es CRUCIAL para el lag en móviles
+            motorAudioPro.detenerTodo(0.01);
+
             // 🔄 SWAP DE NOTAS ACTIVAS: Si hay notas sonando, las cambiamos a la nueva dirección
             const prev = { ...botonesActivosRef.current };
             const next: Record<string, any> = {};
@@ -570,14 +574,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 if (instances && instances.length > 0) {
                     next[newId] = { instances, ...mapaBotonesActual.current[newId] };
                 }
-                detenerTono(oldId);
+                // Ya no necesitamos detenerOldId individualmente porque detenerTodo() ya lo hizo
             });
 
             botonesActivosRef.current = next;
             setBotonesActivos(next);
             direccionRef.current = nuevaDireccion;
         }
-    }, [direccion, reproducirTono, detenerTono]);
+    }, [direccion, reproducirTono]);
 
     useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
