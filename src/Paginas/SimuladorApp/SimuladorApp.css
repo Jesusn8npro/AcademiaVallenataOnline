@@ -231,6 +231,15 @@
     align-items: center;
 }
 
+/* Control de visibilidad para latencia cero */
+.modo-halar .label-empujar {
+    display: none !important;
+}
+
+.modo-empujar .label-halar {
+    display: none !important;
+}
+
 .contenedor-nota-doble {
     display: flex;
     flex-direction: column;

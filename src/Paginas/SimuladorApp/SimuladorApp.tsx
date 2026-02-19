@@ -97,6 +97,17 @@ const SimuladorApp: React.FC = () => {
         const tren = trenRef.current;
         if (!tren) return;
 
+        // 🚀 PRE-CACHÉ DE ELEMENTOS: Evita búsquedas en el DOM durante la ejecución
+        const precargarPitos = () => {
+            const elPitos = tren.querySelectorAll('.pito-boton');
+            elPitos.forEach(el => {
+                const pos = (el as HTMLElement).dataset.pos;
+                if (pos) pitoElementsRef.current.set(pos, el as HTMLElement);
+            });
+        };
+        // Un pequeño timeout para asegurar que React ya pintó los botones
+        setTimeout(precargarPitos, 100);
+
         /**
          * POINTERDOWN: El dedo toca un botón.
          * - Activamos el audio context (por política de autoplay del browser)
@@ -216,15 +227,22 @@ const SimuladorApp: React.FC = () => {
      * necesitamos actualizar los musicalIds de TODOS los dedos activos.
      */
     const manejarCambioFuelle = (nuevaDireccion: 'halar' | 'empujar') => {
-        motorAudioPro.activarContexto();
-        const direccionAnterior = logicaRef.current.direccion;
-        if (nuevaDireccion === direccionAnterior) return;
+        if (nuevaDireccion === logicaRef.current.direccion) return;
 
-        // Actualizar todas las notas activas a la nueva dirección
+        motorAudioPro.activarContexto();
+
+        // 🚀 CAMBIO DE CLASE INSTANTÁNEO EN EL DOM (Sin esperar a React)
+        const root = document.querySelector('.simulador-app-root');
+        if (root) {
+            root.classList.remove('modo-halar', 'modo-empujar');
+            root.classList.add(`modo-${nuevaDireccion}`);
+        }
+
+        // 🧹 LIMPIEZA SÓNICA: Detener todas las voces en curso
+        motorAudioPro.detenerTodo(0.015);
+
+        // Actualizar musicalIds de dedos activos
         pointersMap.current.forEach((data, pointerId) => {
-            // Apagar nota con dirección vieja
-            logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-            // Encender con nueva dirección
             const newMusicalId = `${data.pos}-${nuevaDireccion}`;
             logicaRef.current.actualizarBotonActivo(newMusicalId, 'add', null, true);
             pointersMap.current.set(pointerId, { pos: data.pos, musicalId: newMusicalId });
@@ -305,12 +323,31 @@ const SimuladorApp: React.FC = () => {
         if (grabando) registrarEvento('fuelle', { direccion: logica.direccion });
     }, [logica.direccion, grabando]);
 
+    // 🛡️ LIMPIEZA DE SEGURIDAD: Si cambiamos de instrumento o tonalidad, reseteamos todo
+    useEffect(() => {
+        motorAudioPro.detenerTodo(0.01);
+        pointersMap.current.clear();
+        pitoElementsRef.current.forEach(el => el.classList.remove('nota-activa'));
+    }, [logica.instrumentoId, logica.tonalidadSeleccionada]);
+
     // =====================================================================
-    // 🎹 DATOS DE LAS HILERAS (filtrados por dirección actual)
+    // 🎹 DATOS DE LAS HILERAS (Agrupados por posición física)
     // =====================================================================
-    const pitosAfuera = logica.configTonalidad?.primeraFila?.filter((n: any) => n.id.includes(logica.direccion)) || [];
-    const pitosMedio = logica.configTonalidad?.segundaFila?.filter((n: any) => n.id.includes(logica.direccion)) || [];
-    const pitosAdentro = logica.configTonalidad?.terceraFila?.filter((n: any) => n.id.includes(logica.direccion)) || [];
+    const agruparNotas = (fila: any[]) => {
+        const porPos: Record<string, { halar: any, empujar: any }> = {};
+        fila?.forEach(nota => {
+            const [f, c, dir] = nota.id.split('-');
+            const pos = `${f}-${c}`;
+            if (!porPos[pos]) porPos[pos] = { halar: null, empujar: null };
+            if (dir === 'halar') porPos[pos].halar = nota;
+            else if (dir === 'empujar') porPos[pos].empujar = nota;
+        });
+        return Object.entries(porPos).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1]));
+    };
+
+    const h3 = React.useMemo(() => agruparNotas(logica.configTonalidad?.terceraFila), [logica.configTonalidad?.terceraFila]);
+    const h2 = React.useMemo(() => agruparNotas(logica.configTonalidad?.segundaFila), [logica.configTonalidad?.segundaFila]);
+    const h1 = React.useMemo(() => agruparNotas(logica.configTonalidad?.primeraFila), [logica.configTonalidad?.primeraFila]);
 
     // =====================================================================
     // 🖥️ RENDER
@@ -377,80 +414,53 @@ const SimuladorApp: React.FC = () => {
                         >
                             {/* HILERA 3 - ADENTRO */}
                             <div className="hilera-pitos hilera-adentro">
-                                {pitosAdentro.map((nota: any) => {
-                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
-                                    const notaHalar = logica.configTonalidad.terceraFila.find((n: any) => n.id === `${idBase}-halar`);
-                                    const notaEmpujar = logica.configTonalidad.terceraFila.find((n: any) => n.id === `${idBase}-empujar`);
-                                    return (
-                                        <div
-                                            key={idBase}
-                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-pos={idBase}
-                                        >
-                                            {!vistaDoble ? (
-                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
-                                            ) : (
-                                                <div className="contenedor-nota-doble">
-                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
-                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
-                                                </div>
-                                            )}
-                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
-                                        </div>
-                                    );
-                                })}
+                                {h3.map(([pos, notas]) => (
+                                    <div key={pos} className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`} data-pos={pos}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                        {vistaDoble && (
+                                            <div className="contenedor-nota-doble">
+                                                <span className="nota-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                                <span className="nota-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                            </div>
+                                        )}
+                                        {notas.halar?.tecla && !vistaDoble && <span className="tecla-computador">{notas.halar.tecla}</span>}
+                                    </div>
+                                ))}
                             </div>
 
                             {/* HILERA 2 - MEDIO */}
                             <div className="hilera-pitos hilera-medio">
-                                {pitosMedio.map((nota: any) => {
-                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
-                                    const notaHalar = logica.configTonalidad.segundaFila.find((n: any) => n.id === `${idBase}-halar`);
-                                    const notaEmpujar = logica.configTonalidad.segundaFila.find((n: any) => n.id === `${idBase}-empujar`);
-                                    return (
-                                        <div
-                                            key={idBase}
-                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-pos={idBase}
-                                        >
-                                            {!vistaDoble ? (
-                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
-                                            ) : (
-                                                <div className="contenedor-nota-doble">
-                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
-                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
-                                                </div>
-                                            )}
-                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
-                                        </div>
-                                    );
-                                })}
+                                {h2.map(([pos, notas]) => (
+                                    <div key={pos} className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`} data-pos={pos}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                        {vistaDoble && (
+                                            <div className="contenedor-nota-doble">
+                                                <span className="nota-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                                <span className="nota-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                            </div>
+                                        )}
+                                        {notas.halar?.tecla && !vistaDoble && <span className="tecla-computador">{notas.halar.tecla}</span>}
+                                    </div>
+                                ))}
                             </div>
 
                             {/* HILERA 1 - AFUERA */}
                             <div className="hilera-pitos hilera-afuera">
-                                {pitosAfuera.map((nota: any) => {
-                                    const idBase = nota.id.split('-').slice(0, 2).join('-');
-                                    const notaHalar = logica.configTonalidad.primeraFila.find((n: any) => n.id === `${idBase}-halar`);
-                                    const notaEmpujar = logica.configTonalidad.primeraFila.find((n: any) => n.id === `${idBase}-empujar`);
-                                    return (
-                                        <div
-                                            key={idBase}
-                                            className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`}
-                                            data-pos={idBase}
-                                        >
-                                            {!vistaDoble ? (
-                                                <span className="nota-etiqueta">{formatearEtiquetaNota(nota)}</span>
-                                            ) : (
-                                                <div className="contenedor-nota-doble">
-                                                    <span className="nota-halar">{formatearEtiquetaNota(notaHalar)}</span>
-                                                    <span className="nota-empujar">{formatearEtiquetaNota(notaEmpujar)}</span>
-                                                </div>
-                                            )}
-                                            {nota.tecla && !vistaDoble && <span className="tecla-computador">{nota.tecla}</span>}
-                                        </div>
-                                    );
-                                })}
+                                {h1.map(([pos, notas]) => (
+                                    <div key={pos} className={`pito-boton ${vistaDoble ? 'vista-doble' : ''}`} data-pos={pos}>
+                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                        {vistaDoble && (
+                                            <div className="contenedor-nota-doble">
+                                                <span className="nota-halar">{formatearEtiquetaNota(notas.halar)}</span>
+                                                <span className="nota-empujar">{formatearEtiquetaNota(notas.empujar)}</span>
+                                            </div>
+                                        )}
+                                        {notas.halar?.tecla && !vistaDoble && <span className="tecla-computador">{notas.halar.tecla}</span>}
+                                    </div>
+                                ))}
                             </div>
                         </motion.div>
                     </div>
