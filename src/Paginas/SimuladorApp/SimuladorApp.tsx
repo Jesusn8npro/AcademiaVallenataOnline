@@ -1,12 +1,12 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V18.0 (PointerEvents)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V24.0 (Anti-Lag Nuclear)
  * 
- * MIGRACIÓN CRÍTICA (V17→V18):
- * CAUSA RAÍZ DEL LAG: Chrome Android usa «Throttled Async Touchmove» para 1 solo dedo.
- * Los TouchEvents de 1 solo dedo son procesados como posibles gestos de scroll (200ms delay).
- * SOLUCIÓN: Migrar de TouchEvents → PointerEvents.
- * Los PointerEvents van por el pipeline del Compositor de Chrome y NO tienen throttling.
- * setPointerCapture(): Cada dedo «captura» su elemento para tracking sin perder eventos.
+ * CAMBIOS v24.0:
+ * 1. 🛑 preventDefault() INMEDIATO al inicio de TODOS los handlers (Critical Fix Android Single-Touch).
+ * 2. 🐭 MOUSE KILLER: Matar cualquier evento de mouse emulado para evitar doble disparo.
+ * 3. 🔥 AUDIO PRE-HEAT: Iniciar Zombie Mode al primer toque en CUALQUIER lugar.
+ * 4. 🧹 GC FRIENDLY: Bucles for optimizados y limpieza agresiva de punteros.
+ * 5. 🔒 CSS INLINE: touchAction="none" en todos los elementos críticos.
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -39,7 +39,6 @@ const SimuladorApp: React.FC = () => {
     // 🗺️ REFS Y CACHE DE GEOMETRÍA (Nivel Hardware)
     // 🖐️ V18.0: Mapa de PUNTEROS (PointerEvents), no de touches
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
-    // Cache de geometría eliminada en V20.0 (elementFromPoint es superior)
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -64,10 +63,7 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🚀 MOTOR DE INPUT PRO V20.0 (Zero-Lag + Coalesced Events)
-    // =====================================================================
-    // =====================================================================
-    // 🚀 MOTOR DE INPUT PRO V22.0: PHANTOM TOUCH & VISUAL BYPASS
+    // 🚀 MOTOR DE INPUT PRO V24.0 (Zero-Lag + Anti-Scroll)
     // =====================================================================
     const activeNotesRef = useRef<Set<string>>(new Set());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
@@ -89,7 +85,7 @@ const SimuladorApp: React.FC = () => {
             lastTrenPos.current = { left: trenRect.left - currentX, top: trenRect.top };
             rectsCache.current.clear();
             const botones = tren.querySelectorAll('.pito-boton');
-            // Usar for loop clásico es más rápido y genera menos basura que forEach
+            // Usar for loop clásico optimizado
             for (let i = 0; i < botones.length; i++) {
                 const el = botones[i] as HTMLElement;
                 const pos = el.dataset.pos;
@@ -105,7 +101,6 @@ const SimuladorApp: React.FC = () => {
         };
         actualizarGeometria();
         window.addEventListener('resize', actualizarGeometria);
-        // Reducir frecuencia de chequeo de geometría para salvar CPU
         const intervalGeometria = setInterval(actualizarGeometria, 5000);
 
         const obtenerBotonEnCoordenadas = (clientX: number, clientY: number): string | null => {
@@ -128,17 +123,17 @@ const SimuladorApp: React.FC = () => {
 
         const procesarEvento = (e: PointerEvent, tipo: 'down' | 'move' | 'up') => {
             const target = e.target as HTMLElement;
-            // Filtros rápidos
+
+            // FILTROS
             if (target.closest('.barra-herramientas-contenedor')) return;
             if (target.closest('.indicador-fuelle')) {
                 if (e.cancelable) e.preventDefault();
                 return;
             }
+
+            // 🛑 CRITICAL FIX: MATAR SCROLL INMEDIATAMENTE
             if (e.cancelable) e.preventDefault();
 
-            // 🚀 OPTIMIZACIÓN GC: Evitar crear arrays con getCoalescedEvents si no es necesario
-            // Solo usar coalesced en movimientos rápidos, pero en móviles viejos puede llenar la memoria
-            // Vamos a procesar solo el evento principal por ahora para probar estabilidad
             const pId = e.pointerId;
 
             if (tipo === 'up') {
@@ -152,7 +147,6 @@ const SimuladorApp: React.FC = () => {
                     }
                     pointersMap.current.delete(pId);
                 }
-                // Liberar captura si existe
                 try { if (target.hasPointerCapture(pId)) target.releasePointerCapture(pId); } catch (_) { }
                 return;
             }
@@ -185,14 +179,29 @@ const SimuladorApp: React.FC = () => {
                 if (tipo === 'down' && target instanceof Element) {
                     try { target.setPointerCapture(pId); } catch (_) { }
                 }
+
+                // 🔥 Pre-Calentar Audio si es el primer toque
+                if (activeNotesRef.current.size === 1) {
+                    motorAudioPro.activarContexto();
+                }
             } else {
                 pointersMap.current.set(pId, { pos: '', musicalId: '' });
             }
         };
 
-        const handleDown = (e: PointerEvent) => procesarEvento(e, 'down');
-        const handleMove = (e: PointerEvent) => { if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'move'); };
-        const handleUp = (e: PointerEvent) => { if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'up'); };
+        // 🔥 HANDLERS AGRESIVOS: e.preventDefault() PRIMERO QUE TODO
+        const handleDown = (e: PointerEvent) => {
+            if (e.cancelable && !e.target?.['closest']?.('.barra-herramientas-contenedor')) e.preventDefault();
+            procesarEvento(e, 'down');
+        };
+        const handleMove = (e: PointerEvent) => {
+            if (e.cancelable && !e.target?.['closest']?.('.barra-herramientas-contenedor')) e.preventDefault();
+            if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'move');
+        };
+        const handleUp = (e: PointerEvent) => {
+            if (e.cancelable && !e.target?.['closest']?.('.barra-herramientas-contenedor')) e.preventDefault();
+            if (pointersMap.current.has(e.pointerId)) procesarEvento(e, 'up');
+        };
 
         const opts = { capture: true, passive: false };
         document.addEventListener('pointerdown', handleDown, opts);
@@ -200,23 +209,28 @@ const SimuladorApp: React.FC = () => {
         document.addEventListener('pointerup', handleUp, opts);
         document.addEventListener('pointercancel', handleUp, opts);
 
-        // 👻 PHANTOM TOUCH LISTENER (Nivel 3 Gemini)
-        // Listener agresivo en window para matar CUALQUIER intento de scroll/zoom del navegador
-        // antes de que llegue a React o a los elementos.
+        // 👻 PHANTOM TOUCH KILLER
         const phantomKiller = (e: TouchEvent) => {
             if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
             if (e.cancelable) e.preventDefault();
-            // Despertar AudioContext constantemente
             motorAudioPro.activarContexto();
         };
         window.addEventListener('touchstart', phantomKiller, { passive: false });
         window.addEventListener('touchmove', phantomKiller, { passive: false });
 
-        // 🔥 PRE-CALENTAMIENTO DE AUDIO (Critical: Iniciar Zombie Mode al primer toque)
+        // 🐭 MOUSE KILLER: Matar emulación de mouse para evitar doble disparo en Android
+        const mouseKiller = (e: MouseEvent) => {
+            if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
+            e.preventDefault();
+            e.stopPropagation();
+        };
+        window.addEventListener('mousedown', mouseKiller, true);
+        window.addEventListener('mousemove', mouseKiller, true);
+        window.addEventListener('mouseup', mouseKiller, true);
+
+        // 🔥 WARM UP AUDIO ON FIRST TOUCH
         const warmUpAudio = () => {
-            motorAudioPro.activarContexto().then(() => {
-                console.log("🔥 Motor de Audio Pre-Calentado y Zombie Mode Activo");
-            });
+            motorAudioPro.activarContexto().then(() => console.log("🔥 Audio Warm-UP OK"));
             window.removeEventListener('pointerdown', warmUpAudio);
             window.removeEventListener('keydown', warmUpAudio);
         };
@@ -232,13 +246,15 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointercancel', handleUp, opts);
             window.removeEventListener('touchstart', phantomKiller);
             window.removeEventListener('touchmove', phantomKiller);
+            window.removeEventListener('mousedown', mouseKiller, true);
+            window.removeEventListener('mousemove', mouseKiller, true);
+            window.removeEventListener('mouseup', mouseKiller, true);
             window.removeEventListener('pointerdown', warmUpAudio);
             window.removeEventListener('keydown', warmUpAudio);
             // 🧹 LIMPIEZA DE EMERGENCIA
             pointersMap.current.clear();
             activeNotesRef.current.clear();
         };
-
     }, []);
 
     // ⚡ MANEJO OPTIMIZADO DEL FUELLE (Visual Bypass)
@@ -247,28 +263,29 @@ const SimuladorApp: React.FC = () => {
 
         motorAudioPro.activarContexto();
 
-        // CORRECCIÓN: No cortar el audio abruptamente, permitir decaimiento natural
-        // motorAudioPro.detenerTodo(0.012); <--- ELIMINADO para evitar cortes feos
-
         // Actualizamos estado lógico
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
                 const nextId = `${data.pos}-${nuevaDireccion}`;
-                // Agregamos la nueva nota de inmediato
-                logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
+                if (activeNotesRef.current.has(data.musicalId)) {
+                    // Intercambio sin notas fantasma
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    activeNotesRef.current.delete(data.musicalId);
+
+                    logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
+                    activeNotesRef.current.add(nextId);
+                }
                 pointersMap.current.set(pId, { ...data, musicalId: nextId });
             }
         });
-        logicaRef.current.setDireccion(nuevaDireccion); // Esto dispara re-render de React (lento)
+        logicaRef.current.setDireccion(nuevaDireccion);
 
         // ⚡ ACTUALIZACIÓN VISUAL INSTANTÁNEA (DOM Directo)
-        // Se adelanta al re-render de React para dar feedback instantáneo
         if (fuelleRef.current && fuelleTextRef.current) {
             if (nuevaDireccion === 'empujar') {
                 fuelleRef.current.classList.add('empujar');
                 fuelleRef.current.classList.remove('halar');
                 fuelleTextRef.current.innerText = 'CERRANDO';
-                // Actualizar color de fondo del root para feedback periférico
                 document.querySelector('.simulador-app-root')?.classList.add('modo-empujar');
                 document.querySelector('.simulador-app-root')?.classList.remove('modo-halar');
             } else {
@@ -281,6 +298,19 @@ const SimuladorApp: React.FC = () => {
         }
     };
 
+    const agrupar = (fila: any[]) => {
+        const p: Record<string, { halar: any, empujar: any }> = {};
+        if (!fila) return [];
+        fila.forEach(n => {
+            const [f, c, d] = n.id.split('-');
+            const pos = `${f}-${c}`;
+            if (!p[pos]) p[pos] = { halar: null, empujar: null };
+            if (d === 'halar') p[pos].halar = n; else p[pos].empujar = n;
+        });
+        return Object.entries(p).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1]));
+    };
+
+    // Configuración de renderizado de etiquetas
     const CIFRADO: Record<string, string> = { 'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E', 'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B' };
     const formatearEtiquetaNota = (notaRaw: any) => {
         if (!notaRaw) return '';
@@ -296,6 +326,10 @@ const SimuladorApp: React.FC = () => {
         }
         return base;
     };
+
+    const h3 = React.useMemo(() => agrupar(logica.configTonalidad?.terceraFila), [logica.configTonalidad?.terceraFila]);
+    const h2 = React.useMemo(() => agrupar(logica.configTonalidad?.segundaFila), [logica.configTonalidad?.segundaFila]);
+    const h1 = React.useMemo(() => agrupar(logica.configTonalidad?.primeraFila), [logica.configTonalidad?.primeraFila]);
 
     useEffect(() => {
         const root = document.documentElement;
@@ -329,38 +363,22 @@ const SimuladorApp: React.FC = () => {
         }
     };
 
-    const agrupar = (fila: any[]) => {
-        const p: Record<string, { halar: any, empujar: any }> = {};
-        fila?.forEach(n => {
-            const [f, c, d] = n.id.split('-');
-            const pos = `${f}-${c}`;
-            if (!p[pos]) p[pos] = { halar: null, empujar: null };
-            if (d === 'halar') p[pos].halar = n; else p[pos].empujar = n;
-        });
-        return Object.entries(p).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1]));
-    };
-
-    const h3 = React.useMemo(() => agrupar(logica.configTonalidad?.terceraFila), [logica.configTonalidad?.terceraFila]);
-    const h2 = React.useMemo(() => agrupar(logica.configTonalidad?.segundaFila), [logica.configTonalidad?.segundaFila]);
-    const h1 = React.useMemo(() => agrupar(logica.configTonalidad?.primeraFila), [logica.configTonalidad?.primeraFila]);
-
     return (
-        <div className={`simulador-app-root modo-${logica.direccion}`}>
+        <div className={`simulador-app-root modo-${logica.direccion}`} style={{ touchAction: 'none' }}>
 
-            {/* 🪗 FUELLE OPTIMIZADO: Pointer Capture Vital para evitar "Sticky Button" */}
+            {/* 🪗 FUELLE OPTIMIZADO */}
             <div
                 ref={fuelleRef}
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
                 onPointerDown={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // Evitar conflictos con listeners globales
-                    (e.target as Element).setPointerCapture(e.pointerId); // 🔒 CAPTURA CRÍTICA: El dedo no escapa
+                    e.stopPropagation();
+                    (e.target as Element).setPointerCapture(e.pointerId);
                     manejarCambioFuelle('empujar');
                 }}
                 onPointerUp={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // Liberar captura no es estrictamente necesario (el navegador lo hace), pero es buena práctica
                     try { (e.target as Element).releasePointerCapture(e.pointerId); } catch (_) { }
                     manejarCambioFuelle('halar');
                 }}
@@ -376,8 +394,8 @@ const SimuladorApp: React.FC = () => {
                 </span>
             </div>
 
-            <div className="contenedor-acordeon-completo">
-                <div className="simulador-canvas">
+            <div className="contenedor-acordeon-completo" style={{ touchAction: 'none' }}>
+                <div className="simulador-canvas" style={{ touchAction: 'none' }}>
                     <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
                     <div className="diapason-marco" ref={marcoRef} style={{ touchAction: 'none' }}>
                         <motion.div
@@ -385,25 +403,25 @@ const SimuladorApp: React.FC = () => {
                             className="tren-botones-deslizable"
                             style={{ x, touchAction: 'none' }}
                         >
-                            <div className="hilera-pitos hilera-adentro">
-                                {h3.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
+                            <div className="hilera-pitos hilera-adentro" style={{ touchAction: 'none' }}>
+                                {(h3 || []).map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ touchAction: 'none' }}>
                                         <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
                                         <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
                                     </div>
                                 ))}
                             </div>
-                            <div className="hilera-pitos hilera-medio">
-                                {h2.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
+                            <div className="hilera-pitos hilera-medio" style={{ touchAction: 'none' }}>
+                                {(h2 || []).map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ touchAction: 'none' }}>
                                         <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
                                         <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
                                     </div>
                                 ))}
                             </div>
-                            <div className="hilera-pitos hilera-afuera">
-                                {h1.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
+                            <div className="hilera-pitos hilera-afuera" style={{ touchAction: 'none' }}>
+                                {(h1 || []).map(([pos, n]) => (
+                                    <div key={pos} className="pito-boton" data-pos={pos} style={{ touchAction: 'none' }}>
                                         <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
                                         <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
                                     </div>

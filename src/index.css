@@ -6,7 +6,6 @@ body,
   width: 100%;
   height: 100%;
   position: fixed;
-  /* 🔒 BLOQUEO NIVEL SISTEMA: Evita el rebote del viewport */
   overflow: hidden !important;
 
   /* 🛑 ANTI-LAG TÁCTIL (Chrome/Android/iOS) */
@@ -22,7 +21,20 @@ body,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #000;
-  /* Evita fllash blanco en cargas */
+}
+
+/* 🔥 BUGFIX CRÍTICO: Asegurar que los botones NO esperen scroll */
+.simulador-app-root,
+.contenedor-acordeon-completo,
+.marco-diapason,
+.diapason-mask,
+.tren-botones,
+.pito-boton,
+.indicador-fuelle {
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* Espacio para el menú fijo autenticado (70px de altura) - Solo cuando hay menú */
