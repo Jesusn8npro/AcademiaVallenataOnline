@@ -228,9 +228,16 @@ const SimuladorApp: React.FC = () => {
         window.addEventListener('mousemove', mouseKiller, true);
         window.addEventListener('mouseup', mouseKiller, true);
 
-        // 🔥 WARM UP AUDIO ON FIRST TOUCH
+        // 🔥 WARM UP AUDIO ON FIRST TOUCH + VIDEO WAKE LOCK
         const warmUpAudio = () => {
             motorAudioPro.activarContexto().then(() => console.log("🔥 Audio Warm-UP OK"));
+
+            // 🎥 VIDEO WAKE LOCK: Reproducir video silencioso base64 para forzar modo 'Media Playback' 
+            const video = document.getElementById('wake-lock-video') as HTMLVideoElement;
+            if (video) {
+                video.play().then(() => console.log("🎥 Video Wake Lock ACTIVO")).catch(e => console.warn("Video Lock falló", e));
+            }
+
             window.removeEventListener('pointerdown', warmUpAudio);
             window.removeEventListener('keydown', warmUpAudio);
         };
@@ -365,6 +372,16 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`} style={{ touchAction: 'none' }}>
+
+            {/* 🎥 VIDEO WAKE LOCK: Elemento oculto para evitar throttling */}
+            <video
+                id="wake-lock-video"
+                playsInline
+                muted
+                loop
+                src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIsAAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAFHN0c2oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
+                style={{ position: 'absolute', width: 1, height: 1, opacity: 0.001, pointerEvents: 'none', zIndex: -1 }}
+            />
 
             {/* 🪗 FUELLE OPTIMIZADO */}
             <div
