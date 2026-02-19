@@ -135,28 +135,42 @@ const SimuladorApp: React.FC = () => {
         };
 
         /**
-         * 🚀 MOTOR V18.0: PointerEvents con setPointerCapture
+         * 🚀 MOTOR V19.0: PointerEvents CORREGIDO
          * 
-         * Por qué funciona mejor que TouchEvents:
-         * - Chrome NO aplica "Throttled Async Touchmove" a los PointerEvents.
-         * - setPointerCapture() hace que el dedo "posea" un puntero único.
-         *   Incluso si el dedo se mueve fuera del elemento, los eventos siguen llegando.
-         * - No hay diferenciación entre 1 dedo y 2 dedos: siempre es interactivo.
-         * - El pipeline de PointerEvents va directo al compositor gráfico de Chrome.
+         * BUG RAÍZ ENCONTRADO (V18 → V19):
+         * 1. `.diapason-marco` tiene `pointer-events: none` en CSS → el marco NUNCA recibe
+         *    el pointerdown directamente. Los eventos burbujean desde los hijos (.pito-boton).
+         * 2. `setPointerCapture(e.currentTarget)` fallaba silenciosamente porque currentTarget
+         *    (el marco) no tenía un puntero activo — el puntero nació en el hijo (el pito).
+         * 3. Con pointer-events:none en el marco, la captura nunca se establecía →
+         *    Chrome mantenía sus heurísticas de scroll para el dedo solitario.
+         *
+         * SOLUCIÓN DEFINITIVA:
+         * - Listeners en `document` fase de CAPTURA: se disparan ANTES que Chrome procese eventos.
+         * - `setPointerCapture` sobre `e.target` (el elemento que RECIBIÓ el toque real).
+         * - Filtro por marcoRect: verificamos coordenadas vs bounding box del marco, evitando
+         *   costosas llamadas a `.closest()` en el hot path táctil.
          */
-        const acordeonArea = marco;
+        let marcoRect = marco.getBoundingClientRect();
+        const actualizarMarcoRect = () => { marcoRect = marco.getBoundingClientRect(); };
+        window.addEventListener('resize', actualizarMarcoRect);
+        setTimeout(actualizarMarcoRect, 500);
 
         const handlePointerDown = (e: PointerEvent) => {
-            const target = e.target as HTMLElement;
-            // Filtrar barra de herramientas, modales y fuelle (tienen sus propios handlers)
-            if (target.closest('.barra-herramientas-contenedor') ||
-                target.closest('.menu-opciones-panel') ||
-                target.closest('.modal-contenedor') ||
-                target.closest('.indicador-fuelle')) return;
+            // 🎯 FILTRO DE ZONA: Solo procesamos toques dentro del área del acordeón
+            // Esto reemplaza .closest() (lento) con una simple comparación de coordenadas
+            if (e.clientX < marcoRect.left || e.clientX > marcoRect.right ||
+                e.clientY < marcoRect.top || e.clientY > marcoRect.bottom) return;
 
-            // ⚡ CAPTURA EXCLUSIVA: Este pointerId ya no puede ser interceptado por Chrome
-            // Esto es el equivalente a "Gaming Mode" pero para 1 solo dedo
-            try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch (_) { }
+            const target = e.target as HTMLElement;
+            // Filtrar fuelle y controles UI (tienen su propio manejo)
+            if (target.closest('.indicador-fuelle') ||
+                target.closest('.barra-herramientas-contenedor')) return;
+
+            // ⚡ BUG FIX CRÍTICO: setPointerCapture sobre el TARGET (quien recibió el toque),
+            // NO sobre currentTarget. El target es el .pito-boton que SÍ tiene pointer-events:auto.
+            // Esto es lo que hace que Chrome entre en "modo gaming" para 1 solo dedo.
+            try { target.setPointerCapture(e.pointerId); } catch (_) { }
 
             if (e.cancelable) e.preventDefault();
             motorAudioPro.activarContexto();
@@ -175,7 +189,7 @@ const SimuladorApp: React.FC = () => {
 
         const handlePointerMove = (e: PointerEvent) => {
             const data = pointersMap.current.get(e.pointerId);
-            if (!data) return; // Solo procesamos punteros que ya rastreamos
+            if (!data) return;
 
             if (e.cancelable) e.preventDefault();
 
@@ -210,12 +224,14 @@ const SimuladorApp: React.FC = () => {
             pointersMap.current.delete(e.pointerId);
         };
 
-        // 🎯 ADJUNTAR AL MARCO DEL ACORDEÓN (no al window, evita interferencias)
-        acordeonArea.addEventListener('pointerdown', handlePointerDown, { passive: false });
-        acordeonArea.addEventListener('pointermove', handlePointerMove, { passive: false });
-        acordeonArea.addEventListener('pointerup', handlePointerUp);
-        acordeonArea.addEventListener('pointercancel', handlePointerUp);
-        acordeonArea.addEventListener('pointerleave', handlePointerUp);
+        // 🎯 LISTENERS EN DOCUMENT - FASE DE CAPTURA
+        // Usar capture:true garantiza que nuestro handler corre ANTES que Chrome
+        // decida si es un gesto de scroll. Esto es equivalente a interceptar la
+        // señal antes del sistema operativo.
+        document.addEventListener('pointerdown', handlePointerDown, { capture: true, passive: false });
+        document.addEventListener('pointermove', handlePointerMove, { capture: true, passive: false });
+        document.addEventListener('pointerup', handlePointerUp, { capture: true });
+        document.addEventListener('pointercancel', handlePointerUp, { capture: true });
 
         // 🚫 Bloquear gestos residuales del sistema
         const blockGesture = (e: Event) => { if (e.cancelable) e.preventDefault(); };
@@ -224,11 +240,11 @@ const SimuladorApp: React.FC = () => {
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaBase);
-            acordeonArea.removeEventListener('pointerdown', handlePointerDown);
-            acordeonArea.removeEventListener('pointermove', handlePointerMove);
-            acordeonArea.removeEventListener('pointerup', handlePointerUp);
-            acordeonArea.removeEventListener('pointercancel', handlePointerUp);
-            acordeonArea.removeEventListener('pointerleave', handlePointerUp);
+            window.removeEventListener('resize', actualizarMarcoRect);
+            document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
+            document.removeEventListener('pointermove', handlePointerMove, { capture: true });
+            document.removeEventListener('pointerup', handlePointerUp, { capture: true });
+            document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
             window.removeEventListener('contextmenu', blockGesture);
         };
     }, []);
