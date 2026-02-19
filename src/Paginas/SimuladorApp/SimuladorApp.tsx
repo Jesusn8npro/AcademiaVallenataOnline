@@ -1,10 +1,10 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V8.0 (No-Throttle Gaming Engine)
+ * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V9.0 (Pure Touch Interface)
  * 
- * SOLUCIÓN DEFINITIVA AL LAG DE CHROME ANDROID:
- * - Desactiva el "Throttled Async Touchmove Model" de Chrome.
- * - Fuerza la prioridad de eventos de 1ms incluso con un solo dedo.
- * - Mata el overscroll glow y el pull-to-refresh de raíz.
+ * SOLUCIÓN DEFINITIVA CHROME ANDROID:
+ * - Abandona PointerEvents por TouchEvents de bajo nivel para saltar la "Sala de Espera".
+ * - Manual Multi-Touch Tracking: Seguimiento ultra-veloz de cada dedo por ID.
+ * - Anti-Ghosting: Limpieza forzada de notas al perder el contacto.
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
@@ -34,7 +34,9 @@ const SimuladorApp: React.FC = () => {
 
     const x = useMotionValue(0);
 
-    const pointersMap = useRef<Map<number, { pos: string; musicalId: string; lastX?: number; lastY?: number }>>(new Map());
+    // 🗺️ REFS ESTRUCTURALES
+    const touchesMap = useRef<Map<number, { pos: string; musicalId: string; lastX?: number; lastY?: number }>>(new Map());
+    /** Geometría local para hit-testing inmune al movimiento */
     const localRectsRef = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const pitoElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
@@ -65,7 +67,7 @@ const SimuladorApp: React.FC = () => {
     };
 
     // =====================================================================
-    // 🖐️ MOTOR DE INPUT V8.0 (HIGH-PRIORITY GAMING ENGINE)
+    // 🖐️ MOTOR DE INPUT V9.0 (PURE TOUCH ENGINE)
     // =====================================================================
     useEffect(() => {
         const tren = trenRef.current;
@@ -91,15 +93,16 @@ const SimuladorApp: React.FC = () => {
             });
         };
 
-        const interval = setInterval(actualizarGeometriaLocal, 3000);
+        const interval = setInterval(actualizarGeometriaLocal, 4000);
         window.addEventListener('resize', actualizarGeometriaLocal);
         setTimeout(actualizarGeometriaLocal, 500);
 
         const detectarEnPuntoLocal = (clientX: number, clientY: number): string | null => {
-            const trenRect = tren.getBoundingClientRect();
-            const relX = clientX - trenRect.left;
-            const relY = clientY - trenRect.top;
+            const trenBase = tren.getBoundingClientRect();
+            const relX = clientX - trenBase.left;
+            const relY = clientY - trenBase.top;
             const IMAN = 15;
+
             const entries = Array.from(localRectsRef.current.entries());
             for (let i = entries.length - 1; i >= 0; i--) {
                 const [pos, r] = entries[i];
@@ -111,47 +114,50 @@ const SimuladorApp: React.FC = () => {
             return null;
         };
 
-        const onDown = (e: PointerEvent) => {
-            if (e.pointerType === 'mouse' && !e.isPrimary) return;
-            // 🛡️ MATAR EL DUDAS DEL NAVEGADOR
+        const onTouchStart = (e: TouchEvent) => {
             if (e.cancelable) e.preventDefault();
             motorAudioPro.activarContexto();
 
-            const pos = detectarEnPuntoLocal(e.clientX, e.clientY);
-            if (!pos) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const pos = detectarEnPuntoLocal(touch.clientX, touch.clientY);
+                if (!pos) continue;
 
-            try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch (err) { }
+                const musicalId = `${pos}-${logicaRef.current.direccion}`;
+                touchesMap.current.set(touch.identifier, { pos, musicalId, lastX: touch.clientX, lastY: touch.clientY });
 
-            const musicalId = `${pos}-${logicaRef.current.direccion}`;
-            pointersMap.current.set(e.pointerId, { pos, musicalId, lastX: e.clientX, lastY: e.clientY });
-            logicaRef.current.actualizarBotonActivo(musicalId, 'add', null, true);
-            actualizarVisualBoton(pos, true);
-            registrarEvento('nota_on', { id: musicalId, pos });
+                logicaRef.current.actualizarBotonActivo(musicalId, 'add', null, true);
+                actualizarVisualBoton(pos, true);
+                registrarEvento('nota_on', { id: musicalId, pos });
+            }
         };
 
-        const onMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
+        const onTouchMove = (e: TouchEvent) => {
             if (e.cancelable) e.preventDefault();
 
-            const events = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() : [e];
-            for (const ev of events) {
-                const checkPoints = [{ x: ev.clientX, y: ev.clientY }];
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const data = touchesMap.current.get(touch.identifier);
+                if (!data) continue;
+
+                // 💎 INTERPOLACIÓN AGRESIVA
+                const checkPoints = [{ x: touch.clientX, y: touch.clientY }];
                 if (data.lastX !== undefined && data.lastY !== undefined) {
-                    const dx = ev.clientX - data.lastX;
-                    const dy = ev.clientY - data.lastY;
+                    const dx = touch.clientX - data.lastX;
+                    const dy = touch.clientY - data.lastY;
                     const dist = Math.hypot(dx, dy);
                     if (dist > 15) {
                         const steps = Math.min(4, Math.floor(dist / 12));
-                        for (let i = 1; i <= steps; i++) {
-                            checkPoints.unshift({ x: data.lastX + (dx * (i / (steps + 1))), y: data.lastY + (dy * (i / (steps + 1))) });
+                        for (let j = 1; j <= steps; j++) {
+                            checkPoints.unshift({ x: data.lastX + (dx * (j / (steps + 1))), y: data.lastY + (dy * (j / (steps + 1))) });
                         }
                     }
                 }
 
                 for (const pt of checkPoints) {
-                    const latest = pointersMap.current.get(e.pointerId);
+                    const latest = touchesMap.current.get(touch.identifier);
                     if (!latest) continue;
+
                     const newPos = detectarEnPuntoLocal(pt.x, pt.y);
                     if (newPos !== latest.pos) {
                         if (latest.pos) {
@@ -161,75 +167,63 @@ const SimuladorApp: React.FC = () => {
                         }
                         if (newPos) {
                             const newMusicalId = `${newPos}-${logicaRef.current.direccion}`;
-                            pointersMap.current.set(e.pointerId, { pos: newPos, musicalId: newMusicalId, lastX: pt.x, lastY: pt.y });
+                            touchesMap.current.set(touch.identifier, { pos: newPos, musicalId: newMusicalId, lastX: pt.x, lastY: pt.y });
                             logicaRef.current.actualizarBotonActivo(newMusicalId, 'add', null, true);
                             actualizarVisualBoton(newPos, true);
                             registrarEvento('nota_on', { id: newMusicalId, pos: newPos });
                         } else {
-                            pointersMap.current.set(e.pointerId, { ...latest, pos: '', musicalId: '' });
+                            touchesMap.current.set(touch.identifier, { ...latest, pos: '', musicalId: '' });
                         }
                     }
                 }
-                const final = pointersMap.current.get(e.pointerId);
-                if (final) pointersMap.current.set(e.pointerId, { ...final, lastX: ev.clientX, lastY: ev.clientY });
+                const final = touchesMap.current.get(touch.identifier);
+                if (final) touchesMap.current.set(touch.identifier, { ...final, lastX: touch.clientX, lastY: touch.clientY });
             }
         };
 
-        const onUp = (e: PointerEvent) => {
+        const onTouchEnd = (e: TouchEvent) => {
             if (e.cancelable) e.preventDefault();
-            const d = pointersMap.current.get(e.pointerId);
-            if (d) {
-                if (d.pos) {
-                    logicaRef.current.actualizarBotonActivo(d.musicalId, 'remove', null, true);
-                    actualizarVisualBoton(d.pos, false);
-                    registrarEvento('nota_off', { id: d.musicalId, pos: d.pos });
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const data = touchesMap.current.get(touch.identifier);
+                if (data) {
+                    if (data.pos) {
+                        logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                        actualizarVisualBoton(data.pos, false);
+                        registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                    }
+                    touchesMap.current.delete(touch.identifier);
                 }
-                pointersMap.current.delete(e.pointerId);
             }
         };
 
-        const onWindowUp = (e: PointerEvent) => {
-            if (pointersMap.current.has(e.pointerId)) onUp(e);
-        };
+        // 🛡️ REGISTRO DE EVENTOS PUROS
+        tren.addEventListener('touchstart', onTouchStart, { passive: false });
+        tren.addEventListener('touchmove', onTouchMove, { passive: false });
+        tren.addEventListener('touchend', onTouchEnd, { passive: false });
+        tren.addEventListener('touchcancel', onTouchEnd, { passive: false });
 
-        // 🛡️ EL SECRETO: BLOQUEO DE NIVEL DE SISTEMA
-        // Matamos el touchstart para que Chrome ni siquiera intente pensar en scroll
-        const matarGestosSistema = (e: TouchEvent) => {
+        // Bloqueo global de gestos para que NADA se mueva
+        const matarGestos = (e: Event) => {
             const target = e.target as HTMLElement;
-            // Solo bloqueamos si estamos en el área de música
             if (!target.closest('.barra-herramientas-contenedor') &&
                 !target.closest('.menu-opciones-panel') &&
                 !target.closest('.modal-contenedor')) {
                 if (e.cancelable) e.preventDefault();
             }
         };
-
-        tren.addEventListener('pointerdown', onDown, { passive: false });
-        tren.addEventListener('pointermove', onMove, { passive: false });
-        tren.addEventListener('pointerup', onUp, { passive: false });
-        tren.addEventListener('pointercancel', onUp, { passive: false });
-
-        // 🛡️ INYECCIÓN DE PRIORIDAD MÁXIMA
-        window.addEventListener('touchstart', matarGestosSistema as any, { passive: false });
-        window.addEventListener('touchmove', matarGestosSistema as any, { passive: false });
-        window.addEventListener('pointerup', onWindowUp);
-        window.addEventListener('pointercancel', onWindowUp);
-
-        const block = (e: Event) => e.preventDefault();
-        window.addEventListener('contextmenu', block);
+        window.addEventListener('touchstart', matarGestos as any, { passive: false });
+        window.addEventListener('touchmove', matarGestos as any, { passive: false });
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaLocal);
-            tren.removeEventListener('pointerdown', onDown);
-            tren.removeEventListener('pointermove', onMove);
-            tren.removeEventListener('pointerup', onUp);
-            tren.removeEventListener('pointercancel', onUp);
-            window.removeEventListener('touchstart', matarGestosSistema as any);
-            window.removeEventListener('touchmove', matarGestosSistema as any);
-            window.removeEventListener('pointerup', onWindowUp);
-            window.removeEventListener('pointercancel', onWindowUp);
-            window.removeEventListener('contextmenu', block);
+            tren.removeEventListener('touchstart', onTouchStart);
+            tren.removeEventListener('touchmove', onTouchMove);
+            tren.removeEventListener('touchend', onTouchEnd);
+            tren.removeEventListener('touchcancel', onTouchEnd);
+            window.removeEventListener('touchstart', matarGestos as any);
+            window.removeEventListener('touchmove', matarGestos as any);
         };
     }, []);
 
@@ -242,11 +236,11 @@ const SimuladorApp: React.FC = () => {
             root.classList.add(`modo-${nuevaDireccion}`);
         }
         motorAudioPro.detenerTodo(0.015);
-        pointersMap.current.forEach((data, pId) => {
+        touchesMap.current.forEach((data, tId) => {
             if (data.pos) {
                 const nextId = `${data.pos}-${nuevaDireccion}`;
                 logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
-                pointersMap.current.set(pId, { ...data, musicalId: nextId });
+                touchesMap.current.set(tId, { ...data, musicalId: nextId });
             }
         });
         logicaRef.current.setDireccion(nuevaDireccion);
