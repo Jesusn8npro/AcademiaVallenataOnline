@@ -143,6 +143,9 @@ const SimuladorApp: React.FC = () => {
             const data = pointersMap.current.get(e.pointerId);
             if (!data) return;
 
+            // 🛡️ BLOQUEO DE INTERFERENCIA: Evitamos que el navegador intente hacer scroll
+            if (e.cancelable) e.preventDefault();
+
             const events = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() : [e];
             for (const ev of events) {
                 const checkPoints = [{ x: ev.clientX, y: ev.clientY }];
@@ -193,6 +196,7 @@ const SimuladorApp: React.FC = () => {
         };
 
         const onUp = (e: PointerEvent) => {
+            if (e.cancelable) e.preventDefault();
             const d = pointersMap.current.get(e.pointerId);
             if (d) {
                 if (d.pos) {
@@ -209,15 +213,22 @@ const SimuladorApp: React.FC = () => {
             if (pointersMap.current.has(e.pointerId)) onUp(e);
         };
 
-        // 🛡️ BLINDAJE TOTAL
+        // 🛡️ BLINDAJE TOTAL CONTRA GESTOS (Chrome/Android)
+        const evitarScroll = (e: TouchEvent) => {
+            if (e.cancelable) e.preventDefault();
+        };
+
         tren.addEventListener('pointerdown', onDown, { passive: false });
         tren.addEventListener('pointermove', onMove, { passive: false });
         tren.addEventListener('pointerup', onUp, { passive: false });
         tren.addEventListener('pointercancel', onUp, { passive: false });
+
+        // Matamos el touchmove y touchstart para que el navegador no intente hacer pull-to-refresh
+        window.addEventListener('touchstart', evitarScroll as any, { passive: false });
+        window.addEventListener('touchmove', evitarScroll as any, { passive: false });
         window.addEventListener('pointerup', onWindowUp);
         window.addEventListener('pointercancel', onWindowUp);
 
-        // Bloquear menús contextuales en trinos largos
         const block = (e: Event) => e.preventDefault();
         window.addEventListener('contextmenu', block);
 
@@ -228,6 +239,8 @@ const SimuladorApp: React.FC = () => {
             tren.removeEventListener('pointermove', onMove);
             tren.removeEventListener('pointerup', onUp);
             tren.removeEventListener('pointercancel', onUp);
+            window.removeEventListener('touchstart', evitarScroll as any);
+            window.removeEventListener('touchmove', evitarScroll as any);
             window.removeEventListener('pointerup', onWindowUp);
             window.removeEventListener('pointercancel', onWindowUp);
             window.removeEventListener('contextmenu', block);
