@@ -138,7 +138,7 @@ const SimuladorApp: React.FC = () => {
 
             const relX = clientX - realTrenLeft;
             const relY = clientY - realTrenTop;
-            const IMAN = 15; // Margen de error para dedos grandes
+            const IMAN = 25; // AUMENTADO: Margen de error más generoso para dedos
 
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
@@ -151,36 +151,14 @@ const SimuladorApp: React.FC = () => {
 
         /**
          * 🚀 MOTOR V19.0: PointerEvents CORREGIDO
-         * 
-         * BUG RAÍZ ENCONTRADO (V18 → V19):
-         * 1. `.diapason-marco` tiene `pointer-events: none` en CSS → el marco NUNCA recibe
-         *    el pointerdown directamente. Los eventos burbujean desde los hijos (.pito-boton).
-         * 2. `setPointerCapture(e.currentTarget)` fallaba silenciosamente porque currentTarget
-         *    (el marco) no tenía un puntero activo — el puntero nació en el hijo (el pito).
-         * 3. Con pointer-events:none en el marco, la captura nunca se establecía →
-         *    Chrome mantenía sus heurísticas de scroll para el dedo solitario.
-         *
-         * SOLUCIÓN DEFINITIVA:
-         * - Listeners en `document` fase de CAPTURA: se disparan ANTES que Chrome procese eventos.
-         * - `setPointerCapture` sobre `e.target` (el elemento que RECIBIÓ el toque real).
-         * - Filtro por marcoRect: verificamos coordenadas vs bounding box del marco, evitando
-         *   costosas llamadas a `.closest()` en el hot path táctil.
          */
-        let marcoRect = marco.getBoundingClientRect();
-        const actualizarMarcoRect = () => { marcoRect = marco.getBoundingClientRect(); };
-        window.addEventListener('resize', actualizarMarcoRect);
-        setTimeout(actualizarMarcoRect, 500);
-
         const handlePointerDown = (e: PointerEvent) => {
-            // 🎯 FILTRO DE ZONA: Solo procesamos toques dentro del área del acordeón
-            // Esto reemplaza .closest() (lento) con una simple comparación de coordenadas
-            if (e.clientX < marcoRect.left || e.clientX > marcoRect.right ||
-                e.clientY < marcoRect.top || e.clientY > marcoRect.bottom) return;
-
             const target = e.target as HTMLElement;
             // Filtrar fuelle y controles UI (tienen su propio manejo)
             if (target.closest('.indicador-fuelle') ||
                 target.closest('.barra-herramientas-contenedor')) return;
+
+            // ELIMINADO: Filtro por coordenadas de marco (causaba zonas muertas en bordes)
 
             // ⚡ BUG FIX CRÍTICO: setPointerCapture sobre el TARGET (quien recibió el toque),
             // NO sobre currentTarget. El target es el .pito-boton que SÍ tiene pointer-events:auto.
@@ -255,7 +233,6 @@ const SimuladorApp: React.FC = () => {
         return () => {
             clearInterval(interval);
             window.removeEventListener('resize', actualizarGeometriaBase);
-            window.removeEventListener('resize', actualizarMarcoRect);
             document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
             document.removeEventListener('pointermove', handlePointerMove, { capture: true });
             document.removeEventListener('pointerup', handlePointerUp, { capture: true });
