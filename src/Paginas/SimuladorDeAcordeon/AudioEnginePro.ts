@@ -40,10 +40,10 @@ export class MotorAudioPro {
 
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-        // ⚡ latencyHint: 'interactive' = Balance ideal entre latencia y estabilidad
-        // Aunque 0 es teóricamente más rápido, 'interactive' evita glitches en dispositivos gama media.
+        // ⚡ latencyHint: 'playback' = Prioridad MÁXIMA de batería (SO cree que es música)
+        // 'interactive' permite al SO hacer throttling, 'playback' lo fuerza a mantenerse despierto.
         const opcionesContexto: AudioContextOptions = {
-            latencyHint: 'interactive'
+            latencyHint: 'playback'
         };
 
         if (this.esMovil) {

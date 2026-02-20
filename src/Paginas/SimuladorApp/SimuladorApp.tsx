@@ -235,14 +235,26 @@ const SimuladorApp: React.FC = () => {
         window.addEventListener('mousemove', mouseKiller, true);
         window.addEventListener('mouseup', mouseKiller, true);
 
-        // 🔥 WARM UP AUDIO ON FIRST TOUCH + VIDEO WAKE LOCK
-        const warmUpAudio = () => {
-            motorAudioPro.activarContexto().then(() => console.log("🔥 Audio Warm-UP OK"));
 
-            // 🎥 VIDEO WAKE LOCK: Reproducir video silencioso base64 para forzar modo 'Media Playback' 
-            const video = document.getElementById('wake-lock-video') as HTMLVideoElement;
-            if (video) {
-                video.play().then(() => console.log("🎥 Video Wake Lock ACTIVO")).catch(e => console.warn("Video Lock falló", e));
+        // 🔥 AUDIO & WAKE LOCK MANAGER (TRIPLE CAPA ANTI-LAG)
+        const warmUpAudio = async () => {
+            // 1. AudioContext Resume
+            motorAudioPro.activarContexto().then(() => console.log("🔥 AudioCtx Resume OK"));
+
+            // 2. Wake Lock API (Oficial)
+            try {
+                if ('wakeLock' in navigator) {
+                    await (navigator as any).wakeLock.request('screen');
+                    console.log("🔦 Screen Wake Lock ACTIVE");
+                }
+            } catch (err) {
+                console.warn("Wake Lock Error:", err);
+            }
+
+            // 3. Fake Audio Playback (Bypass para Safari/Chrome Android Background)
+            const audioFake = document.getElementById('silent-audio-loop') as HTMLAudioElement;
+            if (audioFake) {
+                audioFake.play().then(() => console.log("🔊 Silent Audio Loop STARTED")).catch(e => console.warn("Silent Audio Failed", e));
             }
 
             window.removeEventListener('pointerdown', warmUpAudio);
@@ -380,14 +392,12 @@ const SimuladorApp: React.FC = () => {
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`} style={{ touchAction: 'none' }}>
 
-            {/* 🎥 VIDEO WAKE LOCK: Elemento oculto para evitar throttling */}
-            <video
-                id="wake-lock-video"
-                playsInline
-                muted
+            {/* 🔊 FAKE AUDIO LOOP: Truco para mantener el AudioContext vivo en fondo (iOS/Android) */}
+            <audio
+                id="silent-audio-loop"
                 loop
-                src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIsAAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAFHN0c2oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
-                style={{ position: 'absolute', width: 1, height: 1, opacity: 0.001, pointerEvents: 'none', zIndex: -1 }}
+                src="/audio/silence.mp3"
+                style={{ display: 'none' }}
             />
 
             {/* 🪗 FUELLE OPTIMIZADO */}
