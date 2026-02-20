@@ -68,15 +68,10 @@ export class MotorAudioPro {
         // En el momento del toque, solo hacemos: voz.ganancia.gain = volumen → fuente.start()
         this._inicializarPool();
 
-        // 🍎 iOS INTERRUPTED STATE LISTENER
-        // iOS 17+ bug: AudioContext entra en 'interrupted' al soltar el dedo
-        // y resume() se queda colgado para siempre. La solución: el 'Suspend-Resume Dance'
+        // 🍎 iOS INTERRUPTED STATE LISTENER (solo log, no Dance automático)
+        // El Dance automático corta notas activas. Se hace en el siguiente toque del usuario.
         this.contexto.addEventListener('statechange', () => {
-            const state = this.contexto.state as string;
-            if (state === 'interrupted' || state === 'suspended') {
-                console.warn(`⚠️ AudioCtx ${state} → Dance iniciado...`);
-                this.suspendResumeDance();
-            }
+            console.warn(`⚠️ AudioCtx statechange → ${this.contexto.state}`);
         });
 
         document.addEventListener('visibilitychange', () => this.activarContexto());

@@ -192,11 +192,10 @@ const SimuladorApp: React.FC = () => {
         // 🔥 HANDLERS AGRESIVOS: e.preventDefault() PRIMERO QUE TODO
         const handleDown = (e: PointerEvent) => {
             if (e.cancelable && !e.target?.['closest']?.('.barra-herramientas-contenedor')) e.preventDefault();
-            // 🩺 SUSPEND-RESUME DANCE (iOS 17+ BUG FIX)
-            // Debe estar en el call-stack SÍNCRONO del user-gesture.
-            // Si el contexto está en 'interrupted', el Dance lo desbloquea.
-            // Si está 'running', el Dance es seguro e inofensivo.
-            motorAudioPro.suspendResumeDance();
+            // 🔊 Activar contexto SOLO si no está running (no hacer Dance aquí, eso corta el audio)
+            if (motorAudioPro.contexto.state !== 'running') {
+                motorAudioPro.activarContexto();
+            }
             procesarEvento(e, 'down');
         };
         const handleMove = (e: PointerEvent) => {
