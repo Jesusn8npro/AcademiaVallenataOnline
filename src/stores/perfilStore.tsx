@@ -32,10 +32,32 @@ interface StoreState {
 const PerfilContext = createContext<StoreState | null>(null)
 
 export function PerfilProvider({ children }: { children: React.ReactNode }) {
-  const [perfil, setPerfil] = useState<Perfil | null>(null)
-  const [stats, setStats] = useState<Stats>({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 })
+  // 💾 PERSISTENCIA: Inicializar desde caché local si existe para evitar "pantalla en 0"
+  const [perfil, setPerfil] = useState<Perfil | null>(() => {
+    try {
+      const cached = localStorage.getItem('perfil_cache_v1');
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
+
+  const [stats, setStats] = useState<Stats>(() => {
+    try {
+      const cached = localStorage.getItem('perfil_stats_v1');
+      return cached ? JSON.parse(cached) : { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
+    } catch { return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 }; }
+  });
+
   const [cargando, setCargando] = useState(false)
   const [inicializado, setInicializado] = useState(false)
+
+  // 💾 EFECTOS DE PERSISTENCIA
+  useEffect(() => {
+    if (perfil) localStorage.setItem('perfil_cache_v1', JSON.stringify(perfil));
+  }, [perfil]);
+
+  useEffect(() => {
+    localStorage.setItem('perfil_stats_v1', JSON.stringify(stats));
+  }, [stats]);
 
   async function cargarDatosPerfil(forzar = false) {
     if (inicializado && !forzar) return
@@ -53,9 +75,15 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
     const user = session.user
 
+    // 🛡️ VALIDACIÓN DE CACHÉ: Si cambió el usuario, limpiar stats antiguos para no mostrar datos de otro
+    if (perfil && perfil.id !== user.id) {
+      setStats({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 }); // Reset visual inmediato
+      // No reseteamos perfil aquí porque se sobrescribe abajo inmediatamente
+    }
+
     // 2. OPTIMISTIC UI: Construir y setear perfil INMEDIATAMENTE
     // Esto elimina CUALQUIER posibilidad de carga infinita por red
-    const perfilOptimista: Perfil = {
+    const perfilOptimistaBase: Perfil = {
       id: user.id,
       nombre_completo: user.user_metadata?.full_name || user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
       url_foto_perfil: user.user_metadata?.avatar_url || user.user_metadata?.picture,
@@ -64,8 +92,16 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
       nivel_habilidad: 'principiante'
     }
 
+    // Fusión: Optimista Base + Lo que ya tengamos en caché (para no perder portada/nivel mientras carga)
+    const perfilFusionado = perfil && perfil.id === user.id ? {
+      ...perfilOptimistaBase,
+      ...perfil, // Mantiene la data de caché si existe
+      // Asegurar que auth siempre gane si hay conflicto de avatar social fresco? 
+      // No, preferimos BD/Caché local.
+    } : perfilOptimistaBase;
+
     // Renderizado inmediato
-    setPerfil(perfilOptimista)
+    setPerfil(perfilFusionado)
     setInicializado(true)
     setCargando(true)
 
@@ -85,7 +121,16 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
       if (perfilData) {
         console.log('✅ Perfil actualizado desde BD')
-        setPerfil(perfilData as Perfil)
+        // 🛡️ MERGE INTELIGENTE: Si la BD tiene campos nulos, preservar los datos optimistas (ej: avatar de Google)
+        // Esto evita que la imagen "parpadee y desaparezca" si el usuario no ha subido foto personalizada aún
+        setPerfil(prev => ({
+          ...(prev || perfilFusionado), // Base: lo que ya teníamos
+          ...perfilData,                // Override: datos de BD
+          // Excepción crítica: Si BD tiene avatar null, mantener el social/optimista
+          url_foto_perfil: perfilData.url_foto_perfil || prev?.url_foto_perfil || perfilFusionado.url_foto_perfil,
+          // Mantener nombre si viene vacío
+          nombre_completo: perfilData.nombre_completo || prev?.nombre_completo || perfilFusionado.nombre_completo
+        }))
       } else if (error) {
         console.warn('⚠️ Fallo carga BD, manteniendo perfil optimista:', error.message)
       }
@@ -151,6 +196,8 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
     setPerfil(null)
     setStats({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 })
     setInicializado(false)
+    localStorage.removeItem('perfil_cache_v1');
+    localStorage.removeItem('perfil_stats_v1');
   }
 
   const value = useMemo(() => ({

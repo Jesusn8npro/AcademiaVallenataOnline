@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../servicios/supabaseCliente'
+import { useUsuario } from '../../contextos/UsuarioContext'
+import { usePerfilStore } from '../../stores/perfilStore'
 import './encabezado-perfil.css'
 import ModalVisorImagenPerfil from './ModalVisorImagenPerfil'
 
@@ -40,6 +42,10 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
   const [imagenModalId, setImagenModalId] = useState<string | null>(null)
   const [tipoImagenModal, setTipoImagenModal] = useState<'avatar' | 'portada' | null>(null)
 
+  // Hooks para actualización de estado global y local
+  const { actualizarUsuario, usuario } = useUsuario()
+  const { cargarDatosPerfil } = usePerfilStore()
+
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (refMenuPortada.current && !refMenuPortada.current.contains(e.target as Node)) setMostrarMenuPortada(false) }
     if (mostrarMenuPortada) { window.addEventListener('mousedown', handler) } else { window.removeEventListener('mousedown', handler) }
@@ -79,7 +85,28 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
     await supabase.from('perfiles').update(campoUpdate).eq('id', userId!)
     const { data: imagenData } = await supabase.from('usuario_imagenes').insert({ usuario_id: userId, url_imagen: nuevaUrl, tipo: modoEdicion, fecha_subida: new Date().toISOString(), es_actual: true }).select().single()
     if (imagenData) { await supabase.from('usuario_imagenes').update({ es_actual: false }).eq('usuario_id', userId).eq('tipo', modoEdicion).neq('id', imagenData.id) }
-    if (modoEdicion === 'portada') { urlPortada = nuevaUrl; setVistaPortadaTemporal(null) } else { urlAvatar = nuevaUrl; setVistaAvatarTemporal(null) }
+
+    // Actualizar estado local (override temporal visual)
+    if (modoEdicion === 'portada') {
+      urlPortada = nuevaUrl;
+      setVistaPortadaTemporal(null)
+    } else {
+      urlAvatar = nuevaUrl;
+      setVistaAvatarTemporal(null)
+    }
+
+    // 🔄 ACTUALIZACIÓN DE ESTADO GLOBAL Y STORE (CRÍTICO)
+    // Si el perfil editado es el del usuario actual, actualizamos el contexto global (Navbar, etc.)
+    if (userId === usuario?.id) {
+      if (modoEdicion === 'avatar') {
+        actualizarUsuario({ url_foto_perfil: nuevaUrl })
+      }
+      // También podemos actualizar portada si el contexto la soportara
+    }
+
+    // Recargar datos en el store local de la página de perfil
+    await cargarDatosPerfil(true)
+
     mostrarMensaje('¡Actualizado exitosamente!', modoEdicion)
     limpiarSeleccion()
     setSubiendo(false)
@@ -151,7 +178,18 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
   return (
     <>
       <div className="ep-contenedor-portada" onMouseMove={manejarDragPortada as any} onTouchMove={manejarDragPortada as any}>
-        <img src={vistaPortadaTemporal || urlPortada || '/images/perfil-portada/Imagen de portada.png'} alt="Portada de perfil" className={`ep-imagen-portada ${reposicionandoPortada ? 'ep-reposicionando' : ''}`} style={{ objectPosition: `50% ${posicionPortadaY}%`, cursor: !reposicionandoPortada && !vistaPortadaTemporal ? 'pointer' : 'default' }} onClick={() => !reposicionandoPortada && !vistaPortadaTemporal && verFotoPortada()} />
+        <img
+          src={vistaPortadaTemporal || urlPortada || '/images/perfil-portada/Imagen de portada.png'}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; // Prevenir bucle infinito
+            target.src = '/images/perfil-portada/Imagen de portada.png';
+          }}
+          alt="Portada de perfil"
+          className={`ep-imagen-portada ${reposicionandoPortada ? 'ep-reposicionando' : ''}`}
+          style={{ objectPosition: `50% ${posicionPortadaY}%`, cursor: !reposicionandoPortada && !vistaPortadaTemporal ? 'pointer' : 'default' }}
+          onClick={() => !reposicionandoPortada && !vistaPortadaTemporal && verFotoPortada()}
+        />
 
         {mostrarMenuPortada && (
           <div className="ep-menu-flotante-portada" ref={refMenuPortada}>
@@ -180,9 +218,27 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
         <div className="ep-contenedor-avatar">
           <div className="ep-avatar-interactivo">
             {mostrarIniciales ? (
-              <div className="ep-avatar-iniciales" onClick={verFotoAvatar} style={{ cursor: 'pointer' }}>{iniciales}</div>
+              // Si no hay avatar, usamos la imagen por defecto en lugar de iniciales (según petición usuario)
+              <img
+                src={'/images/perfil-portada/Imagen perfil 1.jpg'}
+                alt="Avatar Default"
+                className="ep-imagen-avatar"
+                onClick={verFotoAvatar}
+                style={{ cursor: 'pointer' }}
+              />
             ) : (
-              <img src={vistaAvatarTemporal || urlAvatar || ''} alt="Avatar" className="ep-imagen-avatar" onClick={verFotoAvatar} style={{ cursor: 'pointer' }} />
+              <img
+                src={vistaAvatarTemporal || urlAvatar || '/images/perfil-portada/Imagen perfil 1.jpg'}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/images/perfil-portada/Imagen perfil 1.jpg';
+                }}
+                alt="Avatar"
+                className="ep-imagen-avatar"
+                onClick={verFotoAvatar}
+                style={{ cursor: 'pointer' }}
+              />
             )}
             <span className="ep-icono-camara-avatar" onClick={(e) => { e.stopPropagation(); setMostrarMenuAvatar(true) }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

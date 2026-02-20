@@ -1,13 +1,12 @@
 /**
- * 🚀 MOTOR DE AUDIO - V24.0 (Zero-Latency Mobile & Hardcore Keep-Alive)
+ * 🚀 MOTOR DE AUDIO - V5.0 (Zero-Latency Mobile)
  * 
- * CAMBIOS CRÍTICOS V4.5 → V5.0 → V24.0:
+ * CAMBIOS CRÍTICOS V4.5 → V5.0:
  * PROBLEMA: createBufferSource() + createGain() + connect() en Android tarda 20-80ms.
  * SOLUCIÓN 1: Eliminar DynamicsCompressor (el más costoso en CPU móvil, +15ms por nota).
  * SOLUCIÓN 2: latencyHint: 0 (número cero, NO string) = latencia mínima absoluta del hardware.
  * SOLUCIÓN 3: Ataque de ganancia directo — sin rampas exponenciales, setValueAtTime puro.
  * SOLUCIÓN 4: Pool de GainNodes pre-conectados por voz — no crear en el momento del toque.
- * SOLUCIÓN 5: Zombie Mode V2.0 (ScriptProcessor) para evitar suspensión en single-touch.
  */
 
 export interface BancoSonido {
@@ -26,7 +25,7 @@ interface VozPooled {
 }
 
 export class MotorAudioPro {
-    public contexto: AudioContext;
+    private contexto: AudioContext;
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
     private MAX_VOCES = 24;
@@ -40,18 +39,18 @@ export class MotorAudioPro {
 
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
 
-        // ⚡ latencyHint: 'playback' = Prioridad MÁXIMA de batería (SO cree que es música)
-        // 'interactive' permite al SO hacer throttling, 'playback' lo fuerza a mantenerse despierto.
+        // ⚡ latencyHint: 0 (número) = MÍNIMA LATENCIA ABSOLUTA del hardware
+        // Diferencia crítica: latencyHint: 'interactive' puede ser 40ms, latencyHint: 0 es ~5ms
         const opcionesContexto: AudioContextOptions = {
-            latencyHint: 'playback'
+            latencyHint: 0
         };
 
         if (this.esMovil) {
             this.MAX_VOCES = 20;
-            console.log("📱 Motor V24.0 Móvil: latencyHint=interactive, pool pre-conectado (20 voces)");
+            console.log("📱 Motor V5.0 Móvil: latencyHint=0, sin compresor, pool pre-conectado (20 voces)");
         } else {
             this.MAX_VOCES = 48;
-            console.log("💻 Motor V24.0 Escritorio: pool máximo (48 voces)");
+            console.log("💻 Motor V5.0 Escritorio: latencyHint=0, pool máximo (48 voces)");
         }
 
         this.contexto = new AudioContextClass(opcionesContexto);
@@ -67,12 +66,6 @@ export class MotorAudioPro {
         // Cada voz tiene su GainNode YA CONECTADO al grafo.
         // En el momento del toque, solo hacemos: voz.ganancia.gain = volumen → fuente.start()
         this._inicializarPool();
-
-        // 🍎 iOS INTERRUPTED STATE LISTENER (solo log, no Dance automático)
-        // El Dance automático corta notas activas. Se hace en el siguiente toque del usuario.
-        this.contexto.addEventListener('statechange', () => {
-            console.warn(`⚠️ AudioCtx statechange → ${this.contexto.state}`);
-        });
 
         document.addEventListener('visibilitychange', () => this.activarContexto());
         window.addEventListener('focus', () => this.activarContexto());
@@ -118,93 +111,14 @@ export class MotorAudioPro {
         voz.ocupada = false;
     }
 
-    /**
-     * 🩺 SUSPEND-RESUME DANCE (iOS 17+ BUG FIX)
-     * Fuente: bugs.webkit.org - AudioContext no se recupera de 'interrupted' con solo resume().
-     * El truco: suspend() + resume() en cadena fuerza un reset interno del estado en WebKit.
-     * Llamar síncronamente desde dentro de un user-gesture handler.
-     */
-    suspendResumeDance() {
-        this.contexto.suspend()
-            .then(() => this.contexto.resume())
-            .then(() => {
-                console.log('💪 Dance OK → AudioCtx state:', this.contexto.state);
-                this.iniciarKeepAlive();
-            })
-            .catch(e => console.warn('Dance error:', e));
-    }
-
     async activarContexto() {
-        const state = this.contexto.state as string;
-        if (state === 'interrupted') {
-            // iOS 17+ bug: resume() solo nunca resuelve en 'interrupted'.
-            // Hay que hacer el Dance síncrono.
-            this.suspendResumeDance();
-        } else if (state === 'suspended') {
+        if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try {
                 await this.contexto.resume();
-                console.log('🔊 AudioContext reanimado desde suspended.');
-                this.iniciarKeepAlive();
+                console.log("🔊 AudioContext V5.0 reanimado.");
             } catch (e) {
-                // Si falla, intentar el Dance como fallback
-                this.suspendResumeDance();
+                console.error("❌ No se pudo reanimar el AudioContext:", e);
             }
-        } else {
-            this.iniciarKeepAlive();
-        }
-    }
-
-    /**
-     * 🧟 ZOMBIE MODE V2.0 (HARDCORE KEEP-ALIVE)
-     * El oscilador simple a veces es ignorado por optimizaciones de batería.
-     * Usamos un ScriptProcessor (técnica legacy robusta) para forzar al
-     * hilo de audio a procesar bloques constantemente.
-     */
-    private keepAliveNode: ScriptProcessorNode | null = null;
-    private keepAliveOscillator: OscillatorNode | null = null;
-
-    private iniciarKeepAlive() {
-        if (this.keepAliveNode || this.keepAliveOscillator) return;
-
-        try {
-            // 1. Oscilador base (60Hz para asegurar que pase filtros DC offset)
-            const osc = this.contexto.createOscillator();
-            osc.type = 'sawtooth'; // Onda más rica que seno para evitar compresión
-            osc.frequency.value = 60;
-
-            // 2. Ganancia infinitesimal (inaudible pero matemáticamente significativa)
-            const gain = this.contexto.createGain();
-            gain.gain.value = 0.000001;
-
-            // 3. ScriptProcessor: El "Latido" del Audio
-            // Forzamos al navegador a procesar audio en el hilo principal
-            // Esto evita que Chrome suspenda la actividad de audio por "inactividad"
-            const bufferSize = 4096;
-            const scriptNode = this.contexto.createScriptProcessor(bufferSize, 1, 1);
-
-            scriptNode.onaudioprocess = (e) => {
-                const output = e.outputBuffer.getChannelData(0);
-                // Generar ruido blanco aleatorio de muy baja amplitud
-                // Esto asegura que cada buffer sea único y el navegador no optimice "silencio"
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = (Math.random() * 2 - 1) * 0.000001;
-                }
-            };
-
-            osc.connect(gain);
-            gain.connect(scriptNode);
-            scriptNode.connect(this.contexto.destination);
-            // Conectar también directo para redundancia
-            gain.connect(this.contexto.destination);
-
-            osc.start();
-
-            this.keepAliveOscillator = osc;
-            this.keepAliveNode = scriptNode;
-
-            console.log("🧟 Audio Zombie Mode V2.0 (HARDCORE) ACTIVADO");
-        } catch (e) {
-            console.warn("No se pudo iniciar Keep-Alive V2:", e);
         }
     }
 
@@ -300,24 +214,15 @@ export class MotorAudioPro {
     }
 
     /**
-     * Detención con Release Suave (Evita Clics)
+     * Detención ultra-rápida
      */
-    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.05) {
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.01) {
         try {
             const ahora = this.contexto.currentTime;
             const g = instancia.ganancia.gain;
-
-            // Cancelar cambios programados previos
             g.cancelScheduledValues(ahora);
-
-            // Fijar el valor actual explícitamente para evitar saltos
-            g.setValueAtTime(g.value, ahora);
-
-            // Release exponencial suave hacia casi cero (0.001)
-            g.exponentialRampToValueAtTime(0.001, ahora + rapidez);
-
-            // Detener el oscilador/fuente un poco después para asegurar silencio total
-            instancia.fuente.stop(ahora + rapidez + 0.01);
+            g.setValueAtTime(0, ahora + rapidez);
+            instancia.fuente.stop(ahora + rapidez + 0.002);
         } catch (err) {
             // Silencioso — es normal que falle si ya terminó
         }

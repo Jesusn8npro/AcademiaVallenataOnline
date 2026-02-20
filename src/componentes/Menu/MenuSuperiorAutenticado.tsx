@@ -8,18 +8,19 @@ import type { Notificacion } from '../../servicios/notificacionesService';
 import './MenuSuperiorAutenticado.css';
 
 // Componente Avatar simple
+// Componente Avatar simple con Fallback
 const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size: 'medium' | 'large' }> = ({
     src,
     alt,
     nombreCompleto,
     size
 }) => {
-    const iniciales = nombreCompleto
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+    const [imgError, setImgError] = useState(false);
+
+    // Si la imagen falla o no hay src, usar fallback
+    const imagenFinal = !src || imgError
+        ? '/images/perfil-portada/Imagen perfil 1.jpg'
+        : src;
 
     const tamaño = size === 'large' ? '50px' : '40px';
 
@@ -28,18 +29,22 @@ const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size
             width: tamaño,
             height: tamaño,
             borderRadius: '50%',
-            backgroundColor: '#667eea', // Fallback
-            backgroundImage: src ? `url(${src})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundColor: '#f3f4f6',
+            overflow: 'hidden', // Asegurar que la imagen no salga
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: size === 'large' ? '1.2rem' : '0.9rem'
         }}>
-            {!src && iniciales}
+            <img
+                src={imagenFinal}
+                alt={alt}
+                onError={() => setImgError(true)}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                }}
+            />
         </div>
     );
 };
