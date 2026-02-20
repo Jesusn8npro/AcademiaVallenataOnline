@@ -192,6 +192,8 @@ const SimuladorApp: React.FC = () => {
         // 🔥 HANDLERS AGRESIVOS: e.preventDefault() PRIMERO QUE TODO
         const handleDown = (e: PointerEvent) => {
             if (e.cancelable && !e.target?.['closest']?.('.barra-herramientas-contenedor')) e.preventDefault();
+            // 🔊 iOS AUDIO RESUME HACK: Forzar resume() en cada toque sin esperar promesa
+            motorAudioPro.contexto.resume().catch(() => { });
             procesarEvento(e, 'down');
         };
         const handleMove = (e: PointerEvent) => {
@@ -209,14 +211,19 @@ const SimuladorApp: React.FC = () => {
         document.addEventListener('pointerup', handleUp, opts);
         document.addEventListener('pointercancel', handleUp, opts);
 
-        // 👻 PHANTOM TOUCH KILLER
-        const phantomKiller = (e: TouchEvent) => {
+        // 🍎 iOS SCROLL CANCELLATION EXTREME (User Request)
+        // Específico para Safari: Matar scroll si hay 1 solo dedo
+        const preventDefaultIOS = (e: TouchEvent) => {
             if ((e.target as HTMLElement).closest('.barra-herramientas-contenedor')) return;
-            if (e.cancelable) e.preventDefault();
+            // Solo prevenir si es 1 dedo (scroll) - Multitoque suele ser gesto de app
+            if (e.touches.length === 1 && e.cancelable) {
+                e.preventDefault();
+            }
             motorAudioPro.activarContexto();
         };
-        window.addEventListener('touchstart', phantomKiller, { passive: false });
-        window.addEventListener('touchmove', phantomKiller, { passive: false });
+        // passive: false OBLIGATORIO para iOS
+        window.addEventListener('touchstart', preventDefaultIOS, { passive: false });
+        window.addEventListener('touchmove', preventDefaultIOS, { passive: false });
 
         // 🐭 MOUSE KILLER: Matar emulación de mouse para evitar doble disparo en Android
         const mouseKiller = (e: MouseEvent) => {
@@ -251,8 +258,8 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointermove', handleMove, opts);
             document.removeEventListener('pointerup', handleUp, opts);
             document.removeEventListener('pointercancel', handleUp, opts);
-            window.removeEventListener('touchstart', phantomKiller);
-            window.removeEventListener('touchmove', phantomKiller);
+            window.removeEventListener('touchstart', preventDefaultIOS);
+            window.removeEventListener('touchmove', preventDefaultIOS);
             window.removeEventListener('mousedown', mouseKiller, true);
             window.removeEventListener('mousemove', mouseKiller, true);
             window.removeEventListener('mouseup', mouseKiller, true);

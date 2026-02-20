@@ -26,7 +26,7 @@ interface VozPooled {
 }
 
 export class MotorAudioPro {
-    private contexto: AudioContext;
+    public contexto: AudioContext;
     private bancos: Map<string, BancoSonido>;
     private nodoGananciaPrincipal: GainNode;
     private MAX_VOCES = 24;
