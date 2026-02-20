@@ -68,6 +68,17 @@ export class MotorAudioPro {
         // En el momento del toque, solo hacemos: voz.ganancia.gain = volumen → fuente.start()
         this._inicializarPool();
 
+        // 🍎 iOS INTERRUPTED STATE LISTENER
+        // iOS 17+ bug: AudioContext entra en 'interrupted' al soltar el dedo
+        // y resume() se queda colgado para siempre. La solución: el 'Suspend-Resume Dance'
+        this.contexto.addEventListener('statechange', () => {
+            const state = this.contexto.state as string;
+            if (state === 'interrupted' || state === 'suspended') {
+                console.warn(`⚠️ AudioCtx ${state} → Dance iniciado...`);
+                this.suspendResumeDance();
+            }
+        });
+
         document.addEventListener('visibilitychange', () => this.activarContexto());
         window.addEventListener('focus', () => this.activarContexto());
     }
@@ -112,14 +123,36 @@ export class MotorAudioPro {
         voz.ocupada = false;
     }
 
+    /**
+     * 🩺 SUSPEND-RESUME DANCE (iOS 17+ BUG FIX)
+     * Fuente: bugs.webkit.org - AudioContext no se recupera de 'interrupted' con solo resume().
+     * El truco: suspend() + resume() en cadena fuerza un reset interno del estado en WebKit.
+     * Llamar síncronamente desde dentro de un user-gesture handler.
+     */
+    suspendResumeDance() {
+        this.contexto.suspend()
+            .then(() => this.contexto.resume())
+            .then(() => {
+                console.log('💪 Dance OK → AudioCtx state:', this.contexto.state);
+                this.iniciarKeepAlive();
+            })
+            .catch(e => console.warn('Dance error:', e));
+    }
+
     async activarContexto() {
-        if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
+        const state = this.contexto.state as string;
+        if (state === 'interrupted') {
+            // iOS 17+ bug: resume() solo nunca resuelve en 'interrupted'.
+            // Hay que hacer el Dance síncrono.
+            this.suspendResumeDance();
+        } else if (state === 'suspended') {
             try {
                 await this.contexto.resume();
-                console.log("🔊 AudioContext V24.0 reanimado.");
+                console.log('🔊 AudioContext reanimado desde suspended.');
                 this.iniciarKeepAlive();
             } catch (e) {
-                console.error("❌ No se pudo reanimar el AudioContext:", e);
+                // Si falla, intentar el Dance como fallback
+                this.suspendResumeDance();
             }
         } else {
             this.iniciarKeepAlive();
