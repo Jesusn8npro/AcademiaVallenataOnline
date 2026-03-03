@@ -33,24 +33,22 @@ export default defineConfig({
         include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
         options: {
           compact: true,
-          controlFlowFlattening: true,
-          controlFlowFlatteningThreshold: 0.5, // 50% para no penalizar tanto el rendimiento
-          deadCodeInjection: true,
-          deadCodeInjectionThreshold: 0.2, // 20%
-          debugProtection: true, // Añade un debugger interval invisible
-          debugProtectionInterval: 100, // Cada 100ms
-          disableConsoleOutput: true, // Borra en duro las llamadas a consola de todos los ficheros
-          identifierNamesGenerator: 'hexadecimal',
+          controlFlowFlattening: false, // Se deshabilita para evitar fallos de Memoria (OOM) en Easypanel
+          deadCodeInjection: false, // Se deshabilita por uso extremo de RAM en el servidor
+          debugProtection: true, // Mantiene la trampa anti-f12
+          debugProtectionInterval: 100,
+          disableConsoleOutput: true,
+          identifierNamesGenerator: 'hexadecimal', // Renombra a variables ilegibles (mantiene la ofuscacion principal baja en RAM)
           log: false,
-          numbersToExpressions: true,
+          numbersToExpressions: false,
           renameGlobals: false,
           rotateStringArray: true,
-          selfDefending: true, // Refuerza en contra de modificaciones locales del minificado
+          selfDefending: true,
           shuffleStringArray: true,
-          splitStrings: true,
+          splitStrings: false, // Evita uso excesivo de CPU en compilar
           stringArray: true,
-          stringArrayEncoding: ['base64'],
-          stringArrayThreshold: 0.8,
+          stringArrayEncoding: ['none'], // Se baja de base64 para aligerar la RAM en build
+          stringArrayThreshold: 0.5,
           unicodeEscapeSequence: false
         }
       }),
