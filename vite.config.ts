@@ -71,6 +71,15 @@ export default defineConfig({
   build: {
     sourcemap: false, // 100% false, no exponer mapas
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor_react: ['react', 'react-dom', 'react-router-dom'],
+          vendor_supabase: ['@supabase/supabase-js'],
+          vendor_ui: ['framer-motion', 'lucide-react']
+        }
+      }
+    },
     minify: 'terser',
     terserOptions: {
       compress: {

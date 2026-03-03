@@ -37,6 +37,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
             src="/images/Home/Banner- Academia vallenata ONLINE.jpg"
             alt={t('hero.etiqueta')}
             style={styles.heroBgImage}
+            fetchPriority="high"
           />
         </div>
 
