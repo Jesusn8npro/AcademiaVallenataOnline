@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Send, MessageCircle, Bot } from 'lucide-react'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import './ChatEnVivo.css'
-import { supabase as clienteSupabase } from '../../servicios/supabaseCliente'
+import { supabase as clienteSupabase } from '../../servicios/clienteSupabase'
 
 // Helper para Session ID (ya que no se importa)
 const obtenerSessionId = async () => {
@@ -429,29 +429,24 @@ export default function ChatEnVivo() {
                 }))
             }
 
-            const historial = await cargarHistorial(sessionId)
-            if (historial.length > 0) {
-                // Si ya tenemos mensajes locales (del localStorage), no sobrescribimos BRUSCAMENTE
-                // para evitar perder los que acabamos de enviar y no han llegado al server.
-                // Estrategia simple: Si el local está vacío, llenamos con historial.
-                // Si no, podríamos mezclar, pero por ahora priorizamos la continuidad visual inmediata.
-                setMensajes(prev => {
-                    if (prev.length === 0) return historial;
-
-                    // Opcional: Podríamos intentar fusionar si fuera necesario, 
-                    // pero para "no perder el chat al recargar", mantener el estado local es clave.
-                    // Si queremos actualizaciones, deberíamos manejar IDs reales devueltos por el webhook.
-                    return prev;
-                })
-            } else if (mensajes.length === 0) { // Solo mostrar bienvenida si está vacío totalmente
-                const bienvenida = {
-                    id: 'bienvenida',
-                    texto: '¡Hola! 👋 Soy tu asistente virtual de ACADEMIAVALLENATAONLINE.COM ¿En qué puedo ayudarte hoy?',
-                    esUsuario: false,
-                    timestamp: new Date(),
-                    tipo: 'sistema'
+            // Estrategia: Solo cargar del servidor si NO tenemos mensajes locales o si es la primera vez en la sesión
+            if (mensajes.length === 0) {
+                console.log('📬 [CHAT] Cargando historial desde Supabase...');
+                const historial = await cargarHistorial(sessionId)
+                if (historial.length > 0) {
+                    setMensajes(historial)
+                } else {
+                    const bienvenida = {
+                        id: 'bienvenida',
+                        texto: '¡Hola! 👋 Soy tu asistente virtual de ACADEMIAVALLENATAONLINE.COM ¿En qué puedo ayudarte hoy?',
+                        esUsuario: false,
+                        timestamp: new Date(),
+                        tipo: 'sistema'
+                    }
+                    setMensajes([bienvenida])
                 }
-                setMensajes([bienvenida])
+            } else {
+                console.log('📦 [CHAT] Usando historial de localStorage (más rápido)');
             }
         } catch (error) {
             console.warn('Error inicializando chat:', error)

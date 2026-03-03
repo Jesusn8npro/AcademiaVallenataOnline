@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { actividadService } from '../../../servicios/actividadService';
 import EstadisticasGenerales from './componentes/EstadisticasGenerales';
 import PestanasAdministracion from './componentes/PestanasAdministracion';

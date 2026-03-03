@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 interface Props {
   children: React.ReactNode

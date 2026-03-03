@@ -4,7 +4,7 @@ import { Clock, Star, ChevronDown, AlertTriangle, Loader, Play, Pause } from 'lu
 import './ArticuloBlog.css';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
 import SkeletonBlog from '../../componentes/Skeletons/SkeletonBlog';
-import { supabaseAnon } from '../../servicios/supabaseCliente';
+import { supabaseAnonimo } from '../../servicios/clienteSupabase';
 
 // Propiedades de las secciones del artículo
 interface ContenidoSeccion {
@@ -272,7 +272,7 @@ export default function ArticuloBlog() {
             setError(null);
 
             try {
-                const { data, error: err } = await supabaseAnon
+                const { data, error: err } = await supabaseAnonimo
                     .from('blog_articulos')
                     .select('*')
                     .eq('slug', slug)
@@ -386,3 +386,5 @@ export default function ArticuloBlog() {
         </div>
     );
 }
+
+

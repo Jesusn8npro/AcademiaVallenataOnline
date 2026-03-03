@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import './AdminBlog.css';
 
 interface ArticuloResumen {

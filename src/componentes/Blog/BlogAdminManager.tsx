@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import EditorQuill from './EditorQuill';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import { notificarNuevoArticuloBlog } from '../../servicios/notificacionesService';
 import { eliminarArticuloBlog } from '../../servicios/adminService';
 import './BlogAdminManager.css';

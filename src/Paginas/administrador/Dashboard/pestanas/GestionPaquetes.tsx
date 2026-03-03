@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import { Box, Star, DollarSign, PlayCircle, Clock, Key, Plus, Boxes, Edit3 } from 'lucide-react';
 import './GestionPaquetes.css';
 

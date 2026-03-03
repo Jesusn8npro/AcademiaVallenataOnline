@@ -3,7 +3,7 @@ import GridMisCursos from '../../componentes/MisCursos/GridMisCursos'
 import PorcentajePerfil from '../../componentes/Perfil/PorcentajePerfil'
 import BannerSlider from '../../componentes/Banners/BannerSlider'
 import { usePerfilStore } from '../../stores/perfilStore'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import SkeletonMisCursos from '../../componentes/Skeletons/SkeletonMisCursos'
 
 import { useUsuario } from '../../contextos/UsuarioContext'

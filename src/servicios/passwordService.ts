@@ -1,4 +1,4 @@
-import { supabase } from '../servicios/supabaseCliente'
+import { supabase } from '../servicios/clienteSupabase'
 
 export async function enviarEmailRestablecimiento(email: string): Promise<{ success: boolean; error?: string }> {
   try {

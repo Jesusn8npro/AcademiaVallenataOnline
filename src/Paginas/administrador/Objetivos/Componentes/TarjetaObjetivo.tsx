@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Tag, MoreVertical, Clock } from 'lucide-react';
-import type { ObjetivoAdmin } from '../../../../lib/services/servicioObjetivos';
+import type { ObjetivoAdmin } from '../../../../servicios/servicioObjetivos';
 
 interface Props {
     objetivo: ObjetivoAdmin;
@@ -67,3 +67,4 @@ const TarjetaObjetivo: React.FC<Props> = ({ objetivo, alHacerClic }) => {
 };
 
 export default TarjetaObjetivo;
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
-import type { NuevoObjetivo, ObjetivoAdmin } from '../../../../lib/services/servicioObjetivos';
+import type { NuevoObjetivo, ObjetivoAdmin } from '../../../../servicios/servicioObjetivos';
 
 interface Props {
     alCerrar: () => void;
@@ -171,3 +171,4 @@ const ModalObjetivo: React.FC<Props> = ({ alCerrar, alGuardar, alEliminar, objet
 };
 
 export default ModalObjetivo;
+

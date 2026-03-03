@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import ModalInscripciones from './ModalInscripciones';
 import './MostradorCursosTutoriales.css';
 

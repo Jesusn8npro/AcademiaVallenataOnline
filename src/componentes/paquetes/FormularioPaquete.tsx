@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { generateSlug } from '../../utils/utilidadesSlug'
-import { supabase } from '../../servicios/supabaseCliente'
+import { generateSlug } from '../../utilidades/utilidadesSlug'
+import { supabase } from '../../servicios/clienteSupabase'
 import {
   crearPaquete,
   actualizarPaquete,
@@ -241,3 +241,4 @@ export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Pr
     </div>
   )
 }
+

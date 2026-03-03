@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { PenTool, Sparkles } from 'lucide-react';
 import FormularioArticulo from './FormularioArticulo';

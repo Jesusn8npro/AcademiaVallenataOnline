@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, RotateCcw, Type, Music, Columns } from 'lucide-react';
+import { Settings, RotateCcw, Type, Music, Columns, Usb } from 'lucide-react';
 import type { ModoVista } from '../TiposAcordeon';
 
 interface BotonesControlProps {
@@ -13,12 +13,15 @@ interface BotonesControlProps {
     setModoVista: (val: ModoVista) => void;
     vistaDoble: boolean;
     setVistaDoble: (val: boolean) => void;
+    esp32Conectado: boolean;
+    conectarESP32: () => void;
 }
 
 const BotonesControl: React.FC<BotonesControlProps> = ({
     modoAjuste, setModoAjuste, setBotonSeleccionado,
     direccion, setDireccion, limpiarTodasLasNotas,
-    modoVista, setModoVista, vistaDoble, setVistaDoble
+    modoVista, setModoVista, vistaDoble, setVistaDoble,
+    esp32Conectado, conectarESP32
 }) => {
     return (
         <div className="simulador-controles-capa" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1000 }}>
@@ -35,6 +38,32 @@ const BotonesControl: React.FC<BotonesControlProps> = ({
             >
                 <Settings size={30} />
                 <span style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '4px' }}>GESTOR</span>
+            </button>
+
+            {/* Botón ESP32 Web Serial */}
+            <button
+                onClick={conectarESP32}
+                className="boton-gestor-flotante"
+                style={{
+                    position: 'absolute', top: '155px', right: '40px', pointerEvents: 'auto',
+                    background: esp32Conectado
+                        ? 'linear-gradient(135deg, #16a34a, #15803d)'
+                        : 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                    boxShadow: esp32Conectado ? '0 0 15px rgba(34,197,94,0.6)' : 'none',
+                    animation: esp32Conectado ? 'pulse-esp32 2s infinite' : 'none'
+                }}
+                title={esp32Conectado ? 'ESP32 Conectado ✅' : 'Conectar ESP32 por USB'}
+            >
+                <style>{`
+                    @keyframes pulse-esp32 {
+                        0%, 100% { box-shadow: 0 0 10px rgba(34,197,94,0.4); }
+                        50% { box-shadow: 0 0 25px rgba(34,197,94,0.9); }
+                    }
+                `}</style>
+                <Usb size={30} />
+                <span style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '4px' }}>
+                    {esp32Conectado ? 'ESP32 ✅' : 'ESP32'}
+                </span>
             </button>
 
             <div className="controles-derecha-flotantes" style={{

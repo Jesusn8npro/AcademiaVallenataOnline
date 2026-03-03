@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import { generarSlug } from '../../utilidades/slug'
 import ReproductorLecciones from '../../componentes/VisualizadorDeLeccionesDeCursos/ReproductorLecciones'
 import EncabezadoLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/EncabezadoLeccion'

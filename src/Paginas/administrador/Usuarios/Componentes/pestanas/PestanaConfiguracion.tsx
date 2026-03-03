@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PestanaConfiguracion.css';
-import { supabase } from '../../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../../servicios/clienteSupabase';
 import { cambiarPasswordUsuario, enviarEmailRestablecimiento } from '../../../../../servicios/passwordService';
 
 // Interfaces

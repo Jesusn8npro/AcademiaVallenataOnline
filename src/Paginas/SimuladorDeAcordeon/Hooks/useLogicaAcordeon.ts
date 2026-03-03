@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '../../../lib/supabase/clienteSupabase';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { motorAudioPro } from '../AudioEnginePro';
 import { encontrarMejorMuestra, type Muestra } from '../UniversalSampler';
 import { mapaTeclas, tono } from '../mapaTecladoYFrecuencias';
@@ -35,7 +35,7 @@ const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
 };
 
 const VOL_PITOS = 0.55;
-const VOL_BAJOS = 0.35;
+const VOL_BAJOS = 0.70; // 🔊 Subimos el volumen de los bajos para que resalten más
 const FADE_OUT = 10; // ⚡ Velocidad ultra-extrema para trinos profesionales (10ms)
 
 
@@ -55,6 +55,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<Muestra[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
     const [midiActivado, setMidiActivado] = useState(false);
+    const [esp32Conectado, setEsp32Conectado] = useState(false);
+    const esp32PortRef = useRef<any>(null);
     const [usuarioId, setUsuarioId] = useState<string | null>(null);
     const [samplesPitos, setSamplesPitos] = useState<string[]>([]);
     const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
@@ -173,17 +175,22 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // Activar AudioContext con el primer gesto del usuario
     useEffect(() => {
         const activarAudio = async () => {
-            console.log("🔊 Intentando activar audio...");
-            await motorAudioPro.activarContexto();
-            window.removeEventListener('click', activarAudio);
-            window.removeEventListener('keydown', activarAudio);
-            window.removeEventListener('touchstart', activarAudio);
+            console.log("%c 🔊 INTENTANDO ACTIVAR AUDIO... ", "background: #3498db; color: white; padding: 5px;");
+            try {
+                await motorAudioPro.activarContexto();
+                console.log("%c ✅ SISTEMA DE AUDIO LISTO ", "background: #27ae60; color: white; padding: 5px;");
+                window.removeEventListener('mousedown', activarAudio);
+                window.removeEventListener('keydown', activarAudio);
+                window.removeEventListener('touchstart', activarAudio);
+            } catch (err) {
+                console.error("❌ Error activando audio:", err);
+            }
         };
-        window.addEventListener('click', activarAudio);
+        window.addEventListener('mousedown', activarAudio);
         window.addEventListener('keydown', activarAudio);
         window.addEventListener('touchstart', activarAudio);
         return () => {
-            window.removeEventListener('click', activarAudio);
+            window.removeEventListener('mousedown', activarAudio);
             window.removeEventListener('keydown', activarAudio);
             window.removeEventListener('touchstart', activarAudio);
         };
@@ -199,6 +206,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const basePitchesRef = useRef<Record<string, number>>({});
     const teclasFastMapRef = useRef<Record<string, any>>({});
     const direccionRef = useRef(direccion);
+    useEffect(() => { direccionRef.current = direccion; }, [direccion]);
+    const hardwareMapRef = useRef(new Map<string, string>()); // 🎹 Rastrear physicalKey -> logicalId
     const deshabilitarRef = useRef(deshabilitarInteraccion);
     const previewNodeRef = useRef<any>(null);
 
@@ -448,13 +457,20 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         if (deshabilitarRef.current) return;
 
         if (accion === 'add') {
-            // Detenemos cualquier rastro previo para evitar notas pegadas
-            if (botonesActivosRef.current[id]) detenerTono(id);
+            // 🛡️ PROTECCIÓN CONTRA RE-DISPARO: Si ya está sonando este ID exacto, no hacemos nada.
+            // Esto elimina el ruido de "corto circuito" o ráfaga cuando el serial manda miles de mensajes.
+            if (botonesActivosRef.current[id]) return;
+
+            const esBajo = id.includes('bajo');
+            console.log(
+                `%c ${esBajo ? '🎸 BAJO' : '🎹 PITO'} SIMULADOR %c ID: ${id} `,
+                'background: #3498db; color: white; font-weight: bold; padding: 4px; border-radius: 4px 0 0 4px;',
+                'background: #2c3e50; color: white; padding: 4px; border-radius: 0 4px 4px 0;'
+            );
 
             let instances = instanciasExternas || reproducirTono(id).instances;
             if (!instances || instances.length === 0) return;
 
-            // 🚀 OPTIMIZACIÓN DE TRINOS: Si es silencioso, mutamos directamente para evitar Garbage Collection masiva
             if (silencioso) {
                 botonesActivosRef.current[id] = { instances, ...mapaBotonesActual.current[id] };
             } else {
@@ -465,6 +481,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
             onNotaPresionada?.({ idBoton: id, nombre: id });
         } else {
+            // Solo removemos si realmente existe
+            if (!botonesActivosRef.current[id]) return;
+
             detenerTono(id);
 
             if (silencioso) {
@@ -555,33 +574,47 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => {
         const nuevaDireccion = direccion;
-        if (nuevaDireccion !== direccionRef.current) {
-            // 🔄 LIMPIEZA TOTAL: Liberamos voces en el motor de audio antes de cambiar
-            // Esto es CRUCIAL para el lag en móviles
-            motorAudioPro.detenerTodo(0.01);
+        // 🔄 SWAP DE NOTAS ACTIVAS: Si hay notas sonando, las cambiamos a la nueva dirección
+        const prev = { ...botonesActivosRef.current };
+        const next: Record<string, any> = {};
+        let huboCambio = false;
 
-            // 🔄 SWAP DE NOTAS ACTIVAS: Si hay notas sonando, las cambiamos a la nueva dirección
-            const prev = { ...botonesActivosRef.current };
-            const next: Record<string, any> = {};
+        Object.keys(prev).forEach(oldId => {
+            const parts = oldId.split('-');
+            if (parts.length < 3) return;
+            const esBajo = oldId.includes('bajo');
+            // Construimos el nuevo ID manteniendo fila y columna pero cambiando dirección
+            const newId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
 
-            Object.keys(prev).forEach(oldId => {
-                const parts = oldId.split('-');
-                const esBajo = oldId.includes('bajo');
-                // Construimos el nuevo ID manteniendo fila y columna pero cambiando dirección
-                const newId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
-
+            if (newId !== oldId) {
+                huboCambio = true;
+                detenerTono(oldId);
                 const { instances } = reproducirTono(newId);
                 if (instances && instances.length > 0) {
                     next[newId] = { instances, ...mapaBotonesActual.current[newId] };
                 }
-                // Ya no necesitamos detenerOldId individualmente porque detenerTodo() ya lo hizo
+            } else {
+                next[oldId] = prev[oldId];
+            }
+        });
+
+        if (huboCambio || nuevaDireccion !== direccionRef.current) {
+            // 🔄 Sincronizar rastreador de hardware para que al soltar sepa qué ID apagar
+            const currentHardware = hardwareMapRef.current;
+            currentHardware.forEach((logicalId, physicalKey) => {
+                const parts = logicalId.split('-');
+                if (parts.length >= 3) {
+                    const esBajo = logicalId.includes('bajo');
+                    const newLogicalId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+                    currentHardware.set(physicalKey, newLogicalId);
+                }
             });
 
             botonesActivosRef.current = next;
             setBotonesActivos(next);
             direccionRef.current = nuevaDireccion;
         }
-    }, [direccion, reproducirTono]);
+    }, [direccion, reproducirTono, detenerTono]);
 
     useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
@@ -727,76 +760,255 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         return () => clearTimeout(timer);
     }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId]);
 
+    // --- 🔌 WEB SERIAL API (Conexión directa con ESP32, sin Hairless ni loopMIDI) ---
+    const conectarESP32 = useCallback(async () => {
+        if (!(navigator as any).serial) {
+            alert('❌ Tu navegador no soporta Web Serial. Usa Chrome o Edge y asegúrate de estar en localhost o HTTPS.');
+            return;
+        }
+        try {
+            const port = await (navigator as any).serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            esp32PortRef.current = port;
+            setEsp32Conectado(true);
+            console.log('%c ✅ CONEXIÓN ESTABLE: MODO TEXTO CSV 🪗 ', 'background: #27ae60; color: white; padding: 10px; font-weight: bold;');
+
+            const decoder = new TextDecoderStream();
+            port.readable.pipeTo(decoder.writable);
+            const reader = decoder.readable.getReader();
+
+            const activeTimeouts: Record<string, any> = {};
+            let partialLine = "";
+
+            const readLoop = async () => {
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        const lines = (partialLine + value).split("\n");
+                        partialLine = lines.pop() || "";
+
+                        let huboCambio = false;
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed) continue;
+
+                            const parts = trimmed.split(",");
+                            if (parts.length < 2) continue;
+
+                            const tipo = parts[0];
+                            const val = parts[1];
+                            const estadoStr = parts[2]; // Tercer parámetro opcional (1 = On, 0 = Off)
+
+                            if (tipo === "FUELLE") {
+                                console.log(`%c 💨 EVENTO FUELLE: ${val} `, 'background: #f39c12; color: white; font-weight: bold;');
+                                const nuevaDir = val === "ABRIR" ? "halar" : "empujar";
+                                if (nuevaDir !== direccionRef.current) {
+                                    // 🔄 SWAP ATÓMICO: Sincronizar sonidos y mapa inmediatamente
+                                    const prev = { ...botonesActivosRef.current };
+                                    const next: Record<string, any> = {};
+
+                                    // 1. Swap de sonidos activos
+                                    Object.keys(prev).forEach(oldId => {
+                                        const parts = oldId.split('-');
+                                        if (parts.length < 3) return;
+                                        const esBajo = oldId.includes('bajo');
+                                        const newId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
+                                        if (newId !== oldId) {
+                                            detenerTono(oldId);
+                                            const { instances } = reproducirTono(newId);
+                                            if (instances?.length) next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                                        } else next[oldId] = prev[oldId];
+                                    });
+
+                                    // 2. Swap del rastreador de hardware
+                                    hardwareMapRef.current.forEach((logicalId, physicalKey) => {
+                                        const parts = logicalId.split('-');
+                                        if (parts.length >= 3) {
+                                            const esBajo = logicalId.includes('bajo');
+                                            const newLogicalId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
+                                            hardwareMapRef.current.set(physicalKey, newLogicalId);
+                                        }
+                                    });
+
+                                    direccionRef.current = nuevaDir;
+                                    botonesActivosRef.current = next;
+                                    setDireccion(nuevaDir);
+                                    huboCambio = true;
+                                }
+                            } else if (["H1", "H2", "BA"].includes(tipo)) {
+                                const idx = parseInt(val);
+                                const physicalKey = `${tipo}-${idx}`;
+                                let note = 0;
+
+                                // Mapeo de índices a notas MIDI virtuales
+                                if (tipo === "H1") note = (idx < 6) ? 48 + (5 - idx) : 60 + (idx - 6);
+                                else if (tipo === "H2") note = (idx >= 11) ? 54 + (15 - idx) : 71 + (10 - idx);
+                                else if (tipo === "BA") note = (idx <= 11) ? 30 + idx : (idx === 12 ? 81 : 0);
+
+                                if (note === 0) continue;
+
+                                if (estadoStr !== undefined) {
+                                    const isOn = estadoStr === "1";
+
+                                    if (isOn) {
+                                        // 🎹 PRESIONAR: Calculamos ID con dirección ACTUAL y lo guardamos
+                                        let idBoton: string | null = null;
+                                        if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
+                                        else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
+                                        else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
+
+                                        if (note >= 30 && note <= 41) {
+                                            const map: Record<number, string> = {
+                                                30: '2-1', 31: '2-2', 32: '2-3', 33: '2-4', 34: '2-5', 35: '2-6',
+                                                36: '1-1', 38: '1-2', 39: '1-3', 40: '1-4', 37: '1-5', 41: '1-6'
+                                            };
+                                            const base = map[note];
+                                            if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
+                                        } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
+
+                                        if (idBoton) {
+                                            hardwareMapRef.current.set(physicalKey, idBoton);
+                                            actualizarBotonActivo(idBoton, 'add', null, true);
+                                            huboCambio = true;
+                                        }
+                                    } else {
+                                        // 🎹 SOLTAR: Recuperamos el ID actualizado desde el REF
+                                        const logicalId = hardwareMapRef.current.get(physicalKey);
+                                        if (logicalId) {
+                                            actualizarBotonActivo(logicalId, 'remove', null, true);
+                                            hardwareMapRef.current.delete(physicalKey);
+                                            huboCambio = true;
+                                        }
+                                    }
+                                } else {
+                                    // 📻 MODO COMPATIBILIDAD (Pulsos)
+                                    let idBoton: string | null = null;
+                                    if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
+                                    else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
+                                    else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
+
+                                    if (note >= 30 && note <= 41) {
+                                        const base = { 30: '2-1', 31: '2-2', 32: '2-3', 33: '2-4', 34: '2-5', 35: '2-6', 36: '1-1', 38: '1-2', 39: '1-3', 40: '1-4', 37: '1-5', 41: '1-6' }[note];
+                                        if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
+                                    } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
+
+                                    if (idBoton) {
+                                        if (activeTimeouts[idBoton]) {
+                                            clearTimeout(activeTimeouts[idBoton]);
+                                        } else {
+                                            actualizarBotonActivo(idBoton, 'add', null, true);
+                                            huboCambio = true;
+                                        }
+
+                                        const currentId = idBoton;
+                                        activeTimeouts[idBoton] = setTimeout(() => {
+                                            actualizarBotonActivo(currentId, 'remove');
+                                            delete activeTimeouts[currentId];
+                                        }, 400);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 🏁 SYNC ÚNICO por paquete serial
+                        if (huboCambio) {
+                            setBotonesActivos({ ...botonesActivosRef.current });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error en loop de lectura:", err);
+                    setEsp32Conectado(false);
+                } finally {
+                    reader.releaseLock();
+                }
+            };
+
+            readLoop();
+        } catch (err) {
+            console.error('Error conectando al ESP32:', err);
+            setEsp32Conectado(false);
+        }
+    }, [actualizarBotonActivo, limpiarTodasLasNotas]);
+
     // --- MIDI ENGINE ---
     useEffect(() => {
-        if (!navigator.requestMIDIAccess) return;
+        console.log("%c 🎹 INICIALIZANDO MOTOR MIDI ACADEMIA 🎹 ", "background: #222; color: #bada55; font-size: 1.2em; padding: 5px;");
+
+        if (!navigator.requestMIDIAccess) {
+            console.error("❌ MIDI no soportado en este navegador. Usa Chrome o Edge.");
+            return;
+        }
 
         let midiAccess: any = null;
-        const midiToButtonMap: Record<number, string> = {}; // Cache de mapeo dinámico
 
         const onMIDIMessage = (msg: any) => {
             const [status, note, velocity] = msg.data;
             const command = status & 0xf0;
             const channel = status & 0x0f;
 
-            // --- 🚨 DETERMINAR ID DEL BOTÓN (Mapeo de Espejo Secuencial) ---
-            // Este mapeo asume una secuencia lógica común en acordeones MIDI:
-            // Hilera 1 (Afuera): Notas 60-69
-            // Hilera 2 (Medio): Notas 70-80
-            // Hilera 3 (Adentro): Notas 81-91
-
             let idBoton: string | null = null;
 
-            if (channel === 0) { // Canal MIDI 1 (Pitos)
-                // Hilera 1: 10 botones (Mapeo: MIDI 60 -> 1-1)
-                if (note >= 60 && note <= 69) {
-                    idBoton = `1-${note - 59}-${direccion}`;
-                }
-                // Hilera 2: 11 botones (Mapeo: MIDI 70 -> 2-1)
-                else if (note >= 70 && note <= 80) {
-                    idBoton = `2-${note - 69}-${direccion}`;
-                }
-                // Hilera 3: 10 botones (Mapeo: MIDI 81 && note <= 90)
-                else if (note >= 81 && note <= 90) {
-                    idBoton = `3-${note - 80}-${direccion}`;
-                }
-
-                // Log para calibración técnica: 
-                // "Brother, si presionas una tecla y no suena, abre la consola y dime qué número sale aquí"
-                console.log(`MIDI Pitos -> Nota: ${note}, Canal: ${channel}, ID Sugerido: ${idBoton}`);
+            // --- 🎹 MAPEO SUPER-RESISTENTE (ESP32 + ARTURIA) ---
+            // Hilera 1 (AFUERA): Notas 60-70 (Tus 8 botones del ESP32: 60,61,62,63,64,65,66,67)
+            if (note >= 60 && note <= 70) {
+                idBoton = `1-${note - 59}-${direccion}`;
             }
-            else if (channel === 1 || channel === 2) { // Bajos
-                // Mapeo de bajos secuencial
-                const bajoIndex = (note % 12) + 1;
-                idBoton = `${channel === 1 ? '1' : '2'}-${bajoIndex}-${direccion}-bajo`;
-                console.log(`MIDI Bajos -> Nota: ${note}, Canal: ${channel}, ID Sugerido: ${idBoton}`);
+            // Hilera 2 (MEDIO): Notas 48-59 (Octava abajo del Arturia)
+            else if (note >= 48 && note <= 59) {
+                idBoton = `2-${note - 47}-${direccion}`;
+            }
+            // Hilera 3 (ADENTRO): Notas 71-82 (Octava arriba del Arturia)
+            else if (note >= 71 && note <= 82) {
+                idBoton = `3-${note - 70}-${direccion}`;
             }
 
-            // Note ON
-            if (command === 144 && velocity > 0 && idBoton) {
-                reproducirTono(idBoton);
-                actualizarBotonActivo(idBoton, 'add');
-            }
-            // Note OFF
-            if ((command === 128 || (command === 144 && velocity === 0)) && idBoton) {
-                detenerTono(idBoton);
-                actualizarBotonActivo(idBoton, 'remove');
-            }
+            // 🕵️ LOG DE ALTA VISIBILIDAD (Abre la consola con F12 para ver esto)
+            if (command === 144 && velocity > 0) {
+                console.log(`%c 📥 MIDI ON: Nota ${note} | Canal ${channel} | ID: ${idBoton} `, "background: #27ae60; color: white;");
 
-            // Fuelle (Control Change)
-            if (command === 176 && (note === 11 || note === 1)) {
-                const nuevaDir = velocity > 64 ? 'halar' : 'empujar';
-                if (nuevaDir !== direccion) setDireccion(nuevaDir);
+                if (idBoton) {
+                    reproducirTono(idBoton);
+                    actualizarBotonActivo(idBoton, 'add');
+                    // Ajuste de tipos: solo pasamos idBoton y nombre
+                    if (props.onNotaPresionada) props.onNotaPresionada({ idBoton, nombre: idBoton });
+                }
+            }
+            else if (command === 128 || (command === 144 && velocity === 0)) {
+                console.log(`%c 📤 MIDI OFF: Nota ${note} | ID: ${idBoton} `, "background: #c0392b; color: white;");
+
+                if (idBoton) {
+                    detenerTono(idBoton);
+                    actualizarBotonActivo(idBoton, 'remove');
+                    if (props.onNotaLiberada) props.onNotaLiberada({ idBoton, nombre: idBoton });
+                }
             }
         };
 
-        navigator.requestMIDIAccess().then((access) => {
+        const setupInputs = (access: any) => {
+            access.inputs.forEach((input: any) => {
+                input.onmidimessage = onMIDIMessage;
+                console.log(`%c � DISPOSITIVO DETECTADO: ${input.name} `, "background: #2980b9; color: white; padding: 3px;");
+            });
+        };
+
+        navigator.requestMIDIAccess().then((access: any) => {
             midiAccess = access;
             setMidiActivado(true);
-            access.inputs.forEach((input) => {
-                input.onmidimessage = onMIDIMessage;
-            });
-        }).catch(() => setMidiActivado(false));
+            setupInputs(access);
+
+            access.onstatechange = (e: any) => {
+                if (e.port.state === 'connected') {
+                    console.log(`%c 🔋 Nuevo hardware detectado: ${e.port.name} `, "color: #f1c40f");
+                    setupInputs(access);
+                }
+            };
+        }).catch(() => {
+            console.error("❌ Error al acceder al MIDI. ¿Diste permisos en el candado del navegador?");
+            setMidiActivado(false);
+        });
 
         return () => {
             if (midiAccess) {
@@ -805,7 +1017,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 });
             }
         };
-    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo]);
+    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo, props.onNotaPresionada, props.onNotaLiberada]);
 
     // --- ACCIONES ---
     const guardarAjustes = async () => {
@@ -955,6 +1167,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         muestrasDB, obtenerRutasAudio,
         instrumentoId, setInstrumentoId, listaInstrumentos,
         cargando: cargandoCloud,
-        midiActivado, disenoCargado
+        midiActivado, disenoCargado,
+        esp32Conectado, conectarESP32
     };
 };

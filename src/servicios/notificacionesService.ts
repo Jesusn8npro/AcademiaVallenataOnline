@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // Tipos de notificaciones
@@ -739,3 +739,4 @@ export async function notificarNuevoMensaje(destinatarioId: string, remitenteNom
         return { success: false, error };
     }
 }
+

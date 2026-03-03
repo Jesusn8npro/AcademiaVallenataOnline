@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import { generarSlug } from '../../utilidades/slug'
 import ReproductorLecciones from '../../componentes/VisualizadorDeLeccionesDeCursos/ReproductorLecciones'
 import EncabezadoLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/EncabezadoLeccion'
@@ -46,36 +46,44 @@ export default function ClaseCurso() {
         }
     }, [mostrarSidebar])
 
-    useEffect(() => { cargar() }, [slug, moduloSlug, leccionSlug])
+    useEffect(() => {
+        cargarCurso();
+    }, [slug]);
 
-    async function cargar() {
-        if (!slug || !moduloSlug || !leccionSlug) return
-        setCargando(true); setError(null)
+    useEffect(() => {
+        if (curso && modulos.length > 0) {
+            cargarLeccionYProgreso();
+        }
+    }, [moduloSlug, leccionSlug, curso, modulos]);
+
+    async function cargarCurso() {
+        if (!slug) return;
+        setCargando(true); setError(null);
         try {
-            // 1. Obtener usuario actual
-            const { data: { user } } = await supabase.auth.getUser()
-            setUsuarioActual(user)
+            // 1. Obtener curso por slug (buscando solo el necesario para optimizar API)
+            // Usamos .or para soportar tanto slugs explícitos como títulos
+            const { data: cursoData, error: errC } = await supabase
+                .from('cursos')
+                .select('*')
+                .or(`slug.eq."${slug}",titulo.ilike."${slug}"`)
+                .maybeSingle();
 
-            // 2. Obtener curso por slug (buscando en catálogo completo para mayor seguridad con slugs dinámicos)
-            const { data: cursosData, error: errC } = await supabase.from('cursos').select('*')
-            if (errC) throw errC
+            if (errC) throw errC;
+            if (!cursoData) throw new Error('Curso no encontrado');
 
-            const cursoData = (cursosData || []).find((c: any) => (c.slug || generarSlug(c.titulo)) === slug)
-            if (!cursoData) throw new Error('Curso no encontrado')
-
-            // 3. Obtener módulos y lecciones (simplificado para evitar 400 por columnas faltantes)
+            // 2. Obtener módulos y lecciones
             const { data: mods, error: errM } = await supabase
                 .from('modulos')
                 .select(`
-          id, titulo, orden,
-          lecciones (
-            id, titulo, video_url, orden
-          )
-        `)
+                    id, titulo, orden,
+                    lecciones (
+                        id, titulo, video_url, orden
+                    )
+                `)
                 .eq('curso_id', cursoData.id)
-                .order('orden', { ascending: true })
+                .order('orden', { ascending: true });
 
-            if (errM) throw errM
+            if (errM) throw errM;
 
             const modulosProcesados = (mods || []).map((m: any) => ({
                 ...m,
@@ -84,79 +92,86 @@ export default function ClaseCurso() {
                     ...l,
                     slug: generarSlug(l.titulo)
                 })).sort((a: any, b: any) => a.orden - b.orden)
-            }))
+            }));
 
-            // Guardar en estado
-            cursoData.modulos = modulosProcesados
-            setCurso(cursoData)
-            setModulos(modulosProcesados)
+            cursoData.modulos = modulosProcesados;
+            setCurso(cursoData);
+            setModulos(modulosProcesados);
+        } catch (e: any) {
+            console.error('Error al cargar curso:', e);
+            setError(e.message || 'Error al cargar el curso');
+            setCargando(false);
+        }
+    }
 
-            // 4. Encontrar la lección específica basada en el URL
-            let leccionEncontrada: any = null
-            for (const m of modulosProcesados) {
+    async function cargarLeccionYProgreso() {
+        if (!moduloSlug || !leccionSlug || !curso || modulos.length === 0) return;
+
+        try {
+            // 1. Obtener usuario actual (si no está cargado)
+            let user = usuarioActual;
+            if (!user) {
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+                user = authUser;
+                setUsuarioActual(user);
+            }
+
+            // 2. Encontrar la lección específica en los módulos ya cargados
+            let leccionEncontrada: any = null;
+            for (const m of modulos) {
                 if (m.slug === moduloSlug) {
-                    leccionEncontrada = m.lecciones.find((l: any) => l.slug === leccionSlug)
-                    if (leccionEncontrada) break
+                    leccionEncontrada = m.lecciones.find((l: any) => l.slug === leccionSlug);
+                    if (leccionEncontrada) break;
                 }
             }
 
-            if (!leccionEncontrada) throw new Error('Lección no encontrada en el módulo especificado')
-            setLeccion(leccionEncontrada)
+            if (!leccionEncontrada) throw new Error('Lección no encontrada');
+            setLeccion(leccionEncontrada);
 
-            // 5. Cargar progreso del usuario
+            // 3. Cargar progreso si hay usuario
             if (user) {
-                // Progreso de esta lección
-                const { data: prog } = await supabase
-                    .from('progreso_lecciones')
-                    .select('estado, porcentaje_completado')
-                    .eq('usuario_id', user.id)
-                    .eq('leccion_id', leccionEncontrada.id)
-                    .maybeSingle()
+                // IDs de todas las lecciones del curso para filtrar progreso
+                const idsLecciones = modulos.flatMap((m: any) => m.lecciones.map((l: any) => l.id));
 
-                setCompletada(prog?.estado === 'completada' || prog?.porcentaje_completado === 100)
-
-                // Recopilar IDs de todas las lecciones del curso
-                const idLeccionesCurso = new Set()
-                let totalLecciones = 0
-                modulosProcesados.forEach((m: any) => m.lecciones.forEach((l: any) => {
-                    totalLecciones++
-                    idLeccionesCurso.add(l.id)
-                }))
-
-
-                // Progreso general del curso para el mapa y estadísticas
-                // Corregido: Obtenemos todo el progreso del usuario y filtramos en memoria para evitar errores de URL muy larga
-                // Corregido: Obtenemos todo el progreso del usuario y filtramos en memoria
-                const { data: progAll } = await supabase
+                // Consultar solo el progreso necesario (optimización crítica)
+                const { data: progs, error: errP } = await supabase
                     .from('progreso_lecciones')
                     .select('leccion_id, estado, porcentaje_completado')
                     .eq('usuario_id', user.id)
+                    .in('leccion_id', idsLecciones);
 
-                const map: Record<string, number> = {}
-                let completadasCount = 0
+                if (errP) console.warn('Error cargando progreso:', errP);
 
-                if (progAll) {
-                    progAll.forEach((p: any) => {
+                const map: Record<string, number> = {};
+                let completadasCount = 0;
+                let estaLeccionCompletada = false;
+
+                if (progs) {
+                    progs.forEach((p: any) => {
                         const isCompleted = p.estado === 'completada' || p.porcentaje_completado === 100;
-                        if (idLeccionesCurso.has(p.leccion_id) && isCompleted) {
-                            map[p.leccion_id] = 100
-                            completadasCount++
+                        if (isCompleted) {
+                            map[p.leccion_id] = 100;
+                            completadasCount++;
                         }
-                    })
+                        if (p.leccion_id === leccionEncontrada.id) {
+                            estaLeccionCompletada = isCompleted;
+                        }
+                    });
                 }
 
-                setProgresoMap(map)
+                setProgresoMap(map);
+                setCompletada(estaLeccionCompletada);
                 setEstadisticasProgreso({
                     completadas: completadasCount,
-                    total: totalLecciones,
-                    porcentaje: totalLecciones ? Math.round((completadasCount / totalLecciones) * 100) : 0
-                })
+                    total: idsLecciones.length,
+                    porcentaje: idsLecciones.length ? Math.round((completadasCount / idsLecciones.length) * 100) : 0
+                });
             }
         } catch (e: any) {
-            console.error('Error al cargar ClaseCurso:', e)
-            setError(e.message || 'Error al cargar el contenido')
+            console.error('Error en cargarLeccionYProgreso:', e);
+            setError(e.message || 'Error al cargar lección');
         } finally {
-            setCargando(false)
+            setCargando(false);
         }
     }
 

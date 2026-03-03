@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 export interface ResultadoBusqueda {
     id: string | number;
@@ -370,3 +370,4 @@ class BusquedaService {
 
 export const busquedaService = new BusquedaService();
 export default busquedaService;
+

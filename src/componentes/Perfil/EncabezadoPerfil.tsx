@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import { usePerfilStore } from '../../stores/perfilStore'
 import './encabezado-perfil.css'

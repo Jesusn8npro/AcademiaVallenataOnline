@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import './mensajes-v2.css'
 import ModalNuevoChat from './ModalNuevoChat'
 import { useNavigate } from 'react-router-dom'

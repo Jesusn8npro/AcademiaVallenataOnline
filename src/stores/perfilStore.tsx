@@ -1,245 +1,256 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { supabase } from '../servicios/supabaseCliente'
+import React from 'react';
+import { writable, useTienda } from '../utilidades/tiendaReact';
+import { supabase } from '../servicios/clienteSupabase';
 
-interface Perfil {
-  id: string
-  nombre_completo: string
-  url_foto_perfil?: string | null
-  portada_url?: string | null
-  posicion_img_portada?: string | null
-  nivel_habilidad?: string | null
+interface PerfilData {
+  id: string;
+  nombre_completo: string;
+  correo_electronico: string;
+  url_foto_perfil: string;
+  portada_url: string;
+  posicion_img_portada: number;
+  notificaciones_email?: boolean;
+  notificaciones_push?: boolean;
+  modo_oscuro?: boolean;
+  idioma?: string;
+  publico_perfil?: boolean;
 }
 
-interface Stats {
-  publicaciones: number
-  cursos: number
-  tutoriales: number
-  ranking: number
+interface StatsData {
+  publicaciones: number;
+  cursos: number;
+  tutoriales: number;
+  ranking: number;
 }
 
-interface StoreState {
-  perfil: Perfil | null
-  stats: Stats
-  cargando: boolean
-  inicializado: boolean
-  cargarDatosPerfil: (forzar?: boolean) => Promise<void>
-  actualizarPerfil: (parcial: Partial<Perfil>) => void
-  establecerPerfil: (nuevoPerfil: Perfil) => void
-  forzarInicializacion: () => void
-  resetear: () => void
+interface PerfilStore {
+  perfil: PerfilData | null;
+  stats: StatsData;
+  cargando: boolean;
+  inicializado: boolean;
 }
 
-const PerfilContext = createContext<StoreState | null>(null)
+const estadoInicial: PerfilStore = {
+  perfil: null,
+  stats: { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 },
+  cargando: false,
+  inicializado: false
+};
 
-export function PerfilProvider({ children }: { children: React.ReactNode }) {
-  // 💾 PERSISTENCIA: Inicializar desde caché local si existe para evitar "pantalla en 0"
-  const [perfil, setPerfil] = useState<Perfil | null>(() => {
+function crearPerfilStore() {
+  const { subscribe, set, update } = writable<PerfilStore>(estadoInicial);
+
+  let currentStore: PerfilStore = estadoInicial;
+
+  // Subscribe para mantener referencia al estado actual
+  const unsubscribe = subscribe(state => currentStore = state);
+
+  // Función interna para cargar estadísticas
+  async function cargarEstadisticasInternas(userId: string): Promise<StatsData> {
     try {
-      const cached = localStorage.getItem('perfil_cache_v1');
-      return cached ? JSON.parse(cached) : null;
-    } catch { return null; }
-  });
+      const [publicacionesResult, cursosResult, tutorialesResult, rankingResult] = await Promise.all([
+        supabase.from('comunidad_publicaciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
+        supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
+        supabase.from('progreso_tutorial').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).eq('completado', true),
+        supabase.from('perfiles').select('id').order('created_at', { ascending: false })
+      ]);
 
-  const [stats, setStats] = useState<Stats>(() => {
-    try {
-      const cached = localStorage.getItem('perfil_stats_v1');
-      return cached ? JSON.parse(cached) : { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
-    } catch { return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 }; }
-  });
+      const posicionRanking = rankingResult.data ?
+        rankingResult.data.findIndex((p: any) => p.id === userId) + 1 : 0;
 
-  const [cargando, setCargando] = useState(false)
-  const [inicializado, setInicializado] = useState(false)
-
-  // 💾 EFECTOS DE PERSISTENCIA
-  useEffect(() => {
-    if (perfil) localStorage.setItem('perfil_cache_v1', JSON.stringify(perfil));
-  }, [perfil]);
-
-  useEffect(() => {
-    localStorage.setItem('perfil_stats_v1', JSON.stringify(stats));
-  }, [stats]);
-
-  async function cargarDatosPerfil(forzar = false) {
-    if (inicializado && !forzar) return
-
-    // 1. Obtener sesión LOCALMENTE (sin llamada de red bloqueante)
-    // Usamos getSession en lugar de getUser para velocidad instantánea
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session?.user) {
-      setPerfil(null)
-      setCargando(false)
-      setInicializado(true)
-      return
-    }
-
-    const user = session.user
-
-    // 🛡️ VALIDACIÓN DE CACHÉ: Si cambió el usuario, limpiar stats antiguos para no mostrar datos de otro
-    if (perfil && perfil.id !== user.id) {
-      setStats({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 }); // Reset visual inmediato
-      // No reseteamos perfil aquí porque se sobrescribe abajo inmediatamente
-    }
-
-    // 2. OPTIMISTIC UI: Construir y setear perfil INMEDIATAMENTE
-    // Esto elimina CUALQUIER posibilidad de carga infinita por red
-    const perfilOptimistaBase: Perfil = {
-      id: user.id,
-      nombre_completo: user.user_metadata?.full_name || user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
-      url_foto_perfil: user.user_metadata?.avatar_url || user.user_metadata?.picture,
-      portada_url: null,
-      posicion_img_portada: null,
-      nivel_habilidad: 'principiante'
-    }
-
-    // Fusión: Optimista Base + Lo que ya tengamos en caché (para no perder portada/nivel mientras carga)
-    const perfilFusionado = perfil && perfil.id === user.id ? {
-      ...perfilOptimistaBase,
-      ...perfil, // Mantiene la data de caché si existe
-      // Asegurar que auth siempre gane si hay conflicto de avatar social fresco? 
-      // No, preferimos BD/Caché local.
-    } : perfilOptimistaBase;
-
-    // Renderizado inmediato
-    setPerfil(perfilFusionado)
-    setInicializado(true)
-    setCargando(true)
-
-    try {
-      console.log('🔄 Sincronizando perfil con BD (Background)...')
-
-      // 3. Validación y Sync real (sin bloquear UI)
-      // Primero verificamos que el token sea válido con servidor (silent check)
-      // No esperamos esto para el primer render
-
-      // 4. Fetch DB real
-      const { data: perfilData, error } = await supabase
-        .from('perfiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (perfilData) {
-        console.log('✅ Perfil actualizado desde BD')
-        // 🛡️ MERGE INTELIGENTE: Si la BD tiene campos nulos, preservar los datos optimistas (ej: avatar de Google)
-        // Esto evita que la imagen "parpadee y desaparezca" si el usuario no ha subido foto personalizada aún
-        setPerfil(prev => ({
-          ...(prev || perfilFusionado), // Base: lo que ya teníamos
-          ...perfilData,                // Override: datos de BD
-          // Excepción crítica: Si BD tiene avatar null, mantener el social/optimista
-          url_foto_perfil: perfilData.url_foto_perfil || prev?.url_foto_perfil || perfilFusionado.url_foto_perfil,
-          // Mantener nombre si viene vacío
-          nombre_completo: perfilData.nombre_completo || prev?.nombre_completo || perfilFusionado.nombre_completo
-        }))
-      } else if (error) {
-        console.warn('⚠️ Fallo carga BD, manteniendo perfil optimista:', error.message)
-      }
-
-      // 5. Cargar stats en paralelo
-      const { data: inscripciones } = await supabase
-        .from('inscripciones')
-        .select('curso_id, tutorial_id')
-        .eq('usuario_id', user.id);
-
-      const cursosCount = inscripciones?.filter(i => i.curso_id).length || 0;
-      const tutorialesCount = inscripciones?.filter(i => i.tutorial_id).length || 0;
-
-      // Cargar ranking desde GamificacionServicio
-      let rankingValue = 0;
-      try {
-        const { GamificacionServicio } = await import('../servicios/gamificacionServicio');
-        const rankingList = await GamificacionServicio.obtenerRanking('general', 100);
-        const rankingUser = rankingList.find(r => r.usuario_id === user.id);
-
-        if (rankingUser) {
-          rankingValue = rankingUser.posicion;
-        } else {
-          const rankingData = await GamificacionServicio.obtenerPosicionUsuario(user.id, 'general');
-          if (rankingData && rankingData.posicion) rankingValue = rankingData.posicion;
-        }
-      } catch (err) {
-        console.error('Error cargando ranking en store:', err);
-      }
-
-      // Cargar publicaciones
-      const { count: publicacionesCount } = await supabase
-        .from('comunidad_publicaciones')
-        .select('*', { count: 'exact', head: true })
-        .eq('usuario_id', user.id);
-
-      setStats({
-        publicaciones: publicacionesCount || 0,
-        cursos: cursosCount,
-        tutoriales: tutorialesCount,
-        ranking: rankingValue
-      })
-
+      return {
+        publicaciones: publicacionesResult.count || 0,
+        cursos: cursosResult.count || 0,
+        tutoriales: tutorialesResult.count || 0,
+        ranking: posicionRanking || 0
+      };
     } catch (error) {
-      console.error('Error background sync:', error)
-    } finally {
-      setCargando(false)
+      console.error('Error cargando estadísticas:', error);
+      return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
     }
   }
 
-  function actualizarPerfil(parcial: Partial<Perfil>) {
-    setPerfil(prev => prev ? { ...prev, ...parcial } : prev)
-  }
+  return {
+    subscribe,
 
-  function establecerPerfil(nuevoPerfil: Perfil) {
-    setPerfil(nuevoPerfil)
-    setInicializado(true)
-  }
+    async cargarDatosPerfil(forzarRecarga = false) {
+      console.log('🔄 [PERFIL STORE] Cargando datos del perfil...', { forzarRecarga, inicializado: currentStore.inicializado, cargando: currentStore.cargando });
 
-  function forzarInicializacion() { setInicializado(true); setCargando(false) }
+      // Si ya está inicializado y no es recarga forzada, no hacer nada
+      if (currentStore.inicializado && !forzarRecarga) {
+        console.log('✅ [PERFIL STORE] Datos ya inicializados, saltando carga');
+        return;
+      }
 
-  function resetear() {
-    setPerfil(null)
-    setStats({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 })
-    setInicializado(false)
-    localStorage.removeItem('perfil_cache_v1');
-    localStorage.removeItem('perfil_stats_v1');
-  }
+      // Si ya está cargando, no iniciar otra carga
+      if (currentStore.cargando && !forzarRecarga) {
+        console.log('⏳ [PERFIL STORE] Ya está cargando, saltando nueva carga');
+        return;
+      }
 
-  const value = useMemo(() => ({
-    perfil,
-    stats,
-    cargando,
-    inicializado,
-    cargarDatosPerfil,
-    actualizarPerfil,
-    establecerPerfil,
-    forzarInicializacion,
-    resetear
-  }), [perfil, stats, cargando, inicializado])
+      update(state => ({ ...state, cargando: true }));
 
-  // Auto-cargar datos del perfil al montar
-  useEffect(() => {
-    cargarDatosPerfil()
-  }, [])
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  return <PerfilContext.Provider value={value}>{children}</PerfilContext.Provider>
+        if (userError || !user) {
+          console.warn('⚠️ [PERFIL STORE] Usuario no autenticado:', userError?.message);
+          update(state => ({
+            ...state,
+            cargando: false,
+            inicializado: true,
+            perfil: null
+          }));
+          return;
+        }
+
+        console.log('👤 [PERFIL STORE] Usuario autenticado:', user.id);
+
+        // Obtener datos del perfil desde Supabase
+        const { data: perfilData, error: perfilError } = await supabase
+          .from('perfiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (perfilError && perfilError.code !== 'PGRST116') {
+          console.error('❌ [PERFIL STORE] Error obteniendo perfil:', perfilError);
+          // En lugar de throw, continuar con datos básicos
+        }
+
+        console.log('📄 [PERFIL STORE] Datos de perfil obtenidos:', perfilData);
+
+        // Cargar estadísticas (con timeout para evitar bloqueos)
+        let statsResult = { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
+        try {
+          const statsPromise = cargarEstadisticasInternas(user.id);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 10000) // 10 segundos timeout
+          );
+          statsResult = await Promise.race([statsPromise, timeoutPromise]) as StatsData;
+        } catch (error) {
+          console.warn('⚠️ [PERFIL STORE] Error/timeout cargando estadísticas:', error);
+        }
+
+        const perfilCompleto = perfilData || {
+          id: user.id,
+          nombre_completo: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+          correo_electronico: user.email || '',
+          url_foto_perfil: user.user_metadata?.avatar_url || '',
+          portada_url: '',
+          posicion_img_portada: 50
+        };
+
+        update(state => ({
+          ...state,
+          perfil: perfilCompleto,
+          stats: statsResult,
+          cargando: false,
+          inicializado: true
+        }));
+
+        console.log('✅ [PERFIL STORE] Datos cargados exitosamente:', perfilCompleto);
+
+      } catch (error) {
+        console.error('❌ [PERFIL STORE] Error crítico cargando datos del perfil:', error);
+        update(state => ({
+          ...state,
+          cargando: false,
+          inicializado: true,
+          perfil: null
+        }));
+      }
+    },
+
+    async cargarEstadisticasComunidad(userId: string): Promise<StatsData> {
+      try {
+        const [publicacionesResult, cursosResult, tutorialesResult, rankingResult] = await Promise.all([
+          supabase.from('comunidad_publicaciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
+          supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
+          supabase.from('progreso_tutorial').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).eq('completado', true),
+          supabase.from('perfiles').select('id').order('created_at', { ascending: false })
+        ]);
+
+        const posicionRanking = rankingResult.data ?
+          rankingResult.data.findIndex((p: any) => p.id === userId) + 1 : 0;
+
+        return {
+          publicaciones: publicacionesResult.count || 0,
+          cursos: cursosResult.count || 0,
+          tutoriales: tutorialesResult.count || 0,
+          ranking: posicionRanking || 0
+        };
+      } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+        return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
+      }
+    },
+
+    actualizarPerfil(nuevoPerfil: Partial<PerfilData>) {
+      update(state => ({
+        ...state,
+        perfil: state.perfil ? { ...state.perfil, ...nuevoPerfil } : null
+      }));
+    },
+
+    actualizarStats(nuevasStats: Partial<StatsData>) {
+      update(state => ({
+        ...state,
+        stats: { ...state.stats, ...nuevasStats }
+      }));
+    },
+
+    forzarInicializacion() {
+      update(state => ({
+        ...state,
+        cargando: false,
+        inicializado: true
+      }));
+    },
+
+    resetear() {
+      set(estadoInicial);
+    },
+
+
+  };
 }
 
-export function usePerfilStore() {
-  const ctx = useContext(PerfilContext)
-  if (!ctx) throw new Error('usePerfilStore debe usarse dentro de PerfilProvider')
-  return ctx
+export const perfilStore = crearPerfilStore();
+
+/**
+ * Hook para usar el store de perfil en componentes React
+ */
+export const usePerfilStore = () => {
+  const estado = useTienda(perfilStore);
+  return {
+    ...estado,
+    cargarDatosPerfil: perfilStore.cargarDatosPerfil,
+    cargarEstadisticasComunidad: perfilStore.cargarEstadisticasComunidad,
+    actualizarPerfil: perfilStore.actualizarPerfil,
+    actualizarStats: perfilStore.actualizarStats,
+    forzarInicializacion: perfilStore.forzarInicializacion,
+    resetear: perfilStore.resetear
+  };
+};
+
+/**
+ * Provider decorativo para mantener compatibilidad con componentes que lo esperan.
+ * El estado real se gestiona a través del singleton perfilStore.
+ */
+export const PerfilProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <>{children} </>;
+};
+
+// Solo resetear cuando el usuario se desloguee (no auto-cargar para evitar conflictos)
+if (typeof window !== 'undefined') {
+  supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    if (event === 'SIGNED_OUT') {
+      console.log('🚪 [PERFIL STORE] Usuario desautenticado, reseteando store');
+      perfilStore.resetear();
+    }
+    // Removimos la auto-carga en SIGNED_IN para evitar conflictos con el layout
+  });
 }
 
-export async function requiereAutenticacion(): Promise<boolean> {
-  try {
-    const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
-      setTimeout(() => resolve({ data: { session: null } }), 3000)
-    )
 
-    const sessionPromise = supabase.auth.getSession()
-
-    // Carrera entre la sesión y un timeout de 3s
-    const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
-
-    return !!session
-  } catch (error) {
-    console.error('Error verificando sesión:', error)
-    return false
-  }
-}

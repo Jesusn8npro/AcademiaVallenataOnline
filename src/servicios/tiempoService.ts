@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 // 🕒 Servicio para tracking de tiempo en la plataforma
 export class TiempoService {
@@ -235,3 +235,4 @@ CREATE TABLE IF NOT EXISTS sesiones_usuario (
 CREATE INDEX IF NOT EXISTS idx_sesiones_usuario_fecha ON sesiones_usuario(usuario_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_sesiones_ultima_actividad ON sesiones_usuario(ultima_actividad);
 `;
+

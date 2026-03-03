@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardContenido from '../../../componentes/CrearContenido/WizardContenido';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import './CrearContenido.css';
 
 const CrearContenido = () => {

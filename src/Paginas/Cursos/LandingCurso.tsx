@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import { useUsuario } from '../../contextos/UsuarioContext';
 
 // Importar plantillas

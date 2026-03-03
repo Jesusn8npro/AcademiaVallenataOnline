@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { GamificacionServicio as GamificacionService, type RankingGlobal } from '../../../servicios/gamificacionServicio';
 import './SimuladorEstadisticas.css';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './NotasLeccion.css'
-import { supabase } from '../../lib/supabase/clienteSupabase'
+import { supabase } from '../../servicios/clienteSupabase'
 
 interface NotasLeccionProps {
     leccionId: string

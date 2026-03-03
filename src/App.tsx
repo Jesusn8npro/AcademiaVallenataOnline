@@ -66,7 +66,7 @@ import CierreSesion from './Paginas/CierreSesion/CierreSesion';
 import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
-import { supabase } from './servicios/supabaseCliente'
+import { supabase } from './servicios/clienteSupabase'
 import DashboardAdmin from './Paginas/administrador/Dashboard/DashboardAdmin'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
 import CursorPersonalizado from './componentes/ui/CursorPersonalizado/CursorPersonalizado'

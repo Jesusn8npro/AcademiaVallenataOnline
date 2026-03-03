@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { supabase, supabaseAnon } from '../../servicios/supabaseCliente'
+import { supabase, supabaseAnonimo } from '../../servicios/clienteSupabase'
 import './UltimosArticulosBlog.css'
 
 export default function UltimosArticulosBlog() {
@@ -15,7 +15,7 @@ export default function UltimosArticulosBlog() {
     setCargando(true)
     setError(null)
     try {
-      const { data, error: queryError } = await supabaseAnon
+      const { data, error: queryError } = await supabaseAnonimo
         .from('blog_articulos')
         .select('id, titulo, resumen, imagen_url, creado_en, slug')
         .eq('estado', 'publicado')
@@ -111,3 +111,5 @@ export default function UltimosArticulosBlog() {
     </div>
   )
 }
+
+

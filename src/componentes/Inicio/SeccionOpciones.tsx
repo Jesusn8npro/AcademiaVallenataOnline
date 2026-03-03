@@ -24,7 +24,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.cursos.titulo'),
       descripcion: t('seccionOpciones.opciones.cursos.descripcion'),
-      imagen: '/imagenes/Inicio/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg',
+      imagen: '/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg',
       icono: '📚',
       color: 'from-blue-500 to-purple-600',
       beneficios: t('seccionOpciones.opciones.cursos.beneficios', { returnObjects: true }) as string[],
@@ -35,7 +35,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.simulador.titulo'),
       descripcion: t('seccionOpciones.opciones.simulador.descripcion'),
-      imagen: '/imagenes/Inicio/Acordeon PRO MAX.png',
+      imagen: '/images/Acordeon PRO MAX.png',
       icono: '🎮',
       color: 'from-purple-600 to-pink-600',
       beneficios: t('seccionOpciones.opciones.simulador.beneficios', { returnObjects: true }) as string[],
@@ -47,7 +47,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.tutoriales.titulo'),
       descripcion: t('seccionOpciones.opciones.tutoriales.descripcion'),
-      imagen: '/imagenes/Inicio/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg',
+      imagen: '/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg',
       icono: '🎥',
       color: 'from-green-500 to-teal-600',
       beneficios: t('seccionOpciones.opciones.tutoriales.beneficios', { returnObjects: true }) as string[],
@@ -58,7 +58,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.comunidad.titulo'),
       descripcion: t('seccionOpciones.opciones.comunidad.descripcion'),
-      imagen: '/imagenes/Inicio/Home/comunidad imagen.webp',
+      imagen: '/images/Home/comunidad imagen.webp',
       icono: '👥',
       color: 'from-orange-500 to-red-600',
       beneficios: t('seccionOpciones.opciones.comunidad.beneficios', { returnObjects: true }) as string[],
@@ -70,7 +70,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.paquetes.titulo'),
       descripcion: t('seccionOpciones.opciones.paquetes.descripcion'),
-      imagen: '/imagenes/Inicio/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg',
+      imagen: '/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg',
       icono: '📦',
       color: 'from-indigo-500 to-purple-600',
       beneficios: t('seccionOpciones.opciones.paquetes.beneficios', { returnObjects: true }) as string[],
@@ -81,7 +81,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.clases.titulo'),
       descripcion: t('seccionOpciones.opciones.clases.descripcion'),
-      imagen: '/imagenes/Inicio/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg',
+      imagen: '/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg',
       icono: '👨‍🏫',
       color: 'from-yellow-500 to-orange-600',
       beneficios: t('seccionOpciones.opciones.clases.beneficios', { returnObjects: true }) as string[],
@@ -124,7 +124,7 @@ const SeccionOpciones: React.FC = () => {
                   i18nKey="seccionOpciones.descripcion"
                   components={{
                     1: <strong />,
-                    2: <><br />🚀 </>,
+                    2: <span><br />🚀 </span>,
                     3: <span style={styles.textoUrgencia} />
                   }}
                 />

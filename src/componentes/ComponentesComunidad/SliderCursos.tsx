@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { supabase } from '../../servicios/supabaseCliente';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../servicios/clienteSupabase';
 import './SliderCursos.css';
 
 interface Inscripcion {
@@ -46,7 +46,7 @@ const SliderCursos: React.FC = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar inscripciones del usuario (usando la misma lÃ³gica que MIS CURSOS)
+  // Cargar inscripciones del usuario (usando la misma lógica que MIS CURSOS)
   useEffect(() => {
     const cargarInscripciones = async () => {
       try {
@@ -64,7 +64,7 @@ const SliderCursos: React.FC = () => {
           return;
         }
 
-        console.log('ðŸ” [SLIDER CURSOS] Cargando inscripciones para usuario:', user.id);
+        console.log('🔍 [SLIDER CURSOS] Cargando inscripciones para usuario:', user.id);
 
         // Primero obtener todas las inscripciones del usuario (igual que MIS CURSOS)
         const { data: inscripcionesData, error } = await supabase
@@ -77,10 +77,10 @@ const SliderCursos: React.FC = () => {
           throw error;
         }
 
-        console.log('ðŸ“‹ [SLIDER CURSOS] Inscripciones encontradas:', inscripcionesData?.length || 0);
+        console.log('📋 [SLIDER CURSOS] Inscripciones encontradas:', inscripcionesData?.length || 0);
 
         if (!inscripcionesData || inscripcionesData.length === 0) {
-          console.log('âŒ [SLIDER CURSOS] No se encontraron inscripciones');
+          console.log('❌ [SLIDER CURSOS] No se encontraron inscripciones');
           const datosEjemplo = obtenerInscripcionesEjemplo();
           setInscripciones(datosEjemplo);
           await cargarProgresoEjemplo(datosEjemplo);
@@ -92,7 +92,7 @@ const SliderCursos: React.FC = () => {
         const inscripcionesCursos = inscripcionesData.filter((i: any) => i.curso_id);
         const inscripcionesTutoriales = inscripcionesData.filter((i: any) => i.tutorial_id);
 
-        console.log('ðŸ“Š [SLIDER CURSOS] DistribuciÃ³n de inscripciones:', {
+        console.log('📊 [SLIDER CURSOS] Distribución de inscripciones:', {
           cursos: inscripcionesCursos.length,
           tutoriales: inscripcionesTutoriales.length
         });
@@ -106,7 +106,7 @@ const SliderCursos: React.FC = () => {
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, slug')
             .in('id', cursoIds);
           cursosData = cursos || [];
-          console.log('ðŸ“š [SLIDER CURSOS] Cursos cargados:', cursosData.length);
+          console.log('📚 [SLIDER CURSOS] Cursos cargados:', cursosData.length);
         }
 
         // Obtener datos de tutoriales si hay inscripciones a tutoriales
@@ -118,7 +118,7 @@ const SliderCursos: React.FC = () => {
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, artista, acordeonista, tonalidad')
             .in('id', tutorialIds);
           tutorialesData = tutoriales || [];
-          console.log('ðŸŽµ [SLIDER CURSOS] Tutoriales cargados:', tutorialesData.length);
+          console.log('🎵 [SLIDER CURSOS] Tutoriales cargados:', tutorialesData.length);
         }
 
         // Combinar todo (igual que MIS CURSOS)
@@ -135,15 +135,15 @@ const SliderCursos: React.FC = () => {
           }))
         ];
 
-        // Reordenar por fecha de inscripciÃ³n
+        // Reordenar por fecha de inscripción
         inscripcionesCombinadas.sort((a, b) => new Date(b.fecha_inscripcion).getTime() - new Date(a.fecha_inscripcion).getTime());
 
-        console.log('âœ… [SLIDER CURSOS] Inscripciones finales:', inscripcionesCombinadas.length);
+        console.log('✅ [SLIDER CURSOS] Inscripciones finales:', inscripcionesCombinadas.length);
 
         setInscripciones(inscripcionesCombinadas);
         await cargarProgresoReal(inscripcionesCombinadas, user.id);
       } catch (err) {
-        console.error('âŒ [SLIDER CURSOS] Error cargando inscripciones:', err);
+        console.error('❌ [SLIDER CURSOS] Error cargando inscripciones:', err);
         console.log('Usando datos de ejemplo debido a error');
         const datosEjemplo = obtenerInscripcionesEjemplo();
         setInscripciones(datosEjemplo);
@@ -156,7 +156,7 @@ const SliderCursos: React.FC = () => {
     cargarInscripciones();
   }, []);
 
-  // FunciÃ³n para obtener datos de ejemplo
+  // Función para obtener datos de ejemplo
   const obtenerInscripcionesEjemplo = (): Inscripcion[] => {
     return [
       {
@@ -166,10 +166,10 @@ const SliderCursos: React.FC = () => {
         fecha_inscripcion: '2025-07-17T10:00:00Z',
         cursos: {
           id: '1',
-          titulo: 'AcordeÃ³n Desde Cero',
+          titulo: 'Acordeón Desde Cero',
           imagen_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&h=300&fit=crop',
           slug: 'acordeon-desde-cero',
-          descripcion: 'Aprende acordeÃ³n desde cero con tÃ©cnicas bÃ¡sicas',
+          descripcion: 'Aprende acordeón desde cero con técnicas básicas',
           nivel: 'Principiante',
           duracion_estimada: '8 horas',
           precio_normal: 99
@@ -182,14 +182,14 @@ const SliderCursos: React.FC = () => {
         fecha_inscripcion: '2025-07-09T14:30:00Z',
         tutoriales: {
           id: '1',
-          titulo: 'Tutorial de Vallenato BÃ¡sico',
+          titulo: 'Tutorial de Vallenato Básico',
           imagen_url: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500&h=300&fit=crop',
           slug: 'tutorial-vallenato-basico',
-          descripcion: 'Tutorial paso a paso de vallenato clÃ¡sico',
+          descripcion: 'Tutorial paso a paso de vallenato clásico',
           nivel: 'Intermedio',
           duracion_estimada: '6 horas',
           precio_normal: 79,
-          artista: 'Diomedes DÃ­az',
+          artista: 'Diomedes Díaz',
           acordeonista: 'Juancho Rois',
           tonalidad: 'Mayor'
         }
@@ -201,10 +201,10 @@ const SliderCursos: React.FC = () => {
         fecha_inscripcion: '2025-07-09T16:45:00Z',
         cursos: {
           id: '2',
-          titulo: 'TeorÃ­a Musical Avanzada',
+          titulo: 'Teoría Musical Avanzada',
           imagen_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=300&fit=crop',
           slug: 'teoria-musical-avanzada',
-          descripcion: 'Domina la teorÃ­a musical avanzada',
+          descripcion: 'Domina la teoría musical avanzada',
           nivel: 'Avanzado',
           duracion_estimada: '12 horas',
           precio_normal: 149
@@ -213,7 +213,7 @@ const SliderCursos: React.FC = () => {
     ];
   };
 
-  // FunciÃ³n para cargar progreso de ejemplo
+  // Función para cargar progreso de ejemplo
   const cargarProgresoEjemplo = async (inscripciones: Inscripcion[]) => {
     const progresoMap: Record<string, Progreso> = {};
 
@@ -236,7 +236,7 @@ const SliderCursos: React.FC = () => {
     setProgreso(progresoMap);
   };
 
-  // Cargar progreso real usando la misma lÃ³gica que TarjetaCurso
+  // Cargar progreso real usando la misma lógica que TarjetaCurso
   const cargarProgresoReal = async (inscripciones: Inscripcion[], usuarioId: string) => {
     const progresoMap: Record<string, Progreso> = {};
 
@@ -329,7 +329,7 @@ const SliderCursos: React.FC = () => {
   const totalItems = inscripciones.length;
   const maxIndex = Math.max(0, totalItems - 1);
 
-  // NavegaciÃ³n del slider
+  // Navegación del slider
   const nextSlide = () => {
     if (currentIndex < maxIndex && totalItems > 1) {
       setCurrentIndex(currentIndex + 1);
@@ -348,7 +348,7 @@ const SliderCursos: React.FC = () => {
     }
   };
 
-  // Determinar texto del botÃ³n
+  // Determinar texto del botón
   const determinarTextoBoton = (inscripcion: Inscripcion) => {
     const esCurso = !!inscripcion.cursos;
     const contenidoId = esCurso ? inscripcion.curso_id : inscripcion.tutorial_id;
@@ -360,7 +360,7 @@ const SliderCursos: React.FC = () => {
     return 'Empezar';
   };
 
-  // NavegaciÃ³n inteligente
+  // Navegación inteligente
   const navegarAContenido = async (inscripcion: Inscripcion) => {
     const esCurso = !!inscripcion.cursos;
     const contenido = esCurso ? inscripcion.cursos : inscripcion.tutoriales;
@@ -409,7 +409,7 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">🚀</span> Continúa tu aprendizaje
+            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-loading">
@@ -425,11 +425,11 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">🚀</span> Continúa tu aprendizaje
+            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-error">
-          <p>❌ {error}</p>
+          <p>? {error}</p>
         </div>
       </div>
     );
@@ -440,11 +440,11 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">🚀</span> Continúa tu aprendizaje
+            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-empty">
-          <p>No tienes cursos inscritos aún.</p>
+          <p>No tienes cursos inscritos a�n.</p>
           <a href="/cursos" className="slider-cursos-btn-explorar">Explorar cursos</a>
         </div>
       </div>
@@ -460,11 +460,11 @@ const SliderCursos: React.FC = () => {
       {/* Header */}
       <div className="slider-cursos-header">
         <h3 className="slider-cursos-titulo">
-          <span className="slider-cursos-icono">🚀</span> Continúa tu aprendizaje
+          <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
         </h3>
       </div>
 
-      {/* Controles de navegaciÃ³n */}
+      {/* Controles de navegación */}
       {totalItems > 0 && (
         <div className="slider-cursos-nav-controls">
           <button
@@ -557,7 +557,7 @@ const SliderCursos: React.FC = () => {
         </div>
       </div>
 
-      {/* Indicadores de pÃ¡gina */}
+      {/* Indicadores de página */}
       {totalItems > 1 && (
         <div className="slider-cursos-pagination-dots">
           {Array.from({ length: totalItems }, (_, i) => (

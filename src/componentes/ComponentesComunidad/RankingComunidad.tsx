@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import './RankingComunidad.css';
 
 interface Usuario {

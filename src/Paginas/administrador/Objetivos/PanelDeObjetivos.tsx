@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Layout, Loader2, Calendar, CheckCircle2, ListTodo, PlayCircle } from 'lucide-react';
-import { servicioObjetivos } from '../../../lib/services/servicioObjetivos';
-import type { ObjetivoAdmin, NuevoObjetivo } from '../../../lib/services/servicioObjetivos';
+import { servicioObjetivos } from '../../../servicios/servicioObjetivos';
+import type { ObjetivoAdmin, NuevoObjetivo } from '../../../servicios/servicioObjetivos';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import TarjetaObjetivo from './Componentes/TarjetaObjetivo';
 import ModalObjetivo from './Componentes/ModalObjetivo';
@@ -192,3 +192,4 @@ const PanelDeObjetivos: React.FC = () => {
 };
 
 export default PanelDeObjetivos;
+

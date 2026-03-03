@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, supabaseAnon } from '../../servicios/supabaseCliente';
+import { supabase, supabaseAnonimo } from '../../servicios/clienteSupabase';
 import HeroBlog from '../../componentes/Blog/HeroBlog';
 import TarjetaArticulo from '../../componentes/Blog/TarjetaArticulo';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
@@ -67,7 +67,7 @@ const Blog: React.FC = () => {
       setCargando(true);
       setError('');
 
-      const { data, error: errorSupabase } = await supabaseAnon
+      const { data, error: errorSupabase } = await supabaseAnonimo
         .from('blog_articulos')
         .select('*')
         // Intentamos filtrar por 'publicado', asumiendo que el campo 'estado_publicacion' o 'estado' existe y tiene ese valor.
@@ -537,3 +537,5 @@ const Blog: React.FC = () => {
 };
 
 export default Blog; 
+
+

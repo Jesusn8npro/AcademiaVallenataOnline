@@ -155,7 +155,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                 <div className="nav-auth-left">
                     <div className="nav-auth-logo">
                         <a href={esAdmin ? '/panel-administracion' : '/panel-estudiante'}>
-                            <img src="/imagenes/logo academia vallenata.png" alt="Logo Academia" className="nav-auth-logo-img" />
+                            <img src="/images/logo academia vallenata.png" alt="Logo Academia" className="nav-auth-logo-img" />
                         </a>
                     </div>
 

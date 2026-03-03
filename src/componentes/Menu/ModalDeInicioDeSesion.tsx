@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import { useUsuario } from '../../contextos/UsuarioContext';
 
 interface ModalDeInicioDeSesionProps {
@@ -596,7 +596,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
           <div style={styles.modalHeader}>
             <div style={styles.logoContainer}>
               <img
-                src="/imagenes/logo academia vallenata.png"
+                src="/images/logo academia vallenata.png"
                 alt="Logo Academia Vallenata"
                 style={styles.logoModal}
               />

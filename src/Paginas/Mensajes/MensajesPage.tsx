@@ -13,9 +13,9 @@ export default function MensajesPage() {
   useEffect(() => {
     let activo = true
       ; (async () => {
-        const { data: { user } } = await (await import('../../servicios/supabaseCliente')).supabase.auth.getUser()
+        const { data: { user } } = await (await import('../../servicios/clienteSupabase')).supabase.auth.getUser()
         if (!user || !activo) return
-        const { supabase } = await import('../../servicios/supabaseCliente')
+        const { supabase } = await import('../../servicios/clienteSupabase')
         const { data } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
         if (!activo) return
         setUsuarioActual(data)

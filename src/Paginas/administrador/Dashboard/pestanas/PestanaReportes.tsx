@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import {
     TrendingUp,
     CheckCircle,

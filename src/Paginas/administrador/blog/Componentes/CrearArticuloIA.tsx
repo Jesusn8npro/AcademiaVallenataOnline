@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bot, User, Send, Loader2, Sparkles, RotateCcw, MessageCircle } from 'lucide-react';
 import './CrearArticuloIA.css';
 import FormularioArticulo from '../FormularioArticulo';
-import { supabase } from '../../../../servicios/supabaseCliente'; // Ajusta ruta si es necesario
+import { supabase } from '../../../../servicios/clienteSupabase'; // Ajusta ruta si es necesario
 
 // Se simplifican las props ya que FormularioArticulo maneja el guardado
 interface CrearArticuloIAProps {

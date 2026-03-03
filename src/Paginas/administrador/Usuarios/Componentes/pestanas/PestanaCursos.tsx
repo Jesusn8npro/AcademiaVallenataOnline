@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './PestanaCursos.css';
 import { obtenerTodosPaquetes, obtenerTutorialesDisponibles, obtenerItemsPaquete } from '../../../../../servicios/paquetesService';
 import { obtenerCursosDisponibles } from '../../../../../servicios/cursosServicio';
-import { supabase } from '../../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../../servicios/clienteSupabase';
 
 // Interfaces
 interface Usuario {

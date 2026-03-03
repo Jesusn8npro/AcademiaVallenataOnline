@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 // import { generarSlug } from '../../../utilidades/slug'; // Usamos versión local copiada de LandingCurso
 import Avatar from './Avatar';

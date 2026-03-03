@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './GeolocalizacionUsuarios.css';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, MapPin } from 'lucide-react';
 
 interface UbicacionUsuario {

@@ -9,7 +9,7 @@ import {
   detectarRiesgo,
   colorRiesgo
 } from '../../../../../servicios/geolocalizacionService';
-import { supabase } from '../../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../../servicios/clienteSupabase';
 
 interface PestanaGeolocalizacionProps {
   usuario: any;

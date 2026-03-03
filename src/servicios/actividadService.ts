@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 export interface UsuarioActivo {
     usuario_id: string;
@@ -290,3 +290,4 @@ export const actividadService = {
         }
     }
 };
+

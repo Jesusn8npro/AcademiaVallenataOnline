@@ -10,7 +10,7 @@
  * - Fallbacks en caso de errores
  */
 
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 // Interfaces
 interface RespuestaIpapi {
@@ -439,3 +439,4 @@ class ServicioGeolocalizacion {
 }
 
 export const servicioGeolocalizacion = ServicioGeolocalizacion.obtenerInstancia();
+

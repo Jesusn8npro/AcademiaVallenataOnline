@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import './SidebarResumenAdmin.css';
 
 interface Stats {

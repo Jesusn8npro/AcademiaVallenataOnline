@@ -5,7 +5,7 @@ import {
     ChevronLeft, ChevronRight, X, Phone, Mail,
     MapPin, Calendar, ShoppingBag, Send, AlertCircle
 } from 'lucide-react'
-import { supabase as clienteSupabase } from '../../../servicios/supabaseCliente'
+import { supabase as clienteSupabase } from '../../../servicios/clienteSupabase'
 import './AdminChats.css'
 
 // Interfaces

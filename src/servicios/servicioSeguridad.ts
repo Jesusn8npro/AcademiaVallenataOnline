@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 // Tipos
 export interface AlertaSeguridad {
@@ -219,3 +219,4 @@ function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: numbe
 function gradToRad(deg: number) {
     return deg * (Math.PI / 180);
 }
+

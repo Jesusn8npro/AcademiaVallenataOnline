@@ -1,10 +1,10 @@
-import { supabase, supabaseAnon } from './supabaseCliente';
+import { supabase, supabaseAnonimo } from './clienteSupabase';
 import type { EventoCompleto, FiltrosEventos } from '../tipos/eventos';
 
 class EventosServicio {
   async obtenerEventos(filtros?: FiltrosEventos): Promise<{ eventos: EventoCompleto[]; total: number; error?: string }> {
     try {
-      let query = supabaseAnon
+      let query = supabaseAnonimo
         .from('eventos')
         .select('*', { count: 'exact' })
         .eq('es_publico', true)
@@ -46,7 +46,7 @@ class EventosServicio {
 
   async obtenerEventoPorSlug(slug: string): Promise<{ evento: EventoCompleto | null; error?: string }> {
     try {
-      const { data, error } = await supabaseAnon
+      const { data, error } = await supabaseAnonimo
         .from('eventos')
         .select('*')
         .eq('slug', slug)
@@ -63,3 +63,5 @@ class EventosServicio {
 export const eventosService = new EventosServicio();
 export default eventosService;
 export type { EventoCompleto, FiltrosEventos };
+
+

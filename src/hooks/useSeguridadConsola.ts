@@ -1,11 +1,14 @@
 /**
- * SISTEMA DE SEGURIDAD DE CONSOLA - VERSIÓN FINAL ESTABLE
+ * SISTEMA DE SEGURIDAD DE CONSOLA - VERSIÓN FINAL ESTABLE Y PERMISIVA PARA ADMINS
  * 
  * Este sistema protege los datos en producción:
  * 1. USA import.meta.env.DEV para una detección 100% confiable en Vite.
  * 2. En desarrollo (localhost), el sistema se auto-deshabilita TOTALMENTE.
- * 3. En producción, deshabilita logs y bloquea DevTools.
+ * 3. En producción, deshabilita logs y bloquea DevTools a los usuarios.
+ * 4. ¡NUEVO! Permite el uso completo de la consola a los administradores.
  */
+import { useEffect } from 'react';
+import { useUsuario } from '../contextos/UsuarioContext';
 
 // Guardar referencias originales de console
 const consoleOriginal = {
@@ -24,12 +27,17 @@ const consoleOriginal = {
     clear: console.clear
 };
 
-/**
- * Función para mostrar SOLO el mensaje de seguridad DETENTE
- */
+const funcionVacia = () => { };
+
+// Variables globales para control de intervalos e interrupciones
+let mensajeIntervalId: any = null;
+let devToolsIntervalId: any = null;
+
 const mostrarMensajeDetente = () => {
+    // Si la consola debe estar permitida globalmente, evitamos los mensajes
+    if ((window as any).__permitirDevTools) return;
+
     try {
-        // En producción, limpiar consola puede ser útil, pero lo hacemos con cuidado
         if (typeof consoleOriginal.clear === 'function') {
             consoleOriginal.clear();
         }
@@ -60,18 +68,12 @@ const mostrarMensajeDetente = () => {
     }
 };
 
-const funcionVacia = () => { };
-
-/**
- * Inicializar protección de consola
- */
 export const inicializarSeguridadConsola = () => {
-    // 🛡️ Detección nativa de Vite para desarrollo
     // @ts-ignore
-    if (import.meta.env.DEV) {
-        console.log('🔓 Seguridad: Modo desarrollo detectado (Logs habilitados)');
-        return;
-    }
+    if (import.meta.env.DEV) return;
+
+    // Si ya somos admin o sabemos que tenemos acceso
+    if ((window as any).__permitirDevTools) return;
 
     // EN PRODUCCIÓN: Deshabilitar TODA la consola
     console.log = funcionVacia;
@@ -88,37 +90,72 @@ export const inicializarSeguridadConsola = () => {
     console.groupEnd = funcionVacia;
 
     mostrarMensajeDetente();
-    setInterval(mostrarMensajeDetente, 5000); // 5 seg en lugar de 2 para menos carga
+    if (!mensajeIntervalId) {
+        mensajeIntervalId = setInterval(mostrarMensajeDetente, 5000);
+    }
 };
 
-/**
- * Bloquear DevTools en producción
- */
+export const restaurarConsola = () => {
+    (window as any).__permitirDevTools = true;
+
+    // Restaurar metodos originales
+    Object.assign(console, consoleOriginal);
+
+    // Limpiar intervalos si existen
+    if (mensajeIntervalId) {
+        clearInterval(mensajeIntervalId);
+        mensajeIntervalId = null;
+    }
+    if (devToolsIntervalId) {
+        clearInterval(devToolsIntervalId);
+        devToolsIntervalId = null;
+    }
+};
+
+const contextMenuHandler = (e: any) => {
+    if ((window as any).__permitirDevTools) return;
+    e.preventDefault();
+    return false;
+};
+
+const keyDownHandler = (e: any) => {
+    if ((window as any).__permitirDevTools) return;
+
+    const isInspector = (e.key === 'F12') ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === 'U') ||
+        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()));
+
+    if (isInspector) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+};
+
+const antiHackerLoop = () => {
+    if ((window as any).__permitirDevTools) return;
+    try {
+        // Ejecuta un debugger infinito que congela la ventana de herramientas
+        // de desarrollo si está abierta, dificultando investigar el código.
+        (function () { return false; }['constructor']('debugger')());
+    } catch (err) { }
+};
+
 export const bloquearDevTools = () => {
     // @ts-ignore
     if (import.meta.env.DEV) return;
+    if ((window as any).__permitirDevTools) return;
 
     try {
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        }, { capture: true });
-
-        document.addEventListener('keydown', (e) => {
-            // F12, Ctrl+Shift+I/J/C, Ctrl+U
-            const isInspector = (e.key === 'F12') ||
-                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
-                (e.ctrlKey && e.key.toUpperCase() === 'U') ||
-                (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()));
-
-            if (isInspector) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-        }, { capture: true });
+        if (!(window as any).__seguridadListenersConfigurados) {
+            document.addEventListener('contextmenu', contextMenuHandler, { capture: true });
+            document.addEventListener('keydown', keyDownHandler, { capture: true });
+            (window as any).__seguridadListenersConfigurados = true;
+        }
 
         const detectarDevTools = () => {
+            if ((window as any).__permitirDevTools) return;
             const threshold = 160;
             if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
                 try {
@@ -126,26 +163,42 @@ export const bloquearDevTools = () => {
                     mostrarMensajeDetente();
                 } catch (e) { }
             }
+
+            antiHackerLoop();
         };
-        setInterval(detectarDevTools, 2000);
+
+        if (!devToolsIntervalId) {
+            devToolsIntervalId = setInterval(detectarDevTools, 50);
+        }
     } catch (e) { }
 };
 
-/**
- * Hook de React para usar la seguridad
- */
-import { useEffect } from 'react';
-
 export const useSeguridadConsola = () => {
+    const { usuario, inicializado } = useUsuario();
+
     useEffect(() => {
         // @ts-ignore
         if (import.meta.env.DEV) return;
 
+        // Si todavía estamos cargando el usuario, no bloqueamos la consola aún,
+        // esperamos hasta estar seguros.
+        if (!inicializado) return;
+
+        // Si el usuario es administrador, restaurar (o mantener) la consola normal
+        if (usuario?.rol === 'admin') {
+            restaurarConsola();
+            console.log('🔓 Seguridad Consola: Acceso Administrador Activado. Tienes permiso.');
+            return;
+        }
+
+        // Si no es administrador, o no está logueado, bloquear todo
+        (window as any).__permitirDevTools = false;
         const timeoutId = setTimeout(() => {
             inicializarSeguridadConsola();
             bloquearDevTools();
         }, 1000);
 
         return () => clearTimeout(timeoutId);
-    }, []);
+    }, [usuario, inicializado]);
 };
+

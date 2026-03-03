@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUsuario } from '../../contextos/UsuarioContext';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import './SidebarAdmin.css';
 
 // Interfaces
@@ -175,7 +175,7 @@ const SidebarAdmin = () => {
                     .from('ranking_global')
                     .select('puntuacion, posicion')
                     .eq('usuario_id', usuario.id)
-                    .single(),
+                    .maybeSingle(),
 
                 supabase
                     .from('sesiones_usuario')
@@ -189,7 +189,7 @@ const SidebarAdmin = () => {
             const inscripciones = inscripcionesResult.data || [];
             const progresoLecciones = progresoLeccionesResult.data || [];
             const progresoTutoriales = progresoTutorialesResult.data || [];
-            const ranking = rankingResult.data;
+            const ranking = rankingResult.data as any;
             const sesiones = sesionesResult.data || [];
 
             // Calcular estadísticas

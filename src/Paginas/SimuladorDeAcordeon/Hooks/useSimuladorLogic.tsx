@@ -10,7 +10,7 @@ import {
 import { configuracionUsuario } from '../Datos/TonosUsuario';
 import type { AjustesAcordeon, SonidoVirtual, ModoVista, AcordeonSimuladorProps } from '../TiposAcordeon';
 
-import { supabase } from '../../../lib/supabase/clienteSupabase';
+import { supabase } from '../../../servicios/clienteSupabase';
 import type {
     MuestraAudio
 } from '../UniversalSampler';

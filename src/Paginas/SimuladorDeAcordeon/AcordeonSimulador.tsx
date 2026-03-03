@@ -105,6 +105,8 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
                 setModoVista={logica.setModoVista}
                 vistaDoble={logica.vistaDoble}
                 setVistaDoble={logica.setVistaDoble}
+                esp32Conectado={logica.esp32Conectado}
+                conectarESP32={logica.conectarESP32}
             />
 
             {/* 2. Panel de Ajustes (Gestor de Diseño y Sonido) */}

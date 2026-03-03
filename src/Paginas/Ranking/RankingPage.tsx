@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import { GamificacionServicio } from '../../servicios/gamificacionServicio'
 import type { RankingGlobal } from '../../servicios/gamificacionServicio'
 import './ranking.css'

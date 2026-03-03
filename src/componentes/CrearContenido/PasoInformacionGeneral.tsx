@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import './PasoInformacionGeneral.css'
 import GestorLista from './GestorLista'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 interface Props {
   tipo: 'curso' | 'tutorial'

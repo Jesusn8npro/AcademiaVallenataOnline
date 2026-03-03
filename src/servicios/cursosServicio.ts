@@ -1,4 +1,4 @@
-import { supabaseAnon, supabase } from './supabaseCliente' // Usamos el cliente anónimo para el catálogo público y el autenticado para admin
+import { supabaseAnonimo, supabase } from './clienteSupabase' // Usamos el cliente anónimo para el catálogo público y el autenticado para admin
 
 // ... interfaces ...
 
@@ -21,7 +21,7 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
     // Promesa de carga de datos
     const loadData = async () => {
       // Cargar cursos primero
-      const { data: cursosData, error: cursosError } = await supabaseAnon
+      const { data: cursosData, error: cursosError } = await supabaseAnonimo
         .from('cursos')
         .select('*')
         .order('created_at', { ascending: false });
@@ -29,7 +29,7 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
       if (cursosError) console.error('Error cargando cursos:', cursosError);
 
       // Cargar tutoriales
-      const { data: tutsData, error: tutsError } = await supabaseAnon
+      const { data: tutsData, error: tutsError } = await supabaseAnonimo
         .from('tutoriales')
         .select('*')
         .order('created_at', { ascending: false });
@@ -94,4 +94,6 @@ export async function obtenerCursosDisponibles(): Promise<{ success: boolean; da
     return { success: false, data: [], error: e.message }
   }
 }
+
+
 

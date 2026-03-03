@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import Avatar from './Avatar';
 import { GamificacionServicio as GamificacionService } from '../../../servicios/gamificacionServicio';
-import { obtenerSlugUsuario } from '../../../utils/utilidadesSlug';
+import { obtenerSlugUsuario } from '../../../utilidades/utilidadesSlug';
 import './SidebarDerecho.css';
 
 const SidebarDerecho: React.FC = () => {
@@ -309,3 +309,4 @@ const SidebarDerecho: React.FC = () => {
 };
 
 export default SidebarDerecho;
+

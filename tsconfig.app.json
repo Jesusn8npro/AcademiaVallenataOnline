@@ -1,5 +1,29 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "$lib/*": [
+        "src/*"
+      ],
+      "$servicios/*": [
+        "src/servicios/*"
+      ],
+      "$componentes/*": [
+        "src/componentes/*"
+      ],
+      "$Paginas/*": [
+        "src/Paginas/*"
+      ],
+      "$utilidades/*": [
+        "src/utilidades/*"
+      ],
+      "$stores/*": [
+        "src/stores/*"
+      ]
+    },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,

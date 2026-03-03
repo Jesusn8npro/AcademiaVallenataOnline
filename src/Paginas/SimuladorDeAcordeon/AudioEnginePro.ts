@@ -134,11 +134,38 @@ export class MotorAudioPro {
         if (banco.muestras.has(idSonido)) return;
 
         try {
-            const respuesta = await fetch(url);
-            if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+            // 🛡️ SISTEMA DE CACHÉ PERSISTENTE (V5.1)
+            // Esto evita descargas repetitivas de Supabase Egress
+            const cacheName = 'sim-audios-v1';
+            let audioData: ArrayBuffer | null = null;
 
-            const arrayBuffer = await respuesta.arrayBuffer();
-            const audioBuffer = await this.contexto.decodeAudioData(arrayBuffer);
+            try {
+                const cache = await caches.open(cacheName);
+                const cachedResponse = await cache.match(url);
+
+                if (cachedResponse) {
+                    console.log(`📦 [CACHE] Muestra recuperada: ${idSonido}`);
+                    audioData = await cachedResponse.arrayBuffer();
+                } else {
+                    console.log(`🌐 [RED] Descargando de Supabase: ${idSonido}`);
+                    const respuesta = await fetch(url);
+                    if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+
+                    // Clonar respuesta para guardarla en caché y usarla
+                    const respuestaACachear = respuesta.clone();
+                    await cache.put(url, respuestaACachear);
+                    audioData = await respuesta.arrayBuffer();
+                }
+            } catch (cacheError) {
+                console.warn('⚠️ No se pudo usar Cache API, recurriendo a fetch normal:', cacheError);
+                const respuesta = await fetch(url);
+                if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+                audioData = await respuesta.arrayBuffer();
+            }
+
+            if (!audioData) throw new Error('No se pudo obtener datos de audio');
+
+            const audioBuffer = await this.contexto.decodeAudioData(audioData);
             const offset = this.detectarInicioReal(audioBuffer);
 
             banco.muestras.set(idSonido, audioBuffer);

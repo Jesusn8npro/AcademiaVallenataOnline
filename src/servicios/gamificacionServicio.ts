@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente'
+import { supabase } from './clienteSupabase'
 
 // =====================================================
 // 🎯 TIPOS DE DATOS GAMING
@@ -487,3 +487,4 @@ export class GamificacionServicio {
     }
   }
 }
+

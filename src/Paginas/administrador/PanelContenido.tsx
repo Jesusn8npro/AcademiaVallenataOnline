@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import MostradorCursosTutoriales from './panel-contenido/componentes/MostradorCursosTutoriales';
 import SidebarResumenAdmin from './panel-contenido/componentes/SidebarResumenAdmin';
 import './PanelContenido.css';

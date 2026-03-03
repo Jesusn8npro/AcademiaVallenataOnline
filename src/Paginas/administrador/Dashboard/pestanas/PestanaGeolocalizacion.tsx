@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PestanaGeolocalizacion.css';
 import { Gauge, Shield, PieChart, Users, Play, RefreshCw } from 'lucide-react';
-import { supabase } from '../../../../servicios/supabaseCliente';
+import { supabase } from '../../../../servicios/clienteSupabase';
 import { servicioGeolocalizacion } from '../../../../servicios/servicioGeolocalizacion';
 import GeolocalizacionUsuarios from './GeolocalizacionUsuarios';
 import AnalyticsGeograficos from './AnalyticsGeograficos';

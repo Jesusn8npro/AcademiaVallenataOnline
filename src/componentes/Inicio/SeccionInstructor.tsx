@@ -55,7 +55,7 @@ const SeccionInstructor: React.FC = () => {
                 <div className="collage-maestro" style={styles.collageMaestro}>
                   <div className="foto-principal" style={styles.fotoPrincipal}>
                     <img
-                      src="/imagenes/Inicio/Home/Foto maestro oficial JESUS GONZALEZ.jpg"
+                      src="/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg"
                       alt="Maestro Jesús González"
                       className="img-maestro"
                       style={styles.imgMaestro}

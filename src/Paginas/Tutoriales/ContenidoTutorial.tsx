@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import BarraProgresoAvanzada from '../../componentes/Tutoriales/BarraProgresoAvanzada'
 import TutorialClases from '../../componentes/Tutoriales/TutorialClases'
 import './ContenidoTutorialPremium.css'

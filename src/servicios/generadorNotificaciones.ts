@@ -1,4 +1,4 @@
-import { supabase } from './supabaseCliente';
+import { supabase } from './clienteSupabase';
 
 /**
  * 🚀 GENERADOR AUTOMÁTICO DE NOTIFICACIONES
@@ -651,3 +651,4 @@ export async function obtenerEstadisticasNotificaciones() {
         return { exito: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
 }
+

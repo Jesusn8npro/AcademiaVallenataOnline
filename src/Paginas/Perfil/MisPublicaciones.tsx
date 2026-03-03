@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import { usePerfilStore } from '../../stores/perfilStore'
 import FeedPublicaciones from '../../componentes/ComponentesComunidad/FeedPublicaciones'

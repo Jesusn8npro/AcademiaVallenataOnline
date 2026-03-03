@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { mensajeriaService } from '../../servicios/mensajeriaService'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import type { Mensaje } from '../../servicios/mensajeriaService'
 import BurbujaMensaje from './BurbujaMensaje'
 import EntradaMensaje from './EntradaMensaje'

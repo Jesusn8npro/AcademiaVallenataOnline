@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 import './actividad-usuario.css'
 
 interface PerfilPublico { id: string; nombre?: string | null; nombre_completo?: string | null }

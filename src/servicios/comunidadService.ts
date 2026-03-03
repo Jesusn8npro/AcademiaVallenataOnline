@@ -1,143 +1,454 @@
-import { supabase, supabaseAnon } from './supabaseCliente'
+import { supabase } from './clienteSupabase';
+import { get } from '../utilidades/tiendaReact';
+import { usuario } from './UsuarioActivo/usuario';
 
 export interface PublicacionComunidad {
-    id: string;
-    usuario_id: string;
-    usuario_nombre: string;
-    url_foto_perfil?: string;
-    usuario_slug?: string;
-    fecha: string;
-    contenido: string;
-    tipo: string;
-    url_imagen?: string;
-    encuesta?: any;
-    me_gusta: string[];
-    total_comentarios: number;
-    total_compartidos: number;
+  id: string;
+  contenido: string;
+  fecha_creacion: string;
+  url_imagen?: string;
+  url_video?: string;
+  usuario_id: string;
+  usuario_nombre: string;
+  usuario_apellido: string;
+  url_foto_perfil?: string;
+  total_likes: number;
+  total_comentarios: number;
+  like_usuario?: boolean;
+  comentarios?: ComentarioComunidad[];
 }
 
-const ComunidadService = {
-    async obtenerPublicaciones(limite: number = 20, offset: number = 0): Promise<PublicacionComunidad[]> {
-        try {
-            const { data, error } = await supabaseAnon
-                .from('comunidad_publicaciones')
-                .select(`
-          *,
-          perfiles (
-            nombre,
-            apellido,
-            url_foto_perfil,
-            nombre_usuario
-          ),
-          comunidad_publicaciones_likes (
-            usuario_id
-          ),
-          comunidad_comentarios (count)
-        `)
-                .order('fecha_creacion', { ascending: false })
-                .range(offset, offset + limite - 1)
+export interface ComentarioComunidad {
+  id: string;
+  contenido: string;
+  fecha_creacion: string;
+  usuario_id: string;
+  usuario_nombre: string;
+  usuario_apellido: string;
+  url_foto_perfil?: string;
+  publicacion_id: string;
+}
 
-            if (error) throw error
+export interface NuevaPublicacion {
+  contenido: string;
+  url_imagen?: string;
+  url_video?: string;
+}
 
-            return data.map((p: any) => ({
-                id: p.id,
-                usuario_id: p.usuario_id,
-                usuario_nombre: p.perfiles?.nombre ? `${p.perfiles.nombre} ${p.perfiles.apellido || ''}`.trim() : 'Usuario Desconocido',
-                url_foto_perfil: p.perfiles?.url_foto_perfil,
-                usuario_slug: p.perfiles?.nombre_usuario,
-                fecha: p.fecha_creacion,
-                contenido: p.descripcion,
-                tipo: p.tipo || 'texto',
-                url_imagen: p.url_imagen,
-                encuesta: p.encuesta,
-                me_gusta: p.comunidad_publicaciones_likes?.map((l: any) => l.usuario_id) || [],
-                total_comentarios: p.comunidad_comentarios?.[0]?.count || 0,
-                total_compartidos: p.total_compartidos || 0
-            }))
-        } catch (error) {
-            console.error('Error al obtener publicaciones:', error)
-            throw error
-        }
-    },
+export interface NuevoComentario {
+  contenido: string;
+  publicacion_id: string;
+}
 
-    async obtenerPublicacionPorId(id: string): Promise<PublicacionComunidad | null> {
-        try {
-            const { data, error } = await supabaseAnon
-                .from('comunidad_publicaciones')
-                .select(`
-                  *,
-                  perfiles (
-                    nombre,
-                    apellido,
-                    url_foto_perfil,
-                    nombre_usuario
-                  ),
-                  comunidad_publicaciones_likes (
-                    usuario_id
-                  ),
-                  comunidad_comentarios (count)
-                `)
-                .eq('id', id)
-                .single();
+// Cargar publicaciones con paginación
+export async function cargarPublicaciones(offset: number = 0, limite: number = 10): Promise<PublicacionComunidad[]> {
+  const currentUser = get(usuario);
 
-            if (error) throw error;
-            if (!data) return null;
+  const { data: publicaciones, error } = await supabase
+    .from('comunidad_publicaciones')
+    .select(`
+      *,
+      usuario:perfiles!usuario_id (
+        id,
+        nombre,
+        apellido,
+        url_foto_perfil
+      ),
+      total_likes:comunidad_publicaciones_likes (count),
+      total_comentarios:comunidad_comentarios (count)
+    `)
+    .order('fecha_creacion', { ascending: false })
+    .range(offset, offset + limite - 1);
 
-            return {
-                id: data.id,
-                usuario_id: data.usuario_id,
-                usuario_nombre: data.perfiles?.nombre ? `${data.perfiles.nombre} ${data.perfiles.apellido || ''}`.trim() : 'Usuario Desconocido',
-                url_foto_perfil: data.perfiles?.url_foto_perfil,
-                usuario_slug: data.perfiles?.nombre_usuario,
-                fecha: data.fecha_creacion,
-                contenido: data.descripcion,
-                tipo: data.tipo || 'texto',
-                url_imagen: data.url_imagen,
-                encuesta: data.encuesta,
-                me_gusta: data.comunidad_publicaciones_likes?.map((l: any) => l.usuario_id) || [],
-                total_comentarios: data.comunidad_comentarios?.[0]?.count || 0,
-                total_compartidos: data.total_compartidos || 0
-            };
-        } catch (error) {
-            console.error('Error al obtener publicación por ID:', error);
-            return null;
-        }
-    },
+  if (error) {
+    console.error('Error cargando publicaciones:', error);
+    throw error;
+  }
 
-    async crearPublicacion(publicacion: Partial<PublicacionComunidad>) {
-        // Implementación pendiente o básica
-        return { success: true }
-    },
+  if (!publicaciones) return [];
 
-    async eliminarPublicacion(publicacionId: string) {
-        try {
-            const { error } = await supabase
-                .from('comunidad_publicaciones')
-                .delete()
-                .eq('id', publicacionId);
+  // Obtener los likes del usuario actual si está autenticado
+  let likesUsuario: string[] = [];
+  if (currentUser) {
+    const { data: likes } = await supabase
+      .from('comunidad_publicaciones_likes')
+      .select('publicacion_id')
+      .eq('usuario_id', currentUser.id)
+      .in('publicacion_id', publicaciones.map((p: any) => p.id));
 
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error al eliminar publicación:', error);
-            throw error;
-        }
-    },
+    likesUsuario = likes?.map((like: any) => like.publicacion_id) || [];
+  }
 
-    async eliminarComentario(comentarioId: string) {
-        try {
-            const { error } = await supabase
-                .from('comunidad_comentarios')
-                .delete()
-                .eq('id', comentarioId);
+  // Formatear las publicaciones
+  const publicacionesFormateadas: PublicacionComunidad[] = publicaciones.map((pub: any) => ({
+    id: pub.id,
+    contenido: pub.contenido,
+    fecha_creacion: pub.fecha_creacion,
+    url_imagen: pub.url_imagen,
+    url_video: pub.url_video,
+    usuario_id: pub.usuario_id,
+    usuario_nombre: pub.usuario?.nombre || 'Usuario',
+    usuario_apellido: pub.usuario?.apellido || '',
+    url_foto_perfil: pub.usuario?.url_foto_perfil,
+    total_likes: pub.total_likes?.[0]?.count || 0,
+    total_comentarios: pub.total_comentarios?.[0]?.count || 0,
+    like_usuario: likesUsuario.includes(pub.id)
+  }));
 
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error al eliminar comentario:', error);
-            throw error;
-        }
+  return publicacionesFormateadas;
+}
+
+// Cargar comentarios de una publicación
+export async function cargarComentarios(publicacionId: string): Promise<ComentarioComunidad[]> {
+  const { data: comentarios, error } = await supabase
+    .from('comunidad_comentarios')
+    .select(`
+      *,
+      usuario:perfiles!usuario_id (
+        id,
+        nombre,
+        apellido,
+        url_foto_perfil
+      )
+    `)
+    .eq('publicacion_id', publicacionId)
+    .order('fecha_creacion', { ascending: true });
+
+  if (error) {
+    console.error('Error cargando comentarios:', error);
+    throw error;
+  }
+
+  if (!comentarios) return [];
+
+  return comentarios.map((comentario: any) => ({
+    id: comentario.id,
+    contenido: comentario.contenido,
+    fecha_creacion: comentario.fecha_creacion,
+    usuario_id: comentario.usuario_id,
+    usuario_nombre: comentario.usuario?.nombre || 'Usuario',
+    usuario_apellido: comentario.usuario?.apellido || '',
+    url_foto_perfil: comentario.usuario?.url_foto_perfil,
+    publicacion_id: comentario.publicacion_id
+  }));
+}
+
+// Crear una nueva publicación
+export async function crearPublicacion(nuevaPublicacion: NuevaPublicacion): Promise<PublicacionComunidad> {
+  const currentUser = get(usuario);
+
+  if (!currentUser) {
+    throw new Error('Debes estar autenticado para crear una publicación');
+  }
+
+  const { data: publicacion, error } = await supabase
+    .from('comunidad_publicaciones')
+    .insert({
+      contenido: nuevaPublicacion.contenido,
+      url_imagen: nuevaPublicacion.url_imagen,
+      url_video: nuevaPublicacion.url_video,
+      usuario_id: currentUser.id
+    })
+    .select(`
+      *,
+      usuario:perfiles!usuario_id (
+        id,
+        nombre,
+        apellido,
+        url_foto_perfil
+      )
+    `)
+    .single();
+
+  if (error) {
+    console.error('Error creando publicación:', error);
+    throw error;
+  }
+
+  return {
+    id: publicacion.id,
+    contenido: publicacion.contenido,
+    fecha_creacion: publicacion.fecha_creacion,
+    url_imagen: publicacion.url_imagen,
+    url_video: publicacion.url_video,
+    usuario_id: publicacion.usuario_id,
+    usuario_nombre: publicacion.usuario?.nombre || 'Usuario',
+    usuario_apellido: publicacion.usuario?.apellido || '',
+    url_foto_perfil: publicacion.usuario?.url_foto_perfil,
+    total_likes: 0,
+    total_comentarios: 0,
+    like_usuario: false
+  };
+}
+
+// Crear un nuevo comentario
+export async function crearComentario(nuevoComentario: NuevoComentario): Promise<ComentarioComunidad> {
+  const currentUser = get(usuario);
+
+  if (!currentUser) {
+    throw new Error('Debes estar autenticado para comentar');
+  }
+
+  const { data: comentario, error } = await supabase
+    .from('comunidad_comentarios')
+    .insert({
+      contenido: nuevoComentario.contenido,
+      publicacion_id: nuevoComentario.publicacion_id,
+      usuario_id: currentUser.id
+    })
+    .select(`
+      *,
+      usuario:perfiles!usuario_id (
+        id,
+        nombre,
+        apellido,
+        url_foto_perfil
+      )
+    `)
+    .single();
+
+  if (error) {
+    console.error('Error creando comentario:', error);
+    throw error;
+  }
+
+  return {
+    id: comentario.id,
+    contenido: comentario.contenido,
+    fecha_creacion: comentario.fecha_creacion,
+    usuario_id: comentario.usuario_id,
+    usuario_nombre: comentario.usuario?.nombre || 'Usuario',
+    usuario_apellido: comentario.usuario?.apellido || '',
+    url_foto_perfil: comentario.usuario?.url_foto_perfil,
+    publicacion_id: comentario.publicacion_id
+  };
+}
+
+// Dar/quitar like a una publicación
+export async function toggleLike(publicacionId: string): Promise<{ esLike: boolean; totalLikes: number }> {
+  const currentUser = get(usuario);
+
+  if (!currentUser) {
+    throw new Error('Debes estar autenticado para dar like');
+  }
+
+  // Verificar si ya le dio like
+  const { data: likeExistente } = await supabase
+    .from('comunidad_publicaciones_likes')
+    .select('id')
+    .eq('publicacion_id', publicacionId)
+    .eq('usuario_id', currentUser.id)
+    .single();
+
+  let esLike = false;
+
+  if (likeExistente) {
+    // Quitar like
+    const { error } = await supabase
+      .from('comunidad_publicaciones_likes')
+      .delete()
+      .eq('id', likeExistente.id);
+
+    if (error) {
+      console.error('Error quitando like:', error);
+      throw error;
     }
+
+    esLike = false;
+  } else {
+    // Dar like
+    const { error } = await supabase
+      .from('comunidad_publicaciones_likes')
+      .insert({
+        publicacion_id: publicacionId,
+        usuario_id: currentUser.id
+      });
+
+    if (error) {
+      console.error('Error dando like:', error);
+      throw error;
+    }
+
+    esLike = true;
+  }
+
+  // Obtener el total de likes actualizado
+  const { data: totalLikes } = await supabase
+    .from('comunidad_publicaciones_likes')
+    .select('id', { count: 'exact' })
+    .eq('publicacion_id', publicacionId);
+
+  return {
+    esLike,
+    totalLikes: totalLikes?.length || 0
+  };
 }
 
-export default ComunidadService
+// Eliminar una publicación (solo el autor)
+export async function eliminarPublicacion(publicacionId: string): Promise<void> {
+  const currentUser = get(usuario);
+
+  if (!currentUser) {
+    throw new Error('Debes estar autenticado para eliminar');
+  }
+
+  // Verificar que sea el autor
+  const { data: publicacion } = await supabase
+    .from('comunidad_publicaciones')
+    .select('usuario_id')
+    .eq('id', publicacionId)
+    .single();
+
+  if (!publicacion || publicacion.usuario_id !== currentUser.id) {
+    throw new Error('Solo puedes eliminar tus propias publicaciones');
+  }
+
+  const { error } = await supabase
+    .from('comunidad_publicaciones')
+    .delete()
+    .eq('id', publicacionId);
+
+  if (error) {
+    console.error('Error eliminando publicación:', error);
+    throw error;
+  }
+}
+
+// Eliminar un comentario (solo el autor)
+export async function eliminarComentario(comentarioId: string): Promise<void> {
+  const currentUser = get(usuario);
+
+  if (!currentUser) {
+    throw new Error('Debes estar autenticado para eliminar');
+  }
+
+  // Verificar que sea el autor
+  const { data: comentario } = await supabase
+    .from('comunidad_comentarios')
+    .select('usuario_id')
+    .eq('id', comentarioId)
+    .single();
+
+  if (!comentario || comentario.usuario_id !== currentUser.id) {
+    throw new Error('Solo puedes eliminar tus propios comentarios');
+  }
+
+  const { error } = await supabase
+    .from('comunidad_comentarios')
+    .delete()
+    .eq('id', comentarioId);
+
+  if (error) {
+    console.error('Error eliminando comentario:', error);
+    throw error;
+  }
+}
+
+// Formatear fecha para mostrar
+export function formatearFecha(fecha: string): string {
+  const ahora = new Date();
+  const fechaPublicacion = new Date(fecha);
+  const diferencia = ahora.getTime() - fechaPublicacion.getTime();
+
+  const minutos = Math.floor(diferencia / (1000 * 60));
+  const horas = Math.floor(diferencia / (1000 * 60 * 60));
+  const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+
+  if (minutos < 1) {
+    return 'Ahora';
+  } else if (minutos < 60) {
+    return `${minutos}m`;
+  } else if (horas < 24) {
+    return `${horas}h`;
+  } else if (dias < 7) {
+    return `${dias}d`;
+  } else {
+    return fechaPublicacion.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short'
+    });
+  }
+}
+
+// Validar contenido de publicación
+export function validarPublicacion(contenido: string): string | null {
+  if (!contenido || contenido.trim().length === 0) {
+    return 'El contenido no puede estar vacío';
+  }
+
+  if (contenido.length > 500) {
+    return 'El contenido no puede tener más de 500 caracteres';
+  }
+
+  return null;
+}
+
+// Validar comentario
+export function validarComentario(contenido: string): string | null {
+  if (!contenido || contenido.trim().length === 0) {
+    return 'El comentario no puede estar vacío';
+  }
+
+  if (contenido.length > 200) {
+    return 'El comentario no puede tener más de 200 caracteres';
+  }
+
+  return null;
+}
+
+// ✅ ALIAS PARA COMPATIBILIDAD CON COMPONENTES ANTIGUOS
+export const obtenerPublicaciones = cargarPublicaciones;
+
+export async function obtenerPublicacionPorId(id: string): Promise<PublicacionComunidad | null> {
+  const { data, error } = await supabase
+    .from('comunidad_publicaciones')
+    .select(`
+      *,
+      usuario:perfiles!usuario_id (
+        id,
+        nombre,
+        apellido,
+        url_foto_perfil
+      ),
+      total_likes:comunidad_publicaciones_likes (count),
+      total_comentarios:comunidad_comentarios (count)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    contenido: data.contenido,
+    fecha_creacion: data.fecha_creacion,
+    url_imagen: data.url_imagen,
+    url_video: data.url_video,
+    usuario_id: data.usuario_id,
+    usuario_nombre: data.usuario?.nombre || 'Usuario',
+    usuario_apellido: data.usuario?.apellido || '',
+    url_foto_perfil: data.usuario?.url_foto_perfil,
+    total_likes: data.total_likes?.[0]?.count || 0,
+    total_comentarios: data.total_comentarios?.[0]?.count || 0
+  };
+}
+
+// ✅ EXPORT DEFAULT PARA COMPATIBILIDAD
+const ComunidadService = {
+  cargarPublicaciones,
+  obtenerPublicaciones,
+  obtenerPublicacionPorId,
+  cargarComentarios,
+  crearPublicacion,
+  crearComentario,
+  toggleLike,
+  eliminarPublicacion,
+  eliminarComentario,
+  formatearFecha,
+  validarPublicacion,
+  validarComentario
+};
+
+export default ComunidadService;
+
+

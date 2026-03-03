@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Eye, ArrowLeft, Loader } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
+import { supabase } from '../../../servicios/clienteSupabase';
 import UploaderImagenesArticulo, { type ImagenArticulo } from './Componentes/UploaderImagenesArticulo';
 import EditorJsonArticulo, { type SeccionArticulo, type CtaItem } from './Componentes/EditorJsonArticulo';
 import './FormularioArticulo.css'; // We will create this CSS based on what we likely need or if we find it.

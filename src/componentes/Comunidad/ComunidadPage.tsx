@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../servicios/supabaseCliente';
+import { supabase } from '../../servicios/clienteSupabase';
 import { useLocation } from 'react-router-dom';
 import BannerComunidad from '../ComponentesComunidad/BannerComunidad';
 import ComunidadPublicar from '../ComponentesComunidad/ComunidadPublicar';

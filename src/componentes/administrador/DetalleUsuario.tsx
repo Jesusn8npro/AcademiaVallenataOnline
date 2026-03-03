@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 interface Usuario {
   id: string

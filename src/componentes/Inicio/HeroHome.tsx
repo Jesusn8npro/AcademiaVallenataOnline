@@ -34,7 +34,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
         {/* Imagen de fondo con overlay */}
         <div style={styles.heroBackground}>
           <img
-            src="/imagenes/Inicio/Home/Banner- Academia vallenata ONLINE.jpg"
+            src="/images/Home/Banner- Academia vallenata ONLINE.jpg"
             alt={t('hero.etiqueta')}
             style={styles.heroBgImage}
           />

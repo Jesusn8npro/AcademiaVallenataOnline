@@ -17,7 +17,16 @@ import BarraHerramientas from './Componentes/BarraHerramientas';
 import './SimuladorApp.css';
 
 const SimuladorApp: React.FC = () => {
-    const logica = useLogicaAcordeon();
+    const logica = useLogicaAcordeon({
+        onNotaPresionada: (data) => {
+            const [f, c] = data.idBoton.split('-');
+            actualizarVisualBoton(`${f}-${c}`, true);
+        },
+        onNotaLiberada: (data) => {
+            const [f, c] = data.idBoton.split('-');
+            actualizarVisualBoton(`${f}-${c}`, false);
+        }
+    });
     const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
     const marcoRef = useRef<HTMLDivElement>(null);
     const trenRef = useRef<HTMLDivElement>(null);

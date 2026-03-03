@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../servicios/supabaseCliente';
-import { generateSlug } from '../../../utils/utilidadesSlug';
+import { supabase } from '../../../servicios/clienteSupabase';
+import { generateSlug } from '../../../utilidades/utilidadesSlug';
 import './RecomendacionesCursos.css';
 
 // 🎯 DATOS POR DEFECTO PARA MOSTRAR INMEDIATAMENTE
@@ -322,3 +322,4 @@ const RecomendacionesCursos: React.FC = () => {
 };
 
 export default RecomendacionesCursos;
+

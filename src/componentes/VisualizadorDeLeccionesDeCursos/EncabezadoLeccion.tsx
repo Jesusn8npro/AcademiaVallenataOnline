@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import './EncabezadoLeccion.css'
 import BarraProgresoGeneral from './BarraProgresoGeneral'
 import BarraLateralCurso from './BarraLateralCurso'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 type TipoContenido = 'leccion' | 'clase'
 
@@ -206,7 +206,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
             </button>
           )}
           <a href="/" className="enlace-logo">
-            <img src="/imagenes/logo academia vallenata.png" alt="Academia Vallenata" className="logo" />
+            <img src="/images/logo academia vallenata.png" alt="Academia Vallenata" className="logo" />
           </a>
 
           {esDesktop ? (

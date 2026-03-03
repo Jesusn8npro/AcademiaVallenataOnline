@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import MensajesLayout from './MensajesLayout'
 import ChatVista from './ChatVista'
 import './mensajes.css'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 export default function ChatPage() {
   const { chatId } = useParams()

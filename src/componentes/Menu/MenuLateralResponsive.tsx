@@ -98,7 +98,7 @@ const MenuLateralResponsive: React.FC<MenuLateralResponsiveProps> = ({
             <div className="menu-lateral-bienvenida">
               <div className="menu-lateral-logo" onClick={navegarDesdelogo}>
                 <img
-                  src="/imagenes/logo academia vallenata.png"
+                  src="/images/logo academia vallenata.png"
                   alt="Academia Vallenata"
                   className="menu-lateral-logo-img"
                 />

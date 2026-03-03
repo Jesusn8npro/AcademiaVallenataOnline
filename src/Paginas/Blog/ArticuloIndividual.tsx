@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, supabaseAnon } from '../../servicios/supabaseCliente';
+import { supabase, supabaseAnonimo } from '../../servicios/clienteSupabase';
 import HeroArticulo from '../../componentes/Blog/articulos/HeroArticulo';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
 
@@ -73,7 +73,7 @@ const ArticuloIndividual: React.FC = () => {
       setArticulo(null);
 
       try {
-        const { data: art, error: errorArt } = await supabaseAnon
+        const { data: art, error: errorArt } = await supabaseAnonimo
           .from('blog_articulos')
           .select('*')
           .eq('slug', slug)
@@ -521,3 +521,5 @@ const ArticuloIndividual: React.FC = () => {
 };
 
 export default ArticuloIndividual;
+
+

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import './PasoResumenGuardar.css'
-import { supabase } from '../../servicios/supabaseCliente'
+import { supabase } from '../../servicios/clienteSupabase'
 
 interface Props {
   tipo: 'curso' | 'tutorial'
