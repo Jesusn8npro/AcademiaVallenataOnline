@@ -64,7 +64,7 @@ const SliderCursos: React.FC = () => {
           return;
         }
 
-        console.log('🔍 [SLIDER CURSOS] Cargando inscripciones para usuario:', user.id);
+        console.log('???? [SLIDER CURSOS] Cargando inscripciones para usuario:', user.id);
 
         // Primero obtener todas las inscripciones del usuario (igual que MIS CURSOS)
         const { data: inscripcionesData, error } = await supabase
@@ -77,10 +77,10 @@ const SliderCursos: React.FC = () => {
           throw error;
         }
 
-        console.log('📋 [SLIDER CURSOS] Inscripciones encontradas:', inscripcionesData?.length || 0);
+        console.log('???? [SLIDER CURSOS] Inscripciones encontradas:', inscripcionesData?.length || 0);
 
         if (!inscripcionesData || inscripcionesData.length === 0) {
-          console.log('❌ [SLIDER CURSOS] No se encontraron inscripciones');
+          console.log('??? [SLIDER CURSOS] No se encontraron inscripciones');
           const datosEjemplo = obtenerInscripcionesEjemplo();
           setInscripciones(datosEjemplo);
           await cargarProgresoEjemplo(datosEjemplo);
@@ -92,7 +92,7 @@ const SliderCursos: React.FC = () => {
         const inscripcionesCursos = inscripcionesData.filter((i: any) => i.curso_id);
         const inscripcionesTutoriales = inscripcionesData.filter((i: any) => i.tutorial_id);
 
-        console.log('📊 [SLIDER CURSOS] Distribución de inscripciones:', {
+        console.log('???? [SLIDER CURSOS] Distribución de inscripciones:', {
           cursos: inscripcionesCursos.length,
           tutoriales: inscripcionesTutoriales.length
         });
@@ -106,7 +106,7 @@ const SliderCursos: React.FC = () => {
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, slug')
             .in('id', cursoIds);
           cursosData = cursos || [];
-          console.log('📚 [SLIDER CURSOS] Cursos cargados:', cursosData.length);
+          console.log('???? [SLIDER CURSOS] Cursos cargados:', cursosData.length);
         }
 
         // Obtener datos de tutoriales si hay inscripciones a tutoriales
@@ -118,7 +118,7 @@ const SliderCursos: React.FC = () => {
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, artista, acordeonista, tonalidad')
             .in('id', tutorialIds);
           tutorialesData = tutoriales || [];
-          console.log('🎵 [SLIDER CURSOS] Tutoriales cargados:', tutorialesData.length);
+          console.log('???? [SLIDER CURSOS] Tutoriales cargados:', tutorialesData.length);
         }
 
         // Combinar todo (igual que MIS CURSOS)
@@ -138,12 +138,12 @@ const SliderCursos: React.FC = () => {
         // Reordenar por fecha de inscripción
         inscripcionesCombinadas.sort((a, b) => new Date(b.fecha_inscripcion).getTime() - new Date(a.fecha_inscripcion).getTime());
 
-        console.log('✅ [SLIDER CURSOS] Inscripciones finales:', inscripcionesCombinadas.length);
+        console.log('??? [SLIDER CURSOS] Inscripciones finales:', inscripcionesCombinadas.length);
 
         setInscripciones(inscripcionesCombinadas);
         await cargarProgresoReal(inscripcionesCombinadas, user.id);
       } catch (err) {
-        console.error('❌ [SLIDER CURSOS] Error cargando inscripciones:', err);
+        console.error('??? [SLIDER CURSOS] Error cargando inscripciones:', err);
         console.log('Usando datos de ejemplo debido a error');
         const datosEjemplo = obtenerInscripcionesEjemplo();
         setInscripciones(datosEjemplo);
@@ -409,7 +409,7 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
+            <span className="slider-cursos-icono">🎓</span> Continúa tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-loading">
@@ -425,7 +425,7 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
+            <span className="slider-cursos-icono">🎓</span> Continúa tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-error">
@@ -440,11 +440,11 @@ const SliderCursos: React.FC = () => {
       <div className="slider-cursos-contenedor">
         <div className="slider-cursos-header">
           <h3 className="slider-cursos-titulo">
-            <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
+            <span className="slider-cursos-icono">🎓</span> Continúa tu aprendizaje
           </h3>
         </div>
         <div className="slider-cursos-empty">
-          <p>No tienes cursos inscritos a�n.</p>
+          <p>No tienes cursos inscritos aún.</p>
           <a href="/cursos" className="slider-cursos-btn-explorar">Explorar cursos</a>
         </div>
       </div>
@@ -460,7 +460,7 @@ const SliderCursos: React.FC = () => {
       {/* Header */}
       <div className="slider-cursos-header">
         <h3 className="slider-cursos-titulo">
-          <span className="slider-cursos-icono">??</span> Contin�a tu aprendizaje
+          <span className="slider-cursos-icono">🎓</span> Continúa tu aprendizaje
         </h3>
       </div>
 
