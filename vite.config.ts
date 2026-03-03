@@ -33,22 +33,19 @@ export default defineConfig({
         include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
         options: {
           compact: true,
-          controlFlowFlattening: false, // Se deshabilita para evitar fallos de Memoria (OOM) en Easypanel
-          deadCodeInjection: false, // Se deshabilita por uso extremo de RAM en el servidor
-          debugProtection: true, // Mantiene la trampa anti-f12
-          debugProtectionInterval: 100,
+          controlFlowFlattening: false,
+          deadCodeInjection: false,
+          debugProtection: false, // CRÍTICO: Quitado porque bloquea el renderizado de la página (ya tenemos el propio en useSeguridadConsola)
           disableConsoleOutput: true,
-          identifierNamesGenerator: 'hexadecimal', // Renombra a variables ilegibles (mantiene la ofuscacion principal baja en RAM)
+          identifierNamesGenerator: 'hexadecimal',
           log: false,
           numbersToExpressions: false,
           renameGlobals: false,
-          rotateStringArray: true,
-          selfDefending: true,
-          shuffleStringArray: true,
-          splitStrings: false, // Evita uso excesivo de CPU en compilar
-          stringArray: true,
-          stringArrayEncoding: ['none'], // Se baja de base64 para aligerar la RAM en build
-          stringArrayThreshold: 0.5,
+          rotateStringArray: false, // Mejorar velocidad de carga
+          selfDefending: false, // CRÍTICO: Esto causaba el pantallazo blanco al entrar en conflicto con el minificador de Vite
+          shuffleStringArray: false, // Mejorar velocidad de carga
+          splitStrings: false,
+          stringArray: false, // Mejorar velocidad de carga del cliente
           unicodeEscapeSequence: false
         }
       }),
