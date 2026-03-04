@@ -129,14 +129,8 @@
 }
 
 .ipp-campo-completo {
-    grid-column: 1 / -1;
-    width: 100%;
-}
-
-@media (min-width: 769px) {
-    .ipp-campo-completo {
-        grid-column: span 3;
-    }
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
 }
 
 .ipp-campo label {
@@ -171,7 +165,7 @@
 }
 
 .ipp-textarea-principal {
-    resize: both;
+    resize: vertical;
     min-height: 120px;
     width: 100%;
 }
