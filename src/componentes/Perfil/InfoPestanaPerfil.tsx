@@ -96,6 +96,7 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
 
       const { error } = await supabase
         .from('perfiles')
+        // @ts-ignore
         .update(datosActualizados)
         .eq('id', perfil.id)
 
@@ -112,9 +113,9 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
   }
 
   return (
-    <div className="ipp-info-perfil">
+    <div className="ipp-info-perfil" style={{ width: '100%' }}>
       <div className="ipp-formulario-perfil">
-        <form onSubmit={guardar}>
+        <form onSubmit={guardar} style={{ width: '100%' }}>
 
           {/* SECCIÓN: Información Personal */}
           <div className="ipp-seccion-acordeon">
