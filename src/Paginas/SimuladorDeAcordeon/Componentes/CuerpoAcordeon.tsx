@@ -89,7 +89,10 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                 default: { duration: 0 } // Para que x e y cambien INSTANTÁNEAMENTE sin deslizarse
             }}
             style={{
-                '--imagen-fondo-acordeon': `url('${imagenFondo}')`,
+                backgroundImage: `url("${imagenFondo}")`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 '--sim-tamano': ajustes.tamano,
                 '--sim-x': ajustes.x,
                 '--sim-y': ajustes.y,

@@ -66,12 +66,22 @@ export async function crearUsuario(datos: any): Promise<{ success: boolean; data
     })
 
     if (error) {
-      // Error de invocación de función (red, 500, etc)
-      throw new Error(error.message || 'Error al invocar la función de creación')
+      // Intenta obtener el body del error si es un `FunctionsHttpError`
+      let errorAmostrar = 'Error al invocar la función de creación';
+      try {
+        const errorBody = await error.context?.json();
+        if (errorBody && errorBody.error) {
+          errorAmostrar = errorBody.error;
+        }
+      } catch (e) {
+        errorAmostrar = error.message;
+      }
+
+      console.error('Error detallado de Edge Function:', errorAmostrar, error);
+      throw new Error(errorAmostrar);
     }
 
     if (data && data.error) {
-      // Error retornado por nuestra lógica de negocio en la función
       throw new Error(data.error)
     }
 
@@ -84,8 +94,7 @@ export async function crearUsuario(datos: any): Promise<{ success: boolean; data
 
 export async function actualizarUsuario(id: string, cambios: any): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const { data, error } = await supabase
-      .from('perfiles')
+    const { data, error } = await (supabase.from('perfiles') as any)
       .update(cambios)
       .eq('id', id)
       .select()

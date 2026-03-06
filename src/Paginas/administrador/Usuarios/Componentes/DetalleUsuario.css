@@ -25,7 +25,8 @@
   border: 1px solid var(--detalle-usuario-color-borde);
   border-radius: var(--detalle-usuario-border-radius);
   color: var(--detalle-usuario-color-texto);
-  max-height: 90vh;
+  max-height: 85vh;
+  /* Usamos 85vh para evitar cortes abajo en movil */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -247,20 +248,73 @@
 }
 
 /* ===== PESTAÑAS ===== */
+.detalle-usuario-pestanas-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  border-bottom: 1px solid var(--detalle-usuario-color-borde);
+}
+
+.detalle-usuario-flecha-scroll {
+  display: none;
+  /* Hidden on desktop */
+  background: rgba(15, 23, 42, 0.85);
+  /* Matches dark theme */
+  color: var(--detalle-usuario-color-texto);
+  border: none;
+  padding: 0 8px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.detalle-usuario-flecha-scroll:hover {
+  background: rgba(102, 126, 234, 0.3);
+  color: var(--detalle-usuario-color-primario);
+}
+
+.detalle-usuario-flecha-scroll.izq {
+  left: 0;
+  border-right: 1px solid var(--detalle-usuario-color-borde);
+  border-radius: 0 8px 0 0;
+}
+
+.detalle-usuario-flecha-scroll.der {
+  right: 0;
+  border-left: 1px solid var(--detalle-usuario-color-borde);
+  border-radius: 8px 0 0 0;
+}
+
 .detalle-usuario-pestanas {
   display: flex;
-  border-bottom: 1px solid var(--detalle-usuario-color-borde);
   padding: 0 2rem;
   gap: 0.3125rem;
   overflow-x: auto;
   flex-shrink: 0;
+  width: 100%;
   scrollbar-width: none;
   /* Firefox */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
 .detalle-usuario-pestanas::-webkit-scrollbar {
   display: none;
   /* Chrome/Safari */
+}
+
+/* Permitir clic/drag fácil ignorando eventos en el span de icono mientras rotamos si es necesario, o mantener select text none */
+.detalle-usuario-pestana {
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .detalle-usuario-pestana {
@@ -919,9 +973,15 @@
   .detalle-usuario-pestanas {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 1.25rem 1rem;
+    padding: 0 40px;
+    /* Space for the arrows */
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  .detalle-usuario-flecha-scroll {
+    display: flex;
+    /* Show scroll arrows on mobile */
   }
 
   .detalle-usuario-pestanas::-webkit-scrollbar {

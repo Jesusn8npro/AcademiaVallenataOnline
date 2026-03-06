@@ -1,167 +1,127 @@
 // ====================================================
-// ACORDEÓN JESUS GONZALEZ — OLED KEYMAP + NOTES
-// Archivo: acordeon_esp32.ino
+// ACORDEÓN JESUS GONZALEZ — HARDWARE COMPLETO (ESP32-S3)
 // ====================================================
 
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+// --- 🔌 PINES ACTUALIZADOS PARA ESP32-S3 (Fila Superior) ---
+const int sPines[] = {4, 5, 6, 7}; // Selección MUX (S0, S1, S2, S3)
+const int sigMux1 = 15; // SIG Mux 1 (Pitos Afuera -> Interfaz H1)
+const int sigMux2 = 16; // SIG Mux 2 (Pitos Medio -> Interfaz H2)
+const int sigMux3 = 17; // SIG Mux 3 (Pitos Adentro/Bajos -> Interfaz BA)
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+const int pinTrig = 10; // Trig Sensor Ultrasónico
+const int pinEcho = 11; // Echo Sensor Ultrasónico 
+const int slidePin = 9; // Pin analógico libre en la fila superior
 
-const int sPines[] = {32, 33, 25, 26}; 
-const int sigMux1 = 13; 
-const int sigMux2 = 14; 
-const int sigMux3 = 27;
-const int pinTrig = 5;  
-const int pinEcho = 18; 
-
-// --- 🛡️ SISTEMA DE ESTADOS ---
+// --- 🛡️ SISTEMA DE ESTADOS (BOTONES) ---
 bool estadoM1[16], estadoM2[16], estadoM3[16];
 unsigned long lastTimeM1[16], lastTimeM2[16], lastTimeM3[16];
 const int DEBOUNCE_TIME = 15; 
-bool lastFuelle = false; // false = CER, true = ABR
 
-// --- 🎹 MAPEO DE NOTAS (BESAS - 5 LETRAS) ---
-// Simplificado para la pantalla
-const char* notas1H[] = {"Reb","Sol","Sib","Re","Mi","Sol","Sib","Re","Mi","Sol"};
-const char* notas1E[] = {"Si","Fa","La","Do","Fa","La","Do","Fa","La","Do"};
-const char* notas2H[] = {"Solb","La","Do","Mib","Sol","La","Do","Mib","Sol","La","Do"};
-const char* notas2E[] = {"Mi","Fa","Sib","Re","Fa","Sib","Re","Fa","Sib","Re","Fa"};
-const char* notas3H[] = {"Si","Re","Fa","Lab","Do","Re","Fa","Lab","Do","Re"};
-const char* notas3E[] = {"Reb","Sib","Mib","Sol","Sib","Mib","Sol","Sib","Mib","Sol"};
+// --- 🦇 ESTADOS FUELLE ULTRASÓNICO ---
+bool lastFuelleUS = false; 
+unsigned long ultimoFuelleUST = 0;
 
-String ultimaNota = "---";
-int ultimoMux = 0;
-int ultimoIndice = -1;
+// --- 🎚️ ESTADOS FUELLE DESLIZADOR ---
+int valorAnteriorSlide = 0;
+const int UMBRAL_SLIDE = 15; // Sensibilidad para no enviar lecturas falsas
+bool lastFuelleSlide = false; 
 
 void setup() {
   Serial.begin(115200); 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) for(;;);
-
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(30,25);
-  display.println("INICIANDO...");
-  display.display();
   delay(1000);
 
-  for(int i=0; i<4; i++) pinMode(sPines[i], OUTPUT);
-  pinMode(sigMux1, INPUT_PULLUP); pinMode(sigMux2, INPUT_PULLUP); pinMode(sigMux3, INPUT_PULLUP);
-  pinMode(pinTrig, OUTPUT); pinMode(pinEcho, INPUT);
+  // Configurar Pines Mux
+  for(int i=0; i<4; i++) {
+    pinMode(sPines[i], OUTPUT);
+    digitalWrite(sPines[i], LOW);
+  }
+  pinMode(sigMux1, INPUT_PULLUP); 
+  pinMode(sigMux2, INPUT_PULLUP); 
+  pinMode(sigMux3, INPUT_PULLUP);
+  
+  // Configurar Pines Sensores
+  pinMode(pinTrig, OUTPUT); 
+  pinMode(pinEcho, INPUT);
+  pinMode(slidePin, INPUT);
 
+  // Inicializar estados de los 48 botones como NO PRESIONADOS (HIGH)
   for(int i=0; i<16; i++) {
     estadoM1[i]=estadoM2[i]=estadoM3[i]=HIGH;
     lastTimeM1[i]=lastTimeM2[i]=lastTimeM3[i]=0;
   }
+  
+  valorAnteriorSlide = analogRead(slidePin);
 }
-
-void selectMux(int channel) {
-  for (int i = 0; i < 4; i++) digitalWrite(sPines[i], (channel >> i) & 0x01);
-}
-
-void reportar(String tipo, int n, int st) {
-  Serial.print(tipo); Serial.print(","); Serial.print(n); Serial.print(","); Serial.println(st);
-  if (st == 1) { 
-    ultimoMux = (tipo == "H1") ? 1 : (tipo == "H2" ? 2 : 3);
-    ultimoIndice = n;
-    
-    // Asignar nombre de nota basado en fuelle y botón
-    if (ultimoMux == 1 && n < 10) ultimaNota = lastFuelle ? notas1H[n] : notas1E[n];
-    else if (ultimoMux == 2 && n < 11) ultimaNota = lastFuelle ? notas2H[n] : notas2E[n];
-    else if (ultimoMux == 3 && n < 10) ultimaNota = lastFuelle ? notas3H[n] : notas3E[n];
-    else if (tipo == "BA") ultimaNota = "BAJO";
-    else ultimaNota = "???";
-  }
-}
-
-void dibujarTeclado() {
-  display.clearDisplay();
-  
-  // Título e Info de Aire
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 0);
-  display.print(lastFuelle ? "HALAR" : "EMPUJAR");
-  
-  // Dibujar Pitos (3 hileras en zigzag estilo Hohner)
-  // Hilera 1 (Afuera): 10 botones
-  // Hilera 2 (Medio): 11 botones (desplazada hacia abajo)
-  // Hilera 3 (Adentro): 10 botones
-  
-  int xBase = 75;
-  int yBase = 8;
-  int radio = 2;
-  int espacioY = 5;
-  int espacioX = 14;
-
-  for(int f=0; f<3; f++) {
-    int x = xBase + (f * espacioX);
-    int numBotones = (f == 1) ? 11 : 10;
-    int offsetV = (f == 1) ? 3 : 0; // Desplazamiento para el zigzag del medio
-
-    for(int b=0; b<numBotones; b++) {
-      int y = yBase + (b * espacioY) + offsetV;
-      
-      // Si este es el botón que se está tocando (Mux f+1 e Índice b)
-      if (ultimoMux == (f+1) && ultimoIndice == b) {
-        display.fillCircle(x, y, radio + 1, WHITE); // Resaltado activo
-      } else {
-        display.drawCircle(x, y, radio, WHITE); // Inactivo
-      }
-    }
-  }
-
-  // --- SECCIÓN DE NOTA GRANDE ---
-  display.setTextSize(1);
-  display.setCursor(5, 25);
-  display.print("NOTA:");
-  
-  display.setTextSize(2);
-  display.setCursor(5, 38);
-  display.print(ultimaNota);
-
-  // Vúmetro de aire pequeño abajo
-  int vumetro = map(constrain(ultimoIndice, 0, 15), 0, 15, 0, 60); // Opcional: mostrar algo dinámico
-  display.drawFastHLine(5, 60, 60, WHITE);
-  
-  display.display();
-}
-
-bool tipoMux3EsBajo(int n) { return n >= 0; } // Asumimos Mux 3 para Bajos en este prototipo
 
 void loop() {
   unsigned long now = millis();
-  
-  // FUELLE
-  static unsigned long ultimoFuelleT = 0;
-  if (now - ultimoFuelleT > 60) {
+
+  // ==========================================
+  // 1. FUELLE: SENSOR ULTRASÓNICO (F_US)
+  // ==========================================
+  if (now - ultimoFuelleUST > 60) {
     digitalWrite(pinTrig, LOW); delayMicroseconds(2);
     digitalWrite(pinTrig, HIGH); delayMicroseconds(10);
     digitalWrite(pinTrig, LOW);
-    long d = pulseIn(pinEcho, HIGH, 7100);
+    long d = pulseIn(pinEcho, HIGH, 30000);
     int dist = d * 0.034 / 2;
-    bool currentFuelle = (dist == 0 || dist > 20); // Simulación simple
-    if (currentFuelle != lastFuelle) {
-      lastFuelle = currentFuelle;
-      Serial.print("FUELLE,"); Serial.println(lastFuelle ? "ABRIR" : "CERRAR");
+    
+    // Si la distancia es 0 (rebote fallido) o superior a 150, está ABRIENDO. Si es < 150, está CERRANDO
+    bool currentFuelleUS = (dist == 0 || dist > 150); 
+    if (currentFuelleUS != lastFuelleUS) {
+      lastFuelleUS = currentFuelleUS;
+      Serial.print("F_US,"); 
+      Serial.println(lastFuelleUS ? "ABRIR" : "CERRAR");
     }
-    ultimoFuelleT = now;
+    ultimoFuelleUST = now;
   }
 
-  // BOTONES
+  // ==========================================
+  // 2. FUELLE: DESLIZADOR (F_SL)
+  // ==========================================
+  int valorActualSlide = analogRead(slidePin);
+  int deltaSlide = valorActualSlide - valorAnteriorSlide;
+
+  if (abs(deltaSlide) > UMBRAL_SLIDE) {
+    // Si la palanca sube, consideramos cerrar. Bajar es Abrir.
+    bool currentFuelleSlide = (deltaSlide > 0) ? false : true; 
+    
+    if (currentFuelleSlide != lastFuelleSlide) {
+      lastFuelleSlide = currentFuelleSlide;
+      Serial.print("F_SL,");
+      Serial.println(lastFuelleSlide ? "ABRIR" : "CERRAR");
+    }
+    valorAnteriorSlide = valorActualSlide;
+  }
+
+  // ==========================================
+  // 3. MATRIZ DE BOTONES (MUX 1, 2, 3)
+  // ==========================================
   for (int i = 0; i < 16; i++) {
-    selectMux(i); delayMicroseconds(5);
-    bool s1 = digitalRead(sigMux1), s2 = digitalRead(sigMux2), s3 = digitalRead(sigMux3);
-    unsigned long t = millis();
-    if (s1 != estadoM1[i] && (t - lastTimeM1[i] > DEBOUNCE_TIME)) { reportar("H1", i, (s1 == LOW ? 1 : 0)); estadoM1[i] = s1; lastTimeM1[i] = t; }
-    if (s2 != estadoM2[i] && (t - lastTimeM2[i] > DEBOUNCE_TIME)) { reportar("H2", i, (s2 == LOW ? 1 : 0)); estadoM2[i] = s2; lastTimeM2[i] = t; }
-    if (s3 != estadoM3[i] && (t - lastTimeM3[i] > DEBOUNCE_TIME)) { reportar("BA", i, (s3 == LOW ? 1 : 0)); estadoM3[i] = s3; lastTimeM3[i] = t; }
-  }
+    digitalWrite(sPines[0], (i & 0x01));
+    digitalWrite(sPines[1], (i >> 1) & 0x01);
+    digitalWrite(sPines[2], (i >> 2) & 0x01);
+    digitalWrite(sPines[3], (i >> 3) & 0x01);
+    delayMicroseconds(40); // Estabilidad para el ESP32-S3
 
-  static unsigned long ultimaP = 0;
-  if (now - ultimaP > 100) { dibujarTeclado(); ultimaP = now; }
+    bool s1 = digitalRead(sigMux1);
+    bool s2 = digitalRead(sigMux2);
+    bool s3 = digitalRead(sigMux3);
+    unsigned long t = millis();
+
+    // Enviar código tal cual lo espera React: H1,0,1 | H2,5,0 | BA,10,1
+    if (s1 != estadoM1[i] && (t - lastTimeM1[i] > DEBOUNCE_TIME)) { 
+      Serial.print("H1,"); Serial.print(i); Serial.print(","); Serial.println(s1 == LOW ? 1 : 0);
+      estadoM1[i] = s1; lastTimeM1[i] = t; 
+    }
+    if (s2 != estadoM2[i] && (t - lastTimeM2[i] > DEBOUNCE_TIME)) { 
+      Serial.print("H2,"); Serial.print(i); Serial.print(","); Serial.println(s2 == LOW ? 1 : 0);
+      estadoM2[i] = s2; lastTimeM2[i] = t; 
+    }
+    if (s3 != estadoM3[i] && (t - lastTimeM3[i] > DEBOUNCE_TIME)) { 
+      Serial.print("BA,"); Serial.print(i); Serial.print(","); Serial.println(s3 == LOW ? 1 : 0);
+      estadoM3[i] = s3; lastTimeM3[i] = t; 
+    }
+  }
 }
+

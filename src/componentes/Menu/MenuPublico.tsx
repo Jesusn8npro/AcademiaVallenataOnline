@@ -115,7 +115,6 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
   // Funciones para manejar modales
   const abrirModalBusqueda = () => {
     setMostrarModalBusqueda(true);
-    document.body.style.overflow = 'hidden';
   };
 
   const abrirModalMenu = () => {
@@ -133,7 +132,6 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
 
   const cerrarModalLogin = () => {
     setMostrarModalLogin(false);
-    document.body.style.overflow = 'auto';
   };
 
   const cerrarModales = () => {
@@ -141,7 +139,8 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
     setMostrarModalMenu(false);
     setMostrarMenuLateralResponsive(false);
     setMostrarModalLogin(false);
-    document.body.style.overflow = 'auto';
+    // IMPORTANTE: Al dejar que los 모달 desactiven su propio 'overflow: hidden' 
+    // en su UseEffect return, evitamos choques y que el scroll se rompa.
   };
 
   // Función para manejar clicks fuera del selector de idiomas
@@ -185,7 +184,6 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
       document.removeEventListener('keydown', manejarTeclaEscape);
       window.removeEventListener('scroll', manejarScroll);
       window.removeEventListener('resize', detectarMovil);
-      document.body.style.overflow = 'auto';
     };
   }, []);
 

@@ -49,6 +49,8 @@
     flex: 1;
     min-width: 70px;
     text-align: center;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .perfil-tabs-contenido {
@@ -127,6 +129,21 @@
 .perfil-tabs-boton-scroll.perfil-tabs-visible {
     opacity: 1;
     pointer-events: auto;
+    animation: perfil-tabs-pulse-arrow 2s infinite;
+}
+
+@keyframes perfil-tabs-pulse-arrow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
 }
 
 .perfil-tabs-boton-scroll:hover {
@@ -157,10 +174,13 @@
     .perfil-tabs-navegacion {
         justify-content: flex-start;
         overflow-x: auto;
-        scroll-snap-type: x mandatory;
         padding: 0;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        margin: 0 20px;
+        /* Leave space for nice arrows */
     }
 
     .perfil-tabs-navegacion::-webkit-scrollbar {
@@ -170,7 +190,6 @@
     .perfil-tabs-item {
         flex: 0 0 auto;
         width: 32%;
-        scroll-snap-align: center;
         padding: 4px 6px;
     }
 
@@ -196,12 +215,32 @@
         margin-top: -20px;
         z-index: 10;
         width: 100%;
+        padding: 0;
     }
 
     .perfil-tabs-nav-container-interno {
         width: 100%;
         padding: 0;
         margin-top: 15px;
+    }
+
+    .perfil-tabs-navegacion {
+        border-radius: 0;
+        /* Full width edge-to-edge */
+        margin: 0;
+        /* Remove 20px edge margin from previous */
+        padding: 0 35px;
+        /* Leave padding inside for arrows */
+        width: 100%;
+    }
+
+    /* Posicionar las flechas dentro de la pantalla */
+    .perfil-tabs-boton-scroll.perfil-tabs-izquierda {
+        left: 5px;
+    }
+
+    .perfil-tabs-boton-scroll.perfil-tabs-derecha {
+        right: 5px;
     }
 }
 

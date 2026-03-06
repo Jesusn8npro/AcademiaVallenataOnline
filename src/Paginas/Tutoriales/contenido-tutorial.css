@@ -78,10 +78,9 @@ body {
    ========================================= */
 @media (max-width: 768px) {
 
-    html,
-    body {
+    body.tutorial-pantalla-completa {
         height: 100%;
-        overflow: hidden;
+        overflow: hidden !important;
         /* IMPORTANTE: Previene scroll en body solo en móvil */
         overscroll-behavior: none;
     }

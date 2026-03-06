@@ -38,6 +38,33 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
   const contenedorNav = useRef<HTMLDivElement>(null)
   const [puedeIzq, setPuedeIzq] = useState(false)
   const [puedeDer, setPuedeDer] = useState(false)
+
+  // Estados para drag to scroll
+  const [isDraggingTabs, setIsDraggingTabs] = useState(false);
+  const [dragMoved, setDragMoved] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!contenedorNav.current) return;
+    setIsDraggingTabs(true);
+    setDragMoved(false);
+    setStartX(e.pageX - contenedorNav.current.offsetLeft);
+    setScrollLeftState(contenedorNav.current.scrollLeft);
+  };
+
+  const onMouseLeaveOrUp = () => {
+    setIsDraggingTabs(false);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTabs || !contenedorNav.current) return;
+    e.preventDefault();
+    const x = e.pageX - contenedorNav.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 5) setDragMoved(true);
+    contenedorNav.current.scrollLeft = scrollLeftState - walk;
+  };
   function actualizarScroll() {
     const el = contenedorNav.current
     if (!el) return
@@ -58,9 +85,29 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
         <button className={`perfil-tabs-boton-scroll perfil-tabs-izquierda ${puedeIzq ? 'perfil-tabs-visible' : ''}`} aria-label="Desplazar a la izquierda" onClick={() => scroll('izq')}>
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
-        <nav className="perfil-tabs-navegacion" ref={contenedorNav} onScroll={actualizarScroll}>
+        <nav
+          className={`perfil-tabs-navegacion ${isDraggingTabs ? 'dragging' : ''}`}
+          ref={contenedorNav}
+          onScroll={actualizarScroll}
+          onMouseDown={onMouseDown}
+          onMouseLeave={onMouseLeaveOrUp}
+          onMouseUp={onMouseLeaveOrUp}
+          onMouseMove={onMouseMove}
+          style={{ cursor: isDraggingTabs ? 'grabbing' : 'grab' }}
+        >
           {pestañas.map((p, i) => (
-            <Link key={p.route} to={p.route} className={`perfil-tabs-item ${indiceActivo === i ? 'perfil-tabs-activo' : ''}`} aria-label={p.label} role="tab">
+            <Link
+              key={p.route}
+              to={p.route}
+              className={`perfil-tabs-item ${indiceActivo === i ? 'perfil-tabs-activo' : ''}`}
+              aria-label={p.label}
+              role="tab"
+              onClick={(e) => {
+                if (dragMoved) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <div className="perfil-tabs-contenido">
                 {p.icon && <div className="perfil-tabs-icono" dangerouslySetInnerHTML={{ __html: p.icon }} />}
                 <span className="perfil-tabs-etiqueta">{p.label}</span>

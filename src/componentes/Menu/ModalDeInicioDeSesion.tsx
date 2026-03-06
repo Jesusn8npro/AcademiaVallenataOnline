@@ -68,7 +68,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
       document.body.style.overflow = 'hidden';
       return () => {
         document.removeEventListener('keydown', manejarKeyDown);
-        document.body.style.overflow = 'unset';
+        document.body.style.overflow = '';
       };
     }
   }, [abierto]);
@@ -94,7 +94,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
     setContrasenaRegistro('');
 
     // Restaurar scroll del body
-    document.body.style.overflow = 'unset';
+    document.body.style.overflow = '';
   };
 
   const detenerPropagacion = (e: React.MouseEvent) => {
@@ -151,7 +151,9 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
       setCargando(false);
 
       // Navegar según rol usando React Router
-      if (perfilData?.rol && perfilData.rol.toLowerCase() === 'admin') {
+      const esAdmin = perfilData && typeof perfilData === 'object' && 'rol' in perfilData && (perfilData as any).rol?.toLowerCase() === 'admin';
+
+      if (esAdmin) {
         console.log('🚀 [LOGIN] Navegando a panel admin');
         navigate('/administrador');
       } else {
@@ -270,8 +272,6 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
     }
   };
 
-  if (!abierto) return null;
-
   // Detectar móvil para estilos responsivos
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -292,6 +292,8 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
       document.body.classList.remove('modal-login-abierto');
     };
   }, [abierto]);
+
+  if (!abierto) return null;
 
   const styles = {
     fondoModal: {

@@ -186,8 +186,10 @@ const ModalBusqueda: React.FC<ModalBusquedaProps> = ({ abierto, onCerrar }) => {
 
   const navigarAResultado = (url: string) => {
     reproducirSonido('resultado');
-    navigate(url);
-    onCerrar();
+    onCerrar(); // Cerra el modal y restaura los scrolls PRIMERO
+    setTimeout(() => {
+      navigate(url); // Navega en el siguiente tick para garantizar limpieza del DOM
+    }, 10);
   };
 
   const manejarTeclas = (event: React.KeyboardEvent) => {

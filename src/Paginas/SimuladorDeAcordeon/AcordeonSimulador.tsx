@@ -15,7 +15,7 @@ import PanelAjustes from './Componentes/PanelAjustes/PanelAjustes';
 import type { AcordeonSimuladorProps, AcordeonSimuladorHandle } from './TiposAcordeon';
 
 // Assets
-import bgAcordeonDefault from './Acordeon PRO MAX.png';
+const bgAcordeonDefault = '/AcordeonJugador.png';
 
 /**
  * 🪗 ACORDEÓN SIMULADOR V-PRO
@@ -107,6 +107,8 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
                 setVistaDoble={logica.setVistaDoble}
                 esp32Conectado={logica.esp32Conectado}
                 conectarESP32={logica.conectarESP32}
+                tipoFuelleActivo={logica.tipoFuelleActivo}
+                setTipoFuelleActivo={logica.setTipoFuelleActivo}
             />
 
             {/* 2. Panel de Ajustes (Gestor de Diseño y Sonido) */}

@@ -57,11 +57,15 @@ body.con-sidebar-colapsado {
    ============================================== */
 
 /* 1. Prevenir scroll horizontal en la raíz */
-html,
+html {
+  width: 100%;
+  max-width: 100vw;
+}
+
 body {
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  /* overflow-x: hidden; en body o html rompe el SCROLL VERTICAL en las PWAs iOS/Android */
 }
 
 #root {

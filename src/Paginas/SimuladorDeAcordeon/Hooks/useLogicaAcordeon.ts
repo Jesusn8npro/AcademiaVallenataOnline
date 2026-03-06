@@ -71,6 +71,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
     const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
     const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
+    const [tipoFuelleActivo, setTipoFuelleActivo] = useState<'US' | 'SL'>('US');
 
     // --- ESTADOS DE CONTROL DE CARGA Y VISIBILIDAD ---
     const [disenoCargado, setDisenoCargado] = useState(false);
@@ -210,6 +211,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const hardwareMapRef = useRef(new Map<string, string>()); // 🎹 Rastrear physicalKey -> logicalId
     const deshabilitarRef = useRef(deshabilitarInteraccion);
     const previewNodeRef = useRef<any>(null);
+    const tipoFuelleActivoRef = useRef(tipoFuelleActivo);
+    useEffect(() => { tipoFuelleActivoRef.current = tipoFuelleActivo; }, [tipoFuelleActivo]);
 
     // --- CARGA INTEGRADA DE SUPABASE ---
     useEffect(() => {
@@ -802,8 +805,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                             const val = parts[1];
                             const estadoStr = parts[2]; // Tercer parámetro opcional (1 = On, 0 = Off)
 
-                            if (tipo === "FUELLE") {
-                                console.log(`%c 💨 EVENTO FUELLE: ${val} `, 'background: #f39c12; color: white; font-weight: bold;');
+                            if (tipo === "F_US" || tipo === "F_SL" || tipo === "FUELLE") {
+                                // Si el hardware manda F_US/F_SL, respetamos la opción de UI; si manda "FUELLE" viejo, pasa libre
+                                if ((tipo === "F_US" && tipoFuelleActivoRef.current !== 'US') ||
+                                    (tipo === "F_SL" && tipoFuelleActivoRef.current !== 'SL')) {
+                                    continue;
+                                }
+
+                                console.log(`%c 💨 EVENTO FUELLE (${tipo}): ${val} `, 'background: #f39c12; color: white; font-weight: bold;');
                                 const nuevaDir = val === "ABRIR" ? "halar" : "empujar";
                                 if (nuevaDir !== direccionRef.current) {
                                     // 🔄 SWAP ATÓMICO: Sincronizar sonidos y mapa inmediatamente
@@ -1168,6 +1177,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         instrumentoId, setInstrumentoId, listaInstrumentos,
         cargando: cargandoCloud,
         midiActivado, disenoCargado,
-        esp32Conectado, conectarESP32
+        esp32Conectado, conectarESP32,
+        tipoFuelleActivo, setTipoFuelleActivo
     };
 };

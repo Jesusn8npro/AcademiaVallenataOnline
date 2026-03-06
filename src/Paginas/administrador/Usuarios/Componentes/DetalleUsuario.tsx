@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { actualizarUsuario, eliminarUsuario } from '../../../../servicios/usuariosAdminService';
 import PestanaActividad from './pestanas/PestanaActividad';
 import PestanaGeolocalizacion from './pestanas/PestanaGeolocalizacion';
@@ -170,6 +170,50 @@ const DetalleUsuario: React.FC<Props> = ({
   useEffect(() => {
     cargarDatosCompletos();
   }, []);
+
+  // Ref para contenedor de pestañas
+  const pestanasRef = useRef<HTMLDivElement>(null);
+
+  // Estados para drag to scroll
+  const [isDraggingTabs, setIsDraggingTabs] = useState(false);
+  const [dragMoved, setDragMoved] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const scrollPestanas = (direccion: 'izq' | 'der') => {
+    if (pestanasRef.current) {
+      const scrollAmount = 150;
+      pestanasRef.current.scrollBy({
+        left: direccion === 'der' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const onPestanasMouseDown = (e: React.MouseEvent) => {
+    if (!pestanasRef.current) return;
+    setIsDraggingTabs(true);
+    setDragMoved(false);
+    setStartX(e.pageX - pestanasRef.current.offsetLeft);
+    setScrollLeft(pestanasRef.current.scrollLeft);
+  };
+
+  const onPestanasMouseLeaveOrUp = () => {
+    setIsDraggingTabs(false);
+  };
+
+  const onPestanasMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTabs || !pestanasRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - pestanasRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Velocidad de arrastre
+
+    if (Math.abs(walk) > 5) {
+      setDragMoved(true);
+    }
+
+    pestanasRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   // Cargar datos completos
   const cargarDatosCompletos = async () => {
@@ -503,50 +547,84 @@ const DetalleUsuario: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Pestañas */}
-      <div className="detalle-usuario-pestanas">
-        {pestanas.map((pestana) => (
-          <button
-            key={pestana.id}
-            className={`detalle-usuario-pestana ${pestanaActiva === pestana.id ? 'activa' : ''}`}
-            onClick={() => cambiarPestana(pestana.id)}
-          >
-            <span className="detalle-usuario-pestana-icono">
-              {pestana.id === 'general' && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" />
-                  <path d="M6 21v-2a6 6 0 0 1 12 0v2" stroke="currentColor" strokeWidth="2" />
-                </svg>
-              )}
-              {pestana.id === 'actividad' && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 3v18h18" stroke="currentColor" strokeWidth="2" />
-                  <path d="M7 14l4-4 3 3 3-5" stroke="currentColor" strokeWidth="2" />
-                </svg>
-              )}
-              {pestana.id === 'geolocalizacion' && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                  <path d="M3 12h18" stroke="currentColor" strokeWidth="2" />
-                  <path d="M12 3c3 4 3 14 0 18" stroke="currentColor" strokeWidth="2" />
-                </svg>
-              )}
-              {pestana.id === 'cursos' && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 4h14a3 3 0 0 1 3 3v13H6a3 3 0 0 1-3-3V4z" stroke="currentColor" strokeWidth="2" />
-                  <path d="M6 4v13" stroke="currentColor" strokeWidth="2" />
-                </svg>
-              )}
-              {pestana.id === 'configuracion' && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-                  <path d="M19.4 15a7.9 7.9 0 0 0 .1-6l2-1.6-2-3.4-2.4.6a8 8 0 0 0-5.2-2l-.6-2h-4l-.6 2a8 8 0 0 0-5.2 2L2.5 4l-2 3.4 2 1.6a8 8 0 0 0 .1 6l-2 1.6 2 3.4 2.4-.6a8 8 0 0 0 5.2 2l.6 2h4l.6-2a8 8 0 0 0 5.2-2l2.4.6 2-3.4-2-1.6z" stroke="currentColor" strokeWidth="2" />
-                </svg>
-              )}
-            </span>
-            {pestana.label}
-          </button>
-        ))}
+      {/* Pestañas con Flechas para Navegación Móvil */}
+      <div className="detalle-usuario-pestanas-wrapper">
+        <button
+          className="detalle-usuario-flecha-scroll izq"
+          onClick={() => scrollPestanas('izq')}
+          aria-label="Desplazar pestañas a la izquierda"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" stroke="currentColor" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div
+          className={`detalle-usuario-pestanas ${isDraggingTabs ? 'dragging' : ''}`}
+          ref={pestanasRef}
+          onMouseDown={onPestanasMouseDown}
+          onMouseLeave={onPestanasMouseLeaveOrUp}
+          onMouseUp={onPestanasMouseLeaveOrUp}
+          onMouseMove={onPestanasMouseMove}
+          style={{ cursor: isDraggingTabs ? 'grabbing' : 'grab' }}
+        >
+          {pestanas.map((pestana) => (
+            <button
+              key={pestana.id}
+              className={`detalle-usuario-pestana ${pestanaActiva === pestana.id ? 'activa' : ''}`}
+              onClick={() => {
+                if (!dragMoved) {
+                  cambiarPestana(pestana.id);
+                }
+              }}
+            >
+              <span className="detalle-usuario-pestana-icono">
+                {pestana.id === 'general' && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" />
+                    <path d="M6 21v-2a6 6 0 0 1 12 0v2" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+                {pestana.id === 'actividad' && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 3v18h18" stroke="currentColor" strokeWidth="2" />
+                    <path d="M7 14l4-4 3 3 3-5" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+                {pestana.id === 'geolocalizacion' && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                    <path d="M3 12h18" stroke="currentColor" strokeWidth="2" />
+                    <path d="M12 3c3 4 3 14 0 18" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+                {pestana.id === 'cursos' && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 4h14a3 3 0 0 1 3 3v13H6a3 3 0 0 1-3-3V4z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M6 4v13" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+                {pestana.id === 'configuracion' && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                    <path d="M19.4 15a7.9 7.9 0 0 0 .1-6l2-1.6-2-3.4-2.4.6a8 8 0 0 0-5.2-2l-.6-2h-4l-.6 2a8 8 0 0 0-5.2 2L2.5 4l-2 3.4 2 1.6a8 8 0 0 0 .1 6l-2 1.6 2 3.4 2.4-.6a8 8 0 0 0 5.2 2l.6 2h4l.6-2a8 8 0 0 0 5.2-2l2.4.6 2-3.4-2-1.6z" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+              </span>
+              {pestana.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          className="detalle-usuario-flecha-scroll der"
+          onClick={() => scrollPestanas('der')}
+          aria-label="Desplazar pestañas a la derecha"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" stroke="currentColor" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* Contenido de las pestañas */}

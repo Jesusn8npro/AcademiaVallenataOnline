@@ -15,13 +15,16 @@ interface BotonesControlProps {
     setVistaDoble: (val: boolean) => void;
     esp32Conectado: boolean;
     conectarESP32: () => void;
+    tipoFuelleActivo: 'US' | 'SL';
+    setTipoFuelleActivo: (val: 'US' | 'SL') => void;
 }
 
 const BotonesControl: React.FC<BotonesControlProps> = ({
     modoAjuste, setModoAjuste, setBotonSeleccionado,
     direccion, setDireccion, limpiarTodasLasNotas,
     modoVista, setModoVista, vistaDoble, setVistaDoble,
-    esp32Conectado, conectarESP32
+    esp32Conectado, conectarESP32,
+    tipoFuelleActivo, setTipoFuelleActivo
 }) => {
     return (
         <div className="simulador-controles-capa" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1000 }}>
@@ -67,9 +70,42 @@ const BotonesControl: React.FC<BotonesControlProps> = ({
             </button>
 
             <div className="controles-derecha-flotantes" style={{
-                position: 'absolute', top: '180px', right: '40px',
+                position: 'absolute', top: '230px', right: '40px',
                 textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'flex-end', width: '280px', pointerEvents: 'none'
             }}>
+                {/* Selector de Tipo de Fuelle (solo cuando hay ESP32) */}
+                {esp32Conectado && (
+                    <div style={{
+                        background: 'rgba(0,0,0,0.7)', padding: '10px 18px', borderRadius: '15px',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(15px)', width: '100%', pointerEvents: 'auto'
+                    }}>
+                        <span style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>ENTRADA DE FUELLE</span>
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                            <button
+                                onClick={() => setTipoFuelleActivo('US')}
+                                style={{
+                                    padding: '5px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold',
+                                    background: tipoFuelleActivo === 'US' ? '#3b82f6' : 'rgba(255,255,255,0.1)',
+                                    color: 'white', border: 'none', cursor: 'pointer'
+                                }}
+                            >
+                                🔊 SENSOR
+                            </button>
+                            <button
+                                onClick={() => setTipoFuelleActivo('SL')}
+                                style={{
+                                    padding: '5px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold',
+                                    background: tipoFuelleActivo === 'SL' ? '#f59e0b' : 'rgba(255,255,255,0.1)',
+                                    color: 'white', border: 'none', cursor: 'pointer'
+                                }}
+                            >
+                                🎚️ SLIDER
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <button
                     onClick={() => {
                         const nDir = direccion === 'halar' ? 'empujar' : 'halar';

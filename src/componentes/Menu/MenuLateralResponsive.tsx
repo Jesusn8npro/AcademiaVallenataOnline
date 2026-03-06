@@ -59,8 +59,10 @@ const MenuLateralResponsive: React.FC<MenuLateralResponsiveProps> = ({
   const nombreUsuario = usuario?.nombre || usuario?.email?.split('@')[0] || 'Usuario';
 
   const navegarA = (url: string) => {
-    navigate(url);
     onCerrar();
+    setTimeout(() => {
+      navigate(url);
+    }, 10);
   };
 
   const manejarCerrarSesion = async () => {
