@@ -22,7 +22,7 @@ El objetivo es meter toda la potencia del simulador web dentro de la caja de mad
 3.  **Fuelle Real (Sensor BMP280):** Medición de presión barométrica interna. El fuelle de tela/cartón mandará presión según el esfuerzo físico del músico.
 4.  **Sistema de Energía (UPS 12V + 18650):** Autonomía completa para tocar sin cables.
 5.  **Potencia de Salida (Amplificador 80W + Bocinas):** Audio estéreo integrado en los muebles del acordeón.
-6.  **Panel de Control (TFT 2.8" Touch):** Cambio de tonalidad (Cinco Letras, Rey Vallenato, etc.) y ajustes de brillo/volumen.
+6.  **Panel de Control (TFT 2.8" Touch):** Cambio de tonalidad (Cinco Letras, Rey Vallenato, etc.) y ajustes de brillo/volumen.ILI9341
 
 ---
 
