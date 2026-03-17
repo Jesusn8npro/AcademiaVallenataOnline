@@ -18,6 +18,8 @@ interface PanelAjustesProps {
     setTonalidadSeleccionada: (v: string) => void;
     listaTonalidades: string[];
     setListaTonalidades: (l: string[]) => void;
+    nombresTonalidades: Record<string, string>;
+    actualizarNombreTonalidad: (id: string, nombre: string) => void;
     sonidosVirtuales: SonidoVirtual[];
     setSonidosVirtuales: (sv: SonidoVirtual[]) => void;
     eliminarTonalidad: (t: string) => void;

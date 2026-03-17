@@ -25,6 +25,7 @@ export interface BotonNota {
     id: string;
     nombre: string;
     frecuencia: number | number[];
+    tipo?: string;
 }
 
 // --- SISTEMA DE TRANSPOSICIÓN ---
@@ -155,11 +156,12 @@ function generarTonalidad(semitonosOffset: number, usarSostenidos: boolean = fal
             if (b.tipo === 'nota') freq = transponerNota(b.n, b.o, semitonosOffset, usarSostenidos).frecuencia;
             else freq = construirAcordeBajo(b.n, b.o, b.tipo, semitonosOffset, usarSostenidos);
             const n = transponerNota(b.n, b.o, semitonosOffset, usarSostenidos).nombre;
-            const sufijo = b.tipo === 'mayor' ? ' Mayor' : b.tipo === 'menor' ? ' Menor' : '';
+            const sufijo = b.tipo === 'mayor' ? 'M' : b.tipo === 'menor' ? 'm' : '';
             return {
                 id: `${prefijoId}-${b.i}-${b.t}-bajo`,
                 nombre: n + sufijo,
-                frecuencia: freq
+                frecuencia: freq,
+                tipo: b.tipo
             };
         });
     };
@@ -182,11 +184,13 @@ export const TONALIDADES = {
     'ADG_FLAT': generarTonalidad(3),
     'ADG': generarTonalidad(4),
     'BES': generarTonalidad(5),
+    'CINCO_LETRAS': generarTonalidad(5),
     'BEA': generarTonalidad(6),
     'CFB': generarTonalidad(7),
     'DGB': generarTonalidad(8),
     'GDC': generarTonalidad(9),
     'ELR': generarTonalidad(10),
+    'EAD': generarTonalidad(11),
 };
 
 const tonalidadPorDefecto = TONALIDADES['F-Bb-Eb'];

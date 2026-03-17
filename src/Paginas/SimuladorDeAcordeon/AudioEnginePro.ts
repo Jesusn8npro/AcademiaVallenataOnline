@@ -131,47 +131,49 @@ export class MotorAudioPro {
 
     async cargarSonidoEnBanco(bancoId: string, idSonido: string, url: string): Promise<void> {
         const banco = this.obtenerBanco(bancoId, bancoId);
+        
+        // 1. Verificación de Memoria RAM (Ultra-rápido)
         if (banco.muestras.has(idSonido)) return;
 
         try {
-            // 🛡️ SISTEMA DE CACHÉ PERSISTENTE (V5.1)
-            // Esto evita descargas repetitivas de Supabase Egress
             const cacheName = 'sim-audios-v1';
             let audioData: ArrayBuffer | null = null;
 
+            // 2. Intento desde Cache API (Persistencia en disco)
             try {
                 const cache = await caches.open(cacheName);
                 const cachedResponse = await cache.match(url);
 
                 if (cachedResponse) {
-                    console.log(`📦 [CACHE] Muestra recuperada: ${idSonido}`);
                     audioData = await cachedResponse.arrayBuffer();
                 } else {
-                    console.log(`🌐 [RED] Descargando de Supabase: ${idSonido}`);
+                    // 3. Descarga desde Red/Supabase (Solo si no está en caché)
+                    console.log(`📡 [RED] Descargando: ${idSonido}`);
                     const respuesta = await fetch(url);
                     if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
 
-                    // Clonar respuesta para guardarla en caché y usarla
+                    // Guardar en caché para la próxima vez
                     const respuestaACachear = respuesta.clone();
                     await cache.put(url, respuestaACachear);
                     audioData = await respuesta.arrayBuffer();
                 }
             } catch (cacheError) {
-                console.warn('⚠️ No se pudo usar Cache API, recurriendo a fetch normal:', cacheError);
+                // Fallback si la Cache API falla por alguna razón (ej. modo incógnito)
                 const respuesta = await fetch(url);
                 if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
                 audioData = await respuesta.arrayBuffer();
             }
 
-            if (!audioData) throw new Error('No se pudo obtener datos de audio');
+            if (!audioData) return;
 
+            // 4. Decodificación y almacenamiento en RAM
             const audioBuffer = await this.contexto.decodeAudioData(audioData);
             const offset = this.detectarInicioReal(audioBuffer);
 
             banco.muestras.set(idSonido, audioBuffer);
             banco.offsets.set(idSonido, offset);
         } catch (error) {
-            console.error(`❌ Error cargando sonido [${idSonido}]:`, error);
+            console.error(`❌ Error en motor de audio [${idSonido}]:`, error);
         }
     }
 

@@ -70,6 +70,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
     const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
     const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
+    const [nombresTonalidades, setNombresTonalidades] = useState<Record<string, string>>({});
     const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
     const [tipoFuelleActivo, setTipoFuelleActivo] = useState<'US' | 'SL'>('US');
 
@@ -155,18 +156,39 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             // Formato esperado: Bajo{Nota}[-2][(acorde)]-cm.mp3
             let clean = file.replace('Bajo', '').replace('-cm.mp3', '');
             let octava = 3;
+            let esAcorde = false;
+            let cualidad: 'mayor' | 'menor' = 'mayor';
+
+            if (clean.includes('(acorde)')) {
+                esAcorde = true;
+                clean = clean.replace('(acorde)', '');
+            }
+
             if (clean.includes('-2')) {
                 octava = 2;
                 clean = clean.replace('-2', '');
             }
 
-            // Los archivos (acorde) no se usan en el mapeo cromático individual
-            if (clean.includes('(acorde)')) return;
+            // Detectar si es menor (nombres como Cm, fm)
+            if (clean.endsWith('m') && clean.length > 1 && !clean.endsWith('bm')) {
+                cualidad = 'menor';
+                clean = clean.substring(0, clean.length - 1);
+            }
+
+            // Normalización de nombres de notas para el motor universal
+            const notaNormalizada = clean
+                .replace('Db', 'Db')
+                .replace('Eb', 'Eb')
+                .replace('Ab', 'Ab')
+                .replace('Bb', 'Bb')
+                .replace('Gb', 'Gb');
 
             mLocales.push({
-                nota: clean,
+                nota: notaNormalizada,
                 octava,
-                url_audio: `/audio/Muestras_Cromaticas/Bajos/${file}`
+                url_audio: `/audio/Muestras_Cromaticas/Bajos/${file}`,
+                tipo_bajo: esAcorde ? 'acorde' : 'nota',
+                cualidad: esAcorde ? cualidad : undefined
             });
         });
 
@@ -236,11 +258,26 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id);
                     if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados);
 
+                    // Sincronizar nombres personalizados
+                    if (ajustesData.tonalidades_configuradas) {
+                        const nombres: Record<string, string> = {};
+                        Object.entries(ajustesData.tonalidades_configuradas).forEach(([key, val]: [string, any]) => {
+                            if (val && val.nombrePersonalizado) {
+                                const id = key.replace('ajustes_acordeon_vPRO_', '');
+                                nombres[id] = val.nombrePersonalizado;
+                            }
+                        });
+                        setNombresTonalidades(nombres);
+                    }
+
                     // Sincronizar lista de tonalidades
-                    const guardadas = ajustesData.lista_tonalidades_activa || [];
-                    const disponibles = Object.keys(TONALIDADES);
-                    const listaFinal = Array.from(new Set([...guardadas, ...disponibles]));
-                    setListaTonalidades(listaFinal);
+                    const guardadas = ajustesData.lista_tonalidades_activa;
+                    if (guardadas && Array.isArray(guardadas) && guardadas.length > 0) {
+                        setListaTonalidades(guardadas);
+                    } else {
+                        // Si no hay nada guardado, usamos todas las del sistema
+                        setListaTonalidades(Object.keys(TONALIDADES));
+                    }
 
                     // 🏁 ESTABLECER TONALIDAD ACTIVA (esto disparará cargarSpecificos con el usuario ya listo)
                     if (ajustesData.tonalidad_activa) {
@@ -350,7 +387,16 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
         // --- 1. DETERMINAR QUÉ NOTA DEBE SONAR (Mapeo Manual o Definición) ---
         let notaTarget = btn.nombre;
-        let octavaTarget = obtenerOctava(btn.nombre, btn.frecuencia as number);
+        if (esBajo) {
+            // Limpia sufijos M/m para buscar la nota base y su octava
+            notaTarget = notaTarget.replace(/M$|m$/, '');
+        }
+
+        const fTarget = Array.isArray(btn.frecuencia) ? btn.frecuencia[0] : btn.frecuencia;
+        let octavaTarget = obtenerOctava(notaTarget, fTarget as number);
+        
+        // nEng se usa para la búsqueda en muestrasDB
+        const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
 
         // Si hay un mapeo manual, lo usamos para definir qué nota buscar en otros instrumentos
         if (map[idBoton] && map[idBoton].length > 0) {
@@ -376,12 +422,57 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             if (map[idBoton]) return map[idBoton];
 
             if (muestrasLocalesDB.length > 0) {
-                const filtrarLocales = muestrasLocalesDB.filter((m: Muestra) =>
-                    esBajo ? m.url_audio.includes('Bajos') : m.url_audio.includes('Brillante')
-                );
+                // Si es bajo, buscamos específicamente el tipo (acorde o nota) y su cualidad (mayor/menor)
+                const tipoDeseado = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? 'acorde' : 'nota';
+                const cualidadDeseada = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? btn.tipo : undefined;
+                
+                const filtrarLocales = muestrasLocalesDB.filter((m: Muestra) => {
+                    const deBajo = m.url_audio.includes('Bajos');
+                    if (esBajo) {
+                        return deBajo && m.tipo_bajo === tipoDeseado && (tipoDeseado === 'nota' || m.cualidad === cualidadDeseada);
+                    }
+                    return !deBajo;
+                });
+                
                 const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
-                const best = encontrarMejorMuestra(nEng, octavaTarget, filtrarLocales);
+                let best = encontrarMejorMuestra(nEng, octavaTarget, filtrarLocales);
+                
+                // 🛡️ REGLA DE ORO PROFESIONAL PARA PITOS Y BAJOS
+                // No permitimos que el sistema se "invente" notas desplazando más de 1 o 2 semitonos
+                // si existe una muestra física más cercana en otra octava.
+                if (best && (Math.abs(best.pitch) > 1)) {
+                    // Para pitos, evitamos subir a la octava 7 si suena chillona. 
+                    // Escaneamos un rango seguro: [3, 4, 5, 6].
+                    const octavasEscaneo = esBajo ? [2, 3, 4, 1] : [4, 5, 6, 3]; 
+                    let mejorOpcionGlobal = best;
+                    let menorPitchAbs = Math.abs(best.pitch);
+
+                    for (const oct of octavasEscaneo) {
+                        const prueba = encontrarMejorMuestra(nEng, oct, filtrarLocales);
+                        if (prueba && Math.abs(prueba.pitch) < menorPitchAbs) {
+                            menorPitchAbs = Math.abs(prueba.pitch);
+                            mejorOpcionGlobal = prueba;
+                        }
+                    }
+                    best = mejorOpcionGlobal;
+                }
+                
+                // 🚨 PROTECCIÓN ESPECIAL 3-7 Y ALTOS: Si el pitch sigue siendo > 2, 
+                // bajamos una octava para que "gruese" en lugar de que "se rompa"
+                if (!esBajo && best && best.pitch > 2) {
+                    const fallbackGordo = encontrarMejorMuestra(nEng, octavaTarget - 1, filtrarLocales);
+                    if (fallbackGordo && Math.abs(fallbackGordo.pitch) < Math.abs(best.pitch)) {
+                        best = fallbackGordo;
+                    }
+                }
+                
                 if (best) return [`pitch:${best.pitch}|${best.url}`];
+                
+                // Si no encontramos acorde, intentamos fallback a nota normal (provisional)
+                if (esBajo && tipoDeseado === 'acorde') {
+                    const fallback = encontrarMejorMuestra(nEng, octavaTarget, muestrasLocalesDB.filter(m => m.url_audio.includes('Bajos') && m.tipo_bajo === 'nota'));
+                    if (fallback) return [`pitch:${fallback.pitch}|${fallback.url}`];
+                }
             }
         }
 
@@ -710,7 +801,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     // Precarga de sonidos
     useEffect(() => {
-        motorAudioPro.limpiarBanco(instrumentoId);
+        // ⚡ OPTIMIZACIÓN: Solo vaciamos el mapa de rutas rápidas, pero NO limpiamos el banco de audio
+        // para no forzar descargas repetitivas desde Supabase/Caché en cada pequeño cambio.
         soundsPerKeyRef.current = {};
 
         const timer = setTimeout(() => {
@@ -798,6 +890,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                             const trimmed = line.trim();
                             if (!trimmed) continue;
 
+
                             const parts = trimmed.split(",");
                             if (parts.length < 2) continue;
 
@@ -871,8 +964,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
                                         if (note >= 30 && note <= 41) {
                                             const map: Record<number, string> = {
-                                                30: '2-1', 31: '2-2', 32: '2-3', 33: '2-4', 34: '2-5', 35: '2-6',
-                                                36: '1-1', 38: '1-2', 39: '1-3', 40: '1-4', 37: '1-5', 41: '1-6'
+                                                30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1',
+                                                36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1'
                                             };
                                             const base = map[note];
                                             if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
@@ -900,7 +993,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                                     else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
 
                                     if (note >= 30 && note <= 41) {
-                                        const base = { 30: '2-1', 31: '2-2', 32: '2-3', 33: '2-4', 34: '2-5', 35: '2-6', 36: '1-1', 38: '1-2', 39: '1-3', 40: '1-4', 37: '1-5', 41: '1-6' }[note];
+                                        const base = { 30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1', 36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1' }[note];
                                         if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
                                     } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
 
@@ -1125,35 +1218,86 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         return nuevo;
     };
 
+    const actualizarNombreTonalidad = async (tonalidadId: string, nuevoNombre: string) => {
+        setNombresTonalidades(prev => ({ ...prev, [tonalidadId]: nuevoNombre }));
+
+        if (usuarioId) {
+            try {
+                const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
+                const { data } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .select('tonalidades_configuradas')
+                    .eq('usuario_id', usuarioId)
+                    .maybeSingle();
+
+                const nuevasConfigs = {
+                    ...(data?.tonalidades_configuradas || {}),
+                    [key]: {
+                        ...(data?.tonalidades_configuradas?.[key] || {}),
+                        nombrePersonalizado: nuevoNombre
+                    }
+                };
+
+                await supabase.from('sim_ajustes_usuario').update({
+                    tonalidades_configuradas: nuevasConfigs,
+                    updated_at: new Date().toISOString()
+                }).eq('usuario_id', usuarioId);
+            } catch (e) {
+                console.error('Error al actualizar nombre de tonalidad:', e);
+            }
+        }
+    };
+
+    // Efecto para guardar el orden de las tonalidades cuando cambia
+    useEffect(() => {
+        // Solo guardamos si no es la carga inicial y si hay tonalidades
+        if (!usuarioId || isInitialLoad.current || listaTonalidades.length === 0) return;
+        
+        const timer = setTimeout(async () => {
+            await supabase.from('sim_ajustes_usuario').update({
+                lista_tonalidades_activa: listaTonalidades,
+                updated_at: new Date().toISOString()
+            }).eq('usuario_id', usuarioId);
+        }, 1500); // 1.5s de debounce para dar tiempo a operaciones manuales
+
+        return () => clearTimeout(timer);
+    }, [listaTonalidades, usuarioId]);
+
     const eliminarTonalidad = async (tonalidad: string) => {
         if (listaTonalidades.length <= 1) return alert('Debe conservar al menos una tonalidad.');
-        if (confirm(`¿Eliminar configuración y acceso a la tonalidad ${tonalidad}?`)) {
+        if (confirm(`¿Eliminar la tonalidad ${tonalidad}? Esta acción no se puede deshacer.`)) {
             const nueva = listaTonalidades.filter(t => t !== tonalidad);
+            
+            // 1. Actualización inmediata del estado (UI)
             setListaTonalidades(nueva);
 
-            const key = `ajustes_acordeon_vPRO_${tonalidad}`;
+            if (tonalidad === tonalidadSeleccionada) {
+                setTonalidadSeleccionada(nueva[0]);
+            }
 
-            if (tonalidad === tonalidadSeleccionada) setTonalidadSeleccionada(nueva[0]);
-
-            // Sincronizar en la nube (eliminar la entrada del JSON)
+            // 2. Sincronización PROFUNDA en Supabase
             if (usuarioId) {
                 try {
+                    const key = `ajustes_acordeon_vPRO_${tonalidad}`;
+                    
+                    // Primero obtenemos las configuraciones actuales
                     const { data } = await supabase
                         .from('sim_ajustes_usuario')
                         .select('tonalidades_configuradas')
                         .eq('usuario_id', usuarioId)
                         .maybeSingle();
 
-                    if (data?.tonalidades_configuradas) {
-                        const nuevasConfigs = { ...data.tonalidades_configuradas };
-                        delete nuevasConfigs[key];
+                    const nuevasConfigs = { ...(data?.tonalidades_configuradas || {}) };
+                    delete nuevasConfigs[key];
 
-                        await supabase.from('sim_ajustes_usuario').update({
-                            tonalidades_configuradas: nuevasConfigs,
-                            lista_tonalidades_activa: nueva,
-                            updated_at: new Date().toISOString()
-                        }).eq('usuario_id', usuarioId);
-                    }
+                    // Guardamos la lista actualizada y eliminamos la configuración específica
+                    await supabase.from('sim_ajustes_usuario').update({
+                        tonalidades_configuradas: nuevasConfigs,
+                        lista_tonalidades_activa: nueva,
+                        updated_at: new Date().toISOString()
+                    }).eq('usuario_id', usuarioId);
+
+                    console.log(`✅ Tonalidad ${tonalidad} eliminada de raíz.`);
                 } catch (e) {
                     console.error('Error al eliminar tonalidad en la nube:', e);
                 }
@@ -1165,7 +1309,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         botonesActivos, direccion, setDireccion, modoAjuste, setModoAjuste, modoVista, setModoVista,
         vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
         pestanaActiva, setPestanaActiva, tonalidadSeleccionada, setTonalidadSeleccionada,
-        listaTonalidades, setListaTonalidades, sonidosVirtuales, setSonidosVirtuales,
+        listaTonalidades, setListaTonalidades, nombresTonalidades, actualizarNombreTonalidad, sonidosVirtuales, setSonidosVirtuales,
         limpiarTodasLasNotas, actualizarBotonActivo, guardarAjustes, resetearAjustes,
         guardarNuevoSonidoVirtual, eliminarTonalidad, playPreview, stopPreview, reproduceTono: reproducirTono,
         configTonalidad, samplesBrillante: samplesPitos, samplesBajos: samplesBajos,

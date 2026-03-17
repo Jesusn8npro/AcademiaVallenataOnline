@@ -1,11 +1,15 @@
 import React from 'react';
-import { X, Music, Play, Pause } from 'lucide-react';
+import { X, Music, Play, Pause, GripVertical, Edit2, Settings2 } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import type { AjustesAcordeon, SonidoVirtual } from '../../TiposAcordeon';
 
 interface PestanaSonidoProps {
     tonalidadSeleccionada: string;
     setTonalidadSeleccionada: (val: string) => void;
     listaTonalidades: string[];
+    setListaTonalidades: (val: string[]) => void;
+    nombresTonalidades: Record<string, string>;
+    actualizarNombreTonalidad: (id: string, nombre: string) => void;
     eliminarTonalidad: (t: string) => void;
     botonSeleccionado: string | null;
     mapaBotonesActual: any;
@@ -21,7 +25,6 @@ interface PestanaSonidoProps {
     muestrasDB?: any[];
     soundsPerKey: Record<string, string[]>;
     obtenerRutasAudio: (id: string, ajustes?: AjustesAcordeon) => string[];
-    setListaTonalidades: (val: string[]) => void;
     guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => void;
     modoVista?: 'controles' | 'seleccion';
     instrumentoId: string;
@@ -37,6 +40,8 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
     obtenerRutasAudio,
     guardarNuevoSonidoVirtual,
     setListaTonalidades,
+    nombresTonalidades = {},
+    actualizarNombreTonalidad,
     modoVista = 'controles',
     instrumentoId,
     setInstrumentoId,
@@ -91,17 +96,21 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
                                 onChange={(e) => setTonalidadSeleccionada(e.target.value)}
                                 style={{ flex: 1, background: '#111', color: 'white', border: '1px solid #333', padding: '8px', borderRadius: '8px', fontSize: '12px', outline: 'none' }}
                             >
-                                {listaTonalidades.map(t => (
-                                    <option key={t} value={t}>
-                                        {t === 'FBE' ? 'Fa - Sib - Mib (Original)' :
-                                            t === 'GCF' ? 'Sol - Do - Fa' :
+                                    {listaTonalidades.map(t => (
+                                        <option key={t} value={t}>
+                                            {nombresTonalidades[t] || (
+                                                t === 'FBE' ? 'Fa - Sib - Mib (Original)' :
+                                                t === 'GCF' ? 'Sol - Do - Fa' :
                                                 t === 'ADG' ? 'La - Re - Sol' :
-                                                    t === 'BES' ? 'Sib - Mib - Lab (Cinco Letras)' :
-                                                        t === 'BEA' ? 'Si - Mi - La' :
-                                                            t === 'CFB' ? 'Do - Fa - Sib' :
-                                                                t === 'DGC' ? 'Re - Sol - Do' : t}
-                                    </option>
-                                ))}
+                                                t === 'BES' ? 'Sib - Mib - Lab (Cinco Letras)' :
+                                                t === 'BEA' ? 'Si - Mi - La' :
+                                                t === 'CFB' ? 'Do - Fa - Sib' :
+                                                t === 'DGC' ? 'Re - Sol - Do' : 
+                                                t === 'ELR' ? 'Mi - La - Re (Bemol)' :
+                                                t === 'EAD' ? 'Mi - La - Re (Alto/Natural)' : t
+                                            )}
+                                        </option>
+                                    ))}
                             </select>
                             <button onClick={() => {
                                 const nombre = prompt('Nueva tonalidad:');
@@ -124,6 +133,72 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
                                     setAjustes(prev => ({ ...prev, pitchGlobal: val }));
                                 }} />
                                 <button onClick={() => setAjustes(prev => ({ ...prev, pitchGlobal: 0 }))} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#666', padding: '4px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>RESET</button>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '15px' }}>
+                            <label style={{ display: 'block', fontSize: '10px', marginBottom: '8px', color: '#888', fontWeight: 'bold' }}>ORGANIZAR TONALIDADES (ARRASTRAR)</label>
+                            <div style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '5px' }}>
+                                <Reorder.Group axis="y" values={listaTonalidades} onReorder={setListaTonalidades} style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                    {listaTonalidades.map(t => {
+                                        const label = nombresTonalidades[t] || (
+                                            t === 'FBE' ? 'Fa - Sib - Mib (Original)' :
+                                            t === 'GCF' ? 'Sol - Do - Fa' :
+                                            t === 'ADG' ? 'La - Re - Sol' :
+                                            t === 'BES' ? 'Sib - Mib - Lab (Cinco Letras)' :
+                                            t === 'BEA' ? 'Si - Mi - La' :
+                                            t === 'CFB' ? 'Do - Fa - Sib' :
+                                            t === 'DGC' ? 'Re - Sol - Do' : 
+                                            t === 'ELR' ? 'Mi - La - Re (Bemol)' :
+                                            t === 'EAD' ? 'Mi - La - Re (Alto/Natural)' : t
+                                        );
+                                        const activo = t === tonalidadSeleccionada;
+
+                                        return (
+                                            <Reorder.Item 
+                                                key={t} 
+                                                value={t} 
+                                                style={{ 
+                                                    background: activo ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.03)', 
+                                                    border: activo ? '1px solid #3b82f6aa' : '1px solid #333',
+                                                    padding: '8px 10px', 
+                                                    borderRadius: '8px', 
+                                                    marginBottom: '4px', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '10px',
+                                                    cursor: 'grab'
+                                                }}
+                                            >
+                                                <GripVertical size={14} style={{ color: '#444' }} />
+                                                <span 
+                                                    onClick={() => setTonalidadSeleccionada(t)}
+                                                    style={{ flex: 1, fontSize: '11px', color: activo ? 'white' : '#aaa', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                >
+                                                    {label}
+                                                </span>
+                                                <div style={{ display: 'flex', gap: '5px' }}>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const n = prompt('Nuevo nombre para esta tonalidad:', label);
+                                                            if (n) actualizarNombreTonalidad(t, n);
+                                                        }}
+                                                        style={{ background: 'transparent', border: 'none', color: '#555', cursor: 'pointer', padding: '4px' }}
+                                                    >
+                                                        <Edit2 size={12} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); eliminarTonalidad(t); }} 
+                                                        style={{ background: 'transparent', border: 'none', color: '#ef444466', cursor: 'pointer', padding: '4px' }}
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            </Reorder.Item>
+                                        );
+                                    })}
+                                </Reorder.Group>
                             </div>
                         </div>
 

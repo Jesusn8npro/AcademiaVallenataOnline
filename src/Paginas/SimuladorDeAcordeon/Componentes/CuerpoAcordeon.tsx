@@ -38,10 +38,29 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
 
     const formatearNota = (nombre: string) => {
         if (!nombre) return '';
-        let base = nombre.trim().split(' ')[0].replace(/([a-z])([A-Z])/g, '$1 $2').split(' ')[0];
+        
+        let notaBase = nombre.trim();
+        let sufijo = '';
+
+        // Detectar si termina en M o m (o los formatos largos antiguos)
+        if (notaBase.endsWith('M') || notaBase.endsWith(' Mayor')) {
+            sufijo = 'M';
+            notaBase = notaBase.replace(' Mayor', '').replace(/M$/, '');
+        } else if (notaBase.endsWith('m') || notaBase.endsWith(' Menor')) {
+            sufijo = 'm';
+            notaBase = notaBase.replace(' Menor', '').replace(/m$/, '');
+        }
+
+        // Limpieza de la base: Reb -> Reb, Sol -> Sol
+        let base = notaBase.split(' ')[0].replace(/([a-z])([A-Z])/g, '$1 $2').split(' ')[0];
         base = base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
-        if (modoVista === 'cifrado') return CIFRADO_AMERICANO[base] || base;
-        return base;
+
+        if (modoVista === 'cifrado') {
+            const cifrado = CIFRADO_AMERICANO[base] || base;
+            return cifrado + sufijo;
+        }
+        
+        return base + sufijo;
     };
 
     const extraerNombreNotaDeArchivo = (ruta: string): string => {
@@ -61,10 +80,19 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
     };
 
     const obtenerEtiquetaBoton = (id: string, nombreOriginal: string) => {
+        // Extraer sufijo M/m de la definición lógica original para no perderlo
+        let sufijoLogico = '';
+        if (nombreOriginal.endsWith('M') || nombreOriginal.endsWith(' Mayor')) sufijoLogico = 'M';
+        else if (nombreOriginal.endsWith('m') || nombreOriginal.endsWith(' Menor')) sufijoLogico = 'm';
+
         if (ajustes.mapeoPersonalizado?.[id]?.length > 0) {
             const ruta = ajustes.mapeoPersonalizado[id][0];
             const nuevoNombre = extraerNombreNotaDeArchivo(ruta);
-            return nuevoNombre || formatearNota(nombreOriginal);
+            if (nuevoNombre) {
+                // Si el nombre del archivo ya tiene el sufijo, lo respetamos. Si no, agregamos el lógico.
+                if (nuevoNombre.endsWith('M') || nuevoNombre.endsWith('m')) return nuevoNombre;
+                return nuevoNombre + sufijoLogico;
+            }
         }
         return formatearNota(nombreOriginal);
     }

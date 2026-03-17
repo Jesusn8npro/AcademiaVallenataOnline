@@ -64,6 +64,9 @@ import SimuladorGaming from './Paginas/SimuladorDeAcordeon/SimuladorGaming';
 import SimuladorApp from './Paginas/SimuladorApp/SimuladorApp';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
 import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
+import PaginaEjemplo3D from './Paginas/Ejemplos3d1';
+import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
+import AgenciaIAPage from './Paginas/AgenciaIA';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -96,10 +99,11 @@ const AppContent = () => {
   }
 
   const esSimuladorApp = pathname.startsWith('/simulador-app');
+  const esAgencia = pathname === '/agencia-ia';
 
   // Agregar clase al body cuando el usuario está autenticado y NO estamos en vistas inmersivas
   useEffect(() => {
-    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp;
+    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp || esAgencia;
 
     if (estaAutenticado && !esInmersivo) {
       document.body.classList.add('con-sidebar')
@@ -118,7 +122,7 @@ const AppContent = () => {
     <>
       <CursorPersonalizado />
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
-      {!esModoLectura && !esLandingVenta && !esSimuladorApp && (
+      {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAgencia && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -127,10 +131,10 @@ const AppContent = () => {
       )}
 
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <SidebarAdmin />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAgencia && <SidebarAdmin />}
 
       {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && <MenuInferiorResponsivo />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAgencia && <MenuInferiorResponsivo />}
 
 
       <Routes>
@@ -179,6 +183,9 @@ const AppContent = () => {
         <Route path="/terminos" element={<Terminos />} />
         <Route path="/privacidad" element={<Privacidad />} />
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
+        <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
+        <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
+        <Route path="/agencia-ia" element={<AgenciaIAPage />} />
 
 
         {/* Admin Routes wrapped in ProteccionAdmin */}
@@ -206,7 +213,7 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAgencia && (
         <>
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}

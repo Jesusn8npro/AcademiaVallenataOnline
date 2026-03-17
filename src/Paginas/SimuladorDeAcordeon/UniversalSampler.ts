@@ -10,6 +10,8 @@ export interface Muestra {
     octava: number;
     url_audio: string;
     pitch_ajuste?: number;
+    tipo_bajo?: 'nota' | 'acorde';
+    cualidad?: 'mayor' | 'menor';
 }
 
 /**

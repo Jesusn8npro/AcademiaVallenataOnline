@@ -115,20 +115,27 @@ const AcordeonSimulador = forwardRef<AcordeonSimuladorHandle, AcordeonSimuladorP
             <PanelAjustes {...logica} mapaBotonesActual={logica.mapaBotonesActual} />
 
             {/* 3. El Acordeón (Cuerpo, Pitos y Bajos) */}
-            <CuerpoAcordeon
-                imagenFondo={imagenFondo}
-                ajustes={logica.ajustes}
-                direccion={logica.direccion}
-                configTonalidad={logica.configTonalidad}
-                botonesActivos={logica.botonesActivos}
-                modoAjuste={logica.modoAjuste}
-                botonSeleccionado={logica.botonSeleccionado}
-                modoVista={logica.modoVista}
-                vistaDoble={logica.vistaDoble}
-                setBotonSeleccionado={logica.setBotonSeleccionado}
-                actualizarBotonActivo={logica.actualizarBotonActivo}
-                listo={logica.disenoCargado}
-            />
+            {logica.ajustes && logica.configTonalidad ? (
+                <CuerpoAcordeon
+                    imagenFondo={imagenFondo}
+                    ajustes={logica.ajustes}
+                    direccion={logica.direccion}
+                    configTonalidad={logica.configTonalidad}
+                    botonesActivos={logica.botonesActivos}
+                    modoAjuste={logica.modoAjuste}
+                    botonSeleccionado={logica.botonSeleccionado}
+                    modoVista={logica.modoVista}
+                    vistaDoble={logica.vistaDoble}
+                    setBotonSeleccionado={logica.setBotonSeleccionado}
+                    actualizarBotonActivo={logica.actualizarBotonActivo}
+                    listo={logica.disenoCargado}
+                />
+            ) : (
+                <div style={{ color: 'white', textAlign: 'center', marginTop: '100px' }}>
+                    Error al cargar configuración. Refresca la página (F5).
+                </div>
+            )}
+
 
             {/* Overlay para modo ajuste (Feedback visual global) */}
             {logica.modoAjuste && (
