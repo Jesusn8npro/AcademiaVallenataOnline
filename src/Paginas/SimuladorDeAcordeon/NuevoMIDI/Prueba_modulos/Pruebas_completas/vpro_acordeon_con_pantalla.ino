@@ -2,15 +2,23 @@
 // 🪗 ACORDEÓN V-PRO — PANTALLA + 2 TONALIDADES
 // Tonalidades: 5 Letras (Bb-Eb-Ab) | Si Mi La (B-E-A)
 // Pantalla: ILI9341 240x320 vertical (rotation 2)
-// Fix: VSPI→HSPI compatible ESP32-S3, XPT2046 correcto
+// ====================================================
+// SOLUCIÓN DE TONALIDADES:
+//   Si Mi La = 5 Letras + 1 semitono exacto
+//   → Usamos los MISMOS archivos WAV de 5 Letras
+//   → Solo cambiamos out->SetRate() globalmente:
+//      5 Letras  : SetRate(22050)
+//      Si Mi La  : SetRate(23362) = 22050 × 2^(1/12) = +1 semi
+//   → TODAS las notas suben 1 semitono exacto sin distorsión
+//   → No se necesitan arrays separados para Si Mi La ✅
+//   → Los bajos también cambian correctamente ✅
 // ====================================================
 // PINES PANTALLA (SPI Bus 2 — pines 8/12/13)
 //   TFT_CS=2  TFT_DC=3  TFT_RST=1  TFT_LED=21  TOUCH_CS=47
 // PINES SD (SPI Bus 1 — pines 35/37/36)
 //   SD_CS=14
-// PINES MUX: S0=4 S1=5 S2=6 S3=7
-//   MUX1=15  MUX2=16  MUX3=17  SLIDE=9
-// PINES I2S: BCK=40 WS=41 DIN=42
+// PINES MUX: S0=4 S1=5 S2=6 S3=7  |  MUX1=15  MUX2=16  MUX3=17
+// FUELLE: SLIDE=9  |  I2S: BCK=40 WS=41 DIN=42
 // ====================================================
 
 #include "AudioFileSourceBuffer.h"
@@ -54,7 +62,7 @@ const int sigMux3   = 17;
 const int slidePin  = 9;
 
 // ====================================================
-// ⚙️ MOTOR DE AUDIO (V8)
+// ⚙️ MOTOR DE AUDIO (V8 estable)
 // ====================================================
 #define NUM_VOCES  10
 #define VOL_MAX    0.25f
@@ -62,17 +70,30 @@ const int slidePin  = 9;
 #define DEBOUNCE   20
 #define MUX_DELAY  30
 
+// RATES DESDE -6 HASTA +5 SEMITONOS (Base: 5 Letras @ 22050)
+#define RATE_6_BAJO    15592   // Mi La Re (Alto)
+#define RATE_5_BAJO    16520   // Fa Sib Mib (Original)
+#define RATE_4_BAJO    17501   // GCF Bemol
+#define RATE_3_BAJO    18542   // Sol Do Fa
+#define RATE_2_BAJO    19644   // La Re Sol (Bemol)
+#define RATE_1_BAJO    20812   // La Re Sol (ADG)
+#define RATE_BASE      22050   // 5 Letras (Base)
+#define RATE_1_ALTO    23362   // Si Mi La
+#define RATE_2_ALTO    24750   // Do Fa Sib
+#define RATE_3_ALTO    26222   // Do Fa Si #
+#define RATE_4_ALTO    27781   // Re Sol Do
+#define RATE_5_ALTO    29433   // Mi La Re Bemol
+
 struct VozDinamica {
   AudioGeneratorWAV     *wav  = NULL;
   AudioFileSourceSD     *file = NULL;
   AudioFileSourceBuffer *buff = NULL;
-  int   MuxId  = -1;  int BotonId = -1;
+  int   MuxId  = -1; int BotonId = -1;
   bool  ocupada = false;
   AudioOutputMixerStub *stub = NULL;
   float volumenActual = 0.0f;
   float volMax        = 0.25f;
-  bool  enAtaque = false;
-  bool  enRelease = false;
+  bool  enAtaque = false; bool enRelease = false;
 };
 
 VozDinamica voces[NUM_VOCES];
@@ -86,195 +107,142 @@ bool fuelleAbriendo    = true;
 int  valorAnteriorSlide = 0;
 
 // ====================================================
-// 🎼 ANÁLISIS DE TONALIDADES
+// 🎼 SELECTOR DE TONALIDAD
 // ====================================================
-// Lógica: Sistema transpone desde DEFINICION_BASE (FBE = +0 semitonos)
-// 5 Letras = BbEbAb = +5 semitonos → arrays directos (todos los archivos existen)
-// Si Mi La = BEA    = +6 semitonos → arrays directos (mayoría existen)
-//   ~75% archivos directos en SD     ✅
-//   ~25% usamos nota ±1 semitono     ≈ (imperceptible en acordeón)
-//   Notas faltantes en Brillante: Db4, B3, B5, B6, A6, E6
-// NO SE NECESITA PITCH ADJUSTMENT EN RUNTIME → SetRate siempre 22050Hz
+// IDs según el orden de la página (dropdown)
+const char* NOMBRE_TONOS[] = { 
+  "EAD (ALTO)", "FSibM (Orig)", "GCF BEMOL", "Sol Do Fa", "LRS BEMOL", "ADG (LaReSol)", 
+  "5 Letras", "Si Mi La", "Do Fa Sib", "Do Fa Si #", "RSD (Natural)", "Mi La Re B"
+};
+const int RATES_TONOS[] = { 
+  RATE_6_BAJO, RATE_5_BAJO, RATE_4_BAJO, RATE_3_BAJO, RATE_2_BAJO, RATE_1_BAJO, 
+  RATE_BASE, RATE_1_ALTO, RATE_2_ALTO, RATE_3_ALTO, RATE_4_ALTO, RATE_5_ALTO 
+};
 
-#define TONO_5_LETRAS  0  // Bb-Eb-Ab
-#define TONO_SI_MI_LA  1  // B-E-A
-
-int tonoActual = TONO_5_LETRAS;
-const char* NOMBRE_TONOS[] = { "5 Letras", "Si Mi La" };
+int tonoActual = 6; // Por defecto empezamos en "5 Letras" (índice 6)
 
 // ====================================================
-// 🎹 PITOS — BASE 5 LETRAS (todos los archivos existen)
+// 🎹 PITOS — TONALIDAD 5 LETRAS (base)
+// Para Si Mi La: MISMOS archivos + SetRate(23362) = +1 semi exacto
 // ====================================================
 struct ArchivoAudio { const char *ruta; };
 
-// --- HILERA 1 (afuera) ---
-const ArchivoAudio F1_H_5L[16] = {  // HALAR 5 Letras
-  {"/Brillante/Gb - 4-cm.wav"}, {"/Brillante/C - 4-cm.wav"}, {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/G - 4-cm.wav"},
-  {"/Brillante/A - 4-cm.wav"},  {"/Brillante/C - 5-cm.wav"}, {"/Brillante/Eb - 5-cm.wav"}, {"/Brillante/G - 5-cm.wav"},
+// Hilera 1 — Afuera (MUX1 b=6 a 15 → bot 1-10)
+const ArchivoAudio F1_Halar[16] = {
+  {"/Brillante/Gb - 4-cm.wav"}, {"/Brillante/C - 4-cm.wav"},  {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/G - 4-cm.wav"},
+  {"/Brillante/A - 4-cm.wav"},  {"/Brillante/C - 5-cm.wav"},  {"/Brillante/Eb - 5-cm.wav"}, {"/Brillante/G - 5-cm.wav"},
   {"/Brillante/A - 5-cm.wav"},  {"/Brillante/C - 6-cm.wav"}
 };
-const ArchivoAudio F1_E_5L[16] = {  // EMPUJAR 5 Letras
-  {"/Brillante/E - 4-cm.wav"},  {"/Brillante/Bb - 3-cm.wav"}, {"/Brillante/D - 4-cm.wav"}, {"/Brillante/F - 4-cm.wav"},
-  {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/D - 5-cm.wav"},  {"/Brillante/F - 5-cm.wav"}, {"/Brillante/Bb - 5-cm.wav"},
+const ArchivoAudio F1_Empujar[16] = {
+  {"/Brillante/E - 4-cm.wav"},  {"/Brillante/Bb - 3-cm.wav"}, {"/Brillante/D - 4-cm.wav"},  {"/Brillante/F - 4-cm.wav"},
+  {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/D - 5-cm.wav"},  {"/Brillante/F - 5-cm.wav"},  {"/Brillante/Bb - 5-cm.wav"},
   {"/Brillante/D - 6-cm.wav"},  {"/Brillante/F - 6-cm.wav"}
-};
-// --- HILERA 1 Si Mi La (+1 semitono) ---
-// ✅=archivo exacto  ≈=nota vecina ±1 semitono (imperceptible)
-const ArchivoAudio F1_H_SML[16] = {
-  {"/Brillante/G - 4-cm.wav"},  {"/Brillante/C - 4-cm.wav"},  // ≈Db4→C4
-  {"/Brillante/E - 4-cm.wav"},  {"/Brillante/Ab - 4-cm.wav"},
-  {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/Db - 5-cm.wav"},
-  {"/Brillante/E - 5-cm.wav"},  {"/Brillante/Ab - 5-cm.wav"},
-  {"/Brillante/Bb - 5-cm.wav"}, {"/Brillante/Db - 6-cm.wav"}
-};
-const ArchivoAudio F1_E_SML[16] = {
-  {"/Brillante/F - 4-cm.wav"},  {"/Brillante/Bb - 3-cm.wav"}, // ≈B3→Bb3
-  {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/Gb - 4-cm.wav"},
-  {"/Brillante/B - 4-cm.wav"},  {"/Brillante/Eb - 5-cm.wav"},
-  {"/Brillante/Gb - 5-cm.wav"}, {"/Brillante/Bb - 5-cm.wav"}, // ≈B5→Bb5
-  {"/Brillante/Eb - 6-cm.wav"}, {"/Brillante/F - 6-cm.wav"}   // ≈Gb6→F6
+  // En Si Mi La (rate 23362): Bb-3 → B-3 | Bb-5 → B-5 | F-6 → Gb-6 (exacto)
 };
 
-// --- HILERA 2 (medio) ---
-const ArchivoAudio F2_H_5L[16] = {  // HALAR 5 Letras
+// Hilera 2 — Medio (MUX1 b=0 a 5 + MUX2 b=11 a 15)
+const ArchivoAudio F2_Halar[16] = {
   {"/Brillante/B - 4-cm.wav"},  {"/Brillante/D - 4-cm.wav"},  {"/Brillante/F - 4-cm.wav"},  {"/Brillante/Ab - 4-cm.wav"},
   {"/Brillante/C - 5-cm.wav"},  {"/Brillante/D - 5-cm.wav"},  {"/Brillante/F - 5-cm.wav"},  {"/Brillante/Ab - 5-cm.wav"},
   {"/Brillante/C - 6-cm.wav"},  {"/Brillante/D - 6-cm.wav"},  {"/Brillante/F - 6-cm.wav"}
 };
-const ArchivoAudio F2_E_5L[16] = {  // EMPUJAR 5 Letras
+const ArchivoAudio F2_Empujar[16] = {
   {"/Brillante/A - 4-cm.wav"},  {"/Brillante/Bb - 3-cm.wav"}, {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/G - 4-cm.wav"},
   {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/Eb - 5-cm.wav"}, {"/Brillante/G - 5-cm.wav"},  {"/Brillante/Bb - 5-cm.wav"},
   {"/Brillante/Eb - 6-cm.wav"}, {"/Brillante/G - 6-cm.wav"},  {"/Brillante/Bb - 6-cm.wav"}
 };
-// --- HILERA 2 Si Mi La ---
-const ArchivoAudio F2_H_SML[16] = {
-  {"/Brillante/C - 5-cm.wav"},  {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/Gb - 4-cm.wav"}, {"/Brillante/A - 4-cm.wav"},
-  {"/Brillante/Db - 5-cm.wav"}, {"/Brillante/Eb - 5-cm.wav"}, {"/Brillante/Gb - 5-cm.wav"}, {"/Brillante/A - 5-cm.wav"},
-  {"/Brillante/Db - 6-cm.wav"}, {"/Brillante/Eb - 6-cm.wav"}, {"/Brillante/F - 6-cm.wav"}   // ≈Gb6→F6
-};
-const ArchivoAudio F2_E_SML[16] = {
-  {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/Bb - 3-cm.wav"}, // ≈B3→Bb3
-  {"/Brillante/E - 4-cm.wav"},  {"/Brillante/Ab - 4-cm.wav"}, {"/Brillante/B - 4-cm.wav"},
-  {"/Brillante/E - 5-cm.wav"},  {"/Brillante/Ab - 5-cm.wav"}, {"/Brillante/Bb - 5-cm.wav"}, // ≈B5→Bb5
-  {"/Brillante/Eb - 6-cm.wav"}, {"/Brillante/Ab - 6-cm.wav"}, {"/Brillante/Bb - 6-cm.wav"}  // ≈B6→Bb6
-};
 
-// --- HILERA 3 (adentro) ---
-const ArchivoAudio F3_H_5L[16] = {  // HALAR 5 Letras
+// Hilera 3 — Adentro (MUX2 b=0 a 10)
+const ArchivoAudio F3_Halar[16] = {
   {"/Brillante/E - 5-cm.wav"},  {"/Brillante/G - 4-cm.wav"},  {"/Brillante/Bb - 4-cm.wav"}, {"/Brillante/Db - 5-cm.wav"},
   {"/Brillante/F - 5-cm.wav"},  {"/Brillante/G - 5-cm.wav"},  {"/Brillante/Bb - 5-cm.wav"}, {"/Brillante/Db - 6-cm.wav"},
   {"/Brillante/F - 6-cm.wav"},  {"/Brillante/G - 6-cm.wav"}
 };
-const ArchivoAudio F3_E_5L[16] = {  // EMPUJAR 5 Letras
+const ArchivoAudio F3_Empujar[16] = {
   {"/Brillante/Gb - 5-cm.wav"}, {"/Brillante/Eb - 4-cm.wav"}, {"/Brillante/Ab - 4-cm.wav"}, {"/Brillante/C - 5-cm.wav"},
   {"/Brillante/Eb - 5-cm.wav"}, {"/Brillante/Ab - 5-cm.wav"}, {"/Brillante/C - 6-cm.wav"},  {"/Brillante/Eb - 6-cm.wav"},
   {"/Brillante/Ab - 6-cm.wav"}, {"/Brillante/C - 7-cm.wav"}
-};
-// --- HILERA 3 Si Mi La ---
-const ArchivoAudio F3_H_SML[16] = {
-  {"/Brillante/F - 5-cm.wav"},  {"/Brillante/Ab - 4-cm.wav"}, {"/Brillante/B - 4-cm.wav"},  {"/Brillante/D - 5-cm.wav"},
-  {"/Brillante/Gb - 5-cm.wav"}, {"/Brillante/Ab - 5-cm.wav"}, {"/Brillante/Bb - 5-cm.wav"}, // ≈B5→Bb5
-  {"/Brillante/D - 6-cm.wav"},  {"/Brillante/F - 6-cm.wav"},  {"/Brillante/Ab - 6-cm.wav"}  // ≈Gb6→F6
-};
-const ArchivoAudio F3_E_SML[16] = {
-  {"/Brillante/G - 5-cm.wav"},  {"/Brillante/E - 4-cm.wav"},  {"/Brillante/A - 4-cm.wav"},  {"/Brillante/Db - 5-cm.wav"},
-  {"/Brillante/E - 5-cm.wav"},  {"/Brillante/A - 5-cm.wav"},  {"/Brillante/Db - 6-cm.wav"}, {"/Brillante/Eb - 6-cm.wav"},  // ≈E6→Eb6
-  {"/Brillante/Ab - 6-cm.wav"}, {"/Brillante/C - 7-cm.wav"}   // ≈A6→Ab6, ≈Db7→C7
+  // En Si Mi La (rate 23362): Eb-6 → E-6 | Ab-6 → A-6 | C-7 → Db-7 (exacto)
 };
 
-// --- BAJOS (sin cambio entre tonos — mismos acordes físicos verificados) ---
+// Bajos — Verificados físicamente (swaps pines 4↔10 y 5↔11)
+// En Si Mi La (rate 23362): Mib→Mi, Sib→Si, Fa→Solb, Reb→Re, Do→Reb, Sol→Lab (exacto)
 const ArchivoAudio BAJOS_HALAR[12] = {
-  {"/Bajos/Bajo  Eb-cm.wav"},          {"/Bajos/Bajo  Eb  (acorde)-cm.wav"},
-  {"/Bajos/Bajo Bb-cm.wav"},           {"/Bajos/Bajo Bb  (acorde)-cm.wav"},
-  {"/Bajos/Bajo  F-cm.wav"},           {"/Bajos/Bajo F (acorde)-cm.wav"},
-  {"/Bajos/Bajo Db-cm.wav"},           {"/Bajos/Bajo Db   (acorde)-cm.wav"},
-  {"/Bajos/Bajo  F-cm.wav"},           {"/Bajos/Bajo Fm   (acorde)-cm.wav"},
-  {"/Bajos/Bajo C -cm.wav"},           {"/Bajos/Bajo Cm (acorde)-cm.wav"}
+  {"/Bajos/Bajo  Eb-cm.wav"},          {"/Bajos/Bajo  Eb  (acorde)-cm.wav"}, // 0,1  Mib
+  {"/Bajos/Bajo Bb-cm.wav"},           {"/Bajos/Bajo Bb  (acorde)-cm.wav"},  // 2,3  Sib
+  {"/Bajos/Bajo  F-cm.wav"},           {"/Bajos/Bajo F (acorde)-cm.wav"},    // 4,5  Fa  (swap)
+  {"/Bajos/Bajo Db-cm.wav"},           {"/Bajos/Bajo Db   (acorde)-cm.wav"}, // 6,7  Reb
+  {"/Bajos/Bajo  F-cm.wav"},           {"/Bajos/Bajo Fm   (acorde)-cm.wav"}, // 8,9  Fa menor
+  {"/Bajos/Bajo C -cm.wav"},           {"/Bajos/Bajo Cm (acorde)-cm.wav"}    // 10,11 Do (swap)
 };
 const ArchivoAudio BAJOS_EMPUJAR[12] = {
-  {"/Bajos/Bajo Ab-cm.wav"},           {"/Bajos/Bajo Ab  (acorde)-cm.wav"},
-  {"/Bajos/Bajo  Eb-cm.wav"},          {"/Bajos/Bajo  Eb  (acorde)-cm.wav"},
-  {"/Bajos/Bajo Bb-cm.wav"},           {"/Bajos/Bajo Bb  (acorde)-cm.wav"},
-  {"/Bajos/Bajo Db-cm.wav"},           {"/Bajos/Bajo Db   (acorde)-cm.wav"},
-  {"/Bajos/Bajo C -cm.wav"},           {"/Bajos/Bajo C  (acorde)-cm.wav"},
-  {"/Bajos/Bajo  G-cm.wav"},           {"/Bajos/Bajo G  (acorde)-cm.wav"}
+  {"/Bajos/Bajo Ab-cm.wav"},           {"/Bajos/Bajo Ab  (acorde)-cm.wav"},  // 0,1  Lab
+  {"/Bajos/Bajo  Eb-cm.wav"},          {"/Bajos/Bajo  Eb  (acorde)-cm.wav"}, // 2,3  Mib
+  {"/Bajos/Bajo Bb-cm.wav"},           {"/Bajos/Bajo Bb  (acorde)-cm.wav"},  // 4,5  Sib (swap)
+  {"/Bajos/Bajo Db-cm.wav"},           {"/Bajos/Bajo Db   (acorde)-cm.wav"}, // 6,7  Reb
+  {"/Bajos/Bajo C -cm.wav"},           {"/Bajos/Bajo C  (acorde)-cm.wav"},   // 8,9  Do
+  {"/Bajos/Bajo  G-cm.wav"},           {"/Bajos/Bajo G  (acorde)-cm.wav"}    // 10,11 Sol (swap)
 };
-
-// Punteros activos según el tono seleccionado
-const ArchivoAudio *F1_H, *F1_E, *F2_H, *F2_E, *F3_H, *F3_E;
-
-void actualizarPunterosArray() {
-  if (tonoActual == TONO_5_LETRAS) {
-    F1_H = F1_H_5L; F1_E = F1_E_5L;
-    F2_H = F2_H_5L; F2_E = F2_E_5L;
-    F3_H = F3_H_5L; F3_E = F3_E_5L;
-  } else {
-    F1_H = F1_H_SML; F1_E = F1_E_SML;
-    F2_H = F2_H_SML; F2_E = F2_E_SML;
-    F3_H = F3_H_SML; F3_E = F3_E_SML;
-  }
-}
 
 // ====================================================
 // 🖥️ PANTALLA TFT ILI9341 — VERTICAL (rotation 2)
 // ====================================================
-// FIX: VSPI no existe en ESP32-S3. Usamos HSPI=2 que es compatible.
+// Fix ESP32-S3: VSPI no existe, usamos HSPI=2
 #ifndef HSPI
   #define HSPI 2
 #endif
 SPIClass spiTFT(HSPI);
-
-// FIX: XPT2046 constructor solo acepta (csPin) — SPI se pasa en begin()
+// XPT2046: SPI se pasa en begin(), NO en el constructor
 Adafruit_ILI9341 tft(&spiTFT, TFT_DC, TFT_CS, TFT_RST);
 XPT2046_Touchscreen touch(TOUCH_CS);
 
+// Área de botones en pantalla (2 columnas x 6 filas)
 struct BotonUI { int x, y, w, h; uint16_t colorActivo; };
-BotonUI btnTonos[2] = {
-  {10,  210, 100, 50, 0x07E0},  // 5 Letras — verde
-  {128, 210, 100, 50, 0x001F}   // Si Mi La — azul
+BotonUI btnTonos[12] = {
+  {10,  150, 105, 26, 0x780F}, {125, 150, 105, 26, 0x001F},
+  {10,  178, 105, 26, 0x0410}, {125, 178, 105, 26, 0x07E0},
+  {10,  206, 105, 26, 0xF81F}, {125, 206, 105, 26, 0xF800},
+  {10,  234, 105, 26, 0xFFE0}, {125, 234, 105, 26, 0xFDA0},
+  {10,  262, 105, 26, 0x07FF}, {125, 262, 105, 26, 0xAD55},
+  {10,  290, 105, 26, 0x4208}, {125, 290, 105, 26, 0x001F}
 };
 
 void dibujarPantalla() {
   tft.fillScreen(ILI9341_BLACK);
+
+  // Header Muy Compacto
   tft.setTextColor(ILI9341_YELLOW); tft.setTextSize(2);
-  tft.setCursor(20, 10);  tft.println("ACORDEON V-PRO");
-  tft.drawFastHLine(0, 35, 240, 0x4208);
-
-  tft.setTextColor(0xAD55); tft.setTextSize(1);
-  tft.setCursor(10, 45);   tft.println("Tonalidad activa:");
-  tft.setTextSize(3);      tft.setTextColor(ILI9341_CYAN);
-  tft.setCursor(10, 60);   tft.println(NOMBRE_TONOS[tonoActual]);
-
-  tft.setTextSize(1);      tft.setTextColor(ILI9341_WHITE);
-  tft.setCursor(10, 105);  tft.println("Fuelle:");
-  tft.setTextSize(2);
+  tft.setCursor(10, 5); tft.println("V-PRO ACORDEON");
+  
+  // Tono activo y Fuelle en una misma linea de info
+  tft.setTextColor(ILI9341_CYAN); tft.setTextSize(1);
+  tft.setCursor(10, 30); tft.print("TONO: "); tft.print(NOMBRE_TONOS[tonoActual]);
+  tft.setCursor(10, 45); tft.print("FUELLE: ");
   tft.setTextColor(fuelleAbriendo ? ILI9341_GREEN : ILI9341_RED);
-  tft.setCursor(10, 120);  tft.println(fuelleAbriendo ? "ABRIENDO" : "CERRANDO");
+  tft.println(fuelleAbriendo ? "ABRIENDO" : "CERRANDO");
 
-  tft.drawFastHLine(0, 195, 240, 0x4208);
-  tft.setTextSize(1);      tft.setTextColor(ILI9341_WHITE);
-  tft.setCursor(10, 202);  tft.println("Selecciona tonalidad:");
+  tft.drawFastHLine(0, 60, 240, 0x4208);
+  tft.setTextColor(ILI9341_WHITE); tft.setTextSize(1);
+  tft.setCursor(10, 70); tft.println("Selecciona tonalidad (Segun pagina):");
 
-  for (int i = 0; i < 2; i++) {
+  // Botones de tono
+  for (int i = 0; i < 12; i++) {
     bool sel = (i == tonoActual);
-    uint16_t fondo = sel ? btnTonos[i].colorActivo : 0x2945;
+    uint16_t fondo = sel ? btnTonos[i].colorActivo : 0x2104;
     uint16_t borde = sel ? ILI9341_WHITE : ILI9341_DARKGREY;
-    tft.fillRoundRect(btnTonos[i].x, btnTonos[i].y, btnTonos[i].w, btnTonos[i].h, 8, fondo);
-    tft.drawRoundRect(btnTonos[i].x, btnTonos[i].y, btnTonos[i].w, btnTonos[i].h, 8, borde);
-    tft.setTextSize(1);    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(btnTonos[i].x + 8, btnTonos[i].y + 20);
+    tft.fillRoundRect(btnTonos[i].x, btnTonos[i].y, btnTonos[i].w, btnTonos[i].h, 4, fondo);
+    tft.drawRoundRect(btnTonos[i].x, btnTonos[i].y, btnTonos[i].w, btnTonos[i].h, 4, borde);
+    tft.setTextColor(ILI9341_WHITE); tft.setTextSize(1);
+    tft.setCursor(btnTonos[i].x + 4, btnTonos[i].y + 9);
     tft.println(NOMBRE_TONOS[i]);
   }
-
-  tft.setTextSize(1);  tft.setTextColor(0x4208);
-  tft.setCursor(10, 275); tft.println("V-PRO 17/03/2026");
 }
 
 void actualizarFuellePantalla() {
-  tft.fillRect(10, 120, 200, 20, ILI9341_BLACK);
-  tft.setTextSize(2);
+  tft.fillRect(10, 45, 200, 10, ILI9341_BLACK);
+  tft.setCursor(10, 45); tft.setTextSize(1);
+  tft.print("FUELLE: ");
   tft.setTextColor(fuelleAbriendo ? ILI9341_GREEN : ILI9341_RED);
-  tft.setCursor(10, 120);
   tft.println(fuelleAbriendo ? "ABRIENDO" : "CERRANDO");
 }
 
@@ -304,11 +272,14 @@ int buscarVoz(int m, int b) {
 
 void cambiarTono(int nuevoTono) {
   if (nuevoTono == tonoActual) return;
+  // Apagar todas las voces activas antes de cambiar el rate
   for (int i = 0; i < NUM_VOCES; i++) liberarVoz(i);
   tonoActual = nuevoTono;
-  actualizarPunterosArray();
+  // CLAVE: Cambiar el sample rate global — esto transpone TODAS las notas 1 semitono
+  out->SetRate(RATES_TONOS[tonoActual]);
   dibujarPantalla();
-  Serial.print("🎼 Tono: "); Serial.println(NOMBRE_TONOS[tonoActual]);
+  Serial.print("🎼 Tono: "); Serial.print(NOMBRE_TONOS[tonoActual]);
+  Serial.print(" | Rate: "); Serial.println(RATES_TONOS[tonoActual]);
 }
 
 bool procesarTouch() {
@@ -319,7 +290,7 @@ bool procesarTouch() {
   TS_Point pt = touch.getPoint();
   int x = map(pt.x, 3800, 300, 0, 240);
   int y = map(pt.y, 3700, 200, 0, 320);
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 12; i++) {
     if (x >= btnTonos[i].x && x <= btnTonos[i].x + btnTonos[i].w &&
         y >= btnTonos[i].y && y <= btnTonos[i].y + btnTonos[i].h) {
       cambiarTono(i); return true;
@@ -353,9 +324,9 @@ void sonarNota(int m, int b) {
   const ArchivoAudio *a = NULL;
   int idx = (bot > 0) ? bot - 1 : 0; if (idx > 15) idx = 15;
 
-  if      (h == 1) a = fuelleAbriendo ? &F1_H[idx] : &F1_E[idx];
-  else if (h == 2) a = fuelleAbriendo ? &F2_H[idx] : &F2_E[idx];
-  else if (h == 3) a = fuelleAbriendo ? &F3_H[idx] : &F3_E[idx];
+  if      (h == 1) a = fuelleAbriendo ? &F1_Halar[idx] : &F1_Empujar[idx];
+  else if (h == 2) a = fuelleAbriendo ? &F2_Halar[idx] : &F2_Empujar[idx];
+  else if (h == 3) a = fuelleAbriendo ? &F3_Halar[idx] : &F3_Empujar[idx];
   else if (esBajo && nb >= 0 && nb < 12)
     a = fuelleAbriendo ? &BAJOS_HALAR[nb] : &BAJOS_EMPUJAR[nb];
 
@@ -395,39 +366,33 @@ void setup() {
   pinMode(sigMux1, INPUT_PULLUP); pinMode(sigMux2, INPUT_PULLUP); pinMode(sigMux3, INPUT_PULLUP);
   pinMode(slidePin, INPUT);
 
-  // SD — Bus SPI principal (pines 35/37/36)
+  // SD (SPI Bus 1 — pines 35/37/36)
   SPI.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
   SD.begin(SD_CS, SPI, 20000000, "/sd", 20);
-  Serial.println("✅ SD V-PRO @ 20MHz (max_files=20)");
+  Serial.println("✅ SD V-PRO @ 20MHz");
 
   // I2S DAC
   out = new AudioOutputI2S();
   out->SetPinout(I2S_BCK, I2S_WS, I2S_DIN);
   out->SetBuffers(8, 256);
-  out->SetRate(22050);
+  out->SetRate(RATES_TONOS[tonoActual]);  // 22050 (5 Letras por defecto)
   out->SetGain(1.2f);
+
   mixer = new AudioOutputMixer(512, out);
   for (int i = 0; i < NUM_VOCES; i++) {
     voces[i].stub    = mixer->NewInput();
     voces[i].ocupada = false;
   }
 
-  // Pantalla TFT + Touch — Bus SPI secundario (pines 8/12/13)
+  // Pantalla TFT + Touch (SPI Bus 2 — pines 8/12/13)
   spiTFT.begin(TFT_SCK, TFT_MISO, TFT_MOSI, -1);
-  pinMode(TFT_LED, OUTPUT);
-  digitalWrite(TFT_LED, HIGH);
-  tft.begin();
-  tft.setRotation(2);       // Vertical correcto (igual que vpro_fix_rotation.ino)
-  touch.begin(spiTFT);      // Pasar SPIClass en begin() — correcto para XPT2046
-  touch.setRotation(2);     // Sincronizado con pantalla
+  pinMode(TFT_LED, OUTPUT); digitalWrite(TFT_LED, HIGH);
+  tft.begin(); tft.setRotation(2);
+  touch.begin(spiTFT); touch.setRotation(2);
 
-  // Inicializar arrays de notas
-  actualizarPunterosArray();
   valorAnteriorSlide = analogRead(slidePin);
-
-  // Mostrar pantalla
   dibujarPantalla();
-  Serial.println("🪗 ACORDEÓN V-PRO CON PANTALLA — LISTO");
+  Serial.println("🪗 V-PRO CON PANTALLA — LISTO");
 }
 
 // ====================================================
@@ -452,9 +417,7 @@ void loop() {
         voces[v].stub->SetGain(voces[v].volumenActual);
       }
       if (!voces[v].wav->loop()) liberarVoz(v);
-    } else if (voces[v].ocupada) {
-      liberarVoz(v);
-    }
+    } else if (voces[v].ocupada) { liberarVoz(v); }
   }
 
   if (!haySonido) {
@@ -462,7 +425,7 @@ void loop() {
     for (int s = 0; s < 16; s++) out->ConsumeSample(silence);
   }
 
-  // 2. TOUCH cada 50ms (sin bloquear audio)
+  // 2. TOUCH (cada 50ms — no bloquea audio)
   static unsigned long lastTouchCheck = 0;
   if (now - lastTouchCheck > 50) { lastTouchCheck = now; procesarTouch(); }
 
@@ -489,7 +452,7 @@ void loop() {
     estadoFisicoM1[i] = s1; estadoFisicoM2[i] = s2; estadoFisicoM3[i] = s3;
   }
 
-  // 4. WATCHDOG
+  // 4. WATCHDOG — mata notas pegadas
   for (int v = 0; v < NUM_VOCES; v++) {
     if (!voces[v].ocupada || voces[v].enRelease) continue;
     bool presionado = false;
