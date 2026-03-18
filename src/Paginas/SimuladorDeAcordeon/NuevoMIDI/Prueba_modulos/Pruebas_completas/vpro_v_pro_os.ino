@@ -85,6 +85,7 @@ const char *NOMBRE_TONOS[] = {"EAD (ALTO)", "FSibM (Orig)",  "GCF BEMOL",
 const int RATES_TONOS[] = {15592, 16520, 17501, 18542, 19644, 20812,
                            22050, 23362, 24750, 26222, 27781, 29433};
 int tonoActual = 6;
+bool timbreArmonizado = false; // 🔊 FALSO: Brillante, VERDADERO: Armonizado
 
 struct ArchivoAudio {
   const char *ruta;
@@ -234,6 +235,13 @@ void drawAccUI() {
     tft.setCursor(x + 5, y + 13);
     tft.print(NOMBRE_TONOS[i]);
   }
+  // Botón Selector de Timbre al fondo
+  tft.fillRoundRect(20, 290, 200, 28, 8, timbreArmonizado ? 0xF800 : 0x07E0);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setTextSize(1);
+  tft.setCursor(45, 298);
+  tft.print("TIMBRE: ");
+  tft.print(timbreArmonizado ? "ARMONIZADO" : "BRILLANTE");
 }
 
 void drawVProPlayer() {
@@ -428,6 +436,16 @@ void son(int m, int b) {
     a = fuelleAbriendo ? &BAJOS_H[nb] : &BAJOS_E[nb];
   if (!a || !a->ruta)
     return;
+  
+  // ⚡ GENERACION DINAMICA DE RUTA PARA ARMONIZADO
+  char rutaFinal[64];
+  strcpy(rutaFinal, a->ruta);
+  if (timbreArmonizado && strstr(rutaFinal, "/Brillante/")) {
+    char temp[64];
+    sprintf(temp, "/Armonizado/%s", rutaFinal + 11); // Salta "/Brillante/"
+    strcpy(rutaFinal, temp);
+  }
+
   int v = -1;
   for (int j = 0; j < NUM_VOCES; j++)
     if (!voces[j].ocupada) {
@@ -438,7 +456,7 @@ void son(int m, int b) {
     v = 0;
     libV(0);
   }
-  voces[v].file = new AudioFileSourceSD(a->ruta);
+  voces[v].file = new AudioFileSourceSD(rutaFinal);
   if (voces[v].file->isOpen()) {
     voces[v].wav = new AudioGeneratorWAV();
     voces[v].buff = new AudioFileSourceBuffer(voces[v].file, 2048);
@@ -629,13 +647,16 @@ void loop() {
       }
       break;
     case STATE_ACCORDION:
-      if (y > 60) {
+      if (y > 60 && y < 290) { // Tonalidades
         int c = (x > 120) ? 1 : 0, r = (y - 60) / 38, id = r * 2 + c;
         if (id < 12) {
           tonoActual = id;
           out->SetRate(RATES_TONOS[tonoActual]);
           drawAccUI();
         }
+      } else if (y >= 290) { // Toggle Timbre
+        timbreArmonizado = !timbreArmonizado;
+        drawAccUI();
       }
       break;
     case STATE_PLAYER:

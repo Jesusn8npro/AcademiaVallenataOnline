@@ -287,52 +287,62 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // --- CARGA INTEGRADA DE SUPABASE ---
     useEffect(() => {
         const checkUserAndLoad = async () => {
-            // Cargar lista de instrumentos siempre
-            const { data: instData } = await supabase.from('sim_instrumentos').select('*');
-            if (instData) setListaInstrumentos(instData);
+            setCargandoCloud(true);
+            try {
+                // Cargar lista de instrumentos siempre
+                const { data: instData } = await supabase.from('sim_instrumentos').select('*');
+                if (instData) setListaInstrumentos(instData);
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) { // Cargar TODO el registro del usuario en un solo paso inicial
-                const { data: ajustesData }: { data: any } = await supabase
-                    .from('sim_ajustes_usuario')
-                    .select('*')
-                    .eq('usuario_id', user.id)
-                    .maybeSingle();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    setUsuarioId(user.id);
+                    const { data: ajustesData } = await (supabase
+                        .from('sim_ajustes_usuario')
+                        .select('*')
+                        .eq('usuario_id', user.id)
+                        .maybeSingle() as any);
 
-                if (ajustesData) {
-                    if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id);
-                    if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados);
+                    if (ajustesData) {
+                        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id);
+                        if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados);
+                        
+                        // 📐 Restaurar posición y tamaño
+                        if (ajustesData.ajustes_visuales) {
+                            setAjustes(prev => ({ ...prev, ...ajustesData.ajustes_visuales }));
+                        }
 
-                    // Sincronizar nombres personalizados
-                    if (ajustesData.tonalidades_configuradas) {
-                        const nombres: Record<string, string> = {};
-                        Object.entries(ajustesData.tonalidades_configuradas).forEach(([key, val]: [string, any]) => {
-                            if (val && val.nombrePersonalizado) {
-                                const id = key.replace('ajustes_acordeon_vPRO_', '');
-                                nombres[id] = val.nombrePersonalizado;
-                            }
-                        });
-                        setNombresTonalidades(nombres);
-                    }
+                        // Sincrizar nombres y tonalidades
+                        if (ajustesData.tonalidades_configuradas) {
+                            const nombres: Record<string, string> = {};
+                            Object.entries(ajustesData.tonalidades_configuradas).forEach(([key, val]: [string, any]) => {
+                                if (val?.nombrePersonalizado) {
+                                    const id = key.replace('ajustes_acordeon_vPRO_', '');
+                                    nombres[id] = val.nombrePersonalizado;
+                                }
+                            });
+                            setNombresTonalidades(nombres);
+                        }
 
-                    // Sincronizar lista de tonalidades
-                    const guardadas = ajustesData.lista_tonalidades_activa;
-                    if (guardadas && Array.isArray(guardadas) && guardadas.length > 0) {
-                        setListaTonalidades(guardadas);
+                        if (ajustesData.lista_tonalidades_activa?.length > 0) {
+                            setListaTonalidades(ajustesData.lista_tonalidades_activa);
+                        } else {
+                            setListaTonalidades(Object.keys(TONALIDADES));
+                        }
+
+                        if (ajustesData.tonalidad_activa) {
+                            setTonalidadSeleccionada(ajustesData.tonalidad_activa);
+                        }
                     } else {
-                        // Si no hay nada guardado, usamos todas las del sistema
                         setListaTonalidades(Object.keys(TONALIDADES));
-                    }
-
-                    // 🏁 ESTABLECER TONALIDAD ACTIVA (esto disparará cargarSpecificos con el usuario ya listo)
-                    if (ajustesData.tonalidad_activa) {
-                        setTonalidadSeleccionada(ajustesData.tonalidad_activa);
                     }
                 } else {
                     setListaTonalidades(Object.keys(TONALIDADES));
                 }
-            } else {
+            } catch (error) {
+                console.error("Error cargando datos de usuario:", error);
                 setListaTonalidades(Object.keys(TONALIDADES));
+            } finally {
+                setCargandoCloud(false);
             }
         };
         checkUserAndLoad();
