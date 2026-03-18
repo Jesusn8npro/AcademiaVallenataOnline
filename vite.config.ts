@@ -69,26 +69,29 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: false, // 100% false, no exponer mapas
-    chunkSizeWarningLimit: 1000,
+    sourcemap: false,
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor_react: ['react', 'react-dom', 'react-router-dom'],
-          vendor_supabase: ['@supabase/supabase-js'],
-          vendor_ui: ['framer-motion', 'lucide-react']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor_core';
+            if (id.includes('supabase')) return 'vendor_db';
+            if (id.includes('framer-motion') || id.includes('lucide')) return 'vendor_ui';
+            return 'vendor_libs';
+          }
         }
       }
     },
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Eliminar todos los console.log automáticamente
-        drop_debugger: false, // DEBE SER FALSO para que nuestro antiHackerLoop con debugger funcione
-        passes: 2
+        drop_console: true,
+        drop_debugger: false,
+        passes: 1 // Reducido de 2 a 1 para ahorrar RAM y CPU en el build
       },
       format: {
-        comments: false, // Borrar todos los comentarios, licencias se mantendrán aparte si procede
+        comments: false,
       }
     }
   }
