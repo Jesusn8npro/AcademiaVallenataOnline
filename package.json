@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node scripts/sync-samples.cjs && vite",
     "sync": "node scripts/sync-samples.cjs",
-    "build": "node scripts/sync-samples.cjs && vite build",
+    "build": "node scripts/sync-samples.cjs && NODE_OPTIONS='--max-old-space-size=4096' vite build",
     "type-check": "tsc -b",
     "lint": "eslint .",
     "preview": "serve -s dist -l tcp://0.0.0.0:${PORT:-80}"

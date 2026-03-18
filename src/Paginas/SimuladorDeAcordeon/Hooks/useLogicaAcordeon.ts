@@ -72,8 +72,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // --- 1. ESTADOS (Siempre al principio) ---
     const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69'); // Acordeón Original
     const [listaInstrumentos, setListaInstrumentos] = useState<any[]>([]);
-    const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
-    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<Muestra[]>([]);
+    const [muestrasDB, setMuestrasDB] = useState<any[]>([]); // Tipado explícito para evitar 'never[]'
+    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<any[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
     const [midiActivado, setMidiActivado] = useState(false);
     const [esp32Conectado, setEsp32Conectado] = useState(false);
@@ -292,11 +292,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             if (instData) setListaInstrumentos(instData);
 
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUsuarioId(user.id);
-
-                // Cargar TODO el registro del usuario en un solo paso inicial
-                const { data: ajustesData } = await supabase
+            if (user) { // Cargar TODO el registro del usuario en un solo paso inicial
+                const { data: ajustesData }: { data: any } = await supabase
                     .from('sim_ajustes_usuario')
                     .select('*')
                     .eq('usuario_id', user.id)
@@ -332,11 +329,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                         setTonalidadSeleccionada(ajustesData.tonalidad_activa);
                     }
                 } else {
-                    setSonidosVirtuales(configuracionUsuario.sonidosVirtuales as SonidoVirtual[] || []);
                     setListaTonalidades(Object.keys(TONALIDADES));
                 }
             } else {
-                setSonidosVirtuales(configuracionUsuario.sonidosVirtuales as SonidoVirtual[] || []);
                 setListaTonalidades(Object.keys(TONALIDADES));
             }
         };
@@ -351,7 +346,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 const { data, error } = await supabase
                     .from('sim_muestras')
                     .select('*')
-                    .eq('instrumento_id', instrumentoId);
+                    .eq('instrumento_id', instrumentoId) as any;
 
                 if (error) throw error;
                 setMuestrasDB(data || []);
@@ -1152,7 +1147,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         const setupInputs = (access: any) => {
             access.inputs.forEach((input: any) => {
                 input.onmidimessage = onMIDIMessage;
-                console.log(`%c � DISPOSITIVO DETECTADO: ${input.name} `, "background: #2980b9; color: white; padding: 3px;");
+                console.log(`%c  DISPOSITIVO DETECTADO: ${input.name} `, "background: #2980b9; color: white; padding: 3px;");
             });
         };
 
@@ -1322,6 +1317,34 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
         return () => clearTimeout(timer);
     }, [listaTonalidades, usuarioId]);
+
+    useEffect(() => {
+        const persistir = async () => {
+            if (!usuarioId || listaTonalidades.length === 0) return;
+
+            const allTonalidades: Record<string, any> = {};
+            listaTonalidades.forEach(tonalidadId => {
+                const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
+                allTonalidades[key] = {
+                    nombrePersonalizado: nombresTonalidades[tonalidadId] || null
+                };
+            });
+
+            if (usuarioId) {
+                const { error } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .upsert({
+                        usuario_id: usuarioId,
+                        tonalidades_configuradas: allTonalidades,
+                        lista_tonalidades_activa: listaTonalidades,
+                        updated_at: new Date().toISOString()
+                    } as any, { onConflict: 'usuario_id' }) as any;
+                
+                if (error) console.error("Error guardando tonalidades:", error);
+            }
+        };
+        persistir();
+    }, [nombresTonalidades, listaTonalidades, usuarioId]);
 
     const eliminarTonalidad = async (tonalidad: string) => {
         if (listaTonalidades.length <= 1) return alert('Debe conservar al menos una tonalidad.');
