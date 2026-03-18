@@ -135,8 +135,11 @@ export class MotorAudioPro {
         // 1. Verificación de Memoria RAM (Ultra-rápido)
         if (banco.muestras.has(idSonido)) return;
 
+        // 🔍 LOG DIAGNÓSTICO
+        console.log(`%c 📥 CARGANDO [${bancoId.slice(0,8)}] ${url} `, 'background:#0f766e;color:white;padding:2px;border-radius:3px;font-size:10px;');
+
         try {
-            const cacheName = 'sim-audios-v1';
+            const cacheName = 'sim-audios-v3'; // v3 = ARCHIVOS CONVERTIDOS RECIENTES (30KB+)
             let audioData: ArrayBuffer | null = null;
 
             // 2. Intento desde Cache API (Persistencia en disco)
@@ -146,11 +149,16 @@ export class MotorAudioPro {
 
                 if (cachedResponse) {
                     audioData = await cachedResponse.arrayBuffer();
+                    console.log(`  ✅ DESDE CACHÉ: ${url}`);
                 } else {
                     // 3. Descarga desde Red/Supabase (Solo si no está en caché)
-                    console.log(`📡 [RED] Descargando: ${idSonido}`);
+                    console.log(`  📡 [RED] Descargando: ${url}`);
                     const respuesta = await fetch(url);
-                    if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+                    if (!respuesta.ok) {
+                        console.error(`  ❌ HTTP ${respuesta.status} al descargar: ${url}`);
+                        throw new Error(`HTTP ${respuesta.status}`);
+                    }
+                    console.log(`  ✅ Descargado OK (${respuesta.headers.get('content-type')}): ${url}`);
 
                     // Guardar en caché para la próxima vez
                     const respuestaACachear = respuesta.clone();
@@ -159,8 +167,12 @@ export class MotorAudioPro {
                 }
             } catch (cacheError) {
                 // Fallback si la Cache API falla por alguna razón (ej. modo incógnito)
+                console.warn(`  ⚠️ Cache API falló, intentando fetch directo: ${url}`);
                 const respuesta = await fetch(url);
-                if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+                if (!respuesta.ok) {
+                    console.error(`  ❌ HTTP ${respuesta.status} (fallback) al descargar: ${url}`);
+                    throw new Error(`HTTP ${respuesta.status}`);
+                }
                 audioData = await respuesta.arrayBuffer();
             }
 
@@ -172,6 +184,7 @@ export class MotorAudioPro {
 
             banco.muestras.set(idSonido, audioBuffer);
             banco.offsets.set(idSonido, offset);
+            console.log(`  🎵 Decoded OK → banco['${bancoId.slice(0,8)}']['${idSonido.slice(-30)}']`);
         } catch (error) {
             console.error(`❌ Error en motor de audio [${idSonido}]:`, error);
         }

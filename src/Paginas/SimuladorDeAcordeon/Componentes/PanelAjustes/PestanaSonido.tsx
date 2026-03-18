@@ -22,10 +22,11 @@ interface PestanaSonidoProps {
     reproduceTono: (id: string) => { instances: any[] };
     samplesBrillante: string[];
     samplesBajos: string[];
+    samplesArmonizado: string[];
     muestrasDB?: any[];
     soundsPerKey: Record<string, string[]>;
     obtenerRutasAudio: (id: string, ajustes?: AjustesAcordeon) => string[];
-    guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => void;
+    guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante' | 'Armonizado') => void;
     modoVista?: 'controles' | 'seleccion';
     instrumentoId: string;
     setInstrumentoId: (id: string) => void;
@@ -36,6 +37,7 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
     tonalidadSeleccionada, setTonalidadSeleccionada, listaTonalidades, eliminarTonalidad,
     botonSeleccionado, mapaBotonesActual, sonidosVirtuales, ajustes, setAjustes,
     setSonidosVirtuales, playPreview, stopPreview, reproduceTono, samplesBrillante, samplesBajos,
+    samplesArmonizado,
     muestrasDB = [],
     obtenerRutasAudio,
     guardarNuevoSonidoVirtual,
@@ -217,6 +219,41 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
                                 {(!listaInstrumentos || listaInstrumentos.length === 0) && <option value="default">Cargando instrumentos...</option>}
                             </select>
                             <p style={{ fontSize: '9px', color: '#555', marginTop: '5px', fontStyle: 'italic' }}>Esto cambiará el timbre de todo el acordeón.</p>
+
+                            {/* --- SWITCH DE TIMBRE: BRILLANTE / ARMONIZADO --- */}
+                            <div style={{ marginTop: '14px' }}>
+                                <label style={{ display: 'block', fontSize: '10px', marginBottom: '8px', color: '#888', fontWeight: 'bold' }}>TIMBRE DE PITOS</label>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    {(['Brillante', 'Armonizado'] as const).map(t => {
+                                        const activo = (ajustes.timbre || 'Brillante') === t;
+                                        return (
+                                            <button
+                                                key={t}
+                                                onClick={() => setAjustes(prev => ({ ...prev, timbre: t }))}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '9px 4px',
+                                                    borderRadius: '8px',
+                                                    border: activo ? '1px solid #3b82f6' : '1px solid #333',
+                                                    background: activo ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.03)',
+                                                    color: activo ? '#60a5fa' : '#555',
+                                                    fontWeight: activo ? 'bold' : 'normal',
+                                                    fontSize: '11px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {t === 'Brillante' ? '✨ Brillante' : '🎵 Armonizado'}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p style={{ fontSize: '9px', color: '#555', marginTop: '5px', fontStyle: 'italic' }}>
+                                    {(ajustes.timbre || 'Brillante') === 'Armonizado'
+                                        ? 'Los pitos usan el banco armonizado. Los bajos no cambian.'
+                                        : 'Los pitos usan el banco brillante estándar.'}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -328,8 +365,9 @@ const PestanaSonido: React.FC<PestanaSonidoProps> = ({
 
                             {/* 3. Locales */}
                             <p style={{ fontSize: '9px', fontWeight: '900', color: '#555', margin: '20px 0 8px' }}>LOCAL FILES</p>
-                            {(esBajo ? samplesBajos : samplesBrillante).map(file => {
-                                const ruta = `/audio/Muestras_Cromaticas/${esBajo ? 'Bajos' : 'Brillante'}/${file}`;
+                            {(esBajo ? samplesBajos : (ajustes.timbre === 'Armonizado' ? samplesArmonizado : samplesBrillante)).map(file => {
+                                const carpeta = esBajo ? 'Bajos' : (ajustes.timbre === 'Armonizado' ? 'Armonizado' : 'Brillante');
+                                const ruta = `/audio/Muestras_Cromaticas/${carpeta}/${file}`;
                                 const activo = rutasActivasActuales.includes(ruta);
                                 return (
                                     <div key={file} onClick={() => {

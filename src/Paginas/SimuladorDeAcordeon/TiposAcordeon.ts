@@ -14,6 +14,8 @@ export interface AjustesAcordeon {
     pitchPersonalizado: Record<string, number>;
     pitchGlobal?: number;
     bancoId?: string;
+    /** Timbre de los pitos: 'Brillante' (default) o 'Armonizado' */
+    timbre?: 'Brillante' | 'Armonizado';
 }
 
 export interface SonidoVirtual {
@@ -21,7 +23,7 @@ export interface SonidoVirtual {
     nombre: string;
     rutaBase: string;
     pitch: number;
-    tipo: 'Bajos' | 'Brillante';
+    tipo: 'Bajos' | 'Brillante' | 'Armonizado';
 }
 
 export interface BotonActivo {

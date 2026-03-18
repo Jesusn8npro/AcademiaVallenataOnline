@@ -29,13 +29,14 @@ interface PanelAjustesProps {
     reproduceTono: (id: string) => { instances: any[] };
     samplesBrillante: string[];
     samplesBajos: string[];
+    samplesArmonizado: string[];
     muestrasDB: any[];
     soundsPerKey: Record<string, string[]>;
     obtenerRutasAudio: (id: string) => string[];
     guardarAjustes: () => void;
     resetearAjustes: () => void;
     sincronizarAudios: () => void;
-    guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante') => void;
+    guardarNuevoSonidoVirtual: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante' | 'Armonizado') => void;
     instrumentoId: string;
     setInstrumentoId: (id: string) => void;
     listaInstrumentos: any[];

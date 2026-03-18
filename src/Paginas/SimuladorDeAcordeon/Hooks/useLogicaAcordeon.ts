@@ -16,6 +16,27 @@ const NOMBRES_INGLES: Record<string, string> = {
     'fa': 'F', 'fa#': 'Gb', 'solb': 'Gb', 'sol': 'G', 'sol#': 'Ab', 'lab': 'Ab', 'la': 'A', 'la#': 'Bb', 'sib': 'Bb', 'si': 'B'
 };
 
+// ✅ LISTAS HARDCODEADAS - Garantizan disponibilidad inmediata sin depender de fetch async
+const SAMPLES_BRILLANTE_DEFAULT: string[] = [
+    'A-4-cm.mp3', 'A-5-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3', 'Ab-6-cm.mp3',
+    'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'Bb-3-cm.mp3', 'Bb-4-cm.mp3',
+    'Bb-5-cm.mp3', 'Bb-6-cm.mp3', 'C-4-cm.mp3', 'C-5-cm.mp3', 'C-6-cm.mp3',
+    'C-7-cm.mp3', 'D-4-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3', 'Db-5-cm.mp3',
+    'Db-6-cm.mp3', 'E-4-cm.mp3', 'E-5-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3',
+    'Eb-6-cm.mp3', 'F-4-cm.mp3', 'F-5-cm.mp3', 'F-6-cm.mp3', 'G-4-cm.mp3',
+    'G-5-cm.mp3', 'G-6-cm.mp3', 'Gb-4-cm.mp3', 'Gb-5-cm.mp3'
+];
+
+const SAMPLES_ARMONIZADO_DEFAULT: string[] = [
+    'A-4-cm.mp3', 'A-5-cm.mp3', 'A-6-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3',
+    'Ab-6-cm.mp3', 'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'B-6-cm.mp3',
+    'Bb-4-cm.mp3', 'Bb-5-cm.mp3', 'C-5-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3',
+    'Db-4-cm.mp3', 'Db-5-cm.mp3', 'Db-6-cm.mp3', 'Db-7-cm.mp3', 'E-4-cm.mp3',
+    'E-5-cm.mp3', 'E-6-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3', 'Eb-6-cm.mp3',
+    'F-4-cm.mp3', 'F-5-cm.mp3', 'G-4-cm.mp3', 'G-5-cm.mp3', 'Gb-4-cm.mp3',
+    'Gb-5-cm.mp3', 'Gb-6-cm.mp3'
+];
+
 const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
     const filename = ruta.split('/').pop() || '';
     // Busca patrones como F-6 o Eb-4
@@ -58,8 +79,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [esp32Conectado, setEsp32Conectado] = useState(false);
     const esp32PortRef = useRef<any>(null);
     const [usuarioId, setUsuarioId] = useState<string | null>(null);
-    const [samplesPitos, setSamplesPitos] = useState<string[]>([]);
+    const [samplesPitos, setSamplesPitos] = useState<string[]>(SAMPLES_BRILLANTE_DEFAULT);
     const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
+    const [samplesArmonizado, setSamplesArmonizado] = useState<string[]>(SAMPLES_ARMONIZADO_DEFAULT);
 
     const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
     const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
@@ -114,16 +136,23 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         return defaults;
     });
 
+    // Refs de datos - siempre apuntan al valor más reciente sin crear closures obsoletas
+    // ✅ muestrasLocalesDBRef: evita el stale closure en obtenerRutasAudio
+    // sin esta ref, al cambiar timbre la función lee el DB anterior aunque ya fue reconstruido
+    const muestrasLocalesDBRef = useRef<Muestra[]>([]);
     // --- 2. CALLBACKS Y EFECTOS ---
     const cargarMuestrasLocales = useCallback(async (manual = false) => {
         try {
             const res = await fetch('/muestrasLocales.json?t=' + Date.now());
             const data = await res.json();
-            setSamplesPitos(data.pitos || []);
-            setSamplesBajos(data.bajos || []);
+            // Solo sobreescribir si el JSON tiene datos reales - no destruir los defaults hardcodeados
+            if (data.pitos?.length > 0) setSamplesPitos(data.pitos);
+            if (data.bajos?.length > 0) setSamplesBajos(data.bajos);
+            if (data.armonizado?.length > 0) setSamplesArmonizado(data.armonizado);
+            else setSamplesBajos(data.bajos || []); // Al menos cargar bajos
             if (manual) {
                 motorAudioPro.limpiarBanco(instrumentoId);
-                alert(`✅ ¡Audios actualizados!\nSe encontraron ${data.pitos?.length || 0} pitos y ${data.bajos?.length || 0} bajos.`);
+                alert(`✅ ¡Audios actualizados!\nSe encontraron ${data.pitos?.length || 0} pitos brillantes, ${data.armonizado?.length || 0} armonizados y ${data.bajos?.length || 0} bajos.`);
             }
         } catch (e) {
             console.warn('No se pudo cargar muestrasLocales.json');
@@ -134,24 +163,33 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         cargarMuestrasLocales();
     }, [cargarMuestrasLocales]);
 
+    // Sync de la ref QUITAR - se hace síncronamente en el efecto principal de abajo
+
     // Transformar nombres de archivos locales en objetos Muestra para el motor universal
+    // Se reconstruye toda vez que cambia el timbre (Brillante / Armonizado) o la lista de muestras
     useEffect(() => {
         const mLocales: Muestra[] = [];
+        // ⚠️ CRÍTICO: leer de `ajustes.timbre` (estado reactivo), NO de ajustesRef.current
+        // La ref puede estar desactualizada dentro de un useEffect.
+        const timbreActivo = ajustes.timbre || 'Brillante';
+        // Carpeta ArmonizadoPro = MP3 128kbps convertidos desde WAV originales con ffmpeg (30KB+ por archivo)
+        const carpetaPitos = timbreActivo === 'Armonizado' ? 'ArmonizadoPro' : 'Brillante';
+        const listaActivePitos = timbreActivo === 'Armonizado' ? samplesArmonizado : samplesPitos;
 
-        // Procesar Pitos (Brillante)
-        samplesPitos.forEach(file => {
+        // Procesar Pitos (Brillante o Armonizado según timbre activo)
+        listaActivePitos.forEach(file => {
             // Formato esperado: {Nota}-{Octava}-cm.mp3 (ej: C-4-cm.mp3)
             const parts = file.split('-');
             if (parts.length >= 2) {
                 mLocales.push({
                     nota: parts[0],
                     octava: parseInt(parts[1]) || 4,
-                    url_audio: `/audio/Muestras_Cromaticas/Brillante/${file}`
+                    url_audio: `/audio/Muestras_Cromaticas/${carpetaPitos}/${file}`
                 });
             }
         });
 
-        // Procesar Bajos
+        // Procesar Bajos (siempre la misma carpeta, independiente del timbre)
         samplesBajos.forEach(file => {
             // Formato esperado: Bajo{Nota}[-2][(acorde)]-cm.mp3
             let clean = file.replace('Bajo', '').replace('-cm.mp3', '');
@@ -192,8 +230,18 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             });
         });
 
+        console.log(`%c 🎵 TIMBRE CAMBIADO → ${timbreActivo} (${listaActivePitos.length} pitos desde /Muestras_Cromaticas/${carpetaPitos}/) `, 'background:#8b5cf6;color:white;padding:4px;border-radius:4px;');
+
+        // ✅ Actualizar la ref SÍNCRONAMENTE antes de setState - evita que obtenerRutasAudio lea el DB viejo
+        muestrasLocalesDBRef.current = mLocales;
         setMuestrasLocalesDB(mLocales);
-    }, [samplesPitos, samplesBajos]);
+
+        // ✅ Limpiar TODOS los bancos del motor de audio para forzar recarga con las nuevas rutas
+        motorAudioPro.limpiarBanco(instrumentoId);
+        motorAudioPro.limpiarBanco('4e9f2a94-21c0-4029-872e-7cb1c314af69');
+        motorAudioPro.limpiarBanco('acordeon');
+        soundsPerKeyRef.current = {};
+    }, [samplesPitos, samplesArmonizado, samplesBajos, ajustes.timbre, instrumentoId]);
 
     // Activar AudioContext con el primer gesto del usuario
     useEffect(() => {
@@ -349,7 +397,13 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     };
 
     const encontrarMejorOctava = (nota: string, octavaDeseada: number) => {
-        const existentes: Record<string, number[]> = {
+        const timbre = ajustesRef.current?.timbre || 'Brillante';
+        // Tabla de octavas disponibles por nota (Brillante vs Armonizado)
+        const existentes: Record<string, number[]> = timbre === 'Armonizado' ? {
+            'A': [4, 5, 6], 'Ab': [4, 5, 6], 'B': [3, 4, 5, 6], 'Bb': [4, 5],
+            'C': [5], 'D': [5, 6], 'Db': [4, 5, 6, 7], 'E': [4, 5, 6],
+            'Eb': [4, 5, 6], 'F': [4, 5], 'G': [4, 5], 'Gb': [4, 5, 6]
+        } : {
             'A': [4, 5], 'Ab': [4, 5, 6], 'B': [4], 'Bb': [3, 4, 5, 6],
             'C': [4, 5, 6, 7], 'D': [4, 5, 6], 'Db': [5, 6], 'E': [4, 5],
             'Eb': [4, 5, 6], 'F': [4, 5, 6], 'G': [4, 5, 6], 'Gb': [4, 5]
@@ -419,14 +473,16 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
         // --- 3. FALLBACK: ACORDEÓN ORIGINAL (Solo si es el activo) ---
         if (esAcordeonOriginal) {
-            if (map[idBoton]) return map[idBoton];
+            // Nota: Si hay mapeo manual (map[idBoton]), ya extrajimos notaTarget y octavaTarget arriba en el paso 1.
+            // Por lo tanto, NO retornamos map[idBoton] directamente porque tendría la carpeta "quemada".
+            // Dejamos que el flujo siga para que busque esa nota en la carpeta del timbre actual.
 
-            if (muestrasLocalesDB.length > 0) {
+            if (muestrasLocalesDBRef.current.length > 0) {
                 // Si es bajo, buscamos específicamente el tipo (acorde o nota) y su cualidad (mayor/menor)
                 const tipoDeseado = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? 'acorde' : 'nota';
                 const cualidadDeseada = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? btn.tipo : undefined;
                 
-                const filtrarLocales = muestrasLocalesDB.filter((m: Muestra) => {
+                const filtrarLocales = muestrasLocalesDBRef.current.filter((m: Muestra) => {
                     const deBajo = m.url_audio.includes('Bajos');
                     if (esBajo) {
                         return deBajo && m.tipo_bajo === tipoDeseado && (tipoDeseado === 'nota' || m.cualidad === cualidadDeseada);
@@ -442,8 +498,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 // si existe una muestra física más cercana en otra octava.
                 if (best && (Math.abs(best.pitch) > 1)) {
                     // Para pitos, evitamos subir a la octava 7 si suena chillona. 
-                    // Escaneamos un rango seguro: [3, 4, 5, 6].
-                    const octavasEscaneo = esBajo ? [2, 3, 4, 1] : [4, 5, 6, 3]; 
+                    // Escaneamos un rango seguro: [3, 4, 5, 6, 7].
+                    const octavasEscaneo = esBajo ? [2, 3, 4, 1] : [4, 5, 6, 7, 3]; 
                     let mejorOpcionGlobal = best;
                     let menorPitchAbs = Math.abs(best.pitch);
 
@@ -470,14 +526,16 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 
                 // Si no encontramos acorde, intentamos fallback a nota normal (provisional)
                 if (esBajo && tipoDeseado === 'acorde') {
-                    const fallback = encontrarMejorMuestra(nEng, octavaTarget, muestrasLocalesDB.filter(m => m.url_audio.includes('Bajos') && m.tipo_bajo === 'nota'));
+                    const fallback = encontrarMejorMuestra(nEng, octavaTarget, muestrasLocalesDBRef.current.filter(m => m.url_audio.includes('Bajos') && m.tipo_bajo === 'nota'));
                     if (fallback) return [`pitch:${fallback.pitch}|${fallback.url}`];
                 }
             }
         }
 
         return [];
-    }, [muestrasDB, muestrasLocalesDB, instrumentoId]);
+    // ✅ muestrasLocalesDB QUITADO de deps: ahora usamos la ref para evitar stale closures
+    // La ref siempre tiene el valor más reciente sin necesidad de recrear la función
+    }, [muestrasDB, instrumentoId]);
 
     // --- AUDIO ---
     const detenerTono = useCallback((id: string) => {
@@ -491,7 +549,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     const reproducirTono = useCallback((id: string) => {
         const rawRutas = soundsPerKeyRef.current[id] || obtenerRutasAudio(id);
-        if (rawRutas.length === 0) return { instances: [] };
 
         const volume = id.includes('bajo') ? VOL_BAJOS : VOL_PITOS;
         const userPitch = ajustesRef.current.pitchPersonalizado?.[id] || 0;
@@ -507,6 +564,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             const globalPitch = ajustesRef.current.pitchGlobal || 0;
             return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase);
         }).filter(Boolean);
+
+        // Guardar en caché para que la próxima vez sea instantáneo
+        soundsPerKeyRef.current[id] = rawRutas;
 
         return { instances: instances as any[] };
     }, [obtenerRutasAudio]);
@@ -853,7 +913,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }, 80);
 
         return () => clearTimeout(timer);
-    }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId]);
+    }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId, muestrasLocalesDB]);
 
     // --- 🔌 WEB SERIAL API (Conexión directa con ESP32, sin Hairless ni loopMIDI) ---
     const conectarESP32 = useCallback(async () => {
@@ -1322,6 +1382,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         cargando: cargandoCloud,
         midiActivado, disenoCargado,
         esp32Conectado, conectarESP32,
-        tipoFuelleActivo, setTipoFuelleActivo
+        tipoFuelleActivo, setTipoFuelleActivo,
+        samplesArmonizado
     };
 };
