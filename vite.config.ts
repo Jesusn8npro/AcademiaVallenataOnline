@@ -27,30 +27,7 @@ export default defineConfig({
   plugins: [
     react(),
     syncAudioPlugin(),
-    {
-      ...obfuscator({
-        global: false, // Falso para no ofuscar dependencias npm
-        include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
-        options: {
-          compact: true,
-          controlFlowFlattening: false,
-          deadCodeInjection: false,
-          debugProtection: false, // CRÍTICO: Quitado porque bloquea el renderizado de la página (ya tenemos el propio en useSeguridadConsola)
-          disableConsoleOutput: true,
-          identifierNamesGenerator: 'hexadecimal',
-          log: false,
-          numbersToExpressions: false,
-          renameGlobals: false,
-          rotateStringArray: false, // Mejorar velocidad de carga
-          selfDefending: false, // CRÍTICO: Esto causaba el pantallazo blanco al entrar en conflicto con el minificador de Vite
-          shuffleStringArray: false, // Mejorar velocidad de carga
-          splitStrings: false,
-          stringArray: false, // Mejorar velocidad de carga del cliente
-          unicodeEscapeSequence: false
-        }
-      }),
-      apply: 'build'
-    }
+    // Ofuscador desactivado temporalmente para diagnosticar error de carga en producción
   ],
   resolve: {
     alias: {
@@ -71,22 +48,11 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     sourcemap: false,
-    chunkSizeWarningLimit: 3000, // Aumentado para permitir chunks consolidados
+    chunkSizeWarningLimit: 3000,
     reportCompressedSize: false,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Consolidamos react y supabase juntos para evitar errores de inicialización cruzada
-            if (id.includes('react') || id.includes('supabase') || id.includes('postgrest')) {
-              return 'vendor_core_db';
-            }
-            if (id.includes('framer-motion') || id.includes('lucide')) {
-              return 'vendor_ui';
-            }
-            return 'vendor_others';
-          }
-        }
+        // Dejamos que Vite gestione los chunks automáticamente para evitar errores de inicialización
       }
     }
   }
