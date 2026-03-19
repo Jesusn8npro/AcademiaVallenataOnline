@@ -69,29 +69,21 @@ export default defineConfig({
     }
   },
   build: {
+    minify: 'esbuild', // MUCHO más rápido y consume menos RAM que terser
     sourcemap: false,
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 2500,
+    reportCompressedSize: false, // Desactivar para acelerar el build final
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor_core';
-            if (id.includes('supabase')) return 'vendor_db';
-            if (id.includes('framer-motion') || id.includes('lucide')) return 'vendor_ui';
-            return 'vendor_libs';
+            if (id.includes('react')) return 'vendor_react';
+            if (id.includes('supabase') || id.includes('postgrest')) return 'vendor_db';
+            if (id.includes('framer-motion')) return 'vendor_framer';
+            if (id.includes('lucide') || id.includes('icons')) return 'vendor_icons';
+            return 'vendor_others';
           }
         }
-      }
-    },
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: false,
-        passes: 1 // Reducido de 2 a 1 para ahorrar RAM y CPU en el build
-      },
-      format: {
-        comments: false,
       }
     }
   }

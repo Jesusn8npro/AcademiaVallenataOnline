@@ -120,6 +120,7 @@ const int RATES_TONOS[] = {
 };
 
 int tonoActual = 6; // Por defecto empezamos en "5 Letras" (índice 6)
+bool timbreArmonizado = false; // FALSO: Brillante, VERDADERO: Armonizado
 
 // ====================================================
 // 🎹 PITOS — TONALIDAD 5 LETRAS (base)
@@ -236,6 +237,14 @@ void dibujarPantalla() {
     tft.setCursor(btnTonos[i].x + 4, btnTonos[i].y + 9);
     tft.println(NOMBRE_TONOS[i]);
   }
+
+  // --- BOTÓN SELECTOR DE TIMBRE (Espacio central) ---
+  uint16_t colorT = timbreArmonizado ? 0xF800 : 0x07E0; // Rojo si Armonizado, Verde si Brillante
+  tft.fillRoundRect(10, 95, 220, 40, 6, colorT);
+  tft.drawRoundRect(10, 95, 220, 40, 6, ILI9341_WHITE);
+  tft.setTextColor(ILI9341_WHITE); tft.setTextSize(2);
+  tft.setCursor(25, 108);
+  tft.print("MODO: "); tft.print(timbreArmonizado ? "ARMONIZADO" : "BRILLANTE");
 }
 
 void actualizarFuellePantalla() {
@@ -296,6 +305,12 @@ bool procesarTouch() {
       cambiarTono(i); return true;
     }
   }
+  // Click en el Botón de Timbre
+  if (x >= 10 && x <= 230 && y >= 95 && y <= 135) {
+    timbreArmonizado = !timbreArmonizado;
+    dibujarPantalla();
+    return true;
+  }
   return false;
 }
 
@@ -332,11 +347,29 @@ void sonarNota(int m, int b) {
 
   if (!a || !a->ruta) return;
 
+  // ⚡ MAPEO IDENTICO 1:1 (Totalmente afinado en la SD)
+  char rutaFinal[64];
+  strcpy(rutaFinal, a->ruta);
+
+  if (timbreArmonizado && strstr(rutaFinal, "/Brillante/")) {
+    char temp[64] = "/Armonizado/";
+    strcat(temp, a->ruta + 11); // "A - 4-cm.wav"
+    strcpy(rutaFinal, temp);
+  }
+
   int v = -1;
   for (int j = 0; j < NUM_VOCES; j++) if (!voces[j].ocupada) { v = j; break; }
   if (v == -1) { v = 0; liberarVoz(0); }
 
-  voces[v].file = new AudioFileSourceSD(a->ruta);
+  // 🎼 Carga directa y veloz
+  voces[v].file = new AudioFileSourceSD(rutaFinal);
+  
+  // Seguridad por si alguna nota no existiera (Fallback automático)
+  if (!voces[v].file->isOpen() && timbreArmonizado) {
+    delete voces[v].file;
+    voces[v].file = new AudioFileSourceSD(a->ruta); 
+  }
+
   if (voces[v].file->isOpen()) {
     voces[v].wav  = new AudioGeneratorWAV();
     voces[v].buff = new AudioFileSourceBuffer(voces[v].file, 2048);
