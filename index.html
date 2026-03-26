@@ -48,7 +48,6 @@
       if (isLocal) return;
 
       const _log = console.log;
-      const _info = console.info;
 
       const mostrarDetente = function () {
         if (window.__permitirDevTools) return;
@@ -58,12 +57,8 @@
           "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
         );
         _log(
-          "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiarlas y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
-          "color: #1f2937; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
-        );
-        _log(
-          "%cPara obtener más información, consulta https://www.facebook.com/selfxss",
-          "color: blue; text-decoration: underline; font-size: 16px;"
+          "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiaras y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
+          "color: #f3f4f6; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
         );
       };
 
@@ -74,11 +69,8 @@
       console.warn = v;
       console.debug = v;
 
-      // Un solo disparo inicial seguro
-      setTimeout(mostrarDetente, 1000);
-      
-      // Repetir raramente solo por si acaso, sin clear
-      setTimeout(mostrarDetente, 5000);
+      // Un solo disparo seguro a los 3 segundos
+      setTimeout(mostrarDetente, 3000);
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
