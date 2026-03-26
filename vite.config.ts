@@ -45,14 +45,31 @@ export default defineConfig({
       '$stores': path.resolve(__dirname, './src/stores')
     }
   },
+  esbuild: {
+    drop: ['console', 'debugger'], // 🧹 Limpia logs y debuggers para seguridad y peso
+  },
   build: {
-    minify: 'esbuild',
-    sourcemap: false,
-    chunkSizeWarningLimit: 3000,
+    minify: 'terser', // Terser es más agresivo y seguro para ofuscación
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    sourcemap: false, // 🔒 No expone el código original en producción
+    chunkSizeWarningLimit: 2000, 
     reportCompressedSize: false,
     rollupOptions: {
       output: {
-        // Dejamos que Vite gestione los chunks automáticamente para evitar errores de inicialización
+        // 🔥 DIVIDIR PARA CONQUISTAR: Separamos las librerías gigantes
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'vendor-three'; // Motor 3D aparte
+            if (id.includes('howler')) return 'vendor-audio'; // Audio aparte
+            if (id.includes('cannon') || id.includes('physics')) return 'vendor-physics'; // Física aparte
+            return 'vendor'; // El resto de librerías
+          }
+        }
       }
     }
   }
