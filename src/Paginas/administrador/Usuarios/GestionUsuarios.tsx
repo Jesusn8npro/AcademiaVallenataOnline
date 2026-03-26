@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DetalleUsuario from './Componentes/DetalleUsuario';
 import CrearUsuario from './Componentes/CrearUsuario';
-import { cargarUsuarios, calcularEstadisticas, type UsuarioAdmin } from '../../../servicios/usuariosAdminService';
+import { cargarUsuarios, calcularEstadisticas, eliminarUsuario, type UsuarioAdmin } from '../../../servicios/usuariosAdminService';
 import './GestionUsuarios.css';
 
 // Definir las interfaces directamente aquí como en Svelte
@@ -328,7 +328,6 @@ const GestionUsuarios: React.FC = () => {
 
     try {
       setCargando(true);
-      const { eliminarUsuario } = await import('../../../servicios/usuariosAdminService');
 
       // Eliminar cada usuario seleccionado
       const promesasEliminacion = Array.from(usuariosSeleccionados).map(usuarioId =>
@@ -362,7 +361,6 @@ const GestionUsuarios: React.FC = () => {
 
     try {
       setCargando(true);
-      const { eliminarUsuario } = await import('../../../servicios/usuariosAdminService');
 
       const resultado = await eliminarUsuario(usuarioId);
 
