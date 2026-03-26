@@ -52,24 +52,25 @@
       const mostrarDetente = function () {
         if (window.__permitirDevTools) return;
         
+        console.clear();
         _log(
           "%c¡Detente!",
           "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
         );
         _log(
           "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiaras y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
-          "color: #f3f4f6; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
+          "color: #1f2937; color-scheme: dark light; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
         );
       };
 
-      // Silenciar de inmediato
+      // Silenciar de inmediato y limpiar basura inicial
       const v = function() {};
       console.log = v;
       console.info = v;
       console.warn = v;
       console.debug = v;
 
-      // Un solo disparo seguro a los 3 segundos
+      // Un solo disparo seguro a los 3 segundos con limpieza previa
       setTimeout(mostrarDetente, 3000);
     })();
   </script>
