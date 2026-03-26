@@ -41,6 +41,52 @@
 
 <body>
   <div id="root"></div>
+  <!-- SISTEMA DE SEGURIDAD ANTI-CONSOLA -->
+  <script>
+    (function () {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) return;
+
+      const mostrarDetente = function () {
+        if (window.__permitirDevTools) return;
+        
+        console.clear();
+        console.log(
+          "%c¡Detente!",
+          "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
+        );
+        console.log(
+          "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiarlas y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
+          "color: #1f2937; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
+        );
+        console.log(
+          "%cPara obtener más información, consulta https://www.facebook.com/selfxss",
+          "color: blue; text-decoration: underline; font-size: 16px;"
+        );
+      };
+
+      // Lanzamiento inicial
+      setTimeout(mostrarDetente, 500);
+
+      // Bloqueo de re-limpieza manual
+      const _clear = console.clear;
+      console.clear = function () {
+        _clear.apply(console, arguments);
+        mostrarDetente();
+      };
+
+      // Intervalo de seguridad
+      setInterval(function() {
+        if (!window.__permitirDevTools) {
+          // Detectar apertura por tamaño de ventana
+          const threshold = 160;
+          if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+            mostrarDetente();
+          }
+        }
+      }, 2000);
+    })();
+  </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

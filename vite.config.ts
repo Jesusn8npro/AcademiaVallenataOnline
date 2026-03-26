@@ -45,7 +45,7 @@ export default defineConfig({
     }
   },
   esbuild: {
-    drop: ['console', 'debugger'], // 🧹 Limpia logs y debuggers para seguridad y peso
+    drop: ['debugger'], // Solo debuggers, permitimos console para el aviso de seguridad
   },
   build: {
     minify: 'esbuild', // Esbuild es más rápido y usa menos memoria que terser
