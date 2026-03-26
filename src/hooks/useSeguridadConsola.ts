@@ -170,19 +170,13 @@ export const useSeguridadConsola = () => {
         // @ts-ignore
         if (import.meta.env.DEV) return; // EN DESARROLLO NO HACE NADA
 
-        if (!inicializado) return;
+        // Lanzar advertencia inmediata para todos en producción
+        inicializarSeguridadConsola();
+        bloquearDevTools();
 
-        if (usuario?.rol === 'admin') {
+        // Si el usuario es administrador, restaurar la consola después
+        if (inicializado && usuario?.rol === 'admin') {
             restaurarConsola();
-            return;
         }
-
-        (window as any).__permitirDevTools = false;
-        const timeoutId = setTimeout(() => {
-            inicializarSeguridadConsola();
-            bloquearDevTools();
-        }, 1000);
-
-        return () => clearTimeout(timeoutId);
     }, [usuario, inicializado]);
 };
