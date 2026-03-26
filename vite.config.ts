@@ -49,15 +49,9 @@ export default defineConfig({
     drop: ['console', 'debugger'], // 🧹 Limpia logs y debuggers para seguridad y peso
   },
   build: {
-    minify: 'terser', // Terser es más agresivo y seguro para ofuscación
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild', // Esbuild es más rápido y usa menos memoria que terser
     sourcemap: false, // 🔒 No expone el código original en producción
-    chunkSizeWarningLimit: 2000, 
+    chunkSizeWarningLimit: 5000, 
     reportCompressedSize: false,
     rollupOptions: {
       output: {
