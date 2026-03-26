@@ -47,16 +47,12 @@
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocal) return;
 
-      // Guardar originales para el mensaje de seguridad
       const _log = console.log;
       const _info = console.info;
-      const _warn = console.warn;
-      const _error = console.error;
 
       const mostrarDetente = function () {
         if (window.__permitirDevTools) return;
         
-        console.clear();
         _log(
           "%c¡Detente!",
           "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
@@ -71,26 +67,18 @@
         );
       };
 
-      // Silenciar consola INMEDIATAMENTE para todo lo demás
-      const vacio = function() {};
-      console.log = vacio;
-      console.info = vacio;
-      console.warn = vacio;
-      console.debug = vacio;
+      // Silenciar de inmediato
+      const v = function() {};
+      console.log = v;
+      console.info = v;
+      console.warn = v;
+      console.debug = v;
 
-      // Lanzar el aviso y repetir para limpiar basura que entre tarde
-      setTimeout(mostrarDetente, 500);
-      setTimeout(mostrarDetente, 2000);
+      // Un solo disparo inicial seguro
+      setTimeout(mostrarDetente, 1000);
+      
+      // Repetir raramente solo por si acaso, sin clear
       setTimeout(mostrarDetente, 5000);
-
-      // Bloquear re-apertura de limpieza para evitar bucles, pero permitir que el sistema limpie
-      console.clear = function() {
-        if (window.__permitirDevTools) {
-           console.clear();
-        } else {
-           mostrarDetente();
-        }
-      };
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
