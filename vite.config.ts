@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { exec } from 'child_process'
 import path from 'path'
-import obfuscator from 'rollup-plugin-obfuscator'
 
 // Plugin para sincronizar audios automáticamente al detectar cambios en las carpetas de audio
 const syncAudioPlugin = () => ({
@@ -55,15 +54,7 @@ export default defineConfig({
     reportCompressedSize: false,
     rollupOptions: {
       output: {
-        // 🔥 DIVIDIR PARA CONQUISTAR: Separamos las librerías gigantes
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('three')) return 'vendor-three'; // Motor 3D aparte
-            if (id.includes('howler')) return 'vendor-audio'; // Audio aparte
-            if (id.includes('cannon') || id.includes('physics')) return 'vendor-physics'; // Física aparte
-            return 'vendor'; // El resto de librerías
-          }
-        }
+        // Dejamos que Vite maneje los chunks automáticamente para evitar errores de incompatibilidad con Hooks
       }
     }
   }
