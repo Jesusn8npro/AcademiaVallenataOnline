@@ -54,12 +54,16 @@
         
         console.clear();
         _log(
-          "%c¡Detente!",
-          "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
+          "%c¡SISTEMA PROTEGIDO POR IA DE RASTREO!",
+          "color: #ef4444; font-size: 55px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 15px; font-family: 'Segoe UI', sans-serif;"
         );
         _log(
-          "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiaras y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
-          "color: #1f2937; color-scheme: dark light; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
+          "%cBLOQUEO DE SEGURIDAD ACTIVO. Nuestra IA de Seguridad Forense ha registrado su huella digital de dispositivo (Fingerprint), dirección IP e identificadores de metadatos. El acceso no autorizado a los activos de la Academia Vallenata Online está siendo monitoreado en tiempo real. Cualquier manipulación activará acciones legales por fraude informático y robo de activos digitales.",
+          "color: #ffffff; background: #991b1b; font-size: 18px; font-weight: bold; font-family: sans-serif; padding: 20px; border: 2px solid gold; line-height: 1.5;"
+        );
+        _log(
+          "%cID DE RASTREO: " + Math.random().toString(36).substring(2, 12).toUpperCase() + " | ESTADO: MONITOREO ACTIVO",
+          "color: #fbbf24; font-size: 16px; font-weight: bold; padding: 10px;"
         );
       };
 
@@ -70,8 +74,8 @@
       console.warn = v;
       console.debug = v;
 
-      // Un solo disparo seguro a los 3 segundos con limpieza previa
-      setTimeout(mostrarDetente, 3000);
+      // Un solo disparo seguro a los 2 segundos
+      setTimeout(mostrarDetente, 2000);
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
