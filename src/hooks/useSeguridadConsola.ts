@@ -1,11 +1,11 @@
 /**
  * SISTEMA DE SEGURIDAD DE CONSOLA - VERSIÓN FINAL ESTABLE Y PERMISIVA PARA ADMINS
  * 
- * Este sistema protege los datos en producción:
- * 1. USA import.meta.env.DEV para una detección 100% confiable en Vite.
- * 2. En desarrollo (localhost), el sistema se auto-deshabilita TOTALMENTE.
- * 3. En producción, deshabilita logs y bloquea DevTools a los usuarios.
- * 4. ¡NUEVO! Permite el uso completo de la consola a los administradores.
+ * Protege los datos en producción:
+ * 1. Usa import.meta.env.DEV para detección 100% confiable en Vite (En Localhost NO hace nada).
+ * 2. En producción, deshabilita logs y bloquea DevTools a los usuarios.
+ * 3. Permite el uso completo de la consola a los administradores.
+ * 4. Muestra un mensaje gigante anti-SelfXSS.
  */
 import { useEffect } from 'react';
 import { useUsuario } from '../contextos/UsuarioContext';
@@ -44,15 +44,16 @@ const mostrarMensajeDetente = () => {
 
         const estiloTitulo = [
             'color: #ef4444',
-            'font-size: 50px',
+            'font-size: 80px', // Aumentado para máximo impacto
             'font-weight: bold',
-            'text-shadow: 2px 2px 4px black',
+            'text-shadow: 4px 4px 8px black',
             'padding: 20px',
+            'font-family: system-ui, -apple-system, sans-serif'
         ].join(';');
 
         const estiloTexto = [
             'color: #1f2937',
-            'font-size: 18px',
+            'font-size: 20px',
             'font-family: sans-serif',
             'padding: 10px',
             'line-height: 1.6',
@@ -60,8 +61,12 @@ const mostrarMensajeDetente = () => {
 
         consoleOriginal.log('%c¡Detente!', estiloTitulo);
         consoleOriginal.log(
-            '%cEsta función del navegador está pensada para desarrolladores. Si alguien te ha indicado que copies y pegues algo aquí para habilitar una función o para "hackear" la cuenta de alguien, se trata de un fraude. Si lo haces, esa persona podrá acceder a tu cuenta.',
+            '%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiarlas y pegaras algo aquí para habilitar una función de la Academia o para "hackear" la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.',
             estiloTexto
+        );
+        consoleOriginal.log(
+            '%cPara obtener más información, consulta https://www.academiavallenataonline.com/seguridad',
+            'color: blue; text-decoration: underline; font-size: 16px;'
         );
     } catch (e) {
         // Ignorar errores
@@ -71,11 +76,9 @@ const mostrarMensajeDetente = () => {
 export const inicializarSeguridadConsola = () => {
     // @ts-ignore
     if (import.meta.env.DEV) return;
-
-    // Si ya somos admin o sabemos que tenemos acceso
     if ((window as any).__permitirDevTools) return;
 
-    // EN PRODUCCIÓN: Deshabilitar TODA la consola
+    // EN PRODUCCIÓN: Deshabilitar TODA la consola para no-admins
     console.log = funcionVacia;
     console.warn = funcionVacia;
     console.error = funcionVacia;
@@ -97,11 +100,8 @@ export const inicializarSeguridadConsola = () => {
 
 export const restaurarConsola = () => {
     (window as any).__permitirDevTools = true;
-
-    // Restaurar metodos originales
     Object.assign(console, consoleOriginal);
 
-    // Limpiar intervalos si existen
     if (mensajeIntervalId) {
         clearInterval(mensajeIntervalId);
         mensajeIntervalId = null;
@@ -110,6 +110,8 @@ export const restaurarConsola = () => {
         clearInterval(devToolsIntervalId);
         devToolsIntervalId = null;
     }
+    consoleOriginal.clear();
+    consoleOriginal.log('🔓 Consola Desbloqueada para Administrador');
 };
 
 const contextMenuHandler = (e: any) => {
@@ -120,7 +122,6 @@ const contextMenuHandler = (e: any) => {
 
 const keyDownHandler = (e: any) => {
     if ((window as any).__permitirDevTools) return;
-
     const isInspector = (e.key === 'F12') ||
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
         (e.ctrlKey && e.key.toUpperCase() === 'U') ||
@@ -131,15 +132,6 @@ const keyDownHandler = (e: any) => {
         e.stopPropagation();
         return false;
     }
-};
-
-const antiHackerLoop = () => {
-    if ((window as any).__permitirDevTools) return;
-    try {
-        // Ejecuta un debugger infinito que congela la ventana de herramientas
-        // de desarrollo si está abierta, dificultando investigar el código.
-        (function () { return false; }['constructor']('debugger')());
-    } catch (err) { }
 };
 
 export const bloquearDevTools = () => {
@@ -163,12 +155,10 @@ export const bloquearDevTools = () => {
                     mostrarMensajeDetente();
                 } catch (e) { }
             }
-
-            antiHackerLoop();
         };
 
         if (!devToolsIntervalId) {
-            devToolsIntervalId = setInterval(detectarDevTools, 50);
+            devToolsIntervalId = setInterval(detectarDevTools, 500); // 500ms para no saturar
         }
     } catch (e) { }
 };
@@ -178,20 +168,15 @@ export const useSeguridadConsola = () => {
 
     useEffect(() => {
         // @ts-ignore
-        if (import.meta.env.DEV) return;
+        if (import.meta.env.DEV) return; // EN DESARROLLO NO HACE NADA
 
-        // Si todavía estamos cargando el usuario, no bloqueamos la consola aún,
-        // esperamos hasta estar seguros.
         if (!inicializado) return;
 
-        // Si el usuario es administrador, restaurar (o mantener) la consola normal
         if (usuario?.rol === 'admin') {
             restaurarConsola();
-            console.log('🔓 Seguridad Consola: Acceso Administrador Activado. Tienes permiso.');
             return;
         }
 
-        // Si no es administrador, o no está logueado, bloquear todo
         (window as any).__permitirDevTools = false;
         const timeoutId = setTimeout(() => {
             inicializarSeguridadConsola();
@@ -201,4 +186,3 @@ export const useSeguridadConsola = () => {
         return () => clearTimeout(timeoutId);
     }, [usuario, inicializado]);
 };
-
