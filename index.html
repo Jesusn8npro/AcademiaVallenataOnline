@@ -47,37 +47,50 @@
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (isLocal) return;
 
+      // Guardar originales para el mensaje de seguridad
+      const _log = console.log;
+      const _info = console.info;
+      const _warn = console.warn;
+      const _error = console.error;
+
       const mostrarDetente = function () {
         if (window.__permitirDevTools) return;
         
-        console.log(
+        console.clear();
+        _log(
           "%c¡Detente!",
           "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
         );
-        console.log(
+        _log(
           "%cEsta función del navegador está pensada para desarrolladores. Si alguna persona te ha indicado que copiarlas y pegaras algo aquí para habilitar una función de la Academia o para 'hackear' la cuenta de alguien, se trata de un fraude. Si lo haces, esta persona podrá acceder a tu cuenta.",
           "color: #1f2937; font-size: 20px; font-family: sans-serif; padding: 10px; line-height: 1.6;"
         );
-        console.log(
+        _log(
           "%cPara obtener más información, consulta https://www.facebook.com/selfxss",
           "color: blue; text-decoration: underline; font-size: 16px;"
         );
       };
 
-      // Lanzamiento inicial con pequeño retraso
-      setTimeout(mostrarDetente, 1500);
+      // Silenciar consola INMEDIATAMENTE para todo lo demás
+      const vacio = function() {};
+      console.log = vacio;
+      console.info = vacio;
+      console.warn = vacio;
+      console.debug = vacio;
 
-      // Usar un chequeo más inteligente para detectar apertura
-      setInterval(function() {
-        if (!window.__permitirDevTools) {
-          const threshold = 160;
-          const isDevToolsOpen = window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold;
-          if (isDevToolsOpen) {
-            // Imprimir solo si es necesario para no saturar
-            // mostrarDetente(); 
-          }
+      // Lanzar el aviso y repetir para limpiar basura que entre tarde
+      setTimeout(mostrarDetente, 500);
+      setTimeout(mostrarDetente, 2000);
+      setTimeout(mostrarDetente, 5000);
+
+      // Bloquear re-apertura de limpieza para evitar bucles, pero permitir que el sistema limpie
+      console.clear = function() {
+        if (window.__permitirDevTools) {
+           console.clear();
+        } else {
+           mostrarDetente();
         }
-      }, 3000);
+      };
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
