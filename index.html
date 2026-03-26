@@ -50,7 +50,6 @@
       const mostrarDetente = function () {
         if (window.__permitirDevTools) return;
         
-        console.clear();
         console.log(
           "%c¡Detente!",
           "color: #ef4444; font-size: 80px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 20px; font-family: system-ui, sans-serif;"
@@ -65,26 +64,20 @@
         );
       };
 
-      // Lanzamiento inicial
-      setTimeout(mostrarDetente, 500);
+      // Lanzamiento inicial con pequeño retraso
+      setTimeout(mostrarDetente, 1500);
 
-      // Bloqueo de re-limpieza manual
-      const _clear = console.clear;
-      console.clear = function () {
-        _clear.apply(console, arguments);
-        mostrarDetente();
-      };
-
-      // Intervalo de seguridad
+      // Usar un chequeo más inteligente para detectar apertura
       setInterval(function() {
         if (!window.__permitirDevTools) {
-          // Detectar apertura por tamaño de ventana
           const threshold = 160;
-          if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-            mostrarDetente();
+          const isDevToolsOpen = window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold;
+          if (isDevToolsOpen) {
+            // Imprimir solo si es necesario para no saturar
+            // mostrarDetente(); 
           }
         }
-      }, 2000);
+      }, 3000);
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
