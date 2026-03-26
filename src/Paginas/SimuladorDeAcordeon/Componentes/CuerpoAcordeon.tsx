@@ -153,8 +153,6 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                     onPointerDown={(e) => {
                                         e.preventDefault();
                                         if (vistaDoble) {
-                                            // En vista doble, el contenedor no hace nada, dejamos que los spans manejen el clic
-                                            // Pero por si acaso, si clicas en el borde, usamos el ID actual
                                             handleSelect(b.id);
                                         } else {
                                             handleSelect(b.id);
@@ -162,6 +160,7 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                     }}
                                     onPointerUp={() => actualizarBotonActivo(b.id, 'remove')}
                                     onPointerLeave={() => actualizarBotonActivo(b.id, 'remove')}
+                                    onPointerCancel={() => actualizarBotonActivo(b.id, 'remove')}
                                     style={{ border: (modoAjuste && botonSeleccionado === b.id) ? '2px solid gold' : undefined }}
                                 >
                                     {!vistaDoble ? (
@@ -225,6 +224,7 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                     }}
                                     onPointerUp={() => actualizarBotonActivo(b.id, 'remove')}
                                     onPointerLeave={() => actualizarBotonActivo(b.id, 'remove')}
+                                    onPointerCancel={() => actualizarBotonActivo(b.id, 'remove')}
                                     style={{ border: (modoAjuste && botonSeleccionado === b.id) ? '2px solid gold' : undefined }}
                                 >
                                     {!vistaDoble ? (

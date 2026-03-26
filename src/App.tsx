@@ -67,6 +67,7 @@ import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos
 import PaginaEjemplo3D from './Paginas/Ejemplos3d1';
 import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
 import AgenciaIAPage from './Paginas/AgenciaIA';
+import GrabadorHero from './Paginas/SimuladorDeAcordeon/videojuego_acordeon/GrabadorHero';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -120,7 +121,7 @@ const AppContent = () => {
 
   return (
     <>
-      <CursorPersonalizado />
+      {!location.pathname.startsWith('/simulador') && <CursorPersonalizado />}
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
       {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAgencia && (
         estaAutenticado ? (
@@ -190,6 +191,7 @@ const AppContent = () => {
 
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
+          <Route path="/grabador-hero" element={<GrabadorHero />} />
           <Route path="/simulador-gaming" element={<SimuladorGaming />} />
           <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />

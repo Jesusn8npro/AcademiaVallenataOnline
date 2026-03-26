@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Volume2, Music, Play, Square, Settings2, Sliders } from 'lucide-react';
 import './ModalMetronomo.css';
+import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 
 interface ModalMetronomoProps {
     visible: boolean;
@@ -8,11 +9,14 @@ interface ModalMetronomoProps {
     botonRef: React.RefObject<HTMLDivElement>;
     bpm: number;
     setBpm: React.Dispatch<React.SetStateAction<number>>;
+    onActivoChange?: (activo: boolean) => void;
+    forzarDetencion?: boolean; // Nueva prop
+    forzarInicio?: boolean; // Iniciar forzosamente
 }
 
 type SonidoEfecto = 'Electrónico' | 'Madera' | 'Aplausos' | 'Campana 1' | 'Campana 2' | 'Tono' | 'Silencioso' | 'Baqueta';
 
-const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, botonRef, bpm, setBpm }) => {
+const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, botonRef, bpm, setBpm, onActivoChange, forzarDetencion, forzarInicio }) => {
     // --- ESTADOS ---
     const [activo, setActivo] = useState(false);
     // bpm viene de props
@@ -32,19 +36,34 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
     const pulseCount = useRef(0); // Cuenta los clics (incluyendo subdivisiones)
 
     const bpmRef = useRef(bpm);
+    const lastBpmRef = useRef(bpm);
     const compasRef = useRef(compas);
     const subdivisionRef = useRef(subdivision);
     const volumenRef = useRef(volumen);
     const sonidoRef = useRef(sonidoEfecto);
 
-    // Sincronizar refs
+    // 🎯 FASE-LOCKING (Sincronización invulnerable a cambios de BPM en tiempo real)
     useEffect(() => {
+        if (activo && audioCtx.current && bpm !== lastBpmRef.current) {
+            const ahora = audioCtx.current.currentTime;
+            const oldBeatDur = (60.0 / lastBpmRef.current) / subdivisionRef.current;
+            const newBeatDur = (60.0 / bpm) / subdivisionRef.current;
+            
+            // ¿Qué % del pulso actual nos falta por recorrer?
+            const tiempoRestante = nextNoteTime.current - ahora;
+            const porcentajeRestante = Math.max(0, Math.min(1, tiempoRestante / oldBeatDur));
+            
+            // Re-escalamos ese % a la duración del nuevo BPM
+            nextNoteTime.current = ahora + (porcentajeRestante * newBeatDur);
+        }
+        
         bpmRef.current = bpm;
+        lastBpmRef.current = bpm;
         compasRef.current = compas;
         subdivisionRef.current = subdivision;
         volumenRef.current = volumen;
         sonidoRef.current = sonidoEfecto;
-    }, [bpm, compas, subdivision, volumen, sonidoEfecto]);
+    }, [bpm, compas, subdivision, volumen, sonidoEfecto, activo]);
 
     // --- SÍNTESIS DE SONIDO ---
     const playClick = useCallback((time: number, isFirstBeat: boolean, isSubdivision: boolean) => {
@@ -123,6 +142,10 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
             // Actualizar indicador visual (solo en el pulso principal)
             if (!isSubdivision) {
                 const beatInBar = Math.floor(pulseCount.current / subdivisionRef.current) % compasRef.current;
+                
+                // Exponer a la ventana para el grabador
+                (window as any).proximoPulsoMetronomo = nextNoteTime.current;
+                
                 // Usamos un pequeño delay para que la visual coincida con el audio
                 const delay = (nextNoteTime.current - audioCtx.current!.currentTime) * 1000;
                 setTimeout(() => setPulsoActual(beatInBar), Math.max(0, delay));
@@ -135,16 +158,20 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
 
     const iniciarMetronomo = () => {
         if (!audioCtx.current) {
-            audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioCtx.current = motorAudioPro.contextoAudio;
         }
 
         if (audioCtx.current.state === 'suspended') {
             audioCtx.current.resume();
         }
 
-        nextNoteTime.current = audioCtx.current.currentTime + 0.05;
+        // 🎯 INICIO PRECISO: Alineado exactamente al tiempo actual, sin delay de 0.05
+        nextNoteTime.current = audioCtx.current.currentTime;
         pulseCount.current = 0;
         setPulsoActual(0);
+        
+        (window as any).metronomoActivoHero = true;
+        (window as any).proximoPulsoMetronomo = nextNoteTime.current;
 
         timerID.current = window.setInterval(scheduler, 25);
         setActivo(true);
@@ -155,9 +182,29 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
             clearInterval(timerID.current);
             timerID.current = null;
         }
+        (window as any).metronomoActivoHero = false;
         setActivo(false);
         setPulsoActual(-1); // Resetea visual
     };
+
+    // Sincronizar detención forzada
+    useEffect(() => {
+        if (forzarDetencion && activo) {
+            detenerMetronomo();
+        }
+    }, [forzarDetencion, activo]);
+
+    // Sincronizar inicio forzoso (Para Reproducción)
+    useEffect(() => {
+        if (forzarInicio && !activo) {
+            iniciarMetronomo();
+        }
+    }, [forzarInicio, activo]);
+
+    // Notificar cambios al exterior
+    useEffect(() => {
+        if (onActivoChange) onActivoChange(activo);
+    }, [activo, onActivoChange]);
 
     // Cerrar al desmontar
     useEffect(() => {

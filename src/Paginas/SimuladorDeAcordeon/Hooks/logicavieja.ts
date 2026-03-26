@@ -8,6 +8,7 @@ import {
     TONALIDADES,
     cambiarFuelle
 } from '../notasAcordeonDiatonico';
+import { configuracionUsuario } from '../Datos/TonosUsuario';
 import type { AjustesAcordeon, SonidoVirtual, ModoVista, AcordeonSimuladorProps } from '../TiposAcordeon';
 
 const NOMBRES_INGLES: Record<string, string> = {
@@ -283,24 +284,16 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const tipoFuelleActivoRef = useRef(tipoFuelleActivo);
     useEffect(() => { tipoFuelleActivoRef.current = tipoFuelleActivo; }, [tipoFuelleActivo]);
 
-    // 🚀 REF MAGICA PARA EVITAR SWAPS DEL REPRODUCTOR HERO
-    const skipNextSwapRef = useRef(false);
-    const setDireccionSinSwap = useCallback((d: 'halar' | 'empujar') => {
-        skipNextSwapRef.current = true;
-        setDireccion(d);
-    }, []);
-
     // --- CARGA INTEGRADA DE SUPABASE ---
     useEffect(() => {
         const checkUserAndLoad = async () => {
             setCargandoCloud(true);
             try {
                 // Cargar lista de instrumentos siempre
-                const { data: instData } = await (supabase.from('sim_instrumentos').select('*') as any);
+                const { data: instData } = await supabase.from('sim_instrumentos').select('*');
                 if (instData) setListaInstrumentos(instData);
 
-                const { data: userData } = await supabase.auth.getUser();
-                const user = userData.user;
+                const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                     setUsuarioId(user.id);
                     const { data: ajustesData } = await (supabase
@@ -310,19 +303,18 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                         .maybeSingle() as any);
 
                     if (ajustesData) {
-                        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id as string);
-                        if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados as SonidoVirtual[]);
+                        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id);
+                        if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados);
 
                         // 📐 Restaurar posición y tamaño
                         if (ajustesData.ajustes_visuales) {
-                            setAjustes(prev => ({ ...prev, ...(ajustesData.ajustes_visuales as any) }));
+                            setAjustes(prev => ({ ...prev, ...ajustesData.ajustes_visuales }));
                         }
-                        
-                        // ... restore tonalidades logic ...
+
+                        // Sincrizar nombres y tonalidades
                         if (ajustesData.tonalidades_configuradas) {
-                            const configs = ajustesData.tonalidades_configuradas as any;
                             const nombres: Record<string, string> = {};
-                            Object.entries(configs).forEach(([key, val]: [string, any]) => {
+                            Object.entries(ajustesData.tonalidades_configuradas).forEach(([key, val]: [string, any]) => {
                                 if (val?.nombrePersonalizado) {
                                     const id = key.replace('ajustes_acordeon_vPRO_', '');
                                     nombres[id] = val.nombrePersonalizado;
@@ -331,14 +323,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                             setNombresTonalidades(nombres);
                         }
 
-                        if (ajustesData.lista_tonalidades_activa && Array.isArray(ajustesData.lista_tonalidades_activa) && ajustesData.lista_tonalidades_activa.length > 0) {
-                            setListaTonalidades(ajustesData.lista_tonalidades_activa as string[]);
+                        if (ajustesData.lista_tonalidades_activa?.length > 0) {
+                            setListaTonalidades(ajustesData.lista_tonalidades_activa);
                         } else {
                             setListaTonalidades(Object.keys(TONALIDADES));
                         }
 
                         if (ajustesData.tonalidad_activa) {
-                            setTonalidadSeleccionada(ajustesData.tonalidad_activa as string);
+                            setTonalidadSeleccionada(ajustesData.tonalidad_activa);
                         }
                     } else {
                         setListaTonalidades(Object.keys(TONALIDADES));
@@ -411,9 +403,22 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     const encontrarMejorOctava = (nota: string, octavaDeseada: number) => {
         const timbre = ajustesRef.current?.timbre || 'Brillante';
-        // Fallback básico si no hay muestra exacta
+        // Tabla de octavas disponibles por nota (Brillante vs Armonizado)
+        const existentes: Record<string, number[]> = timbre === 'Armonizado' ? {
+            'A': [4, 5, 6], 'Ab': [4, 5, 6], 'B': [3, 4, 5, 6], 'Bb': [4, 5],
+            'C': [5], 'D': [5, 6], 'Db': [4, 5, 6, 7], 'E': [4, 5, 6],
+            'Eb': [4, 5, 6], 'F': [4, 5], 'G': [4, 5], 'Gb': [4, 5, 6]
+        } : {
+            'A': [4, 5], 'Ab': [4, 5, 6], 'B': [4], 'Bb': [3, 4, 5, 6],
+            'C': [4, 5, 6, 7], 'D': [4, 5, 6], 'Db': [5, 6], 'E': [4, 5],
+            'Eb': [4, 5, 6], 'F': [4, 5, 6], 'G': [4, 5, 6], 'Gb': [4, 5]
+        };
+        const disponibles = existentes[nota] || [4];
         const candidatos = [octavaDeseada, octavaDeseada - 1, octavaDeseada + 1, octavaDeseada - 2, octavaDeseada + 2, 4];
-        return candidatos[0]; // Simplificado: el engine Pro ya maneja el pitch shifting dinámico
+        for (const c of candidatos) {
+            if (disponibles.includes(c)) return c;
+        }
+        return disponibles[0];
     };
 
     const configTonalidad = TONALIDADES[tonalidadSeleccionada as keyof typeof TONALIDADES] || TONALIDADES['F-Bb-Eb'];
@@ -494,37 +499,31 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 let best = encontrarMejorMuestra(nEng, octavaTarget, filtrarLocales);
 
                 // 🛡️ REGLA DE ORO PROFESIONAL PARA PITOS Y BAJOS
-                // Priorizamos pitch shifting pequeño dentro de la misma octava (ej. -2 o +2 semitonos)
-                // antes que hacer grandes saltos de octava.
-                if (best && (Math.abs(best.pitch) > 2)) {
+                // No permitimos que el sistema se "invente" notas desplazando más de 1 o 2 semitonos
+                // si existe una muestra física más cercana en otra octava.
+                if (best && (Math.abs(best.pitch) > 1)) {
+                    // Para pitos, evitamos subir a la octava 7 si suena chillona. 
+                    // Escaneamos un rango seguro: [3, 4, 5, 6, 7].
                     const octavasEscaneo = esBajo ? [2, 3, 4, 1] : [4, 5, 6, 7, 3];
                     let mejorOpcionGlobal = best;
                     let menorPitchAbs = Math.abs(best.pitch);
 
                     for (const oct of octavasEscaneo) {
                         const prueba = encontrarMejorMuestra(nEng, oct, filtrarLocales);
-                        if (prueba) {
-                            // Ajustar el pitch para que la muestra de la otra octava 
-                            // SUENE en la octava objetivo original.
-                            const pitchCorregido = prueba.pitch + ((octavaTarget - oct) * 12);
-                            if (Math.abs(pitchCorregido) < menorPitchAbs) {
-                                menorPitchAbs = Math.abs(pitchCorregido);
-                                mejorOpcionGlobal = { ...prueba, pitch: pitchCorregido };
-                            }
+                        if (prueba && Math.abs(prueba.pitch) < menorPitchAbs) {
+                            menorPitchAbs = Math.abs(prueba.pitch);
+                            mejorOpcionGlobal = prueba;
                         }
                     }
                     best = mejorOpcionGlobal;
                 }
 
-                // 🚨 PROTECCIÓN ESPECIAL 3-7 Y ALTOS: Si el pitch sigue siendo > 3, 
-                // permitimos fallback inteligente
-                if (!esBajo && best && best.pitch > 3) {
+                // 🚨 PROTECCIÓN ESPECIAL 3-7 Y ALTOS: Si el pitch sigue siendo > 2, 
+                // bajamos una octava para que "gruese" en lugar de que "se rompa"
+                if (!esBajo && best && best.pitch > 2) {
                     const fallbackGordo = encontrarMejorMuestra(nEng, octavaTarget - 1, filtrarLocales);
-                    if (fallbackGordo) {
-                        const pitchCorregido = fallbackGordo.pitch + 12; // Compensar diferencia de 1 octava
-                        if (Math.abs(pitchCorregido) < Math.abs(best.pitch)) {
-                            best = { ...fallbackGordo, pitch: pitchCorregido };
-                        }
+                    if (fallbackGordo && Math.abs(fallbackGordo.pitch) < Math.abs(best.pitch)) {
+                        best = fallbackGordo;
                     }
                 }
 
@@ -544,16 +543,16 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     }, [muestrasDB, instrumentoId]);
 
     // --- AUDIO ---
-    const detenerTono = useCallback((id: string, tiempoProgramado?: number) => {
+    const detenerTono = useCallback((id: string) => {
         const b = botonesActivosRef.current[id];
         if (!b?.instances) return;
 
         b.instances.forEach((inst: any) => {
-            motorAudioPro.detener(inst, FADE_OUT / 1000, tiempoProgramado); // Sincronizado con el motor pro
+            motorAudioPro.detener(inst, FADE_OUT / 1000); // Sincronizado con el motor pro
         });
     }, []);
 
-    const reproducirTono = useCallback((id: string, tiempoProgramado?: number, duracionSec?: number, loop: boolean = false) => {
+    const reproducirTono = useCallback((id: string) => {
         const rawRutas = soundsPerKeyRef.current[id] || obtenerRutasAudio(id);
 
         const volume = id.includes('bajo') ? VOL_BAJOS : VOL_PITOS;
@@ -568,19 +567,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 ruta = parts[1];
             }
             const globalPitch = ajustesRef.current.pitchGlobal || 0;
-            return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase, loop, tiempoProgramado, duracionSec);
+            return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase);
         }).filter(Boolean);
 
         // Guardar en caché para que la próxima vez sea instantáneo
         soundsPerKeyRef.current[id] = rawRutas;
 
         return { instances: instances as any[] };
-    }, [obtenerRutasAudio, instrumentoId]);
-
-    const preprogramarTono = useCallback((id: string, delayInicioSec: number, delayFinSec: number) => {
-        const { instances } = reproducirTono(id, delayInicioSec, delayFinSec - delayInicioSec);
-        return instances;
-    }, [reproducirTono]);
+    }, [obtenerRutasAudio]);
 
     const stopPreview = useCallback(() => {
         if (previewNodeRef.current) {
@@ -588,8 +582,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 const { fuente, ganancia } = previewNodeRef.current;
                 const ahora = motorAudioPro.tiempoActual;
                 ganancia.gain.cancelScheduledValues(ahora);
-                ganancia.gain.setTargetAtTime(0, ahora, 0.05);
-                fuente.stop(ahora + 0.1);
+                ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + 0.1);
+                fuente.stop(ahora + 0.15);
+                setTimeout(() => { try { ganancia.disconnect(); } catch (e) { } }, 200);
             } catch (e) { }
             previewNodeRef.current = null;
         }
@@ -613,24 +608,27 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }
     }, [stopPreview]);
 
-    const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add', instanciasExternas: any[] | null = null, silencioso: boolean = false, tiempoProgramado?: number, loop: boolean = false) => {
+    /**
+     * @param silencioso Si es true, no dispara el estado de React (evita re-renders). 
+     * Útil para trinos extremos donde el componente maneja su propia visual.
+     */
+    const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add', instanciasExternas: any[] | null = null, silencioso: boolean = false) => {
         if (deshabilitarRef.current) return;
 
         if (accion === 'add') {
-            // 🛡️ PROTECCIÓN CONTRA RE-DISPARO (Solo Manual): 
-            // Si el trigger viene del secuenciador (instanciasExternas !== null), PERMITIMOS solapamiento
-            // para que las ejecuciones rápidas no suenen entrecortadas.
-            if (instanciasExternas === null && botonesActivosRef.current[id]) return;
+            // 🛡️ PROTECCIÓN CONTRA RE-DISPARO: Si ya está sonando este ID exacto, no hacemos nada.
+            // Esto elimina el ruido de "corto circuito" o ráfaga cuando el serial manda miles de mensajes.
+            if (botonesActivosRef.current[id]) return;
 
             const esBajo = id.includes('bajo');
+            console.log(
+                `%c ${esBajo ? '🎸 BAJO' : '🎹 PITO'} SIMULADOR %c ID: ${id} `,
+                'background: #3498db; color: white; font-weight: bold; padding: 4px; border-radius: 4px 0 0 4px;',
+                'background: #2c3e50; color: white; padding: 4px; border-radius: 0 4px 4px 0;'
+            );
 
-            let instances: any[] = [];
-            
-            if (instanciasExternas !== null) {
-                instances = instanciasExternas;
-            } else {
-                instances = reproducirTono(id, tiempoProgramado, undefined, loop).instances;
-            }
+            let instances = instanciasExternas || reproducirTono(id).instances;
+            if (!instances || instances.length === 0) return;
 
             if (silencioso) {
                 botonesActivosRef.current[id] = { instances, ...mapaBotonesActual.current[id] };
@@ -645,7 +643,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             // Solo removemos si realmente existe
             if (!botonesActivosRef.current[id]) return;
 
-            detenerTono(id, tiempoProgramado);
+            detenerTono(id);
 
             if (silencioso) {
                 delete botonesActivosRef.current[id];
@@ -661,81 +659,10 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
 
     const limpiarTodasLasNotas = useCallback(() => {
-        // 🚨 FORZA DETENCIÓN TOTAL EN EL MOTOR (Agresivo)
-        motorAudioPro.detenerTodo(0.02);
-        
-        // Limpiar estados locales y refs
-        Object.keys(botonesActivosRef.current).forEach(id => {
-            onNotaLiberada?.({ idBoton: id, nombre: id });
-        });
-        
+        Object.keys(botonesActivosRef.current).forEach(id => detenerTono(id));
         botonesActivosRef.current = {};
         setBotonesActivos({});
-    }, [onNotaLiberada]);
-
-    // 🌪️ CENTRAL SWAP LOGIC: Robust direction cambio
-    const ejecutarSwapDireccion = useCallback((nuevaDir: 'halar' | 'empujar') => {
-        if (nuevaDir === direccionRef.current) return;
-
-        console.log(`%c 🔄 SWAP DIRECTO → ${nuevaDir} `, 'background:#f59e0b;color:white;font-weight:bold;');
-        
-        const prev = { ...botonesActivosRef.current };
-        const next: Record<string, any> = {};
-        let huboCambio = false;
-
-        Object.keys(prev).forEach(oldId => {
-            const parts = oldId.split('-');
-            if (parts.length < 3) return;
-            const esBajo = oldId.includes('bajo');
-            const newId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
-
-            if (newId !== oldId) {
-                // Si es una nota del secuenciador (instances: []), no la swapeamos
-                if (prev[oldId].instances && prev[oldId].instances.length === 0) {
-                    next[oldId] = prev[oldId];
-                    return;
-                }
-
-                huboCambio = true;
-                // 1. Matar la nota vieja AGRESIVAMENTE (0.015s fade)
-                const bOld = prev[oldId];
-                if (bOld.instances) {
-                    bOld.instances.forEach((inst: any) => {
-                        motorAudioPro.detener(inst, 0.015);
-                    });
-                }
-                onNotaLiberada?.({ idBoton: oldId, nombre: oldId });
-
-                // 2. Disparar la nota nueva
-                const { instances } = reproducirTono(newId);
-                onNotaPresionada?.({ idBoton: newId, nombre: newId });
-                
-                if (instances && instances.length > 0) {
-                    next[newId] = { instances, ...mapaBotonesActual.current[newId] };
-                }
-            } else {
-                next[oldId] = prev[oldId];
-            }
-        });
-
-        // Actualizar trackeado de hardware
-        const currentHardware = hardwareMapRef.current;
-        currentHardware.forEach((logicalId, physicalKey) => {
-            const parts = logicalId.split('-');
-            if (parts.length >= 3) {
-                const esBajo = logicalId.includes('bajo');
-                currentHardware.set(physicalKey, `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`);
-            }
-        });
-
-        direccionRef.current = nuevaDir;
-        setDireccion(nuevaDir);
-        
-        if (huboCambio) {
-            botonesActivosRef.current = next;
-            setBotonesActivos(next);
-        }
-    }, [reproducirTono, onNotaLiberada, onNotaPresionada]);
+    }, [detenerTono]);
 
     const manejarEventoTeclado = useCallback((e: KeyboardEvent | React.KeyboardEvent, esPresionada: boolean) => {
         if (deshabilitarRef.current) return;
@@ -751,7 +678,20 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         if (tecla === cambiarFuelle) {
             const nuevaDireccion = esPresionada ? 'empujar' : 'halar';
             if (nuevaDireccion !== direccionRef.current) {
-                ejecutarSwapDireccion(nuevaDireccion);
+                const prev = { ...botonesActivosRef.current };
+                setDireccion(nuevaDireccion);
+                direccionRef.current = nuevaDireccion;
+                const next: Record<string, any> = {};
+                Object.keys(prev).forEach(oldId => {
+                    const parts = oldId.split('-');
+                    const esBajo = oldId.includes('bajo');
+                    const newId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+                    const { instances } = reproducirTono(newId);
+                    if (instances && instances.length > 0) next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                    detenerTono(oldId);
+                });
+                botonesActivosRef.current = next;
+                setBotonesActivos(next);
             }
             return;
         }
@@ -788,21 +728,52 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         } else if (!esPresionada) {
             actualizarBotonActivo(id, 'remove');
         }
-    }, [actualizarBotonActivo, reproducirTono, detenerTono, modoAjuste, botonSeleccionado, ejecutarSwapDireccion, cambiarFuelle]);
+    }, [actualizarBotonActivo, reproducirTono, detenerTono, modoAjuste, botonSeleccionado]);
 
     // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => {
-        if (skipNextSwapRef.current) {
-            skipNextSwapRef.current = false;
-            direccionRef.current = direccion;
-            return;
-        }
+        const nuevaDireccion = direccion;
+        // 🔄 SWAP DE NOTAS ACTIVAS: Si hay notas sonando, las cambiamos a la nueva dirección
+        const prev = { ...botonesActivosRef.current };
+        const next: Record<string, any> = {};
+        let huboCambio = false;
 
-        // Si la dirección cambió externamente (ej: ESP32 o Props), ejecutamos el swap central
-        if (direccion !== direccionRef.current) {
-            ejecutarSwapDireccion(direccion);
+        Object.keys(prev).forEach(oldId => {
+            const parts = oldId.split('-');
+            if (parts.length < 3) return;
+            const esBajo = oldId.includes('bajo');
+            // Construimos el nuevo ID manteniendo fila y columna pero cambiando dirección
+            const newId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+
+            if (newId !== oldId) {
+                huboCambio = true;
+                detenerTono(oldId);
+                const { instances } = reproducirTono(newId);
+                if (instances && instances.length > 0) {
+                    next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                }
+            } else {
+                next[oldId] = prev[oldId];
+            }
+        });
+
+        if (huboCambio || nuevaDireccion !== direccionRef.current) {
+            // 🔄 Sincronizar rastreador de hardware para que al soltar sepa qué ID apagar
+            const currentHardware = hardwareMapRef.current;
+            currentHardware.forEach((logicalId, physicalKey) => {
+                const parts = logicalId.split('-');
+                if (parts.length >= 3) {
+                    const esBajo = logicalId.includes('bajo');
+                    const newLogicalId = `${parts[0]}-${parts[1]}-${nuevaDireccion}${esBajo ? '-bajo' : ''}`;
+                    currentHardware.set(physicalKey, newLogicalId);
+                }
+            });
+
+            botonesActivosRef.current = next;
+            setBotonesActivos(next);
+            direccionRef.current = nuevaDireccion;
         }
-    }, [direccion, ejecutarSwapDireccion]);
+    }, [direccion, reproducirTono, detenerTono]);
 
     useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
@@ -1129,10 +1100,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }
     }, [actualizarBotonActivo, limpiarTodasLasNotas]);
 
-    // --- MIDI ENGINE (DESACTIVADO TEMPORALMENTE A PETICIÓN) ---
-    /*
+    // --- MIDI ENGINE ---
     useEffect(() => {
-        if (!navigator.requestMIDIAccess) return;
+        console.log("%c 🎹 INICIALIZANDO MOTOR MIDI ACADEMIA 🎹 ", "background: #222; color: #bada55; font-size: 1.2em; padding: 5px;");
+
+        if (!navigator.requestMIDIAccess) {
+            console.error("❌ MIDI no soportado en este navegador. Usa Chrome o Edge.");
+            return;
+        }
 
         let midiAccess: any = null;
 
@@ -1143,31 +1118,64 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
             let idBoton: string | null = null;
 
-            if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccion}`;
-            else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccion}`;
-            else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccion}`;
+            // --- 🎹 MAPEO SUPER-RESISTENTE (ESP32 + ARTURIA) ---
+            // Hilera 1 (AFUERA): Notas 60-70 (Tus 8 botones del ESP32: 60,61,62,63,64,65,66,67)
+            if (note >= 60 && note <= 70) {
+                idBoton = `1-${note - 59}-${direccion}`;
+            }
+            // Hilera 2 (MEDIO): Notas 48-59 (Octava abajo del Arturia)
+            else if (note >= 48 && note <= 59) {
+                idBoton = `2-${note - 47}-${direccion}`;
+            }
+            // Hilera 3 (ADENTRO): Notas 71-82 (Octava arriba del Arturia)
+            else if (note >= 71 && note <= 82) {
+                idBoton = `3-${note - 70}-${direccion}`;
+            }
 
+            // 🕵️ LOG DE ALTA VISIBILIDAD (Abre la consola con F12 para ver esto)
             if (command === 144 && velocity > 0) {
+                console.log(`%c 📥 MIDI ON: Nota ${note} | Canal ${channel} | ID: ${idBoton} `, "background: #27ae60; color: white;");
+
                 if (idBoton) {
                     reproducirTono(idBoton);
                     actualizarBotonActivo(idBoton, 'add');
+                    // Ajuste de tipos: solo pasamos idBoton y nombre
+                    if (props.onNotaPresionada) props.onNotaPresionada({ idBoton, nombre: idBoton });
                 }
             }
             else if (command === 128 || (command === 144 && velocity === 0)) {
+                console.log(`%c 📤 MIDI OFF: Nota ${note} | ID: ${idBoton} `, "background: #c0392b; color: white;");
+
                 if (idBoton) {
                     detenerTono(idBoton);
                     actualizarBotonActivo(idBoton, 'remove');
+                    if (props.onNotaLiberada) props.onNotaLiberada({ idBoton, nombre: idBoton });
                 }
             }
+        };
+
+        const setupInputs = (access: any) => {
+            access.inputs.forEach((input: any) => {
+                input.onmidimessage = onMIDIMessage;
+                console.log(`%c  DISPOSITIVO DETECTADO: ${input.name} `, "background: #2980b9; color: white; padding: 3px;");
+            });
         };
 
         navigator.requestMIDIAccess().then((access: any) => {
             midiAccess = access;
             setMidiActivado(true);
-            access.inputs.forEach((input: any) => {
-                input.onmidimessage = onMIDIMessage;
-            });
-        }).catch(() => setMidiActivado(false));
+            setupInputs(access);
+
+            access.onstatechange = (e: any) => {
+                if (e.port.state === 'connected') {
+                    console.log(`%c 🔋 Nuevo hardware detectado: ${e.port.name} `, "color: #f1c40f");
+                    setupInputs(access);
+                }
+            };
+        }).catch(() => {
+            console.error("❌ Error al acceder al MIDI. ¿Diste permisos en el candado del navegador?");
+            setMidiActivado(false);
+        });
 
         return () => {
             if (midiAccess) {
@@ -1176,8 +1184,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 });
             }
         };
-    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo]);
-    */
+    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo, props.onNotaPresionada, props.onNotaLiberada]);
 
     // --- ACCIONES ---
     const guardarAjustes = async () => {
@@ -1286,7 +1293,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     .from('sim_ajustes_usuario')
                     .select('tonalidades_configuradas')
                     .eq('usuario_id', usuarioId)
-                    .maybeSingle() as any; // Added (as any)
+                    .maybeSingle();
 
                 const nuevasConfigs = {
                     ...(data?.tonalidades_configuradas || {}),
@@ -1299,7 +1306,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 await supabase.from('sim_ajustes_usuario').update({
                     tonalidades_configuradas: nuevasConfigs,
                     updated_at: new Date().toISOString()
-                }).eq('usuario_id', usuarioId) as any; // Added (as any)
+                }).eq('usuario_id', usuarioId);
             } catch (e) {
                 console.error('Error al actualizar nombre de tonalidad:', e);
             }
@@ -1367,13 +1374,13 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     const key = `ajustes_acordeon_vPRO_${tonalidad}`;
 
                     // Primero obtenemos las configuraciones actuales
-                    const { data } = await (supabase
+                    const { data } = await supabase
                         .from('sim_ajustes_usuario')
                         .select('tonalidades_configuradas')
                         .eq('usuario_id', usuarioId)
-                        .maybeSingle() as any);
+                        .maybeSingle();
 
-                    const nuevasConfigs = { ...((data as any)?.tonalidades_configuradas || {}) };
+                    const nuevasConfigs = { ...(data?.tonalidades_configuradas || {}) };
                     delete nuevasConfigs[key];
 
                     // Guardamos la lista actualizada y eliminamos la configuración específica
@@ -1391,28 +1398,24 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }
     };
 
-    // Limpiar el caché de sonidos cuando cambia el instrumento para evitar stale URLs/banks
-    useEffect(() => {
-        soundsPerKeyRef.current = {};
-    }, [instrumentoId]);
-
     return {
         botonesActivos, direccion, setDireccion, modoAjuste, setModoAjuste, modoVista, setModoVista,
         vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
         pestanaActiva, setPestanaActiva, tonalidadSeleccionada, setTonalidadSeleccionada,
         listaTonalidades, setListaTonalidades, nombresTonalidades, actualizarNombreTonalidad, sonidosVirtuales, setSonidosVirtuales,
-        limpiarTodasLasNotas, actualizarBotonActivo, guardarAjustes, resetearAjustes, 
-        setDireccionSinSwap, muestrasDB, obtenerRutasAudio, sincronizarAudios: cargarMuestrasLocales,
-        guardarNuevoSonidoVirtual, eliminarTonalidad,
-        playPreview, stopPreview, reproduceTono: reproducirTono,
-        configTonalidad, muestrasInstrumento: muestrasLocalesDBRef.current,
-        soundsPerKey: soundsPerKeyRef.current, teclasFastMap: teclasFastMapRef.current,
-        midiActivado, esp32Conectado, conectarESP32,
-        listaInstrumentos,
-        instrumentoId, setInstrumentoId, cargando: cargandoCloud, disenoCargado,
+        limpiarTodasLasNotas, actualizarBotonActivo, guardarAjustes, resetearAjustes,
+        guardarNuevoSonidoVirtual, eliminarTonalidad, playPreview, stopPreview, reproduceTono: reproducirTono,
+        configTonalidad, samplesBrillante: samplesPitos, samplesBajos: samplesBajos,
+        sincronizarAudios: cargarMuestrasLocales,
+        mapaBotonesActual: mapaBotonesActual.current, teclasFastMap: teclasFastMapRef.current,
+        soundsPerKey: soundsPerKeyRef.current,
+        basePitch: basePitchesRef.current,
+        muestrasDB, obtenerRutasAudio,
+        instrumentoId, setInstrumentoId, listaInstrumentos,
+        cargando: cargandoCloud,
+        midiActivado, disenoCargado,
+        esp32Conectado, conectarESP32,
         tipoFuelleActivo, setTipoFuelleActivo,
-        samplesBrillante: samplesPitos, samplesBajos, samplesArmonizado,
-        mapaBotonesActual: mapaBotonesActual.current,
-        preprogramarTono
+        samplesArmonizado
     };
 };

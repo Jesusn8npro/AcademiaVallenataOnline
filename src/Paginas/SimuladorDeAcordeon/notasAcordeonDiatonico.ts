@@ -34,7 +34,7 @@ const NOTAS_CROMATICAS = ['Do', 'Reb', 'Re', 'Mib', 'Mi', 'Fa', 'Solb', 'Sol', '
 const NOTAS_CROMATICAS_SOSTENIDOS = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
 
 // Definición base abstracta (Tonalidad FBE - Fa Sib Mib)
-const DEFINICION_BASE = {
+export const DEFINICION_BASE = {
     primeraFila: [
         // Halar
         { i: 1, n: 'Reb', o: 4, t: 'halar' }, { i: 2, n: 'Sol', o: 3, t: 'halar' }, { i: 3, n: 'Sib', o: 3, t: 'halar' },
@@ -92,38 +92,43 @@ const DEFINICION_BASE = {
 };
 
 function transponerNota(nota: string, octava: number, semitonos: number, usarSostenidos: boolean = false): { nombre: string, octava: number, frecuencia: number } {
-    const idx = NOTAS_CROMATICAS.indexOf(nota);
-    if (idx === -1) {
-        const idxSos = NOTAS_CROMATICAS_SOSTENIDOS.indexOf(nota);
-        if (idxSos !== -1) {
-            let nuevoIdx = idxSos + semitonos;
-            let nuevaOctava = octava;
-            while (nuevoIdx >= 12) { nuevoIdx -= 12; nuevaOctava++; }
-            while (nuevoIdx < 0) { nuevoIdx += 12; nuevaOctava--; }
-            const lista = usarSostenidos ? NOTAS_CROMATICAS_SOSTENIDOS : NOTAS_CROMATICAS;
-            const nuevoNombre = lista[nuevoIdx];
-            const freqs = (tono as any)[nuevoNombre] || (tono as any)[NOTAS_CROMATICAS[nuevoIdx]];
-            let freq = 0;
-            if (freqs && freqs[nuevaOctava]) freq = freqs[nuevaOctava];
-            else if (freqs) freq = freqs[Math.min(Math.max(0, nuevaOctava), freqs.length - 1)];
-            return { nombre: nuevoNombre, octava: nuevaOctava, frecuencia: freq };
-        }
-        return { nombre: nota, octava, frecuencia: 0 };
-    }
+    // Intentar encontrar la nota en cualquiera de las dos escalas (bemoles o sostenidos)
+    let idx = NOTAS_CROMATICAS.indexOf(nota);
+    if (idx === -1) idx = NOTAS_CROMATICAS_SOSTENIDOS.indexOf(nota);
+    
+    // Si no se encuentra (caso raro), devolver nota base con frecuencia 0
+    if (idx === -1) return { nombre: nota, octava, frecuencia: 0 };
 
     let nuevoIdx = idx + semitonos;
     let nuevaOctava = octava;
 
+    // Manejo inteligente de octavas
     while (nuevoIdx >= 12) { nuevoIdx -= 12; nuevaOctava++; }
     while (nuevoIdx < 0) { nuevoIdx += 12; nuevaOctava--; }
 
+    // Elegir la lista de nombres según la preferencia
     const listaNombres = usarSostenidos ? NOTAS_CROMATICAS_SOSTENIDOS : NOTAS_CROMATICAS;
     const nuevoNombre = listaNombres[nuevoIdx];
-    const nombreParaFrecuencia = NOTAS_CROMATICAS[nuevoIdx];
-    const freqs = (tono as any)[nombreParaFrecuencia];
+    
+    // Buscar la frecuencia de forma robusta (usando nombres internos de la tabla 'tono')
+    const nombreReferencia = NOTAS_CROMATICAS[nuevoIdx]; // Siempre usar la base de bemoles para buscar frecuencia
+    const freqs = (tono as any)[nombreReferencia];
+    
     let freq = 0;
-    if (freqs && freqs[nuevaOctava]) freq = freqs[nuevaOctava];
-    else if (freqs) freq = freqs[Math.min(Math.max(0, nuevaOctava), freqs.length - 1)];
+    if (freqs) {
+        // Si la octava existe, usarla; si no, ir a la más cercana disponible para no silenciar
+        if (freqs[nuevaOctava]) {
+            freq = freqs[nuevaOctava];
+        } else {
+            const octavasDisponibles = Object.keys(freqs).map(Number).sort((a,b) => a-b);
+            if (octavasDisponibles.length > 0) {
+                const octavaCercana = nuevaOctava < octavasDisponibles[0] 
+                    ? octavasDisponibles[0] 
+                    : octavasDisponibles[octavasDisponibles.length - 1];
+                freq = freqs[octavaCercana];
+            }
+        }
+    }
 
     return { nombre: nuevoNombre, octava: nuevaOctava, frecuencia: freq };
 }
@@ -198,6 +203,140 @@ export const primeraFila = tonalidadPorDefecto.primeraFila;
 export const segundaFila = tonalidadPorDefecto.segundaFila;
 export const terceraFila = tonalidadPorDefecto.terceraFila;
 export const disposicionBajos = tonalidadPorDefecto.disposicionBajos;
+
+// --- RESOLUTORES PARA LA BIBLIOTECA ---
+
+/**
+ * Mapeo de offsets por NOMBRE DE TONALIDAD (Para el selector de acordeón)
+ */
+export const TONALIDAD_OFFSETS: Record<string, number> = {
+    'F-Bb-Eb': 0, 'Gb-B-E': 1, 'GCF': 2, 'ADG_FLAT': 3, 'ADG': 4, 'BES': 5, 'CINCO_LETRAS': 5,
+    'BEA': 6, 'CFB': 7, 'DGB': 8, 'GDC': 9, 'ELR': 10, 'EAD': 11
+};
+
+/**
+ * Mapeo de TONALIDADES LÍDERES por cada hilera del acordeón seleccionado.
+ */
+export const HILERAS_NATIVAS: Record<string, string[]> = {
+    'F-Bb-Eb': ['FA', 'SIB', 'MIB'],
+    'Gb-B-E': ['FA#', 'SI', 'MI'],
+    'GCF': ['SOL', 'DO', 'FA'],
+    'ADG_FLAT': ['SOL#', 'DO#', 'FA#'],
+    'ADG': ['LA', 'RE', 'SOL'],
+    'BES': ['SIB', 'MIB', 'LAB'],
+    'CINCO_LETRAS': ['SIB', 'MIB', 'LAB'],
+    'BEA': ['SI', 'MI', 'LA'],
+    'CFB': ['DO', 'FA', 'SIB'],
+    'DGB': ['RE', 'SOL', 'DO'],
+    'GDC': ['SOL', 'DO', 'FA'],
+    'ELR': ['MI', 'LA', 'RE'],
+    'EAD': ['MI', 'LA', 'RE']
+};
+
+export const CIRCULO_OFFSETS: Record<string, number> = {
+    'FA': 0, 'SOLB': 1, 'FA#': 1, 'SOL': 2, 'LAB': 3, 'SOL#': 3, 'LA': 4, 'SIB': 5, 'SI': 6, 'DO': 7, 'REB': 8, 'DO#': 8, 'RE': 9, 'MIB': 10, 'RE#': 10, 'MI': 11
+};
+
+/**
+ * Traduce un ID de botón a su nota real según el offset
+ */
+export function resolverNotaDeBoton(id: string, offset: number): string {
+    const parts = id.split('-'); // ej: "1-4-halar" o "b-1-halar"
+    if (parts.length < 3) return '?';
+
+    const fila = parts[0];
+    const index = parseInt(parts[1]);
+    const fuelle = parts[2];
+
+    let baseInfo: any = null;
+
+    if (fila === '1') baseInfo = DEFINICION_BASE.primeraFila.find(b => b.i === index && b.t === fuelle);
+    else if (fila === '2') baseInfo = DEFINICION_BASE.segundaFila.find(b => b.i === index && b.t === fuelle);
+    else if (fila === '3') baseInfo = DEFINICION_BASE.terceraFila.find(b => b.i === index && b.t === fuelle);
+    else if (fila === 'b') {
+        // Bajos
+        baseInfo = [...DEFINICION_BASE.bajos.una, ...DEFINICION_BASE.bajos.dos].find(b => b.i === index && b.t === fuelle);
+    }
+
+    if (!baseInfo) return '?';
+
+    const t = transponerNota(baseInfo.n, baseInfo.o, offset);
+    return t.nombre;
+}
+
+/**
+ * Obtiene el listado de notas de un acorde
+ */
+export function obtenerNotasDelAcorde(botones: string[], offset: number = 2): string {
+    if (!botones || !Array.isArray(botones)) return '';
+    const notas = botones.map(id => resolverNotaDeBoton(id, offset)).filter(n => n !== '?');
+    // Eliminar duplicados si los hay (ej. misma nota en distintas octavas si se desea simplificado)
+    const unicas = Array.from(new Set(notas));
+    return unicas.join(', ');
+}
+
+/**
+ * RECONOCEDOR DE ACORDES (CEREBRO ARMÓNICO)
+ * Identifica el nombre del acorde analizando las notas que contiene.
+ */
+export function identificarNombreAcorde(botones: string[], offset: number = 2): string {
+    if (!botones || !Array.isArray(botones)) return 'Acorde Desconocido';
+    
+    // Obtener las notas reales y normalizar a la escala de GCF (para búsqueda consistente)
+    const notasOriginales = botones.map(id => resolverNotaDeBoton(id, offset)).filter(n => n !== '?');
+    
+    // Función interna para normalizar nombres (Do# -> Reb, etc.) para búsqueda de ADN
+    const normalizar = (n: string) => {
+        const mapa: Record<string, string> = {
+            'Do#': 'Reb', 'Re#': 'Mib', 'Fa#': 'Solb', 'Sol#': 'Lab', 'La#': 'Sib'
+        };
+        return mapa[n] || n;
+    };
+    
+    const setNotasNormalizadas = new Set(notasOriginales.map(normalizar));
+    
+    // ADN DE ACORDES: Definimos las bases (Tónica, Tercera, Quinta, [Séptima])
+    // Usamos nombres normalizados (bemoles) para el ADN
+    const BASES = [
+        { t: 'Do', nombres: ['Do', 'Reb', 'Re', 'Mib', 'Mi', 'Fa', 'Solb', 'Sol', 'Lab', 'La', 'Sib', 'Si'] }
+    ];
+    
+    const NOTAS = ['Do', 'Reb', 'Re', 'Mib', 'Mi', 'Fa', 'Solb', 'Sol', 'Lab', 'La', 'Sib', 'Si'];
+
+    const obtenerADN = (rootIdx: number, tipo: 'Mayor' | 'Menor' | 'Septima' | 'Menor7') => {
+        const root = NOTAS[rootIdx];
+        const terceraMayor = NOTAS[(rootIdx + 4) % 12];
+        const terceraMenor = NOTAS[(rootIdx + 3) % 12];
+        const quinta = NOTAS[(rootIdx + 7) % 12];
+        const septimaMenor = NOTAS[(rootIdx + 10) % 12];
+        
+        if (tipo === 'Mayor') return { nombre: `${root} Mayor`, adn: [root, terceraMayor, quinta] };
+        if (tipo === 'Menor') return { nombre: `${root} Menor`, adn: [root, terceraMenor, quinta] };
+        if (tipo === 'Septima') return { nombre: `${root} Septima`, adn: [root, terceraMayor, quinta, septimaMenor] };
+        if (tipo === 'Menor7') return { nombre: `${root} Menor 7`, adn: [root, terceraMenor, quinta, septimaMenor] };
+        return { nombre: '', adn: [] };
+    };
+
+    // Generar tabla completa de búsqueda
+    const TABLA_ADN: { nombre: string, adn: string[] }[] = [];
+    for (let i = 0; i < 12; i++) {
+        // Añadimos séptimas PRIMERO para que tengan prioridad en la detección
+        TABLA_ADN.push(obtenerADN(i, 'Septima'));
+        TABLA_ADN.push(obtenerADN(i, 'Menor7'));
+        TABLA_ADN.push(obtenerADN(i, 'Mayor'));
+        TABLA_ADN.push(obtenerADN(i, 'Menor'));
+    }
+
+    // Buscar coincidencia
+    for (const item of TABLA_ADN) {
+        if (item.adn.length === 0) continue;
+        // Un acorde coincide si TODAS las notas de su ADN están presentes en los botones pulsados
+        const coincide = item.adn.every(nota => setNotasNormalizadas.has(nota));
+        if (coincide) return item.nombre;
+    }
+
+    return 'Acorde Libre';
+}
 export const disposicion: Record<string, BotonNota[]> = { primeraFila, segundaFila, terceraFila }
 
 export const mapaFilas: Record<number, string> = { 1: 'primeraFila', 2: 'segundaFila', 3: 'terceraFila' }

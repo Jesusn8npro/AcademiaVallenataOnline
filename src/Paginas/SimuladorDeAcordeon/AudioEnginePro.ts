@@ -9,6 +9,8 @@
  * SOLUCIÓN 4: Pool de GainNodes pre-conectados por voz — no crear en el momento del toque.
  */
 
+const BANK_RELEASE_DELAY = 1000;
+
 export interface BancoSonido {
     id: string;
     nombre: string;
@@ -49,8 +51,8 @@ export class MotorAudioPro {
             this.MAX_VOCES = 20;
             console.log("📱 Motor V5.0 Móvil: latencyHint=0, sin compresor, pool pre-conectado (20 voces)");
         } else {
-            this.MAX_VOCES = 48;
-            console.log("💻 Motor V5.0 Escritorio: latencyHint=0, pool máximo (48 voces)");
+            this.MAX_VOCES = 128;
+            console.log("💻 Motor V5.0 Escritorio: latencyHint=0, pool máximo (128 voces)");
         }
 
         this.contexto = new AudioContextClass(opcionesContexto);
@@ -106,7 +108,7 @@ export class MotorAudioPro {
         // Silenciar inmediatamente su GainNode (sigue conectado al grafo)
         try {
             voz.ganancia.gain.cancelScheduledValues(this.contexto.currentTime);
-            voz.ganancia.gain.setValueAtTime(0, this.contexto.currentTime);
+            voz.ganancia.gain.setTargetAtTime(0, this.contexto.currentTime, 0.015);
         } catch (_) { }
         voz.ocupada = false;
     }
@@ -115,7 +117,7 @@ export class MotorAudioPro {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try {
                 await this.contexto.resume();
-                console.log("🔊 AudioContext V5.0 reanimado.");
+                // console.log("🔊 AudioContext V5.0 reanimado.");
             } catch (e) {
                 console.error("❌ No se pudo reanimar el AudioContext:", e);
             }
@@ -135,8 +137,8 @@ export class MotorAudioPro {
         // 1. Verificación de Memoria RAM (Ultra-rápido)
         if (banco.muestras.has(idSonido)) return;
 
-        // 🔍 LOG DIAGNÓSTICO
-        console.log(`%c 📥 CARGANDO [${bancoId.slice(0,8)}] ${url} `, 'background:#0f766e;color:white;padding:2px;border-radius:3px;font-size:10px;');
+        // 🔍 LOG DIAGNÓSTICO (Oculto)
+        // console.log(`%c 📥 CARGANDO [${bancoId.slice(0,8)}] ${url} `, 'background:#0f766e;color:white;padding:2px;border-radius:3px;font-size:10px;');
 
         try {
             const cacheName = 'sim-audios-v3'; // v3 = ARCHIVOS CONVERTIDOS RECIENTES (30KB+)
@@ -149,16 +151,16 @@ export class MotorAudioPro {
 
                 if (cachedResponse) {
                     audioData = await cachedResponse.arrayBuffer();
-                    console.log(`  ✅ DESDE CACHÉ: ${url}`);
+                    // console.log(`  ✅ DESDE CACHÉ: ${url}`);
                 } else {
                     // 3. Descarga desde Red/Supabase (Solo si no está en caché)
-                    console.log(`  📡 [RED] Descargando: ${url}`);
+                    // console.log(`  📡 [RED] Descargando: ${url}`);
                     const respuesta = await fetch(url);
                     if (!respuesta.ok) {
                         console.error(`  ❌ HTTP ${respuesta.status} al descargar: ${url}`);
                         throw new Error(`HTTP ${respuesta.status}`);
                     }
-                    console.log(`  ✅ Descargado OK (${respuesta.headers.get('content-type')}): ${url}`);
+                    // console.log(`  ✅ Descargado OK (${respuesta.headers.get('content-type')}): ${url}`);
 
                     // Guardar en caché para la próxima vez
                     const respuestaACachear = respuesta.clone();
@@ -167,7 +169,7 @@ export class MotorAudioPro {
                 }
             } catch (cacheError) {
                 // Fallback si la Cache API falla por alguna razón (ej. modo incógnito)
-                console.warn(`  ⚠️ Cache API falló, intentando fetch directo: ${url}`);
+                // console.warn(`  ⚠️ Cache API falló, intentando fetch directo: ${url}`);
                 const respuesta = await fetch(url);
                 if (!respuesta.ok) {
                     console.error(`  ❌ HTTP ${respuesta.status} (fallback) al descargar: ${url}`);
@@ -184,7 +186,7 @@ export class MotorAudioPro {
 
             banco.muestras.set(idSonido, audioBuffer);
             banco.offsets.set(idSonido, offset);
-            console.log(`  🎵 Decoded OK → banco['${bancoId.slice(0,8)}']['${idSonido.slice(-30)}']`);
+            // console.log(`  🎵 Decoded OK → banco['${bancoId.slice(0,8)}']['${idSonido.slice(-30)}']`);
         } catch (error) {
             console.error(`❌ Error en motor de audio [${idSonido}]:`, error);
         }
@@ -210,7 +212,7 @@ export class MotorAudioPro {
      * AudioBufferSourceNode es de un solo uso por spec — no se puede evitar crearlo.
      * Pero eliminamos todo lo demás del camino crítico.
      */
-    reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
+    reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false, tiempoProgramado?: number, duracionSec?: number): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
         const banco = this.bancos.get(bancoId);
         if (!banco || !this.contexto) return null;
 
@@ -218,12 +220,13 @@ export class MotorAudioPro {
         const offset = banco.offsets.get(idSonido) || 0;
         if (!buffer) return null;
 
-        // ⚡ OBTENER VOZ DEL POOL (GainNode ya conectado)
         const voz = this._obtenerVozLibre();
         voz.ocupada = true;
-        voz.tiempo = this.contexto.currentTime;
+        
+        const cTime = this.contexto.currentTime;
+        const startTime = tiempoProgramado !== undefined ? Math.max(cTime, cTime + tiempoProgramado) : cTime;
+        voz.tiempo = startTime;
 
-        // ⚡ SOLO creamos el SourceNode (obligatorio por spec Web Audio)
         const fuente = this.contexto.createBufferSource();
         fuente.buffer = buffer;
         fuente.loop = loop;
@@ -232,24 +235,32 @@ export class MotorAudioPro {
             fuente.playbackRate.value = Math.pow(2, semitonos / 12);
         }
 
-        // Conectar fuente → GainNode del pool (GainNode ya → destino)
         fuente.connect(voz.ganancia);
 
-        // ⚡ ACTIVAR GANANCIA DIRECTAMENTE — sin rampas costosas
-        voz.ganancia.gain.cancelScheduledValues(voz.tiempo);
-        voz.ganancia.gain.setValueAtTime(volumen, voz.tiempo);
+        voz.ganancia.gain.cancelScheduledValues(cTime);
+        voz.ganancia.gain.setValueAtTime(volumen, startTime);
 
-        fuente.start(voz.tiempo, offset);
+        fuente.start(startTime, offset);
         voz.fuente = fuente;
 
-        const instancia = { fuente, ganancia: voz.ganancia, tiempo: voz.tiempo };
+        // 🛡️ REGLA DE ORO: Si conocemos la duración (Secuenciador), programamos el fin 
+        // directamente en el hardware. Esto previene notas pegadas aunque el JS colapse.
+        if (duracionSec !== undefined && duracionSec > 0) {
+            const endTime = startTime + duracionSec;
+            const fadeDur = Math.min(0.02, duracionSec / 2);
+            voz.ganancia.gain.setTargetAtTime(0, endTime - fadeDur, fadeDur);
+            fuente.stop(endTime + 0.01);
+        }
+
+        const instancia = { fuente, ganancia: voz.ganancia, tiempo: startTime };
 
         fuente.onended = () => {
-            try { fuente.disconnect(); } catch (_) { }
-            voz.fuente = null;
-            // Silenciar la ganancia para que no interfiera con la próxima nota
-            try { voz.ganancia.gain.setValueAtTime(0, this.contexto.currentTime); } catch (_) { }
-            voz.ocupada = false;
+            if (voz.fuente === fuente) {
+                try { fuente.disconnect(); } catch (_) { }
+                voz.fuente = null;
+                try { voz.ganancia.gain.setTargetAtTime(0, this.contexto.currentTime, 0.015); } catch (_) { }
+                voz.ocupada = false;
+            }
         };
 
         return instancia;
@@ -258,15 +269,20 @@ export class MotorAudioPro {
     /**
      * Detención ultra-rápida
      */
-    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.01) {
+    detener(instancia: { fuente: AudioBufferSourceNode, ganancia: GainNode }, rapidez: number = 0.01, tiempoProgramado?: number) {
         try {
-            const ahora = this.contexto.currentTime;
+            const ahora = tiempoProgramado !== undefined ? Math.max(this.contexto.currentTime, this.contexto.currentTime + tiempoProgramado) : this.contexto.currentTime;
             const g = instancia.ganancia.gain;
+            
+            // 🔥 BULLETPROOF STOP: Usa RC curve exponent (setTargetAtTime) que es atómico
+            // No depende de anclar el estado actual como linearRamp, por lo que nunca
+            // sufrirá del bug de "nota congelada en el futuro" de Chromium/WebKit.
             g.cancelScheduledValues(ahora);
-            g.setValueAtTime(0, ahora + rapidez);
-            instancia.fuente.stop(ahora + rapidez + 0.002);
+            g.setTargetAtTime(0, ahora, rapidez > 0 ? rapidez : 0.015);
+            
+            instancia.fuente.stop(ahora + (rapidez * 2) + 0.01);
         } catch (err) {
-            // Silencioso — es normal que falle si ya terminó
+            // Silencioso
         }
     }
 
@@ -279,8 +295,8 @@ export class MotorAudioPro {
             if (voz.ocupada && voz.fuente) {
                 try {
                     voz.ganancia.gain.cancelScheduledValues(ahora);
-                    voz.ganancia.gain.setValueAtTime(0, ahora + rapidez);
-                    voz.fuente.stop(ahora + rapidez + 0.002);
+                    voz.ganancia.gain.setTargetAtTime(0, ahora, rapidez > 0 ? rapidez : 0.015);
+                    voz.fuente.stop(ahora + (rapidez * 2) + 0.002);
                 } catch (_) { }
                 voz.fuente = null;
                 voz.ocupada = false;
@@ -299,6 +315,11 @@ export class MotorAudioPro {
     get tiempoActual() {
         return this.contexto.currentTime;
     }
+
+    get contextoAudio() {
+        return this.contexto;
+    }
 }
 
 export const motorAudioPro = new MotorAudioPro();
+(window as any).motorAudioPro = motorAudioPro;
