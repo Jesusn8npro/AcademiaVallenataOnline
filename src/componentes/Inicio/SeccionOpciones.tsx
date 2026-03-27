@@ -389,9 +389,11 @@ const styles = {
   },
   gridOpciones: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '2.5rem',
     marginBottom: '4rem',
+    maxWidth: '1000px',
+    margin: '0 auto 4rem auto',
   },
   tarjetaOpcion: {
     background: 'white',
