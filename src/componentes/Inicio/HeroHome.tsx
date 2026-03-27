@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-// Importación blindada de activos (REPARACIÓN PARA DEPLOY)
-import bannerHero from '../../../assets/images/Home/Banner- Academia vallenata ONLINE.jpg';
 
 interface HeroHomeProps {
   mostrarModal: boolean;
@@ -36,7 +34,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
         {/* Imagen de fondo con overlay */}
         <div style={styles.heroBackground}>
           <img
-            src={bannerHero}
+            src="/images/Home/Banner- Academia vallenata ONLINE.jpg"
             alt={t('hero.etiqueta')}
             style={styles.heroBgImage}
             fetchPriority="high"
