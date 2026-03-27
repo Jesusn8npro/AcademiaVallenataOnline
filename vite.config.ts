@@ -48,13 +48,16 @@ export default defineConfig({
     drop: ['debugger'], // Solo debuggers, permitimos console para el aviso de seguridad
   },
   build: {
-    minify: 'esbuild', // Esbuild es más rápido y usa menos memoria que terser
-    sourcemap: false, // 🔒 No expone el código original en producción
+    minify: 'esbuild',
+    sourcemap: false,
     chunkSizeWarningLimit: 5000, 
     reportCompressedSize: false,
+    assetsDir: 'static',
     rollupOptions: {
       output: {
-        // Dejamos que Vite maneje los chunks automáticamente para evitar errores de incompatibilidad con Hooks
+        entryFileNames: `static/js/[hash].js`,
+        chunkFileNames: `static/js/[hash].js`,
+        assetFileNames: `static/media/[hash].[ext]`,
       }
     }
   }
