@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import FotoMaestro from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
 
 const SeccionInstructor: React.FC = () => {
   const [visible, setVisible] = useState(false);
@@ -55,7 +56,7 @@ const SeccionInstructor: React.FC = () => {
                 <div className="collage-maestro" style={styles.collageMaestro}>
                   <div className="foto-principal" style={styles.fotoPrincipal}>
                     <img
-                      src="/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg"
+                      src={FotoMaestro}
                       alt="Maestro Jesús González"
                       className="img-maestro"
                       style={styles.imgMaestro}
