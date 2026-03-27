@@ -89,7 +89,10 @@ const SeccionOpciones: React.FC = () => {
       destacado: false,
       action: () => window.location.href = '/contacto'
     }
-  ];
+  ].filter(op => 
+    !op.titulo.includes('Simulador') && 
+    !op.titulo.includes('Comunidad')
+  );
 
   const getGradientStyle = (color: string) => {
     const gradients: { [key: string]: string } = {
