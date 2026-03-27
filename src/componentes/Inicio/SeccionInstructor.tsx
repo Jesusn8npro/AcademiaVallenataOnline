@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// Importación blindada de la foto del maestro
+import fotoMaestro from '../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
 
 const SeccionInstructor: React.FC = () => {
   const [visible, setVisible] = useState(false);
@@ -55,7 +57,7 @@ const SeccionInstructor: React.FC = () => {
                 <div className="collage-maestro" style={styles.collageMaestro}>
                   <div className="foto-principal" style={styles.fotoPrincipal}>
                     <img
-                      src="/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg"
+                      src={fotoMaestro}
                       alt="Maestro Jesús González"
                       className="img-maestro"
                       style={styles.imgMaestro}

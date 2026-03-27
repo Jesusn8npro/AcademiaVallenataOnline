@@ -6,6 +6,9 @@ import ModalDeInicioDeSesion from './ModalDeInicioDeSesion';
 import MenuLateralResponsive from './MenuLateralResponsive';
 import './MenuPublico.css';
 
+// Importación blindada del logo
+import logoAcademia from '../../assets/images/logo academia vallenata.png';
+
 interface ArticuloBlog {
   id: number;
   titulo: string;
@@ -273,7 +276,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
           <a href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
-            <img src="/images/logo academia vallenata.png" alt="Logo Academia Vallenata" />
+            <img src={logoAcademia} alt="Logo Academia Vallenata" />
           </a>
 
           {/* Menú de navegación */}
@@ -372,7 +375,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({
 
             <div className="mpub-encabezado-menu">
               <a href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
-                <img src="/images/logo academia vallenata.png" alt="Academia Vallenata" className="mpub-logo-menu" />
+                <img src={logoAcademia} alt="Academia Vallenata" className="mpub-logo-menu" />
               </a>
               <p className="mpub-descripcion-menu">
                 {t('menu.descripcion')}

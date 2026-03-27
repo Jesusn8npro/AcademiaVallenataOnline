@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import './nuestra-academia.css'
 
+// Importaciones blindadas de activos
+import imgJesusLeyendas from '../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
+import imgBienvenida from '../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg';
+import fotoMaestro from '../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
+import imgBannerJesus from '../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg';
+import imgAcordeonPro from '../../assets/images/Acordeon PRO MAX.png';
+import imgClasesVirtuales from '../../assets/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg';
+import imgCursosEco from '../../assets/images/NuestraAcademia/Cursos-de-acordeon.jpg';
+import imgClasesPerso from '../../assets/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg';
+
 const testimonios = [
   { nombre: 'Carlos Mendoza', ciudad: 'Valledupar, Cesar', tiempo: '6 meses', texto: 'El simulador es increíble, siento que tengo al maestro Jesús aquí conmigo. Jamás pensé aprender tan rápido.', nivel: 'Principiante a Intermedio' },
   { nombre: 'María González', ciudad: 'Barranquilla, Atlántico', tiempo: '1 año', texto: 'La metodología es única. En un año ya toco canciones completas y mi familia no lo puede creer.', nivel: 'Avanzada' },
@@ -8,11 +18,11 @@ const testimonios = [
 ]
 
 const cronologia = [
-  { año: '2020', titulo: 'Los Inicios', descripcion: 'Jesús González inicia su carrera profesional acompañando a Orlando Acosta, adquiriendo experiencia invaluable en el vallenato auténtico.', imagen: '/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg', color: '#ff6600' },
-  { año: '2021', titulo: 'Nace la Academia', descripcion: 'Se funda Academia Vallenata Online, revolucionando la enseñanza del acordeón con metodología efectiva y resultados comprobados.', imagen: '/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg', color: '#ff8c42' },
-  { año: '2022', titulo: 'Consolidación', descripcion: 'Consolidación como acordeonista profesional, perfeccionando técnicas que luego transmite a miles de estudiantes en línea.', imagen: '/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg', color: '#ffb366' },
-  { año: '2023-2024', titulo: 'Giras Internacionales', descripcion: 'Recorre Colombia y el mundo acompañando a Poncho Zuleta, llevando el vallenato auténtico a nuevos territorios.', imagen: '/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg', color: '#ffd699' },
-  { año: '2025', titulo: 'Revolución Digital', descripcion: 'Lanzamiento del Acordeón Interactivo estilo videojuego. Aprender teoría musical, canciones y técnicas nunca fue tan efectivo.', imagen: '/images/Acordeon PRO MAX.png', color: '#ff6600' }
+  { año: '2020', titulo: 'Los Inicios', descripcion: 'Jesús González inicia su carrera profesional acompañando a Orlando Acosta, adquiriendo experiencia invaluable en el vallenato auténtico.', imagen: imgJesusLeyendas, color: '#ff6600' },
+  { año: '2021', titulo: 'Nace la Academia', descripcion: 'Se funda Academia Vallenata Online, revolucionando la enseñanza del acordeón con metodología efectiva y resultados comprobados.', imagen: imgBienvenida, color: '#ff8c42' },
+  { año: '2022', titulo: 'Consolidación', descripcion: 'Consolidación como acordeonista profesional, perfeccionando técnicas que luego transmite a miles de estudiantes en línea.', imagen: fotoMaestro, color: '#ffb366' },
+  { año: '2023-2024', titulo: 'Giras Internacionales', descripcion: 'Recorre Colombia y el mundo acompañando a Poncho Zuleta, llevando el vallenato auténtico a nuevos territorios.', imagen: imgBannerJesus, color: '#ffd699' },
+  { año: '2025', titulo: 'Revolución Digital', descripcion: 'Lanzamiento del Acordeón Interactivo estilo videojuego. Aprender teoría musical, canciones y técnicas nunca fue tan efectivo.', imagen: imgAcordeonPro, color: '#ff6600' }
 ]
 
 export default function NuestraAcademia() {
@@ -45,7 +55,7 @@ export default function NuestraAcademia() {
             </div>
           </div>
           <div className={`hero-image ${montado ? 'visible' : ''}`}>
-            <img src="/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg" alt="Maestro Jesús González" className="maestro-img" />
+            <img src={fotoMaestro} alt="Maestro Jesús González" className="maestro-img" />
             <div className="glow-effect" />
           </div>
         </div>
@@ -62,21 +72,21 @@ export default function NuestraAcademia() {
               <h3>Sin Profesor Cerca</h3>
               <p><strong>Problema:</strong> No hay maestros de acordeón vallenato en tu ciudad</p>
               <p><strong>Solución:</strong> Clases en vivo y simulador interactivo 24/7</p>
-              <img src="/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg" alt="Clases virtuales" className="card-img" />
+              <img src={imgClasesVirtuales} alt="Clases virtuales" className="card-img" />
             </div>
             <div className={`diferencia-card ${montado ? 'visible' : ''}`}>
               <div className="card-icon">💰</div>
               <h3>Clases Muy Costosas</h3>
               <p><strong>Problema:</strong> Clases presenciales cuestan $50,000+ por hora</p>
               <p><strong>Solución:</strong> Acceso ilimitado por menos de $30,000 al mes</p>
-              <img src="/images/NuestraAcademia/Cursos-de-acordeon.jpg" alt="Cursos económicos" className="card-img" />
+              <img src={imgCursosEco} alt="Cursos económicos" className="card-img" />
             </div>
             <div className={`diferencia-card ${montado ? 'visible' : ''}`}>
               <div className="card-icon">⏰</div>
               <h3>Horarios Rígidos</h3>
               <p><strong>Problema:</strong> Horarios fijos que no se adaptan a tu vida</p>
               <p><strong>Solución:</strong> Aprende a tu ritmo, cuando quieras, donde quieras</p>
-              <img src="/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg" alt="Horarios flexibles" className="card-img" />
+              <img src={imgClasesPerso} alt="Horarios flexibles" className="card-img" />
             </div>
           </div>
         </div>
@@ -116,7 +126,7 @@ export default function NuestraAcademia() {
               <button className="btn-simulador" onClick={() => (window.location.href = '/simulador-gaming')}>Probar Simulador Gratis</button>
             </div>
             <div className="simulador-imagen">
-              <img src="/images/Acordeon PRO MAX.png" alt="Acordeón Interactivo" className="acordeon-img" />
+              <img src={imgAcordeonPro} alt="Acordeón Interactivo" className="acordeon-img" />
               <div className="simulador-glow" />
             </div>
           </div>
