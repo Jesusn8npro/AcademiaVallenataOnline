@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import './nuestra-academia.css'
 
-// Importaciones blindadas de activos (Corregidas para deploy exitoso)
-import imgJesusLeyendas from '../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
-import imgBienvenida from '../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg';
-import fotoMaestro from '../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
-import imgBannerJesus from '../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg';
-import imgAcordeonPro from '../../assets/images/Acordeon PRO MAX.png';
-import imgClasesVirtuales from '../../assets/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg';
-import imgCursosEco from '../../assets/images/NuestraAcademia/Cursos-de-acordeon.jpg';
-import imgClasesPerso from '../../assets/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg';
+// Importaciones blindadas de activos (REPARACIÓN CRÍTICA PARA DEPLOY)
+import imgJesusLeyendas from '../../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
+import imgBienvenida from '../../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg';
+import fotoMaestro from '../../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
+import imgBannerJesus from '../../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg';
+import imgAcordeonPro from '../../../assets/images/Acordeon PRO MAX.png';
+import imgClasesVirtuales from '../../../assets/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg';
+import imgCursosEco from '../../../assets/images/NuestraAcademia/Cursos-de-acordeon.jpg';
+import imgClasesPerso from '../../../assets/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg';
 
 const testimonios = [
   { nombre: 'Carlos Mendoza', ciudad: 'Valledupar, Cesar', tiempo: '6 meses', texto: 'El simulador es increíble, siento que tengo al maestro Jesús aquí conmigo. Jamás pensé aprender tan rápido.', nivel: 'Principiante a Intermedio' },

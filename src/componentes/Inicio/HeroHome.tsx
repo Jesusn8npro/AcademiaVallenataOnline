@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-// Importación blindada de activos
-import bannerHero from '../../assets/images/Home/Banner- Academia vallenata ONLINE.jpg';
+// Importación blindada de activos (REPARACIÓN PARA DEPLOY)
+import bannerHero from '../../../assets/images/Home/Banner- Academia vallenata ONLINE.jpg';
 
 interface HeroHomeProps {
   mostrarModal: boolean;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 
-// Importaciones blindadas de activos de opciones
-import imgCursos from '../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg';
-import imgSimulador from '../../assets/images/Acordeon PRO MAX.png';
-import imgTutoriales from '../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg';
-import imgComunidad from '../../assets/images/Home/comunidad imagen.webp';
-import imgPaquetes from '../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg';
-import imgClases from '../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg';
+// Importaciones blindadas de activos de opciones (REPARACIÓN PARA DEPLOY)
+import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg';
+import imgSimulador from '../../../assets/images/Acordeon PRO MAX.png';
+import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg';
+import imgComunidad from '../../../assets/images/Home/comunidad imagen.webp';
+import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg';
+import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg';
 
 const SeccionOpciones: React.FC = () => {
   const { t } = useTranslation();

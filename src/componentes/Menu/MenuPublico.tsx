@@ -6,8 +6,8 @@ import ModalDeInicioDeSesion from './ModalDeInicioDeSesion';
 import MenuLateralResponsive from './MenuLateralResponsive';
 import './MenuPublico.css';
 
-// Importación blindada del logo
-import logoAcademia from '../../assets/images/logo academia vallenata.png';
+// Importación blindada del logo (REPARACIÓN PARA DEPLOY)
+import logoAcademia from '../../../assets/images/logo academia vallenata.png';
 
 interface ArticuloBlog {
   id: number;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// Importación blindada de la foto del maestro
-import fotoMaestro from '../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
+// Importación blindada de la foto del maestro (REPARACIÓN PARA DEPLOY)
+import fotoMaestro from '../../../assets/images/Home/Foto maestro oficial JESUS GONZALEZ.jpg';
 
 const SeccionInstructor: React.FC = () => {
   const [visible, setVisible] = useState(false);
