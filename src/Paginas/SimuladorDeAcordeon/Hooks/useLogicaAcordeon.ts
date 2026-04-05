@@ -1,0 +1,1432 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { supabase } from '../../../servicios/clienteSupabase';
+import { motorAudioPro } from '../AudioEnginePro';
+import { encontrarMejorMuestra, type Muestra } from '../UniversalSampler';
+import { mapaTeclas, tono } from '../mapaTecladoYFrecuencias';
+import {
+    mapaTeclasBajos,
+    TONALIDADES,
+    cambiarFuelle
+} from '../notasAcordeonDiatonico';
+import type { AjustesAcordeon, SonidoVirtual, ModoVista, AcordeonSimuladorProps } from '../TiposAcordeon';
+
+const NOMBRES_INGLES: Record<string, string> = {
+    'do': 'C', 'do#': 'Db', 'reb': 'Db', 're': 'D', 're#': 'Eb', 'mib': 'Eb', 'mi': 'E',
+    'fa': 'F', 'fa#': 'Gb', 'solb': 'Gb', 'sol': 'G', 'sol#': 'Ab', 'lab': 'Ab', 'la': 'A', 'la#': 'Bb', 'sib': 'Bb', 'si': 'B'
+};
+
+// ✅ LISTAS HARDCODEADAS - Garantizan disponibilidad inmediata sin depender de fetch async
+const SAMPLES_BRILLANTE_DEFAULT: string[] = [
+    'A-4-cm.mp3', 'A-5-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3', 'Ab-6-cm.mp3',
+    'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'Bb-3-cm.mp3', 'Bb-4-cm.mp3',
+    'Bb-5-cm.mp3', 'Bb-6-cm.mp3', 'C-4-cm.mp3', 'C-5-cm.mp3', 'C-6-cm.mp3',
+    'C-7-cm.mp3', 'D-4-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3', 'Db-5-cm.mp3',
+    'Db-6-cm.mp3', 'E-4-cm.mp3', 'E-5-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3',
+    'Eb-6-cm.mp3', 'F-4-cm.mp3', 'F-5-cm.mp3', 'F-6-cm.mp3', 'G-4-cm.mp3',
+    'G-5-cm.mp3', 'G-6-cm.mp3', 'Gb-4-cm.mp3', 'Gb-5-cm.mp3'
+];
+
+const SAMPLES_ARMONIZADO_DEFAULT: string[] = [
+    'A-4-cm.mp3', 'A-5-cm.mp3', 'A-6-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3',
+    'Ab-6-cm.mp3', 'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'B-6-cm.mp3',
+    'Bb-4-cm.mp3', 'Bb-5-cm.mp3', 'C-5-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3',
+    'Db-4-cm.mp3', 'Db-5-cm.mp3', 'Db-6-cm.mp3', 'Db-7-cm.mp3', 'E-4-cm.mp3',
+    'E-5-cm.mp3', 'E-6-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3', 'Eb-6-cm.mp3',
+    'F-4-cm.mp3', 'F-5-cm.mp3', 'G-4-cm.mp3', 'G-5-cm.mp3', 'Gb-4-cm.mp3',
+    'Gb-5-cm.mp3', 'Gb-6-cm.mp3'
+];
+
+const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
+    const filename = ruta.split('/').pop() || '';
+    // Busca patrones como F-6 o Eb-4
+    const match = filename.match(/([a-zA-Z#]+)-(\d+)/);
+    if (match) {
+        return { nota: match[1], octava: parseInt(match[2]) };
+    }
+    // Caso especial para Bajos: BajoC-3-cm.mp3
+    if (filename.startsWith('Bajo')) {
+        const notaMatch = filename.replace('Bajo', '').match(/([a-zA-Z#]+)/);
+        const octMatch = filename.match(/-(\d+)-/);
+        if (notaMatch) {
+            return { nota: notaMatch[1], octava: octMatch ? parseInt(octMatch[1]) : 3 };
+        }
+    }
+    return null;
+};
+
+const VOL_PITOS = 0.55;
+const VOL_BAJOS = 0.70; // 🔊 Subimos el volumen de los bajos para que resalten más
+const FADE_OUT = 10; // ⚡ Velocidad ultra-extrema para trinos profesionales (10ms)
+
+
+
+export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
+    const {
+        direccion: direccionProp = 'halar',
+        deshabilitarInteraccion = false,
+        onNotaPresionada,
+        onNotaLiberada
+    } = props;
+
+    // --- 1. ESTADOS (Siempre al principio) ---
+    const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69'); // Acordeón Original
+    const [listaInstrumentos, setListaInstrumentos] = useState<any[]>([]);
+    const [muestrasDB, setMuestrasDB] = useState<any[]>([]); // Tipado explícito para evitar 'never[]'
+    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<any[]>([]);
+    const [cargandoCloud, setCargandoCloud] = useState(false);
+    const [midiActivado, setMidiActivado] = useState(false);
+    const [esp32Conectado, setEsp32Conectado] = useState(false);
+    const esp32PortRef = useRef<any>(null);
+    const [usuarioId, setUsuarioId] = useState<string | null>(null);
+    const [samplesPitos, setSamplesPitos] = useState<string[]>(SAMPLES_BRILLANTE_DEFAULT);
+    const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
+    const [samplesArmonizado, setSamplesArmonizado] = useState<string[]>(SAMPLES_ARMONIZADO_DEFAULT);
+
+    const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
+    const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
+    const [modoAjuste, setModoAjuste] = useState(false);
+    const [modoVista, setModoVista] = useState<ModoVista>('notas');
+    const [vistaDoble, setVistaDoble] = useState(false);
+    const [botonSeleccionado, setBotonSeleccionado] = useState<string | null>(null);
+    const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
+    const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
+    const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
+    const [nombresTonalidades, setNombresTonalidades] = useState<Record<string, string>>({});
+    const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
+    const [tipoFuelleActivo, setTipoFuelleActivo] = useState<'US' | 'SL'>('US');
+
+    // --- ESTADOS DE CONTROL DE CARGA Y VISIBILIDAD ---
+    const [disenoCargado, setDisenoCargado] = useState(false);
+    const isInitialLoad = useRef(true);
+
+    // --- ESTADO PRINCIPAL DE DISEÑO CON CARGA INSTANTÁNEA (Lazy Initializer) ---
+    const [ajustes, setAjustes] = useState<AjustesAcordeon>(() => {
+        const defaults: AjustesAcordeon = {
+            tamano: '88vh',
+            x: '50%',
+            y: '50%',
+            pitosBotonTamano: '4.4vh',
+            pitosFuenteTamano: '1.6vh',
+            bajosBotonTamano: '4.2vh',
+            bajosFuenteTamano: '1.3vh',
+            teclasLeft: '5.05%',
+            teclasTop: '13%',
+            bajosLeft: '82.5%',
+            bajosTop: '28%',
+            mapeoPersonalizado: {},
+            pitchPersonalizado: {},
+            pitchGlobal: 0,
+            bancoId: 'acordeon'
+        };
+
+        try {
+            // Intentamos recuperar el "Master Mirror" del diseño para carga inmediata
+            const saved = localStorage.getItem('SIM_VISUAL_MASTER_V11'); // Incremento versión para limpieza
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Validación de seguridad para evitar datos corruptos
+                if (parsed.x && parsed.y) {
+                    return { ...defaults, ...parsed };
+                }
+            }
+        } catch (e) {
+            console.warn('Error en carga inicial de localStorage:', e);
+        }
+        return defaults;
+    });
+
+    // Refs de datos - siempre apuntan al valor más reciente sin crear closures obsoletas
+    // ✅ muestrasLocalesDBRef: evita el stale closure en obtenerRutasAudio
+    // sin esta ref, al cambiar timbre la función lee el DB anterior aunque ya fue reconstruido
+    const muestrasLocalesDBRef = useRef<Muestra[]>([]);
+    // --- 2. CALLBACKS Y EFECTOS ---
+    const cargarMuestrasLocales = useCallback(async (manual = false) => {
+        try {
+            const res = await fetch('/muestrasLocales.json?t=' + Date.now());
+            const data = await res.json();
+            // Solo sobreescribir si el JSON tiene datos reales - no destruir los defaults hardcodeados
+            if (data.pitos?.length > 0) setSamplesPitos(data.pitos);
+            if (data.bajos?.length > 0) setSamplesBajos(data.bajos);
+            if (data.armonizado?.length > 0) setSamplesArmonizado(data.armonizado);
+            else setSamplesBajos(data.bajos || []); // Al menos cargar bajos
+            if (manual) {
+                motorAudioPro.limpiarBanco(instrumentoId);
+                alert(`✅ ¡Audios actualizados!\nSe encontraron ${data.pitos?.length || 0} pitos brillantes, ${data.armonizado?.length || 0} armonizados y ${data.bajos?.length || 0} bajos.`);
+            }
+        } catch (e) {
+            console.warn('No se pudo cargar muestrasLocales.json');
+        }
+    }, [instrumentoId]);
+
+    useEffect(() => {
+        cargarMuestrasLocales();
+    }, [cargarMuestrasLocales]);
+
+    // Sync de la ref QUITAR - se hace síncronamente en el efecto principal de abajo
+
+    // Transformar nombres de archivos locales en objetos Muestra para el motor universal
+    // Se reconstruye toda vez que cambia el timbre (Brillante / Armonizado) o la lista de muestras
+    useEffect(() => {
+        const mLocales: Muestra[] = [];
+        // ⚠️ CRÍTICO: leer de `ajustes.timbre` (estado reactivo), NO de ajustesRef.current
+        // La ref puede estar desactualizada dentro de un useEffect.
+        const timbreActivo = ajustes.timbre || 'Brillante';
+        // Carpeta ArmonizadoPro = MP3 128kbps convertidos desde WAV originales con ffmpeg (30KB+ por archivo)
+        const carpetaPitos = timbreActivo === 'Armonizado' ? 'ArmonizadoPro' : 'Brillante';
+        const listaActivePitos = timbreActivo === 'Armonizado' ? samplesArmonizado : samplesPitos;
+
+        // Procesar Pitos (Brillante o Armonizado según timbre activo)
+        listaActivePitos.forEach(file => {
+            // Formato esperado: {Nota}-{Octava}-cm.mp3 (ej: C-4-cm.mp3)
+            const parts = file.split('-');
+            if (parts.length >= 2) {
+                mLocales.push({
+                    nota: parts[0],
+                    octava: parseInt(parts[1]) || 4,
+                    url_audio: `/audio/Muestras_Cromaticas/${carpetaPitos}/${file}`
+                });
+            }
+        });
+
+        // Procesar Bajos (siempre la misma carpeta, independiente del timbre)
+        samplesBajos.forEach(file => {
+            // Formato esperado: Bajo{Nota}[-2][(acorde)]-cm.mp3
+            let clean = file.replace('Bajo', '').replace('-cm.mp3', '');
+            let octava = 3;
+            let esAcorde = false;
+            let cualidad: 'mayor' | 'menor' = 'mayor';
+
+            if (clean.includes('(acorde)')) {
+                esAcorde = true;
+                clean = clean.replace('(acorde)', '');
+            }
+
+            if (clean.includes('-2')) {
+                octava = 2;
+                clean = clean.replace('-2', '');
+            }
+
+            // Detectar si es menor (nombres como Cm, fm)
+            if (clean.endsWith('m') && clean.length > 1 && !clean.endsWith('bm')) {
+                cualidad = 'menor';
+                clean = clean.substring(0, clean.length - 1);
+            }
+
+            // Normalización de nombres de notas para el motor universal
+            const notaNormalizada = clean
+                .replace('Db', 'Db')
+                .replace('Eb', 'Eb')
+                .replace('Ab', 'Ab')
+                .replace('Bb', 'Bb')
+                .replace('Gb', 'Gb');
+
+            mLocales.push({
+                nota: notaNormalizada,
+                octava,
+                url_audio: `/audio/Muestras_Cromaticas/Bajos/${file}`,
+                tipo_bajo: esAcorde ? 'acorde' : 'nota',
+                cualidad: esAcorde ? cualidad : undefined
+            });
+        });
+
+        console.log(`%c 🎵 TIMBRE CAMBIADO → ${timbreActivo} (${listaActivePitos.length} pitos desde /Muestras_Cromaticas/${carpetaPitos}/) `, 'background:#8b5cf6;color:white;padding:4px;border-radius:4px;');
+
+        // ✅ Actualizar la ref SÍNCRONAMENTE antes de setState - evita que obtenerRutasAudio lea el DB viejo
+        muestrasLocalesDBRef.current = mLocales;
+        setMuestrasLocalesDB(mLocales);
+
+        // ✅ Limpiar TODOS los bancos del motor de audio para forzar recarga con las nuevas rutas
+        motorAudioPro.limpiarBanco(instrumentoId);
+        motorAudioPro.limpiarBanco('4e9f2a94-21c0-4029-872e-7cb1c314af69');
+        motorAudioPro.limpiarBanco('acordeon');
+        soundsPerKeyRef.current = {};
+    }, [samplesPitos, samplesArmonizado, samplesBajos, ajustes.timbre, instrumentoId]);
+
+    // Activar AudioContext con el primer gesto del usuario
+    useEffect(() => {
+        const activarAudio = async () => {
+            console.log("%c 🔊 INTENTANDO ACTIVAR AUDIO... ", "background: #3498db; color: white; padding: 5px;");
+            try {
+                await motorAudioPro.activarContexto();
+                console.log("%c ✅ SISTEMA DE AUDIO LISTO ", "background: #27ae60; color: white; padding: 5px;");
+                window.removeEventListener('mousedown', activarAudio);
+                window.removeEventListener('keydown', activarAudio);
+                window.removeEventListener('touchstart', activarAudio);
+            } catch (err) {
+                console.error("❌ Error activando audio:", err);
+            }
+        };
+        window.addEventListener('mousedown', activarAudio);
+        window.addEventListener('keydown', activarAudio);
+        window.addEventListener('touchstart', activarAudio);
+        return () => {
+            window.removeEventListener('mousedown', activarAudio);
+            window.removeEventListener('keydown', activarAudio);
+            window.removeEventListener('touchstart', activarAudio);
+        };
+    }, []);
+
+    // 🚩 Referencia maestra para sincronizar con estados
+    const ajustesRef = useRef(ajustes);
+    useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
+
+    // --- REFS ---
+    const botonesActivosRef = useRef<Record<string, any>>({});
+    const soundsPerKeyRef = useRef<Record<string, string[]>>({});
+    const basePitchesRef = useRef<Record<string, number>>({});
+    const teclasFastMapRef = useRef<Record<string, any>>({});
+    const direccionRef = useRef(direccion);
+    useEffect(() => { direccionRef.current = direccion; }, [direccion]);
+    const hardwareMapRef = useRef(new Map<string, string>()); // 🎹 Rastrear physicalKey -> logicalId
+    const deshabilitarRef = useRef(deshabilitarInteraccion);
+    const previewNodeRef = useRef<any>(null);
+    const tipoFuelleActivoRef = useRef(tipoFuelleActivo);
+    useEffect(() => { tipoFuelleActivoRef.current = tipoFuelleActivo; }, [tipoFuelleActivo]);
+
+    // 🚀 REF MAGICA PARA EVITAR SWAPS DEL REPRODUCTOR HERO
+    const skipNextSwapRef = useRef(false);
+    const setDireccionSinSwap = useCallback((d: 'halar' | 'empujar') => {
+        skipNextSwapRef.current = true;
+        setDireccion(d);
+    }, []);
+
+    // --- CARGA INTEGRADA DE SUPABASE ---
+    useEffect(() => {
+        const checkUserAndLoad = async () => {
+            setCargandoCloud(true);
+            try {
+                // Cargar lista de instrumentos siempre
+                const { data: instData } = await (supabase.from('sim_instrumentos').select('*') as any);
+                if (instData) setListaInstrumentos(instData);
+
+                const { data: userData } = await supabase.auth.getUser();
+                const user = userData.user;
+                if (user) {
+                    setUsuarioId(user.id);
+                    const { data: ajustesData } = await (supabase
+                        .from('sim_ajustes_usuario')
+                        .select('*')
+                        .eq('usuario_id', user.id)
+                        .maybeSingle() as any);
+
+                    if (ajustesData) {
+                        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id as string);
+                        if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados as SonidoVirtual[]);
+
+                        // 📐 Restaurar posición y tamaño
+                        if (ajustesData.ajustes_visuales) {
+                            setAjustes(prev => ({ ...prev, ...(ajustesData.ajustes_visuales as any) }));
+                        }
+                        
+                        // ... restore tonalidades logic ...
+                        if (ajustesData.tonalidades_configuradas) {
+                            const configs = ajustesData.tonalidades_configuradas as any;
+                            const nombres: Record<string, string> = {};
+                            Object.entries(configs).forEach(([key, val]: [string, any]) => {
+                                if (val?.nombrePersonalizado) {
+                                    const id = key.replace('ajustes_acordeon_vPRO_', '');
+                                    nombres[id] = val.nombrePersonalizado;
+                                }
+                            });
+                            setNombresTonalidades(nombres);
+                        }
+
+                        if (ajustesData.lista_tonalidades_activa && Array.isArray(ajustesData.lista_tonalidades_activa) && ajustesData.lista_tonalidades_activa.length > 0) {
+                            setListaTonalidades(ajustesData.lista_tonalidades_activa as string[]);
+                        } else {
+                            setListaTonalidades(Object.keys(TONALIDADES));
+                        }
+
+                        if (ajustesData.tonalidad_activa) {
+                            setTonalidadSeleccionada(ajustesData.tonalidad_activa as string);
+                        }
+                    } else {
+                        setListaTonalidades(Object.keys(TONALIDADES));
+                    }
+                } else {
+                    setListaTonalidades(Object.keys(TONALIDADES));
+                }
+            } catch (error) {
+                console.error("Error cargando datos de usuario:", error);
+                setListaTonalidades(Object.keys(TONALIDADES));
+            } finally {
+                setCargandoCloud(false);
+            }
+        };
+        checkUserAndLoad();
+    }, []);
+
+    useEffect(() => {
+        const cargarMuestras = async () => {
+            if (!instrumentoId) return;
+            setCargandoCloud(true);
+            try {
+                const { data, error } = await supabase
+                    .from('sim_muestras')
+                    .select('*')
+                    .eq('instrumento_id', instrumentoId) as any;
+
+                if (error) throw error;
+                setMuestrasDB(data || []);
+
+                // Limpiar caché de sonidos para forzar recarga con el nuevo instrumento
+                motorAudioPro.limpiarBanco(instrumentoId);
+                soundsPerKeyRef.current = {};
+
+            } catch (e) {
+                console.warn('Error cargando muestras desde Supabase:', e);
+            } finally {
+                setCargandoCloud(false);
+            }
+        };
+        cargarMuestras();
+    }, [instrumentoId]);
+
+    const obtenerOctava = (nombre: string, freq: number) => {
+        // Normalizar nombre para búsqueda en tabla maestra
+        const n = nombre.toLowerCase()
+            .replace('do#', 'reb')
+            .replace('re#', 'mib')
+            .replace('fa#', 'solb')
+            .replace('sol#', 'lab')
+            .replace('la#', 'sib');
+
+        const claveOriginal = Object.keys(tono).find(k => k.toLowerCase() === n) || 'Do';
+        const freqs = (tono as any)[claveOriginal];
+
+        // Buscamos el índice que tenga la frecuencia más cercana para determinar la octava real
+        let mejorIdx = 4;
+        let minDiff = Infinity;
+
+        freqs.forEach((f: number, idx: number) => {
+            const diff = Math.abs(f - freq);
+            if (diff < minDiff) {
+                minDiff = diff;
+                mejorIdx = idx;
+            }
+        });
+
+        return mejorIdx;
+    };
+
+    const encontrarMejorOctava = (nota: string, octavaDeseada: number) => {
+        const timbre = ajustesRef.current?.timbre || 'Brillante';
+        // Fallback básico si no hay muestra exacta
+        const candidatos = [octavaDeseada, octavaDeseada - 1, octavaDeseada + 1, octavaDeseada - 2, octavaDeseada + 2, 4];
+        return candidatos[0]; // Simplificado: el engine Pro ya maneja el pitch shifting dinámico
+    };
+
+    const configTonalidad = TONALIDADES[tonalidadSeleccionada as keyof typeof TONALIDADES] || TONALIDADES['F-Bb-Eb'];
+    const mapaBotonesActual = useRef<Record<string, any>>({});
+
+    useEffect(() => {
+        const todos = [
+            ...configTonalidad.primeraFila,
+            ...configTonalidad.segundaFila,
+            ...configTonalidad.terceraFila,
+            ...configTonalidad.disposicionBajos.una,
+            ...configTonalidad.disposicionBajos.dos
+        ];
+        mapaBotonesActual.current = todos.reduce((acc, btn) => ({ ...acc, [btn.id]: btn }), {});
+    }, [configTonalidad]);
+
+    const obtenerRutasAudio = useCallback((idBoton: string, ajustesOverride?: AjustesAcordeon) => {
+        const currentAjustes = ajustesOverride || ajustesRef.current;
+        const map = currentAjustes.mapeoPersonalizado || {};
+        const btn = mapaBotonesActual.current[idBoton];
+        if (!btn) return [];
+
+        const esAcordeonOriginal = instrumentoId === '4e9f2a94-21c0-4029-872e-7cb1c314af69';
+        const esBajo = idBoton.includes('bajo');
+
+        // --- 1. DETERMINAR QUÉ NOTA DEBE SONAR (Mapeo Manual o Definición) ---
+        let notaTarget = btn.nombre;
+        if (esBajo) {
+            // Limpia sufijos M/m para buscar la nota base y su octava
+            notaTarget = notaTarget.replace(/M$|m$/, '');
+        }
+
+        const fTarget = Array.isArray(btn.frecuencia) ? btn.frecuencia[0] : btn.frecuencia;
+        let octavaTarget = obtenerOctava(notaTarget, fTarget as number);
+
+        // nEng se usa para la búsqueda en muestrasDB
+        const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
+
+        // Si hay un mapeo manual, lo usamos para definir qué nota buscar en otros instrumentos
+        if (map[idBoton] && map[idBoton].length > 0) {
+            const infoManual = EXTRAER_NOTA_OCTAVA(map[idBoton][0]);
+            if (infoManual) {
+                notaTarget = infoManual.nota;
+                octavaTarget = infoManual.octava;
+            }
+        }
+
+        // --- 2. PRIORIDAD: INSTRUMENTO PERSONALIZADO (Supabase) ---
+        if (!esAcordeonOriginal && muestrasDB && muestrasDB.length > 0) {
+            const filtrarMuestras = muestrasDB.filter(m => esBajo ? m.tipo === 'bajos' : m.tipo === 'pitos');
+            if (filtrarMuestras.length > 0) {
+                const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
+                const best = encontrarMejorMuestra(nEng, octavaTarget, filtrarMuestras);
+                if (best) return [`pitch:${best.pitch}|${best.url}`];
+            }
+        }
+
+        // --- 3. FALLBACK: ACORDEÓN ORIGINAL (Solo si es el activo) ---
+        if (esAcordeonOriginal) {
+            // Nota: Si hay mapeo manual (map[idBoton]), ya extrajimos notaTarget y octavaTarget arriba en el paso 1.
+            // Por lo tanto, NO retornamos map[idBoton] directamente porque tendría la carpeta "quemada".
+            // Dejamos que el flujo siga para que busque esa nota en la carpeta del timbre actual.
+
+            if (muestrasLocalesDBRef.current.length > 0) {
+                // Si es bajo, buscamos específicamente el tipo (acorde o nota) y su cualidad (mayor/menor)
+                const tipoDeseado = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? 'acorde' : 'nota';
+                const cualidadDeseada = (btn.tipo === 'mayor' || btn.tipo === 'menor') ? btn.tipo : undefined;
+
+                const filtrarLocales = muestrasLocalesDBRef.current.filter((m: Muestra) => {
+                    const deBajo = m.url_audio.includes('Bajos');
+                    if (esBajo) {
+                        return deBajo && m.tipo_bajo === tipoDeseado && (tipoDeseado === 'nota' || m.cualidad === cualidadDeseada);
+                    }
+                    return !deBajo;
+                });
+
+                const nEng = NOMBRES_INGLES[notaTarget.toLowerCase()] || notaTarget;
+                let best = encontrarMejorMuestra(nEng, octavaTarget, filtrarLocales);
+
+                // 🛡️ REGLA DE ORO PROFESIONAL PARA PITOS Y BAJOS
+                // Priorizamos pitch shifting pequeño dentro de la misma octava (ej. -2 o +2 semitonos)
+                // antes que hacer grandes saltos de octava.
+                if (best && (Math.abs(best.pitch) > 2)) {
+                    const octavasEscaneo = esBajo ? [2, 3, 4, 1] : [4, 5, 6, 7, 3];
+                    let mejorOpcionGlobal = best;
+                    let menorPitchAbs = Math.abs(best.pitch);
+
+                    for (const oct of octavasEscaneo) {
+                        const prueba = encontrarMejorMuestra(nEng, oct, filtrarLocales);
+                        if (prueba) {
+                            // Ajustar el pitch para que la muestra de la otra octava 
+                            // SUENE en la octava objetivo original.
+                            const pitchCorregido = prueba.pitch + ((octavaTarget - oct) * 12);
+                            if (Math.abs(pitchCorregido) < menorPitchAbs) {
+                                menorPitchAbs = Math.abs(pitchCorregido);
+                                mejorOpcionGlobal = { ...prueba, pitch: pitchCorregido };
+                            }
+                        }
+                    }
+                    best = mejorOpcionGlobal;
+                }
+
+                // 🚨 PROTECCIÓN ESPECIAL 3-7 Y ALTOS: Si el pitch sigue siendo > 3, 
+                // permitimos fallback inteligente
+                if (!esBajo && best && best.pitch > 3) {
+                    const fallbackGordo = encontrarMejorMuestra(nEng, octavaTarget - 1, filtrarLocales);
+                    if (fallbackGordo) {
+                        const pitchCorregido = fallbackGordo.pitch + 12; // Compensar diferencia de 1 octava
+                        if (Math.abs(pitchCorregido) < Math.abs(best.pitch)) {
+                            best = { ...fallbackGordo, pitch: pitchCorregido };
+                        }
+                    }
+                }
+
+                if (best) return [`pitch:${best.pitch}|${best.url}`];
+
+                // Si no encontramos acorde, intentamos fallback a nota normal (provisional)
+                if (esBajo && tipoDeseado === 'acorde') {
+                    const fallback = encontrarMejorMuestra(nEng, octavaTarget, muestrasLocalesDBRef.current.filter(m => m.url_audio.includes('Bajos') && m.tipo_bajo === 'nota'));
+                    if (fallback) return [`pitch:${fallback.pitch}|${fallback.url}`];
+                }
+            }
+        }
+
+        return [];
+        // ✅ muestrasLocalesDB QUITADO de deps: ahora usamos la ref para evitar stale closures
+        // La ref siempre tiene el valor más reciente sin necesidad de recrear la función
+    }, [muestrasDB, instrumentoId]);
+
+    // --- AUDIO ---
+    const detenerTono = useCallback((id: string, tiempoProgramado?: number) => {
+        const b = botonesActivosRef.current[id];
+        if (!b?.instances) return;
+
+        b.instances.forEach((inst: any) => {
+            motorAudioPro.detener(inst, FADE_OUT / 1000, tiempoProgramado); // Sincronizado con el motor pro
+        });
+    }, []);
+
+    const reproducirTono = useCallback((id: string, tiempoProgramado?: number, duracionSec?: number, loop: boolean = false) => {
+        const rawRutas = soundsPerKeyRef.current[id] || obtenerRutasAudio(id);
+
+        const volume = id.includes('bajo') ? VOL_BAJOS : VOL_PITOS;
+        const userPitch = ajustesRef.current.pitchPersonalizado?.[id] || 0;
+
+        const instances = rawRutas.map(rutaRaw => {
+            let ruta = rutaRaw;
+            let pitchBase = 0;
+            if (rutaRaw.startsWith('pitch:')) {
+                const parts = rutaRaw.replace('pitch:', '').split('|');
+                pitchBase = parseInt(parts[0]);
+                ruta = parts[1];
+            }
+            const globalPitch = ajustesRef.current.pitchGlobal || 0;
+            return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase, loop, tiempoProgramado, duracionSec);
+        }).filter(Boolean);
+
+        // Guardar en caché para que la próxima vez sea instantáneo
+        soundsPerKeyRef.current[id] = rawRutas;
+
+        return { instances: instances as any[] };
+    }, [obtenerRutasAudio, instrumentoId]);
+
+    const preprogramarTono = useCallback((id: string, delayInicioSec: number, delayFinSec: number) => {
+        const { instances } = reproducirTono(id, delayInicioSec, delayFinSec - delayInicioSec);
+        return instances;
+    }, [reproducirTono]);
+
+    const stopPreview = useCallback(() => {
+        if (previewNodeRef.current) {
+            try {
+                const { fuente, ganancia } = previewNodeRef.current;
+                const ahora = motorAudioPro.tiempoActual;
+                ganancia.gain.cancelScheduledValues(ahora);
+                ganancia.gain.setTargetAtTime(0, ahora, 0.05);
+                fuente.stop(ahora + 0.1);
+            } catch (e) { }
+            previewNodeRef.current = null;
+        }
+    }, []);
+
+    const playPreview = useCallback((rutaRaw: string, pitch: number, loop: boolean = true) => {
+        stopPreview();
+        let ruta = rutaRaw;
+        let pBase = 0;
+        if (rutaRaw.startsWith('pitch:')) {
+            const parts = rutaRaw.replace('pitch:', '').split('|');
+            pBase = parseInt(parts[0]);
+            ruta = parts[1];
+        }
+        const instance = motorAudioPro.reproducir(ruta, instrumentoId, 0.6, pitch + pBase, loop);
+        if (instance) {
+            previewNodeRef.current = instance;
+            instance.fuente.onended = () => {
+                if (previewNodeRef.current === instance) previewNodeRef.current = null;
+            };
+        }
+    }, [stopPreview]);
+
+    const actualizarBotonActivo = useCallback((id: string, accion: 'add' | 'remove' = 'add', instanciasExternas: any[] | null = null, silencioso: boolean = false, tiempoProgramado?: number, loop: boolean = false) => {
+        if (deshabilitarRef.current) return;
+
+        if (accion === 'add') {
+            // 🛡️ PROTECCIÓN CONTRA RE-DISPARO (Solo Manual): 
+            // Si el trigger viene del secuenciador (instanciasExternas !== null), PERMITIMOS solapamiento
+            // para que las ejecuciones rápidas no suenen entrecortadas.
+            if (instanciasExternas === null && botonesActivosRef.current[id]) return;
+
+            const esBajo = id.includes('bajo');
+
+            let instances: any[] = [];
+            
+            if (instanciasExternas !== null) {
+                instances = instanciasExternas;
+            } else {
+                instances = reproducirTono(id, tiempoProgramado, undefined, loop).instances;
+            }
+
+            if (silencioso) {
+                botonesActivosRef.current[id] = { instances, ...mapaBotonesActual.current[id] };
+            } else {
+                const newState = { ...botonesActivosRef.current, [id]: { instances, ...mapaBotonesActual.current[id] } };
+                botonesActivosRef.current = newState;
+                setBotonesActivos(newState);
+            }
+
+            onNotaPresionada?.({ idBoton: id, nombre: id });
+        } else {
+            // Solo removemos si realmente existe
+            if (!botonesActivosRef.current[id]) return;
+
+            detenerTono(id, tiempoProgramado);
+
+            if (silencioso) {
+                delete botonesActivosRef.current[id];
+            } else {
+                const newState = { ...botonesActivosRef.current };
+                delete newState[id];
+                botonesActivosRef.current = newState;
+                setBotonesActivos(newState);
+            }
+
+            onNotaLiberada?.({ idBoton: id, nombre: id });
+        }
+    }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
+
+    const limpiarTodasLasNotas = useCallback(() => {
+        // 🚨 FORZA DETENCIÓN TOTAL EN EL MOTOR (Agresivo)
+        motorAudioPro.detenerTodo(0.02);
+        
+        // Limpiar estados locales y refs
+        Object.keys(botonesActivosRef.current).forEach(id => {
+            onNotaLiberada?.({ idBoton: id, nombre: id });
+        });
+        
+        botonesActivosRef.current = {};
+        setBotonesActivos({});
+    }, [onNotaLiberada]);
+
+    // 🌪️ CENTRAL SWAP LOGIC: Robust direction cambio
+    const ejecutarSwapDireccion = useCallback((nuevaDir: 'halar' | 'empujar') => {
+        if (nuevaDir === direccionRef.current) return;
+
+        console.log(`%c 🔄 SWAP DIRECTO → ${nuevaDir} `, 'background:#f59e0b;color:white;font-weight:bold;');
+        
+        const prev = { ...botonesActivosRef.current };
+        const next: Record<string, any> = {};
+        let huboCambio = false;
+
+        Object.keys(prev).forEach(oldId => {
+            const parts = oldId.split('-');
+            if (parts.length < 3) return;
+            const esBajo = oldId.includes('bajo');
+            const newId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
+
+            if (newId !== oldId) {
+                // Si es una nota del secuenciador (instances: []), no la swapeamos
+                if (prev[oldId].instances && prev[oldId].instances.length === 0) {
+                    next[oldId] = prev[oldId];
+                    return;
+                }
+
+                huboCambio = true;
+                // 1. Matar la nota vieja AGRESIVAMENTE (0.015s fade)
+                const bOld = prev[oldId];
+                if (bOld.instances) {
+                    bOld.instances.forEach((inst: any) => {
+                        motorAudioPro.detener(inst, 0.015);
+                    });
+                }
+                onNotaLiberada?.({ idBoton: oldId, nombre: oldId });
+
+                // 2. Disparar la nota nueva
+                const { instances } = reproducirTono(newId);
+                onNotaPresionada?.({ idBoton: newId, nombre: newId });
+                
+                if (instances && instances.length > 0) {
+                    next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                }
+            } else {
+                next[oldId] = prev[oldId];
+            }
+        });
+
+        // Actualizar trackeado de hardware
+        const currentHardware = hardwareMapRef.current;
+        currentHardware.forEach((logicalId, physicalKey) => {
+            const parts = logicalId.split('-');
+            if (parts.length >= 3) {
+                const esBajo = logicalId.includes('bajo');
+                currentHardware.set(physicalKey, `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`);
+            }
+        });
+
+        direccionRef.current = nuevaDir;
+        setDireccion(nuevaDir);
+        
+        if (huboCambio) {
+            botonesActivosRef.current = next;
+            setBotonesActivos(next);
+        }
+    }, [reproducirTono, onNotaLiberada, onNotaPresionada]);
+
+    const manejarEventoTeclado = useCallback((e: KeyboardEvent | React.KeyboardEvent, esPresionada: boolean) => {
+        if (deshabilitarRef.current) return;
+
+        // 🚫 NO INTERFERIR SI EL USUARIO ESTÁ ESCRIBIENDO EN UN INPUT
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+            return;
+        }
+
+        const tecla = e.key.toLowerCase();
+
+        if (tecla === cambiarFuelle) {
+            const nuevaDireccion = esPresionada ? 'empujar' : 'halar';
+            if (nuevaDireccion !== direccionRef.current) {
+                ejecutarSwapDireccion(nuevaDireccion);
+            }
+            return;
+        }
+
+        const d = mapaTeclas[tecla] || mapaTeclasBajos[tecla];
+        if (!d) return;
+        const esBajo = !!mapaTeclasBajos[tecla];
+        const id = `${d.fila}-${d.columna}-${direccionRef.current}${esBajo ? '-bajo' : ''}`;
+
+        if (esPresionada && !e.repeat) {
+            if (modoAjuste) setBotonSeleccionado(id);
+
+            const fastData = teclasFastMapRef.current[tecla];
+            if (fastData) {
+                const dir = direccionRef.current;
+                const rawRutas = dir === 'halar' ? fastData.rutasHalar : fastData.rutasEmpujar;
+                const userPitch = dir === 'halar' ? fastData.userPitchHalar : fastData.userPitchEmpujar;
+                const vol = fastData.esBajo ? VOL_BAJOS : VOL_PITOS;
+
+                const instanciasFast = rawRutas.map((rRaw: string) => {
+                    let r = rRaw; let pBase = 0;
+                    if (rRaw.startsWith('pitch:')) {
+                        const parts = rRaw.replace('pitch:', '').split('|');
+                        pBase = parseInt(parts[0]); r = parts[1];
+                    }
+                    const gPitch = ajustesRef.current.pitchGlobal || 0;
+                    return motorAudioPro.reproducir(r, instrumentoId, vol, gPitch + userPitch + pBase);
+                }).filter(Boolean);
+
+                actualizarBotonActivo(id, 'add', instanciasFast);
+            } else {
+                actualizarBotonActivo(id, 'add');
+            }
+        } else if (!esPresionada) {
+            actualizarBotonActivo(id, 'remove');
+        }
+    }, [actualizarBotonActivo, reproducirTono, detenerTono, modoAjuste, botonSeleccionado, ejecutarSwapDireccion, cambiarFuelle]);
+
+    // --- EFECTOS DE SINCRONIZACIÓN ---
+    useEffect(() => {
+        if (skipNextSwapRef.current) {
+            skipNextSwapRef.current = false;
+            direccionRef.current = direccion;
+            return;
+        }
+
+        // Si la dirección cambió externamente (ej: ESP32 o Props), ejecutamos el swap central
+        if (direccion !== direccionRef.current) {
+            ejecutarSwapDireccion(direccion);
+        }
+    }, [direccion, ejecutarSwapDireccion]);
+
+    useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
+    useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
+    useEffect(() => { botonesActivosRef.current = botonesActivos; }, [botonesActivos]);
+    useEffect(() => { if (direccionProp !== direccion) setDireccion(direccionProp); }, [direccionProp]);
+
+    useEffect(() => {
+        const handleInteraction = () => {
+            motorAudioPro.activarContexto();
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+        window.addEventListener('click', handleInteraction);
+        window.addEventListener('keydown', handleInteraction);
+        return () => {
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+    }, []);
+
+    useEffect(() => {
+        const hKD = (e: KeyboardEvent) => manejarEventoTeclado(e, true);
+        const hKU = (e: KeyboardEvent) => manejarEventoTeclado(e, false);
+        window.addEventListener('keydown', hKD);
+        window.addEventListener('keyup', hKU);
+        return () => {
+            window.removeEventListener('keydown', hKD);
+            window.removeEventListener('keyup', hKU);
+        };
+    }, [manejarEventoTeclado]);
+
+    // Cargar ajustes por tonalidad (de Supabase o Local)
+    // --- 3. CARGA DE CONFIGURACIÓN (Supabase) ---
+    useEffect(() => {
+        const mappingKey = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
+
+        const cargarTodo = async () => {
+            if (usuarioId === null) return;
+            // Carga totalmente silenciosa
+            try {
+                const { data } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .select('ajustes_visuales, tonalidades_configuradas, instrumento_id')
+                    .eq('usuario_id', usuarioId)
+                    .maybeSingle();
+
+                // 1. Cargamos el Diseño Global (Si existe)
+                const disenoGlobalNube = (data as any)?.ajustes_visuales || {};
+                const rawConfigMusical = (data as any)?.tonalidades_configuradas?.[mappingKey] || {};
+
+                const configMusical: Partial<AjustesAcordeon> = {
+                    mapeoPersonalizado: rawConfigMusical.mapeoPersonalizado,
+                    pitchPersonalizado: rawConfigMusical.pitchPersonalizado,
+                    pitchGlobal: rawConfigMusical.pitchGlobal,
+                    bancoId: rawConfigMusical.bancoId,
+                    timbre: rawConfigMusical.timbre,
+                };
+
+                // 🏗️ CONSTRUCCIÓN INTELIGENTE:
+                // Priorizamos lo que el usuario YA tiene en pantalla (ajustesRef.current)
+                // Solo usamos lo de la nube si el usuario no ha movido nada o es la carga inicial
+                const ajustesFinales: AjustesAcordeon = {
+                    ...ajustesRef.current, // Lo que ya ves en pantalla
+                    ...configMusical,      // Notas musicales del nuevo tono
+                };
+
+                // Si es la carga inicial, o si el usuario no ha movido el acordeón, aplicamos el diseño de la nube.
+                // Esto evita el "salto asqueroso" si el usuario ya ha movido el acordeón y luego cambia de tonalidad.
+                if (isInitialLoad.current || (ajustesRef.current.x === '50%' && ajustesRef.current.y === '50%')) {
+                    Object.assign(ajustesFinales, disenoGlobalNube);
+                }
+
+                // 🛑 FILTRO FINAL: Si por algún error la nube trae el valor "maldito" de 53.5%, lo corregimos al 50%
+                if (ajustesFinales.x === '53.5%') ajustesFinales.x = '50%';
+
+                setAjustes(ajustesFinales);
+                ajustesRef.current = ajustesFinales;
+
+                // Una vez que tenemos los datos de la nube, el diseño es oficial y "limpio"
+                setDisenoCargado(true);
+                isInitialLoad.current = false; // Ya no es la carga inicial
+
+                if ((data as any)?.instrumento_id) setInstrumentoId((data as any).instrumento_id);
+
+            } catch (e) {
+                console.error('Error cargando ajustes:', e);
+            }
+        };
+
+        cargarTodo();
+    }, [tonalidadSeleccionada, usuarioId]);
+
+    // Precarga de sonidos
+    useEffect(() => {
+        // ⚡ OPTIMIZACIÓN: Solo vaciamos el mapa de rutas rápidas, pero NO limpiamos el banco de audio
+        // para no forzar descargas repetitivas desde Supabase/Caché en cada pequeño cambio.
+        soundsPerKeyRef.current = {};
+
+        const timer = setTimeout(() => {
+            const todosLosIds: string[] = [];
+            Object.values(mapaBotonesActual.current).forEach((btn: any) => {
+                const baseId = btn.id.split('-')[0] + '-' + btn.id.split('-')[1];
+                const esBajo = btn.id.includes('bajo');
+                todosLosIds.push(`${baseId}-halar${esBajo ? '-bajo' : ''}`);
+                todosLosIds.push(`${baseId}-empujar${esBajo ? '-bajo' : ''}`);
+            });
+
+            todosLosIds.forEach(id => {
+                // LLAMAMOS DIRECTAMENTE a obtenerRutasAudio para usar la protección anti-mezcla
+                let rutas = obtenerRutasAudio(id);
+                if (rutas.length > 0) {
+                    soundsPerKeyRef.current[id] = rutas;
+                    rutas.forEach(rRaw => {
+                        const r = rRaw.startsWith('pitch:') ? rRaw.split('|')[1] : rRaw;
+                        // Forzamos que la ruta sea absoluta para evitar errores de carga
+                        const rutaFinal = r.startsWith('http') || r.startsWith('/') ? r : `/${r}`;
+                        motorAudioPro.cargarSonidoEnBanco(instrumentoId, r, rutaFinal);
+                    });
+                }
+            });
+
+            const nuevoFastMap: Record<string, any> = {};
+            const pMap = ajustes.pitchPersonalizado || {};
+
+            const procesarTecla = (key: string, data: any, esBajo: boolean) => {
+                const idBase = `${data.fila}-${data.columna}`;
+                const suf = esBajo ? '-bajo' : '';
+                const idH = `${idBase}-halar${suf}`;
+                const idE = `${idBase}-empujar${suf}`;
+                const rH = soundsPerKeyRef.current[idH] || [];
+                const rE = soundsPerKeyRef.current[idE] || [];
+                if (rH.length > 0 || rE.length > 0) {
+                    nuevoFastMap[key] = {
+                        idH, idE, rutasHalar: rH, rutasEmpujar: rE,
+                        userPitchHalar: pMap[idH] || 0, userPitchEmpujar: pMap[idE] || 0,
+                        esBajo
+                    };
+                }
+            };
+
+            Object.entries(mapaTeclas).forEach(([k, v]) => procesarTecla(k, v, false));
+            Object.entries(mapaTeclasBajos).forEach(([k, v]) => procesarTecla(k, v, true));
+            teclasFastMapRef.current = nuevoFastMap;
+        }, 80);
+
+        return () => clearTimeout(timer);
+    }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId, muestrasLocalesDB]);
+
+    // --- 🔌 WEB SERIAL API (Conexión directa con ESP32, sin Hairless ni loopMIDI) ---
+    const conectarESP32 = useCallback(async () => {
+        if (!(navigator as any).serial) {
+            alert('❌ Tu navegador no soporta Web Serial. Usa Chrome o Edge y asegúrate de estar en localhost o HTTPS.');
+            return;
+        }
+        try {
+            const port = await (navigator as any).serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            esp32PortRef.current = port;
+            setEsp32Conectado(true);
+            console.log('%c ✅ CONEXIÓN ESTABLE: MODO TEXTO CSV 🪗 ', 'background: #27ae60; color: white; padding: 10px; font-weight: bold;');
+
+            const decoder = new TextDecoderStream();
+            port.readable.pipeTo(decoder.writable);
+            const reader = decoder.readable.getReader();
+
+            const activeTimeouts: Record<string, any> = {};
+            let partialLine = "";
+
+            const readLoop = async () => {
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        const lines = (partialLine + value).split("\n");
+                        partialLine = lines.pop() || "";
+
+                        let huboCambio = false;
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed) continue;
+
+
+                            const parts = trimmed.split(",");
+                            if (parts.length < 2) continue;
+
+                            const tipo = parts[0];
+                            const val = parts[1];
+                            const estadoStr = parts[2]; // Tercer parámetro opcional (1 = On, 0 = Off)
+
+                            if (tipo === "F_US" || tipo === "F_SL" || tipo === "FUELLE") {
+                                // Si el hardware manda F_US/F_SL, respetamos la opción de UI; si manda "FUELLE" viejo, pasa libre
+                                if ((tipo === "F_US" && tipoFuelleActivoRef.current !== 'US') ||
+                                    (tipo === "F_SL" && tipoFuelleActivoRef.current !== 'SL')) {
+                                    continue;
+                                }
+
+                                console.log(`%c 💨 EVENTO FUELLE (${tipo}): ${val} `, 'background: #f39c12; color: white; font-weight: bold;');
+                                const nuevaDir = val === "ABRIR" ? "halar" : "empujar";
+                                if (nuevaDir !== direccionRef.current) {
+                                    // 🔄 SWAP ATÓMICO: Sincronizar sonidos y mapa inmediatamente
+                                    const prev = { ...botonesActivosRef.current };
+                                    const next: Record<string, any> = {};
+
+                                    // 1. Swap de sonidos activos
+                                    Object.keys(prev).forEach(oldId => {
+                                        const parts = oldId.split('-');
+                                        if (parts.length < 3) return;
+                                        const esBajo = oldId.includes('bajo');
+                                        const newId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
+                                        if (newId !== oldId) {
+                                            detenerTono(oldId);
+                                            const { instances } = reproducirTono(newId);
+                                            if (instances?.length) next[newId] = { instances, ...mapaBotonesActual.current[newId] };
+                                        } else next[oldId] = prev[oldId];
+                                    });
+
+                                    // 2. Swap del rastreador de hardware
+                                    hardwareMapRef.current.forEach((logicalId, physicalKey) => {
+                                        const parts = logicalId.split('-');
+                                        if (parts.length >= 3) {
+                                            const esBajo = logicalId.includes('bajo');
+                                            const newLogicalId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
+                                            hardwareMapRef.current.set(physicalKey, newLogicalId);
+                                        }
+                                    });
+
+                                    direccionRef.current = nuevaDir;
+                                    botonesActivosRef.current = next;
+                                    setDireccion(nuevaDir);
+                                    huboCambio = true;
+                                }
+                            } else if (["H1", "H2", "BA"].includes(tipo)) {
+                                const idx = parseInt(val);
+                                const physicalKey = `${tipo}-${idx}`;
+                                let note = 0;
+
+                                // Mapeo de índices a notas MIDI virtuales
+                                if (tipo === "H1") note = (idx < 6) ? 48 + (5 - idx) : 60 + (idx - 6);
+                                else if (tipo === "H2") note = (idx >= 11) ? 54 + (15 - idx) : 71 + (10 - idx);
+                                else if (tipo === "BA") note = (idx <= 11) ? 30 + idx : (idx === 12 ? 81 : 0);
+
+                                if (note === 0) continue;
+
+                                if (estadoStr !== undefined) {
+                                    const isOn = estadoStr === "1";
+
+                                    if (isOn) {
+                                        // 🎹 PRESIONAR: Calculamos ID con dirección ACTUAL y lo guardamos
+                                        let idBoton: string | null = null;
+                                        if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
+                                        else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
+                                        else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
+
+                                        if (note >= 30 && note <= 41) {
+                                            const map: Record<number, string> = {
+                                                30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1',
+                                                36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1'
+                                            };
+                                            const base = map[note];
+                                            if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
+                                        } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
+
+                                        if (idBoton) {
+                                            hardwareMapRef.current.set(physicalKey, idBoton);
+                                            actualizarBotonActivo(idBoton, 'add', null, true);
+                                            huboCambio = true;
+                                        }
+                                    } else {
+                                        // 🎹 SOLTAR: Recuperamos el ID actualizado desde el REF
+                                        const logicalId = hardwareMapRef.current.get(physicalKey);
+                                        if (logicalId) {
+                                            actualizarBotonActivo(logicalId, 'remove', null, true);
+                                            hardwareMapRef.current.delete(physicalKey);
+                                            huboCambio = true;
+                                        }
+                                    }
+                                } else {
+                                    // 📻 MODO COMPATIBILIDAD (Pulsos)
+                                    let idBoton: string | null = null;
+                                    if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
+                                    else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
+                                    else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
+
+                                    if (note >= 30 && note <= 41) {
+                                        const base = { 30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1', 36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1' }[note];
+                                        if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
+                                    } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
+
+                                    if (idBoton) {
+                                        if (activeTimeouts[idBoton]) {
+                                            clearTimeout(activeTimeouts[idBoton]);
+                                        } else {
+                                            actualizarBotonActivo(idBoton, 'add', null, true);
+                                            huboCambio = true;
+                                        }
+
+                                        const currentId = idBoton;
+                                        activeTimeouts[idBoton] = setTimeout(() => {
+                                            actualizarBotonActivo(currentId, 'remove');
+                                            delete activeTimeouts[currentId];
+                                        }, 400);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 🏁 SYNC ÚNICO por paquete serial
+                        if (huboCambio) {
+                            setBotonesActivos({ ...botonesActivosRef.current });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error en loop de lectura:", err);
+                    setEsp32Conectado(false);
+                } finally {
+                    reader.releaseLock();
+                }
+            };
+
+            readLoop();
+        } catch (err) {
+            console.error('Error conectando al ESP32:', err);
+            setEsp32Conectado(false);
+        }
+    }, [actualizarBotonActivo, limpiarTodasLasNotas]);
+
+    // --- MIDI ENGINE (DESACTIVADO TEMPORALMENTE A PETICIÓN) ---
+    /*
+    useEffect(() => {
+        if (!navigator.requestMIDIAccess) return;
+
+        let midiAccess: any = null;
+
+        const onMIDIMessage = (msg: any) => {
+            const [status, note, velocity] = msg.data;
+            const command = status & 0xf0;
+            const channel = status & 0x0f;
+
+            let idBoton: string | null = null;
+
+            if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccion}`;
+            else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccion}`;
+            else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccion}`;
+
+            if (command === 144 && velocity > 0) {
+                if (idBoton) {
+                    reproducirTono(idBoton);
+                    actualizarBotonActivo(idBoton, 'add');
+                }
+            }
+            else if (command === 128 || (command === 144 && velocity === 0)) {
+                if (idBoton) {
+                    detenerTono(idBoton);
+                    actualizarBotonActivo(idBoton, 'remove');
+                }
+            }
+        };
+
+        navigator.requestMIDIAccess().then((access: any) => {
+            midiAccess = access;
+            setMidiActivado(true);
+            access.inputs.forEach((input: any) => {
+                input.onmidimessage = onMIDIMessage;
+            });
+        }).catch(() => setMidiActivado(false));
+
+        return () => {
+            if (midiAccess) {
+                midiAccess.inputs.forEach((input: any) => {
+                    input.onmidimessage = null;
+                });
+            }
+        };
+    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo]);
+    */
+
+    // --- ACCIONES ---
+    const guardarAjustes = async () => {
+        if (!usuarioId) return;
+
+        const key = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
+        const cur = ajustesRef.current;
+
+        // Separación de responsabilidades:
+        const disenoGlobal = {
+            x: cur.x, y: cur.y, tamano: cur.tamano,
+            pitosBotonTamano: cur.pitosBotonTamano, pitosFuenteTamano: cur.pitosFuenteTamano,
+            bajosBotonTamano: cur.bajosBotonTamano, bajosFuenteTamano: cur.bajosFuenteTamano,
+            teclasLeft: cur.teclasLeft, teclasTop: cur.teclasTop,
+            bajosLeft: cur.bajosLeft, bajosTop: cur.bajosTop
+        };
+
+        const configMusical = {
+            mapeoPersonalizado: cur.mapeoPersonalizado,
+            pitchPersonalizado: cur.pitchPersonalizado,
+            pitchGlobal: cur.pitchGlobal,
+            bancoId: cur.bancoId,
+            timbre: cur.timbre || 'Brillante',
+        };
+
+        try {
+            const { data } = await supabase
+                .from('sim_ajustes_usuario')
+                .select('tonalidades_configuradas')
+                .eq('usuario_id', usuarioId)
+                .maybeSingle() as any;
+
+            const nuevasTonalidades = {
+                ...((data as any)?.tonalidades_configuradas || {}),
+                [key]: configMusical // Solo guardamos la parte musical aquí
+            };
+
+            const { error } = await (supabase.from('sim_ajustes_usuario').upsert({
+                usuario_id: usuarioId,
+                tonalidad_activa: tonalidadSeleccionada,
+                instrumento_id: instrumentoId,
+                ajustes_visuales: disenoGlobal,
+                tonalidades_configuradas: nuevasTonalidades,
+                updated_at: new Date().toISOString()
+            } as any) as any);
+
+            if (error) throw error;
+
+            // 🪞 Guardamos una copia "espejo" del diseño visual para carga inmediata en el próximo refresh
+            localStorage.setItem('SIM_VISUAL_MASTER_V11', JSON.stringify({
+                tamano: ajustes.tamano,
+                x: ajustes.x,
+                y: ajustes.y,
+                pitosBotonTamano: ajustes.pitosBotonTamano,
+                pitosFuenteTamano: ajustes.pitosFuenteTamano,
+                bajosBotonTamano: ajustes.bajosBotonTamano,
+                bajosFuenteTamano: ajustes.bajosFuenteTamano,
+                teclasLeft: ajustes.teclasLeft,
+                teclasTop: ajustes.teclasTop,
+                bajosLeft: ajustes.bajosLeft,
+                bajosTop: ajustes.bajosTop
+            }));
+
+            console.log('✨ Sincronización Global Exitosa');
+        } catch (e) {
+            console.error('Error en guardado:', e);
+        }
+    };
+
+    const resetearAjustes = () => {
+        localStorage.removeItem('SIM_VISUAL_MASTER_V11');
+        setAjustes({
+            tamano: '88vh', x: '50%', y: '50%',
+            pitosBotonTamano: '4.4vh', pitosFuenteTamano: '1.6vh',
+            bajosBotonTamano: '4.2vh', bajosFuenteTamano: '1.3vh',
+            teclasLeft: '5.05%', teclasTop: '13%',
+            bajosLeft: '82.5%', bajosTop: '28%',
+            mapeoPersonalizado: {}, pitchPersonalizado: {}, pitchGlobal: 0,
+            bancoId: 'acordeon'
+        });
+    };
+
+    const guardarNuevoSonidoVirtual = async (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante' | 'Armonizado') => {
+        const nuevo: SonidoVirtual = { id: `custom_${Date.now()}`, nombre, rutaBase, pitch, tipo };
+        const nuevaLista = [nuevo, ...sonidosVirtuales];
+        setSonidosVirtuales(nuevaLista);
+
+        // Nube (Única fuente de verdad persistente)
+        if (usuarioId) {
+            await (supabase.from('sim_ajustes_usuario').upsert({
+                usuario_id: usuarioId,
+                sonidos_personalizados: nuevaLista,
+                updated_at: new Date().toISOString()
+            } as any) as any);
+        }
+
+        return nuevo;
+    };
+
+    const actualizarNombreTonalidad = async (tonalidadId: string, nuevoNombre: string) => {
+        setNombresTonalidades(prev => ({ ...prev, [tonalidadId]: nuevoNombre }));
+
+        if (usuarioId) {
+            try {
+                const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
+                const { data } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .select('tonalidades_configuradas')
+                    .eq('usuario_id', usuarioId)
+                    .maybeSingle() as any; // Added (as any)
+
+                const nuevasConfigs = {
+                    ...(data?.tonalidades_configuradas || {}),
+                    [key]: {
+                        ...(data?.tonalidades_configuradas?.[key] || {}),
+                        nombrePersonalizado: nuevoNombre
+                    }
+                };
+
+                await ((supabase.from('sim_ajustes_usuario') as any).update({
+                    tonalidades_configuradas: nuevasConfigs,
+                    updated_at: new Date().toISOString()
+                } as any).eq('usuario_id', usuarioId) as any); // Added (as any)
+            } catch (e) {
+                console.error('Error al actualizar nombre de tonalidad:', e);
+            }
+        }
+    };
+
+    // Efecto para guardar el orden de las tonalidades cuando cambia
+    useEffect(() => {
+        // Solo guardamos si no es la carga inicial y si hay tonalidades
+        if (!usuarioId || isInitialLoad.current || listaTonalidades.length === 0) return;
+
+        const timer = setTimeout(async () => {
+            await ((supabase.from('sim_ajustes_usuario') as any).update({
+                lista_tonalidades_activa: listaTonalidades,
+                updated_at: new Date().toISOString()
+            } as any).eq('usuario_id', usuarioId) as any);
+        }, 1500); // 1.5s de debounce para dar tiempo a operaciones manuales
+
+        return () => clearTimeout(timer);
+    }, [listaTonalidades, usuarioId]);
+
+    useEffect(() => {
+        const persistir = async () => {
+            if (!usuarioId || listaTonalidades.length === 0) return;
+
+            try {
+                const { data } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .select('tonalidades_configuradas')
+                    .eq('usuario_id', usuarioId)
+                    .maybeSingle() as any;
+
+                const configuracionesActuales = (data as any)?.tonalidades_configuradas || {};
+                const siguientesConfiguraciones: Record<string, any> = { ...configuracionesActuales };
+
+                listaTonalidades.forEach(tonalidadId => {
+                    const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
+                    siguientesConfiguraciones[key] = {
+                        ...(configuracionesActuales[key] || {}),
+                        nombrePersonalizado: nombresTonalidades[tonalidadId] || null
+                    };
+                });
+
+                const { error } = await supabase
+                    .from('sim_ajustes_usuario')
+                    .upsert({
+                        usuario_id: usuarioId,
+                        tonalidades_configuradas: siguientesConfiguraciones,
+                        lista_tonalidades_activa: listaTonalidades,
+                        updated_at: new Date().toISOString()
+                    } as any, { onConflict: 'usuario_id' }) as any;
+
+                if (error) console.error("Error guardando tonalidades:", error);
+            } catch (error) {
+                console.error("Error preservando configuraciones de tonalidades:", error);
+            }
+        };
+        persistir();
+    }, [nombresTonalidades, listaTonalidades, usuarioId]);
+
+    const eliminarTonalidad = async (tonalidad: string) => {
+        if (listaTonalidades.length <= 1) return alert('Debe conservar al menos una tonalidad.');
+        if (confirm(`¿Eliminar la tonalidad ${tonalidad}? Esta acción no se puede deshacer.`)) {
+            const nueva = listaTonalidades.filter(t => t !== tonalidad);
+
+            // 1. Actualización inmediata del estado (UI)
+            setListaTonalidades(nueva);
+
+            if (tonalidad === tonalidadSeleccionada) {
+                setTonalidadSeleccionada(nueva[0]);
+            }
+
+            // 2. Sincronización PROFUNDA en Supabase
+            if (usuarioId) {
+                try {
+                    const key = `ajustes_acordeon_vPRO_${tonalidad}`;
+
+                    // Primero obtenemos las configuraciones actuales
+                    const { data } = await (supabase
+                        .from('sim_ajustes_usuario')
+                        .select('tonalidades_configuradas')
+                        .eq('usuario_id', usuarioId)
+                        .maybeSingle() as any);
+
+                    const nuevasConfigs = { ...((data as any)?.tonalidades_configuradas || {}) };
+                    delete nuevasConfigs[key];
+
+                    // Guardamos la lista actualizada y eliminamos la configuración específica
+                    await ((supabase.from('sim_ajustes_usuario') as any).update({
+                        tonalidades_configuradas: nuevasConfigs,
+                        lista_tonalidades_activa: nueva,
+                        updated_at: new Date().toISOString()
+                    } as any).eq('usuario_id', usuarioId) as any);
+
+                    console.log(`✅ Tonalidad ${tonalidad} eliminada de raíz.`);
+                } catch (e) {
+                    console.error('Error al eliminar tonalidad en la nube:', e);
+                }
+            }
+        }
+    };
+
+    // Limpiar el caché de sonidos cuando cambia el instrumento para evitar stale URLs/banks
+    useEffect(() => {
+        soundsPerKeyRef.current = {};
+    }, [instrumentoId]);
+
+    return {
+        botonesActivos, direccion, setDireccion, modoAjuste, setModoAjuste, modoVista, setModoVista,
+        vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
+        pestanaActiva, setPestanaActiva, tonalidadSeleccionada, setTonalidadSeleccionada,
+        listaTonalidades, setListaTonalidades, nombresTonalidades, actualizarNombreTonalidad, sonidosVirtuales, setSonidosVirtuales,
+        limpiarTodasLasNotas, actualizarBotonActivo, guardarAjustes, resetearAjustes, 
+        setDireccionSinSwap, muestrasDB, obtenerRutasAudio, sincronizarAudios: cargarMuestrasLocales,
+        guardarNuevoSonidoVirtual, eliminarTonalidad,
+        playPreview, stopPreview, reproduceTono: reproducirTono,
+        configTonalidad, muestrasInstrumento: muestrasLocalesDBRef.current,
+        soundsPerKey: soundsPerKeyRef.current, teclasFastMap: teclasFastMapRef.current,
+        midiActivado, esp32Conectado, conectarESP32,
+        listaInstrumentos,
+        instrumentoId, setInstrumentoId, cargando: cargandoCloud, disenoCargado,
+        tipoFuelleActivo, setTipoFuelleActivo,
+        samplesBrillante: samplesPitos, samplesBajos, samplesArmonizado,
+        mapaBotonesActual: mapaBotonesActual.current,
+        preprogramarTono
+    };
+};

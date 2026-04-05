@@ -1,0 +1,412 @@
+.hero-maestro-solo-wrap {
+    --maestro-acordeon-tamano: min(700px);
+    --maestro-acordeon-x: 50%;
+    --maestro-acordeon-y: 45%;
+    width: 100%;
+    height: calc(100% + 16px);
+    margin-top: -16px;
+    padding: 0 18px 16px;
+    background:
+        radial-gradient(circle at top, rgba(59, 131, 246, 0.059), transparent 10%),
+        linear-gradient(180deg, rgba(13, 20, 36, 0.98), rgba(19, 31, 55, 0.98));
+}
+
+.maestro-solo-layout {
+    width: 100%;
+    min-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(280px, 450px) minmax(0, 1fr) minmax(280px, 400px);
+    grid-template-areas: "left center right";
+    align-items: stretch;
+}
+
+.maestro-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 100%;
+}
+
+.maestro-sidebar-left {
+    grid-area: left;
+}
+
+.maestro-sidebar-right {
+    grid-area: right;
+}
+
+.maestro-center-column {
+    grid-area: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    min-height: 100%;
+}
+
+.maestro-card {
+    border: 1px solid rgba(96, 165, 250, 0.14);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(17, 25, 42, 0.96), rgba(13, 20, 36, 0.96));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.maestro-banner-info {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+    padding: 14px 16px;
+}
+
+.banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    margin-top: 2px;
+}
+
+.banner-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.banner-texto strong,
+.hero-maestro-kicker,
+.control-label {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.banner-texto strong {
+    color: #dbeafe;
+    font-size: 0.72rem;
+}
+
+.banner-texto p,
+.maestro-resumen-card p,
+.maestro-lateral-card p,
+.control-hint,
+.maestro-atajos-teclado span {
+    margin: 0;
+    font-family: 'Raleway', sans-serif;
+    color: rgba(226, 232, 240, 0.74);
+    line-height: 1.45;
+}
+
+.banner-texto p,
+.maestro-resumen-card p,
+.maestro-lateral-card p {
+    font-size: 0.88rem;
+}
+
+.banner-cerrar {
+    border: 0;
+    background: transparent;
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    cursor: pointer;
+}
+
+.banner-cerrar:hover {
+    color: #fff;
+}
+
+.maestro-resumen-card,
+.maestro-lateral-card {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hero-maestro-kicker {
+    font-size: 0.68rem;
+    color: #60a5fa;
+}
+
+.maestro-resumen-card strong,
+.maestro-lateral-card strong,
+.hero-maestro-label-top strong {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.maestro-panel-controles {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.control-item {
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.control-label {
+    color: rgba(191, 219, 254, 0.82);
+    font-size: 0.64rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bpm-display {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #3b82f6;
+}
+
+.control-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.control-slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 2px solid #3b82f6;
+}
+
+.control-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 2px solid #3b82f6;
+}
+
+.control-hint {
+    font-size: 0.72rem;
+}
+
+.control-toggle {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(226, 232, 240, 0.86);
+    padding: 10px 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+}
+
+.control-toggle.on {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.24), rgba(37, 99, 235, 0.2));
+    border-color: rgba(96, 165, 250, 0.38);
+    color: #dbeafe;
+}
+
+.maestro-stage-card {
+    padding: 12px 18px 16px;
+    min-height: auto;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    flex: 1 1 auto;
+}
+
+.hero-maestro-label-top {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+}
+
+.hero-maestro-solo-acordeon {
+    width: 100%;
+    min-height: clamp(380px, 54vh, 560px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.07), transparent 58%);
+    overflow: visible;
+}
+
+.hero-maestro-transporte-wrapper {
+    width: 100%;
+    align-self: center;
+    margin-top: 4px;
+}
+
+.hero-maestro-indicadores-fuelle {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fuelle-badge {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(226, 232, 240, 0.84);
+    padding: 12px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.fuelle-badge.activo.halar {
+    background: rgba(59, 130, 246, 0.18);
+    border-color: rgba(96, 165, 250, 0.36);
+    color: #dbeafe;
+}
+
+.fuelle-badge.activo.empujar {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(248, 113, 113, 0.34);
+    color: #fee2e2;
+}
+
+.fuelle-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.maestro-atajos-card {
+    gap: 10px;
+}
+
+.maestro-atajos-teclado {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 10px;
+    align-items: center;
+    font-size: 0.78rem;
+}
+
+.maestro-atajos-teclado kbd {
+    min-width: 44px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.72rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1280px) {
+    .maestro-solo-layout {
+        grid-template-columns: 280px minmax(0, 1fr) 260px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .maestro-solo-layout {
+        grid-template-columns: 280px minmax(0, 1fr);
+        grid-template-areas:
+            "left center"
+            "right center";
+    }
+
+    .hero-maestro-solo-acordeon {
+        min-height: clamp(340px, 50vh, 500px);
+    }
+}
+
+@media (max-width: 900px) {
+    .hero-maestro-solo-wrap {
+        padding: 0 12px 16px;
+    }
+
+    .maestro-solo-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "left"
+            "center"
+            "right";
+    }
+
+    .maestro-stage-card {
+        min-height: auto;
+    }
+
+    .hero-maestro-solo-acordeon {
+        min-height: clamp(300px, 46vh, 440px);
+    }
+
+    .hero-maestro-indicadores-fuelle {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-maestro-solo-wrap {
+        padding: 0 10px 14px;
+    }
+
+    .maestro-card {
+        border-radius: 18px;
+    }
+
+    .maestro-banner-info,
+    .maestro-resumen-card,
+    .maestro-lateral-card,
+    .maestro-panel-controles,
+    .hero-maestro-indicadores-fuelle,
+    .maestro-stage-card {
+        padding: 14px;
+    }
+
+    .bpm-display {
+        font-size: 1.3rem;
+    }
+
+    .hero-maestro-solo-acordeon {
+        min-height: clamp(240px, 38vh, 340px);
+    }
+
+    .hero-maestro-indicadores-fuelle {
+        flex-direction: column;
+    }
+
+    .maestro-atajos-teclado {
+        font-size: 0.72rem;
+    }
+}

@@ -1,0 +1,218 @@
+.hero-historial-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.hero-historial-modal {
+  background: linear-gradient(to bottom, #1e293b, #0f172a);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  color: #fff;
+  animation: slideUp 0.3s ease;
+}
+
+.hero-historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #334155;
+}
+
+.hero-historial-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-historial-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  margin-top: -0.5rem;
+  transition: color 0.2s;
+}
+
+.hero-historial-close:hover {
+  color: #f8fafc;
+}
+
+.hero-historial-content {
+  padding: 2rem;
+}
+
+.hero-historial-loading {
+  padding: 4rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1.25rem;
+}
+
+.hero-historial-top {
+  display: flex;
+  margin-bottom: 2rem;
+}
+
+.hero-historial-stat {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  flex: 1;
+}
+
+.hero-historial-stat span {
+  display: block;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.hero-historial-stat strong {
+  display: block;
+  font-size: 2rem;
+  color: #fbbf24;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.hero-historial-chart {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #334155;
+}
+
+.hero-historial-chart h4, .hero-historial-table-container h4 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  color: #e2e8f0;
+}
+
+.hero-historial-table-container {
+  overflow-x: auto;
+}
+
+.hero-historial-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.hero-historial-table th {
+  background-color: rgba(30, 41, 59, 0.8);
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #334155;
+}
+
+.hero-historial-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+}
+
+.hero-historial-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.hero-historial-table tr.row-record td {
+  background-color: rgba(251, 191, 36, 0.05);
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(2vh); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MEDIA QUERIES PARA RESPONSIVIDAD (TABLET & MÓVIL)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .hero-historial-modal {
+    width: 95vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-historial-modal {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .hero-historial-header {
+    padding: 1.5vh 4vw;
+  }
+
+  .hero-historial-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .hero-historial-content {
+    padding: 4vw;
+  }
+
+  .hero-historial-top {
+    flex-direction: column;
+    gap: 2vh;
+    margin-bottom: 3vh;
+  }
+
+  .hero-historial-stat {
+    padding: 1rem;
+  }
+
+  .hero-historial-stat strong {
+    font-size: 1.6rem;
+  }
+
+  .hero-historial-chart {
+    padding: 3vw;
+    overflow-x: auto;
+  }
+
+  .hero-historial-table th, 
+  .hero-historial-table td {
+    padding: 0.8rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+

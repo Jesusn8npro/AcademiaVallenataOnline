@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/logo%20academia%20vallenata.png" />
+  <link rel="preload" as="image" href="/images/Home/Banner-%20Academia%20vallenata%20ONLINE.jpg" fetchpriority="high">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+
+  <!-- Optimización PWA iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Academia Vallenata">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-V6LNQ93YE6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-V6LNQ93YE6');
+  </script>
+
+  <!-- Base SEO Statico -->
+  <title>Academia Vallenata Online - Aprende Acordeón desde Cero</title>
+  <meta name="description"
+    content="La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de estudiantes y cursos desde cero a avanzado." />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://academiavallenata.online/">
+  <meta property="og:title" content="Academia Vallenata Online - Aprende Acordeón">
+  <meta property="og:description"
+    content="La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de estudiantes y cursos desde cero a avanzado.">
+  <meta property="og:site_name" content="Academia Vallenata Online" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- SISTEMA DE SEGURIDAD ANTI-CONSOLA -->
+  <script>
+    (function () {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) return;
+
+      const _log = console.log;
+
+      const mostrarDetente = function () {
+        if (window.__permitirDevTools) return;
+        
+        console.clear();
+        _log(
+          "%c¡SISTEMA PROTEGIDO POR IA DE RASTREO!",
+          "color: #ef4444; font-size: 55px; font-weight: bold; text-shadow: 4px 4px 8px black; padding: 15px; font-family: 'Segoe UI', sans-serif;"
+        );
+        _log(
+          "%cBLOQUEO DE SEGURIDAD ACTIVO. Nuestra IA de Seguridad Forense ha registrado su huella digital de dispositivo (Fingerprint), dirección IP e identificadores de metadatos. El acceso no autorizado a los activos de la Academia Vallenata Online está siendo monitoreado en tiempo real. Cualquier manipulación activará acciones legales por fraude informático y robo de activos digitales.",
+          "color: #ffffff; background: #991b1b; font-size: 18px; font-weight: bold; font-family: sans-serif; padding: 20px; border: 2px solid gold; line-height: 1.5;"
+        );
+        _log(
+          "%cID DE RASTREO: " + Math.random().toString(36).substring(2, 12).toUpperCase() + " | ESTADO: MONITOREO ACTIVO",
+          "color: #fbbf24; font-size: 16px; font-weight: bold; padding: 10px;"
+        );
+      };
+
+      // Silenciar de inmediato y limpiar basura inicial
+      const v = function() {};
+      console.log = v;
+      console.info = v;
+      console.warn = v;
+      console.debug = v;
+
+      // Un solo disparo seguro a los 2 segundos
+      setTimeout(mostrarDetente, 2000);
+    })();
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

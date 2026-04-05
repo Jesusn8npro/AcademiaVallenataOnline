@@ -1,0 +1,173 @@
+/* PestanaGeolocalizacion.css */
+.pestana-geolocalizacion {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #ffffff;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.geo-header-main {
+    background: #1a202c !important;
+    color: white !important;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-bottom: 4px solid #2d3748;
+    border-radius: 12px 12px 0 0;
+}
+
+.geo-titulo-principal h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #ffffff !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.geo-titulo-principal p {
+    margin: 0;
+    font-size: 1rem;
+    color: #e2e8f0 !important;
+    font-weight: 600;
+}
+
+.geo-stats-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.geo-stat-card {
+    text-align: center;
+    min-width: 120px;
+    background: #ffffff !important;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 3px solid #2d3748 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.geo-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border-color: #4a5568 !important;
+}
+
+.geo-stat-valor {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    color: #1a202c !important;
+    text-shadow: none;
+}
+
+.geo-stat-label {
+    font-size: 0.9rem;
+    color: #2d3748 !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.geo-stat-card.geo-ubicaciones-hoy.activo {
+    background: #38a169 !important;
+    border-color: #2f855a !important;
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.geo-stat-card.geo-ubicaciones-hoy.activo .geo-stat-valor {
+    color: #ffffff !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.geo-stat-card.geo-ubicaciones-hoy.activo .geo-stat-label {
+    color: #f0fff4 !important;
+}
+
+.geo-tabs-navegacion {
+    display: flex;
+    background: #f7fafc;
+    border-bottom: 3px solid #cbd5e1;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.geo-tab-btn {
+    padding: 1.5rem 2rem;
+    border: none;
+    background: transparent;
+    color: #2d3748 !important;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    white-space: nowrap;
+    border-bottom: 4px solid transparent;
+    font-size: 1rem;
+}
+
+.geo-tab-btn:hover {
+    color: #1a202c !important;
+    background: #edf2f7 !important;
+    transform: translateY(-1px);
+}
+
+.geo-tab-btn.activo {
+    color: #1a202c !important;
+    border-bottom-color: #3182ce !important;
+    background: #edf2f7 !important;
+    font-weight: 800;
+}
+
+.geo-content-area {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    background: #f8fafc !important;
+    min-height: 600px;
+}
+
+/* Placeholders styling */
+.geo-panel-placeholder {
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    text-align: center;
+    color: #64748b;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .geo-header-main {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        padding: 2rem 1.5rem;
+    }
+
+    .geo-stats-grid {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .geo-content-area {
+        padding: 1rem;
+    }
+
+    .geo-tab-btn {
+        padding: 1rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}

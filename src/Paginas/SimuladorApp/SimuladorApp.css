@@ -1,0 +1,349 @@
+/* 🚀 SIMULADOR APP V26 - DISEÑO PANAL REAL + COLORES DINÁMICOS */
+
+.capa-blindaje-total {
+    user-select: none !important;
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    overscroll-behavior: none !important;
+    outline: none !important;
+}
+
+.simulador-app-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background-color: #000;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* BLOQUEO TOTAL DE SELECCIÓN Y GESTOS */
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+/* 🪗 CONTENEDOR COMPLETO DEL ACORDEÓN */
+.contenedor-acordeon-completo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    /* Ocupa toda la pantalla */
+    z-index: 500;
+    pointer-events: none;
+    /* ← El contenedor no atrapa clics */
+}
+
+.contenedor-acordeon-completo>* {
+    pointer-events: auto;
+    /* ← Pero sus hijos (canvas, barra) sí */
+}
+
+.barra-herramientas-contenedor {
+    z-index: 800 !important;
+    /* ← Prioridad absoluta */
+    touch-action: auto !important;
+    pointer-events: auto !important;
+}
+
+.simulador-canvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100% !important;
+    /* 🎯 ALTURA SINCRONIZADA + ESTIRAMIENTO PARA iOS */
+    height: calc(45vh * var(--escala-acordeon, 1) + 77px + var(--offset-ios, 0px)) !important;
+    background-image: url('/Diapason%20con%20fondo%20firme.jpg');
+    background-size: 100% 100%;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: height 0.2s ease-out;
+}
+
+/* 🛡️ DIAPASÓN MARCO - Con inclinación real Cassoto */
+.diapason-marco {
+    position: absolute;
+    width: 90%;
+    height: 100%;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    /* 🎯 BOTONES ABAJO SIEMPRE (Petición del usuario) */
+    justify-content: flex-end;
+    align-items: center;
+    pointer-events: none;
+
+    /* 🚀 OPTIMIZACIÓN DE MOTOR DE CARRERAS */
+    contain: layout size style;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+
+    /* 📐 INCLINACIÓN INVERTIDA: Se abre hacia afuera arriba */
+    clip-path: polygon(0% 0%, 100% 0%, 98.5% 100%, 1.5% 100%);
+}
+
+.diapason-marco * {
+    pointer-events: auto;
+}
+
+/* 🚂 EL TREN DE BOTONES */
+.tren-botones-deslizable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: grab;
+    width: auto;
+    /* 🎯 SEPARACIÓN VERTICAL DINÁMICA */
+    gap: calc(var(--distancia-v-pitos, 0.8vh) * var(--escala-acordeon, 1));
+    /* 🎯 ESPACIO INFERIOR ESCALADO + OFFSET iOS */
+    padding-bottom: calc(var(--offset-ios, 0px) + 5px * var(--escala-acordeon, 1));
+}
+
+.hilera-pitos {
+    display: flex;
+    justify-content: center;
+    /* 🎯 SEPARACIÓN HORIZONTAL DINÁMICA */
+    gap: calc(var(--distancia-h-pitos, 2.5vh) * var(--escala-acordeon, 1));
+}
+
+/* 💎 BOTONES ESCALADOS */
+.pito-boton {
+    /* 🎯 TAMAÑO DINÁMICO LINEAL */
+    width: calc(11vh * var(--escala-acordeon, 1));
+    height: calc(11vh * var(--escala-acordeon, 1));
+    min-width: calc(55px * var(--escala-acordeon, 1));
+    min-height: calc(55px * var(--escala-acordeon, 1));
+    border-radius: 50%;
+
+    /* 💎 TEXTURA Y ACABADO DE NÁCAR (Domo esférico) */
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #f8f8f8 30%, #e0e0e0 70%, #b0b0b0 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: soft-light;
+    background-size: cover;
+    background-position: center;
+
+    /* 💎 RELIEVE 3D SEGÚN IMAGEN 1 (Semi-esfera realista) */
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 1),
+        /* Brillo de borde superior */
+        inset 0px 8px 15px rgba(255, 255, 255, 0.8),
+        /* Cuerpo de luz (Domo) */
+        inset 0px -4px 8px rgba(0, 0, 0, 0.2),
+        /* Sombra de caída inferior */
+        0px 5px 0px #999,
+        /* Cuerpo lateral (Relieve lateral) */
+        0px 8px 20px rgba(0, 0, 0, 0.7);
+    /* Sombra proyectada profunda */
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+    outline: none;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    /* Definición de borde */
+}
+
+/* 🎨 COLORES DINÁMICOS SEGÚN EL FUELLE */
+
+/* MODO HALAR (Azul) - ABIERTO */
+.modo-halar .pito-boton.nota-activa {
+    transform: translateY(4px) scale(0.98) !important;
+    /* 💎 DOMO AZUL CRISTALINO MEJORADO */
+    background: radial-gradient(circle at 35% 30%, #88bbfc 0%, #3b82f6 40%, #1e3a8a 100%) !important;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
+        /* Resplandor interno */
+        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
+        /* Sombra de fondo */
+        0px 2px 0px #1e40af,
+        /* Relieve residual lateral */
+        0px 0px 30px rgba(59, 130, 246, 0.9),
+        /* Brillo ambiental 1 */
+        0px 0px 60px rgba(59, 130, 246, 0.4) !important;
+    /* Brillo ambiental 2 (Volumen) */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modo-halar .nota-activa .nota-etiqueta {
+    color: #3b82f6 !important;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+/* MODO EMPUJAR (Rojo) - CERRANDO */
+.modo-empujar .pito-boton.nota-activa {
+    transform: translateY(4px) scale(0.98) !important;
+    /* 💎 DOMO ROJO RUBÍ MEJORADO (VOLUMEN REAL) */
+    background: radial-gradient(circle at 35% 30%, #ff8888 0%, #ef4444 40%, #991b1b 100%) !important;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
+        0px 2px 0px #7f1d1d,
+        0px 0px 30px rgba(239, 68, 68, 0.9),
+        0px 0px 60px rgba(239, 68, 68, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modo-empujar .nota-activa .nota-etiqueta {
+    color: #fff !important;
+    /* Blanco para contraste real */
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* 🔥 VOLUMEN DE SOMBREADO ROJO EN BARRA (ATMOSFÉRICO) */
+.modo-empujar .barra-herramientas-contenedor {
+    box-shadow: 0px 6px 15px rgba(239, 68, 68, 0.4);
+}
+
+.nota-etiqueta {
+    font-size: var(--tamano-fuente-pitos, 2.8vh);
+    font-weight: 900;
+    color: #222;
+    pointer-events: none;
+    transition: font-size 0.2s;
+}
+
+.tecla-computador {
+    font-size: 1.2vh;
+    font-weight: 800;
+    color: #3b82f6;
+    margin-top: -2px;
+    pointer-events: none;
+}
+
+/* 🎭 VISTA DOBLE (Halar/Empujar) */
+.pito-boton.vista-doble {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Control de visibilidad para latencia cero */
+.modo-halar .label-empujar {
+    display: none !important;
+}
+
+.modo-empujar .label-halar {
+    display: none !important;
+}
+
+.contenedor-nota-doble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    /* Más compacto */
+    pointer-events: none;
+    width: 100%;
+}
+
+.nota-halar {
+    color: #3b82f6;
+    font-size: calc(var(--tamano-fuente-pitos, 2.8vh) * 0.8);
+    font-weight: 900;
+    margin-bottom: -2px;
+}
+
+.nota-empujar {
+    color: #fb923c;
+    font-size: calc(var(--tamano-fuente-pitos, 2.8vh) * 0.8);
+    font-weight: 900;
+    margin-top: -2px;
+}
+
+/* 📱 OVERLAY DE ORIENTACIÓN */
+.overlay-rotacion {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 20000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+    padding: 30px;
+}
+
+.icono-rotar {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: rotar-anim 2s infinite;
+}
+
+@keyframes rotar-anim {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-90deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+/* 🌬️ INDICADOR DE FUELLE */
+.indicador-fuelle {
+    position: absolute;
+    /* Flota sobre el diapasón */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 10px 0;
+    color: #fff;
+    z-index: 100;
+    /* ← Reducido de 200 para que el menú quede encima */
+    text-align: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
+
+.fuelle-status {
+    font-weight: 950;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+}
+
+.modo-halar .indicador-fuelle {
+    color: #60a5fa;
+    border-bottom-color: #3b82f6;
+}
+
+.modo-empujar .indicador-fuelle {
+    color: #fb923c;
+    border-bottom-color: #f97316;
+}

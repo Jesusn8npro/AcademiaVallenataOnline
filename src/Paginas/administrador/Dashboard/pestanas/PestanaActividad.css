@@ -1,0 +1,131 @@
+/* PestanaActividad.css */
+.pestaña-actividad {
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.encabezado-pestaña {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.encabezado-pestaña h2 {
+    margin: 0 0 0.5rem 0;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.encabezado-pestaña p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.metricas-rapidas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.metrica-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.metrica-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.metrica-icono {
+    font-size: 1.5rem;
+    opacity: 0.8;
+}
+
+.metrica-numero {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.metrica-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.contenido-actividad {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* IGUALAR ALTURAS */
+.seccion-tiempo-real,
+.seccion-alumnos {
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .metricas-rapidas {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contenido-actividad {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .seccion-tiempo-real,
+    .seccion-alumnos {
+        height: auto;
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .encabezado-pestaña h2 {
+        font-size: 1.25rem;
+    }
+
+    .encabezado-pestaña p {
+        font-size: 0.85rem;
+    }
+
+    .metricas-rapidas {
+        grid-template-columns: 1fr;
+    }
+
+    .metrica-card {
+        padding: 1rem;
+    }
+
+    .contenido-actividad {
+        gap: 1rem;
+    }
+}

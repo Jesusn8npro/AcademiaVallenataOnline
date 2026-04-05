@@ -1,0 +1,423 @@
+.mis-validaciones-container {
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.validaciones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.validaciones-header-info {
+  flex: 1;
+}
+
+.validaciones-titulo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.validaciones-descripcion {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.btn-nueva-validacion {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-nueva-validacion:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.validaciones-vacio {
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 60px 24px;
+  text-align: center;
+  margin-top: 32px;
+}
+
+.validaciones-vacio-icono {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.validaciones-vacio h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 10px 0;
+}
+
+.validaciones-vacio p {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 24px 0;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-nueva-validacion-secundario {
+  background: #fff;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-nueva-validacion-secundario:hover {
+  background: #eff6ff;
+}
+
+.validaciones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.validacion-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.validacion-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.validacion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.estado-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.estado-pendiente { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.estado-en_revision { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.estado-aprobado { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.estado-rechazado { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.validacion-fecha {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.validacion-tutorial-titulo {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.validacion-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  background: #eff6ff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  align-self: flex-start;
+  transition: all 0.2s;
+}
+
+.validacion-link:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.validacion-recompensas {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 4px;
+}
+
+.recompensas-label {
+  font-size: 0.75rem;
+  color: #b45309;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recompensas-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recompensa-item {
+  font-size: 0.85rem;
+  background: #fef3c7;
+  color: #d97706;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.validacion-comentario {
+  background: #f8fafc;
+  border-left: 4px solid #3b82f6;
+  padding: 14px;
+  border-radius: 0 12px 12px 0;
+  margin-top: 8px;
+}
+
+.validacion-comentario h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.85rem;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.validacion-comentario p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* MODAL STYLES */
+.modal-envio-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-envio-content {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 550px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-envio-header {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-envio-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-close-modal:hover { color: #475569; }
+
+.modal-envio-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #fff;
+}
+
+.modal-envio-instruccion {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.modal-envio-instruccion strong {
+  display: block;
+  color: #1d4ed8;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.modal-envio-instruccion ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #3b82f6;
+  line-height: 1.5;
+}
+
+.modal-envio-instruccion li { margin-bottom: 6px; }
+.modal-envio-instruccion b { font-weight: 800; }
+
+.instruccion-alerta {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.modal-envio-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 0 0 20px 20px;
+}
+
+.btn-cancelar {
+  background: none;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancelar:hover { background: #f1f5f9; color: #334155; }
+
+.btn-enviar {
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+}
+
+.btn-enviar:hover:not(:disabled) { background: #1d4ed8; }
+.btn-enviar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.validaciones-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.spinner-carga {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .validaciones-header { flex-direction: column; }
+  .btn-nueva-validacion { width: 100%; }
+}

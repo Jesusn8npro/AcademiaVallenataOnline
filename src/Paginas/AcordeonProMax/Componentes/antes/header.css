@@ -1,0 +1,259 @@
+/* ─── HUD — BARRA SUPERIOR ────────────────────────────────────────────── */
+
+.hero-hud-superior {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 30;
+    gap: 12px;
+}
+
+.hero-hud-titulo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.hero-hud-controles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hero-btn-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.hero-btn-control:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hero-btn-control.peligro {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+.hero-btn-control.peligro:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* ─── HUD — Control de BPM ───────────────────────────────────────────────── */
+
+.hero-bpm-control {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 2px 6px;
+}
+
+.hero-btn-bpm {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s;
+}
+
+.hero-btn-bpm:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.hero-bpm-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    min-width: 36px;
+}
+
+.hero-bpm-num {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+
+.hero-bpm-lbl {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero-bpm-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 70px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.hero-bpm-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #7c3aed;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.hero-bpm-slider::-webkit-slider-thumb:hover {
+    background: #a855f7;
+}
+
+.hero-bpm-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #7c3aed;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+/* ─── HUD — Marcador central ──────────────────────────────────────────────── */
+
+.hero-hud-marcador {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: 1;
+    justify-content: center;
+}
+
+.hero-marcador-puntos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.hero-puntos-num {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #fde68a;
+    letter-spacing: 0.04em;
+}
+
+.hero-puntos-label-hud {
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.hero-marcador-separador {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-marcador-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.hero-stat-num {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.hero-stat-lbl {
+    font-size: 0.5rem;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero-multiplicador {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #f59e0b;
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+/* ─── HUD — Selector de modo de vista ────────────────────────────────────── */
+
+.hero-hud-vistas {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.hero-btn-vista {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+}
+
+.hero-btn-vista.activo {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Badge en el HUD */
+.hero-hud-modo-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 9px;
+    background: rgba(251, 191, 36, 0.18);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}

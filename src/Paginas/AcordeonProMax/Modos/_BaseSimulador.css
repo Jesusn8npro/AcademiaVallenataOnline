@@ -1,0 +1,216 @@
+.promax-simulador-container {
+  width: 100% !important;
+  height: 100vh !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Raleway', sans-serif;
+}
+
+.promax-simulador-content {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0;
+}
+
+.hero-youtube-fondo-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-youtube-fondo-wrap iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 100vh;
+  transform: translate(-50%, -50%) scale(1.35);
+  pointer-events: none;
+}
+
+.hero-youtube-oscurecedor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.8) 100%), rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.hero-cuenta-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.hero-cuenta-numero {
+  font-size: clamp(6rem, 18vw, 14rem);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(59, 130, 246, 0.8), 0 0 80px rgba(59, 130, 246, 0.4);
+  animation: hero-cuenta-pulso 0.9s ease-out forwards;
+}
+
+@keyframes hero-cuenta-pulso {
+  0% {
+    transform: scale(1.4);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+
+.rhythm-pause-menu-card {
+  background: rgba(100, 100, 100, 0.6);
+  border-radius: 8px;
+  padding: 20px 0;
+  min-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+  font-family: 'Raleway', sans-serif;
+  color: white;
+}
+
+.pause-menu-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.pause-menu-header h2 {
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #f1f1f1;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.pause-menu-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.pause-menu-btn {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  padding: 18px 40px;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+  transition: all 0.1s ease;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: capitalize;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.pause-menu-btn:hover,
+.pause-menu-btn.seleccionado {
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: none;
+  transform: none;
+}
+
+.pause-menu-btn .icono {
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+
+.pause-menu-btn.seleccionado .icono {
+  opacity: 1;
+}
+
+.pause-menu-advanced {
+  padding: 0 40px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.advanced-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.advanced-item label {
+  font-size: 0.95rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.advanced-control-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MEDIA QUERIES PARA RESPONSIVIDAD (TABLET & MÓVIL)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .rhythm-pause-menu-card {
+    min-width: 90vw;
+    width: 95vw;
+    padding: 15px 0;
+  }
+  
+  .pause-menu-btn {
+    padding: 15px 25px;
+    font-size: 1rem;
+  }
+  
+  .pause-menu-advanced {
+    padding: 0 25px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-cuenta-numero {
+    font-size: clamp(4rem, 25vw, 10rem);
+  }
+}
+

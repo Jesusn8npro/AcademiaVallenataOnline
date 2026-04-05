@@ -1,0 +1,68 @@
+/* src/componentes/Skeletons/SkeletonClase.css */
+.skeleton-clase-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #000;
+    /* Fondo negro de cine */
+    color: white;
+    overflow: hidden;
+}
+
+.skeleton-clase-header {
+    height: 60px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+}
+
+.skeleton-clase-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.skeleton-clase-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+}
+
+.skeleton-video-player {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    max-height: 70vh;
+}
+
+.skeleton-clase-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton-clase-sidebar {
+    width: 350px;
+    background-color: #111;
+    border-left: 1px solid #333;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+}
+
+@media (min-width: 1024px) {
+    .skeleton-clase-sidebar {
+        display: flex;
+    }
+}
+
+.skeleton-lesson-item {
+    height: 60px;
+    width: 100%;
+    border-radius: 4px;
+}

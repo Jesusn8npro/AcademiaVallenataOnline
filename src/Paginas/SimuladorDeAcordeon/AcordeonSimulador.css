@@ -1,0 +1,311 @@
+.disposicion-acordeon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: var(--imagen-fondo-acordeon) no-repeat center center;
+    background-size: contain;
+    width: var(--sim-tamano, 88vh);
+    height: var(--sim-tamano, 88vh);
+    position: absolute;
+    left: var(--sim-x, 50%);
+    top: var(--sim-y, 50%);
+    transform: translate(-50%, -50%);
+    transition: none;
+    /* 
+       ✨ UNIDAD BASE DE ESCALADO 
+       Dividimos el tamaño total en 100 partes para que todo lo interno
+       (botones, fuentes, posiciones) sea proporcional al acordeón.
+    */
+    --unit: calc(var(--sim-tamano) / 100);
+}
+
+.lado-teclas {
+    position: absolute;
+    left: var(--sim-teclas-left, 5.05%);
+    top: var(--sim-teclas-top, 13%);
+    display: flex;
+    z-index: 10;
+}
+
+.lado-bajos {
+    position: absolute;
+    left: var(--sim-bajos-left, 82.5%);
+    top: var(--sim-bajos-top, 30%);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    z-index: 10;
+}
+
+.lado-bajos .fila.uno {
+    margin-right: calc(0.3 * var(--unit));
+}
+
+.lado-bajos .fila.dos {
+    margin-top: 0;
+}
+
+.fila {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lado-teclas .boton {
+    /* ✨ ESCALADO RELATIVO: Usamos la unidad base directamente */
+    height: calc(var(--sim-pitos-boton-tamano-val, 4.4) * var(--unit));
+    width: calc(var(--sim-pitos-boton-tamano-val, 4.4) * var(--unit));
+    font-size: calc(var(--sim-pitos-fuente-tamano-val, 1.6) * var(--unit));
+}
+
+.lado-bajos .boton {
+    height: calc(var(--sim-bajos-boton-tamano-val, 4.2) * var(--unit));
+    width: calc(var(--sim-bajos-boton-tamano-val, 4.2) * var(--unit));
+    font-size: calc(var(--sim-bajos-fuente-tamano-val, 1.3) * var(--unit));
+}
+
+.boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-right: calc(0.5 * var(--unit));
+    background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.6), 0px 6px rgba(0, 0, 0, 0.3);
+    color: #222;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.boton:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+.boton.activo {
+    transform: translateY(5px) scale(0.96);
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.5), 0 1px rgba(0, 0, 0, 0.2);
+    background-image: url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca-activa.JPG');
+    color: #ffffff;
+    transition: all 0.05s ease-in;
+}
+
+.boton.halar.activo {
+    background: rgba(59, 130, 246, 0.85) !important;
+    border: 2px solid #3b82f6 !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.4), 0 0 15px rgba(59,130,246,0.6) !important;
+    color: #ffffff !important;
+}
+
+.boton.empujar.activo {
+    background: rgba(239, 68, 68, 0.85) !important;
+    border: 2px solid #ef4444 !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.4), 0 0 15px rgba(239,68,68,0.6) !important;
+    color: #ffffff !important;
+}
+
+.lado-teclas .fila.tres {
+    margin-top: calc(3.2 * var(--unit));
+}
+
+.lado-teclas .fila.dos {
+    margin-top: 0;
+}
+
+.lado-teclas .fila.uno {
+    margin-top: calc(3.2 * var(--unit));
+}
+
+.fila .boton {
+    margin-bottom: calc(1.1 * var(--unit));
+}
+
+.fila h4 {
+    margin-top: calc(0.4 * var(--unit));
+    font-size: calc(1.2 * var(--unit));
+    text-align: center;
+    color: #efeaea;
+}
+
+/* 🛠️ CONTROLES FLOTANTES */
+
+.simulador-controles-capa {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.boton-gestor-flotante {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    width: 70px;
+    height: 70px;
+}
+
+.boton-gestor-flotante:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.controles-derecha-flotantes {
+    transition: all 0.3s ease;
+}
+
+.boton-fuelle-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.boton-fuelle-control:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.boton-fuelle-control:active {
+    transform: scale(0.96);
+}
+
+.contenedor-vistas-control {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    background: rgba(10, 10, 10, 0.85) !important;
+}
+
+.etiqueta-vistas {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #3b82f6;
+    margin: 0;
+    font-weight: 900;
+    text-align: center;
+}
+
+.btn-vista {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    border-radius: 10px;
+    cursor: pointer !important;
+    font-size: 11px;
+    font-weight: 800;
+    transition: all 0.2s;
+}
+
+.btn-vista:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-vista.activo {
+    background: #3b82f6;
+    color: white;
+    border-color: #60a5fa;
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.5);
+    transform: scale(1.05);
+}
+
+/* 🛠️ PANEL DE PERSONALIZACIÓN */
+
+.panel-ajustes {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1 !important;
+}
+
+.tab-ajuste {
+    transition: all 0.2s;
+}
+
+.tab-ajuste:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tab-ajuste.activa {
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* 🛠️ CURSOR HANDLING */
+.cursor-punto-central,
+.cursor-anillo-externo,
+.cursor-ripple {
+    z-index: 1000000 !important;
+}
+
+body.diseno-activo .cursor-punto-central,
+body.diseno-activo .cursor-anillo-externo {
+    z-index: 1000000 !important;
+}
+
+/* Clases utilitarias */
+.grupo-ajuste label {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #e2e8f0;
+}
+
+.grupo-ajuste input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    height: 6px;
+    outline: none;
+}
+
+.grupo-ajuste input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3b82f6;
+    border-radius: 50%;
+    cursor: pointer !important;
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.boton.seleccionado-ajuste {
+    box-shadow: 0 0 20px gold, inset 0 0 100px gold !important;
+    border: 3px solid gold !important;
+    transform: scale(1.15);
+    z-index: 999;
+}
+
+/* 🌀 ANIMACIÓN DE CARGA */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

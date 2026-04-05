@@ -1,0 +1,21 @@
+/* Contador de oferta */
+.contador-banner{background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);color:#fff;padding:.8rem 0}
+.contador-banner .container{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.contador-banner .left-section{display:flex;align-items:center;gap:1.5rem}
+.contador-banner .btn-volver{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.5rem 1rem;border-radius:6px;font-size:.85rem;cursor:pointer;transition:all .2s ease;backdrop-filter:blur(10px)}
+.contador-banner .btn-volver:hover{background:rgba(255,255,255,.3)}
+.contador-banner .oferta-info{display:flex;align-items:center;gap:.75rem}
+.contador-banner .oferta-icon{font-size:1.3rem;animation:pulse 2s infinite}
+.contador-banner .oferta-text{font-size:1rem;font-weight:700;letter-spacing:.5px}
+.contador-banner .descuento{background:#ef4444;color:#fff;padding:.3rem .7rem;border-radius:20px;font-size:.75rem;font-weight:600;animation:bounce 2s infinite}
+.contador-banner .right-section{display:flex;align-items:center;gap:1rem}
+.contador-banner .tiempo-text{font-size:.9rem;opacity:.9;white-space:nowrap}
+.contador-banner .countdown{display:flex;gap:.5rem}
+.contador-banner .time-item{background:rgba(0,0,0,.3);border-radius:8px;padding:.5rem;text-align:center;min-width:45px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
+.contador-banner .number{display:block;font-size:1.1rem;font-weight:700;line-height:1}
+.contador-banner .label{display:block;font-size:.65rem;opacity:.8;margin-top:.25rem}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes bounce{0%,20%,50%,80%,100%{transform:translateY(0)}40%{transform:translateY(-3px)}60%{transform:translateY(-1px)}}
+@media (max-width:768px){.contador-banner .container{flex-direction:column;gap:1rem;padding:0 1rem}.contador-banner .left-section{width:100%;justify-content:space-between;gap:1rem}.contador-banner .right-section{width:100%;flex-direction:column;gap:.75rem;align-items:center}.contador-banner .tiempo-text{font-size:.85rem}.contador-banner .countdown{gap:.75rem}.contador-banner .time-item{min-width:50px;padding:.6rem .4rem}.contador-banner .number{font-size:1.2rem}.contador-banner .label{font-size:.7rem}}
+@media (max-width:480px){.contador-banner{padding:1rem 0}.contador-banner .left-section{flex-direction:column;gap:.8rem;align-items:center}.contador-banner .btn-volver{align-self:flex-start;font-size:.8rem;padding:.4rem .8rem}.contador-banner .oferta-info{gap:.5rem}.contador-banner .oferta-text{font-size:.9rem}.contador-banner .right-section{gap:.5rem}.contador-banner .countdown{gap:.5rem}.contador-banner .time-item{min-width:45px;padding:.5rem .3rem}.contador-banner .number{font-size:1rem}.contador-banner .label{font-size:.6rem}}
+

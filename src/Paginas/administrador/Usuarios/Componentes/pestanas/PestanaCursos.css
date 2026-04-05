@@ -1,0 +1,696 @@
+/* ===== ESTILOS PARA PESTAÑA DE CURSOS ===== */
+
+/* Contenedor principal de la pestaña */
+.pestana-cursos-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Diseño horizontal para cursos */
+.pestana-cursos-layout-horizontal {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+}
+
+.pestana-cursos-columna-izquierda {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Columna derecha: Buscador y cursos disponibles */
+.pestana-cursos-columna-derecha {
+  flex: 1.2;
+  /* Ligeramente más ancha para el grid */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Zona de drop para drag & drop */
+.pestana-cursos-zona-drop {
+  flex: 1;
+  border: 2px dashed transparent;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.pestana-cursos-zona-drop:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  background: rgba(102, 126, 234, 0.05);
+}
+
+/* Secciones */
+.pestana-cursos-seccion {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 25px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pestana-cursos-seccion h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+/* Header de secciones */
+.pestana-cursos-header-seccion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pestana-cursos-header-seccion h3 {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+/* Contador de cursos */
+.pestana-cursos-contador-cursos {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Lista de cursos compacta */
+.pestana-cursos-lista-cursos-compacta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pestana-cursos-curso-item-compacto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.pestana-cursos-curso-item-compacto:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.pestana-cursos-curso-imagen-mini {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pestana-cursos-curso-imagen-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pestana-cursos-curso-info-mini {
+  flex: 1;
+  min-width: 0;
+}
+
+.pestana-cursos-curso-info-mini h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pestana-cursos-curso-info-mini h5 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pestana-cursos-curso-info-mini p {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.pestana-cursos-tipo {
+  font-weight: 500;
+  color: rgba(102, 126, 234, 0.8) !important;
+}
+
+.pestana-cursos-fecha {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  margin: 2px 0;
+}
+
+.pestana-cursos-duracion {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 11px !important;
+  margin: 2px 0 !important;
+}
+
+.pestana-cursos-precio {
+  color: #4caf50 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  margin: 2px 0 !important;
+}
+
+.pestana-cursos-estado {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pestana-cursos-estado-activo {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.pestana-cursos-estado-pendiente {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.pestana-cursos-estado-completado {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+}
+
+.pestana-cursos-curso-acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pestana-cursos-btn-quitar-mini {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pestana-cursos-btn-quitar-mini:hover {
+  background: rgba(244, 67, 54, 0.3);
+  transform: scale(1.05);
+}
+
+/* Sección para agregar cursos */
+.pestana-cursos-seccion-agregar {
+  background: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Buscador de cursos */
+.pestana-cursos-buscador {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.pestana-cursos-buscador svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pestana-cursos-buscador input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+}
+
+.pestana-cursos-buscador input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Filtros de contenido */
+.pestana-cursos-filtros-contenido {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.pestana-cursos-filtro-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pestana-cursos-filtro-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pestana-cursos-filtro-btn.activo {
+  background: rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-color: #667eea;
+}
+
+.pestana-cursos-filtro-btn.activo:hover {
+  background: rgba(102, 126, 234, 0.4);
+}
+
+/* Categorías de cursos */
+.pestana-cursos-categoria-cursos {
+  margin-bottom: 30px;
+}
+
+.pestana-cursos-categoria-cursos h4 {
+  margin-bottom: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+}
+
+/* Header de categorías */
+.pestana-cursos-header-categoria {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.pestana-cursos-header-categoria h4 {
+  margin: 0;
+}
+
+.pestana-cursos-contador-resultados {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Grid de cursos disponibles */
+.pestana-cursos-grid-cursos-disponibles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+/* Curso disponible (draggable) */
+.pestana-cursos-curso-disponible {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: grab;
+  transition: all 0.3s ease;
+}
+
+.pestana-cursos-curso-disponible:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.pestana-cursos-curso-disponible:active {
+  cursor: grabbing;
+}
+
+/* Botón agregar curso individual */
+.pestana-cursos-btn-agregar-curso {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid #4CAF50;
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.pestana-cursos-btn-agregar-curso:hover {
+  background: rgba(76, 175, 80, 0.3);
+  transform: scale(1.1);
+}
+
+/* Paginación */
+.pestana-cursos-paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 15px 0;
+}
+
+.pestana-cursos-btn-pagina {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pestana-cursos-btn-pagina:hover:not(.disabled) {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+  color: #667eea;
+  transform: translateY(-1px);
+}
+
+.pestana-cursos-btn-pagina.activa {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.pestana-cursos-btn-pagina.disabled {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+/* Estados de carga y vacío */
+.pestana-cursos-cargando,
+.pestana-cursos-vacio {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pestana-cursos-vacio svg {
+  opacity: 0.5;
+  margin-bottom: 15px;
+}
+
+.pestana-cursos-vacio-mini {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pestana-cursos-vacio-mini svg {
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+/* Lista de paquetes inscritos */
+.pestana-cursos-lista-cursos-inscritos {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Paquete inscrito expandido */
+.pestana-cursos-paquete-inscrito-expandido {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(102, 126, 234, 0.05));
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.pestana-cursos-paquete-inscrito-expandido:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.pestana-cursos-paquete-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.pestana-cursos-paquete-icon-grande {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 12px;
+  font-size: 28px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.pestana-cursos-paquete-info-principal {
+  flex: 1;
+}
+
+.pestana-cursos-paquete-info-principal h5 {
+  margin: 0 0 8px 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pestana-cursos-paquete-descripcion {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.pestana-cursos-paquete-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.pestana-cursos-paquete-meta span {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.pestana-cursos-fecha-inscripcion {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin: 5px 0;
+}
+
+.pestana-cursos-total-tutoriales {
+  color: #667eea;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pestana-cursos-nivel-paquete {
+  color: #667eea;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pestana-cursos-paquete-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pestana-cursos-progreso-paquete {
+  margin-top: 10px;
+}
+
+.pestana-cursos-progreso-circular {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: conic-gradient(#667eea 0deg, #667eea calc(var(--progress, 0) * 3.6deg), rgba(255, 255, 255, 0.2) calc(var(--progress, 0) * 3.6deg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pestana-cursos-progreso-circular::before {
+  content: '';
+  position: absolute;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pestana-cursos-progreso-porcentaje {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  z-index: 1;
+}
+
+.pestana-cursos-botones-paquete {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pestana-cursos-btn-ver-paquete-detalle {
+  background: rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border: 1px solid #667eea;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 12px;
+}
+
+.pestana-cursos-btn-ver-paquete-detalle:hover {
+  background: rgba(102, 126, 234, 0.5);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pestana-cursos-btn-eliminar-paquete {
+  background: rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 12px;
+}
+
+.pestana-cursos-btn-eliminar-paquete:hover {
+  background: rgba(220, 53, 69, 0.5);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Estilos para paquetes en la columna derecha */
+.pestana-cursos-paquete-item {
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(102, 126, 234, 0.05));
+}
+
+.pestana-cursos-paquete-item:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+.pestana-cursos-paquete-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 8px;
+  font-size: 18px;
+  color: white;
+}
+
+.pestana-cursos-paquete-detalles {
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 4px 0;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .pestana-cursos-layout-horizontal {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .pestana-cursos-columna-izquierda,
+  .pestana-cursos-columna-derecha {
+    flex: none;
+    min-height: 300px;
+  }
+
+  .pestana-cursos-grid-cursos-disponibles {
+    grid-template-columns: 1fr;
+  }
+
+  .pestana-cursos-filtros-contenido {
+    justify-content: center;
+  }
+
+  .pestana-cursos-paquete-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pestana-cursos-paquete-acciones {
+    align-items: center;
+    flex-direction: row;
+    justify-content: center;
+  }
+}

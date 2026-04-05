@@ -1,0 +1,310 @@
+.admin-validaciones-container {
+  padding: 30px;
+  color: #fff;
+  background: var(--bg-admin, #0f172a);
+  min-height: 100vh;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 20px;
+}
+
+.admin-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #38bdf8;
+}
+
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.select-filtro {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  outline: none;
+}
+
+.select-filtro:focus {
+  border-color: #38bdf8;
+}
+
+.validaciones-tabla-container {
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.validaciones-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.validaciones-tabla th,
+.validaciones-tabla td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+}
+
+.validaciones-tabla th {
+  background: #0f172a;
+  font-weight: 600;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.validaciones-tabla tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.td-subtexto {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.badge-estado {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badge-estado.pendiente { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.badge-estado.en_revision { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.badge-estado.aprobado { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.badge-estado.rechazado { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+.btn-revisar {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 8px;
+  transition: background 0.2s;
+}
+
+.btn-revisar:hover {
+  background: #2563eb;
+}
+
+.btn-ver-video {
+  display: inline-block;
+  background: #334155;
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-ver-video:hover {
+  background: #475569;
+  color: #fff;
+}
+
+.cargando-admin, .sin-resultados-admin {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+}
+
+/* Modal revision */
+.modal-revision-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-revision-content {
+  background: #1e293b;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-revision-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-revision-header h3 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-revision-body {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.info-alumno-modal {
+  background: #0f172a;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.video-player-container {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.btn-link-video {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-link-video:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.revision-form .form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.revision-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.revision-form select,
+.revision-form textarea {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  outline: none;
+}
+
+.revision-form select:focus,
+.revision-form textarea:focus {
+  border-color: #3b82f6;
+}
+
+.form-group-checkboxes {
+  margin-bottom: 20px;
+  background: #0f172a;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: normal !important;
+  color: #cbd5e1 !important;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+}
+
+.modal-revision-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancelar {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #475569;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.btn-guardar {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-guardar:hover {
+  background: #2563eb;
+}
+
+.btn-guardar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

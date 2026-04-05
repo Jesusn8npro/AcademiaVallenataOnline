@@ -1,0 +1,42 @@
+/* src/componentes/Skeletons/SkeletonBase.css */
+
+/* Animación de brillo (shimmer) */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Clase base para elementos esqueleto - COLORES CLAROS */
+.skeleton-box {
+    background: #e5e7eb;
+    /* Gris claro base (Tailwind gray-200) */
+    background-image: linear-gradient(90deg,
+            #e5e7eb 0%,
+            #f3f4f6 50%,
+            /* Gris más claro (Tailwind gray-100) */
+            #e5e7eb 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+/* Variaciones de forma */
+.skeleton-text {
+    height: 1em;
+    margin-bottom: 0.5em;
+    border-radius: 2px;
+}
+
+.skeleton-circle {
+    border-radius: 50%;
+}
+
+.skeleton-rect {
+    width: 100%;
+    height: 100%;
+}

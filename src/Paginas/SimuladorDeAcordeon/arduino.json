@@ -1,0 +1,94 @@
+
+
+// ====================================================
+// ACORDEÓN JESUS GONZALEZ — OPTIMIZADO PARA CERO LATENCIA
+// ====================================================
+
+const int sPines[] = {32, 33, 25, 26}; 
+const int sigMux1 = 13; 
+const int sigMux2 = 14; 
+const int sigMux3 = 27;
+
+const int pinTrig = 18;
+const int pinEcho = 19;
+
+// --- 🛡️ SISTEMA DE ESTADOS (Solo mandar si cambia) ---
+bool estadoM1[16], estadoM2[16], estadoM3[16];
+bool lastFuelle = false; // false = CERRAR, true = ABRIR
+unsigned long ultimoFuelle = 0;
+
+void setup() {
+  Serial.begin(115200); 
+  
+  for(int i=0; i<4; i++) pinMode(sPines[i], OUTPUT);
+  pinMode(sigMux1, INPUT_PULLUP);
+  pinMode(sigMux2, INPUT_PULLUP);
+  pinMode(sigMux3, INPUT_PULLUP);
+  pinMode(pinTrig, OUTPUT);
+  pinMode(pinEcho, INPUT);
+
+  // Inicializar todos en HIGH (sueltos)
+  for(int i=0; i<16; i++) {
+    estadoM1[i] = estadoM2[i] = estadoM3[i] = HIGH;
+  }
+}
+
+void selectMux(int channel) {
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(sPines[i], (channel >> i) & 0x01);
+  }
+}
+
+void reportar(String tipo, int n, int st) {
+  // Formato: H1,0,1 (Presionado) | H1,0,0 (Soltado)
+  Serial.print(tipo); Serial.print(",");
+  Serial.print(n); Serial.print(",");
+  Serial.println(st);
+}
+
+void loop() {
+  // 1. --- 💨 LÓGICA DE FUELLE ULTRA-RÁPIDA ---
+  if (millis() - ultimoFuelle > 30) { // 30ms es perfecto para no laguear
+    digitalWrite(pinTrig, LOW); delayMicroseconds(2);
+    digitalWrite(pinTrig, HIGH); delayMicroseconds(10);
+    digitalWrite(pinTrig, LOW);
+    long duracion = pulseIn(pinEcho, HIGH, 20000);
+    int distancia = duracion * 0.034 / 2;
+
+    if (distancia > 0) {
+      bool currentFuelle = (distancia > 20); // 20cm umbral
+      if (currentFuelle != lastFuelle) {
+        Serial.print("FUELLE,");
+        Serial.println(currentFuelle ? "ABRIR" : "CERRAR");
+        lastFuelle = currentFuelle;
+      }
+    }
+    ultimoFuelle = millis();
+  }
+
+  // 2. --- 🎹 ESCANEO DE BOTONES (Solo ON/OFF) ---
+  for (int i = 0; i < 16; i++) {
+    selectMux(i);
+    delayMicroseconds(20); // Tiempo para que el MUX estabilice
+
+    bool s1 = digitalRead(sigMux1);
+    bool s2 = digitalRead(sigMux2);
+    bool s3 = digitalRead(sigMux3);
+
+    // MUX 1
+    if (s1 != estadoM1[i]) {
+      reportar("H1", i, (s1 == LOW ? 1 : 0));
+      estadoM1[i] = s1;
+    }
+    // MUX 2
+    if (s2 != estadoM2[i]) {
+      reportar("H2", i, (s2 == LOW ? 1 : 0));
+      estadoM2[i] = s2;
+    }
+    // MUX 3
+    if (s3 != estadoM3[i]) {
+      reportar("BA", i, (s3 == LOW ? 1 : 0));
+      estadoM3[i] = s3;
+    }
+  }
+}

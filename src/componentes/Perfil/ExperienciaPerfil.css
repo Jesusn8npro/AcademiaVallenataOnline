@@ -1,0 +1,196 @@
+.experiencia-perfil-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+:root[data-theme='dark'] .experiencia-perfil-card {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 1px solid #334155;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.experiencia-header h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+:root[data-theme='dark'] .experiencia-header h3 {
+  color: #f8fafc;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.experiencia-nivel-container {
+  margin-bottom: 2rem;
+}
+
+.experiencia-nivel-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.experiencia-nivel-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+:root[data-theme='dark'] .experiencia-nivel-badge {
+  border-color: #0f172a;
+}
+
+.nivel-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.nivel-numero {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.experiencia-progreso-texto {
+  display: flex;
+  flex-direction: column;
+}
+
+.experiencia-progreso-texto strong {
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+:root[data-theme='dark'] .experiencia-progreso-texto strong {
+  color: #f8fafc;
+}
+
+.experiencia-progreso-texto span {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+:root[data-theme='dark'] .experiencia-progreso-texto span {
+  color: #94a3b8;
+}
+
+.experiencia-barra-bg {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+:root[data-theme='dark'] .experiencia-barra-bg {
+  background: #1e293b;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.experiencia-barra-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.experiencia-categorias {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .experiencia-categorias {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.experiencia-categoria {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+:root[data-theme='dark'] .experiencia-categoria {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: #334155;
+}
+
+.experiencia-categoria:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.cat-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.cat-simulador { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.cat-cursos { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.cat-comunidad { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+.cat-logros { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.cat-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.cat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .cat-label {
+  color: #94a3b8;
+}
+
+.cat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+:root[data-theme='dark'] .cat-value {
+  color: #f8fafc;
+}
+
+.experiencia-loading {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}

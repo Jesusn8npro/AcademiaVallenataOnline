@@ -1,0 +1,60 @@
+# REGISTRO DE PINES - PROYECTO V-PRO ACORDEÓN DIGITAL
+# Actualizado: 2026-03-14 (Configuración Multi-Bus SPI)
+
+==========================================
+📺 PANTALLA (ILI9341) & 🖐️ TOUCH (XPT2046)
+Bus SPI 1 (Principal)
+==========================================
+TFT_CS:      2
+TFT_DC:      3
+TFT_RST:     1
+TFT_LED:     21 (PWM Control)
+TOUCH_CS:    47
+TOUCH_IRQ:   [No usado - Ahorro de cables]
+
+BUS SPI 1 (Compartido):
+SCK:         8
+MOSI:        13
+MISO:        12
+
+==========================================
+💾 ALMACENAMIENTO (TARJETA SD)
+Bus SPI 2 (Independiente - Aislado)
+==========================================
+SD_CS:       14
+SD_SCK:      35
+SD_MOSI:     36
+SD_MISO:     37
+
+==========================================
+🔊 AUDIO (DAC I2S - PCM5102)
+==========================================
+I2S_BCK:     40
+I2S_WS:      41
+I2S_DIN:     42
+
+==========================================
+🎛️ MULTIPLEXORES (BOTONES/TECLAS)
+==========================================
+S0:          4
+S1:          5
+S2:          6
+S3:          7
+MUX_1:       15 (Hilera 1)
+MUX_2:       16 (Hilera 2)
+MUX_3:       17 (Bajos)
+EN:          [GND Físico]
+
+==========================================
+🌬️ FUELLE Y OTROS
+==========================================
+FADE (Slide): 9 (Potenciómetro Fuelle)
+
+==========================================
+⚠️ OBSERVACIONES CLAVE
+==========================================
+1. La SD está AISLADA en el segundo bus SPI. Esto evita que "secuestre" el bus y bloquee el Touch.
+2. Los cables de la SD (35, 36, 37) deben estar bien soldados/conectados.
+3. El Touch NO usa el pin IRQ, funciona por polling en el código para ahorrar cables.
+4. Pin 2 (TFT_CS) y Pin 3 (TFT_DC) son críticos para la pantalla.
+
