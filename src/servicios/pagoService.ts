@@ -1,20 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { generarReferencia, calcularIVA } from './ePaycoService';
-
-// Cliente Supabase para operaciones del servidor (bypassa RLS)
-const supabaseAdmin = createClient(
-	import.meta.env.VITE_SUPABASE_URL,
-	import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY,
-	{
-		auth: {
-			autoRefreshToken: false,
-			persistSession: false
-		}
-	}
-);
-
-// Cliente regular para operaciones que no requieren admin
-import { supabase } from '$servicios/clienteSupabase';
+import { supabase } from './clienteSupabase';
 
 // Tipos para los pagos
 export interface RegistroPago {
@@ -65,7 +50,8 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
 			usuario_id: datos.usuario_id,
 			curso_id: datos.curso_id || null,
 			tutorial_id: datos.tutorial_id || null,
-			membresia_id: datos.membresia_id || null, // 🆕 SOPORTE PARA MEMBRESÍAS
+			paquete_id: datos.paquete_id || null,
+			membresia_id: datos.membresia_id || null,
 			nombre_producto: datos.nombre_producto,
 			descripcion: datos.descripcion || null,
 			valor: datos.valor,
@@ -109,7 +95,7 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
 			}
 		};
 
-		const { data, error } = await supabaseAdmin
+		const { data, error } = await supabase
 			.from('pagos_epayco')
 			.insert([registroPago])
 			.select('*')
@@ -148,7 +134,7 @@ export async function obtenerPagoPorReferencia(refPayco: string): Promise<Result
 	try {
 		console.log('🔍 Buscando pago por referencia:', refPayco);
 		
-		const { data, error } = await supabaseAdmin
+		const { data, error } = await supabase
 			.from('pagos_epayco')
 			.select(`
 				*,
@@ -217,7 +203,7 @@ export async function actualizarEstadoPago(
 			if (datosAdicionales.fecha_transaccion) datosActualizacion.fecha_transaccion = datosAdicionales.fecha_transaccion;
 		}
 
-		const { data, error } = await supabaseAdmin
+		const { data, error } = await supabase
 			.from('pagos_epayco')
 			.update(datosActualizacion)
 			.eq('ref_payco', refPayco)
@@ -249,7 +235,7 @@ export async function sincronizarEstadoConEpayco(refPayco: string): Promise<Resu
 		console.log('🔄 Sincronizando estado con ePayco:', refPayco);
 		
 		// Obtener datos del pago desde tu BD
-		const { data: pagoLocal } = await supabaseAdmin
+		const { data: pagoLocal } = await supabase
 			.from('pagos_epayco')
 			.select('*')
 			.eq('ref_payco', refPayco)

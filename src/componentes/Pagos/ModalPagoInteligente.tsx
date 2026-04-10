@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import { supabase } from '../../servicios/clienteSupabase';
+import { crearRegistroPago } from '../../servicios/pagoService';
 import './ModalPagoInteligente.css';
 
 // Interface para el contenido (paquete, curso, tutorial, etc.)
@@ -265,10 +266,28 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                         throw new Error('El email ya existe pero la contraseña es incorrecta');
                     }
 
+                    // Establecer sesión para signIn
+                    if (signInData?.session) {
+                        await supabase.auth.setSession({
+                            access_token: signInData.session.access_token,
+                            refresh_token: signInData.session.refresh_token
+                        });
+                        console.log('✅ Sesión establecida (signIn)');
+                    }
+
                     return signInData?.user?.id || null;
                 } else {
                     throw signUpError;
                 }
+            }
+
+            // Establecer sesión para signUp
+            if (authData?.session) {
+                await supabase.auth.setSession({
+                    access_token: authData.session.access_token,
+                    refresh_token: authData.session.refresh_token
+                });
+                console.log('✅ Sesión establecida (signUp)');
             }
 
             return authData?.user?.id || null;
@@ -316,6 +335,56 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                 return;
             }
 
+            // 2️⃣ CREAR REGISTRO EN SUPABASE ANTES DE ABRIR EPAYCO
+            console.log('💾 Creando registro de pago en Supabase...');
+
+            // Generar referencia única para el pago
+            const refPayco = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+            // Calcular IVA
+            const { base, iva, total } = calcularIVA(precio);
+
+            // Construir datos del pago
+            const datosRegistroPago = {
+                usuario_id: usuarioId,
+                curso_id: tipoContenido === 'curso' ? String(contenido?.id || '') : undefined,
+                tutorial_id: tipoContenido === 'tutorial' ? String(contenido?.id || '') : undefined,
+                paquete_id: tipoContenido === 'paquete' ? String(contenido?.id || '') : undefined,
+                membresia_id: tipoContenido === 'membresia' ? String(contenido?.id || '') : undefined,
+                nombre_producto: obtenerTitulo(contenido),
+                descripcion: `${obtenerLabelTipo()}: ${obtenerTitulo(contenido)}`,
+                valor: total,
+                iva: iva,
+                base_iva: base,
+                moneda: 'COP',
+                ref_payco: refPayco,
+                factura: refPayco,
+                nombre: datosPago.nombre,
+                apellido: datosPago.apellido,
+                email: datosPago.email,
+                telefono: datosPago.telefono,
+                whatsapp: datosPago.whatsapp,
+                fecha_nacimiento: datosPago.fecha_nacimiento,
+                profesion: datosPago.profesion,
+                documento_tipo: datosPago.tipo_documento,
+                documento_numero: datosPago.numero_documento,
+                direccion_completa: datosPago.direccion,
+                ciudad: datosPago.ciudad,
+                pais: datosPago.pais,
+                codigo_postal: datosPago.codigo_postal,
+                como_nos_conocio: datosPago.como_nos_conocio,
+                user_agent: navigator.userAgent
+            };
+
+            // Llamar a crearRegistroPago
+            const resultadoRegistro = await crearRegistroPago(datosRegistroPago);
+
+            if (!resultadoRegistro.success) {
+                throw new Error(resultadoRegistro.message || 'Error al registrar el pago en la base de datos');
+            }
+
+            console.log('✅ Pago registrado en Supabase:', resultadoRegistro.data);
+
             const epaycoData = {
                 key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1',
                 test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true'
@@ -330,11 +399,11 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                 const dataPago = {
                     name: obtenerTitulo(contenido),
                     description: obtenerTitulo(contenido),
-                    invoice: 'ORD-' + Date.now(),
+                    invoice: refPayco,
                     currency: 'cop',
-                    amount: precio.toString(),
-                    tax_base: '0',
-                    tax: '0',
+                    amount: total.toString(),
+                    tax_base: base.toString(),
+                    tax: iva.toString(),
                     country: 'co',
                     lang: 'es',
 
@@ -353,10 +422,10 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     method: 'GET'
                 };
 
-                // 2️⃣ CERRAR MODAL antes de abrir ePayco
+                // 3️⃣ CERRAR MODAL antes de abrir ePayco
                 setMostrar(false);
 
-                // 3️⃣ Abrir checkout
+                // 4️⃣ Abrir checkout
                 handler.open(dataPago);
 
                 // 4️⃣ Detectar si el usuario cierra ePayco sin pagar (después de 30 segundos, volver a mostrar modal)
@@ -416,6 +485,19 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         if (!item) return 'Contenido';
         if (tipoContenido === 'membresia') return item.nombre || 'Membresía';
         return item.titulo || 'Producto';
+    };
+
+    const obtenerLabelTipo = () => {
+        if (tipoContenido === 'curso') return 'Curso';
+        if (tipoContenido === 'tutorial') return 'Tutorial';
+        if (tipoContenido === 'paquete') return 'Paquete';
+        return 'Membresía';
+    };
+
+    const calcularIVA = (valor: number) => {
+        const iva = Math.round(valor * 0.19);
+        const base = valor - iva;
+        return { base, iva, total: valor };
     };
 
     if (!mostrar) return null;
