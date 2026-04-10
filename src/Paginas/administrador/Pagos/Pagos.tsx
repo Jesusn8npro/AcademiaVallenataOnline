@@ -159,30 +159,31 @@ const Pagos: React.FC = () => {
         setMensajesConfirmacion(prev => ({ ...prev, [refPayco]: 'Confirmando...' }));
 
         try {
-            const response = await fetch('/api/pagos/confirmar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ref_payco: refPayco,
-                    forzar_confirmacion: true
+            // Actualizar estado a 'aceptada' directamente en Supabase
+            const { error: updateError } = await supabase
+                .from('pagos_epayco')
+                .update({
+                    estado: 'aceptada',
+                    updated_at: new Date().toISOString()
                 })
-            });
+                .eq('ref_payco', refPayco);
 
-            const resultado = await response.json();
+            if (updateError) throw updateError;
 
-            if (resultado.success) {
-                setMensajesConfirmacion(prev => ({
-                    ...prev,
-                    [refPayco]: resultado.estado_nuevo === 'aceptada'
-                        ? '✅ Pago confirmado e inscripción procesada'
-                        : `✅ Estado: ${resultado.estado_nuevo}`
-                }));
-                await cargarPagos();
-            } else {
-                setMensajesConfirmacion(prev => ({ ...prev, [refPayco]: `❌ Error: ${resultado.error}` }));
-            }
+            // Inscribir usuario en cursos/tutoriales si corresponde
+            await inscribirUsuarioManual(refPayco);
+
+            setMensajesConfirmacion(prev => ({
+                ...prev,
+                [refPayco]: '✅ Pago confirmado e inscripción procesada'
+            }));
+
+            // Recargar pagos para reflejar cambios
+            await cargarPagos();
+
         } catch (error) {
-            setMensajesConfirmacion(prev => ({ ...prev, [refPayco]: '❌ Error de conexión' }));
+            console.error('Error confirmando pago:', error);
+            setMensajesConfirmacion(prev => ({ ...prev, [refPayco]: '❌ Error al confirmar pago' }));
         } finally {
             setConfirmando(prev => ({ ...prev, [refPayco]: false }));
             setTimeout(() => {
@@ -263,6 +264,94 @@ const Pagos: React.FC = () => {
         setFiltroEstado('todos');
         setBuscarRef('');
         cargarPagos();
+    };
+
+    const sincronizarPagosPendientes = async () => {
+        const confirmacion = confirm(
+            '¿Sincronizar pagos pendientes con ePayco?\n\nEsto puede tomar unos minutos.'
+        );
+        if (!confirmacion) return;
+
+        setCargando(true);
+        let actualizados = 0;
+        let totales = 0;
+
+        try {
+            // Obtener todos los pagos pendientes
+            const { data: pagosPendientes, error: errorCarga } = await supabase
+                .from('pagos_epayco')
+                .select('*')
+                .eq('estado', 'pendiente');
+
+            if (errorCarga) throw errorCarga;
+            if (!pagosPendientes || pagosPendientes.length === 0) {
+                alert('No hay pagos pendientes para sincronizar');
+                return;
+            }
+
+            totales = pagosPendientes.length;
+            const epaycoPublicKey = import.meta.env.VITE_EPAYCO_PUBLIC_KEY;
+
+            // Procesar cada pago
+            for (const pago of pagosPendientes) {
+                try {
+                    // Consultar ePayco API
+                    const response = await fetch(
+                        `https://secure.epayco.co/validation/v1/reference/${pago.ref_payco}`,
+                        {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${epaycoPublicKey}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        console.log(`Referencia ${pago.ref_payco} no encontrada en ePayco`);
+                        continue;
+                    }
+
+                    const datos = await response.json();
+
+                    // Si la respuesta indica éxito (código 1), actualizar a aceptada
+                    if (datos.x_cod_response === '1' || datos.success) {
+                        const { error: updateError } = await supabase
+                            .from('pagos_epayco')
+                            .update({
+                                estado: 'aceptada',
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('ref_payco', pago.ref_payco);
+
+                        if (!updateError) {
+                            actualizados++;
+                            // Inscribir usuario
+                            await inscribirUsuarioManual(pago.ref_payco);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error sincronizando ${pago.ref_payco}:`, error);
+                    // Continuar con el siguiente
+                }
+            }
+
+            // Recargar pagos
+            await cargarPagos();
+
+            // Mostrar reporte
+            alert(
+                `✅ Sincronización completada\n\n` +
+                `Pagos actualizados: ${actualizados} de ${totales}\n` +
+                `${totales - actualizados} permanecen pendientes`
+            );
+
+        } catch (error) {
+            console.error('Error sincronizando pagos:', error);
+            alert('❌ Error durante la sincronización');
+        } finally {
+            setCargando(false);
+        }
     };
 
     const formatearFecha = (fecha: string) => {
@@ -478,6 +567,14 @@ const Pagos: React.FC = () => {
                                 style={{ width: 'auto' }}
                             >
                                 <span>📋</span> Ver Todos
+                            </button>
+                            <button
+                                onClick={sincronizarPagosPendientes}
+                                className="academia-pagos-btn-accion academia-btn-purpura"
+                                style={{ width: 'auto' }}
+                                disabled={cargando}
+                            >
+                                <span>🔄</span> Sincronizar Pendientes con ePayco
                             </button>
                         </div>
                     </div>
