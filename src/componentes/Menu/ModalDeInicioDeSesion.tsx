@@ -238,6 +238,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
     }
   };
 
+
   const iniciarSesionConGoogle = async () => {
     try {
       setCargando(true);
@@ -265,6 +266,33 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
 
     } catch (error) {
       console.error('❌ [GOOGLE] Error inesperado:', error);
+      setErrorLogin('Error inesperado. Inténtalo de nuevo.');
+      setCargando(false);
+    }
+  };
+
+  const iniciarSesionConFacebook = async () => {
+    try {
+      setCargando(true);
+      setErrorLogin('');
+
+      console.log('🔐 [FACEBOOK] Iniciando autenticación con Facebook...');
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: 'https://academiavallenataonline.com'
+        }
+      });
+
+      if (error) {
+        console.error('❌ [FACEBOOK] Error en autenticación:', error);
+        setErrorLogin('Error al conectar con Facebook. Inténtalo de nuevo.');
+        setCargando(false);
+      }
+
+    } catch (error) {
+      console.error('❌ [FACEBOOK] Error inesperado:', error);
       setErrorLogin('Error inesperado. Inténtalo de nuevo.');
       setCargando(false);
     }
@@ -495,22 +523,45 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
     },
     botonesSociales: {
       padding: isMobile ? '0 16px 8px' : '0 24px 8px',
+      display: 'flex',
+      flexDirection: isMobile ? 'column' as const : 'row' as const,
+      gap: '12px',
+      width: '100%',
+      boxSizing: 'border-box' as const,
     },
     botonGoogle: {
-      width: '100%',
+      flex: 1,
       background: 'white',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      padding: isMobile ? '12px 16px' : '14px 20px',
+      padding: isMobile ? '12px 12px' : '14px 16px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '12px',
+      gap: '8px',
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      fontSize: '1rem',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
       fontWeight: 600,
       color: '#1e293b',
+      position: 'relative' as const,
+      overflow: 'hidden',
+    },
+    botonFacebook: {
+      flex: 1,
+      background: '#1877F2',
+      border: 'none',
+      borderRadius: '12px',
+      padding: isMobile ? '12px 12px' : '14px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
+      fontWeight: 600,
+      color: 'white',
       position: 'relative' as const,
       overflow: 'hidden',
     },
@@ -596,7 +647,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
           <div style={styles.modalHeader}>
             <div style={styles.logoContainer}>
               <img
-                src="/images/logo academia vallenata.png"
+                src="/logo academia vallenata.png"
                 alt="Logo Academia Vallenata"
                 style={styles.logoModal}
               />
@@ -710,13 +761,19 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
 
               <div style={styles.botonesSociales}>
                 <button type="button" style={styles.botonGoogle} onClick={iniciarSesionConGoogle} disabled={cargando}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
-                  <span>{cargando ? 'Conectando...' : 'Continuar con Google'}</span>
+                  <span>Google</span>
+                </button>
+                <button type="button" style={styles.botonFacebook} onClick={iniciarSesionConFacebook} disabled={cargando}>
+                  <svg width="18" height="18" fill="white" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                  <span>Facebook</span>
                 </button>
               </div>
 
@@ -851,13 +908,19 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
 
               <div style={styles.botonesSociales}>
                 <button type="button" style={styles.botonGoogle} onClick={iniciarSesionConGoogle} disabled={cargando}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
-                  <span>{cargando ? 'Conectando...' : 'Registrarme con Google'}</span>
+                  <span>Google</span>
+                </button>
+                <button type="button" style={styles.botonFacebook} onClick={iniciarSesionConFacebook} disabled={cargando}>
+                  <svg width="18" height="18" fill="white" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                  <span>Facebook</span>
                 </button>
               </div>
 
