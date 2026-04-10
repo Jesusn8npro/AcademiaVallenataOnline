@@ -40,6 +40,11 @@ interface DatosPago {
     como_nos_conocio?: string;
 }
 
+// URLs de ePayco - Usar SIEMPRE URLs de producción, incluso en desarrollo local
+// ePayco rechaza URLs de localhost
+const EPAYCO_RESPONSE_URL = 'https://academiavallenataonline.com/pago-exitoso';
+const EPAYCO_CONFIRMATION_URL = 'https://tbijzvtyyewhtwgakgka.supabase.co/functions/v1/epayco-webhook';
+
 const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso' }: ModalPagoInteligenteProps) => {
     const { usuario } = useUsuario();
 
@@ -330,8 +335,8 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     email_billing: datosPago.email,
 
                     // Funciones de callback
-                    response: `${window.location.origin}/pago-exitoso`, // Url de respuesta
-                    confirmation: `${window.location.origin}/api/pagos/confirmar`, // Url de confirmación
+                    response: EPAYCO_RESPONSE_URL, // Url de respuesta (producción, no localhost)
+                    confirmation: EPAYCO_CONFIRMATION_URL, // Url de confirmación (webhook Supabase)
 
                     // Callbacks JS directos
                     method: 'GET'
