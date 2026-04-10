@@ -339,7 +339,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
             console.log('💾 Creando registro de pago en Supabase...');
 
             // Generar referencia única para el pago
-            const refPayco = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            const refPayco = generarRefPaycoReal();
 
             // Calcular IVA
             const { base, iva, total } = calcularIVA(precio);
@@ -498,6 +498,26 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         const iva = Math.round(valor * 0.19);
         const base = valor - iva;
         return { base, iva, total: valor };
+    };
+
+    const obtenerPrefijoRef = () => {
+        if (tipoContenido === 'curso') return 'CUR';
+        if (tipoContenido === 'tutorial') return 'TUT';
+        if (tipoContenido === 'paquete') return 'PAQ';
+        return 'MEM';
+    };
+
+    const generarRefPaycoReal = () => {
+        const prefijo = obtenerPrefijoRef();
+        const timestamp = Date.now().toString();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const idSanitizado = String(contenido?.id ?? 'ITEM')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '');
+        const longitudFija = prefijo.length + timestamp.length + random.length + 3;
+        const maxIdLength = Math.max(1, 32 - longitudFija);
+        const idRecortado = (idSanitizado || 'ITEM').substring(0, maxIdLength);
+        return `${prefijo}-${idRecortado}-${timestamp}-${random}`.substring(0, 32);
     };
 
     if (!mostrar) return null;
