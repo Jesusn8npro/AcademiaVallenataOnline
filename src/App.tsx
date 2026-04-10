@@ -39,6 +39,7 @@ import ProteccionRuta from './SeguridadApp/ProteccionRuta'
 import ProteccionAdmin from './SeguridadApp/ProteccionAdmin'
 import Terminos from './Paginas/Legales/Terminos'
 import Privacidad from './Paginas/Legales/Privacidad'
+import RecuperarContrasena from './Paginas/Legales/RecuperarContrasena'
 import PerfilPublicoLayout from './Paginas/Usuarios/PerfilPublicoLayout'
 import PerfilPublicoPage from './Paginas/Usuarios/PerfilPublicoPage'
 import ActividadUsuarioPage from './Paginas/Usuarios/ActividadUsuarioPage'
@@ -107,13 +108,14 @@ const AppContent = () => {
   }
 
   const esSimuladorApp = pathname.startsWith('/simulador-app');
+  const esRecuperarContrasena = pathname === '/recuperar-contrasena';
 
   const esAcordeonProMax = pathname.startsWith('/acordeon-pro-max') || pathname === '/acordeon-promax' || pathname === '/acordeon-promax-menu';
   const esAgencia = pathname === '/agencia-ia';
 
   // Agregar clase al body cuando el usuario está autenticado y NO estamos en vistas inmersivas
   useEffect(() => {
-    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp || esAcordeonProMax || esAgencia;
+    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp || esAcordeonProMax || esAgencia || esRecuperarContrasena;
 
     if (estaAutenticado && !esInmersivo) {
       document.body.classList.add('con-sidebar')
@@ -132,7 +134,7 @@ const AppContent = () => {
     <>
       {!location.pathname.startsWith('/simulador') && <CursorPersonalizado />}
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
-      {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && (
+      {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -141,10 +143,10 @@ const AppContent = () => {
       )}
 
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && <SidebarAdmin />}
-
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <SidebarAdmin />}
+      
       {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && <MenuInferiorResponsivo />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <MenuInferiorResponsivo />}
 
 
       <Routes>
@@ -193,6 +195,7 @@ const AppContent = () => {
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
         <Route path="/terminos" element={<Terminos />} />
         <Route path="/privacidad" element={<Privacidad />} />
+        <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
@@ -232,7 +235,7 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
         <>
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}

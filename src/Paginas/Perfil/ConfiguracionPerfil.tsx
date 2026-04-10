@@ -129,8 +129,13 @@ export default function ConfiguracionPerfil() {
         setMensajeRecuperar('')
 
         try {
+            const isProduction = window.location.hostname === 'academiavallenataonline.com';
+            const redirectURL = isProduction 
+                ? 'https://academiavallenataonline.com/recuperar-contrasena'
+                : window.location.origin + '/recuperar-contrasena';
+
             const { error } = await supabase.auth.resetPasswordForEmail(correoRecuperar, {
-                redirectTo: window.location.origin + '/recuperar-contrasena'
+                redirectTo: redirectURL
             })
 
             if (error) throw error
