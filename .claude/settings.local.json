@@ -15,7 +15,9 @@
       "Bash(grep -v \"//\\\\|console\\\\|//.*timbre\")",
       "Bash(find '/c/Users/acord/OneDrive/Desktop/Academia2026/Guia de Videojuegos/Rhythm-Plus-Music-Game/src' -type f -name *.vue -o -name *menu* -o -name *song*)",
       "Bash(find '/c/Users/acord/OneDrive/Desktop/Academia2026/Guia de Videojuegos/Rhythm-Plus-Music-Game/src' -name *theme* -o -name *color* -o -name *config*)",
-      "mcp__claude_ai_Supabase__list_tables"
+      "mcp__claude_ai_Supabase__list_tables",
+      "Bash(npm install:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

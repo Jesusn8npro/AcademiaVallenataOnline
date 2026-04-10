@@ -76,6 +76,7 @@ import HomeProMax from './Paginas/AcordeonProMax/HomeProMax';
 import ListaCancionesProMax from './Paginas/AcordeonProMax/ListaCancionesProMax';
 import ConfiguracionProMax from './Paginas/AcordeonProMax/ConfiguracionProMax';
 import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/AcordeonProMaxSimulador';
+import Footer from './componentes/Footer/Footer';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -240,6 +241,11 @@ const AppContent = () => {
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}
         </>
+      )}
+      
+      {/* Footer - Solo en páginas públicas, NO en app autenticada, NO en vistas inmersivas */}
+      {!estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+        <Footer />
       )}
     </>
   )
