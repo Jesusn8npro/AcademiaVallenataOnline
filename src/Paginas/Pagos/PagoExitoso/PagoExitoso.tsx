@@ -64,7 +64,8 @@ const PagoExitoso: React.FC = () => {
                 console.log('📋 Parámetros recibidos:', paramsObj);
 
                 // 1️⃣ EXTRAER ref_payco DE LA URL
-                const refPayco = searchParams.get('x_ref_payco') || searchParams.get('ref_payco') || '';
+                // ePayco envía el invoice que nosotros mandamos en el parámetro x_id_invoice
+                const refPayco = searchParams.get('x_id_invoice') || searchParams.get('ref_payco') || searchParams.get('x_ref_payco') || '';
                 console.log('🔍 Referencia de pago:', refPayco);
 
                 // 2️⃣ CONSULTAR SUPABASE PARA VERIFICAR ESTADO REAL
