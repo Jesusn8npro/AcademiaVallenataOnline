@@ -1,14 +1,15 @@
 // Configuración de ePayco usando variables de entorno
+// ⚠️ IMPORTANTE: La private key NUNCA se incluye en el frontend
+// La private key está segura en la Edge Function de Supabase como secret
 const EPAYCO_CONFIG = {
 	apiKey: import.meta.env.VITE_EPAYCO_PUBLIC_KEY,
-	privateKey: import.meta.env.VITE_EPAYCO_PRIVATE_KEY,
 	customerId: import.meta.env.VITE_EPAYCO_CUSTOMER_ID,
 	test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true',
 	lang: 'es'
 };
 
 // Validar que las variables de entorno de ePayco estén configuradas
-if (!EPAYCO_CONFIG.apiKey || !EPAYCO_CONFIG.privateKey || !EPAYCO_CONFIG.customerId) {
+if (!EPAYCO_CONFIG.apiKey || !EPAYCO_CONFIG.customerId) {
 	throw new Error('❌ Variables de entorno de ePayco no configuradas. Revisa tu archivo .env');
 }
 
