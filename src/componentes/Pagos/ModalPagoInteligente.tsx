@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUsuario } from '../../contextos/UsuarioContext';
+import { supabase } from '../../servicios/clienteSupabase';
 import './ModalPagoInteligente.css';
 
 // Interface para el contenido (paquete, curso, tutorial, etc.)
@@ -231,6 +232,53 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         });
     };
 
+    // Crear usuario en Supabase Auth si es nuevo y obtener su ID
+    const crearOObtenerUsuario = async (): Promise<string | null> => {
+        // Si ya está registrado, retornar su ID
+        if (usuario?.id) {
+            return usuario.id;
+        }
+
+        try {
+            // Intentar signUp
+            const { data: authData, error: signUpError } = await supabase.auth.signUp({
+                email: datosPago.email,
+                password: datosPago.password,
+                options: {
+                    data: {
+                        nombre: datosPago.nombre,
+                        apellido: datosPago.apellido
+                    }
+                }
+            });
+
+            if (signUpError) {
+                // Si el error es que el usuario ya existe, intentar signIn
+                if (signUpError.message?.includes('already registered') || signUpError.message?.includes('User already exists')) {
+                    console.log('📧 Email ya registrado, intentando signIn...');
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email: datosPago.email,
+                        password: datosPago.password
+                    });
+
+                    if (signInError) {
+                        throw new Error('El email ya existe pero la contraseña es incorrecta');
+                    }
+
+                    return signInData?.user?.id || null;
+                } else {
+                    throw signUpError;
+                }
+            }
+
+            return authData?.user?.id || null;
+
+        } catch (error: any) {
+            console.error('Error creando/obteniendo usuario:', error);
+            throw new Error(error.message || 'Error al registrar usuario');
+        }
+    };
+
     const procesarPago = async () => {
         const ahora = Date.now();
         if (procesandoPago || ahora - ultimoIntentoPago < 3000) return;
@@ -241,72 +289,36 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         setError('');
 
         try {
+            // 1️⃣ Si es usuario nuevo, crear cuenta en Supabase Auth primero
+            let usuarioId: string | null = null;
+
+            if (!usuarioEstaRegistrado) {
+                console.log('👤 Creando usuario nuevo en Supabase Auth...');
+                usuarioId = await crearOObtenerUsuario();
+
+                if (!usuarioId) {
+                    throw new Error('No se pudo obtener ID de usuario');
+                }
+                console.log('✅ Usuario creado/obtenido:', usuarioId);
+            } else {
+                usuarioId = usuario?.id || null;
+            }
+
             await loadEpaycoScript();
 
-            // Preparar datos para API
+            // Preparar datos para pago
             const precio = obtenerPrecio(contenido);
             if (precio <= 0) {
-                // Lógica gratuito (simulada aquí)
+                // Lógica gratuito
                 setPagoExitoso(true);
                 setCargando(false);
                 setProcesandoPago(false);
                 return;
             }
 
-            const dataParaApi = {
-                usuarioId: usuario?.id || null,
-                esUsuarioNuevo: !usuarioEstaRegistrado,
-                // Mapeo de IDs según tipo
-                cursoId: tipoContenido === 'curso' ? contenido?.id : undefined,
-                tutorialId: tipoContenido === 'tutorial' ? contenido?.id : undefined,
-                paqueteId: tipoContenido === 'paquete' ? contenido?.id : undefined,
-
-                email: datosPago.email,
-                nombre: datosPago.nombre,
-                telefono: datosPago.telefono,
-                datosAdicionales: {
-                    apellido: datosPago.apellido,
-                    whatsapp: datosPago.whatsapp,
-                    documento_tipo: datosPago.tipo_documento,
-                    documento_numero: datosPago.numero_documento,
-                    direccion_completa: datosPago.direccion,
-                    ciudad: datosPago.ciudad,
-                    pais: datosPago.pais,
-                    codigo_postal: datosPago.codigo_postal
-                },
-                password: usuarioEstaRegistrado ? undefined : datosPago.password
-            };
-
-            console.log("💰 Datos preparados para API:", dataParaApi);
-
-            // Llamada al backend para obtener keys de epayco
-            // Nota: En Svelte llamaban a /api/pagos/crear. Aquí asumiremos que existe ese endpoint o simularemos.
-            // Si no existe el backend en Next/Express, esto fallará. 
-            // VOY A ASUMIR QUE EL BACKEND EXISTE O MOCKEARLO SI ES NECESARIO, PERO EL PROMPT DICE QUE ADAPTE EL COMPONENTE.
-            // Para que funcione REALMENTE, el backend debe responder.
-
-            // Simulación de respuesta del backend para obtener la llave publica (si no podemos llamar al backend real aun)
-            // O llamamos al endpoint real si el proyecto tiene el backend configurado en el mismo puerto/dominio.
-
-            // INTENTO DE LLAMADA REAL:
-            /*
-            const response = await fetch('/api/pagos/crear', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataParaApi)
-            });
-            if (!response.ok) throw new Error('Error iniciando pago');
-            const { epaycoData } = await response.json();
-            */
-
-            // --- MOCK DE EPAYCO DATA PARA DEMOSTRACIÓN (SI EL BACKEND NO ESTÁ LISTO) ---
-            // En un entorno real, esto viene del backend para no exponer keys o lógica sensible, pero
-            // necesitamos configurar el checkout con la key pública.
             const epaycoData = {
-                key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1', // Key pública de pruebas ePayco por defecto o env
-                test: true,
-                external: false,
-                autoclick: false
+                key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1',
+                test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true'
             };
 
             if ((window as any).ePayco) {
@@ -335,24 +347,33 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     email_billing: datosPago.email,
 
                     // Funciones de callback
-                    response: EPAYCO_RESPONSE_URL, // Url de respuesta (producción, no localhost)
-                    confirmation: EPAYCO_CONFIRMATION_URL, // Url de confirmación (webhook Supabase)
+                    response: EPAYCO_RESPONSE_URL,
+                    confirmation: EPAYCO_CONFIRMATION_URL,
 
-                    // Callbacks JS directos
                     method: 'GET'
                 };
 
-                // Abrir checkout
+                // 2️⃣ CERRAR MODAL antes de abrir ePayco
+                setMostrar(false);
+
+                // 3️⃣ Abrir checkout
                 handler.open(dataPago);
 
-                // NOTA: El handler.open es asíncrono en UI pero no retorna promesa. 
-                // Epayco maneja el flujo. Nosotros podemos cerrar el modal o esperar.
-                // En el código original Svelte, usaban callbacks onResponse etc.
-                // Aquí simplificamos, pero idealmente deberíamos inyectar los callbacks en la config si Epayco lo permite en esta version.
+                // 4️⃣ Detectar si el usuario cierra ePayco sin pagar (después de 30 segundos, volver a mostrar modal)
+                const timeoutHandle = setTimeout(() => {
+                    // Si el modal sigue cerrado después de 30s, probablemente cerró ePayco sin pagar
+                    // Volver a mostrar el modal
+                    setMostrar(true);
+                    setError('');
+                    setCargando(false);
+                    setProcesandoPago(false);
+                }, 30000);
 
-                // Hack para detectar cierre si no hay callbacks expuestos fácilmente en la versión JS estándar
                 setCargando(false);
                 setProcesandoPago(false);
+
+                // Limpiar timeout si el usuario completa el pago (redirige a pago-exitoso)
+                return () => clearTimeout(timeoutHandle);
 
             } else {
                 throw new Error('Epayco no disponible');
