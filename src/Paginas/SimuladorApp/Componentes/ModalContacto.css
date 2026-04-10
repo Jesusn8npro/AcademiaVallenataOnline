@@ -1,0 +1,293 @@
+.modal-contacto-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20000;
+}
+
+.modal-contacto-contenedor {
+    background: #1a1d24;
+    width: 95%;
+    max-width: 850px;
+    max-height: 90dvh;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 25px;
+    /* ← Más aire */
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+.modal-contacto-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    /* ← Más espacio */
+    min-height: 45px;
+}
+
+.label-solucion {
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: #ccc;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.modal-contacto-titulo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 16px;
+    /* ← Texto más grande */
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+    width: 50%;
+}
+
+.btn-cerrar-rojo {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.modal-contacto-cuerpo {
+    display: flex;
+    gap: 20px;
+    min-height: 200px;
+    /* ← Más alto */
+}
+
+/* Categorías */
+.contacto-categorias-grid {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+}
+
+.btn-categoria {
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 6px 14px;
+    /* ← Botones más grandes */
+    color: #fff;
+    font-size: 12px;
+    /* ← Texto legible */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-categoria:hover {
+    border-color: #666;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-categoria.activa {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+.contacto-mensaje-contenedor {
+    flex: 1.2;
+    background: #11141a;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    min-height: 150px;
+    /* ← Caja de mensaje más alta */
+}
+
+.contacto-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 80px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    resize: none;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 4px;
+}
+
+.contacto-textarea::placeholder {
+    color: #444;
+}
+
+/* Footer y Botón Enviar */
+.modal-contacto-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.btn-enviar-contacto {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 40px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+
+
+.btn-enviar-contacto:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+}
+
+.btn-enviar-contacto:active {
+    transform: translateY(0);
+}
+
+/* 🎯 MODO ENFOQUE (Optimizado para Teclado) */
+.modal-contacto-overlay.modo-enfoque {
+    align-items: flex-start;
+    padding-top: 5px;
+}
+
+.modal-contacto-overlay.modo-enfoque .modal-contacto-contenedor {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: #111;
+    padding: 8px 15px;
+}
+
+.vista-enfoque-teclado {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.enfoque-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 8px;
+}
+
+.enfoque-conteo {
+    color: #666;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.enfoque-acciones {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-enfoque-cancelar {
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btn-enfoque-concluido {
+    background: #222;
+    border: 1px solid #333;
+    color: #555;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btn-enfoque-concluido.activo {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.contacto-textarea-enfoque {
+    width: 100%;
+    min-height: 120px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 16px;
+    /* Evita zoom automático en iOS */
+    resize: none;
+}
+
+/* 🎯 AJUSTES VISTA NORMAL */
+.placeholder-falso {
+    color: #555;
+    font-size: 12px;
+    cursor: text;
+    height: 100%;
+    width: 100%;
+    padding: 5px;
+    overflow-y: auto;
+}
+
+/* Adaptabilidad para móviles */
+@media (max-width: 768px) {
+    .modal-contacto-cuerpo {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-contacto-titulo {
+        font-size: 12px;
+        position: relative;
+        left: 0;
+        transform: none;
+        width: auto;
+        flex: 1;
+        margin: 0 10px;
+    }
+
+    .modal-contacto-contenedor {
+        width: 98%;
+        padding: 10px;
+    }
+
+    .contacto-mensaje-contenedor {
+        min-height: 80px;
+    }
+}

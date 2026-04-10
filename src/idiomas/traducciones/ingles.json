@@ -1,0 +1,113 @@
+{
+    "menu": {
+        "inicio": "Home",
+        "blog": "Blog",
+        "cursos": "Courses",
+        "paquetes": "Packages",
+        "eventos": "Events",
+        "nuestraAcademia": "Our Academy",
+        "buscarContenido": "Search content",
+        "iniciarSesion": "Login",
+        "descripcion": "The best academy to learn vallenato accordion online. Learn with the best teachers from the comfort of your home."
+    },
+    "hero": {
+        "etiqueta": "ACADEMY #1 IN VALLENATO ACCORDION",
+        "tituloPrincipal": "Master the Vallenato Accordion",
+        "subtitulo": "FROM HOME - NO INSTRUMENT NEEDED",
+        "descripcion": "COMPLETE COURSES + PREMIUM TUTORIALS that take you from BEGINNER to PROFESSIONAL in record time",
+        "simulador": "Virtual Simulator Included - No Accordion Needed",
+        "estadisticas": {
+            "estudiantes": "STUDENTS",
+            "contenido": "HOURS OF CONTENT",
+            "calificacion": "AVERAGE RATING"
+        },
+        "boton": {
+            "empezar": "START STAR COURSE!",
+            "subtexto": "First song in 7 days"
+        },
+        "simuladorBoton": {
+            "titulo": "SIMULATOR",
+            "subtitulo": "COMING SOON",
+            "lanzamiento": "Launch in days"
+        }
+    },
+    "seccionOpciones": {
+        "badge": "🎯 CHOOSE YOUR PATH TO SUCCESS",
+        "titulo": "6 <1>Powerful</1> Ways to <2>Master the Vallenato Accordion</2>",
+        "descripcion": "No matter your level, experience, or time availability. <1>We have the PERFECT option to transform you into an accordion master.</1><2>🚀 <3>Over 5,000 students have already chosen their path to success!</3></2>",
+        "opciones": {
+            "cursos": {
+                "titulo": "Accordion Courses",
+                "descripcion": "Complete programs from beginner to professional expert",
+                "beneficios": [
+                    "Proven structured methodology",
+                    "Step-by-step guaranteed progress",
+                    "Official achievement certificates"
+                ],
+                "precio": "From $189.000"
+            },
+            "simulador": {
+                "titulo": "Accordion Gaming Simulator",
+                "descripcion": "THE ONLY accordion educational video game in the world!",
+                "etiqueta": "🚀 WORLD INNOVATION",
+                "beneficios": [
+                    "Unique gaming experience",
+                    "Global competitive ranking",
+                    "Learn by playing and having fun"
+                ],
+                "precio": "FREE!"
+            },
+            "tutoriales": {
+                "titulo": "Specific Tutorials",
+                "descripcion": "Specific lessons to master specific techniques",
+                "beneficios": [
+                    "Proven specific techniques",
+                    "Professional HD videos",
+                    "Focused and effective practice"
+                ],
+                "precio": "From $45.000"
+            },
+            "comunidad": {
+                "titulo": "VIP Exclusive Community",
+                "descripcion": "5,000+ accordionists sharing, learning, and growing together",
+                "etiqueta": "💎 #1 COMMUNITY",
+                "beneficios": [
+                    "Network of 5,000+ musicians",
+                    "Constant feedback and support",
+                    "Exclusive live events"
+                ],
+                "precio": "INCLUDED"
+            },
+            "paquetes": {
+                "titulo": "Thematic Packages",
+                "descripcion": "Specialized content grouped by styles and genres",
+                "beneficios": [
+                    "Perfectly organized content",
+                    "Best bundle price",
+                    "Immediate full access"
+                ],
+                "precio": "From $129.000"
+            },
+            "clases": {
+                "titulo": "VIP Personalized Classes",
+                "descripcion": "Direct 1-on-1 attention with Maestro Jesús González",
+                "beneficios": [
+                    "Personal attention from the master",
+                    "100% flexible schedules",
+                    "Guaranteed accelerated progress"
+                ],
+                "precio": "From $85.000/hour"
+            }
+        },
+        "boton": {
+            "acceder": "🚀 ACCESS NOW!",
+            "explorar": "Explore Now"
+        },
+        "asesoria": {
+            "titulo": "Not sure which to choose to achieve success?",
+            "descripcion": "Our <1>certified experts</1> help you find the perfect path according to your level and goals",
+            "boton": "💬 Get Personalized Advice for FREE",
+            "garantia": "✅ <1>100% personalized advice</1> • ✅ <3>No commitment</3> • ✅ <5>Immediate response</5>"
+        }
+    }
+}

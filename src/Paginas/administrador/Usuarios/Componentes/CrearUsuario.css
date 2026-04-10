@@ -1,0 +1,436 @@
+/* ===== CREAR USUARIO - CSS ROBUSTO CON PREFIJOS ÚNICOS ===== */
+
+/* Variables CSS únicas para crear usuario */
+:root {
+  --crear-usuario-color-primario: #667eea;
+  --crear-usuario-color-secundario: #764ba2;
+  --crear-usuario-color-fondo: rgba(255, 255, 255, 0.1);
+  --crear-usuario-color-borde: rgba(255, 255, 255, 0.2);
+  --crear-usuario-color-texto: white;
+  --crear-usuario-color-texto-secundario: rgba(255, 255, 255, 0.7);
+  --crear-usuario-color-error: #f44336;
+  --crear-usuario-color-exito: #4CAF50;
+  --crear-usuario-color-advertencia: #ff9800;
+  --crear-usuario-sombra: 0 4px 15px rgba(0, 0, 0, 0.2);
+  --crear-usuario-sombra-hover: 0 8px 25px rgba(0, 0, 0, 0.3);
+  --crear-usuario-transicion: all 0.3s ease;
+  --crear-usuario-border-radius: 15px;
+  --crear-usuario-border-radius-pequeño: 8px;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.crear-usuario {
+  background: var(--crear-usuario-color-fondo);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--crear-usuario-color-borde);
+  border-radius: var(--crear-usuario-border-radius);
+  padding: 2rem;
+  color: var(--crear-usuario-color-texto);
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: crear-usuario-fadeIn 0.5s ease-out;
+}
+
+@keyframes crear-usuario-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+.crear-usuario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--crear-usuario-color-borde);
+  padding-bottom: 1.25rem;
+}
+
+.crear-usuario-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--crear-usuario-color-texto);
+}
+
+.crear-usuario-btn-cerrar {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--crear-usuario-color-borde);
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  color: var(--crear-usuario-color-texto);
+  font-size: 1.125rem;
+  font-weight: bold;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: var(--crear-usuario-transicion);
+}
+
+.crear-usuario-btn-cerrar:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* ===== MENSAJES DE ESTADO ===== */
+.crear-usuario-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid var(--crear-usuario-color-error);
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  color: var(--crear-usuario-color-error);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(244, 67, 54, 0.2);
+}
+
+.crear-usuario-exito {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid var(--crear-usuario-color-exito);
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  padding: 2rem;
+  text-align: center;
+  color: var(--crear-usuario-color-exito);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.crear-usuario-exito p {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.crear-usuario-exito small {
+  color: rgba(76, 175, 80, 0.7);
+  font-size: 0.875rem;
+}
+
+/* ===== FORMULARIO ===== */
+.crear-usuario-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.crear-usuario-seccion {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.crear-usuario-seccion h3 {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.625rem;
+}
+
+.crear-usuario-campos-grupo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.crear-usuario-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.crear-usuario-campo-obligatorio label::after {
+  content: ' *';
+  color: var(--crear-usuario-color-error);
+}
+
+.crear-usuario-campo label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.crear-usuario-campo input,
+.crear-usuario-campo select {
+  padding: 0.75rem 0.9375rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--crear-usuario-color-borde);
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  color: var(--crear-usuario-color-texto);
+  font-size: 0.875rem;
+  transition: var(--crear-usuario-transicion);
+}
+
+.crear-usuario-campo input:focus,
+.crear-usuario-campo select:focus {
+  outline: none;
+  border-color: var(--crear-usuario-color-primario);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.crear-usuario-campo input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.crear-usuario-campo option {
+  background: #333;
+  color: var(--crear-usuario-color-texto);
+}
+
+/* ===== ACCIONES DEL FORMULARIO ===== */
+.crear-usuario-acciones-formulario {
+  display: flex;
+  gap: 0.9375rem;
+  justify-content: flex-end;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--crear-usuario-color-borde);
+}
+
+.crear-usuario-btn-limpiar {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--crear-usuario-color-texto);
+  border: 1px solid var(--crear-usuario-color-borde);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--crear-usuario-transicion);
+}
+
+.crear-usuario-btn-limpiar:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.crear-usuario-btn-crear {
+  background: linear-gradient(135deg, var(--crear-usuario-color-primario), var(--crear-usuario-color-secundario));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--crear-usuario-border-radius-pequeño);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--crear-usuario-transicion);
+  min-width: 140px;
+  box-shadow: var(--crear-usuario-sombra);
+}
+
+.crear-usuario-btn-crear:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--crear-usuario-sombra-hover);
+}
+
+.crear-usuario-btn-crear:disabled,
+.crear-usuario-btn-limpiar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .crear-usuario-campos-grupo {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .crear-usuario {
+    padding: 1.25rem;
+    max-height: 90vh;
+  }
+
+  .crear-usuario-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .crear-usuario-campos-grupo {
+    grid-template-columns: 1fr;
+  }
+
+  .crear-usuario-acciones-formulario {
+    flex-direction: column;
+  }
+
+  .crear-usuario-btn-crear,
+  .crear-usuario-btn-limpiar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .crear-usuario {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+
+  .crear-usuario-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .crear-usuario-seccion {
+    padding: 1rem;
+  }
+
+  .crear-usuario-campos-grupo {
+    gap: 1rem;
+  }
+}
+
+/* ===== SCROLLBAR PERSONALIZADO ===== */
+.crear-usuario::-webkit-scrollbar {
+  width: 6px;
+}
+
+.crear-usuario::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.crear-usuario::-webkit-scrollbar-thumb {
+  background: var(--crear-usuario-color-primario);
+  border-radius: 3px;
+}
+
+.crear-usuario::-webkit-scrollbar-thumb:hover {
+  background: var(--crear-usuario-color-secundario);
+}
+
+/* ===== ESTADOS DE FOCUS MEJORADOS ===== */
+.crear-usuario-btn-cerrar:focus,
+.crear-usuario-btn-limpiar:focus,
+.crear-usuario-btn-crear:focus {
+  outline: 2px solid var(--crear-usuario-color-primario);
+  outline-offset: 2px;
+}
+
+.crear-usuario-campo input:focus,
+.crear-usuario-campo select:focus {
+  outline: 2px solid var(--crear-usuario-color-primario);
+  outline-offset: 2px;
+}
+
+/* ===== ANIMACIONES ADICIONALES ===== */
+.crear-usuario-seccion {
+  animation: crear-usuario-slideInUp 0.4s ease-out;
+}
+
+@keyframes crear-usuario-slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.crear-usuario-campo {
+  animation: crear-usuario-fadeIn 0.3s ease-out;
+}
+
+@keyframes crear-usuario-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== VALIDACIÓN VISUAL ===== */
+.crear-usuario-campo input:invalid:not(:placeholder-shown) {
+  border-color: var(--crear-usuario-color-error);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2);
+}
+
+.crear-usuario-campo input:valid:not(:placeholder-shown) {
+  border-color: var(--crear-usuario-color-exito);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+/* ===== ESTADOS DE HOVER MEJORADOS ===== */
+.crear-usuario-campo:hover input,
+.crear-usuario-campo:hover select {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.crear-usuario-seccion:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== LOADING STATES ===== */
+.crear-usuario-btn-crear:disabled {
+  position: relative;
+  overflow: hidden;
+}
+
+.crear-usuario-btn-crear:disabled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: crear-usuario-loading 1.5s infinite;
+}
+
+@keyframes crear-usuario-loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ===== MEJORAS DE ACCESIBILIDAD ===== */
+.crear-usuario-campo label {
+  cursor: pointer;
+}
+
+.crear-usuario-campo input:focus + label,
+.crear-usuario-campo select:focus + label {
+  color: var(--crear-usuario-color-primario);
+}
+
+/* ===== ESTADOS DE ERROR ESPECÍFICOS ===== */
+.crear-usuario-campo.crear-usuario-campo-error input,
+.crear-usuario-campo.crear-usuario-campo-error select {
+  border-color: var(--crear-usuario-color-error);
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2);
+}
+
+.crear-usuario-campo.crear-usuario-campo-error label {
+  color: var(--crear-usuario-color-error);
+}
+
+/* ===== MEJORAS DE RENDIMIENTO ===== */
+.crear-usuario {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.crear-usuario-campo input,
+.crear-usuario-campo select {
+  will-change: border-color, box-shadow;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}

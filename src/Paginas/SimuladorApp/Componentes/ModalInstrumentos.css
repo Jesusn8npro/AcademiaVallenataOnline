@@ -1,0 +1,281 @@
+/* 🎹 MODAL DE INSTRUMENTOS - DISEÑO LUXURY GRID */
+
+.modal-instrumentos-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+}
+
+.modal-instrumentos-contenedor {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 340px;
+    /* Más delgado */
+    max-height: 85vh;
+    background: rgba(12, 12, 12, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.95), 0 0 50px rgba(59, 130, 246, 0.15);
+    z-index: 2001;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: aparecerModalInst 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes aparecerModalInst {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -45%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.modal-instrumentos-cabecera {
+    padding: 12px 20px;
+    /* Reducido a la mitad */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.titulo-con-icono {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icono-titulo {
+    color: #3b82f6;
+}
+
+.modal-instrumentos-titulo {
+    font-size: 15px;
+    /* Más pequeño para que quepa todo */
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    margin: 0;
+}
+
+.btn-cerrar-inst {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #666;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cerrar-inst:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.modal-instrumentos-cuerpo {
+    flex: 1;
+    padding: 12px 15px;
+    /* Compactado */
+    overflow-y: auto;
+    /* Estilo de scroll personalizado */
+}
+
+.modal-instrumentos-cuerpo::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-instrumentos-cuerpo::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-instrumentos-cuerpo::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.grid-instrumentos {
+    display: flex;
+    /* Cambiado de grid a flex para fila única */
+    flex-direction: row;
+    gap: 8px;
+    padding-bottom: 5px;
+}
+
+.card-instrumento {
+    flex: 1;
+    min-width: 80px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px 4px;
+    /* Más estrecho */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.card-instrumento:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #3b82f666;
+    transform: translateY(-5px);
+}
+
+.card-instrumento.seleccionado {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+}
+
+.instrumento-imagen-container {
+    width: 45px;
+    /* Tamaño fijo pequeño */
+    height: 45px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.instrumento-img {
+    width: 65%;
+    /* Ocupa más dentro del contenedor pequeño */
+    height: 65%;
+    object-fit: contain;
+    transition: transform 0.3s;
+}
+
+.card-instrumento:hover .instrumento-img {
+    transform: scale(1.1);
+}
+
+.instrumento-placeholder {
+    font-size: 32px;
+}
+
+.check-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #3b82f6;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+    z-index: 2;
+}
+
+.spinner-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+}
+
+.spinning {
+    animation: rotateSpinner 1s linear infinite;
+    color: #3b82f6;
+}
+
+@keyframes rotateSpinner {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.instrumento-info {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inst-nombre-premium {
+    font-size: 8px;
+    /* Texto ultra compacto */
+    font-weight: 800;
+    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70px;
+}
+
+.card-instrumento.seleccionado .inst-nombre-premium {
+    color: #fff;
+}
+
+.inst-calidad {
+    display: none;
+}
+
+.contenedor-acciones-inst {
+    padding: 5px 15px 15px;
+    /* Padding reducido */
+}
+
+.btn-confirmar-instrumento {
+    width: 100%;
+    padding: 10px;
+    /* Más bajo */
+    background: #3b82f6;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    /* Letra pro proporcional */
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-confirmar-instrumento:active {
+    transform: scale(0.96);
+    background: #1d4ed8;
+}
+
+.modal-instrumentos-footer {
+    display: none;
+}
+
+.modal-instrumentos-footer p {
+    font-size: 10px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}

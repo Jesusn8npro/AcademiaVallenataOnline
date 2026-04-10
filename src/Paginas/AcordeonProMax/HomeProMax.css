@@ -1,0 +1,172 @@
+/* Estilos para Acordeón Pro Max - Home inspirada en Rhythm+ */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Nunito:wght@400;700&display=swap');
+
+.home-promax-contenedor {
+  position: fixed;
+  inset: 0;
+  background-color: #050510;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Nunito', sans-serif;
+  color: white;
+}
+
+/* ─── LOGO CENTRAL ─────────────────────────────────────────────────────── */
+
+.home-promax-centro {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  text-align: center;
+}
+
+.home-promax-logo-texto {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(2rem, 7vw, 4rem); /* Reducido de 2.5rem/8vw/5rem */
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #fff 30%, #fbbf24 60%, #f59e0b 100%); /* Cambiado a dorado/naranja */
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.45));
+  margin: 0;
+}
+
+.home-promax-subtitulo {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: -10px;
+  letter-spacing: 2px;
+}
+
+/* ─── BOTÓN START GAME ─────────────────────────────────────────────────── */
+
+.home-promax-btn-start {
+  min-width: 280px;
+  height: 65px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: none;
+  border-radius: 50px;
+  color: black;
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-promax-btn-start:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(245, 158, 11, 0.6);
+}
+
+/* El aro animado de Rhythm+ */
+.home-promax-btn-start::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50px;
+  border: 4px solid #fbbf24;
+  opacity: 0;
+  animation: ring-promax 2s infinite;
+}
+
+@keyframes ring-promax {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* GRUPO DE BOTONES */
+.home-promax-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  z-index: 20;
+}
+
+.home-promax-btn-practice {
+  min-width: 250px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.home-promax-btn-practice:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+}
+
+.home-promax-login-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.home-promax-login-sub:hover { color: #f472b6; }
+
+/* ─── AVISO ALPHA / VERSIÓN ───────────────────────────────────────────── */
+
+.home-promax-version {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  z-index: 50;
+}
+
+.home-promax-aviso {
+  position: absolute;
+  bottom: 40px;
+  max-width: 400px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 50;
+}
+
+.home-promax-aviso-icono {
+  background: rgba(255,255,255,0.1);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-promax-aviso-texto h4 { margin: 0; font-size: 12px; color: #fff; }
+.home-promax-aviso-texto p { margin: 0; font-size: 10px; color: rgba(255,255,255,0.5); }

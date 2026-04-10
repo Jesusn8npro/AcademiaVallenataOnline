@@ -1,0 +1,151 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   ACORDEÓN PRO MAX — PANTALLA GAME OVER (COMPACTA)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.hero-gameover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.hero-gameover-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.5) contrast(1.1);
+}
+
+.hero-gameover-video-dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%);
+}
+
+.hero-gameover-panel {
+  position: relative;
+  z-index: 10;
+  background: rgba(14, 12, 30, 0.95); /* Más sólido */
+  padding: 32px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  width: min(90%, 420px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(239, 68, 68, 0.1);
+}
+
+.hero-gameover-titulo-wrap {
+  margin-bottom: 24px;
+}
+
+.hero-gameover-titulo {
+  font-size: 2.8rem;
+  font-weight: 900;
+  margin: 0;
+  color: #fff;
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.hero-gameover-subtitulo {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  margin: 6px 0 0;
+}
+
+.hero-gameover-stats {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.hero-gameover-stat-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.9rem;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  text-align: left;
+}
+
+.stat-value {
+  font-weight: 800;
+  color: #fff;
+}
+
+.hero-gameover-separador {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 10px 0;
+}
+
+.destaca {
+  font-size: 1.05rem;
+  color: #f472b6;
+}
+
+.precision-valor {
+  font-weight: 900;
+  font-size: 1.3rem;
+  color: #f472b6;
+}
+
+.destaca-puntos {
+  font-size: 1.1rem;
+}
+
+.puntos-valor {
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: #fbbf24;
+}
+
+.hero-gameover-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-gameover-btn {
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+}
+
+.hero-gameover-btn.reintentar {
+  background: white;
+  color: #000;
+}
+
+.hero-gameover-btn.reintentar:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.9);
+}
+
+.hero-gameover-btn.seleccion {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-gameover-btn.seleccion:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}

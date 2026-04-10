@@ -1,0 +1,534 @@
+/* ⚡ MODO SYNTHESIA — Estilos Educativos Piano Roll */
+
+.synthesia-modo {
+    --duelo-acordeon-tamano: min(70vh, 32vw);
+    --duelo-acordeon-x: 50%;
+    --duelo-acordeon-y: 50%;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+}
+
+.synthesia-modo .hero-escenario {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding-top: 48px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5vw;
+    z-index: 2;
+}
+
+.synthesia-modo .hero-acordeon-wrap {
+    position: relative;
+    width: 45%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.synthesia-modo .hero-acordeon-label {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.synthesia-modo .hero-pro-judgment-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 90;
+    pointer-events: none;
+    font-family: 'Raleway', 'Outfit', sans-serif;
+}
+
+.synthesia-modo .hero-pro-combo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -15px;
+}
+
+.synthesia-modo .hero-pro-combo .combo-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.3em;
+    margin-bottom: -5px;
+}
+
+.synthesia-modo .hero-pro-combo .combo-num {
+    font-size: 5rem;
+    font-weight: 950;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 50px rgba(255, 255, 255, 0.2);
+    font-family: 'Outfit', sans-serif;
+}
+
+.synthesia-modo .hero-pro-label {
+    font-size: 2.2rem;
+    font-weight: 950;
+    letter-spacing: 0.1em;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+}
+
+.synthesia-modo .hero-pro-label.perfecto {
+    color: #22c55e;
+    text-shadow: 0 0 25px rgba(34, 197, 94, 0.8);
+}
+
+.synthesia-modo .hero-pro-label.bien {
+    color: #3b82f6;
+    text-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+}
+
+.synthesia-modo .hero-pro-label.fallada,
+.synthesia-modo .hero-pro-label.perdida {
+    color: #ef4444;
+    text-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+}
+
+.synthesia-modo .hero-hit-pillar {
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: synthesia-pillar-fade 0.5s ease-out forwards;
+}
+
+@keyframes synthesia-pillar-fade {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.2) scaleY(1);
+    }
+
+    30% {
+        opacity: 0.8;
+        transform: scaleX(1.2) scaleY(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scaleX(1) scaleY(1);
+    }
+}
+
+.synthesia-modo [id^='sustain-'].activo {
+    animation: synthesia-sustain-pulse 0.2s infinite alternate;
+}
+
+@keyframes synthesia-sustain-pulse {
+    from {
+        opacity: 0.8;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.synthesia-hud-superior {
+    display: none;
+    position: fixed;
+    top: 65px;
+    inset-inline: 0;
+    margin-inline: auto;
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    pointer-events: none;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* ── Badge del Modo ── */
+.synthesia-badge-modo {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(167, 139, 250, 0.2));
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    border: 2px solid rgba(251, 191, 36, 0.4);
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #fbbf24;
+    /* Dorado/Ámbar */
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+/* ── Progreso de Acordes ── */
+.synthesia-progreso-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.72rem 1.2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    min-width: min(260px, calc(100vw - 32px));
+    margin: 0 auto;
+    align-self: center;
+}
+
+.synthesia-progreso-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fbbf24;
+    text-align: center;
+}
+
+.synthesia-progreso-bar {
+    position: relative;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    overflow: hidden;
+}
+
+.synthesia-progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24, #a78bfa);
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: inset 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.synthesia-progreso-texto {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Panel de Espera: Botones a Tocar ── */
+.synthesia-espera-panel {
+    position: fixed;
+    bottom: 42px;
+    inset-inline: 0;
+    margin-inline: auto;
+    z-index: 2000;
+    width: min(260px, calc(100vw - 24px));
+    max-height: none;
+    overflow: visible;
+}
+
+.synthesia-espera-content {
+    backdrop-filter: blur(20px);
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(167, 139, 250, 0.1));
+    border: 2px solid rgba(251, 191, 36, 0.5);
+    border-radius: 20px;
+    padding: 0.72rem 0.78rem 0.72rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 260px;
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.synthesia-icono-grande {
+    font-size: 1.35rem;
+    animation: synthesia-icono-float 2s ease-in-out infinite;
+}
+
+@keyframes synthesia-icono-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.synthesia-mensaje {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.28rem;
+    text-align: center;
+}
+
+.synthesia-mensaje strong {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #fbbf24;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+.synthesia-mensaje span {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.02em;
+    max-width: 22ch;
+}
+
+/* ── Badge de Fuelle ── */
+.synthesia-badge-fuelle {
+    padding: 0.34rem 0.72rem;
+    border-radius: 999px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.64rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: inline-block;
+    animation: synthesia-badge-pulsar 1.2s ease-in-out infinite;
+}
+
+.synthesia-badge-fuelle.abriendo {
+    background: rgba(59, 130, 246, 0.2);
+    border: 2px solid #3b82f6;
+    color: #3b82f6;
+    text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.synthesia-badge-fuelle.cerrando {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #ef4444;
+    color: #ef4444;
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes synthesia-badge-pulsar {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+/* ── Lista de Botones a Tocar ── */
+.synthesia-botones-lista {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.34rem;
+    width: 100%;
+}
+
+.synthesia-boton-item {
+    display: flex;
+    align-items: center;
+    gap: 0.36rem;
+    padding: 0.32rem 0.56rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(167, 139, 250, 0.3);
+    border-radius: 999px;
+    transition: all 0.3s ease;
+    animation: synthesia-boton-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.synthesia-boton-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(167, 139, 250, 0.6);
+    transform: translateX(4px);
+}
+
+@keyframes synthesia-boton-enter {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.synthesia-boton-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: synthesia-dot-pulsar 1s ease-in-out infinite;
+}
+
+.synthesia-boton-item.abriendo .synthesia-boton-dot {
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+}
+
+.synthesia-boton-item.cerrando .synthesia-boton-dot {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+@keyframes synthesia-dot-pulsar {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
+}
+
+.synthesia-boton-numero {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.synthesia-modo .hero-acordeon-wrap.alumno.guia-visible .boton.activo {
+    animation: synthesia-guia-pulso 1s ease-in-out infinite;
+}
+
+.synthesia-modo .hero-acordeon-wrap.alumno.guia-visible .boton.halar.activo {
+    background: rgba(59, 130, 246, 0.92) !important;
+    border: 2px solid #60a5fa !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), 0 0 0 4px rgba(96, 165, 250, 0.2), 0 0 22px rgba(59,130,246,0.8) !important;
+}
+
+.synthesia-modo .hero-acordeon-wrap.alumno.guia-visible .boton.empujar.activo {
+    background: rgba(239, 68, 68, 0.92) !important;
+    border: 2px solid #f87171 !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), 0 0 0 4px rgba(248, 113, 113, 0.16), 0 0 22px rgba(239,68,68,0.75) !important;
+}
+
+.synthesia-guia-alumno {
+    position: absolute;
+    top: 42px;
+    inset-inline: 0;
+    margin-inline: auto;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    padding: 0.34rem 0.72rem;
+    border-radius: 999px;
+    background: rgba(11, 18, 32, 0.84);
+    border: 1px solid rgba(96, 165, 250, 0.45);
+    color: #dbeafe;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.3);
+    pointer-events: none;
+}
+
+@keyframes synthesia-guia-pulso {
+    0%,
+    100% {
+        transform: translateY(5px) scale(0.96);
+    }
+
+    50% {
+        transform: translateY(5px) scale(1.03);
+    }
+}
+
+/* ── Modo "Motivation Only" (sin botones) ── */
+.synthesia-espera-content.motivation-only {
+    gap: 0.42rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .synthesia-hud-superior {
+        top: 70px;
+        gap: 0.5rem;
+    }
+
+    .synthesia-badge-modo {
+        font-size: 0.62rem;
+        padding: 0.4rem 1rem;
+    }
+
+    .synthesia-progreso-container {
+        min-width: 240px;
+        padding: 0.6rem 1rem;
+    }
+
+    .synthesia-espera-content {
+        padding: 0.68rem 0.72rem;
+        gap: 0.46rem;
+        max-width: 240px;
+    }
+
+    .synthesia-icono-grande {
+        font-size: 1.2rem;
+    }
+
+    .synthesia-mensaje strong {
+        font-size: 0.78rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .synthesia-espera-panel {
+        bottom: 50px;
+        width: min(230px, calc(100vw - 20px));
+    }
+
+    .synthesia-espera-content {
+        padding: 0.62rem 0.66rem;
+        gap: 0.42rem;
+    }
+
+    .synthesia-icono-grande {
+        font-size: 1.08rem;
+    }
+
+    .synthesia-mensaje strong {
+        font-size: 0.74rem;
+    }
+
+    .synthesia-mensaje span {
+        font-size: 0.62rem;
+    }
+
+    .synthesia-boton-item {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.66rem;
+    }
+}

@@ -1,0 +1,196 @@
+/* Estilos Aislados para EntradaMensaje (Namespace em-) */
+
+.em-wrapper {
+    background-color: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    width: 100%;
+    position: relative;
+    z-index: 50;
+    /* Ensure visibility over other overlays */
+}
+
+:global(.dark) .em-wrapper {
+    background-color: #1f2937;
+    border-top: 1px solid #374151;
+}
+
+.em-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+}
+
+/* Botones (Emoji, Adjuntar, Enviar) */
+.em-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    /* Reset */
+    background: transparent;
+    color: #6b7280;
+    /* gray-500 */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.em-btn:hover {
+    background-color: #f3f4f6;
+    /* gray-100 */
+    color: #374151;
+    /* gray-700 */
+}
+
+:global(.dark) .em-btn {
+    color: #9ca3af;
+    /* gray-400 */
+}
+
+:global(.dark) .em-btn:hover {
+    background-color: #374151;
+    /* gray-700 */
+    color: #e5e7eb;
+    /* gray-200 */
+}
+
+/* Botón Enviar Específico */
+.em-btn-send {
+    background-color: #2563eb;
+    /* blue-600 */
+    color: white;
+}
+
+.em-btn-send:hover {
+    background-color: #1d4ed8;
+    /* blue-700 */
+    color: white;
+}
+
+.em-btn-send:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Área de Texto */
+.em-textarea-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    min-width: 0;
+    /* Fix flex child overflow */
+}
+
+.em-textarea {
+    width: 100% !important;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 10px 16px;
+    border-radius: 24px;
+    border: 1px solid #d1d5db;
+    /* gray-300 */
+    background-color: #f9fafb;
+    /* gray-50 */
+    color: #111827;
+    /* gray-900 */
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    overflow-y: hidden;
+    /* Se ajusta con JS */
+    box-sizing: border-box !important;
+}
+
+.em-textarea:focus {
+    border-color: #3b82f6;
+    /* blue-500 */
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    background-color: white;
+}
+
+:global(.dark) .em-textarea {
+    background-color: #374151;
+    /* gray-700 */
+    border-color: #4b5563;
+    /* gray-600 */
+    color: white;
+}
+
+:global(.dark) .em-textarea:focus {
+    border-color: #3b82f6;
+    background-color: #1f2937;
+    /* gray-800 */
+}
+
+/* Panel de Emojis */
+.em-emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 12px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    width: 320px;
+    z-index: 50;
+}
+
+:global(.dark) .em-emoji-picker {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+.em-emoji-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.em-emoji-btn:hover {
+    background-color: #f3f4f6;
+}
+
+:global(.dark) .em-emoji-btn:hover {
+    background-color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .em-wrapper {
+        padding: 8px 10px;
+    }
+
+    .em-container {
+        gap: 8px;
+    }
+
+    .em-textarea {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}

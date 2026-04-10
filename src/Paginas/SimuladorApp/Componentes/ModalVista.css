@@ -1,0 +1,238 @@
+/* 👁️ MODAL DE VISTA - ESTILO PREMIUM CASSOTO */
+
+.modal-vista-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(0.5px);
+}
+
+.modal-vista-contenedor {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    max-height: 92vh;
+    /* Evita salirse de la pantalla */
+    background: rgba(15, 15, 15, 0.98);
+    border: 1px solid #3b82f644;
+    border-radius: 20px;
+    /* Un poco más compacto */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(59, 130, 246, 0.15);
+    z-index: 1001;
+    color: white;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    /* Scroll si el contenido es muy alto */
+    animation: aparecerModalCentro 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes aparecerModalCentro {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -45%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.modal-vista-cabecera {
+    padding: 20px 24px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-vista-titulo {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
+.btn-cerrar-vista {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #888;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-vista-cuerpo {
+    padding: 10px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.opcion-vista-grupo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.opcion-vista-grupo.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.opcion-vista-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.opcion-vista-info span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ccc;
+}
+
+.icono-opcion {
+    color: #3b82f6;
+}
+
+.selector-botones-grupo {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 12px;
+    display: flex;
+    gap: 4px;
+}
+
+.btn-opcion-item {
+    background: transparent;
+    border: none;
+    color: #666;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-opcion-item.activo {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* 🔘 SWITCH PREMIUM */
+.switch-premium {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch-premium input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-premium {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider-premium:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider-premium {
+    background-color: #3b82f6;
+}
+
+input:checked+.slider-premium:before {
+    transform: translateX(20px);
+}
+
+input:disabled+.slider-premium {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* 📏 CONTROL SLIDER TAMAÑO */
+.control-slider-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 4px 0;
+}
+
+.fuente-min,
+.fuente-max {
+    font-size: 14px;
+    font-weight: 800;
+    color: #444;
+}
+
+.slider-fuente {
+    flex: 1;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    outline: none;
+}
+
+.slider-fuente::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3b82f6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.modal-vista-footer {
+    padding: 12px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-vista-footer p {
+    font-size: 10px;
+    color: #444;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}

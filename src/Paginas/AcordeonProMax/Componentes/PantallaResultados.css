@@ -1,0 +1,728 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   ACORDEÓN PRO MAX — PANTALLA DE RESULTADOS
+   ─────────────────────────────────────────────────────────────────────────────
+   Componente modular con estilos premium de glassmorphism y animaciones suaves.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.hero-resultados-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(8, 7, 20, 0.9); /* Más opaco */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hero-fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 16px;
+}
+
+.hero-resultados-panel {
+  background: rgba(18, 16, 35, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  padding: 32px;
+  width: 95%;
+  max-width: min(500px, 95vw);
+  margin: auto;
+  max-height: 94vh;
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(59, 130, 246, 0.08);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-resultados-encabezado {
+  margin-bottom: 20px;
+}
+
+.hero-resultados-titulo {
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.hero-resultados-cancion {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  margin: 6px 0 0;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.hero-resultados-estrellas {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hero-estrella {
+  font-size: 2.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-estrella.ganada {
+  color: #fbbf24;
+  text-shadow: 0 0 25px rgba(251, 191, 36, 0.5);
+  transform: scale(1.1);
+}
+
+.hero-estrella.vacia {
+  color: rgba(255, 255, 255, 0.06);
+}
+
+.hero-resultados-puntos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.hero-puntos-valor {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.hero-puntos-label {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 2px;
+  font-weight: 800;
+}
+
+.hero-resultados-motivacion {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 28px;
+  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.15);
+}
+
+.hero-resultados-stats {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+
+.hero-stat-fila {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.88rem;
+}
+
+.hero-stat-icono {
+  width: 20px;
+  font-size: 0.75rem;
+  margin-right: 8px;
+}
+
+.hero-stat-nombre {
+  flex: 1;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.hero-stat-valor {
+  font-weight: 800;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.hero-stat-precision {
+  font-size: 1.25rem;
+  color: #fbbf24 !important;
+}
+
+.hero-stat-separador {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 10px 0;
+}
+
+.hero-barra-precision {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.hero-barra-precision-relleno {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  transition: width 1.5s cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.hero-resultados-guardado {
+  margin-bottom: 24px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.hero-resultados-guardado-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hero-resultados-guardado h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.hero-resultados-guardado-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hero-resultados-guardado-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.84rem;
+}
+
+.hero-resultados-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hero-resultados-campo span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hero-resultados-campo input,
+.hero-resultados-campo textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(6, 8, 18, 0.72);
+  color: #fff;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.hero-resultados-campo textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.hero-resultados-campo input:focus,
+.hero-resultados-campo textarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.hero-resultados-guardado-error {
+  margin: 4px 0 12px;
+  color: #fca5a5;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.hero-resultados-guardado-acciones {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hero-btn-seleccion-secundario,
+.hero-btn-guardar-grabacion {
+  width: 100%;
+}
+
+.hero-btn-jugar-nuevo:disabled,
+.hero-btn-seleccion:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.hero-resultados-guardado-ayuda,
+.hero-resultados-guardado-texto {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.hero-resultados-guardado-exito {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.hero-resultados-guardado-bloqueado {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+.hero-btn-guardar-inline {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hero-resultados-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 6, 15, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.hero-resultados-modal-guardar {
+  width: 95%;
+  max-width: min(500px, 95vw);
+  margin: auto;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(18, 16, 35, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
+
+.hero-resultados-modal-guardar-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hero-resultados-modal-etiqueta {
+  margin: 0 0 6px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-resultados-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-btn-jugar-nuevo {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hero-btn-jugar-nuevo:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px -5px rgba(59, 130, 246, 0.5);
+  filter: brightness(1.1);
+}
+
+.hero-btn-seleccion {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero-btn-seleccion:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .hero-resultados-guardado-acciones {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-resultados-modal-guardar-encabezado {
+    flex-direction: column;
+  }
+}
+
+.hero-record-badge {
+  display: inline-block;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  color: #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+  animation: pulse-gold 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.hero-gamificacion-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 20px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.hero-gamificacion-panel.animar {
+  animation: slide-up-fade 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 1. XP Ganado / Perdido */
+.hero-xp-partida {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-xp-positivo, .hero-xp-negativo, .hero-xp-neutro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-xp-icono {
+  font-size: 1.8rem;
+}
+
+.hero-xp-texto {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hero-xp-positivo .hero-xp-texto {
+  background: linear-gradient(to right, #4ade80, #22c55e);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6));
+}
+
+.hero-xp-negativo .hero-xp-texto {
+  background: linear-gradient(to right, #ef4444, #dc2626);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6));
+}
+
+.hero-xp-neutro .hero-xp-texto {
+  background: linear-gradient(to right, #9ca3af, #6b7280);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.5rem;
+}
+
+.hero-xp-mensaje {
+  width: 100%;
+  font-size: 0.9rem;
+  color: #fca5a5;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* 2. Barra de progreso Cancion */
+.hero-xp-acumulado-cancion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.hero-xp-acumulado-cancion h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hero-cancion-dominada-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+}
+
+.hero-xp-acumulado-negativo {
+  color: #fca5a5;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.hero-barra-xp-cancion {
+  height: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-barra-xp-cancion.activa .hero-barra-xp-relleno {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #3b82f6, #4ade80);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-barra-xp-cancion.negativa .hero-barra-xp-relleno {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #b91c1c, #ef4444);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.hero-barra-xp-texto {
+  position: relative;
+  z-index: 10;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+
+/* 3. Recompensas (Monedas) */
+.hero-monedas-recompensa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-monedas-ganadas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  padding: 6px 12px;
+  border-radius: 12px;
+  animation: pulse-gold 2s infinite;
+}
+
+.hero-monedas-texto {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.hero-monedas-saldo-actual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hero-monedas-oro {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.hero-btn-historial-inline {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  color: #93c5fd !important;
+}
+
+.hero-btn-historial-inline:hover {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #fff !important;
+}
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(2vh); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 1vh rgba(251, 191, 36, 0.4); }
+  50% { opacity: 0.8; transform: scale(1.05); box-shadow: 0 0 2vh rgba(251, 191, 36, 0.7); }
+}
+
+@keyframes hero-fade-in {
+  from { opacity: 0; transform: scale(0.96) translateY(2vh); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MEDIA QUERIES PARA RESPONSIVIDAD (TABLET & MÓVIL)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .hero-resultados-panel {
+    width: 85vw;
+    padding: 3vh 3vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-resultados-panel {
+    width: 95vw;
+    padding: 4vw;
+    border-radius: 1.5rem;
+    max-height: 98vh;
+    overflow-y: auto; /* Permite scroll si la pantalla es muy pequeña */
+  }
+
+  .hero-resultados-titulo {
+    font-size: 1.8rem;
+  }
+
+  .hero-estrella {
+    font-size: 2.2rem;
+  }
+
+  .hero-puntos-valor {
+    font-size: 2.8rem;
+  }
+
+  .hero-resultados-motivacion {
+    font-size: 1rem;
+    margin-bottom: 2vh;
+  }
+
+  .hero-resultados-stats {
+    padding: 3vw;
+    border-radius: 1rem;
+  }
+
+  .hero-gamificacion-panel {
+    padding: 3vw;
+    gap: 2vh;
+  }
+
+  .hero-btn-jugar-nuevo, .hero-btn-seleccion {
+    padding: 1.5vh;
+    font-size: 0.85rem;
+  }
+
+  .hero-resultados-guardado-acciones {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-resultados-modal-guardar-encabezado {
+    flex-direction: column;
+  }
+
+  .hero-xp-texto {
+    font-size: 1.8rem;
+  }
+
+  .hero-resultados-overlay {
+    padding: 2vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-resultados-titulo {
+    font-size: 1.5rem;
+  }
+
+  .hero-puntos-valor {
+    font-size: 2.2rem;
+  }
+
+  .hero-estrella {
+    font-size: 1.8rem;
+    gap: 8px;
+  }
+
+  .hero-stat-fila {
+    font-size: 0.8rem;
+  }
+
+  .hero-stat-precision {
+    font-size: 1rem;
+  }
+}

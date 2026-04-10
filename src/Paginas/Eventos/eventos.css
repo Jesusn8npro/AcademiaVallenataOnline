@@ -1,0 +1,276 @@
+/* Estilos para Eventos - Namespaced evt-main- */
+
+.evt-main-page {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    /* bg-gray-50 */
+    padding-bottom: 2rem;
+}
+
+/* Banner de Bienvenida */
+.evt-main-banner {
+    background: linear-gradient(to right, #2563eb, #7e22ce);
+    /* from-blue-600 to-purple-700 */
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.evt-main-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    /* bg-black/20 */
+}
+
+.evt-main-banner-content {
+    position: relative;
+    z-index: 10;
+    max-width: 80rem;
+    /* max-w-7xl */
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .evt-main-banner-content {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-main-banner-content {
+        padding: 2rem 2rem;
+    }
+}
+
+.evt-main-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.2s;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.evt-main-close-btn:hover {
+    color: white;
+}
+
+.evt-main-hero-text {
+    text-align: center;
+}
+
+.evt-main-icon-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    margin-bottom: 1.5rem;
+}
+
+.evt-main-title {
+    font-size: 2.25rem;
+    /* text-4xl */
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .evt-main-title {
+        font-size: 3rem;
+        /* text-5xl */
+    }
+}
+
+.evt-main-subtitle {
+    font-size: 1.25rem;
+    /* text-xl */
+    margin-bottom: 2rem;
+    color: #dbeafe;
+    /* text-blue-100 */
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 768px) {
+    .evt-main-subtitle {
+        font-size: 1.5rem;
+        /* text-2xl */
+    }
+}
+
+.evt-main-features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    /* text-sm */
+}
+
+.evt-main-feature-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+}
+
+/* Acceso Rápido Admin */
+.evt-main-admin-panel {
+    background-color: #fffbeb;
+    /* bg-amber-50 */
+    border-left: 4px solid #fbbf24;
+    /* border-amber-400 */
+    padding: 1rem;
+}
+
+.evt-main-admin-container {
+    max-width: 80rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.evt-main-admin-text {
+    font-size: 0.875rem;
+    color: #b45309;
+    /* text-amber-700 */
+    margin-left: 0.75rem;
+}
+
+.evt-main-admin-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.evt-main-btn-manage {
+    background-color: #fef3c7;
+    /* bg-amber-100 */
+    color: #92400e;
+    /* text-amber-800 */
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.evt-main-btn-manage:hover {
+    background-color: #fde68a;
+    /* bg-amber-200 */
+}
+
+.evt-main-btn-create {
+    background-color: #f59e0b;
+    /* bg-amber-500 */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.evt-main-btn-create:hover {
+    background-color: #d97706;
+    /* bg-amber-600 */
+}
+
+/* Contenido Principal */
+.evt-main-content-wrapper {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .evt-main-content-wrapper {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .evt-main-content-wrapper {
+        padding: 2rem 2rem;
+    }
+}
+
+/* KPI Cards */
+.evt-main-kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .evt-main-kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.evt-main-kpi-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+}
+
+.evt-main-kpi-inner {
+    display: flex;
+    align-items: center;
+}
+
+.evt-main-kpi-icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.evt-main-kpi-info {
+    margin-left: 1rem;
+}
+
+.evt-main-kpi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+    /* text-gray-600 */
+}
+
+.evt-main-kpi-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    /* text-gray-900 */
+    margin: 0;
+}
+
+/* Colores para iconos */
+.evt-text-blue {
+    color: #2563eb;
+}
+
+.evt-text-green {
+    color: #16a34a;
+}
+
+.evt-text-yellow {
+    color: #ca8a04;
+}
+
+.evt-text-purple {
+    color: #9333ea;
+}

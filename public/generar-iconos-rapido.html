@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Iconos PWA Rápido</title>
+</head>
+<body>
+    <h1>🚀 Generando Iconos PWA...</h1>
+    <div id="status">Iniciando...</div>
+    
+    <script>
+        const status = document.getElementById('status');
+        const tamaños = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function updateStatus(message) {
+            status.innerHTML += '<br>' + message;
+        }
+        
+        function generarIcono(tamaño) {
+            const canvas = document.createElement('canvas');
+            canvas.width = tamaño;
+            canvas.height = tamaño;
+            const ctx = canvas.getContext('2d');
+            
+            // Fondo azul simple
+            ctx.fillStyle = '#1e40af';
+            ctx.fillRect(0, 0, tamaño, tamaño);
+            
+            // Texto AV en blanco
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${Math.floor(tamaño * 0.4)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('AV', tamaño / 2, tamaño / 2);
+            
+            return canvas;
+        }
+        
+        async function generarTodos() {
+            updateStatus('Generando iconos...');
+            
+            for (const tamaño of tamaños) {
+                try {
+                    const canvas = generarIcono(tamaño);
+                    
+                    // Convertir a blob y descargar
+                    canvas.toBlob(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `icon-${tamaño}x${tamaño}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }, 'image/png');
+                    
+                    updateStatus(`✅ Generado: icon-${tamaño}x${tamaño}.png`);
+                    
+                    // Pausa breve entre descargas
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    updateStatus(`❌ Error con ${tamaño}x${tamaño}: ${error.message}`);
+                }
+            }
+            
+            updateStatus('<strong>🎉 ¡LISTO! Todos los iconos generados. Cópialos a la carpeta iconos-pwa/</strong>');
+        }
+        
+        // Iniciar automáticamente
+        generarTodos();
+    </script>
+</body>
+</html> 

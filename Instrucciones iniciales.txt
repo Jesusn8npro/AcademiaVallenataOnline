@@ -1,0 +1,160 @@
+Estoy trabajando en Academia Vallenata Online — plataforma React + TypeScript + Vite + Supabase. Es un juego estilo Guitar Hero para aprender acordeón vallenato llamado Acordeón Pro Max.
+Ya existe en Supabase (no crear nada):
+
+scores_hero — guarda resultado de cada partida
+xp_transacciones — historial de XP ganado
+experiencia_usuario — XP total del usuario con categorías: xp_simulador, xp_cursos, xp_comunidad, xp_logros, xp_total, nivel
+estadisticas_usuario — métricas completas
+canciones_hero — 75 canciones del juego
+grabaciones_estudiantes_hero — grabaciones completas con secuencia JSONB
+notificaciones — notificaciones al usuario
+perfiles — con experiencia_total y nivel_usuario
+
+Triggers ya activos en Supabase (automáticos, no tocar):
+Cuando se inserta en scores_hero → automáticamente suma XP en experiencia_usuario, actualiza estadisticas_usuario, verifica si subió de nivel y notifica al usuario. No hay que hacer nada extra en el frontend para el XP — solo hacer el INSERT en scores_hero.
+Lo que necesito que implementes:
+1. Al terminar una partida en AcordeonProMaxSimulador.tsx, hacer INSERT en scores_hero con:
+usuario_id, cancion_id, puntuacion, precision_porcentaje,
+notas_totales, notas_correctas, notas_falladas, racha_maxima,
+multiplicador_maximo, modo ('competencia'|'libre'|'synthesia'),
+tonalidad, duracion_ms,
+es_mejor_personal (comparar con MAX(puntuacion) previo del mismo usuario+cancion),
+xp_ganado (50 si competencia, 20 si libre, 10 si synthesia)
+2. Pantalla de resultados después de cada partida mostrando:
+
+Puntuación obtenida
+Precisión en porcentaje
+XP ganado con animación "+50 XP"
+Si batió su récord personal → badge "🏆 ¡Nuevo récord!"
+Nivel actual del usuario con barra de progreso
+Botón "Ver mi historial en esta canción"
+
+3. Pantalla de historial por canción consultando scores_hero filtrado por usuario_id + cancion_id, ordenado por created_at DESC, mostrando:
+
+Lista de últimas 10 partidas con fecha, puntuación, precisión y modo
+Gráfica de línea con la evolución de puntuación (usar recharts que ya está instalado)
+Mejor score personal destacado
+
+4. En el perfil del usuario mostrar desde experiencia_usuario:
+
+XP total con barra de progreso al siguiente nivel (cada 1000 XP = 1 nivel)
+4 categorías con ícono: 🎮 Simulador / 📚 Cursos / 👥 Comunidad / 🏆 Logros
+Nivel actual y cuánto falta para el siguiente
+
+Revisa todas las paginas y el conexto par que tengas ides de como es el proceso de la implementacion
+
+
+
+y el segundo promt:
+Necesito implementar el sistema completo de XP y Monedas en Acordeón Pro Max. Todo está creado en Supabase, solo conectar el frontend.
+
+CONTEXTO DEL SISTEMA
+XP = El ego del usuario. Un solo número global que sube y baja según sus ejecuciones. Se muestra en el perfil como su nivel de músico.
+Monedas = Dinero virtual. 1 moneda = $100 pesos colombianos. Se ganan siendo perfeccionista, se pueden gastar en tutoriales, canciones y accesorios de la plataforma.
+
+TABLAS EN SUPABASE — YA EXISTEN, NO CREAR NADA
+
+scores_hero — resultado de cada partida. Campos clave: xp_ganado (el trigger lo corrige al valor real), xp_acumulado_cancion (cuánto XP lleva en esa canción), precision_porcentaje, abandono, porcentaje_completado
+xp_cancion_usuario — XP acumulado por usuario por canción: usuario_id, cancion_id, xp_acumulado. Techo: 100 XP. Piso: -50 XP
+experiencia_usuario — XP global: xp_total, xp_simulador, xp_cursos, xp_comunidad, xp_logros, nivel
+monedas_usuario — saldo actual: usuario_id, saldo, total_ganadas, total_gastadas
+monedas_transacciones — historial de cada movimiento de monedas
+monedas_cancion_usuario — monedas acumuladas por canción: usuario_id, cancion_id, monedas_acumuladas, cancion_dominada. Techo: 10 monedas por canción
+validaciones_tutorial — validaciones de ejecución física: usuario_id, tutorial_id, video_url, estado (pendiente/aprobado/rechazado), fase1_otorgada, fase2_otorgada, comentario_profesor, profesor_id
+
+
+TRIGGERS ACTIVOS — NO TOCAR, FUNCIONAN SOLOS
+El frontend solo hace INSERT en scores_hero y los triggers hacen todo automáticamente:
+
+Suma o resta XP según precisión
+Respeta techo de 100 XP y piso de -50 XP por canción
+Actualiza XP global en experiencia_usuario
+Verifica si subió de nivel y manda notificación
+Al compartir grabación → +2 monedas automáticas
+Al eliminar publicación → -2 monedas automáticas
+Al recibir like → +0.1 monedas al autor
+Al subir validación tutorial → +5 monedas fase 1
+Al aprobar validación profesor → +5 monedas fase 2 + notificación
+
+
+REGLAS DE XP — para mostrar correctamente en UI
+PrecisiónXP que gana/pierde90-100%+50 XP70-89%+20 XP50-69%+5 XP30-49%-5 XPMenos 30%-15 XPAbandona +70% canción0 XPAbandona -70% canción-10 XP
+Techo por canción: 100 XP — Piso por canción: -50 XP
+El campo xp_ganado del INSERT ya viene corregido por el trigger con el valor real.
+
+REGLAS DE MONEDAS — para mostrar correctamente en UI
+AcciónMonedasPrecisión 95-100% competencia+3 monedas (max 1 vez por canción por día)Dominar canción (100 XP acumulado)+10 monedas (solo 1 vez por canción)Compartir grabación en comunidad+2 monedasEliminar publicación compartida-2 monedasRecibir like en publicación+0.1 monedasSubir video de validación tutorial+5 monedas fase 1Profesor aprueba validación+5 monedas fase 2Completar curso completo+80 monedas (1 vez)Racha 7 días+15 monedas semanalTop 1 ranking semanal+50 monedas
+Techo por canción: 10 monedas — Saldo mínimo global: 0
+
+LO QUE NECESITO IMPLEMENTAR
+1. EN la pagina de mi perfil por el momento — siempre visible
+Mostrar dos chips junto al avatar del usuario:
+
+⚡ 1,250 XP — desde experiencia_usuario.xp_total
+🪙 45.5 — desde monedas_usuario.saldo
+Ambos actualizados en tiempo real con suscripción de Supabase Realtime.
+
+2. PantallaResultados — después de cada partida
+Después del INSERT en scores_hero, hacer SELECT del registro insertado para leer xp_ganado y xp_acumulado_cancion reales (el trigger los corrige). Mostrar:
+
+Si xp_ganado positivo → animación verde +50 XP ⚡ conteo hacia arriba
+Si xp_ganado negativo → animación roja -15 XP ⚠️ con mensaje "¡Necesitas practicar más!"
+Si xp_ganado es 0 → gris 0 XP — Ya dominaste esta canción 🔒
+Barra de progreso de la canción: xp_acumulado_cancion / 100 con texto "X/100 XP"
+Si xp_acumulado_cancion >= 100 → badge verde 🏆 Canción dominada + confetti
+Si xp_acumulado_cancion < 0 → barra roja con ⚠️ XP: -X en esta canción
+Monedas ganadas en dorado +3 🪙 si aplica
+Saldo actualizado de monedas
+
+3. AcordeonProMaxSimulador — detectar abandono
+Cuando el usuario cierra, recarga o navega fuera antes de terminar la canción:
+
+Usar beforeunload y visibilitychange para detectarlo
+Calcular porcentaje_completado = notas jugadas hasta ese momento / notas totales * 100
+Hacer INSERT en scores_hero con abandono = true y porcentaje_completado real
+El trigger aplica la penalización automáticamente
+
+4. Perfil del usuario — sección XP completa
+Debajo de PorcentajePerfil, sección al 100% de ancho con:
+
+Badge naranja grande con el nivel actual NIVEL 5
+Barra de progreso al siguiente nivel: xp_actual / xp_siguiente_nivel en gradiente azul-verde
+4 tarjetas con iconos:
+
+🎮 Simulador → xp_simulador
+📚 Cursos → xp_cursos
+👥 Comunidad → xp_comunidad
+🏆 Logros → xp_logros
+
+
+Historial de últimas 10 transacciones de XP desde xp_transacciones
+
+5. Perfil del usuario — sección Monedas
+
+Saldo actual grande en dorado 🪙 45.5 monedas
+Equivalente en pesos = $4.550 COP
+Historial de últimas 10 transacciones desde monedas_transacciones con concepto legible:
+
+ganada → verde con concepto
+penalizacion → rojo con concepto
+gastada → naranja con concepto
+
+
+Botón Canjear monedas que lleva a la tienda
+
+6. Sección "Mis Validaciones" en el perfil
+
+Botón + Subir mi ejecución que abre modal
+Modal con: dropdown de tutoriales donde está inscrito + campo URL del video (YouTube o Google Drive) + botón enviar
+Al enviar: INSERT en validaciones_tutorial con estado = 'pendiente'
+Lista de validaciones anteriores mostrando: nombre del tutorial, estado con color (pendiente=amarillo, aprobado=verde, rechazado=rojo), comentario del profesor si existe
+
+7. Panel de profesor en /admin
+
+Tab "Validaciones pendientes"
+Lista ordenada por fecha con: foto del alumno, nombre, tutorial, link al video (abrir en nueva pestaña)
+Botón ✅ Aprobar y ❌ Rechazar con campo de comentario obligatorio al rechazar
+Al aprobar: UPDATE validaciones_tutorial SET estado = 'aprobado' — el trigger da las monedas solo
+Contador de pendientes en el tab Validaciones (5)
+
+Confirmame si entendiste para confirmarte que es correcto o no?

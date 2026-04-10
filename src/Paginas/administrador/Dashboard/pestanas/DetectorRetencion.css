@@ -1,0 +1,381 @@
+/* DetectorRetencion.css */
+.detector-retencion {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.header-info h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.header-info p {
+    margin: 0.25rem 0 0 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-refresh,
+.btn-toggle-detalle {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+}
+
+.btn-refresh:hover,
+.btn-toggle-detalle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.girando {
+    animation: girar 1s linear infinite;
+}
+
+.estadisticas-riesgo {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-riesgo {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.stat-riesgo.total {
+    border-left: 4px solid #8b5cf6;
+}
+
+.stat-riesgo.alto {
+    border-left: 4px solid #ef4444;
+}
+
+.stat-riesgo.medio {
+    border-left: 4px solid #f59e0b;
+}
+
+.stat-riesgo.bajo {
+    border-left: 4px solid #6b7280;
+}
+
+.stat-numero {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.loading-detectando {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.spinner-retencion {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.sin-riesgo {
+    text-align: center;
+    padding: 2rem;
+    color: #10b981;
+    font-size: 1rem;
+}
+
+.usuarios-compactos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.usuario-compacto {
+    border-left: 4px solid;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.usuario-info-compacto {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.foto-y-nombre {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.foto-mini,
+.avatar-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.avatar-mini {
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+}
+
+.nivel-riesgo {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.acciones-rapidas {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-accion-mini {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-accion-mini:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.motivos-mini {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.usuarios-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.usuario-detalle {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.usuario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.usuario-foto-info {
+    display: flex;
+    gap: 1rem;
+}
+
+.foto-perfil,
+.avatar-default {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.avatar-default {
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.usuario-datos h4 {
+    margin: 0;
+    color: white;
+    font-size: 1rem;
+}
+
+.email {
+    margin: 0.25rem 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.badge-suscripcion,
+.badge-riesgo {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.badge-suscripcion.premium {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+}
+
+.badge-suscripcion.free {
+    background: rgba(107, 114, 128, 0.2);
+    color: #9ca3af;
+}
+
+.usuario-acciones {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-contactar,
+.btn-ver-perfil {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.btn-contactar {
+    background: #10b981;
+    color: white;
+}
+
+.btn-contactar:hover {
+    background: #059669;
+}
+
+.btn-ver-perfil {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn-ver-perfil:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.usuario-metricas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.metrica {
+    text-align: center;
+}
+
+.metrica-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.metrica-valor {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    margin-top: 0.25rem;
+}
+
+.motivos-riesgo {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+}
+
+.motivos-riesgo ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.5rem;
+}
+
+.motivos-riesgo li {
+    margin-bottom: 0.25rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes girar {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .estadisticas-riesgo {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .usuario-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .usuario-metricas {
+        grid-template-columns: 1fr;
+    }
+}

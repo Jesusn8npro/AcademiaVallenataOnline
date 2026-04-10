@@ -1,0 +1,403 @@
+/* ===========================
+   CONTENEDOR PRINCIPAL
+=========================== */
+.form-paquete {
+  max-width: 1340px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* ===========================
+   ALERTAS
+=========================== */
+.alert-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+/* ===========================
+   TARJETAS
+=========================== */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .06);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #eef2ff, #e9d5ff);
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-title {
+  font-weight: 800;
+  color: #374151;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* ===========================
+   GRID SYSTEM
+=========================== */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* ===========================
+   CAMPOS DE FORMULARIO
+=========================== */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.field > label {
+  font-weight: 600;
+  color: #374151;
+  font-size: .9rem;
+}
+
+.field input,
+.field textarea,
+.field select {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: .75rem;
+  font-size: .95rem;
+  transition: .2s;
+  background: #fff;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, .15);
+}
+
+.field.checkbox {
+  margin-top: .5rem;
+}
+
+/* ===========================
+   ZONA DE CARGA (UPLOAD)
+=========================== */
+.upload-zone {
+  margin-top: 1rem;
+}
+
+.drop-area {
+  display: block;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f7fafc, #edf2f7);
+  position: relative;
+}
+
+.drop-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  color: #334155;
+}
+
+.drop-text {
+  font-weight: 600;
+}
+
+.drop-sub {
+  font-size: .85rem;
+  color: #64748b;
+}
+
+.btn-upload {
+  margin-top: .75rem;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: .6rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===========================
+   PREVIEW DE IMAGEN
+=========================== */
+.preview-img {
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
+}
+
+.preview-img img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===========================
+   PROGRESS BAR
+=========================== */
+.progress {
+  margin-top: .75rem;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress .bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #7c3aed);
+}
+
+/* ===========================
+   PANEL DE PRECIOS
+=========================== */
+.precio-panel {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.precio-total {
+  font-weight: 700;
+  color: #374151;
+}
+
+.btn-sugerir {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: .5rem .9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.precio-preview {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.precio-actual {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0ea5e9;
+}
+
+.precio-original {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.badge-off {
+  background: #22c55e;
+  color: #fff;
+  border-radius: 999px;
+  padding: .25rem .6rem;
+  font-weight: 800;
+}
+
+.precio-ahorro {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+/* ===========================
+   TOOLBAR TUTORIALES
+=========================== */
+.tutoriales-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tutoriales-toolbar .search {
+  flex: 1;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: .6rem .9rem;
+  font-size: .95rem;
+}
+
+.tutoriales-toolbar .search:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, .15);
+}
+
+.tutoriales-toolbar .filter {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: .6rem .9rem;
+  background: #fff;
+}
+
+.tutoriales-toolbar .count {
+  font-weight: 700;
+  color: #374151;
+}
+
+/* ===========================
+   CARDS DE TUTORIALES
+=========================== */
+.grid-tutoriales {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.tutorial-card {
+  display: grid;
+  grid-template-columns: 72px 1fr 28px;
+  gap: .75rem;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: .6rem .75rem;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.tutorial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .08);
+}
+
+.tutorial-card.sel {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+}
+
+.thumb {
+  width: 72px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-ph {
+  font-size: 1.25rem;
+}
+
+.t-info {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
+.t-title {
+  font-weight: 700;
+  color: #111827;
+}
+
+.t-meta {
+  font-size: .85rem;
+  color: #6b7280;
+}
+
+.t-precio {
+  font-size: .9rem;
+  color: #0ea5e9;
+  font-weight: 700;
+}
+
+.t-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===========================
+   ACCIONES
+=========================== */
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn-primario {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: .9rem 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+@media (max-width: 960px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-tutoriales {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-tutoriales {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,469 @@
+/* 🛠️ BARRA DE HERRAMIENTAS - DISEÑO PREMIUM CASSOTO */
+
+.barra-herramientas-contenedor {
+    position: absolute;
+    /* 🎯 VUELVE AL TOPE: El canvas ahora escala con los botones */
+    top: 10px;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: 92%;
+    /* ← Menos larga */
+    margin: 0 auto;
+    height: 42px;
+    /* ← Más delgada */
+    background: linear-gradient(180deg, #333333 0%, #111111 100%);
+    border: 2px solid #555;
+    border-radius: 8px;
+    /* ← Más redondeado compacto */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
+    z-index: 200;
+    /* Por encima de los botones */
+    overflow: hidden;
+}
+
+.seccion-barra {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    /* ← Reducido de 4px */
+    height: 100%;
+}
+
+/* Estilo de botones individuales */
+.boton-herramienta {
+    height: 34px;
+    /* ← Más pequeño */
+    min-width: 34px;
+    /* ← Más pequeño */
+    background: linear-gradient(180deg, #444 0%, #222 100%);
+    border: 1px solid #000;
+    border-radius: 6px;
+    /* ← Reducido de 8px */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #ccc;
+    transition: all 0.2s;
+    box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+}
+
+.boton-herramienta:active {
+    background: #111;
+    transform: translateY(1px);
+}
+
+.boton-herramienta.activo {
+    border-color: #fb923c;
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+.boton-herramienta span {
+    font-size: 7px;
+    /* ← Reducido de 8px */
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 1px;
+    /* ← Reducido de 2px */
+    color: #aaa;
+}
+
+/* Botón Aprende Especial */
+.boton-aprende {
+    background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+    color: #000;
+}
+
+.boton-aprende span {
+    color: #000;
+    font-weight: 900;
+}
+
+/* Bloque de Anuncio Central */
+.bloque-anuncio-centro {
+    flex: 1;
+    max-width: 250px;
+    /* ← Más angosto */
+    height: 34px;
+    /* ← Más delgado */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    margin: 0 6px;
+    overflow: hidden;
+}
+
+.miniatura-acordeon {
+    width: 26px;
+    /* ← Más pequeño */
+    height: 26px;
+    /* ← Más pequeño */
+    background: #444;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+.info-anuncio {
+    flex: 1;
+}
+
+.info-anuncio h4 {
+    color: #fff;
+    font-size: 10px;
+    /* ← Reducido de 11px */
+    margin: 0;
+}
+
+.estrellas {
+    color: #fbbf24;
+    font-size: 9px;
+    /* ← Reducido de 10px */
+}
+
+.texto-descarga {
+    color: #aaa;
+    font-size: 8px;
+    /* ← Reducido de 9px */
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Icono de Instalar (Reemplaza al botón) */
+.boton-icono-instalar {
+    width: 28px;
+    /* ← Tamaño compacto */
+    height: 28px;
+    /* ← Tamaño compacto */
+    background: #333;
+    border: 1px solid #666;
+    border-radius: 50%;
+    /* ← Circular */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    /* No se encoge */
+}
+
+.boton-icono-instalar:hover {
+    background: #444;
+    transform: scale(1.1);
+}
+
+.boton-icono-instalar:active {
+    transform: scale(0.95);
+}
+
+/* Grupo de Tamaño con Indicador */
+.grupo-tamano {
+    background: #222;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    height: 34px;
+    /* ← Más delgado */
+    gap: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.label-tam-contenedor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.label-tam {
+    font-size: 6px;
+    color: #888;
+    font-weight: 950;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.valor-tam {
+    font-size: 10px;
+    color: #fb923c;
+    /* Color naranja para destacar el valor */
+    font-weight: 900;
+    font-family: monospace;
+}
+
+.tam-controles {
+    display: flex;
+    align-items: center;
+}
+
+.tam-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 16px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+    transition: all 0.2s;
+}
+
+.tam-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fb923c;
+}
+
+/* Botón de Aviso Especial */
+.boton-aviso {
+    position: relative;
+    border-color: #fb923c !important;
+}
+
+.badge-aviso {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #fb923c;
+    color: #000;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+}
+
+/* Etiqueta Oferta */
+.oferta-tag {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    background: red;
+    color: white;
+    font-size: 7px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 900;
+    transform: rotate(-15deg);
+}
+
+.contenedor-oferta {
+    position: relative;
+}
+
+/* 🎹 POPUP DE INSTRUMENTOS */
+.popup-instrumentos {
+    position: absolute;
+    top: 50px;
+    left: 45px;
+    width: 200px;
+    background: rgba(15, 15, 15, 0.98);
+    border: 1px solid #444;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(251, 146, 60, 0.1);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.popup-flecha {
+    position: absolute;
+    top: -6px;
+    left: 15px;
+    width: 12px;
+    height: 12px;
+    background: #444;
+    transform: rotate(45deg);
+    z-index: -1;
+}
+
+.popup-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+}
+
+.popup-cabecera span {
+    font-size: 9px;
+    font-weight: 900;
+    color: #fb923c;
+    letter-spacing: 0.5px;
+}
+
+.popup-cabecera button {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.lista-instrumentos-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.item-instrumento {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-instrumento:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #555;
+}
+
+.item-instrumento.seleccionado {
+    background: rgba(251, 146, 60, 0.15);
+    border-color: #fb923c;
+}
+
+.inst-nombre {
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.item-instrumento.seleccionado .inst-nombre {
+    color: #fb923c;
+}
+
+.inst-tipo {
+    font-size: 8px;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* 🔄 MINI LOADER */
+.loader-mini {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+    border-top-color: #fb923c;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 🎯 CONTROL DE ARRASTRE DE BOTONES */
+.contenedor-control-drag {
+    width: 60px;
+    height: 34px;
+    position: relative;
+    overflow: hidden;
+    background: #111 !important;
+    border: 1px solid #333 !important;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+}
+
+.label-botones {
+    font-size: 7px;
+    font-weight: 950;
+    color: #888;
+    position: absolute;
+    top: 4px;
+    pointer-events: none;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+.icono-drag-handle {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(180deg, #444 0%, #222 100%);
+    border: 1px solid #555;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    margin-top: 6px;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.icono-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* 🥁 BOTÓN METRÓNOMO BARRA */
+.metronomo-btn-barra {
+    gap: 0;
+    position: relative;
+}
+
+.label-metronomo-mini {
+    font-size: 6.5px !important;
+    font-weight: 900 !important;
+    color: #fb923c !important;
+    text-transform: uppercase;
+    margin-top: 0px !important;
+    line-height: 1;
+}
+
+.metronomo-btn-barra svg {
+    margin-bottom: -1px;
+    color: #eee;
+}
+
+.metronomo-btn-barra.activo {
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.metronomo-btn-barra.activo .label-metronomo-mini {
+    color: #3b82f6 !important;
+}

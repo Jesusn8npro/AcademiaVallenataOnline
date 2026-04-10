@@ -1,0 +1,44 @@
+.resumen-contenedor{max-width:1000px;margin:0 auto;background:linear-gradient(135deg,#f8faff 0%,#ffffff 100%);border-radius:2rem;box-shadow:0 20px 60px rgba(102,126,234,.08);border:1px solid rgba(102,126,234,.1);overflow:hidden}
+.header-resumen{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:2.5rem 2rem;text-align:center;color:#fff}
+.titulo-resumen{font-size:2.5rem;font-weight:800;margin:0 0 .5rem 0;display:flex;align-items:center;justify-content:center;gap:1rem}
+.icono-resumen{font-size:3rem}
+.descripcion-resumen{font-size:1.1rem;opacity:.9;margin:0}
+.contenido-resumen{padding:3rem 2rem}
+.seccion-resumen{background:#fff;border-radius:1.5rem;padding:2.5rem;margin-bottom:2rem;box-shadow:0 8px 30px rgba(0,0,0,.05);border:1px solid rgba(226,232,240,.5)}
+.subtitulo-resumen{display:flex;align-items:center;gap:1rem;font-size:1.5rem;font-weight:700;color:#2d3748;margin:0 0 2rem 0;padding-bottom:.75rem;border-bottom:2px solid #e2e8f0}
+.numero-resumen{width:2.5rem;height:2.5rem;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700}
+.grid-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.info-item{display:flex;flex-direction:column;gap:.5rem}
+.info-label{font-weight:600;color:#6b7280;font-size:.875rem;text-transform:uppercase;letter-spacing:.5px}
+.info-value{font-size:1rem;color:#374151;font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.5rem 1rem;border-radius:9999px;font-size:.875rem;font-weight:600;width:fit-content}
+.seccion-precios{margin-top:2rem;padding-top:2rem;border-top:1px solid #e5e7eb}
+.subtitulo-precio{font-size:1.25rem;font-weight:700;color:#2d3748;margin:0 0 1.5rem 0}
+.grid-precios{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+.precio-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:#f9fafb;border-radius:.75rem;border:1px solid #e5e7eb}
+.precio-label{font-weight:600;color:#6b7280}
+.precio-value{font-weight:700;color:#374151}
+.precio-value.descuento{color:#059669}
+.estructura-preview{display:flex;flex-direction:column;gap:1.5rem}
+.estructura-item{background:#f9fafb;border-radius:1rem;padding:1.5rem;border:1px solid #e5e7eb}
+.estructura-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.estructura-numero{width:2rem;height:2rem;background:#667eea;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.estructura-titulo{font-size:1.125rem;font-weight:600;color:#374151}
+.lecciones-preview{display:flex;flex-direction:column;gap:.75rem;margin-left:3rem}
+.leccion-item{display:flex;align-items:center;gap:.75rem;padding:.5rem 1rem;background:#fff;border-radius:.5rem;border:1px solid #e5e7eb}
+.leccion-numero{font-size:.875rem;font-weight:600;color:#667eea}
+.leccion-titulo{color:#6b7280}
+.error-mensaje{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:1rem 1.5rem;border-radius:1rem;margin-bottom:2rem;display:flex;align-items:center;gap:.75rem}
+.error-icono{font-size:1.25rem}
+.acciones-resumen{text-align:center;margin-top:3rem;padding-top:2rem;border-top:1px solid #e5e7eb}
+.btn-guardar{background:linear-gradient(135deg,#10b981 0%,#34d399 100%);color:#fff;border:none;padding:1.25rem 3rem;border-radius:1.5rem;font-size:1.1rem;font-weight:600;cursor:pointer;transition:.3s;display:flex;align-items:center;gap:1rem;margin:0 auto;box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.btn-guardar:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 35px rgba(16,185,129,.4)}
+.btn-guardar:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.btn-guardar.guardando{background:linear-gradient(135deg,#6b7280 0%,#9ca3af 100%)}
+.spinner{width:1.25rem;height:1.25rem;border:2px solid transparent;border-top:2px solid currentColor;border-radius:50%;animation:spin 1s linear infinite}
+.imagen-preview-resumen{grid-column:1/-1;align-items:flex-start}
+.imagen-miniatura{margin-top:.5rem}
+.imagen-resumen{width:120px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0}
+.icono-btn{font-size:1.2rem}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@media (max-width:768px){.grid-info{grid-template-columns:1fr}.grid-precios{grid-template-columns:1fr}.resumen-contenedor{border-radius:1rem}.contenido-resumen{padding:2rem 1rem}.seccion-resumen{padding:1.5rem}.lecciones-preview{margin-left:1.5rem}}

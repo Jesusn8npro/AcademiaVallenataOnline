@@ -1,0 +1,113 @@
+{
+    "menu": {
+        "inicio": "Inicio",
+        "blog": "Blog",
+        "cursos": "Cursos",
+        "paquetes": "Paquetes",
+        "eventos": "Eventos",
+        "nuestraAcademia": "Nuestra Academia",
+        "buscarContenido": "Buscar contenido",
+        "iniciarSesion": "Iniciar sesión",
+        "descripcion": "La mejor academia para aprender acordeón vallenato online. Aprende con los mejores maestros desde la comodidad de tu hogar."
+    },
+    "hero": {
+        "etiqueta": "ACADEMIA #1 EN ACORDEÓN VALLENATO",
+        "tituloPrincipal": "Domina el Acordeón Vallenato",
+        "subtitulo": "DESDE CASA - SIN INSTRUMENTO",
+        "descripcion": "CURSOS COMPLETOS + TUTORIALES PREMIUM que te llevan del nivel PRINCIPIANTE al PROFESIONAL en tiempo récord",
+        "simulador": "Simulador Virtual Incluido - Sin Necesidad de Acordeón",
+        "estadisticas": {
+            "estudiantes": "ESTUDIANTES ACTIVO",
+            "contenido": "HORAS DE CONTENIDO",
+            "calificacion": "CALIFICACIÓN PROMEDIO"
+        },
+        "boton": {
+            "empezar": "¡EMPEZAR CURSO ESTRELLA!",
+            "subtexto": "Primera canción en 7 días"
+        },
+        "simuladorBoton": {
+            "titulo": "¡ELIGE TU CAMINO!",
+            "subtitulo": "6 formas poderosas de aprender",
+            "lanzamiento": "Encuentra tu opción ideal"
+        }
+    },
+    "seccionOpciones": {
+        "badge": "🎯 ELIGE TU CAMINO AL ÉXITO",
+        "titulo": "6 Formas <1>Poderosas</1> de <2>Dominar el Acordeón Vallenato</2>",
+        "descripcion": "No importa tu nivel, experiencia o disponibilidad de tiempo. <1>Tenemos la opción PERFECTA para transformarte en un maestro del acordeón.</1><2>🚀 <3>¡Más de 5,000 estudiantes ya eligieron su camino al éxito!</3></2>",
+        "opciones": {
+            "cursos": {
+                "titulo": "Cursos de Acordeón",
+                "descripcion": "Programas completos desde principiante hasta experto profesional",
+                "beneficios": [
+                    "Metodología estructurada probada",
+                    "Progreso garantizado paso a paso",
+                    "Certificados oficiales de logro"
+                ],
+                "precio": "Desde $189.000"
+            },
+            "simulador": {
+                "titulo": "Simulador Gaming de Acordeón",
+                "descripcion": "¡EL ÚNICO videojuego educativo de acordeón en el mundo!",
+                "etiqueta": "🚀 INNOVACIÓN MUNDIAL",
+                "beneficios": [
+                    "Experiencia gaming única",
+                    "Ranking competitivo global",
+                    "Aprende jugando y divirtiéndote"
+                ],
+                "precio": "¡GRATIS!"
+            },
+            "tutoriales": {
+                "titulo": "Tutoriales Específicos",
+                "descripcion": "Lecciones puntuales para dominar técnicas específicas",
+                "beneficios": [
+                    "Técnicas específicas probadas",
+                    "Videos HD profesionales",
+                    "Práctica enfocada y efectiva"
+                ],
+                "precio": "Desde $45.000"
+            },
+            "comunidad": {
+                "titulo": "Comunidad Exclusiva VIP",
+                "descripcion": "5,000+ acordeonistas compartiendo, aprendiendo y creciendo juntos",
+                "etiqueta": "💎 COMUNIDAD #1",
+                "beneficios": [
+                    "Red de 5,000+ músicos",
+                    "Feedback y apoyo constante",
+                    "Eventos exclusivos en vivo"
+                ],
+                "precio": "INCLUIDO"
+            },
+            "paquetes": {
+                "titulo": "Paquetes Temáticos",
+                "descripcion": "Contenido especializado agrupado por estilos y géneros",
+                "beneficios": [
+                    "Contenido perfectamente organizado",
+                    "Mejor precio conjunto",
+                    "Acceso completo inmediato"
+                ],
+                "precio": "Desde $129.000"
+            },
+            "clases": {
+                "titulo": "Clases Personalizadas VIP",
+                "descripcion": "Atención directa 1 a 1 con el Maestro Jesús González",
+                "beneficios": [
+                    "Atención personal del maestro",
+                    "Horarios 100% flexibles",
+                    "Progreso acelerado garantizado"
+                ],
+                "precio": "Desde $85.000/hora"
+            }
+        },
+        "boton": {
+            "acceder": "🚀 ¡ACCEDER AHORA!",
+            "explorar": "Explorar Ahora"
+        },
+        "asesoria": {
+            "titulo": "¿No estás seguro cuál elegir para alcanzar el éxito?",
+            "descripcion": "Nuestros <1>expertos certificados</1> te ayudan a encontrar el camino perfecto según tu nivel y objetivos",
+            "boton": "💬 Recibir Asesoría Personalizada GRATIS",
+            "garantia": "✅ <1>Asesoría 100% personalizada</1> • ✅ <3>Sin compromiso</3> • ✅ <5>Respuesta inmediata</5>"
+        }
+    }
+}

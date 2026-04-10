@@ -1,0 +1,70 @@
+/* PanelEstudiante.css */
+
+/* 🚫 GLOBAL OVERRIDES (Specific for this page wrapper) */
+/* Note: Since React is SPA, better to apply these styles to specific containers or use body class toggling 
+   if we want to affect the whole page background. For now, we apply to the main container which covers 100vh */
+
+/* 🎮 LAYOUT GAMING PRINCIPAL */
+.academia-panel-gaming-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* 🚀 Sidebar es fixed, así que usamos 1 columna */
+    grid-template-areas: "main";
+    /* 🚀 Ajustado para evitar doble scroll con el navbar */
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    color: white;
+    gap: 20px;
+    padding: 20px;
+    padding-right: 340px;
+    /* 🚀 Espacio para el sidebar fixed */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 📊 CONTENIDO PRINCIPAL */
+.academia-contenido-principal {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+
+/* 🎮 SIMULADOR + RECOMENDACIONES */
+.academia-simulador-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+
+
+/* 📱 RESPONSIVE */
+@media (max-width: 1300px) {
+    .academia-panel-gaming-container {
+        padding-right: 20px;
+        /* 🚀 Quitar espacio del sidebar en pantallas medianas/pequeñas */
+        padding-top: 40px;
+    }
+
+    .academia-simulador-stats {
+        grid-template-columns: 1fr;
+        /* Stack vertical */
+    }
+
+    .academia-simulador-card,
+    .academia-estadisticas-card {
+        height: auto;
+        /* Altura automática en móvil */
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 900px) {
+    .academia-panel-gaming-container {
+        padding: 16px;
+        padding-top: 20px;
+    }
+
+    /* Nota: El SidebarDerecho se oculta via media queries en su propio CSS */
+}

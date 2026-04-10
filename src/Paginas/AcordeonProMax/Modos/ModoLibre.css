@@ -1,0 +1,420 @@
+/* 🎵 MODO LIBRE — Estilos Zen/Práctica Amigable */
+
+.libre-modo {
+    --duelo-acordeon-tamano: min(70vh, 32vw);
+    --duelo-acordeon-x: 50%;
+    --duelo-acordeon-y: 50%;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+}
+
+.libre-modo .hero-escenario {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding-top: 48px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5vw;
+    z-index: 2;
+}
+
+.libre-modo .hero-acordeon-wrap {
+    position: relative;
+    width: 45%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.libre-modo .hero-acordeon-label {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.libre-modo .hero-pro-judgment-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 90;
+    pointer-events: none;
+    font-family: 'Raleway', 'Outfit', sans-serif;
+}
+
+.libre-modo .hero-pro-combo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -15px;
+}
+
+.libre-modo .hero-pro-combo .combo-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.3em;
+    margin-bottom: -5px;
+}
+
+.libre-modo .hero-pro-combo .combo-num {
+    font-size: 5rem;
+    font-weight: 950;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 50px rgba(255, 255, 255, 0.2);
+    font-family: 'Outfit', sans-serif;
+}
+
+.libre-modo .hero-pro-label {
+    font-size: 2.2rem;
+    font-weight: 950;
+    letter-spacing: 0.1em;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+}
+
+.libre-modo .hero-pro-label.perfecto {
+    color: #22c55e;
+    text-shadow: 0 0 25px rgba(34, 197, 94, 0.8);
+}
+
+.libre-modo .hero-pro-label.bien {
+    color: #3b82f6;
+    text-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+}
+
+.libre-modo .hero-pro-label.fallada,
+.libre-modo .hero-pro-label.perdida {
+    color: #ef4444;
+    text-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+}
+
+.libre-modo .hero-hit-pillar {
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: libre-pillar-fade 0.5s ease-out forwards;
+}
+
+@keyframes libre-pillar-fade {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.2) scaleY(1);
+    }
+
+    30% {
+        opacity: 0.8;
+        transform: scaleX(1.2) scaleY(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scaleX(1) scaleY(1);
+    }
+}
+
+.libre-modo [id^='sustain-'].activo {
+    animation: libre-sustain-pulse 0.2s infinite alternate;
+}
+
+@keyframes libre-sustain-pulse {
+    from {
+        opacity: 0.8;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ── BANNER DE BIENVENIDA ── */
+.libre-banner-bienvenida {
+    position: fixed;
+    bottom: 34px;
+    inset-inline: 0;
+    margin-inline: auto;
+    z-index: 48;
+    max-width: 520px;
+}
+
+.libre-banner-content {
+    backdrop-filter: blur(15px);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.1));
+    border: 2px solid rgba(34, 197, 94, 0.4);
+    border-radius: 16px;
+    padding: 0.95rem 1.1rem;
+    box-shadow: 0 8px 32px rgba(34, 197, 94, 0.2);
+}
+
+.libre-banner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.libre-banner-titulo {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #22c55e;
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.libre-banner-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.libre-banner-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.libre-banner-texto {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.libre-banner-texto strong {
+    color: #22c55e;
+    font-weight: 700;
+}
+
+/* ── HUD SUPERIOR ── */
+.libre-hud-superior {
+    display: none;
+    position: fixed;
+    top: 140px;
+    inset-inline: 0;
+    margin-inline: auto;
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    pointer-events: none;
+    width: 90%;
+    max-width: 760px;
+}
+
+/* ── Badge del Modo ── */
+.libre-badge-modo {
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2));
+    padding: 0.6rem 1.5rem;
+    border-radius: 20px;
+    border: 2px solid rgba(34, 197, 94, 0.4);
+
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #22c55e;
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+/* ── Estadísticas ── */
+.libre-estadisticas-container {
+    display: flex;
+    gap: 1rem;
+    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.85rem 1.2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.libre-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.stat-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.stat-valor {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 900;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.stat-valor.perfecto {
+    color: #22c55e;
+}
+
+.stat-valor.bien {
+    color: #3b82f6;
+}
+
+.stat-valor.fallada {
+    color: #fbbf24;
+}
+
+.stat-valor.racha {
+    color: #ec4899;
+    font-size: 1.4rem;
+    animation: racha-brillo 1s ease-in-out infinite;
+}
+
+.stat-valor.puntos {
+    color: #f59e0b;
+    font-size: 1.4rem;
+}
+
+@keyframes racha-brillo {
+
+    0%,
+    100% {
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    }
+
+    50% {
+        text-shadow: 0 0 12px rgba(236, 72, 153, 0.5);
+    }
+}
+
+.libre-stat-divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* ── Mensaje Dinámico ── */
+.libre-mensaje-dinamico {
+    backdrop-filter: blur(10px);
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    max-width: 440px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .libre-hud-superior {
+        top: 88px;
+        gap: 0.6rem;
+    }
+
+    .libre-badge-modo {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .libre-estadisticas-container {
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .stat-valor {
+        font-size: 1rem;
+    }
+
+    .stat-valor.racha,
+    .stat-valor.puntos {
+        font-size: 1.1rem;
+    }
+
+    .libre-mensaje-dinamico {
+        font-size: 0.75rem;
+        padding: 0.6rem 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .libre-hud-superior {
+        top: 84px;
+        width: 95%;
+    }
+
+    .libre-banner-content {
+        padding: 1rem;
+    }
+
+    .libre-banner-titulo {
+        font-size: 0.9rem;
+    }
+
+    .libre-banner-texto {
+        font-size: 0.8rem;
+    }
+
+    .libre-estadisticas-container {
+        gap: 0.75rem;
+        padding: 0.6rem 0.8rem;
+        justify-content: space-around;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+    }
+
+    .stat-valor {
+        font-size: 0.9rem;
+    }
+
+    .stat-valor.racha,
+    .stat-valor.puntos {
+        font-size: 1rem;
+    }
+
+    .libre-stat-divider {
+        display: none;
+    }
+
+    .libre-mensaje-dinamico {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.75rem;
+    }
+}

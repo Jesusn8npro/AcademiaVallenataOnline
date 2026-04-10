@@ -1,0 +1,290 @@
+/* EstadisticasGenerales.css */
+/* 📊 CONTENEDOR PRINCIPAL */
+.contenedor-estadisticas {
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+}
+
+/* 🎯 ENCABEZADO DE SECCIÓN */
+.encabezado-seccion {
+    margin-bottom: 2rem;
+}
+
+.encabezado-seccion h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.encabezado-seccion p {
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* 📈 GRID DE MÉTRICAS */
+.grid-metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    overflow-x: auto;
+}
+
+/* 🎮 TARJETAS DE MÉTRICAS */
+.tarjeta-metrica {
+    position: relative;
+    padding: 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    overflow: hidden;
+    min-height: 120px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.tarjeta-metrica:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tarjeta-metrica.clickeable {
+    cursor: pointer;
+    position: relative;
+}
+
+.tarjeta-metrica.clickeable:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.icono-click {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 3;
+}
+
+.tarjeta-metrica.clickeable:hover .icono-click {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* 🎨 VARIANTES DE COLOR */
+.tarjeta-metrica.usuarios {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+}
+
+.tarjeta-metrica.usuarios:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.15) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: translateY(-2px);
+}
+
+.tarjeta-metrica.premium {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%);
+}
+
+.tarjeta-metrica.contenido {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%);
+}
+
+.tarjeta-metrica.crecimiento {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%);
+}
+
+/* ⭐ ICONOS DE MÉTRICAS */
+.icono-metrica {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.usuarios .icono-metrica {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+
+.premium .icono-metrica {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+}
+
+.contenido .icono-metrica {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+}
+
+.crecimiento .icono-metrica {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+}
+
+/* 📊 CONTENIDO DE MÉTRICAS */
+.contenido-metrica {
+    flex: 1;
+    z-index: 2;
+}
+
+.numero-principal {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+@media (min-width: 1600px) {
+    .numero-principal {
+        font-size: 2.25rem;
+    }
+}
+
+.etiqueta-metrica {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.indicador-crecimiento {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.indicador-crecimiento.positivo {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.porcentaje-stat {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+}
+
+.desglose-contenido {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.desglose-contenido span {
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.desglose-contenido span:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+/* 🎨 FONDOS DECORATIVOS */
+.fondo-decorativo {
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    opacity: 0.1;
+    z-index: 1;
+}
+
+.usuarios-bg {
+    background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+}
+
+.premium-bg {
+    background: radial-gradient(circle, #f59e0b 0%, transparent 70%);
+}
+
+.contenido-bg {
+    background: radial-gradient(circle, #10b981 0%, transparent 70%);
+}
+
+.crecimiento-bg {
+    background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+}
+
+.ventas-bg {
+    background: radial-gradient(circle, #059669 0%, transparent 70%);
+}
+
+/* 💰 ESTILOS ESPECÍFICOS PARA VENTAS */
+.tarjeta-metrica.ventas {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.tarjeta-metrica.ventas:hover {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(5, 150, 105, 0.5);
+    transform: translateY(-2px);
+}
+
+.tarjeta-metrica.ventas .icono-metrica {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+}
+
+.tarjeta-metrica.ventas .numero-principal {
+    color: #059669;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(5, 150, 105, 0.3);
+}
+
+/* Estado sin datos */
+.estado-sin-datos {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.icono-sin-datos {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}

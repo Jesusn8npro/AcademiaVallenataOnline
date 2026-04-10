@@ -1,0 +1,119 @@
+.editor-json-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f8fafc;
+}
+
+.editor-json-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.editor-json-header h4 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #1e293b;
+}
+
+.btn-agregar-seccion {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-agregar-seccion:hover {
+    background-color: #059669;
+}
+
+.seccion-item,
+.cta-item {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.seccion-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    background-color: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.seccion-header span {
+    font-weight: 500;
+    flex-grow: 1;
+    color: #475569;
+}
+
+.seccion-contenido {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.seccion-contenido select,
+.seccion-contenido input,
+.seccion-contenido textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+.seccion-contenido textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.cta-item {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.cta-item input,
+.cta-item select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+.btn-eliminar-seccion,
+.btn-eliminar-cta {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-eliminar-seccion:hover,
+.btn-eliminar-cta:hover {
+    background-color: #fee2e2;
+}

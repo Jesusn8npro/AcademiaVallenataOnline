@@ -1,0 +1,238 @@
+/* ===========================
+   CONTENEDOR ESTRUCTURA
+=========================== */
+.estructura-curso,
+.estructura-tutorial {
+  max-width: 100%;
+  margin: 0 auto;
+  margin-bottom: 2rem;
+}
+
+/* ===========================
+   MÓDULOS / PARTES
+=========================== */
+.modulo,
+.parte {
+  background: #f8fbff;
+  border-radius: 1.5rem;
+  box-shadow:
+    0 4px 24px #1e90ff22,
+    0 1.5px 6px #0001;
+  margin-bottom: 2.2rem;
+  padding: 1.7rem 2.2rem 1.5rem 2.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.3rem 2.5rem;
+  align-items: flex-end;
+  position: relative;
+  transition: box-shadow .22s, transform .18s;
+}
+
+.parte:hover {
+  box-shadow:
+    0 8px 32px #1e90ff44,
+    0 2px 12px #0002;
+  transform: translateY(-2px) scale(1.01);
+}
+
+.modulo-header,
+.parte {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Responsive módulo/parte */
+@media (max-width: 900px) {
+  .parte {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.2rem .7rem;
+  }
+}
+
+/* ===========================
+   LECCIONES
+=========================== */
+.lecciones {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.leccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===========================
+   INPUTS / TEXTAREAS
+=========================== */
+.input-video-url,
+.select-tipo-contenido,
+.textarea-contenido {
+  min-width: 120px;
+  max-width: 350px;
+}
+
+.textarea-contenido {
+  flex: 2 1 350px;
+  min-width: 220px;
+  max-width: 600px;
+  width: 100%;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: .7rem;
+}
+
+.input-parte,
+.select-tipo-parte,
+.select-tipo-contenido,
+textarea {
+  min-width: 130px;
+  max-width: 340px;
+  padding: .7rem 1rem;
+  border-radius: 1rem;
+  border: 1.5px solid #b0c4de;
+  font-size: 1.05rem;
+  background: #fff;
+  transition: border .18s, box-shadow .18s;
+  box-shadow: 0 .5px 2px #1e90ff11;
+}
+
+.input-parte:focus,
+.select-tipo-parte:focus,
+.select-tipo-contenido:focus,
+textarea:focus {
+  border: 1.5px solid #1e90ff;
+  box-shadow: 0 2px 8px #1e90ff22;
+  outline: none;
+}
+
+textarea {
+  flex: 2 1 300px;
+  min-width: 180px;
+  max-width: 600px;
+  width: 100%;
+  resize: vertical;
+  margin-bottom: .7rem;
+  font-family: inherit;
+}
+
+.label-visible {
+  font-weight: 500;
+  color: #1e90ff;
+  margin-bottom: 0;
+}
+
+/* Responsive inputs */
+@media (max-width: 900px) {
+  .input-parte,
+  .select-tipo-parte,
+  .select-tipo-contenido,
+  textarea {
+    max-width: 100%;
+    min-width: 90px;
+  }
+}
+
+/* ===========================
+   DRAG HANDLE
+=========================== */
+.drag {
+  cursor: grab;
+  font-size: 1.7rem;
+  color: #1e90ffcc;
+  margin-right: .7rem;
+  transition: color .2s, transform .12s;
+}
+
+.drag:hover {
+  color: #1e90ff;
+  transform: scale(1.15);
+}
+
+/* ===========================
+   BOTONES ACCIÓN
+=========================== */
+.agregar,
+.continuar {
+  background: linear-gradient(90deg, #1e90ff 60%, #6dd5ed 100%);
+  color: #fff;
+  border: none;
+  border-radius: 2rem;
+  padding: .9rem 2.5rem;
+  font-size: 1.13rem;
+  font-weight: 700;
+  margin-top: 1.7rem;
+  margin-right: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px #1e90ff33;
+  transition: background .25s, box-shadow .22s, transform .12s;
+  position: relative;
+  overflow: hidden;
+}
+
+.agregar:hover,
+.continuar:hover {
+  background: linear-gradient(90deg, #6dd5ed 60%, #1e90ff 100%);
+  box-shadow: 0 8px 32px #1e90ff55;
+  transform: scale(1.04);
+}
+
+.btn-eliminar {
+  background: #fff0f3;
+  color: #e53935;
+  border: none;
+  border-radius: 1.2rem;
+  font-size: 1.18rem;
+  padding: .6rem 1.2rem;
+  margin-left: .5rem;
+  cursor: pointer;
+  transition: background .22s, color .22s, box-shadow .18s;
+  box-shadow: 0 2px 8px #e5393533;
+}
+
+.btn-eliminar:hover {
+  background: #e53935;
+  color: #fff;
+  box-shadow: 0 4px 16px #e5393555;
+}
+
+.btn-mover {
+  background: #f8fbff;
+  color: #1e90ff;
+  border: 1.5px solid #b0c4de;
+  border-radius: 1.2rem;
+  font-size: 1rem;
+  padding: .5rem 1.1rem;
+  margin-left: .3rem;
+  cursor: pointer;
+  transition: background .18s, color .18s, border .18s, box-shadow .15s;
+  box-shadow: 0 1.5px 6px #1e90ff11;
+}
+
+.btn-mover:hover {
+  background: #1e90ff;
+  color: #fff;
+  border: 1.5px solid #1e90ff;
+  box-shadow: 0 4px 16px #1e90ff44;
+}
+
+/* ===========================
+   CONTENEDOR MOVER MÓDULO
+=========================== */
+.modulo-mover {
+  margin-top: .7rem;
+  display: flex;
+  gap: 1rem;
+}

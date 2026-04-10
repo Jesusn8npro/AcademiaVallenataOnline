@@ -1,0 +1,168 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CLASE ESPECÍFICA PARA BLOQUEAR SCROLL EN SIMULADOR */
+.bloquear-scroll-simulador {
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: none !important;
+}
+
+/* Espacio para el menú fijo autenticado (70px de altura) - Solo cuando hay menú */
+body.con-menu-autenticado {
+  padding-top: 70px;
+}
+
+/* Espacio para el sidebar (280px de ancho) - Solo para usuarios autenticados */
+body.con-sidebar {
+  padding-left: 280px;
+  padding-top: 70px;
+  /* También agregar padding-top aquí */
+}
+
+/* Sidebar colapsado (80px de ancho) */
+body.con-sidebar-colapsado {
+  padding-left: 80px;
+  padding-top: 70px;
+  /* También agregar padding-top aquí */
+}
+
+/* En pantallas pequeñas, quitar el padding del sidebar */
+@media (max-width: 900px) {
+
+  body.con-sidebar,
+  body.con-sidebar-colapsado {
+    padding-left: 0;
+  }
+}
+
+/* Reglas globales seguras para evitar desbordes horizontales */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ==============================================
+   🛡️ PROTECCIÓN GLOBAL RESPONSIVE (ANTIGRAVITY)
+   ============================================== */
+
+/* 1. Prevenir scroll horizontal en la raíz */
+* { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* 2. Asegurar que NINGÚN medio rompa el layout */
+img,
+video,
+iframe,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  /* Elimina espacio fantasma abajo */
+}
+
+/* 3. Evitar que textos largos generen scroll horizontal */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+li,
+a,
+div {
+  overflow-wrap: break-word;
+  /* Estándar moderno */
+  word-wrap: break-word;
+  /* Legacy */
+  word-break: break-word;
+  /* Para palabras muuuuy largas */
+  hyphens: auto;
+  /* Opcional: silabeo automático */
+}
+
+/* 4. Contenedores seguros por defecto */
+section,
+main,
+header,
+footer {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+
+
+
+
+
+
+/* ========================================
+   SCROLLBAR PERSONALIZADO "MORADO"
+   ======================================== */
+/* ========================================
+   SCROLLBAR PERSONALIZADO "MORADO" - SOLO DESKTOP
+   ======================================== */
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #8b5cf6;
+    /* Violeta-500 */
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed;
+    /* Violeta-600 */
+  }
+}
+
+/* ========================================
+   MODO CHAT APP RESPONSIVO (SVELTE LIKE)
+   ======================================== */
+/* En pantallas móviles/tablets (<900px), si estamos en un CHAT ABIERTO, ocultar menús */
+@media (max-width: 900px) {
+
+
+  body.modo-chat-abierto .menu-inferior-responsivo {
+    display: none !important;
+  }
+
+  /* Eliminar padding superior para que el chat use toda la pantalla */
+  body.modo-chat-abierto.con-menu-autenticado,
+  body.modo-chat-abierto.con-sidebar,
+  body.modo-chat-abierto.con-sidebar-colapsado,
+  body.modo-chat-abierto {
+    padding-top: 0 !important;
+  }
+}

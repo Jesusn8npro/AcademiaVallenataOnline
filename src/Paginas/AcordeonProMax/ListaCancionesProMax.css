@@ -1,0 +1,419 @@
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap");
+
+.promax-menu-contenedor {
+  width: 100%;
+  max-width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  font-family: 'Raleway', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.promax-menu-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 80px 20px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.promax-menu-lista-wrap {
+  transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  min-width: 350px;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.promax-menu-header {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 28px 24px;
+  background: rgba(4, 10, 20, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.promax-page-title {
+  font-size: clamp(1.8rem, 5vw, 4rem);
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-align: center;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  opacity: 0.98;
+}
+
+.promax-menu-tabs-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 18px;
+}
+
+.promax-menu-tabs {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.promax-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Raleway', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 12px 8px;
+  border-radius: 0;
+  transition: 0.25s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid transparent;
+}
+
+.promax-tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.promax-tab.activo {
+  background: none;
+  border-color: rgba(255, 255, 255, 0.9);
+  color: white;
+}
+
+.promax-tab-divider {
+  color: rgba(255, 255, 255, 0.28);
+  margin: 0 2px;
+}
+
+.promax-menu-buscador {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 11px 18px;
+  border-radius: 999px;
+  width: min(420px, 100%);
+  transition: 0.25s ease;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.promax-menu-buscador:focus-within {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04);
+}
+
+.buscador-icono {
+  opacity: 0.8;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.promax-menu-buscador input {
+  background: none;
+  border: none;
+  color: white;
+  width: 100%;
+  outline: none;
+  font-family: 'Raleway', sans-serif;
+  font-size: 0.85rem;
+  padding: 0 5px;
+}
+
+.promax-menu-buscador input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.promax-listado-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+  mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+}
+
+.promax-listado-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 10px 18px;
+}
+
+.promax-listado-titulo {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 0.95;
+  font-weight: 600;
+}
+
+.promax-listado-subtitulo {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.92rem;
+}
+
+.promax-listado-accion {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-family: 'Raleway', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.promax-listado-accion:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.promax-listado-scroll::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+.promax-cancion-card {
+  background: rgba(255, 255, 255, 0.14);
+  padding: 0;
+  margin: 10px auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  outline-color: transparent;
+  transition: transform 0.5s, background 0.5s, outline-color 0.5s;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  min-height: 124px;
+}
+
+.promax-cancion-card:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  z-index: 50;
+}
+
+.card-titulo-star {
+  margin-right: 6px;
+}
+
+.promax-cancion-card:active:hover {
+  transition: transform 0.2s;
+  transform: scale(1.05);
+}
+
+.promax-cancion-card.seleccionada {
+  background: rgba(255, 255, 255, 0.2);
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.card-image-wrap {
+  width: 220px;
+  height: 124px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.473);
+  text-align: center;
+  min-width: 220px;
+}
+
+.card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── DETALLE DE TARJETA ──────────────────────────────────────────────────── */
+/* Copia de .detail en SongListItem */
+.card-content-wrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  text-align: left;
+}
+
+.card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Título: font-size 1.3em bold — igual que Rhythm+ */
+.card-titulo {
+  font-size: 1.95rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.card-autor {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.card-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-top: 8px;
+  opacity: 0.78;
+  flex-wrap: wrap;
+}
+
+.card-dificultad,
+.card-bpm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── ESTADOS CARGANDO/VACÍO ─────────────────────────────────────────────── */
+.promax-cargando,
+.promax-lista-vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 300px;
+  opacity: 0.4;
+}
+
+.promax-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── RESPONSIVO ─────────────────────────────────────────────────────────── */
+@media (min-width: 951px) {
+  .promax-menu-lista-wrap:not(.colapsado) {
+    max-width: 1000px;
+    /* Un poco más ancho en desktop si no hay detalle */
+  }
+}
+
+@media (max-width: 1300px) {
+  .promax-cancion-card:hover {
+    transform: none;
+  }
+
+  .promax-cancion-card:active:hover {
+    transform: scale(0.95);
+  }
+}
+
+@media (max-width: 1100px) {
+  .promax-menu-layout {
+    padding: 90px 10px 20px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .card-image-wrap {
+    width: 160px;
+    min-width: 160px;
+    height: 100px;
+  }
+
+  .card-titulo {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 950px) {
+  .promax-menu-layout {
+    flex-direction: column;
+    padding-top: 60px;
+    padding-bottom: 80px;
+    /* Aseguramos que ocupe todo el ancho sin gaps */
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .promax-menu-lista-wrap {
+    margin: 0;
+    min-width: unset;
+    max-width: 100%;
+    /* ANCHO COMPLETO INMEDIATAMENTE */
+    width: 100%;
+    height: 100%;
+  }
+
+  .promax-listado-scroll {
+    mask-image: none;
+    -webkit-mask-image: none;
+    padding: 0 15px 20px;
+    /* Padding interno para que no pegue a los bordes */
+  }
+
+  .promax-menu-lista-wrap.colapsado {
+    display: none;
+  }
+
+  .promax-menu-tabs {
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  .promax-listado-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 15px 18px;
+  }
+
+  .card-content-wrap {
+    padding: 16px;
+  }
+
+  .promax-menu-buscador {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}

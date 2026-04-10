@@ -1,0 +1,377 @@
+.grabaciones-hero-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(2, 6, 23, 0.84);
+    backdrop-filter: blur(14px);
+}
+
+.grabaciones-hero-modal {
+    position: relative;
+    width: min(1500px, 96vw);
+    height: min(940px, calc(100dvh - 36px));
+    max-height: calc(100dvh - 36px);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 18px;
+    border-radius: 30px;
+    background: linear-gradient(180deg, #06101f 0%, #0f172a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px 24px 22px;
+    box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
+    color: #fff;
+}
+
+.grabaciones-hero-modal-cerrar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.grabaciones-hero-modal-encabezado {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    padding-right: 62px;
+}
+
+.grabaciones-hero-modal-eyebrow {
+    margin: 0 0 8px;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.grabaciones-hero-modal h2 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.grabaciones-hero-modal-subtitulo {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.grabaciones-hero-modal-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.grabaciones-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.grabaciones-hero-badge.competencia {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fcd34d;
+}
+
+.grabaciones-hero-badge.practica {
+    background: rgba(34, 197, 94, 0.16);
+    color: #86efac;
+}
+
+.grabaciones-hero-badge.precision {
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+}
+
+.grabaciones-hero-badge.audio {
+    background: rgba(6, 182, 212, 0.16);
+    color: #a5f3fc;
+}
+
+.grabaciones-hero-modal-metricas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.grabaciones-hero-modal-metricas div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.grabaciones-hero-modal-metricas span {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.8rem;
+}
+
+.grabaciones-hero-modal-metricas strong {
+    font-size: 1.05rem;
+}
+
+.grabaciones-hero-replay-escenario {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    height: 100%;
+    border-radius: 26px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 35%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.grabaciones-hero-replay-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.78fr);
+    gap: 18px;
+    min-height: 0;
+}
+
+.grabaciones-hero-replay-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+}
+
+.grabaciones-hero-replay-escenario .disposicion-acordeon {
+    /*
+      ESCALA VISUAL EXTRA DEL ACORDEON DENTRO DEL MODAL.
+      Si quieres que el tamano lo controle SOLO el valor en pixeles del TSX,
+      deja esta escala en 1.
+    */
+    --grabaciones-replay-scale: 0.55;
+    transform: translate(-50%, -50%) scale(var(--grabaciones-replay-scale));
+    transform-origin: center center;
+    pointer-events: none;
+}
+
+.grabaciones-hero-replay-escenario .boton.activo {
+    transform: translateY(5px) scale(0.98) !important;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 255, 255, 0.2) !important;
+}
+
+.grabaciones-hero-replay-escenario .boton.halar.activo {
+    background: rgba(59, 130, 246, 0.92) !important;
+    border: 3px solid #60a5fa !important;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.38), 0 0 22px rgba(96, 165, 250, 0.85) !important;
+}
+
+.grabaciones-hero-replay-escenario .boton.empujar.activo {
+    background: rgba(249, 115, 22, 0.94) !important;
+    border: 3px solid #fb923c !important;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.38), 0 0 22px rgba(251, 146, 60, 0.85) !important;
+}
+
+.grabaciones-hero-replay-cargando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    min-height: 420px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.grabaciones-hero-replay-controles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.grabaciones-hero-replay-tiempo,
+.grabaciones-hero-replay-progreso-texto {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.85rem;
+}
+
+.grabaciones-hero-replay-progreso-texto strong {
+    color: #fff;
+}
+
+.grabaciones-hero-replay-slider {
+    width: 100%;
+    accent-color: #3b82f6;
+}
+
+.grabaciones-hero-replay-acciones {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.grabaciones-hero-replay-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.grabaciones-hero-replay-btn.primaria {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+}
+
+.grabaciones-hero-replay-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.68;
+}
+
+.grabaciones-hero-replay-descripcion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.grabaciones-hero-replay-descripcion h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+}
+
+.grabaciones-hero-replay-descripcion p {
+    margin: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+    color: rgba(255, 255, 255, 0.74);
+    line-height: 1.6;
+}
+
+@media (max-width: 1220px) {
+    .grabaciones-hero-modal {
+        width: min(1380px, 96vw);
+    }
+
+    .grabaciones-hero-replay-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(320px, 1fr) auto;
+    }
+
+    .grabaciones-hero-replay-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+        align-items: stretch;
+    }
+
+    .grabaciones-hero-replay-panel > :only-child {
+        grid-column: 1 / -1;
+    }
+
+    .grabaciones-hero-replay-descripcion {
+        min-height: 170px;
+    }
+}
+
+@media (max-width: 960px) {
+    .grabaciones-hero-modal-metricas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grabaciones-hero-replay-escenario {
+        min-height: 360px;
+    }
+
+    .grabaciones-hero-replay-escenario .disposicion-acordeon {
+        --grabaciones-replay-scale: 0.92;
+    }
+
+    .grabaciones-hero-replay-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .grabaciones-hero-modal-overlay {
+        padding: 12px;
+    }
+
+    .grabaciones-hero-modal-encabezado {
+        flex-direction: column;
+    }
+
+    .grabaciones-hero-modal {
+        padding: 18px;
+        height: min(920px, calc(100dvh - 24px));
+        max-height: calc(100dvh - 24px);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        overflow-y: auto;
+    }
+
+    .grabaciones-hero-modal-metricas {
+        grid-template-columns: 1fr;
+    }
+
+    .grabaciones-hero-replay-acciones {
+        flex-direction: column;
+    }
+
+    .grabaciones-hero-replay-escenario {
+        min-height: 320px;
+    }
+
+    .grabaciones-hero-replay-escenario .disposicion-acordeon {
+        --grabaciones-replay-scale: 0.84;
+    }
+
+    .grabaciones-hero-replay-layout,
+    .grabaciones-hero-replay-panel {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .grabaciones-hero-replay-descripcion {
+        min-height: 140px;
+    }
+
+    .grabaciones-hero-replay-btn {
+        width: 100%;
+    }
+}
