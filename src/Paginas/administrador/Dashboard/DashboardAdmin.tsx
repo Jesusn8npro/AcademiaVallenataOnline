@@ -32,7 +32,28 @@ const DashboardAdmin: React.FC = () => {
             iniciarIntervalo();
         }
 
-        return () => detenerIntervalo();
+        // Suscribirse a cambios en tiempo real en la tabla sesiones_usuario
+        const canal = supabase
+            .channel('sesiones-realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'sesiones_usuario'
+                },
+                (payload) => {
+                    console.log('🔔 Cambio en sesiones_usuario:', payload.eventType);
+                    // Recargar datos cuando hay cambios
+                    cargarDatosTiempoReal();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            detenerIntervalo();
+            supabase.removeChannel(canal);
+        };
     }, []);
 
     // Efecto para toggle auto-refresh
@@ -46,10 +67,18 @@ const DashboardAdmin: React.FC = () => {
 
     const iniciarIntervalo = () => {
         detenerIntervalo();
-        intervalRef.current = setInterval(() => {
-            console.log('🔄 [AUTO] Actualizando dashboard...');
-            cargarDatosTiempoReal(); // Solo actualizamos lo ligero
-        }, 10000);
+        intervalRef.current = setInterval(async () => {
+            console.log('🔄 [AUTO] Actualizando dashboard (30s)...');
+            // Limpiar sesiones expiradas
+            try {
+                await supabase.rpc('limpiar_sesiones_expiradas');
+                console.log('✅ Sesiones expiradas limpiadas');
+            } catch (err) {
+                console.warn('⚠️ Error limpiando sesiones:', err);
+            }
+            // Actualizar datos en tiempo real
+            cargarDatosTiempoReal();
+        }, 30000); // 30 segundos
     };
 
     const detenerIntervalo = () => {
@@ -106,7 +135,11 @@ const DashboardAdmin: React.FC = () => {
             const { count: countCursos } = await supabase.from('cursos').select('*', { count: 'exact', head: true });
             const { count: countTutoriales } = await supabase.from('tutoriales').select('*', { count: 'exact', head: true });
 
-            // 3. Ventas Mes
+            // 3. Sesiones hoy (usando RPC)
+            const { data: sesionesToyData, error: errorSesionesToy } = await supabase.rpc('get_sesiones_hoy');
+            const sesionesToy = !errorSesionesToy && sesionesToyData ? sesionesToyData[0]?.count || 0 : 0;
+
+            // 4. Ventas Mes
             const inicioMes = new Date();
             inicioMes.setDate(1);
             inicioMes.setHours(0, 0, 0, 0);
@@ -119,7 +152,7 @@ const DashboardAdmin: React.FC = () => {
             const pagosReales = pagos || [];
             const ventasTotalesMes = pagosReales.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
 
-            // 4. Inscripciones recientes (30 días)
+            // 5. Inscripciones recientes (30 días)
             const hace30Dias = new Date();
             hace30Dias.setDate(hace30Dias.getDate() - 30);
             const { count: countInscripciones } = await supabase
@@ -139,7 +172,8 @@ const DashboardAdmin: React.FC = () => {
                 transaccionesDelMes: pagosReales.length,
                 pagosAceptados: pagosReales.filter(p => p.estado === 'aceptada').length,
                 ventasCursos: pagosReales.filter(p => p.curso_id).length,
-                ventasTutoriales: pagosReales.filter(p => p.tutorial_id).length
+                ventasTutoriales: pagosReales.filter(p => p.tutorial_id).length,
+                sesionesToy: sesionesToy
             });
 
         } catch (error) {
