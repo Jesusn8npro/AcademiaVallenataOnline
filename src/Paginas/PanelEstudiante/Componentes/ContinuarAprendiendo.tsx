@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { useUsuario } from '../../../contextos/UsuarioContext';
@@ -49,11 +49,9 @@ const ContinuarAprendiendo: React.FC = () => {
     // 🎠 Estados del slider
     const [todasLasActividades, setTodasLasActividades] = useState<any[]>([]);
     const [actividadActual, setActividadActual] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
     const [isChanging, setIsChanging] = useState(false);
 
     // Refs
-    const autoPlayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const mensajeMotivacionalRef = useRef<string>('');
 
     // 🎲 Mensaje motivacional aleatorio para esta sesión
@@ -77,40 +75,6 @@ const ContinuarAprendiendo: React.FC = () => {
         return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
     };
 
-    // 🔄 CONTROL ESTRICTO DE AUTO-PLAY (SIN DUPLICACIONES)
-    const iniciarAutoPlay = useCallback(() => {
-        if (autoPlayIntervalRef.current) {
-            clearInterval(autoPlayIntervalRef.current);
-            autoPlayIntervalRef.current = null;
-        }
-
-        if (todasLasActividades.length > 1 && !isPaused) {
-            console.log('🔄 [AUTO-PLAY] Iniciando nuevo interval');
-            autoPlayIntervalRef.current = setInterval(() => {
-                siguienteActividadAuto();
-            }, 15000);
-        }
-    }, [todasLasActividades.length, isPaused]);
-
-    const siguienteActividadAuto = useCallback(() => {
-        if (isPaused || !autoPlayIntervalRef.current) {
-            return;
-        }
-
-        setIsChanging(true);
-        setTimeout(() => {
-            setActividadActual(prev => {
-                if (prev < todasLasActividades.length - 1) {
-                    return prev + 1;
-                } else {
-                    return 0;
-                }
-            });
-            setTimeout(() => {
-                setIsChanging(false);
-            }, 300);
-        }, 150);
-    }, [isPaused, todasLasActividades.length]);
 
     // Efecto para actualizar ultimaActividad cuando cambia actividadActual
     useEffect(() => {
@@ -120,39 +84,6 @@ const ContinuarAprendiendo: React.FC = () => {
     }, [actividadActual, todasLasActividades]);
 
 
-    const pausarAutoPlay = () => {
-        console.log('⏸️ [AUTO-PLAY] Pausando...');
-        setIsPaused(true);
-        if (autoPlayIntervalRef.current) {
-            clearInterval(autoPlayIntervalRef.current);
-            autoPlayIntervalRef.current = null;
-        }
-    };
-
-    const reanudarAutoPlay = () => {
-        console.log('▶️ [AUTO-PLAY] Reanudando...');
-        setIsPaused(false);
-        // El effect de isPaused se encargará de iniciar
-    };
-
-    const reanudarAutoPlayDespuesDe = (ms: number) => {
-        console.log(`⏰ [AUTO-PLAY] Programado para reanudar en ${ms}ms`);
-        setTimeout(() => {
-            reanudarAutoPlay();
-        }, ms);
-    };
-
-    // Efecto para manejar el auto-play basado en dependencias
-    useEffect(() => {
-        if (todasLasActividades.length > 1 && !isPaused) {
-            iniciarAutoPlay();
-        }
-        return () => {
-            if (autoPlayIntervalRef.current) {
-                clearInterval(autoPlayIntervalRef.current);
-            }
-        };
-    }, [todasLasActividades.length, isPaused, iniciarAutoPlay]);
 
 
     // Función para generar slug (Copiada de LandingCurso.tsx para consistencia exacta)
@@ -520,39 +451,33 @@ const ContinuarAprendiendo: React.FC = () => {
 
     // Funciones de control
     const anteriorActividad = () => {
-        pausarAutoPlay();
         setIsChanging(true);
         setTimeout(() => {
             setActividadActual(prev => {
                 if (prev > 0) return prev - 1;
-                return prev; // Svelte logic: does not loop backwards on manual click effectively? "if (actividadActual > 0)"
+                return prev;
             });
             setTimeout(() => setIsChanging(false), 300);
         }, 100);
-        reanudarAutoPlayDespuesDe(10000);
     };
 
     const siguienteActividad = () => {
-        pausarAutoPlay();
         setIsChanging(true);
         setTimeout(() => {
             setActividadActual(prev => {
                 if (prev < todasLasActividades.length - 1) return prev + 1;
-                return 0; // Loops
+                return 0;
             });
             setTimeout(() => setIsChanging(false), 300);
         }, 100);
-        reanudarAutoPlayDespuesDe(10000);
     };
 
     const irAActividad = (index: number) => {
-        pausarAutoPlay();
         setIsChanging(true);
         setTimeout(() => {
             setActividadActual(index);
             setTimeout(() => setIsChanging(false), 300);
         }, 100);
-        reanudarAutoPlayDespuesDe(10000);
     };
 
     const continuarAprendizaje = () => {
@@ -605,8 +530,6 @@ const ContinuarAprendiendo: React.FC = () => {
             ) : ultimaActividad && todasLasActividades.length > 0 ? (
                 <div
                     className="academia-slider-container"
-                    onMouseEnter={pausarAutoPlay}
-                    onMouseLeave={reanudarAutoPlay}
                 >
                     <div className="academia-slider-header">
                         <div className="academia-usuario-info">
@@ -638,17 +561,11 @@ const ContinuarAprendiendo: React.FC = () => {
 
                                 <span className="academia-contador-externo">
                                     {actividadActual + 1} / {todasLasActividades.length}
-                                    {!isPaused && todasLasActividades.length > 1 ? (
-                                        <span className="academia-auto-indicator academia-active">●</span>
-                                    ) : isPaused && todasLasActividades.length > 1 ? (
-                                        <span className="academia-auto-indicator academia-paused">⏸</span>
-                                    ) : null}
                                 </span>
 
                                 <button
                                     className="academia-nav-btn-external academia-nav-next"
                                     onClick={siguienteActividad}
-                                    disabled={actividadActual === todasLasActividades.length - 1} // Svelte logic loop is handled in function but disabled prop might prevent click? In Svelte it was "disabled={actividadActual === todasLasActividades.length - 1}". Wait, Next button shouldn't be disabled if it loops? Svelte code: "disabled={actividadActual === todasLasActividades.length - 1}". The Svelte code logic handles loop in `siguienteActividad` IF the button is clickable. If disabled, it won't click. So manual nav doesn't loop? But auto does.
                                     aria-label="Siguiente actividad"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
