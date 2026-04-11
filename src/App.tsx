@@ -77,21 +77,26 @@ import ListaCancionesProMax from './Paginas/AcordeonProMax/ListaCancionesProMax'
 import ConfiguracionProMax from './Paginas/AcordeonProMax/ConfiguracionProMax';
 import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/AcordeonProMaxSimulador';
 import Footer from './componentes/Footer/Footer';
+import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
 import DashboardAdmin from './Paginas/administrador/Dashboard/DashboardAdmin'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
+import { useSesionTracker } from './hooks/useSesionTracker'
 import CursorPersonalizado from './componentes/ui/CursorPersonalizado/CursorPersonalizado'
 
 // Componente interno que tiene acceso al contexto de usuario
 const AppContent = () => {
-  const { estaAutenticado } = useUsuario()
+  const { estaAutenticado, usuario } = useUsuario()
   const location = useLocation();
 
   // Activar efectos globales de seguridad (Sonido manejado ahora por CursorPersonalizado y AudioManager)
   useSeguridadConsola();
   // useEfectosSonido(); // Reemplazado por CursorPersonalizado + AudioManager
+
+  // Rastrear sesión del usuario autenticado
+  useSesionTracker(usuario?.id || null)
 
   // Verificar si estamos en una vista de lectura/reproducción (Tutoriales o Cursos)
   const pathname = location.pathname;
@@ -143,9 +148,14 @@ const AppContent = () => {
         )
       )}
 
+      {/* Mostrar banner de email faltante si está autenticado */}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+        <EmailCompletarWrapper />
+      )}
+
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta o SIMULADOR */}
       {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <SidebarAdmin />}
-      
+
       {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta o SIMULADOR */}
       {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <MenuInferiorResponsivo />}
 

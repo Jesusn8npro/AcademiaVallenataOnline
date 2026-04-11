@@ -25,138 +25,31 @@ export interface UsuarioActivo {
 
 export const actividadService = {
     /**
-     * Carga la actividad en tiempo real de los usuarios
+     * Carga la actividad en tiempo real de los usuarios usando RPC
+     * Retorna directamente los datos de la RPC sin mapeo
      */
-    async cargarActividadTiempoReal(): Promise<UsuarioActivo[]> {
+    async cargarActividadTiempoReal(): Promise<any[]> {
         try {
-            console.log('🔄 [ADMIN] Cargando actividad en tiempo real...');
+            console.log('🔄 [ADMIN] Cargando actividad en tiempo real (RPC)...');
 
-            const ahora = new Date();
-            const hace2Horas = new Date(ahora.getTime() - 2 * 60 * 60 * 1000); // 2 horas atrás
-            const hace30Min = new Date(ahora.getTime() - 30 * 60 * 1000);
+            // Usar RPC para obtener usuarios activos en los últimos 5 minutos
+            const { data: usuariosActivos, error: errorRPC } = await supabase
+                .rpc('get_usuarios_activos', { minutos: 5 });
 
-            // 1. Obtener sesiones activas desde la tabla 'sesiones_usuario'
-            // Nota: En React usamos select con join explícito si es necesario, pero Supabase js client maneja esto
-            const { data: usuariosSesionActiva, error: errorSesion } = await supabase
-                .from('sesiones_usuario')
-                .select(`
-                    usuario_id,
-                    ultima_actividad,
-                    pagina_actual,
-                    esta_activo,
-                    tiempo_sesion_actual,
-                    tiempo_total_minutos,
-                    sesiones_totales,
-                    perfiles:usuario_id (
-                        id,
-                        nombre,
-                        apellido,
-                        url_foto_perfil,
-                        rol
-                    )
-                `)
-                .eq('esta_activo', true)
-                .gte('ultima_actividad', hace2Horas.toISOString())
-                .order('ultima_actividad', { ascending: false })
-                .limit(25);
-
-            if (errorSesion) {
-                console.error('❌ [ADMIN] Error obteniendo usuarios activos:', errorSesion);
-                throw errorSesion;
+            if (errorRPC) {
+                console.error('❌ [ADMIN] Error RPC get_usuarios_activos:', errorRPC);
+                throw errorRPC;
             }
 
-            // 2. Obtener sesiones recientes (como respaldo)
-            let sesionesActivas: any[] = [];
-            try {
-                const { data: sesiones } = await supabase
-                    .from('sesiones_usuario')
-                    .select(`
-                        *,
-                        perfiles:usuario_id (
-                            id,
-                            nombre,
-                            apellido,
-                            url_foto_perfil,
-                            rol
-                        )
-                    `)
-                    .eq('esta_activo', true)
-                    .gte('ultima_actividad', hace30Min.toISOString())
-                    .order('ultima_actividad', { ascending: false });
-
-                if (sesiones) {
-                    sesionesActivas = sesiones;
-                }
-            } catch (error) {
-                console.warn('⚠️ [ADMIN] Error secundario al obtener sesiones:', error);
+            if (!usuariosActivos || usuariosActivos.length === 0) {
+                console.log('ℹ️ [ADMIN] No hay usuarios activos');
+                return [];
             }
 
-            // 3. Procesar y combinar datos
-            const usuariosFinales = new Map<string, UsuarioActivo>();
+            console.log('✅ [ADMIN] Usuarios activos cargados:', usuariosActivos.length);
 
-            const procesarUsuario = (sesion: any, esRespaldo: boolean = false) => {
-                if (!sesion.perfiles) return;
-
-                const fechaActividad = new Date(sesion.ultima_actividad);
-                const minutosDesdeUpdate = Math.floor((ahora.getTime() - fechaActividad.getTime()) / (1000 * 60));
-
-                // Lógica de estado
-                const esActivoAhora = minutosDesdeUpdate <= 5;
-                const esActivoReciente = minutosDesdeUpdate <= 30;
-
-                let paginaAmigable = sesion.pagina_actual || '/panel-estudiante';
-                if (paginaAmigable.includes('/panel-estudiante')) paginaAmigable = 'Panel Estudiante';
-                else if (paginaAmigable.includes('/cursos')) paginaAmigable = 'Cursos';
-                else if (paginaAmigable.includes('/tutoriales')) paginaAmigable = 'Tutoriales';
-                else if (paginaAmigable.includes('/simulador')) paginaAmigable = 'Simulador';
-                else if (paginaAmigable.includes('/comunidad')) paginaAmigable = 'Comunidad';
-                else if (paginaAmigable === '/') paginaAmigable = 'Inicio';
-
-                const usuarioProcesado: UsuarioActivo = {
-                    usuario_id: sesion.usuario_id,
-                    ultima_actividad: sesion.ultima_actividad,
-                    pagina_actual: paginaAmigable,
-                    tiempo_sesion_actual: sesion.tiempo_sesion_actual || Math.max(1, 60 - minutosDesdeUpdate),
-                    esta_activo: sesion.esta_activo && esActivoReciente,
-                    perfiles: sesion.perfiles,
-                    tipo_actividad: esActivoAhora ? 'En línea ahora' :
-                        esActivoReciente ? `Hace ${minutosDesdeUpdate}m` :
-                            'Conectado recientemente',
-                    tiempo_total_minutos: sesion.tiempo_total_minutos || 0,
-                    origen: 'sesiones_usuario',
-                    estado_visual: esActivoAhora ? 'online' : esActivoReciente ? 'reciente' : 'offline',
-                    es_datos_reales: true,
-                    minutos_desde_actividad: minutosDesdeUpdate
-                };
-
-                if (!usuariosFinales.has(sesion.usuario_id)) {
-                    usuariosFinales.set(sesion.usuario_id, usuarioProcesado);
-                }
-            };
-
-            // Procesar lista principal
-            usuariosSesionActiva?.forEach(u => procesarUsuario(u));
-
-            // Procesar lista de respaldo (si no están ya)
-            sesionesActivas?.forEach(u => procesarUsuario(u, true));
-
-            // 4. Convertir a array y ordenar
-            const listaOrdenada = Array.from(usuariosFinales.values())
-                .sort((a, b) => {
-                    // 1. Online primero
-                    if (a.estado_visual === 'online' && b.estado_visual !== 'online') return -1;
-                    if (a.estado_visual !== 'online' && b.estado_visual === 'online') return 1;
-
-                    // 2. Activos recientes
-                    if (a.esta_activo && !b.esta_activo) return -1;
-                    if (!a.esta_activo && b.esta_activo) return 1;
-
-                    // 3. Por fecha
-                    return new Date(b.ultima_actividad).getTime() - new Date(a.ultima_actividad).getTime();
-                })
-                .slice(0, 15); // Top 15
-
-            return listaOrdenada;
+            // Retornar directamente los datos de la RPC
+            return usuariosActivos;
 
         } catch (error) {
             console.error('❌ [ADMIN] Error fatal cargando actividad:', error);
