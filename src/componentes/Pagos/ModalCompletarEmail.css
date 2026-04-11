@@ -1,0 +1,243 @@
+.mce-modal-fondo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.mce-modal-contenedor {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    position: relative;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.mce-boton-cerrar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.mce-boton-cerrar:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+/* Contenido del formulario */
+.mce-contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mce-contenido h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.mce-descripcion {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Campo de input */
+.mce-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mce-campo label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    display: block;
+}
+
+.mce-input {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mce-input:focus {
+    outline: none;
+    border-color: #3B6D11;
+    box-shadow: 0 0 0 3px rgba(59, 109, 17, 0.1);
+}
+
+.mce-input:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.mce-error {
+    font-size: 12px;
+    color: #d32f2f;
+    display: block;
+}
+
+/* Botones */
+.mce-botones {
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+    margin-top: 8px;
+}
+
+.mce-boton-primario,
+.mce-boton-secundario {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.mce-boton-primario {
+    background: #3B6D11;
+    color: white;
+}
+
+.mce-boton-primario:hover:not(:disabled) {
+    background: #2d5a0e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 109, 17, 0.3);
+}
+
+.mce-boton-primario:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.mce-boton-secundario {
+    background: transparent;
+    color: #555;
+    border: 1px solid #e0e0e0;
+}
+
+.mce-boton-secundario:hover:not(:disabled) {
+    background: #f8f8f8;
+    border-color: #999;
+}
+
+.mce-boton-secundario:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Pantalla de éxito */
+.mce-contenido-exito {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.mce-icono-exito {
+    width: 64px;
+    height: 64px;
+    background: #EAF3DE;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #3B6D11;
+}
+
+.mce-contenido-exito h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.mce-contenido-exito p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.mce-subtexto {
+    font-size: 13px;
+    color: #888;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .mce-modal-contenedor {
+        margin: 16px;
+        max-width: calc(100% - 32px);
+        padding: 24px;
+    }
+
+    .mce-botones {
+        flex-direction: column;
+    }
+
+    .mce-boton-primario,
+    .mce-boton-secundario {
+        width: 100%;
+    }
+}
