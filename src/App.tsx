@@ -37,6 +37,7 @@ import PagoError from './Paginas/Pagos/PagoError/PagoError'
 import PagoExitoso from './Paginas/Pagos/PagoExitoso/PagoExitoso'
 import ProteccionRuta from './SeguridadApp/ProteccionRuta'
 import ProteccionAdmin from './SeguridadApp/ProteccionAdmin'
+import ProtegidoAcordeonProMax from './SeguridadApp/ProtegidoAcordeonProMax'
 import Terminos from './Paginas/Legales/Terminos'
 import Privacidad from './Paginas/Legales/Privacidad'
 import RecuperarContrasena from './Paginas/Legales/RecuperarContrasena'
@@ -78,6 +79,7 @@ import ConfiguracionProMax from './Paginas/AcordeonProMax/ConfiguracionProMax';
 import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/AcordeonProMaxSimulador';
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
+import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -211,10 +213,10 @@ const AppContent = () => {
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
         <Route path="/agencia-ia" element={<AgenciaIAPage />} />
-        <Route path="/acordeon-pro-max" element={<HomeProMax />} />
+        <Route path="/acordeon-pro-max" element={<ProtegidoAcordeonProMax><HomeProMax /></ProtegidoAcordeonProMax>} />
         <Route path="/acordeon-pro-max/lista" element={<ListaCancionesProMax />} />
-        <Route path="/acordeon-pro-max/acordeon" element={<AcordeonProMaxSimulador />} />
-        <Route path="/acordeon-pro-max/acordeon/:slug" element={<AcordeonProMaxSimulador />} />
+        <Route path="/acordeon-pro-max/acordeon" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
+        <Route path="/acordeon-pro-max/acordeon/:slug" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
 
 
         {/* Admin Routes wrapped in ProteccionAdmin */}
