@@ -155,7 +155,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                 <div className="nav-auth-left">
                     <div className="nav-auth-logo">
                         <a href={esAdmin ? '/panel-administracion' : '/panel-estudiante'}>
-                            <img src="/images/logo academia vallenata.png" alt="Logo Academia" className="nav-auth-logo-img" />
+                            <img src="/logo academia vallenata.png" alt="Logo Academia" className="nav-auth-logo-img" />
                         </a>
                     </div>
 
@@ -266,6 +266,15 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                                     </svg>
                                 </span>
                                 <span>Acordeon Pro Max</span>
+                            </a>
+                            <a href="/simulador-app" className="nav-auth-link">
+                                <span className="nav-auth-icon">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                                        <line x1="12" y1="18" x2="12.01" y2="18" />
+                                    </svg>
+                                </span>
+                                <span>Simulador App</span>
                             </a>
                             <a href="/mensajes" className="nav-auth-link">
                                 <span className="nav-auth-icon">

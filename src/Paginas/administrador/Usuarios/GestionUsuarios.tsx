@@ -356,7 +356,19 @@ const GestionUsuarios: React.FC = () => {
 
   // Función para eliminar usuario individual desde menú contextual
   const eliminarUsuarioIndividual = async (usuarioId: string) => {
-    const confirmacion = confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.');
+    const usuario = usuarios.find(u => u.id === usuarioId);
+    const nombreUsuario = usuario?.nombre_completo || usuario?.correo_electronico || usuarioId;
+
+    const confirmacion = confirm(
+      `⚠️ ELIMINAR USUARIO COMPLETAMENTE\n\n` +
+      `Usuario: ${nombreUsuario}\n\n` +
+      `Esta acción eliminará:\n` +
+      `• El usuario de la base de datos\n` +
+      `• La cuenta de autenticación (auth.users)\n` +
+      `• Todos sus datos asociados\n\n` +
+      `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER\n\n` +
+      `¿Confirmas que deseas eliminar a "${nombreUsuario}"?`
+    );
     if (!confirmacion) return;
 
     try {

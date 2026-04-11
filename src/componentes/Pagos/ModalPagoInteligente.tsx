@@ -178,6 +178,69 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         }
     };
 
+    // Función para limpiar teléfono (quitar códigos de país +57, +1, etc)
+    const limpiarTelefono = (tel: string): string => {
+        if (!tel) return '';
+        return tel
+            .replace(/^\+\d{1,3}/, '') // Quitar +57, +1, etc
+            .replace(/\s/g, '')        // Quitar espacios
+            .replace(/\D+/g, (match) => match === '' ? '' : match) // Mantener solo dígitos y separadores válidos
+            .trim();
+    };
+
+    // Función para guardar/actualizar datos del usuario en tabla perfiles
+    const guardarPerfilUsuario = async (usuarioId: string) => {
+        try {
+            const datosActualizar: Record<string, string | null> = {};
+
+            // Solo actualizar campos que tengan valor
+            if (datosPago.nombre) datosActualizar.nombre = datosPago.nombre;
+            if (datosPago.apellido) datosActualizar.apellido = datosPago.apellido;
+
+            // Concatenar nombre completo
+            if (datosPago.nombre && datosPago.apellido) {
+                datosActualizar.nombre_completo = `${datosPago.nombre} ${datosPago.apellido}`;
+            }
+
+            // Email
+            if (datosPago.email) datosActualizar.correo_electronico = datosPago.email;
+
+            // Teléfono limpio (sin código de país)
+            const telefonoLimpio = limpiarTelefono(datosPago.telefono || datosPago.whatsapp);
+            if (telefonoLimpio) datosActualizar.whatsapp = telefonoLimpio;
+
+            // Documento
+            if (datosPago.tipo_documento) datosActualizar.documento_tipo = datosPago.tipo_documento;
+            if (datosPago.numero_documento) datosActualizar.documento_numero = datosPago.numero_documento;
+
+            // Dirección y ubicación
+            if (datosPago.direccion) datosActualizar.direccion_completa = datosPago.direccion;
+            if (datosPago.ciudad) datosActualizar.ciudad = datosPago.ciudad;
+            if (datosPago.pais) datosActualizar.pais = datosPago.pais;
+            if (datosPago.codigo_postal) datosActualizar.codigo_postal = datosPago.codigo_postal;
+
+            // Solo actualizar si hay datos para guardar
+            if (Object.keys(datosActualizar).length > 0) {
+                console.log('💾 Guardando datos de perfil:', datosActualizar);
+
+                const { error } = await supabase
+                    .from('perfiles')
+                    .update(datosActualizar)
+                    .eq('id', usuarioId);
+
+                if (error) {
+                    console.warn('⚠️ No se pudieron guardar datos en perfil:', error);
+                    // No bloquear el flujo de pago si esto falla
+                } else {
+                    console.log('✅ Datos de perfil guardados exitosamente');
+                }
+            }
+        } catch (err) {
+            console.warn('⚠️ Error al guardar perfil de usuario:', err);
+            // No bloquear el flujo de pago
+        }
+    };
+
     const cerrarModal = () => {
         setMostrar(false);
     };
@@ -439,6 +502,11 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
 
             console.log('✅ Pago registrado en Supabase:', resultadoRegistro.data);
 
+            // 💾 GUARDAR DATOS DEL USUARIO EN TABLA PERFILES (antes de abrir ePayco)
+            if (usuarioId) {
+                await guardarPerfilUsuario(usuarioId);
+            }
+
             const epaycoData = {
                 key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1',
                 test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true'
@@ -465,7 +533,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     name_billing: datosPago.nombre + ' ' + datosPago.apellido,
                     address_billing: datosPago.direccion,
                     type_doc_billing: datosPago.tipo_documento,
-                    mobilephone_billing: datosPago.telefono,
+                    mobilephone_billing: limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
                     number_doc_billing: datosPago.numero_documento,
                     email_billing: datosPago.email,
 
