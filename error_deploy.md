@@ -1,7 +1,18 @@
-Commit: Fix: fija typescript-eslint compatible con Node 22.11 
+Commit: refactor: improve PanelEstudiante with better UX and performance
+
+- Remove auto-play slider (15s rotation) from ContinuarAprendiendo for user control
+- Remove unnecessary 500ms background loading simulation
+- Simplify PanelEstudiante main component structure
+- Keep all real Supabase data fetching and responsive design intact
+- Reduce component code by 117 lines while preserving functionality
+
+Users now have manual navigation control with Previous/Next/Indicator buttons.
+All data remains real and responsive design works across all devices.
+
+Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com> 
 ##########################################
 ### Download Github Archive Started...
-### Mon, 30 Mar 2026 22:34:15 GMT
+### Sat, 11 Apr 2026 18:34:14 GMT
 ##########################################
 
 
@@ -38,8 +49,8 @@ Saved output to:
 #4 DONE 0.0s
 
 #5 [internal] load build context
-#5 transferring context: 68.37MB 0.6s done
-#5 DONE 0.6s
+#5 transferring context: 97.92MB 0.9s done
+#5 DONE 0.9s
 
 #6 [stage-0  2/15] WORKDIR /app/
 #6 CACHED
@@ -60,37 +71,90 @@ Saved output to:
 #11 CACHED
 
 #12 [stage-0  8/15] COPY . /app/.
-#12 DONE 0.3s
+#12 DONE 0.8s
 
 #13 [stage-0  9/15] RUN  caddy fmt --overwrite /assets/Caddyfile
 #13 DONE 0.2s
 
 #14 [stage-0 10/15] COPY . /app/.
-#14 DONE 0.4s
+#14 DONE 0.5s
 
 #15 [stage-0 11/15] RUN --mount=type=cache,id=V13bXEaLGp4-/root/npm,target=/root/.npm npm install
-#15 16.10 
-#15 16.10 added 532 packages, and audited 533 packages in 16s
-#15 16.10 
-#15 16.10 128 packages are looking for funding
-#15 16.10   run `npm fund` for details
-#15 16.10 
-#15 16.10 found 0 vulnerabilities
-#15 DONE 16.4s
+#15 14.69 
+#15 14.69 added 571 packages, and audited 572 packages in 15s
+#15 14.69 
+#15 14.69 130 packages are looking for funding
+#15 14.69   run `npm fund` for details
+#15 14.70 
+#15 14.70 1 high severity vulnerability
+#15 14.70 
+#15 14.70 To address all issues, run:
+#15 14.70   npm audit fix
+#15 14.70 
+#15 14.70 Run `npm audit` for details.
+#15 DONE 15.0s
 
 #16 [stage-0 12/15] COPY . /app/.
-#16 DONE 1.4s
+#16 DONE 1.0s
 
 #17 [stage-0 13/15] RUN --mount=type=cache,id=V13bXEaLGp4-node_modules/cache,target=/app/node_modules/.cache npm run build
-#17 0.625 
-#17 0.625 > mi-app@0.0.0 build
-#17 0.625 > node scripts/sync-samples.cjs && node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build
-#17 0.625 
-#17 0.668 ✅ Sincronización completa. 34 pitos y 20 bajos detectados.
-#17 0.668 📂 Lista guardada en: /app/public/muestrasLocales.json
-#17 1.029 vite v6.4.1 building for production...
-#17 1.329 transforming...
-#17 2.920 
-#17 2.920 /images/Jesus-Gonzalez--Fondo.jpg referenced in /images/Jesus-Gonzalez--Fondo.jpg didn't resolve at build time, it will remain unchanged to be resolved at runtime
-#17 27.29 ✓ 4036 modules transformed.
-#17 31.12 rendering chunks...
+#17 0.637 
+#17 0.637 > mi-app@0.0.0 build
+#17 0.637 > node scripts/sync-samples.cjs && node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build
+#17 0.637 
+#17 0.679 ✅ Sincronización completa. 34 pitos y 20 bajos detectados.
+#17 0.680 📂 Lista guardada en: /app/public/muestrasLocales.json
+#17 1.051 vite v6.4.1 building for production...
+#17 1.353 transforming...
+#17 1.729 ✓ 20 modules transformed.
+#17 1.732 ✗ Build failed in 649ms
+#17 1.733 error during build:
+#17 1.733 Could not resolve "./componentes/Pagos/EmailCompletarWrapper" from "src/App.tsx"
+#17 1.733 file: /app/src/App.tsx
+#17 1.733     at getRollupError (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:406:41)
+#17 1.733     at error (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+#17 1.733     at ModuleLoader.handleInvalidResolvedId (file:///app/node_modules/rollup/dist/es/shared/node-entry.js:21765:24)
+#17 1.733     at file:///app/node_modules/rollup/dist/es/shared/node-entry.js:21725:26
+#17 1.780 npm notice
+#17 1.780 npm notice New major version of npm available! 10.9.0 -> 11.12.1
+#17 1.780 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+#17 1.780 npm notice To update run: npm install -g npm@11.12.1
+#17 1.780 npm notice
+#17 ERROR: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
+------
+ > [stage-0 13/15] RUN --mount=type=cache,id=V13bXEaLGp4-node_modules/cache,target=/app/node_modules/.cache npm run build:
+1.733 file: /app/src/App.tsx
+1.733     at getRollupError (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:406:41)
+1.733     at error (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+1.733     at ModuleLoader.handleInvalidResolvedId (file:///app/node_modules/rollup/dist/es/shared/node-entry.js:21765:24)
+1.733     at file:///app/node_modules/rollup/dist/es/shared/node-entry.js:21725:26
+1.780 npm notice
+1.780 npm notice New major version of npm available! 10.9.0 -> 11.12.1
+1.780 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+1.780 npm notice To update run: npm install -g npm@11.12.1
+1.780 npm notice
+------
+
+ 7 warnings found (use docker --debug to expand):
+ - UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 24)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_EPAYCO_PRIVATE_KEY") (line 13)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_GIPHY_API_KEY") (line 13)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "VITE_SUPABASE_ANON_KEY") (line 13)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_EPAYCO_PRIVATE_KEY") (line 14)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_GIPHY_API_KEY") (line 14)
+ - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "VITE_SUPABASE_ANON_KEY") (line 14)
+Dockerfile:30
+--------------------
+  28 |     # build phase
+  29 |     COPY . /app/.
+  30 | >>> RUN --mount=type=cache,id=V13bXEaLGp4-node_modules/cache,target=/app/node_modules/.cache npm run build
+  31 |     
+  32 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
+##########################################
+### Error
+### Sat, 11 Apr 2026 18:34:42 GMT
+##########################################
+
+Command failed with exit code 1: docker buildx build --network host -f /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/.nixpacks/Dockerfile -t easypanel/academiavallenataonline_app/academiavallenataonline_app_2026 --label 'keep=true' --build-arg 'VITE_SUPABASE_URL=https://tbijzvtyyewhtwgakgka.supabase.co' --build-arg 'VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiaWp6dnR5eWV3aHR3Z2FrZ2thIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTQyNjIsImV4cCI6MjA1ODUzMDI2Mn0.P09L8OpLpcrm5XzTLAN0oQllhl_bePk5bxbUUpoG-cQ' --build-arg 'VITE_EPAYCO_PUBLIC_KEY=a04d60e2e678d5bd89a58d26f3413fdb' --build-arg 'VITE_EPAYCO_PRIVATE_KEY=83ec651809bb7d11fcd114b16777bfa1' --build-arg 'VITE_EPAYCO_CUSTOMER_ID=37257' --build-arg 'VITE_EPAYCO_TEST_MODE=true' --build-arg 'VITE_GIPHY_API_KEY=Kj3vAtPH8E0gWaVO2amamR5xazoGL36q' --build-arg 'VITE_APP_URL=http://localhost:5173' --build-arg 'VITE_BASE_URL=http://localhost:5173' --build-arg 'NODE_ENV=development' --build-arg 'GIT_SHA=3e558352bafa2354a07191645607f08065346f3f' /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/

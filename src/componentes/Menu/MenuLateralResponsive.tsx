@@ -100,7 +100,7 @@ const MenuLateralResponsive: React.FC<MenuLateralResponsiveProps> = ({
             <div className="menu-lateral-bienvenida">
               <div className="menu-lateral-logo" onClick={navegarDesdelogo}>
                 <img
-                  src="/images/logo academia vallenata.png"
+                  src="/logo academia vallenata.png"
                   alt="Academia Vallenata"
                   className="menu-lateral-logo-img"
                 />
@@ -414,7 +414,17 @@ const MenuLateralResponsive: React.FC<MenuLateralResponsiveProps> = ({
                       <line x1="17" y1="10" x2="17" y2="12" />
                     </svg>
                   </div>
-                  <span>Simulador</span>
+                  <span>Simulador Gaming</span>
+                </button>
+
+                <button className="menu-lateral-enlace" onClick={() => navegarA('/simulador-app')}>
+                  <div className="menu-lateral-icono">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                      <line x1="12" y1="18" x2="12.01" y2="18" />
+                    </svg>
+                  </div>
+                  <span>Simulador App</span>
                 </button>
 
                 <button className="menu-lateral-enlace" onClick={() => navegarA('/acordeon-pro-max')}>

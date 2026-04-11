@@ -51,10 +51,36 @@ export function calcularEstadisticas(usuarios: UsuarioAdmin[]): EstadisticasUsua
 
 export async function eliminarUsuario(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from('perfiles').delete().eq('id', id)
-    if (error) throw error
+    // Obtener sesión del usuario autenticado
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session?.access_token) {
+      throw new Error('No hay sesión activa')
+    }
+
+    // Llamar Edge Function para eliminar usuario completamente
+    // (tanto de perfiles como de auth.users)
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eliminar-usuario`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ usuarioId: id }),
+      }
+    )
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Error al eliminar usuario')
+    }
+
     return { success: true }
   } catch (e: any) {
+    console.error('Error eliminando usuario:', e)
     return { success: false, error: e.message }
   }
 }
