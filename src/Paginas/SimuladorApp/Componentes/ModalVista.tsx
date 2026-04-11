@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Type, Music, Hash, Eye, Columns } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Type, Hash, Columns } from 'lucide-react';
 import './ModalVista.css';
 
 interface ModalVistaProps {
@@ -7,15 +7,12 @@ interface ModalVistaProps {
     onCerrar: () => void;
     botonRef: React.RefObject<HTMLDivElement>;
 
-    // Estados de Vista
+    // Estados de Vista (Vienen de la App)
     modoVista: 'notas' | 'cifrado' | 'numeros' | 'teclas';
     setModoVista: (modo: 'notas' | 'cifrado' | 'numeros' | 'teclas') => void;
 
     mostrarOctavas: boolean;
     setMostrarOctavas: (mostrar: boolean) => void;
-
-    tamanoFuente: number;
-    setTamanoFuente: (tamano: number) => void;
 
     vistaDoble: boolean;
     setVistaDoble: (doble: boolean) => void;
@@ -29,11 +26,25 @@ const ModalVista: React.FC<ModalVistaProps> = ({
     setModoVista,
     mostrarOctavas,
     setMostrarOctavas,
-    tamanoFuente,
-    setTamanoFuente,
     vistaDoble,
     setVistaDoble
 }) => {
+    // Manejo autónomo del tamaño de fuente (Directo al CSS)
+    const [tamanoFuente, setLocalTamanoFuente] = useState(2.8);
+
+    useEffect(() => {
+        const style = getComputedStyle(document.documentElement);
+        const current = style.getPropertyValue('--pitos-fuente').trim();
+        if (current) setLocalTamanoFuente(parseFloat(current));
+    }, [visible]);
+
+    const handleTamanoChange = (v: number) => {
+        setLocalTamanoFuente(v);
+        document.documentElement.style.setProperty('--pitos-fuente', `${v}vh`);
+        // 💾 GUARDADO AUTOMÁTICO
+        localStorage.setItem('sim_cfg_--pitos-fuente', `${v}vh`);
+    };
+
     if (!visible) return null;
 
     return (
@@ -115,7 +126,7 @@ const ModalVista: React.FC<ModalVistaProps> = ({
                                 max="4.5"
                                 step="0.1"
                                 value={tamanoFuente}
-                                onChange={(e) => setTamanoFuente(parseFloat(e.target.value))}
+                                onChange={(e) => handleTamanoChange(parseFloat(e.target.value))}
                                 className="slider-fuente"
                             />
                             <span className="fuente-max">A+</span>

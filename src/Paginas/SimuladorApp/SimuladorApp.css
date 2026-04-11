@@ -1,7 +1,24 @@
-/* 🎹 SIMULADOR DE ACORDEÓN PRO - SISTEMA DE ESTILOS V26 */
-/* Este archivo controla la estructura base, los botones (pitos) y la respuesta visual del fuelle */
+/* 🎹 SIMULADOR DE ACORDEÓN PRO - PANEL DE CONTROL CSS */
+:root {
+    /* 📏 DISTANCIAS PITOS (HILERAS) */
+    --pitos-dist-h: 4.80vh;
+    /* Separación entre botones */
+    --pitos-dist-v: 1.8vh;
+    /* Separación entre hileras */
+    --pitos-fuente: 2.8vh;
+    /* Tamaño de letra en botones */
 
-/* 1. RAÍZ Y BLINDAJE: Bloquea gestos del sistema para evitar interrupciones en el juego */
+    /* 📏 DISTANCIAS BAJOS */
+    --bajos-dist-h: 2.5vh;
+    --bajos-dist-v: 0.8vh;
+
+    /* 🎨 COLORES Y AJUSTES */
+    --color-halar: #3b82f6;
+    --color-empujar: #fb923c;
+    --escala-inicial: 1.0;
+}
+
+/* 1. RAÍZ Y BLINDAJE... */
 .simulador-app-root {
     position: fixed;
     top: 0;
@@ -49,7 +66,7 @@
     /* Siempre encima de todo */
     touch-action: auto !important;
     pointer-events: auto !important;
-    width: 100%;
+
 }
 
 /* Efecto de brillo de la barra al cerrar (Rojo) */
@@ -64,7 +81,7 @@
     left: 0;
     width: 100% !important;
     /* La altura se ajusta desde el menú de opciones */
-    height: calc(45vh * var(--escala-acordeon, 1) + 77px + var(--offset-ios, 0px)) !important;
+    height: calc(45vh * var(--escala-acordeon, 1) + 90px + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -106,15 +123,15 @@
     align-items: center;
     cursor: grab;
     width: auto;
-    gap: calc(var(--distancia-v-pitos, 0.8vh) * var(--escala-acordeon, 1));
-    padding-bottom: calc(var(--offset-ios, 0px) + 5px * var(--escala-acordeon, 1));
+    gap: var(--pitos-dist-v);
+    padding-bottom: calc(var(--offset-ios, 0px) + 12px * var(--escala-acordeon, 1));
 }
 
 /* Hileras de botones horizontales */
 .hilera-pitos {
     display: flex;
     justify-content: center;
-    gap: calc(var(--distancia-h-pitos, 2.5vh) * var(--escala-acordeon, 1));
+    gap: var(--pitos-dist-h);
 }
 
 /* 6. LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
