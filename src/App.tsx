@@ -214,7 +214,7 @@ const AppContent = () => {
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
         <Route path="/agencia-ia" element={<AgenciaIAPage />} />
         <Route path="/acordeon-pro-max" element={<ProtegidoAcordeonProMax><HomeProMax /></ProtegidoAcordeonProMax>} />
-        <Route path="/acordeon-pro-max/lista" element={<ListaCancionesProMax />} />
+        <Route path="/acordeon-pro-max/lista" element={<ProtegidoAcordeonProMax><ListaCancionesProMax /></ProtegidoAcordeonProMax>} />
         <Route path="/acordeon-pro-max/acordeon" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
         <Route path="/acordeon-pro-max/acordeon/:slug" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
 
