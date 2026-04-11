@@ -117,13 +117,13 @@ const ProximamentePage: React.FC = () => {
                 </div>
 
                 {/* Botón volver */}
-                <button className="boton-volver" onClick={() => navigate('/mi-panel')}>
-                    ← Volver al Inicio
+                <button className="boton-volver" onClick={() => navigate('/mis-cursos')}>
+                    ← Ir a Mis Cursos
                 </button>
 
                 {/* Mensaje adicional */}
                 <p className="proximamente-footer">
-                    ✉️ Déjanos saber si tienes sugerencias en <strong>soporte@academiavallenataonline.com</strong>
+                    ✉️ Déjanos saber si tienes sugerencias en <strong>contacto@academiavallenataonline.com</strong>
                 </p>
             </div>
         </div>
