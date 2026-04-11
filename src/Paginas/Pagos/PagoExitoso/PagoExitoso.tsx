@@ -61,12 +61,26 @@ const PagoExitoso: React.FC = () => {
                 searchParams.forEach((value, key) => {
                     paramsObj[key] = value;
                 });
-                console.log('📋 Parámetros recibidos:', paramsObj);
+                console.log('📋 ===== PARÁMETROS RECIBIDOS DE EPAYCO =====');
+                console.log('Objeto completo:', JSON.stringify(paramsObj, null, 2));
+                console.log('Todas las claves:', Object.keys(paramsObj));
+
+                // Loguear cada parámetro que ePayco envía
+                console.log('--- Parámetros individuales ---');
+                console.log('ref_payco:', searchParams.get('ref_payco'));
+                console.log('x_ref_payco:', searchParams.get('x_ref_payco'));
+                console.log('x_id_invoice:', searchParams.get('x_id_invoice'));
+                console.log('invoice:', searchParams.get('invoice'));
+                console.log('x_transaction_id:', searchParams.get('x_transaction_id'));
+                console.log('x_cod_response:', searchParams.get('x_cod_response'));
+                console.log('estado:', searchParams.get('estado'));
+                console.log('x_response:', searchParams.get('x_response'));
+                console.log('='.repeat(45));
 
                 // 1️⃣ EXTRAER ref_payco DE LA URL
                 // ePayco envía el invoice que nosotros mandamos en el parámetro x_id_invoice
                 const refPayco = searchParams.get('x_id_invoice') || searchParams.get('ref_payco') || searchParams.get('x_ref_payco') || '';
-                console.log('🔍 Referencia de pago:', refPayco);
+                console.log('🔍 Referencia de pago encontrada:', refPayco);
 
                 // 2️⃣ CONSULTAR SUPABASE PARA VERIFICAR ESTADO REAL
                 if (!refPayco) {

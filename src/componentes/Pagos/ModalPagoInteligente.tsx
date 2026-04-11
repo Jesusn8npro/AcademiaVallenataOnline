@@ -100,24 +100,78 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         }
     }, [mostrar, usuario]);
 
-    const verificarUsuario = () => {
+    const verificarUsuario = async () => {
         if (usuario) {
             setUsuarioEstaRegistrado(true);
             setPasoActual(1);
-            setDatosPago(prev => ({
-                ...prev,
-                nombre: usuario.nombre || '',
-                apellido: usuario.nombre ? '' : '', // El contexto a veces trae nombre completo
-                email: usuario.email || '',
-                // @ts-ignore
-                telefono: usuario.telefono || '',
-                // @ts-ignore
-                whatsapp: usuario.telefono || '', // Fallback a telefono si whatsapp no existe
-                // @ts-ignore
-                ciudad: usuario.ciudad || '',
-                // @ts-ignore
-                pais: usuario.pais || 'Colombia'
-            }));
+
+            try {
+                // Consultar perfil completo del usuario en Supabase
+                console.log('👤 Cargando datos del perfil del usuario:', usuario.id);
+                const { data: perfil, error } = await supabase
+                    .from('perfiles')
+                    .select('nombre, apellido, correo_electronico, whatsapp, documento_tipo, documento_numero, direccion_completa, ciudad, pais, codigo_postal')
+                    .eq('id', usuario.id)
+                    .single();
+
+                if (error) {
+                    console.warn('⚠️ Error cargando perfil:', error);
+                    // Si hay error, usar datos del contexto solamente
+                    setDatosPago(prev => ({
+                        ...prev,
+                        nombre: usuario.nombre || '',
+                        email: usuario.email || '',
+                        telefono: (usuario as any).telefono || '',
+                        whatsapp: (usuario as any).telefono || '',
+                        ciudad: (usuario as any).ciudad || '',
+                        pais: (usuario as any).pais || 'Colombia'
+                    }));
+                    return;
+                }
+
+                if (perfil) {
+                    console.log('✅ Perfil cargado:', perfil);
+                    // Pre-llenar con datos completos de Supabase
+                    setDatosPago(prev => ({
+                        ...prev,
+                        nombre: perfil.nombre || '',
+                        apellido: perfil.apellido || '',
+                        email: perfil.correo_electronico || usuario.email || '',
+                        telefono: perfil.whatsapp || '',
+                        whatsapp: perfil.whatsapp || '',
+                        tipo_documento: perfil.documento_tipo || 'CC',
+                        numero_documento: perfil.documento_numero || '',
+                        direccion: perfil.direccion_completa || '',
+                        ciudad: perfil.ciudad || '',
+                        pais: perfil.pais || 'Colombia',
+                        codigo_postal: perfil.codigo_postal || ''
+                    }));
+                } else {
+                    console.warn('⚠️ No se encontró perfil para usuario');
+                    // Fallback a datos del contexto
+                    setDatosPago(prev => ({
+                        ...prev,
+                        nombre: usuario.nombre || '',
+                        email: usuario.email || '',
+                        telefono: (usuario as any).telefono || '',
+                        whatsapp: (usuario as any).telefono || '',
+                        ciudad: (usuario as any).ciudad || '',
+                        pais: (usuario as any).pais || 'Colombia'
+                    }));
+                }
+            } catch (err) {
+                console.error('❌ Error en verificarUsuario:', err);
+                // Fallback seguro
+                setDatosPago(prev => ({
+                    ...prev,
+                    nombre: usuario.nombre || '',
+                    email: usuario.email || '',
+                    telefono: (usuario as any).telefono || '',
+                    whatsapp: (usuario as any).telefono || '',
+                    ciudad: (usuario as any).ciudad || '',
+                    pais: (usuario as any).pais || 'Colombia'
+                }));
+            }
         } else {
             setUsuarioEstaRegistrado(false);
             setPasoActual(1);
