@@ -469,8 +469,9 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     number_doc_billing: datosPago.numero_documento,
                     email_billing: datosPago.email,
 
-                    // Funciones de callback
-                    response: EPAYCO_RESPONSE_URL,
+                    // Funciones de callback con nuestro ref_payco como parámetro
+                    response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
+                    url_response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
                     confirmation: EPAYCO_CONFIRMATION_URL,
 
                     method: 'GET'
