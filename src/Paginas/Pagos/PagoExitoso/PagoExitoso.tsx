@@ -219,6 +219,47 @@ const PagoExitoso: React.FC = () => {
         }
     };
 
+    // Polling para verificar estado si está pendiente
+    useEffect(() => {
+        // Solo hacer polling si el estado es pendiente
+        if (estadoPago !== 'pendiente' || !datosPago?.referencia) return;
+
+        let intentos = 0;
+        const MAX_INTENTOS = 40; // 40 intentos x 3 segundos = 2 minutos máximo
+
+        const polling = setInterval(async () => {
+            intentos++;
+            console.log(`🔄 Polling intento ${intentos}/${MAX_INTENTOS}`);
+
+            try {
+                const { data } = await supabaseAnonimo
+                    .from('pagos_epayco')
+                    .select('estado, cod_respuesta, respuesta')
+                    .eq('ref_payco', datosPago.referencia)
+                    .single();
+
+                if (data && data.estado !== 'pendiente') {
+                    // Estado cambió → actualizar UI y detener polling
+                    console.log('✅ Estado del pago cambió a:', data.estado);
+                    setEstadoPago(data.estado);
+                    setDatosPago(prev => prev ? { ...prev, ...data } : null);
+                    clearInterval(polling);
+                    return;
+                }
+
+                if (intentos >= MAX_INTENTOS) {
+                    // Timeout de 2 minutos → dejar en pendiente
+                    console.warn('⏱️ Se alcanzó el timeout de polling (2 minutos)');
+                    clearInterval(polling);
+                }
+            } catch (error) {
+                console.error('❌ Error en polling:', error);
+            }
+        }, 3000);
+
+        return () => clearInterval(polling);
+    }, [estadoPago, datosPago?.referencia]);
+
     const irAPanelEstudiante = () => {
         navigate('/panel-estudiante');
     };
@@ -453,6 +494,76 @@ const PagoExitoso: React.FC = () => {
                                         <button onClick={() => navigate('/')} className="boton-secundario">
                                             ← Volver al Inicio
                                         </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ⏳ ESTADO: PENDIENTE - Polling activo */}
+                            {estadoPago === 'pendiente' && datosPago && (
+                                <div className="tarjeta-exito tarjeta-pendiente">
+                                    <div className="encabezado-exito">
+                                        <div className="icono-pendiente mb-6">
+                                            <div className="spinner-pendiente">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2"></path>
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <h1 className="titulo-principal">Procesando tu Pago</h1>
+                                        <h2 className="subtitulo-principal">Verificando tu pago...</h2>
+                                        <p className="descripcion-principal">Tu transacción está siendo procesada. Por favor espera mientras verificamos el estado.</p>
+                                    </div>
+
+                                    <div className="seccion-pago">
+                                        <h3 className="titulo-seccion">
+                                            <svg className="w-8 h-8 mr-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Detalles de tu Transacción
+                                        </h3>
+
+                                        <div className="detalles-pago">
+                                            <div className="detalle-item">
+                                                <span className="etiqueta-detalle">Referencia:</span>
+                                                <span className="valor-detalle font-mono">{datosPago.referencia}</span>
+                                            </div>
+                                            <div className="detalle-item">
+                                                <span className="etiqueta-detalle">Estado:</span>
+                                                <span className="valor-detalle text-yellow-600">⏳ Pendiente de Verificación</span>
+                                            </div>
+                                            <div className="detalle-item bg-yellow-50 border-yellow-200">
+                                                <span className="etiqueta-detalle text-yellow-700">Monto:</span>
+                                                <span className="valor-detalle text-yellow-800 text-3xl">
+                                                    ${parseInt(datosPago.monto || '0').toLocaleString()} {datosPago.moneda}
+                                                </span>
+                                            </div>
+                                            <div className="detalle-item">
+                                                <span className="etiqueta-detalle">Producto:</span>
+                                                <span className="valor-detalle">🎵 {datosPago.descripcion}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="seccion-aviso">
+                                        <p className="texto-aviso">
+                                            ℹ️ <strong>Información importante:</strong>
+                                        </p>
+                                        <ul style={{ paddingLeft: '2rem', marginTop: '0.5rem' }}>
+                                            <li>Estamos verificando tu pago automáticamente (cada 3 segundos)</li>
+                                            <li>Este proceso puede tomar hasta 2 minutos</li>
+                                            <li>No cierres esta página mientras se procesa</li>
+                                            <li>Recibirás una notificación cuando se complete</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* Barra de progreso visual */}
+                                    <div className="progreso-pendiente">
+                                        <div className="puntos-progreso">
+                                            <span className="punto"></span>
+                                            <span className="punto"></span>
+                                            <span className="punto"></span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
