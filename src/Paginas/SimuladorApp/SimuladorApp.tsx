@@ -1,343 +1,160 @@
 /**
- * 🎹 SIMULADOR DE ACORDEÓN - MOTOR DE INPUT PRO V18.0 (PointerEvents)
- * 
- * MIGRACIÓN CRÍTICA (V17→V18):
- * CAUSA RAÍZ DEL LAG: Chrome Android usa «Throttled Async Touchmove» para 1 solo dedo.
- * Los TouchEvents de 1 solo dedo son procesados como posibles gestos de scroll (200ms delay).
- * SOLUCIÓN: Migrar de TouchEvents → PointerEvents.
- * Los PointerEvents van por el pipeline del Compositor de Chrome y NO tienen throttling.
- * setPointerCapture(): Cada dedo «captura» su elemento para tracking sin perder eventos.
+ * 🎹 SIMULADOR DE ACORDEÓN PRO - V19.2 (Optimizado)
  */
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
+
+// Hooks de Lógica
 import { useLogicaAcordeon } from '../SimuladorDeAcordeon/Hooks/useLogicaAcordeon';
 import { motorAudioPro } from '../SimuladorDeAcordeon/AudioEnginePro';
+import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
+
+// Componentes UI
 import BarraHerramientas from './Componentes/BarraHerramientas';
+import MenuOpciones from './Componentes/MenuOpciones';
+import ModalContacto from './Componentes/ModalContacto';
+import ModalTonalidades from './Componentes/ModalTonalidades';
+import ModalVista from './Componentes/ModalVista';
+import ModalMetronomo from './Componentes/ModalMetronomo';
+import ModalInstrumentos from './Componentes/ModalInstrumentos';
+
 import './SimuladorApp.css';
 
 const SimuladorApp: React.FC = () => {
+    // 1. Estado de la Lógica Musical
     const logica = useLogicaAcordeon({
-        onNotaPresionada: (data) => {
-            const [f, c] = data.idBoton.split('-');
-            actualizarVisualBoton(`${f}-${c}`, true);
-        },
-        onNotaLiberada: (data) => {
-            const [f, c] = data.idBoton.split('-');
-            actualizarVisualBoton(`${f}-${c}`, false);
-        }
+        onNotaPresionada: (data) => actualizarVisualBoton(data.idBoton.split('-').slice(0, 2).join('-'), true),
+        onNotaLiberada: (data) => actualizarVisualBoton(data.idBoton.split('-').slice(0, 2).join('-'), false)
     });
-    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-    const marcoRef = useRef<HTMLDivElement>(null);
-    const trenRef = useRef<HTMLDivElement>(null);
+
+    // 2. Estados de UI y Configuración
     const [escala, setEscala] = useState(1.0);
+    const [config, setConfig] = useState({
+        modoVista: 'notas' as 'notas' | 'cifrado' | 'numeros' | 'teclas',
+        mostrarOctavas: false,
+        vistaDoble: false
+    });
 
-    const [distanciaH, setDistanciaH] = useState(2.5);
-    const [distanciaV, setDistanciaV] = useState(0.8);
-    const [distanciaHBajos, setDistanciaHBajos] = useState(2.5);
-    const [distanciaVBajos, setDistanciaVBajos] = useState(0.8);
-    const [alejarIOS, setAlejarIOS] = useState(false);
-
-    const [modoVista, setModoVista] = useState<'notas' | 'cifrado' | 'numeros' | 'teclas'>('notas');
-    const [mostrarOctavas, setMostrarOctavas] = useState(false);
-    const [tamanoFuente, setTamanoFuente] = useState(2.8);
-    const [vistaDoble, setVistaDoble] = useState(false);
-
-    const x = useMotionValue(0);
-
-    // 🗺️ REFS Y CACHE DE GEOMETRÍA (Nivel Hardware)
-    // 🖐️ V18.0: Mapa de PUNTEROS (PointerEvents), no de touches
-    const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
-    const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
-    const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
-
-    const logicaRef = useRef(logica);
-    useEffect(() => { logicaRef.current = logica; }, [logica]);
-
-    // 🔒 BLOQUEO DE SCROLL SCROLL SOLO EN SIMULADOR
-    useEffect(() => {
-        // Bloquear scroll al entrar
-        document.body.classList.add('bloquear-scroll-simulador');
-        document.documentElement.classList.add('bloquear-scroll-simulador');
-        document.getElementById('root')?.classList.add('bloquear-scroll-simulador');
-
-        return () => {
-            // Desbloquear scroll al salir
-            document.body.classList.remove('bloquear-scroll-simulador');
-            document.documentElement.classList.remove('bloquear-scroll-simulador');
-            document.getElementById('root')?.classList.remove('bloquear-scroll-simulador');
-        };
-    }, []);
-
+    const [modales, setModales] = useState({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false });
+    const [bpmMetronomo, setBpmMetronomo] = useState(80);
     const [grabando, setGrabando] = useState(false);
+    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+    // 3. Refs y MotionValues
+    const x = useMotionValue(0);
+    const trenRef = useRef<HTMLDivElement>(null);
+    const refsModales = { menu: useRef(null), tonalidades: useRef(null), metronomo: useRef(null), instrumentos: useRef(null), vista: useRef(null) };
     const secuenciaRef = useRef<any[]>([]);
     const tiempoInicioRef = useRef<number>(0);
-    const grabandoRef = useRef(false);
-    useEffect(() => { grabandoRef.current = grabando; }, [grabando]);
 
-    const registrarEvento = (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => {
-        if (!grabandoRef.current) return;
-        secuenciaRef.current.push({ t: Date.now() - tiempoInicioRef.current, tipo, ...data });
-    };
-
+    // 4. Utilidades
     const actualizarVisualBoton = (pos: string, activo: boolean) => {
         const el = document.querySelector(`[data-pos="${pos}"]`) as HTMLElement;
-        if (el) {
-            if (activo) el.classList.add('nota-activa');
-            else el.classList.remove('nota-activa');
-        }
+        if (el) activo ? el.classList.add('nota-activa') : el.classList.remove('nota-activa');
     };
 
-    // =====================================================================
-    // 🚀 MOTOR DE INPUT PRO V18.0 (PointerEvents + setPointerCapture)
-    // =====================================================================
-    useEffect(() => {
-        const marco = marcoRef.current;
-        const tren = trenRef.current;
-        if (!marco || !tren) return;
+    const registrarEvento = (tipo: string, data: any) => {
+        if (grabando) secuenciaRef.current.push({ t: Date.now() - tiempoInicioRef.current, tipo, ...data });
+    };
 
-        /**
-         * 🗺️ CACHÉ ATÓMICA DE GEOMETRÍA
-         * Se ejecuta solo al montar, redimensionar o cuando cambian distancias.
-         */
-        const actualizarGeometriaBase = () => {
-            if (!tren) return;
-            const elPitos = tren.querySelectorAll('.pito-boton');
-            const currentX = x.get();
-            const trenBase = tren.getBoundingClientRect();
+    // 🌟 FUNCIÓN PARA FORMATEAR EL NOMBRE DE LA NOTA SEGÚN EL MODO
+    const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
+        if (!notaObj) return '';
 
-            // Calculamos donde estaría el tren si el scroll fuera 0
-            lastTrenRect.current = {
-                left: trenBase.left - currentX,
-                top: trenBase.top
+        let nombre = notaObj.nombre || ''; // "Do 4", "La# 5", etc.
+        const partes = nombre.split(' ');
+        let notaBase = partes[0];
+        const octava = partes[1] || '';
+
+        // 1. MODO CIFRADO (C, D, E...)
+        if (modo === 'cifrado') {
+            const MAPA_CIFRADO: Record<string, string> = {
+                'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
+                'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
             };
-
-            rectsCache.current.clear();
-            elPitos.forEach(el => {
-                const pos = (el as HTMLElement).dataset.pos;
-                const r = el.getBoundingClientRect();
-                if (pos) {
-                    // Guardamos la posición relativa al tren (punto 0 del scroll)
-                    rectsCache.current.set(pos, {
-                        left: r.left - trenBase.left,
-                        right: r.right - trenBase.left,
-                        top: r.top - trenBase.top,
-                        bottom: r.bottom - trenBase.top
-                    });
-                }
-            });
-            console.log("📍 Geometría Atómica Recalculada:", rectsCache.current.size, "pitos");
-        };
-
-        const interval = setInterval(actualizarGeometriaBase, 10000);
-        window.addEventListener('resize', actualizarGeometriaBase);
-        // Pequeño delay para que React termine el layout
-        setTimeout(actualizarGeometriaBase, 1000);
-
-        /**
-         * 🎯 HIT-TESTING MATEMÁTICO (Zero DOM access)
-         */
-        const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
-            if (!lastTrenRect.current) return null;
-
-            // Calculamos posición real del tren usando el MotionValue (Sin Reflow!)
-            const currentX = x.get();
-            const realTrenLeft = lastTrenRect.current.left + currentX;
-            const realTrenTop = lastTrenRect.current.top;
-
-            const relX = clientX - realTrenLeft;
-            const relY = clientY - realTrenTop;
-            const IMAN = 25; // AUMENTADO: Margen de error más generoso para dedos
-
-            for (const [pos, r] of rectsCache.current.entries()) {
-                if (relX >= r.left - IMAN && relX <= r.right + IMAN &&
-                    relY >= r.top - IMAN && relY <= r.bottom + IMAN) {
-                    return pos;
-                }
-            }
-            return null;
-        };
-
-        /**
-         * 🚀 MOTOR V19.0: PointerEvents CORREGIDO
-         */
-        const handlePointerDown = (e: PointerEvent) => {
-            const target = e.target as HTMLElement;
-            // Filtrar fuelle y controles UI (tienen su propio manejo)
-            if (target.closest('.indicador-fuelle') ||
-                target.closest('.barra-herramientas-contenedor')) return;
-
-            // ELIMINADO: Filtro por coordenadas de marco (causaba zonas muertas en bordes)
-
-            // ⚡ BUG FIX CRÍTICO: setPointerCapture sobre el TARGET (quien recibió el toque),
-            // NO sobre currentTarget. El target es el .pito-boton que SÍ tiene pointer-events:auto.
-            // Esto es lo que hace que Chrome entre en "modo gaming" para 1 solo dedo.
-            try { target.setPointerCapture(e.pointerId); } catch (_) { }
-
-            if (e.cancelable) e.preventDefault();
-            motorAudioPro.activarContexto();
-
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            if (pos) {
-                const mId = `${pos}-${logicaRef.current.direccion}`;
-                pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
-                actualizarVisualBoton(pos, true);
-                registrarEvento('nota_on', { id: mId, pos });
-            } else {
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
-            }
-        };
-
-        const handlePointerMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
-
-            if (e.cancelable) e.preventDefault();
-
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            if (pos !== data.pos) {
-                if (data.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                    actualizarVisualBoton(data.pos, false);
-                    registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-                }
-                if (pos) {
-                    const newMId = `${pos}-${logicaRef.current.direccion}`;
-                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId });
-                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
-                    actualizarVisualBoton(pos, true);
-                    registrarEvento('nota_on', { id: newMId, pos });
-                } else {
-                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
-                }
-            }
-        };
-
-        const handlePointerUp = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
-
-            if (data.pos) {
-                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                actualizarVisualBoton(data.pos, false);
-                registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
-            }
-            pointersMap.current.delete(e.pointerId);
-        };
-
-        // 🎯 LISTENERS EN DOCUMENT - FASE DE CAPTURA
-        // Usar capture:true garantiza que nuestro handler corre ANTES que Chrome
-        // decida si es un gesto de scroll. Esto es equivalente a interceptar la
-        // señal antes del sistema operativo.
-        document.addEventListener('pointerdown', handlePointerDown, { capture: true, passive: false });
-        document.addEventListener('pointermove', handlePointerMove, { capture: true, passive: false });
-        document.addEventListener('pointerup', handlePointerUp, { capture: true });
-        document.addEventListener('pointercancel', handlePointerUp, { capture: true });
-
-        // 🚫 Bloquear gestos residuales del sistema
-        const blockGesture = (e: Event) => { if (e.cancelable) e.preventDefault(); };
-        window.addEventListener('contextmenu', blockGesture);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('resize', actualizarGeometriaBase);
-            document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
-            document.removeEventListener('pointermove', handlePointerMove, { capture: true });
-            document.removeEventListener('pointerup', handlePointerUp, { capture: true });
-            document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
-            window.removeEventListener('contextmenu', blockGesture);
-        };
-    }, []);
-
-    const manejarCambioFuelle = (nuevaDireccion: 'halar' | 'empujar') => {
-        if (nuevaDireccion === logicaRef.current.direccion) return;
-        motorAudioPro.activarContexto();
-        motorAudioPro.detenerTodo(0.012);
-
-        pointersMap.current.forEach((data, pId) => {
-            if (data.pos) {
-                const nextId = `${data.pos}-${nuevaDireccion}`;
-                logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
-                pointersMap.current.set(pId, { ...data, musicalId: nextId });
-            }
-        });
-        logicaRef.current.setDireccion(nuevaDireccion);
-    };
-
-    const CIFRADO: Record<string, string> = { 'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E', 'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B' };
-    const formatearEtiquetaNota = (notaRaw: any) => {
-        if (!notaRaw) return '';
-        const soloNota = (notaRaw.nombre || '').split(' ')[0];
-        const baseNorm = soloNota.charAt(0).toUpperCase() + soloNota.slice(1).toLowerCase();
-        const base = modoVista === 'cifrado' ? (CIFRADO[baseNorm] || baseNorm) : baseNorm;
-        if (mostrarOctavas) {
-            const freq = Array.isArray(notaRaw.frecuencia) ? notaRaw.frecuencia[0] : notaRaw.frecuencia;
-            if (freq > 0) {
-                const octava = Math.floor((12 * (Math.log(freq / 440) / Math.log(2)) + 69 + 0.5) / 12) - 1;
-                return `${base}${octava}`;
-            }
+            notaBase = MAPA_CIFRADO[notaBase] || notaBase;
         }
-        return base;
+
+        return mostrarOctavas ? `${notaBase}${octava}` : notaBase;
     };
 
-    useEffect(() => {
-        const root = document.documentElement;
-        root.style.setProperty('--escala-acordeon', escala.toString());
-        root.style.setProperty('--distancia-h-pitos', `${distanciaH}vh`);
-        root.style.setProperty('--distancia-v-pitos', `${distanciaV}vh`);
-        root.style.setProperty('--distancia-h-bajos', `${distanciaHBajos}vh`);
-        root.style.setProperty('--distancia-v-bajos', `${distanciaVBajos}vh`);
-        root.style.setProperty('--offset-ios', alejarIOS ? '10px' : '0px');
-        root.style.setProperty('--tamano-fuente-pitos', `${tamanoFuente}vh`);
-    }, [escala, distanciaH, distanciaV, distanciaHBajos, distanciaVBajos, alejarIOS, tamanoFuente]);
+    // 5. Hook de Entrada (PointerEvents Engine)
+    const { manejarCambioFuelle } = usePointerAcordeon({ 
+        x, 
+        logica, 
+        actualizarVisualBoton, 
+        registrarEvento, 
+        trenRef,
+        desactivarAudio: Object.values(modales).some(v => v)
+    });
 
+    // 6. Efectos
     useEffect(() => {
+        // 🔄 CARGADOR DE CONFIGURACIÓN (Restaurar ajustes guardados)
+        const variables = [
+            '--pitos-dist-h', '--pitos-dist-v', '--pitos-fuente',
+            '--bajos-dist-h', '--bajos-dist-v', '--offset-ios'
+        ];
+        
+        variables.forEach(v => {
+            const saved = localStorage.getItem(`sim_cfg_${v}`);
+            if (saved) document.documentElement.style.setProperty(v, saved);
+        });
+
         const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
         window.addEventListener('resize', check);
-        return () => window.removeEventListener('resize', check);
+        document.body.classList.add('bloquear-scroll-simulador');
+        return () => {
+            window.removeEventListener('resize', check);
+            document.body.classList.remove('bloquear-scroll-simulador');
+        };
     }, []);
 
-    const toggleGrabacion = () => {
-        if (!grabando) {
-            secuenciaRef.current = []; tiempoInicioRef.current = Date.now(); setGrabando(true);
-        } else {
-            setGrabando(false);
-            if (secuenciaRef.current.length > 0) {
-                const blob = new Blob([JSON.stringify(secuenciaRef.current)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `secuencia_${Date.now()}.json`;
-                a.click();
-            }
-        }
+    useEffect(() => {
+        document.documentElement.style.setProperty('--escala-acordeon', escala.toString());
+    }, [escala]);
+
+    // 7. Handlers
+    const toggleModal = (nombre: keyof typeof modales) => {
+        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, [nombre]: !prev[nombre] }));
     };
 
-    const agrupar = (fila: any[]) => {
-        const p: Record<string, { halar: any, empujar: any }> = {};
+    const handleToggleGrabacion = () => {
+        if (!grabando) { secuenciaRef.current = []; tiempoInicioRef.current = Date.now(); setGrabando(true); }
+        else setGrabando(false);
+    };
+
+    const renderHilera = (fila: any[]) => {
+        const p: Record<string, any> = {};
         fila?.forEach(n => {
-            const [f, c, d] = n.id.split('-');
-            const pos = `${f}-${c}`;
+            const pos = n.id.split('-').slice(0, 2).join('-');
             if (!p[pos]) p[pos] = { halar: null, empujar: null };
-            if (d === 'halar') p[pos].halar = n; else p[pos].empujar = n;
+            n.id.includes('halar') ? p[pos].halar = n : p[pos].empujar = n;
         });
-        return Object.entries(p).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1]));
-    };
 
-    const h3 = React.useMemo(() => agrupar(logica.configTonalidad?.terceraFila), [logica.configTonalidad?.terceraFila]);
-    const h2 = React.useMemo(() => agrupar(logica.configTonalidad?.segundaFila), [logica.configTonalidad?.segundaFila]);
-    const h1 = React.useMemo(() => agrupar(logica.configTonalidad?.primeraFila), [logica.configTonalidad?.primeraFila]);
+        return Object.entries(p).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1])).map(([pos, n]) => {
+            const labelHalar = formatearNombreNota(n.halar, config.modoVista, config.mostrarOctavas);
+            const labelEmpujar = formatearNombreNota(n.empujar, config.modoVista, config.mostrarOctavas);
+            const esDoble = config.vistaDoble;
+            const esHalar = logica.direccion === 'halar';
+
+            return (
+                <div key={pos} className={`pito-boton ${esDoble ? 'vista-doble' : ''}`} data-pos={pos}>
+                    {(esDoble || esHalar) && <span className="nota-etiqueta label-halar">{labelHalar}</span>}
+                    {(esDoble || !esHalar) && <span className="nota-etiqueta label-empujar">{labelEmpujar}</span>}
+                </div>
+            );
+        });
+    };
 
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`}>
-
-            {/* 🪗 FUELLE: Migrado a PointerEvents para coherencia con el motor V18 */}
+            {/* FUELLE */}
             <div
                 className={`indicador-fuelle ${logica.direccion === 'empujar' ? 'empujar' : 'halar'}`}
-                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar'); }}
-                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onPointerCancel={(e) => { e.preventDefault(); manejarCambioFuelle('halar'); }}
-                onContextMenu={(e) => e.preventDefault()}
+                onPointerDown={(e) => { e.preventDefault(); manejarCambioFuelle('empujar', motorAudioPro); }}
+                onPointerUp={(e) => { e.preventDefault(); manejarCambioFuelle('halar', motorAudioPro); }}
                 style={{ zIndex: 100, touchAction: 'none' }}
             >
                 <span className="fuelle-status">{logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}</span>
@@ -345,37 +162,48 @@ const SimuladorApp: React.FC = () => {
 
             <div className="contenedor-acordeon-completo">
                 <div className="simulador-canvas">
-                    <BarraHerramientas logica={logica} x={x} marcoRef={marcoRef} escala={escala} setEscala={setEscala} distanciaH={distanciaH} setDistanciaH={setDistanciaH} distanciaV={distanciaV} setDistanciaV={setDistanciaV} distanciaHBajos={distanciaHBajos} setDistanciaHBajos={setDistanciaHBajos} distanciaVBajos={distanciaVBajos} setDistanciaVBajos={setDistanciaVBajos} alejarIOS={alejarIOS} setAlejarIOS={setAlejarIOS} modoVista={modoVista} setModoVista={setModoVista} mostrarOctavas={mostrarOctavas} setMostrarOctavas={setMostrarOctavas} tamanoFuente={tamanoFuente} setTamanoFuente={setTamanoFuente} vistaDoble={vistaDoble} setVistaDoble={setVistaDoble} grabando={grabando} toggleGrabacion={toggleGrabacion} />
-                    <div className="diapason-marco" ref={marcoRef} style={{ touchAction: 'none' }}>
-                        <motion.div
-                            ref={trenRef}
-                            className="tren-botones-deslizable"
-                            style={{ x, touchAction: 'none' }}
-                        >
-                            <div className="hilera-pitos hilera-adentro">
-                                {h3.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
-                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
-                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="hilera-pitos hilera-medio">
-                                {h2.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
-                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
-                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="hilera-pitos hilera-afuera">
-                                {h1.map(([pos, n]) => (
-                                    <div key={pos} className="pito-boton" data-pos={pos}>
-                                        <span className="nota-etiqueta label-halar">{formatearEtiquetaNota(n.halar)}</span>
-                                        <span className="nota-etiqueta label-empujar">{formatearEtiquetaNota(n.empujar)}</span>
-                                    </div>
-                                ))}
-                            </div>
+                    <BarraHerramientas
+                        logica={logica} x={x} escala={escala} setEscala={setEscala}
+                        modoVista={config.modoVista} grabando={grabando} toggleGrabacion={handleToggleGrabacion}
+                        bpmMetronomo={bpmMetronomo} modalesVisibles={modales}
+                        onToggleMenu={() => toggleModal('menu')} onToggleTonalidades={() => toggleModal('tonalidades')}
+                        onToggleMetronomo={() => toggleModal('metronomo')} onToggleInstrumentos={() => toggleModal('instrumentos')}
+                        onToggleVista={() => toggleModal('vista')} refs={refsModales as any}
+                    />
+
+                    {/* RENDERS DE MODALES */}
+                    <MenuOpciones 
+                        visible={modales.menu} 
+                        onCerrar={() => toggleModal('menu')} 
+                        botonRef={refsModales.menu as any}
+                        onAbrirContacto={() => toggleModal('contacto')}
+                    />
+
+                    <ModalTonalidades visible={modales.tonalidades} onCerrar={() => toggleModal('tonalidades')} tonalidadSeleccionada={logica.tonalidadSeleccionada} onSeleccionarTonalidad={logica.setTonalidadSeleccionada} listaTonalidades={logica.listaTonalidades} botonRef={refsModales.tonalidades as any} />
+
+                    <ModalVista 
+                        visible={modales.vista} 
+                        onCerrar={() => toggleModal('vista')} 
+                        modoVista={config.modoVista} 
+                        setModoVista={(v) => setConfig(c => ({ ...c, modoVista: v }))} 
+                        mostrarOctavas={config.mostrarOctavas} 
+                        setMostrarOctavas={(v) => setConfig(c => ({ ...c, mostrarOctavas: v }))} 
+                        vistaDoble={config.vistaDoble} 
+                        setVistaDoble={(v) => setConfig(c => ({ ...c, vistaDoble: v }))} 
+                        botonRef={refsModales.vista as any} 
+                    />
+
+                    <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} />
+
+                    <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
+
+                    <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
+
+                    <div className="diapason-marco" style={{ touchAction: 'none' }}>
+                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'none' }}>
+                            <div className="hilera-pitos hilera-adentro">{renderHilera(logica.configTonalidad?.terceraFila)}</div>
+                            <div className="hilera-pitos hilera-medio">{renderHilera(logica.configTonalidad?.segundaFila)}</div>
+                            <div className="hilera-pitos hilera-afuera">{renderHilera(logica.configTonalidad?.primeraFila)}</div>
                         </motion.div>
                     </div>
                 </div>

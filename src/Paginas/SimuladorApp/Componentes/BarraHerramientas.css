@@ -2,27 +2,22 @@
 
 .barra-herramientas-contenedor {
     position: absolute;
-    /* 🎯 VUELVE AL TOPE: El canvas ahora escala con los botones */
     top: 10px;
     bottom: auto;
     left: 0;
     right: 0;
     width: 92%;
-    /* ← Menos larga */
     margin: 0 auto;
     height: 42px;
-    /* ← Más delgada */
     background: linear-gradient(180deg, #333333 0%, #111111 100%);
     border: 2px solid #555;
     border-radius: 8px;
-    /* ← Más redondeado compacto */
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 6px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
     z-index: 200;
-    /* Por encima de los botones */
     overflow: hidden;
 }
 
@@ -30,20 +25,16 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    /* ← Reducido de 4px */
     height: 100%;
 }
 
 /* Estilo de botones individuales */
 .boton-herramienta {
     height: 34px;
-    /* ← Más pequeño */
     min-width: 34px;
-    /* ← Más pequeño */
     background: linear-gradient(180deg, #444 0%, #222 100%);
     border: 1px solid #000;
     border-radius: 6px;
-    /* ← Reducido de 8px */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -52,6 +43,8 @@
     color: #ccc;
     transition: all 0.2s;
     box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+    position: relative;
+    padding: 0 4px;
 }
 
 .boton-herramienta:active {
@@ -66,11 +59,9 @@
 
 .boton-herramienta span {
     font-size: 7px;
-    /* ← Reducido de 8px */
     font-weight: 700;
     text-transform: uppercase;
     margin-top: 1px;
-    /* ← Reducido de 2px */
     color: #aaa;
 }
 
@@ -85,85 +76,99 @@
     font-weight: 900;
 }
 
-/* Bloque de Anuncio Central */
+/* 🛑 SECCIÓN ANUNCIO PREMIUM (MATCH IMAGEN 2) */
 .bloque-anuncio-centro {
     flex: 1;
-    max-width: 250px;
-    /* ← Más angosto */
-    height: 34px;
-    /* ← Más delgado */
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 320px;
+    height: 36px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 5px;
     display: flex;
     align-items: center;
     padding: 0 6px;
-    margin: 0 6px;
+    margin: 0 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.miniatura-acordeon-pro {
+    width: 28px;
+    height: 28px;
+    background: #000;
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-right: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.img-miniatura-anuncio {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-anuncio-pro {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     overflow: hidden;
 }
 
-.miniatura-acordeon {
-    width: 26px;
-    /* ← Más pequeño */
-    height: 26px;
-    /* ← Más pequeño */
-    background: #444;
-    border-radius: 4px;
-    margin-right: 6px;
-}
-
-.info-anuncio {
-    flex: 1;
-}
-
-.info-anuncio h4 {
+.anuncio-titulo-pro {
     color: #fff;
     font-size: 10px;
-    /* ← Reducido de 11px */
+    font-weight: 800;
     margin: 0;
-}
-
-.estrellas {
-    color: #fbbf24;
-    font-size: 9px;
-    /* ← Reducido de 10px */
-}
-
-.texto-descarga {
-    color: #aaa;
-    font-size: 8px;
-    /* ← Reducido de 9px */
-    margin: 0;
+    line-height: 1.1;
     white-space: nowrap;
 }
 
-/* Icono de Instalar (Reemplaza al botón) */
-.boton-icono-instalar {
-    width: 28px;
-    /* ← Tamaño compacto */
-    height: 28px;
-    /* ← Tamaño compacto */
-    background: #333;
-    border: 1px solid #666;
-    border-radius: 50%;
-    /* ← Circular */
+.anuncio-meta-flex {
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    gap: 4px;
+    margin-top: 0px;
+}
+
+.estrellas-flex {
+    display: flex;
+    gap: 0;
+    color: #fbbf24;
+}
+
+.anuncio-desc-premium {
+    color: #888;
+    font-size: 8px;
+    font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.boton-instalar-premium {
+    background: #333;
+    border: 1px solid #555;
     color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
     transition: all 0.2s;
-    flex-shrink: 0;
-    /* No se encoge */
+    height: 22px;
+    display: flex;
+    align-items: center;
 }
 
-.boton-icono-instalar:hover {
+.boton-instalar-premium:hover {
     background: #444;
-    transform: scale(1.1);
-}
-
-.boton-icono-instalar:active {
-    transform: scale(0.95);
+    border-color: #777;
 }
 
 /* Grupo de Tamaño con Indicador */
@@ -174,7 +179,6 @@
     align-items: center;
     padding: 0 6px;
     height: 34px;
-    /* ← Más delgado */
     gap: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -198,7 +202,6 @@
 .valor-tam {
     font-size: 10px;
     color: #fb923c;
-    /* Color naranja para destacar el valor */
     font-weight: 900;
     font-family: monospace;
 }
@@ -229,25 +232,6 @@
     color: #fb923c;
 }
 
-/* Botón de Aviso Especial */
-.boton-aviso {
-    position: relative;
-    border-color: #fb923c !important;
-}
-
-.badge-aviso {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #fb923c;
-    color: #000;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 2px 4px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
-}
-
 /* Etiqueta Oferta */
 .oferta-tag {
     position: absolute;
@@ -260,120 +244,11 @@
     border-radius: 3px;
     font-weight: 900;
     transform: rotate(-15deg);
+    z-index: 10;
 }
 
 .contenedor-oferta {
     position: relative;
-}
-
-/* 🎹 POPUP DE INSTRUMENTOS */
-.popup-instrumentos {
-    position: absolute;
-    top: 50px;
-    left: 45px;
-    width: 200px;
-    background: rgba(15, 15, 15, 0.98);
-    border: 1px solid #444;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(251, 146, 60, 0.1);
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    animation: fadeInScale 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.popup-flecha {
-    position: absolute;
-    top: -6px;
-    left: 15px;
-    width: 12px;
-    height: 12px;
-    background: #444;
-    transform: rotate(45deg);
-    z-index: -1;
-}
-
-.popup-cabecera {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 6px;
-    margin-bottom: 4px;
-}
-
-.popup-cabecera span {
-    font-size: 9px;
-    font-weight: 900;
-    color: #fb923c;
-    letter-spacing: 0.5px;
-}
-
-.popup-cabecera button {
-    background: transparent;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-
-.lista-instrumentos-mini {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.item-instrumento {
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-}
-
-.item-instrumento:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #555;
-}
-
-.item-instrumento.seleccionado {
-    background: rgba(251, 146, 60, 0.15);
-    border-color: #fb923c;
-}
-
-.inst-nombre {
-    font-size: 10px;
-    font-weight: 900;
-    color: #fff;
-}
-
-.item-instrumento.seleccionado .inst-nombre {
-    color: #fb923c;
-}
-
-.inst-tipo {
-    font-size: 8px;
-    color: #666;
-    margin-top: 2px;
 }
 
 /* 🔄 MINI LOADER */
@@ -390,9 +265,7 @@
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 /* 🎯 CONTROL DE ARRASTRE DE BOTONES */
@@ -454,11 +327,6 @@
     line-height: 1;
 }
 
-.metronomo-btn-barra svg {
-    margin-bottom: -1px;
-    color: #eee;
-}
-
 .metronomo-btn-barra.activo {
     border-color: #3b82f6;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
@@ -466,4 +334,21 @@
 
 .metronomo-btn-barra.activo .label-metronomo-mini {
     color: #3b82f6 !important;
+}
+
+/* 🔴 ESTADOS DE GRABACIÓN */
+.boton-grabadora.grabando {
+    border-color: #ef4444;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0% { background: rgba(239, 68, 68, 0.1); }
+    50% { background: rgba(239, 68, 68, 0.2); }
+    100% { background: rgba(239, 68, 68, 0.1); }
+}
+
+.boton-grabadora.grabando span {
+    color: #ef4444;
 }

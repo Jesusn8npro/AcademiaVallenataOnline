@@ -1,217 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, ChevronLeft, ChevronRight, Volume2, Music, Play, Square, Settings2, Sliders } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, ChevronLeft, ChevronRight, Music, Sliders } from 'lucide-react';
+import { useMetronomo } from '../Hooks/useMetronomo';
 import './ModalMetronomo.css';
-import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 
 interface ModalMetronomoProps {
     visible: boolean;
     onCerrar: () => void;
-    botonRef: React.RefObject<HTMLDivElement>;
     bpm: number;
     setBpm: React.Dispatch<React.SetStateAction<number>>;
-    onActivoChange?: (activo: boolean) => void;
-    forzarDetencion?: boolean; // Nueva prop
-    forzarInicio?: boolean; // Iniciar forzosamente
 }
 
-type SonidoEfecto = 'Electrónico' | 'Madera' | 'Aplausos' | 'Campana 1' | 'Campana 2' | 'Tono' | 'Silencioso' | 'Baqueta';
-
-const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, botonRef, bpm, setBpm, onActivoChange, forzarDetencion, forzarInicio }) => {
-    // --- ESTADOS ---
-    const [activo, setActivo] = useState(false);
-    // bpm viene de props
-    const [compas, setCompas] = useState(4);
-    const [subdivision, setSubdivision] = useState(1);
-    const [volumen, setVolumen] = useState(0.5);
-    const [sonidoEfecto, setSonidoEfecto] = useState<SonidoEfecto>('Baqueta');
+const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, bpm, setBpm }) => {
+    // 🧠 Usamos nuestro Hook especializado para toda la lógica de audio
+    const met = useMetronomo(bpm);
     const [mostrarSelectorSonido, setMostrarSelectorSonido] = useState(false);
 
-    // Estado para el indicador visual (pulso actual)
-    const [pulsoActual, setPulsoActual] = useState(0);
-
-    // --- REFS PARA EL MOTOR DE AUDIO ---
-    const audioCtx = useRef<AudioContext | null>(null);
-    const nextNoteTime = useRef(0);
-    const timerID = useRef<number | null>(null);
-    const pulseCount = useRef(0); // Cuenta los clics (incluyendo subdivisiones)
-
-    const bpmRef = useRef(bpm);
-    const lastBpmRef = useRef(bpm);
-    const compasRef = useRef(compas);
-    const subdivisionRef = useRef(subdivision);
-    const volumenRef = useRef(volumen);
-    const sonidoRef = useRef(sonidoEfecto);
-
-    // 🎯 FASE-LOCKING (Sincronización invulnerable a cambios de BPM en tiempo real)
-    useEffect(() => {
-        if (activo && audioCtx.current && bpm !== lastBpmRef.current) {
-            const ahora = audioCtx.current.currentTime;
-            const oldBeatDur = (60.0 / lastBpmRef.current) / subdivisionRef.current;
-            const newBeatDur = (60.0 / bpm) / subdivisionRef.current;
-            
-            // ¿Qué % del pulso actual nos falta por recorrer?
-            const tiempoRestante = nextNoteTime.current - ahora;
-            const porcentajeRestante = Math.max(0, Math.min(1, tiempoRestante / oldBeatDur));
-            
-            // Re-escalamos ese % a la duración del nuevo BPM
-            nextNoteTime.current = ahora + (porcentajeRestante * newBeatDur);
-        }
-        
-        bpmRef.current = bpm;
-        lastBpmRef.current = bpm;
-        compasRef.current = compas;
-        subdivisionRef.current = subdivision;
-        volumenRef.current = volumen;
-        sonidoRef.current = sonidoEfecto;
-    }, [bpm, compas, subdivision, volumen, sonidoEfecto, activo]);
-
-    // --- SÍNTESIS DE SONIDO ---
-    const playClick = useCallback((time: number, isFirstBeat: boolean, isSubdivision: boolean) => {
-        if (!audioCtx.current || sonidoRef.current === 'Silencioso') return;
-
-        const osc = audioCtx.current.createOscillator();
-        const envelope = audioCtx.current.createGain();
-
-        // Configuración básica según el efecto
-        let freq = isFirstBeat ? 1000 : 500;
-        let type: OscillatorType = 'sine';
-        let decay = 0.1;
-
-        switch (sonidoRef.current) {
-            case 'Electrónico':
-                freq = isFirstBeat ? 1200 : 600;
-                type = 'square';
-                decay = 0.05;
-                break;
-            case 'Madera':
-                freq = isFirstBeat ? 800 : 400;
-                type = 'triangle';
-                decay = 0.08;
-                break;
-            case 'Baqueta':
-                freq = isFirstBeat ? 1500 : 1000;
-                type = 'sine';
-                decay = 0.04;
-                break;
-            case 'Tono':
-                freq = isFirstBeat ? 440 : 330;
-                type = 'sine';
-                decay = 0.2;
-                break;
-            case 'Campana 1':
-                freq = isFirstBeat ? 2000 : 1500;
-                type = 'sine';
-                decay = 0.3;
-                break;
-            default:
-                freq = isFirstBeat ? 1000 : 500;
-        }
-
-        if (isSubdivision) {
-            freq *= 0.8;
-            decay *= 0.5;
-        }
-
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, time);
-
-        envelope.gain.setValueAtTime(volumenRef.current, time);
-        envelope.gain.exponentialRampToValueAtTime(0.001, time + decay);
-
-        osc.connect(envelope);
-        envelope.connect(audioCtx.current.destination);
-
-        osc.start(time);
-        osc.stop(time + decay);
-    }, []);
-
-    // --- MOTOR DE SCHEDULING ---
-    const scheduler = useCallback(() => {
-        while (nextNoteTime.current < audioCtx.current!.currentTime + 0.1) {
-            const secondsPerBeat = 60.0 / bpmRef.current;
-            const secondsPerClick = secondsPerBeat / subdivisionRef.current;
-
-            // ¿Es el primer pulso del compás?
-            const isFirstBeat = (pulseCount.current % (compasRef.current * subdivisionRef.current)) === 0;
-            // ¿Es una subdivisión (no el pulso principal)?
-            const isSubdivision = (pulseCount.current % subdivisionRef.current) !== 0;
-
-            // Programar sonido
-            playClick(nextNoteTime.current, isFirstBeat, isSubdivision);
-
-            // Actualizar indicador visual (solo en el pulso principal)
-            if (!isSubdivision) {
-                const beatInBar = Math.floor(pulseCount.current / subdivisionRef.current) % compasRef.current;
-                
-                // Exponer a la ventana para el grabador
-                (window as any).proximoPulsoMetronomo = nextNoteTime.current;
-                
-                // Usamos un pequeño delay para que la visual coincida con el audio
-                const delay = (nextNoteTime.current - audioCtx.current!.currentTime) * 1000;
-                setTimeout(() => setPulsoActual(beatInBar), Math.max(0, delay));
-            }
-
-            nextNoteTime.current += secondsPerClick;
-            pulseCount.current++;
-        }
-    }, [playClick]);
-
-    const iniciarMetronomo = () => {
-        if (!audioCtx.current) {
-            audioCtx.current = motorAudioPro.contextoAudio;
-        }
-
-        if (audioCtx.current.state === 'suspended') {
-            audioCtx.current.resume();
-        }
-
-        // 🎯 INICIO PRECISO: Alineado exactamente al tiempo actual, sin delay de 0.05
-        nextNoteTime.current = audioCtx.current.currentTime;
-        pulseCount.current = 0;
-        setPulsoActual(0);
-        
-        (window as any).metronomoActivoHero = true;
-        (window as any).proximoPulsoMetronomo = nextNoteTime.current;
-
-        timerID.current = window.setInterval(scheduler, 25);
-        setActivo(true);
-    };
-
-    const detenerMetronomo = () => {
-        if (timerID.current) {
-            clearInterval(timerID.current);
-            timerID.current = null;
-        }
-        (window as any).metronomoActivoHero = false;
-        setActivo(false);
-        setPulsoActual(-1); // Resetea visual
-    };
-
-    // Sincronizar detención forzada
-    useEffect(() => {
-        if (forzarDetencion && activo) {
-            detenerMetronomo();
-        }
-    }, [forzarDetencion, activo]);
-
-    // Sincronizar inicio forzoso (Para Reproducción)
-    useEffect(() => {
-        if (forzarInicio && !activo) {
-            iniciarMetronomo();
-        }
-    }, [forzarInicio, activo]);
-
-    // Notificar cambios al exterior
-    useEffect(() => {
-        if (onActivoChange) onActivoChange(activo);
-    }, [activo, onActivoChange]);
-
-    // Cerrar al desmontar
-    useEffect(() => {
-        return () => {
-            if (timerID.current) clearInterval(timerID.current);
-        };
-    }, []);
+    // Sincronizar el BPM del modal con el BPM global que viene como prop
+    React.useEffect(() => {
+        met.setBpm(bpm);
+    }, [bpm]);
 
     if (!visible) return null;
 
@@ -220,7 +27,6 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
             <div className="modal-metronomo-overlay" onClick={onCerrar} />
             <div className="modal-metronomo-contenedor">
 
-                {/* VISTA PRINCIPAL */}
                 {!mostrarSelectorSonido ? (
                     <>
                         <div className="modal-metronomo-cabecera">
@@ -233,79 +39,64 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
                         <div className="modal-metronomo-cuerpo">
                             {/* BOTÓN INICIAR/DETENER */}
                             <button
-                                className={`btn-control-principal ${activo ? 'detener' : 'iniciar'}`}
-                                onClick={activo ? detenerMetronomo : iniciarMetronomo}
+                                className={`btn-control-principal ${met.activo ? 'detener' : 'iniciar'}`}
+                                onClick={met.activo ? met.detener : met.iniciar}
                             >
-                                {activo ? 'DETENER' : 'INICIAR'}
+                                {met.activo ? 'DETENER' : 'INICIAR'}
                             </button>
 
-                            {/* INDICADOR VISUAL DE PULSOS */}
+                            {/* INDICADOR VISUAL */}
                             <div className="indicador-pulsos-row">
-                                {Array.from({ length: compas }).map((_, i) => (
+                                {Array.from({ length: met.compas }).map((_, i) => (
                                     <div
                                         key={i}
-                                        className={`pulso-circulo ${pulsoActual === i ? 'activo' : ''} ${i === 0 ? 'acento' : ''}`}
+                                        className={`pulso-circulo ${met.pulsoActual === i ? 'activo' : ''} ${i === 0 ? 'acento' : ''}`}
                                     />
                                 ))}
                             </div>
 
-                            {/* AJUSTE VELOCIDAD (BPM) */}
-                            <div className="ajuste-fila">
-                                <div className="ajuste-info">
-                                    <span className="ajuste-label">Velocidad</span>
-                                    <span className="ajuste-sublabel">Tempo en BPM</span>
-                                </div>
-                                <div className="control-inc-dec">
-                                    <button onClick={() => setBpm(b => Math.max(20, b - 1))}><ChevronLeft size={20} /></button>
-                                    <span className="valor-display">{bpm}</span>
-                                    <button onClick={() => setBpm(b => Math.min(300, b + 1))}><ChevronRight size={20} /></button>
-                                </div>
-                            </div>
+                            {/* AJUSTES */}
+                            <ControlAjuste 
+                                label="Velocidad" 
+                                sublabel="Tempo en BPM" 
+                                valor={bpm} 
+                                onInc={() => setBpm(b => Math.min(300, b + 1))} 
+                                onDec={() => setBpm(b => Math.max(20, b - 1))} 
+                            />
 
-                            {/* AJUSTE COMPÁS (PULSOS POR COMPÁS) */}
-                            <div className="ajuste-fila">
-                                <div className="ajuste-info">
-                                    <span className="ajuste-label">Tempo</span>
-                                    <span className="ajuste-sublabel">Pulso por compás</span>
-                                </div>
-                                <div className="control-inc-dec">
-                                    <button onClick={() => setCompas(c => Math.max(1, c - 1))}><ChevronLeft size={20} /></button>
-                                    <span className="valor-display">{compas}</span>
-                                    <button onClick={() => setCompas(c => Math.min(12, c + 1))}><ChevronRight size={20} /></button>
-                                </div>
-                            </div>
+                            <ControlAjuste 
+                                label="Tempo" 
+                                sublabel="Pulsos por compás" 
+                                valor={met.compas} 
+                                onInc={() => met.setCompas(c => Math.min(12, c + 1))} 
+                                onDec={() => met.setCompas(c => Math.max(1, c - 1))} 
+                            />
 
-                            {/* AJUSTE SUBDIVISIÓN */}
-                            <div className="ajuste-fila">
-                                <div className="ajuste-info">
-                                    <span className="ajuste-label">Subdivisión</span>
-                                    <span className="ajuste-sublabel">Clics por pulso</span>
-                                </div>
-                                <div className="control-inc-dec">
-                                    <button onClick={() => setSubdivision(s => Math.max(1, s - 1))}><ChevronLeft size={20} /></button>
-                                    <span className="valor-display">{subdivision}</span>
-                                    <button onClick={() => setSubdivision(s => Math.min(4, s + 1))}><ChevronRight size={20} /></button>
-                                </div>
-                            </div>
+                            <ControlAjuste 
+                                label="Subdivisión" 
+                                sublabel="Clics por pulso" 
+                                valor={met.subdivision} 
+                                onInc={() => met.setSubdivision(s => Math.min(4, s + 1))} 
+                                onDec={() => met.setSubdivision(s => Math.max(1, s - 1))} 
+                            />
 
-                            {/* SELECCIÓN DE SONIDO */}
                             <div className="ajuste-fila clickable" onClick={() => setMostrarSelectorSonido(true)}>
                                 <span className="ajuste-label">Efecto de Sonido</span>
                                 <div className="valor-con-flecha">
-                                    <span>{sonidoEfecto}</span>
+                                    <span>{met.sonidoEfecto}</span>
                                     <ChevronRight size={18} />
                                 </div>
                             </div>
 
                             {/* VOLUMEN */}
                             <div className="ajuste-fila vertical">
-                                <span className="ajuste-label">Volumen del Metrónomo</span>
+                                <span className="ajuste-label">Volumen</span>
                                 <div className="volumen-control-container">
                                     <input
                                         type="range"
                                         min="0" max="1" step="0.01"
-                                        value={volumen}
-                                        onChange={(e) => setVolumen(parseFloat(e.target.value))}
+                                        value={met.volumen}
+                                        onChange={(e) => met.setVolumen(parseFloat(e.target.value))}
                                         className="slider-premium-met"
                                     />
                                     <Sliders size={18} className="icono-vol" />
@@ -314,22 +105,21 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
                         </div>
                     </>
                 ) : (
-                    /* VISTA SELECTOR DE SONIDO */
+                    /* SELECTOR DE SONIDO */
                     <>
                         <div className="modal-metronomo-cabecera">
                             <button className="btn-atras" onClick={() => setMostrarSelectorSonido(false)}>
                                 <ChevronLeft size={20} />
                             </button>
-                            <h3 className="modal-metronomo-titulo">Efecto de Sonido</h3>
-                            <div style={{ width: 20 }} />
+                            <h3 className="modal-metronomo-titulo">Efectos</h3>
                         </div>
                         <div className="lista-sonidos">
-                            {(['Electrónico', 'Madera', 'Aplausos', 'Campana 1', 'Campana 2', 'Tono', 'Silencioso', 'Baqueta'] as SonidoEfecto[]).map(sonido => (
+                            {['Electrónico', 'Madera', 'Aplausos', 'Campana 1', 'Campana 2', 'Tono', 'Silencioso', 'Baqueta'].map(sonido => (
                                 <div
                                     key={sonido}
-                                    className={`item-sonido ${sonidoEfecto === sonido ? 'activo' : ''}`}
+                                    className={`item-sonido ${met.sonidoEfecto === sonido ? 'activo' : ''}`}
                                     onClick={() => {
-                                        setSonidoEfecto(sonido);
+                                        met.setSonidoEfecto(sonido as any);
                                         setMostrarSelectorSonido(false);
                                     }}
                                 >
@@ -337,7 +127,7 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
                                         <Music size={16} />
                                         <span>{sonido}</span>
                                     </div>
-                                    {sonidoEfecto === sonido && <div className="check-mark">✓</div>}
+                                    {met.sonidoEfecto === sonido && <div className="check-mark">✓</div>}
                                 </div>
                             ))}
                         </div>
@@ -351,5 +141,26 @@ const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, boto
         </>
     );
 };
+
+/** 🧱 SUB-COMPONENTE DE CONTROL REUTILIZABLE **/
+const ControlAjuste: React.FC<{
+    label: string, 
+    sublabel: string, 
+    valor: number, 
+    onInc: () => void, 
+    onDec: () => void
+}> = ({ label, sublabel, valor, onInc, onDec }) => (
+    <div className="ajuste-fila">
+        <div className="ajuste-info">
+            <span className="ajuste-label">{label}</span>
+            <span className="ajuste-sublabel">{sublabel}</span>
+        </div>
+        <div className="control-inc-dec">
+            <button onClick={onDec}><ChevronLeft size={20} /></button>
+            <span className="valor-display">{valor}</span>
+            <button onClick={onInc}><ChevronRight size={20} /></button>
+        </div>
+    </div>
+);
 
 export default ModalMetronomo;

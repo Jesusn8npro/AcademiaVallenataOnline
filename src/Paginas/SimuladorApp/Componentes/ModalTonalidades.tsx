@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Music, X, Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Music, X, Search, ChevronRight } from 'lucide-react';
 import './ModalTonalidades.css';
 
 interface ModalTonalidadesProps {
@@ -16,7 +16,7 @@ const NOMBRES_LARGOS: Record<string, string> = {
     'FBE': 'Fa - Sib - Mib (Original)',
     'GCF': 'Sol - Do - Fa (G/C/F)',
     'ADG': 'La - Re - Sol (A/D/G)',
-    'BES': 'Sib - Mib - Lab (Cinco Letras)',
+    'BES': 'Sib - Mib - Lab (5 Letras)',
     'BEA': 'Si - Mi - La',
     'CFB': 'Do - Fa - Sib',
     'DGC': 'Re - Sol - Do',
@@ -28,25 +28,17 @@ const NOMBRES_LARGOS: Record<string, string> = {
 };
 
 const ModalTonalidades: React.FC<ModalTonalidadesProps> = ({
-    visible,
-    onCerrar,
-    tonalidadSeleccionada,
-    onSeleccionarTonalidad,
-    listaTonalidades
+    visible, onCerrar, tonalidadSeleccionada, onSeleccionarTonalidad, listaTonalidades
 }) => {
     const [busqueda, setBusqueda] = useState('');
 
-    useEffect(() => {
-        if (!visible) {
-            setBusqueda('');
-        }
-    }, [visible]);
+    useEffect(() => { if (!visible) setBusqueda(''); }, [visible]);
 
     if (!visible) return null;
 
     const tonalidadesFiltradas = listaTonalidades.filter(t => {
         const nombre = (NOMBRES_LARGOS[t] || t).toLowerCase();
-        return nombre.includes(busqueda.toLowerCase());
+        return nombre.includes(busqueda.toLowerCase()) || t.toLowerCase().includes(busqueda.toLowerCase());
     });
 
     return (
@@ -54,66 +46,72 @@ const ModalTonalidades: React.FC<ModalTonalidadesProps> = ({
             <div className="modal-tonalidades-overlay" onClick={onCerrar} />
             <div className="modal-tonalidades-contenedor">
                 <div className="modal-tonalidades-cabecera">
-                    <h3 className="modal-tonalidades-titulo">Elija la Afinación</h3>
+                    <div className="titulo-con-icono">
+                        <Music className="icono-titulo" size={18} />
+                        <h3 className="modal-tonalidades-titulo">Afinación</h3>
+                    </div>
                     <button className="btn-cerrar-tonalidades" onClick={onCerrar}>
                         <X size={18} />
                     </button>
                 </div>
 
-                <div className="modal-tonalidades-subtitulo">
-                    <span>3 HILERAS</span>
-                    <div className="linea-activa-tab" />
-                </div>
-
-                <div className="buscador-tonalidades-contenedor">
-                    <Search size={14} className="icono-buscar" />
+                <div className="buscador-premium-container">
+                    <Search size={16} className="icono-search" />
                     <input
                         type="text"
-                        placeholder="Buscar afinación..."
+                        placeholder="Buscar afinación (Ej: GCF)..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="input-busqueda-tonalidades"
+                        className="input-search-pro"
                     />
                 </div>
 
                 <div className="modal-tonalidades-lista">
                     {tonalidadesFiltradas.length > 0 ? (
                         tonalidadesFiltradas.map((ton) => (
-                            <div
+                            <TonalidadItem 
                                 key={ton}
-                                className={`item-tonalidad ${tonalidadSeleccionada === ton ? 'seleccionado' : ''}`}
-                                onClick={() => {
-                                    onSeleccionarTonalidad(ton);
-                                    onCerrar();
-                                }}
-                            >
-                                <div className="item-tonalidad-icono">
-                                    <Music size={18} />
-                                </div>
-                                <div className="item-tonalidad-info">
-                                    <span className="ton-nombre-primario">{ton}</span>
-                                    <span className="ton-nombre-desc">{NOMBRES_LARGOS[ton] || ton}</span>
-                                </div>
-                                {tonalidadSeleccionada === ton && (
-                                    <div className="indicador-seleccionado">
-                                        <div className="punto-seleccion" />
-                                    </div>
-                                )}
-                            </div>
+                                id={ton}
+                                seleccionado={tonalidadSeleccionada === ton}
+                                onClick={() => { onSeleccionarTonalidad(ton); onCerrar(); }}
+                                nombreLargo={NOMBRES_LARGOS[ton] || ton}
+                            />
                         ))
                     ) : (
-                        <div className="sin-resultados-tonalidades">
-                            No se encontraron afinaciones
+                        <div className="sin-resultados">
+                            <Music size={40} className="icono-vacio" />
+                            <p>No se encontró esa afinación</p>
                         </div>
                     )}
                 </div>
 
                 <div className="modal-tonalidades-footer">
-                    <p className="footer-pregunta">¿No encontraste la afinación que buscas?</p>
+                    <p>Personaliza tu experiencia auditiva</p>
                 </div>
             </div>
         </>
     );
 };
+
+/** 🧱 SUB-COMPONENTE: ITEM DE LISTA **/
+const TonalidadItem: React.FC<{ 
+    id: string, 
+    seleccionado: boolean, 
+    onClick: () => void, 
+    nombreLargo: string 
+}> = ({ id, seleccionado, onClick, nombreLargo }) => (
+    <div className={`item-tonalidad-pro ${seleccionado ? 'activo' : ''}`} onClick={onClick}>
+        <div className="ton-pre-icono">
+            <div className="tecla-mini"></div>
+            <div className="tecla-mini"></div>
+            <div className="tecla-mini"></div>
+        </div>
+        <div className="ton-content">
+            <span className="ton-id">{id}</span>
+            <span className="ton-full">{nombreLargo}</span>
+        </div>
+        {seleccionado ? <div className="dot-seleccion"></div> : <ChevronRight size={14} className="flecha-item" />}
+    </div>
+);
 
 export default ModalTonalidades;
