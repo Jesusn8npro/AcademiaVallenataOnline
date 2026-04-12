@@ -6,8 +6,8 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
-    z-index: 1000;
-    width: 290px; /* Un poco más grande para estabilidad */
+    z-index: 10000 !important; /* 🚀 FUERZA BRUTA PARA GANAR A LOS BAJOS (1500) */
+    width: 290px;
     max-height: 95vh;
     display: flex;
     flex-direction: column;

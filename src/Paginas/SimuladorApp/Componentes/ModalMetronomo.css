@@ -3,7 +3,7 @@
 .modal-metronomo-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000;
+    z-index: 10000 !important;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(2px);
 }
@@ -19,7 +19,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 28px;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.95), 0 0 40px rgba(59, 130, 246, 0.1);
-    z-index: 2001;
+    z-index: 10001 !important;
     color: white;
     display: flex;
     flex-direction: column;

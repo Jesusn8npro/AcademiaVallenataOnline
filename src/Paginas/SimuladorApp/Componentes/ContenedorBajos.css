@@ -1,0 +1,317 @@
+/* 🎹 CONTENEDOR DE BAJOS - CLEAN VERSION */
+:root {
+    --bajos-dist-h: 2.5vh;
+    --bajos-dist-v: 0.8vh;
+}
+
+/* 🎵 SECCIÓN IZQUIERDA: LADO DEL FUELLE */
+.seccion-bajos-contenedor {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    background-color: #0c0c0c;
+    overflow: hidden;
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease-out;
+}
+
+.img-bajos-fondo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+    opacity: 0.85;
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.modo-estirado .img-bajos-fondo {
+    object-fit: fill;
+}
+
+.seccion-bajos-contenedor:active .img-bajos-fondo {
+    opacity: 1;
+    filter: brightness(1.1);
+}
+
+.fuelle-status-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2.5vh;
+    font-weight: 900;
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    letter-spacing: 5px;
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+/* 🎹 PANEL INTERACTIVO */
+.contenedor-bajos-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* 🚀 EVITA QUE SE ESTIREN LOS HIJOS */
+    z-index: 1500;
+    gap: 12px; /* Un poco de aire entre el panel y los controles */
+    pointer-events: none;
+    touch-action: none;
+    will-change: transform;
+}
+
+.contenedor-bajos-principal {
+    background: linear-gradient(180deg, #8B7355 0%, #6B5344 100%);
+    border-radius: 0 0 25px 25px;
+    border: 3px solid #5D4A3A;
+    border-top: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    padding: 4px 8px 15px 8px;
+    pointer-events: auto;
+    cursor: grab;
+}
+
+.contenedor-bajos-principal:active {
+    cursor: grabbing;
+}
+
+.grid-bajos-contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--bajos-dist-v) * 1.5);
+}
+
+.fila-bajos-contenedor {
+    display: flex;
+    gap: calc(var(--bajos-dist-h) * 1.5);
+    justify-content: center;
+}
+
+/* 🔘 BOTONES DE BAJOS */
+.boton-bajo-contenedor {
+    width: calc(7.5vh * var(--escala-acordeon, 1));
+    height: calc(7.5vh * var(--escala-acordeon, 1));
+    min-width: calc(56px * var(--escala-acordeon, 1));
+    min-height: calc(56px * var(--escala-acordeon, 1));
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #E8D4C0 0%, #C9A98A 50%, #A38A70 100%);
+    box-shadow:
+        inset 0 3px 6px rgba(255, 255, 255, 0.6),
+        0 6px 0 #7A6650,
+        0 10px 25px rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #7A6650;
+    cursor: pointer;
+}
+
+.texto-boton-bajo {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #444;
+    pointer-events: none;
+    text-transform: capitalize;
+}
+
+/* 🎨 ESTILOS PARA VISTA DOBLE EN BAJOS */
+.boton-bajo-contenedor.vista-doble {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1px;
+}
+
+.layout-bajos-doble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.bajo-label-doble {
+    font-size: 0.8rem;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.bajo-label-doble.label-halar {
+    color: #2563eb; /* Azul fuerte */
+}
+
+.bajo-label-doble.label-empujar {
+    color: #ea580c; /* Naranja fuerte */
+}
+
+/* EFECTO ACTIVE (HUNDIMIENTO) */
+.boton-bajo-contenedor:active,
+.boton-bajo-contenedor.activo {
+    transform: scale(0.92) translateY(2px);
+    box-shadow: 
+        inset 0 3px 6px rgba(0,0,0,0.4),
+        0 2px 4px rgba(0,0,0,0.2);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.boton-bajo-contenedor.activo .bajo-label-doble,
+.boton-bajo-contenedor.activo .texto-boton-bajo {
+    color: #fff !important;
+}
+
+/* 🌀 EFECTO DE GLOW SEGÚN FUELLE (SOBRESCRIBE EL ANTERIOR) */
+.modo-halar .boton-bajo-contenedor.activo,
+.modo-halar .boton-bajo-contenedor:active {
+    background: radial-gradient(circle at 35% 30%, #5BA3F5 0%, #1E3BA3 100%) !important;
+    box-shadow: 0 0 30px #3b82f6, 0 0 60px rgba(59, 130, 246, 0.4) !important;
+}
+
+.modo-empujar .boton-bajo-contenedor.activo,
+.modo-empujar .boton-bajo-contenedor:active {
+    background: radial-gradient(circle at 35% 30%, #FF8844 0%, #D93C1F 100%) !important;
+    box-shadow: 0 0 30px #f97316, 0 0 60px rgba(249, 115, 22, 0.4) !important;
+}
+
+/* 🎮 CÁPSULA DE CONTROLES (CERRAR / MOVER) */
+.bajos-capsula-controles {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #1a1b1e;
+    border-radius: 0 0 20px 20px;
+    padding: 4px;
+    width: 48px; /* 📏 ANCHO FIJO */
+    margin-top: 0;
+    pointer-events: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    box-shadow: 
+        inset 0 0 0 1px #000, 
+        0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.btn-capsula-accion {
+    width: 44px;
+    height: 38px; /* 📏 MÁS BAJITO */
+    background: transparent;
+    border: none;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.btn-capsula-accion:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.btn-capsula-accion:active {
+    transform: scale(0.9);
+}
+
+.separador-capsula {
+    width: 30px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 2px 0;
+}
+
+.btn-mover-bajos {
+    cursor: grab;
+}
+
+.btn-mover-bajos:active {
+    cursor: grabbing;
+}
+
+/* 📱 BOTÓN 'BAJOS' SUPERIOR (MODO CERRADO) */
+.boton-bajos-superior {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1500;
+    width: 75px;
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.texto-bajos {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    width: 100%;
+    background: linear-gradient(180deg, #5a4a3a 0%, #3d3029 100%);
+    border: 1px solid #6b5a48;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 35px;
+}
+
+.flecha-bajos {
+    font-size: 10px;
+    padding: 4px 6px;
+    background: linear-gradient(180deg, #3d3029 0%, #2d1f18 100%);
+    border: 1px solid #6b5a48;
+    width: 100%;
+    text-align: center;
+    border-radius: 0 0 40px 40px;
+}
+
+/* 📐 RESPONSIVE */
+@media (max-width: 768px) {
+    .contenedor-bajos-principal {
+        padding: 18px 24px;
+    }
+
+    .boton-bajo-contenedor {
+        width: calc(6.5vh * var(--escala-acordeon, 1));
+        height: calc(6.5vh * var(--escala-acordeon, 1));
+    }
+
+    .texto-boton-bajo {
+        font-size: calc(2vh * var(--escala-acordeon, 1));
+    }
+}
+
+@media (max-width: 480px) {
+    .contenedor-bajos-principal {
+        padding: 12px 18px;
+    }
+
+    .boton-bajo-contenedor {
+        width: calc(5.5vh * var(--escala-acordeon, 1));
+        height: calc(5.5vh * var(--escala-acordeon, 1));
+    }
+
+    .texto-boton-bajo {
+        font-size: calc(1.6vh * var(--escala-acordeon, 1));
+    }
+
+    .boton-bajos-superior {
+        width: 68px;
+    }
+
+    .texto-bajos {
+        font-size: 11px;
+        min-height: 32px;
+    }
+}

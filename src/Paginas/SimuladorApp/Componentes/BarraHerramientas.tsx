@@ -64,10 +64,37 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     bpmMetronomo,
     refs
 }) => {
+    // 🔻 POSICIONAR LA FLECHA EN EL BOTÓN ACTIVO
+    React.useEffect(() => {
+        const actualizarPosicionFlecha = () => {
+            const botonActivo = document.querySelector('.boton-herramienta.activo') as HTMLElement;
+            if (!botonActivo) return;
+
+            const rect = botonActivo.getBoundingClientRect();
+            // Calcular posición: centrado en el botón, debajo de él
+            const flechaLeft = rect.left + rect.width / 2;
+            const flechaTop = rect.bottom + 8;
+
+            // Usar CSS variables para posicionar la flecha dinámicamente
+            document.documentElement.style.setProperty('--flecha-left', `${flechaLeft}px`);
+            document.documentElement.style.setProperty('--flecha-top', `${flechaTop}px`);
+        };
+
+        actualizarPosicionFlecha();
+        window.addEventListener('resize', actualizarPosicionFlecha);
+
+        // Observar cambios en modalesVisibles
+        const timeout = setTimeout(actualizarPosicionFlecha, 100);
+
+        return () => {
+            window.removeEventListener('resize', actualizarPosicionFlecha);
+            clearTimeout(timeout);
+        };
+    }, [modalesVisibles]);
 
     const handleDrag = (_: any, info: { delta: { x: number } }) => {
         if (x) {
-            const factor = 8 / escala; 
+            const factor = 8 / escala;
             const nuevoX = x.get() + (info.delta.x * factor);
             x.set(nuevoX);
         }

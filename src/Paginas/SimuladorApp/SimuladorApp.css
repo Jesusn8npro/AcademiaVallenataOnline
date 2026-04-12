@@ -8,9 +8,7 @@
     --pitos-fuente: 2.8vh;
     /* Tamaño de letra en botones */
 
-    /* 📏 DISTANCIAS BAJOS */
-    --bajos-dist-h: 2.5vh;
-    --bajos-dist-v: 0.8vh;
+
 
     /* 🎨 COLORES Y AJUSTES */
     --color-halar: #3b82f6;
@@ -33,6 +31,10 @@
     padding: 0 !important;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
+    /* ⚡ NUEVO: LAYOUT DINÁMICO FLEX */
+    display: flex;
+    flex-direction: column;
+
     /* Shield contra gestos de navegador */
     touch-action: none !important;
     user-select: none !important;
@@ -42,17 +44,14 @@
     outline: none !important;
 }
 
-/* 2. CAPA ESTRUCTURAL: Permite superponer capas sin bloquear clics */
+/* 2. CAPA ESTRUCTURAL: Flex-shrink para que el teclado mande sobre el tamaño */
 .contenedor-acordeon-completo {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    flex-shrink: 0;
+    /* No se deja comprimir, mantiene su altura de botones */
     z-index: 500;
     pointer-events: none;
-    /* No atrapa clics para no bloquear el teclado */
 }
 
 /* Restaura eventos para los hijos (teclado, barra) */
@@ -73,12 +72,9 @@
     box-shadow: 0px 6px 15px rgba(239, 68, 68, 0.4);
 }
 
-/* 4. EL TECLADO (CANVAS): Fondo y dimensiones dinámicas */
+/* 4. EL TECLADO (CANVAS): Posición relativa al flujo flex */
 .simulador-canvas {
-    position: absolute;
-    bottom: 0;
-    /* 📏 BASE AL SUELO (Como debe ser) */
-    left: 0;
+    position: relative;
     width: 100% !important;
     /* 📏 Altura dinámica: escala + espaciado + offset */
     height: calc(45vh * var(--escala-acordeon, 1) + 60px + var(--offset-ios, 0px) + (var(--pitos-dist-v, 2.9vh) * 2)) !important;
@@ -204,14 +200,36 @@
     font-weight: 900;
     color: #222;
     pointer-events: none;
+    line-height: 1;
+    transition: all 0.2s ease;
 }
 
-/* Control automático de visibilidad de notas según el fuelle */
-.modo-halar .label-empujar {
+/* ✨ VISTA DOBLE: Layout de doble nota */
+.pito-boton.vista-doble {
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 2px !important;
+}
+
+.pito-boton.vista-doble .nota-etiqueta {
+    font-size: calc(var(--pitos-fuente, 2.8vh) * 0.75);
+    text-shadow: 0px 1px 1px rgba(255,255,255,0.5);
+}
+
+.pito-boton.vista-doble .label-halar {
+    color: var(--color-halar, #3b82f6) !important;
+}
+
+.pito-boton.vista-doble .label-empujar {
+    color: #f97316 !important; /* Naranja fuerte para empujar */
+}
+
+/* Control inteligente de visibilidad: Oculta solo si NO hay vista doble */
+.modo-halar .pito-boton:not(.vista-doble) .label-empujar {
     display: none !important;
 }
 
-.modo-empujar .label-halar {
+.modo-empujar .pito-boton:not(.vista-doble) .label-halar {
     display: none !important;
 }
 
@@ -251,34 +269,117 @@
     }
 }
 
-/* 9. INDICADOR DE FUELLE (ESTADO) */
+/* 9. INDICADOR DE FUELLE (ESTADO) - DISEÑO PREMIUM CON EFECTOS */
 .indicador-fuelle {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 10px 0;
+    background: linear-gradient(180deg,
+            rgba(20, 20, 20, 1) 0%,
+            rgba(10, 10, 10, 0.95) 50%,
+            rgba(5, 5, 5, 0.9) 100%);
+    backdrop-filter: blur(15px);
+    padding: 12px 0;
     color: #fff;
     z-index: 100;
     text-align: center;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
+
+    /* 🎨 Bordes superior e inferior con quiebres visuales */
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* 📏 Transición suave y elástica */
 }
 
 .fuelle-status {
     font-weight: 950;
     font-size: 1.2rem;
     letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* 🔵 MODO HALAR (ABRIENDO) - EFECTO AZUL SUAVE */
 .modo-halar .indicador-fuelle {
     color: #60a5fa;
     border-bottom-color: #3b82f6;
+    background: linear-gradient(180deg,
+            rgba(15, 23, 42, 1) 0%,
+            rgba(8, 15, 35, 0.95) 50%,
+            rgba(3, 10, 25, 0.9) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(96, 165, 250, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        0 4px 20px rgba(59, 130, 246, 0.2);
 }
 
+.modo-halar .fuelle-status {
+    color: #88c7ff;
+    text-shadow:
+        0 2px 10px rgba(59, 130, 246, 0.4),
+        0 0 20px rgba(59, 130, 246, 0.2);
+    animation: pulsado-halar 0.6s ease-out;
+}
+
+/* 🟠 MODO EMPUJAR (CERRANDO) - EFECTO NARANJA SUAVE */
 .modo-empujar .indicador-fuelle {
     color: #fb923c;
     border-bottom-color: #f97316;
+    background: linear-gradient(180deg,
+            rgba(42, 28, 15, 1) 0%,
+            rgba(35, 20, 8, 0.95) 50%,
+            rgba(25, 15, 3, 0.9) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(251, 146, 60, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        0 4px 20px rgba(249, 115, 22, 0.2);
+}
+
+.modo-empujar .fuelle-status {
+    color: #ffb574;
+    text-shadow:
+        0 2px 10px rgba(251, 146, 60, 0.4),
+        0 0 20px rgba(251, 146, 60, 0.2);
+    animation: pulsado-empujar 0.6s ease-out;
+}
+
+/* ✨ ANIMACIONES SUAVES DE CAMBIO DE ESTADO */
+@keyframes pulsado-halar {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulsado-empujar {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
