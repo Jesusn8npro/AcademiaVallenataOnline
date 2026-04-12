@@ -21,6 +21,14 @@
     overflow: hidden;
 }
 
+/* 📱 MÓVIL: Reduce el espacio entre barra y botones */
+@media (max-width: 768px) {
+    .barra-herramientas-contenedor {
+        top: 2px;
+        /* Reduce de 10px a 2px en móvil para cerrar el gap */
+    }
+}
+
 .seccion-barra {
     display: flex;
     align-items: center;
