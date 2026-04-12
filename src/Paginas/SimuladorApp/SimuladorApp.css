@@ -3,7 +3,7 @@
     /* 📏 DISTANCIAS PITOS (HILERAS) */
     --pitos-dist-h: 4.80vh;
     /* Separación entre botones */
-    --pitos-dist-v: 1.8vh;
+    --pitos-dist-v: 2.9vh;
     /* Separación entre hileras */
     --pitos-fuente: 2.8vh;
     /* Tamaño de letra en botones */
@@ -66,7 +66,6 @@
     /* Siempre encima de todo */
     touch-action: auto !important;
     pointer-events: auto !important;
-
 }
 
 /* Efecto de brillo de la barra al cerrar (Rojo) */
@@ -77,20 +76,24 @@
 /* 4. EL TECLADO (CANVAS): Fondo y dimensiones dinámicas */
 .simulador-canvas {
     position: absolute;
-    bottom: 0; /* 📏 BASE AL SUELO (Como debe ser) */
+    bottom: 0;
+    /* 📏 BASE AL SUELO (Como debe ser) */
     left: 0;
     width: 100% !important;
-    /* La altura se ajusta desde el menú de opciones */
-    height: calc(45vh * var(--escala-acordeon, 1) + 80px + var(--offset-ios, 0px)) !important;
+    /* 📏 Altura dinámica: escala + espaciado + offset */
+    height: calc(45vh * var(--escala-acordeon, 1) + 60px + var(--offset-ios, 0px) + (var(--pitos-dist-v, 2.9vh) * 2)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
     background-repeat: no-repeat;
     display: flex;
-    flex-direction: column; /* 📏 Apilar hacia arriba */
-    justify-content: flex-start; /* 📏 Pegar a la barra herramientas */
+    flex-direction: column;
+    /* 📏 Apilar hacia arriba */
+    justify-content: flex-start;
+    /* 📏 Pegar a la barra herramientas */
     align-items: center;
-    gap: 0px; /* 📏 Sin gap en desktop, 0px en móvil */
+    gap: 0px;
+    /* 📏 Sin gap */
     transition: height 0.2s ease-out;
 }
 
@@ -174,7 +177,7 @@
 /* MODO HALAR (Abriendo - Azul) */
 .modo-halar .pito-boton.nota-activa {
     transform: translateY(4px) scale(0.98);
-    background: radial-gradient(circle at 35% 30%, #88bbfc 0%, #3b82f6 40%, #1e3a8a 100%) !important;
+    background: radial-gradient(circle at 35% 30%, #88bbfc 0%, var(--color-halar, #3b82f6) 40%, #1e3a8a 100%) !important;
     box-shadow:
         inset 0px 2px 4px rgba(255, 255, 255, 0.8),
         inset 0px -4px 10px rgba(0, 0, 0, 0.4),
@@ -186,7 +189,7 @@
 /* MODO EMPUJAR (Cerrando - Rojo) */
 .modo-empujar .pito-boton.nota-activa {
     transform: translateY(4px) scale(0.98);
-    background: radial-gradient(circle at 35% 30%, #ff8888 0%, #ef4444 40%, #991b1b 100%) !important;
+    background: radial-gradient(circle at 35% 30%, #ff8888 0%, var(--color-empujar, #ef4444) 40%, #991b1b 100%) !important;
     box-shadow:
         inset 0px 2px 4px rgba(255, 255, 255, 0.8),
         inset 0px -4px 10px rgba(0, 0, 0, 0.4),
@@ -197,7 +200,7 @@
 
 /* Etiquetas de las notas (C, D, E, etc.) */
 .nota-etiqueta {
-    font-size: var(--tamano-fuente-pitos, 2.8vh);
+    font-size: var(--pitos-fuente, 2.8vh);
     font-weight: 900;
     color: #222;
     pointer-events: none;
