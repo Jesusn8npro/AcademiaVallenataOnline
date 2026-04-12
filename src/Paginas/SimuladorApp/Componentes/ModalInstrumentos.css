@@ -3,7 +3,7 @@
 .modal-instrumentos-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000;
+    z-index: 10000 !important;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(2px);
 }
@@ -20,7 +20,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     box-shadow: 0 30px 100px rgba(0, 0, 0, 0.95), 0 0 50px rgba(59, 130, 246, 0.15);
-    z-index: 2001;
+    z-index: 10001 !important;
     color: white;
     display: flex;
     flex-direction: column;

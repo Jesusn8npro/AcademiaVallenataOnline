@@ -62,7 +62,43 @@
 
 .boton-herramienta.activo {
     border-color: #fb923c;
-    box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+    background: linear-gradient(180deg, #333 0%, #111 100%);
+    box-shadow:
+        inset 0px 2px 5px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(251, 146, 60, 0.6);
+    transform: translateY(2px);
+    /* Efecto de botón hundido */
+}
+
+/* 🔻 FLECHITA QUE APUNTA AL BOTÓN ACTIVO - VISIBLE SOBRE MODALES */
+.boton-herramienta.activo::after {
+    content: '';
+    position: fixed;
+    /* Usar variables CSS para posicionamiento dinámico */
+    left: var(--flecha-left, 0);
+    top: var(--flecha-top, 0);
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid #fb923c;
+    opacity: 1;
+    z-index: 9999;
+    /* ↑ CLAVE: Sobre todo, incluyendo modales y overlay */
+    animation: flecha-pulse 0.3s ease-out;
+    pointer-events: none;
+}
+
+@keyframes flecha-pulse {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .boton-herramienta span {

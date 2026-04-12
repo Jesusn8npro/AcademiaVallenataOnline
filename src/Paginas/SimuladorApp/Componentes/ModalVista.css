@@ -3,7 +3,7 @@
 .modal-vista-overlay {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: 10000 !important; /* 🚀 BASE MODAL */
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(0.5px);
 }
@@ -21,7 +21,7 @@
     border-radius: 20px;
     /* Un poco más compacto */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(59, 130, 246, 0.15);
-    z-index: 1001;
+    z-index: 10001 !important; /* 🚀 POR ENCIMA DEL OVERLAY */
     color: white;
     padding: 0;
     display: flex;
