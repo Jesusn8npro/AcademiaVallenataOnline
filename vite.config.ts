@@ -28,6 +28,7 @@ export default defineConfig({
   plugins: [
     react(),
     syncAudioPlugin(),
+    /*
     obfuscator({
       options: {
         compact: true,
@@ -57,6 +58,8 @@ export default defineConfig({
       include: ['**/*.js', '**/*.ts', '**/*.jsx', '**/*.tsx'],
       exclude: [/node_modules/],
     }),
+    */
+    // Ofuscador desactivado temporalmente para permitir un deploy rápido en Easypanel
   ],
   resolve: {
     alias: {
