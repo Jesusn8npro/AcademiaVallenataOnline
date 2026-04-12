@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { exec } from 'child_process'
 import path from 'path'
 
+import obfuscator from 'rollup-plugin-obfuscator';
+
 // Plugin para sincronizar audios automáticamente al detectar cambios en las carpetas de audio
 const syncAudioPlugin = () => ({
   name: 'sync-audio-plugin',
@@ -26,7 +28,43 @@ export default defineConfig({
   plugins: [
     react(),
     syncAudioPlugin(),
-    // Ofuscador desactivado temporalmente para diagnosticar error de carga en producción
+    obfuscator({
+      options: {
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.75,
+        deadCodeInjection: true,
+        deadCodeInjectionThreshold: 0.4,
+        debugProtection: true,
+        debugProtectionInterval: 4000,
+        disableConsoleOutput: false, // Permitimos consola para el aviso de seguridad
+        identifierNamesGenerator: 'hexadecimal',
+        log: false,
+        numbersToExpressions: true,
+        renameGlobals: false,
+        selfDefending: true,
+        simplify: true,
+        splitStrings: true,
+        splitStringsChunkLength: 10,
+        stringArray: true,
+        stringArrayCallsTransform: true,
+        stringArrayCallsTransformThreshold: 0.75,
+        stringArrayEncoding: ['base64'],
+        stringArrayIndexesType: ['hexadecimal-number'],
+        stringArrayIndexShift: true,
+        stringArrayRotate: true,
+        stringArrayShuffle: true,
+        stringArrayWrappersCount: 2,
+        stringArrayWrappersChainedCalls: true,
+        stringArrayWrappersParametersMaxCount: 4,
+        stringArrayWrappersType: 'variable',
+        stringArrayThreshold: 0.75,
+        transformObjectKeys: true,
+        unicodeEscapeSequence: false
+      },
+      include: ['**/*.js', '**/*.ts', '**/*.jsx', '**/*.tsx'],
+      exclude: [/node_modules/],
+    }),
   ],
   resolve: {
     alias: {
