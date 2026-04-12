@@ -1,7 +1,7 @@
 /**
  * 🎹 SIMULADOR DE ACORDEÓN PRO - V19.2 (Optimizado)
  */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 
@@ -73,31 +73,32 @@ const SimuladorApp: React.FC = () => {
     const secuenciaRef = useRef<any[]>([]);
     const tiempoInicioRef = useRef<number>(0);
 
-    // 4. Utilidades
-    const actualizarVisualBoton = (pos: string, activo: boolean, esBajo: boolean) => {
-        // Buscamos el botón específico: si es bajo, buscamos dentro de su contenedor
-        const selector = esBajo 
-            ? `.boton-bajo-contenedor[title*="${pos}"], .boton-bajo-contenedor` // Fallback para bajos
-            : `.boton-pito[data-pos="${pos}"]`;
-            
-        // En el caso de SimuladorApp, los pitos usan data-pos
-        const el = document.querySelector(`.boton[data-pos="${pos}"]${esBajo ? '': ':not(.bajo)'}`) as HTMLElement;
-        
-        // Pero para ser 100% seguros y limpios, usamos la clase que acabamos de meter:
-        const botones = document.querySelectorAll(`[data-pos="${pos}"]`);
-        botones.forEach((btn: any) => {
-            const botonEsBajo = btn.classList.contains('boton-bajo-contenedor') || btn.closest('.contenedor-bajos-wrapper');
-            if (esBajo && botonEsBajo) {
-                activo ? btn.classList.add('activo') : btn.classList.remove('activo');
-            } else if (!esBajo && !botonEsBajo) {
-                activo ? btn.classList.add('nota-activa') : btn.classList.remove('nota-activa');
-            }
-        });
-    };
+    // 4. Caché de elementos DOM para evitar querySelectorAll en cada toque
+    const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
 
-    const registrarEvento = (tipo: string, data: any) => {
+    // ⚡ Utilidades optimizadas con useCallback
+    const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
+        let cached = elementosCache.current.get(pos);
+
+        // Primera búsqueda: cachear los elementos
+        if (!cached) {
+            const pito = document.querySelector(`.pito-boton[data-pos="${pos}"]`);
+            const bajo = document.querySelector(`.boton-bajo-contenedor[data-pos="${pos}"]`);
+            cached = { pito, bajo };
+            elementosCache.current.set(pos, cached);
+        }
+
+        // Actualizar clases (muy rápido porque ya tenemos el ref)
+        if (esBajo && cached.bajo) {
+            activo ? cached.bajo.classList.add('activo') : cached.bajo.classList.remove('activo');
+        } else if (!esBajo && cached.pito) {
+            activo ? cached.pito.classList.add('nota-activa') : cached.pito.classList.remove('nota-activa');
+        }
+    }, []);
+
+    const registrarEvento = useCallback((tipo: string, data: any) => {
         if (grabando) secuenciaRef.current.push({ t: Date.now() - tiempoInicioRef.current, tipo, ...data });
-    };
+    }, [grabando]);
 
     // 🌟 FUNCIÓN PARA FORMATEAR EL NOMBRE DE LA NOTA SEGÚN EL MODO
     const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
@@ -120,14 +121,17 @@ const SimuladorApp: React.FC = () => {
         return mostrarOctavas ? `${notaBase}${octava}` : notaBase;
     };
 
+    // ⚡ Memoizar si está desactivado audio (evitar recalcular en cada render)
+    const desactivarAudio = useMemo(() => Object.values(modales).some(v => v), [modales]);
+
     // 5. Hook de Entrada (PointerEvents Engine)
-    const { manejarCambioFuelle } = usePointerAcordeon({ 
-        x, 
-        logica, 
-        actualizarVisualBoton, 
-        registrarEvento, 
+    const { manejarCambioFuelle } = usePointerAcordeon({
+        x,
+        logica,
+        actualizarVisualBoton,
+        registrarEvento,
         trenRef,
-        desactivarAudio: Object.values(modales).some(v => v)
+        desactivarAudio
     });
 
     // 6. Efectos
@@ -144,6 +148,11 @@ const SimuladorApp: React.FC = () => {
             document.body.classList.remove('bloquear-scroll-simulador');
         };
     }, []);
+
+    // ⚡ Limpiar caché de elementos cuando cambia la tonalidad (se re-renderizan los botones)
+    useEffect(() => {
+        elementosCache.current.clear();
+    }, [logica.tonalidadSeleccionada]);
 
     useEffect(() => {
         document.documentElement.style.setProperty('--escala-acordeon', escala.toString());
@@ -192,7 +201,7 @@ const SimuladorApp: React.FC = () => {
                 logica={logica}
                 escala={escala}
                 manejarCambioFuelle={manejarCambioFuelle}
-                desactivarAudio={Object.values(modales).some(v => v)}
+                desactivarAudio={desactivarAudio}
                 vistaDoble={config.vistaDoble} // 👈 CONECTADO
             />
 

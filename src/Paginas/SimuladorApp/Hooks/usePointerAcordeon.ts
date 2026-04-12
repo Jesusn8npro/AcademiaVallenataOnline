@@ -4,7 +4,7 @@ import { MotionValue } from 'framer-motion';
 interface PointerLogicProps {
     x: MotionValue<number>;
     logica: any;
-    actualizarVisualBoton: (pos: string, activo: boolean) => void;
+    actualizarVisualBoton: (pos: string, activo: boolean, esBajo: boolean) => void;
     registrarEvento: (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => void;
     trenRef: React.RefObject<HTMLDivElement>;
     desactivarAudio?: boolean;
@@ -16,6 +16,10 @@ export const usePointerAcordeon = ({
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
+
+    // 🚀 THROTTLING: RAF para pointermove (reduce de 120 eventos/seg a 1 por frame)
+    const rafPendingRef = useRef<number | null>(null);
+    const pendingMoveRef = useRef<Map<number, PointerEvent>>(new Map());
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -44,7 +48,8 @@ export const usePointerAcordeon = ({
         };
 
         window.addEventListener('resize', actualizarGeometriaBase);
-        setTimeout(actualizarGeometriaBase, 1000);
+        // ⚡ Carga inmediata en el próximo frame (no esperar 1 segundo)
+        requestAnimationFrame(actualizarGeometriaBase);
 
         const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
             if (!lastTrenRect.current) return null;
@@ -68,38 +73,50 @@ export const usePointerAcordeon = ({
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
-                actualizarVisualBoton(pos, true);
+                actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
             }
         };
 
-        const handlePointerMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
+        // 🎯 Función central que procesa un evento de movimiento
+        const procesarMove = (e: PointerEvent, pointerId: number) => {
+            const data = pointersMap.current.get(pointerId);
             if (!data) return;
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
             if (pos !== data.pos) {
                 if (data.pos) {
                     logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                    actualizarVisualBoton(data.pos, false);
+                    actualizarVisualBoton(data.pos, false, false);
                     registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
-                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId });
+                    pointersMap.current.set(pointerId, { pos, musicalId: newMId });
                     logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
-                    actualizarVisualBoton(pos, true);
+                    actualizarVisualBoton(pos, true, false);
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
-                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
+                    pointersMap.current.set(pointerId, { pos: '', musicalId: '' });
                 }
             }
+        };
+
+        // ⚡ RAF-throttled pointermove: acumula eventos y procesa en batch
+        const handlePointerMove = (e: PointerEvent) => {
+            pendingMoveRef.current.set(e.pointerId, e);
+            if (rafPendingRef.current !== null) return; // Ya hay un frame pendiente
+            rafPendingRef.current = requestAnimationFrame(() => {
+                rafPendingRef.current = null;
+                pendingMoveRef.current.forEach((ev, pId) => procesarMove(ev, pId));
+                pendingMoveRef.current.clear();
+            });
         };
 
         const handlePointerUp = (e: PointerEvent) => {
             const data = pointersMap.current.get(e.pointerId);
             if (data?.pos) {
                 logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
-                actualizarVisualBoton(data.pos, false);
+                actualizarVisualBoton(data.pos, false, false);
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
             pointersMap.current.delete(e.pointerId);
@@ -116,6 +133,11 @@ export const usePointerAcordeon = ({
             document.removeEventListener('pointermove', handlePointerMove, { capture: true });
             document.removeEventListener('pointerup', handlePointerUp, { capture: true });
             document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
+            // Limpiar RAF pendiente
+            if (rafPendingRef.current !== null) {
+                cancelAnimationFrame(rafPendingRef.current);
+                rafPendingRef.current = null;
+            }
         };
     }, [x, actualizarVisualBoton, registrarEvento, trenRef]);
 
