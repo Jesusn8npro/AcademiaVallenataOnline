@@ -77,7 +77,7 @@
 /* 4. EL TECLADO (CANVAS): Fondo y dimensiones dinámicas */
 .simulador-canvas {
     position: absolute;
-    bottom: 0;
+    bottom: 0; /* 📏 BASE AL SUELO (Como debe ser) */
     left: 0;
     width: 100% !important;
     /* La altura se ajusta desde el menú de opciones */
