@@ -33,6 +33,7 @@ const ControlSliderCSS: React.FC<{
 }> = ({ label, variable, icon, min = 0, max = 15 }) => {
     const [valor, setValor] = useState(0);
 
+    // 🔄 LEER ÚNICAMENTE DEL CSS - SIN SOBRESCRITURAS
     useEffect(() => {
         const style = getComputedStyle(document.documentElement);
         const current = style.getPropertyValue(variable).trim();
@@ -42,9 +43,8 @@ const ControlSliderCSS: React.FC<{
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const v = parseFloat(e.target.value);
         setValor(v);
+        // ✅ SOLO para preview temporal - SIN localStorage
         document.documentElement.style.setProperty(variable, `${v}vh`);
-        // 💾 GUARDADO AUTOMÁTICO
-        localStorage.setItem(`sim_cfg_${variable}`, `${v}vh`);
     };
 
     return (
@@ -132,17 +132,19 @@ const MenuOpciones: React.FC<MenuOpcionesProps> = ({
     if (!visible) return null;
 
     const restaurarTodo = () => {
-        const defaults = {
-            '--pitos-dist-h': '4.8vh',
-            '--pitos-dist-v': '2.8vh',
-            '--bajos-dist-h': '2.5vh',
-            '--bajos-dist-v': '0.8vh',
+        // ✅ RESTAURAR DESDE CSS (:root) - NO HARDCODED
+        // Los valores se restauran a lo que está en SimuladorApp.css
+        const style = getComputedStyle(document.documentElement);
+        const cssValues = {
+            '--pitos-dist-h': style.getPropertyValue('--pitos-dist-h').trim(),
+            '--pitos-dist-v': style.getPropertyValue('--pitos-dist-v').trim(),
+            '--bajos-dist-h': style.getPropertyValue('--bajos-dist-h').trim(),
+            '--bajos-dist-v': style.getPropertyValue('--bajos-dist-v').trim(),
             '--offset-ios': '0px'
         };
-        
-        Object.entries(defaults).forEach(([variable, valor]) => {
-            document.documentElement.style.setProperty(variable, valor);
-            localStorage.removeItem(`sim_cfg_${variable}`);
+
+        Object.entries(cssValues).forEach(([variable, valor]) => {
+            if (valor) document.documentElement.style.removeProperty(variable);
         });
 
         setAlejarIOS(false);

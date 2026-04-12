@@ -91,16 +91,9 @@ const SimuladorApp: React.FC = () => {
 
     // 6. Efectos
     useEffect(() => {
-        // 🔄 CARGADOR DE CONFIGURACIÓN (Restaurar ajustes guardados)
-        const variables = [
-            '--pitos-dist-h', '--pitos-dist-v', '--pitos-fuente',
-            '--bajos-dist-h', '--bajos-dist-v', '--offset-ios'
-        ];
-        
-        variables.forEach(v => {
-            const saved = localStorage.getItem(`sim_cfg_${v}`);
-            if (saved) document.documentElement.style.setProperty(v, saved);
-        });
+        // 🔄 TODO VIENE DEL CSS - SIN SOBRESCRITURAS DE JAVASCRIPT
+        // Los estilos se controlan ÚNICAMENTE desde SimuladorApp.css (:root)
+        // Nota: localStorage ya no sobrescribe los valores del CSS
 
         const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
         window.addEventListener('resize', check);
