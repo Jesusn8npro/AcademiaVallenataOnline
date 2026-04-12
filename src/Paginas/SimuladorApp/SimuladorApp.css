@@ -81,14 +81,16 @@
     left: 0;
     width: 100% !important;
     /* La altura se ajusta desde el menú de opciones */
-    height: calc(45vh * var(--escala-acordeon, 1) + 90px + var(--offset-ios, 0px)) !important;
+    height: calc(45vh * var(--escala-acordeon, 1) + 80px + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
     background-repeat: no-repeat;
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* 📏 Apilar hacia arriba */
+    justify-content: flex-start; /* 📏 Pegar a la barra herramientas */
     align-items: center;
+    gap: 4px; /* 📏 El pequeño margen de tu imagen 3 */
     transition: height 0.2s ease-out;
 }
 
