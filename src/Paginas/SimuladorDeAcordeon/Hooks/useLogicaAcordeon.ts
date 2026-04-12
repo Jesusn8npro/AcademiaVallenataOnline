@@ -640,7 +640,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 setBotonesActivos(newState);
             }
 
-            onNotaPresionada?.({ idBoton: id, nombre: id });
+            // ⚡ Solo disparar callback si no es silencioso (evita actualizar DOM innecesariamente)
+            if (!silencioso) onNotaPresionada?.({ idBoton: id, nombre: id });
         } else {
             // Solo removemos si realmente existe
             if (!botonesActivosRef.current[id]) return;
@@ -656,7 +657,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 setBotonesActivos(newState);
             }
 
-            onNotaLiberada?.({ idBoton: id, nombre: id });
+            // ⚡ Solo disparar callback si no es silencioso (evita actualizar DOM innecesariamente)
+            if (!silencioso) onNotaLiberada?.({ idBoton: id, nombre: id });
         }
     }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
 
