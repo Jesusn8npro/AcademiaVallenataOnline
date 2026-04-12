@@ -32,8 +32,8 @@ export default defineConfig({
       options: {
         compact: true,
         controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.5,
-        deadCodeInjection: false, // Desactivado para que el build no se cuelgue
+        controlFlowFlatteningThreshold: 0.15, // Solo lo más crítico para ir rápido
+        deadCodeInjection: false,
         debugProtection: true,
         debugProtectionInterval: 4000,
         disableConsoleOutput: false,
@@ -43,15 +43,14 @@ export default defineConfig({
         renameGlobals: false,
         selfDefending: true,
         simplify: true,
-        splitStrings: true,
-        splitStringsChunkLength: 5,
+        splitStrings: false, // 🚀 TURBO: Desactivado para acelerar el build
         stringArray: true,
         stringArrayCallsTransform: true,
         stringArrayEncoding: ['base64'],
         stringArrayRotate: true,
         stringArrayShuffle: true,
         stringArrayWrappersCount: 1,
-        stringArrayThreshold: 0.75,
+        stringArrayThreshold: 0.5,
         transformObjectKeys: true,
         unicodeEscapeSequence: false
       },
