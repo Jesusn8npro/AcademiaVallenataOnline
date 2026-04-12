@@ -90,7 +90,7 @@
     flex-direction: column; /* 📏 Apilar hacia arriba */
     justify-content: flex-start; /* 📏 Pegar a la barra herramientas */
     align-items: center;
-    gap: 4px; /* 📏 El pequeño margen de tu imagen 3 */
+    gap: 0px; /* 📏 Sin gap en desktop, 0px en móvil */
     transition: height 0.2s ease-out;
 }
 

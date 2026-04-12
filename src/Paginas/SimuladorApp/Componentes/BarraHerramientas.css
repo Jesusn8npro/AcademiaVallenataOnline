@@ -2,7 +2,7 @@
 
 .barra-herramientas-contenedor {
     position: absolute;
-    top: 10px;
+    top: 8px;
     bottom: auto;
     left: 0;
     right: 0;
@@ -19,6 +19,13 @@
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
     z-index: 200;
     overflow: hidden;
+}
+
+/* 📱 AJUSTE PARA MÓVIL/IPHONE: Reduce el top para cerrar el gap */
+@media (max-width: 768px) {
+    .barra-herramientas-contenedor {
+        top: 4px;
+    }
 }
 
 .seccion-barra {
