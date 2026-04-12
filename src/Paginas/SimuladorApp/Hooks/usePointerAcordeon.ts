@@ -70,6 +70,17 @@ export const usePointerAcordeon = ({
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
             if (pos) {
+                // ⚡ AUTO-DETECTAR DIRECCIÓN: Si tocas en la zona inferior = empujar, superior = halar
+                // Esto permite ejecutar rápido SIN necesidad de mantener dedo en el fuelle
+                const ventanaAltura = window.innerHeight;
+                const zonaFuelle = ventanaAltura * 0.15; // Los 15% inferiores de la pantalla
+                const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
+
+                // Cambiar dirección automáticamente si tocas el fuelle
+                if (esZonaFuelle && logicaRef.current.direccion === 'halar') {
+                    logicaRef.current.setDireccion('empujar');
+                }
+
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
@@ -82,6 +93,18 @@ export const usePointerAcordeon = ({
         const procesarMove = (e: PointerEvent, pointerId: number) => {
             const data = pointersMap.current.get(pointerId);
             if (!data) return;
+
+            // ⚡ AUTO-DETECTAR DIRECCIÓN: Si deslizas hacia zona inferior = empujar
+            const ventanaAltura = window.innerHeight;
+            const zonaFuelle = ventanaAltura * 0.15;
+            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
+
+            if (esZonaFuelle && logicaRef.current.direccion === 'halar') {
+                logicaRef.current.setDireccion('empujar');
+            } else if (!esZonaFuelle && logicaRef.current.direccion === 'empujar' && pointersMap.current.size <= 1) {
+                logicaRef.current.setDireccion('halar');
+            }
+
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
             if (pos !== data.pos) {
                 if (data.pos) {
@@ -120,6 +143,16 @@ export const usePointerAcordeon = ({
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
             pointersMap.current.delete(e.pointerId);
+
+            // ⚡ Volver a HALAR cuando no hay dedos presionados (excepto en zona del fuelle)
+            const ventanaAltura = window.innerHeight;
+            const zonaFuelle = ventanaAltura * 0.15;
+            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
+
+            // Si levantamos fuera de la zona del fuelle y no hay más dedos, volver a HALAR
+            if (!esZonaFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
+                logicaRef.current.setDireccion('halar');
+            }
         };
 
         document.addEventListener('pointerdown', handlePointerDown, { capture: true });
