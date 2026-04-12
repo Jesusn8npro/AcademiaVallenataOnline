@@ -1,21 +1,9 @@
 {
   "name": "Academia Vallenata Online",
   "description": "Plataforma educativa para acordeón vallenato",
-  "keywords": ["svelte", "sveltekit", "nodejs", "education"],
+  "keywords": ["react", "vite", "nodejs", "education"],
   "website": "https://academia-vallenata-online.com",
-  "repository": "https://github.com/Jesusn8npro/AcademiaVallenataOnline2",
-  "buildpacks": [
-    {
-      "url": "heroku/nodejs"
-    }
-  ],
-  "formation": {
-    "web": {
-      "quantity": 1,
-      "size": "basic"
-    }
-  },
-  "addons": [],
+  "repository": "https://github.com/Jesusn8npro/AcademiaVallenataOnline",
   "env": {
     "NODE_ENV": {
       "description": "Node environment",
@@ -26,4 +14,4 @@
       "value": "false"
     }
   }
-} 
+}

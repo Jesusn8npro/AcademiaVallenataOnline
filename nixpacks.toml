@@ -1,15 +1,15 @@
-
 [variables]
-NIXPACKS_NODE_VERSION = "22"
+    NODE_ENV = "production"
+    NIXPACKS_METRI_MODE = "true"
 
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+    nixPkgs = ["nodejs-22_x", "python3", "pkg-config"]
 
 [phases.install]
-cmds = ["npm ci --include=dev --legacy-peer-deps"]
+    cmds = ["npm install --include=dev --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["npm run build"]
+    cmds = ["npm run build"]
 
 [start]
-cmd = "npm run preview"
+    cmd = "npm run preview"
