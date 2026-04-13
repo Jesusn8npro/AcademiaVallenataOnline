@@ -1,6 +1,7 @@
 [variables]
     NODE_ENV = "production"
     NIXPACKS_METRI_MODE = "true"
+    NODE_OPTIONS = "--max-old-space-size=4096"
 
 [phases.setup]
     nixPkgs = ["nodejs", "python3", "pkg-config"]

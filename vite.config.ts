@@ -31,10 +31,8 @@ export default defineConfig({
     obfuscator({
       options: {
         compact: true,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.75,
-        deadCodeInjection: true,
-        deadCodeInjectionThreshold: 0.4,
+        controlFlowFlattening: false, // Desactivado por ser extremadamente pesado para la memoria
+        deadCodeInjection: false,     // Desactivado para evitar el inflado excesivo del código
         debugProtection: true,
         debugProtectionInterval: 4000,
         disableConsoleOutput: false,
