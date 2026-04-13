@@ -28,41 +28,7 @@ export default defineConfig({
   plugins: [
     react(),
     syncAudioPlugin(),
-    obfuscator({
-      options: {
-        compact: true,
-        controlFlowFlattening: false, // Desactivado por ser extremadamente pesado para la memoria
-        deadCodeInjection: false,     // Desactivado para evitar el inflado excesivo del código
-        debugProtection: true,
-        debugProtectionInterval: 4000,
-        disableConsoleOutput: false,
-        identifierNamesGenerator: 'hexadecimal',
-        log: false,
-        numbersToExpressions: true,
-        renameGlobals: false,
-        selfDefending: true,
-        simplify: true,
-        splitStrings: true,
-        splitStringsChunkLength: 10,
-        stringArray: true,
-        stringArrayCallsTransform: true,
-        stringArrayCallsTransformThreshold: 0.75,
-        stringArrayEncoding: ['base64'],
-        stringArrayIndexesType: ['hexadecimal-number'],
-        stringArrayIndexShift: true,
-        stringArrayRotate: true,
-        stringArrayShuffle: true,
-        stringArrayWrappersCount: 2,
-        stringArrayWrappersChainedCalls: true,
-        stringArrayWrappersParametersMaxCount: 4,
-        stringArrayWrappersType: 'variable',
-        stringArrayThreshold: 0.75,
-        transformObjectKeys: true,
-        unicodeEscapeSequence: false
-      },
-      include: /\.(js|ts|jsx|tsx)$/,
-      exclude: /node_modules/,
-    }),
+    // obfuscator({ ... }) // COMENTADO TEMPORALMENTE: Está tumbando el servidor por falta de recursos
   ],
   resolve: {
     alias: {
