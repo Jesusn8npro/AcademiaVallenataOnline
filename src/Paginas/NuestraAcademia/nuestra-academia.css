@@ -17,7 +17,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('/images/Jesus-Gonzalez--Fondo.jpg') center/cover;
+    /* background: url('/images/Jesus-Gonzalez--Fondo.jpg') center/cover; */
+    background: linear-gradient(135deg, rgba(255,102,0,.05) 0%, rgba(255,140,66,.05) 100%);
     opacity: .1;
     z-index: 0
 }
