@@ -28,13 +28,13 @@ export default defineConfig({
   plugins: [
     react(),
     syncAudioPlugin(),
-    /*
     obfuscator({
       options: {
         compact: true,
         controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.15, // Solo lo más crítico para ir rápido
-        deadCodeInjection: false,
+        controlFlowFlatteningThreshold: 0.75,
+        deadCodeInjection: true,
+        deadCodeInjectionThreshold: 0.4,
         debugProtection: true,
         debugProtectionInterval: 4000,
         disableConsoleOutput: false,
@@ -44,22 +44,27 @@ export default defineConfig({
         renameGlobals: false,
         selfDefending: true,
         simplify: true,
-        splitStrings: false, // 🚀 TURBO: Desactivado para acelerar el build
+        splitStrings: true,
+        splitStringsChunkLength: 10,
         stringArray: true,
         stringArrayCallsTransform: true,
+        stringArrayCallsTransformThreshold: 0.75,
         stringArrayEncoding: ['base64'],
+        stringArrayIndexesType: ['hexadecimal-number'],
+        stringArrayIndexShift: true,
         stringArrayRotate: true,
         stringArrayShuffle: true,
-        stringArrayWrappersCount: 1,
-        stringArrayThreshold: 0.5,
+        stringArrayWrappersCount: 2,
+        stringArrayWrappersChainedCalls: true,
+        stringArrayWrappersParametersMaxCount: 4,
+        stringArrayWrappersType: 'variable',
+        stringArrayThreshold: 0.75,
         transformObjectKeys: true,
         unicodeEscapeSequence: false
       },
-      include: ['**/*.js', '**/*.ts', '**/*.jsx', '**/*.tsx'],
-      exclude: [/node_modules/],
+      include: /\.(js|ts|jsx|tsx)$/,
+      exclude: /node_modules/,
     }),
-    */
-    // Ofuscador desactivado temporalmente para permitir un deploy rápido en Easypanel
   ],
   resolve: {
     alias: {
