@@ -16,6 +16,7 @@ import BarraTransporte from '../Modos/BarraTransporte';
 import ModalGuardarHero from '../../SimuladorDeAcordeon/Componentes/ModalGuardarHero';
 import PuenteNotas from '../Componentes/PuenteNotas';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
+import { useAudioFondoPracticaLibre } from './Hooks/useAudioFondoPracticaLibre';
 import './EstudioPracticaLibre.css';
 
 interface EstudioPracticaLibreProps {
@@ -211,6 +212,21 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
 
   // Estados de grabación
   const [metronomoActivo, setMetronomoActivo] = React.useState(false);
+
+  // 🎵 Hook para sincronizar audio de fondo con reproducción
+  const audioRef = useAudioFondoPracticaLibre({
+    reproduciendo,
+    pausado,
+    bpm,
+    tickActual,
+    cancionData: {
+      bpm: bpm,
+      resolucion: 192,
+      audio_fondo_url: pistaUrl
+    },
+    audioUrl: pistaUrl,
+    volumen: 0.8
+  });
 
   // Cargar sonidos de metrónomo al iniciar
   React.useEffect(() => {
