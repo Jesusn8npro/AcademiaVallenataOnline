@@ -73,10 +73,10 @@ import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
 import AgenciaIAPage from './Paginas/AgenciaIA';
 import GrabadorHero from './Paginas/SimuladorDeAcordeon/videojuego_acordeon/GrabadorHero';
 // import HomeProMax from './Paginas/AcordeonProMax/HomeProMax'; (line neighbor)
-import HomeProMax from './Paginas/AcordeonProMax/HomeProMax';
-import ListaCancionesProMax from './Paginas/AcordeonProMax/ListaCancionesProMax';
-import ConfiguracionProMax from './Paginas/AcordeonProMax/ConfiguracionProMax';
-import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/AcordeonProMaxSimulador';
+import HomeProMax from './Paginas/AcordeonProMax/Pantallas/HomeProMax';
+import ListaCancionesProMax from './Paginas/AcordeonProMax/Pantallas/ListaCancionesProMax';
+import ConfiguracionProMax from './Paginas/AcordeonProMax/Pantallas/ConfiguracionProMax';
+import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxSimulador';
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'

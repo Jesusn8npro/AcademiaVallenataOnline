@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ListaCancionesProMax.css';
-import NavbarProMax from './Componentes/NavbarProMax';
-import DetalleCancionProMax from './Componentes/DetalleCancionProMax';
-import FondoEspacialProMax from './Componentes/FondoEspacialProMax';
-import { useCancionesProMax } from './Hooks/useLogicaProMax';
-import type { CancionHeroConTonalidad } from './TiposProMax';
+import NavbarProMax from '../Componentes/NavbarProMax';
+import DetalleCancionProMax from '../Componentes/DetalleCancionProMax';
+import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
+import { useCancionesProMax } from '../Hooks/useLogicaProMax';
+import type { CancionHeroConTonalidad } from '../TiposProMax';
 import { Howl } from 'howler';
 import { supabase } from '../../servicios/clienteSupabase';
 import { useUsuario } from '../../contextos/UsuarioContext';
