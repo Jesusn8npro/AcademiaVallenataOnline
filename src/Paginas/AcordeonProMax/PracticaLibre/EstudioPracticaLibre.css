@@ -1,7 +1,7 @@
 .estudio-practica-libre {
-  --estudio-acordeon-tamano: min(68vh, 57vw);
+  --estudio-acordeon-tamano: min(70vh, 65vw);
   --estudio-acordeon-x: 50%;
-  --estudio-acordeon-y: 48%;
+  --estudio-acordeon-y: 60%;
   position: relative;
   width: 100%;
   height: 100%;
@@ -682,4 +682,26 @@
   .estudio-practica-libre-btn-grabar {
     flex: 1 1 130px;
   }
+}
+
+@media (max-width: 560px) {
+  .estudio-practica-libre-transport-fixed {
+    bottom: 10px;
+    width: 100%;
+  }
+}
+
+.estudio-practica-libre-transport-fixed {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 1200px;
+  z-index: 2000;
+  pointer-events: auto;
+}
+
+.estudio-practica-libre-area-acordeon {
+  margin-bottom: 120px;
 }

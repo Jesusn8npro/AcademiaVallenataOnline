@@ -11,7 +11,8 @@ export interface GrabacionEstudianteHero {
     origen: string;
     titulo: string | null;
     descripcion: string | null;
-    secuencia_grabada: NotaHero[];
+    secuencia_json?: NotaHero[];
+    secuencia_grabada?: NotaHero[];
     bpm: number;
     resolucion: number;
     tonalidad: string | null;
@@ -30,9 +31,11 @@ export interface GrabacionEstudianteHero {
 export interface DatosGuardarGrabacionHero {
     cancion_id?: string | null;
     modo: ModoGrabacionHero;
+    origen?: string;
     titulo?: string;
     descripcion?: string | null;
-    secuencia_grabada: NotaHero[];
+    secuencia_grabada?: NotaHero[];
+    secuencia?: NotaHero[];
     bpm: number;
     resolucion?: number;
     tonalidad?: string | null;
@@ -135,21 +138,26 @@ async function validarPublicacionesActivasDeGrabaciones(grabaciones: any[], usua
 export async function guardarGrabacion(datos: DatosGuardarGrabacionHero): Promise<GrabacionEstudianteHero> {
     const usuario = await obtenerUsuarioAutenticado();
 
+    const secuencia = datos.secuencia_grabada || datos.secuencia || [];
+
     const payload = {
         usuario_id: usuario.id,
         cancion_id: datos.cancion_id || null,
         modo: datos.modo,
+        origen: datos.origen || 'practica_libre',
         titulo: datos.titulo?.trim() || null,
         descripcion: datos.descripcion?.trim() || null,
-        secuencia_grabada: datos.secuencia_grabada,
+        secuencia_json: secuencia,
         bpm: datos.bpm,
         resolucion: datos.resolucion ?? 192,
         tonalidad: datos.tonalidad || null,
         duracion_ms: datos.duracion_ms ?? 0,
         precision_porcentaje: datos.precision_porcentaje ?? null,
         puntuacion: datos.puntuacion ?? null,
-        notas_totales: datos.notas_totales ?? datos.secuencia_grabada.length,
+        notas_totales: datos.notas_totales ?? secuencia.length,
         notas_correctas: datos.notas_correctas ?? null,
+        es_publica: false,
+        publicacion_id: null,
         metadata: datos.metadata ?? {}
     };
 

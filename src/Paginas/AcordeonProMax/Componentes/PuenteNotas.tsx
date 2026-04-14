@@ -87,10 +87,11 @@ function obtenerEtiqueta(botonId: string, modoVista: ModoVista, configTonalidad:
 
 const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerPosicionMaestro, obtenerPosicionAlumno, modoVista, configTonalidad, notasImpactadas }) => {
   const notasEnVuelo = useMemo<DatosNota[]>(() => {
+    if (!cancion || !cancion.secuencia || !Array.isArray(cancion.secuencia)) return [];
+    
     const resultado: DatosNota[] = [];
     const windowStart = tickActual - 60; // Dejamos ver un poco más hacia atrás
     const windowEnd = tickActual + TICKS_VIAJE + 40;
-
     for (const nota of cancion.secuencia) {
       if (nota.tick < windowStart || (nota.tick - TICKS_VIAJE) > windowEnd) continue;
 

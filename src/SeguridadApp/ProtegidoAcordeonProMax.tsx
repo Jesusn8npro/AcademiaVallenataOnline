@@ -11,9 +11,11 @@ interface Props {
  * - Usuarios normales: ven página "Próximamente"
  */
 const ProtegidoAcordeonProMax: React.FC<Props> = ({ children }) => {
-    const { esAdmin } = useUsuario();
+    const { esAdmin, usuario } = useUsuario();
 
-    if (esAdmin) {
+    const emailAutorizado = usuario?.email?.toLowerCase().trim() === 'shalom@gmail.com';
+
+    if (esAdmin || emailAutorizado) {
         return <>{children}</>;
     }
 

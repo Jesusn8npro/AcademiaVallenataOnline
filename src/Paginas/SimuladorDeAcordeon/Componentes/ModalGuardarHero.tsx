@@ -191,7 +191,7 @@ const ModalGuardarHero: React.FC<ModalGuardarHeroProps> = ({
 
 const overlayStyle: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
-    backdropFilter: 'blur(10px)', zIndex: 99999,
+    backdropFilter: 'blur(10px)', zIndex: 9999999,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '16px'
 };

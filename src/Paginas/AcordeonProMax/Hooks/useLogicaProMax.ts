@@ -250,12 +250,18 @@ export function useLogicaProMax() {
     }
   }, []);
 
-  const iniciarCaptura = useCallback((tipo: TipoGrabacionPendiente) => {
+  const iniciarCaptura = useCallback((tipo: TipoGrabacionPendiente, secuenciaBase?: NotaHero[], tickInicio?: number) => {
     limpiarEstadoGrabaciones();
     inicioCronometroGrabacionRef.current = Date.now();
     setTiempoGrabacionMs(0);
     modoGrabacionActivaRef.current = tipo;
-    iniciarGrabacionHeroRef.current();
+
+    // Soporta PUNCH-IN: pasar secuencia existente y tick de inicio
+    if (secuenciaBase && tickInicio !== undefined) {
+      iniciarGrabacionHeroRef.current(secuenciaBase, tickInicio);
+    } else {
+      iniciarGrabacionHeroRef.current();
+    }
   }, [limpiarEstadoGrabaciones]);
 
   const finalizarCapturaActiva = useCallback(() => {
@@ -328,9 +334,9 @@ export function useLogicaProMax() {
     setErrorGuardadoGrabacion(null);
   }, [finalizarCapturaActiva]);
 
-  const iniciarGrabacionPracticaLibre = useCallback(async () => {
-    await motorAudioPro.activarContexto();
-    iniciarCaptura('practica_libre');
+  const iniciarGrabacionPracticaLibre = useCallback((tipo: 'practica_libre' | 'competencia' = 'practica_libre') => {
+    iniciarCaptura(tipo);
+    // IMPORTANTE: No cambiamos estadoJuego aquí para no desmontar el estudio de práctica libre
   }, [iniciarCaptura]);
 
   const detenerGrabacionPracticaLibre = useCallback(() => {
@@ -382,14 +388,36 @@ export function useLogicaProMax() {
     setErrorGuardadoGrabacion(null);
   }, []);
 
-  const guardarGrabacionPendiente = useCallback(async (titulo: string, descripcion: string) => {
-    const pendiente = grabacionPendienteRef.current;
+  const guardarGrabacionPendiente = useCallback(async (datos: any) => {
+    // Si viene con secuencia directa (desde EstudioPracticaLibre), crear pendiente temporal
+    let pendiente = grabacionPendienteRef.current;
+    if (!pendiente && datos.secuencia) {
+      console.log('🔧 Creando pendiente temporal desde datos directos...');
+      pendiente = {
+        tipo: datos.tipo || 'practica_libre',
+        secuencia: datos.secuencia,
+        bpm: datos.bpm || 120,
+        tonalidad: datos.tonalidad || 'ADG',
+        duracionMs: datos.duracionMs || 0,
+        tituloSugerido: datos.titulo || 'Grabación',
+        tickFinal: 0,
+        resolucion: 192,
+        precisionPorcentaje: 0,
+        puntuacion: 0,
+        notasTotales: datos.secuencia?.length || 0,
+        notasCorrectas: datos.secuencia?.length || 0,
+        cancionId: null,
+        metadata: {
+          audio_fondo_url: datos.pistaUrl || null,
+        }
+      };
+    }
 
     if (!pendiente) return false;
 
-    const tituloLimpio = titulo.trim();
+    const tituloLimpio = datos.titulo?.trim();
     if (!tituloLimpio) {
-      setErrorGuardadoGrabacion('Debes escribir un titulo para guardar la grabacion.');
+      setErrorGuardadoGrabacion('Debes escribir un titulo.');
       return false;
     }
 
@@ -397,32 +425,58 @@ export function useLogicaProMax() {
     setErrorGuardadoGrabacion(null);
 
     try {
-      const grabacion = await guardarGrabacion({
-        cancion_id: pendiente.cancionId,
-        modo: pendiente.tipo,
-        titulo: tituloLimpio,
-        descripcion: descripcion.trim(),
-        secuencia_grabada: pendiente.secuencia,
-        bpm: pendiente.bpm,
-        resolucion: pendiente.resolucion,
-        tonalidad: pendiente.tonalidad,
-        duracion_ms: pendiente.duracionMs,
-        precision_porcentaje: pendiente.precisionPorcentaje,
-        puntuacion: pendiente.puntuacion,
-        notas_totales: pendiente.notasTotales,
-        notas_correctas: pendiente.notasCorrectas,
-        metadata: pendiente.metadata,
-      });
+      if (pendiente.tipo === 'competencia') {
+        // 🚀 GUARDAR COMO CANCIÓN/EJERCICIO PROFESIONAL (Canciones_Hero)
+        const { data, error } = await scoresHeroService.crearCancionHeroDesdeGrabacion({
+          titulo: tituloLimpio,
+          autor: datos.autor || 'Jesus Gonzalez',
+          descripcion: datos.descripcion || '',
+          youtube_id: datos.youtube_id || '',
+          tipo: datos.tipo || 'cancion',
+          dificultad: datos.dificultad || 'basico',
+          secuencia: pendiente.secuencia,
+          bpm: pendiente.bpm,
+          tonalidad: pendiente.tonalidad || 'ADG',
+          audio_fondo_url: pendiente.metadata?.audio_fondo_url || null,
+        });
 
-      setUltimaGrabacionGuardada({
-        id: grabacion.id,
-        tipo: pendiente.tipo,
-        titulo: grabacion.titulo || tituloLimpio,
-      });
+        if (error) throw error;
+        
+        setUltimaGrabacionGuardada({ 
+          id: data.id, 
+          tipo: 'competencia', 
+          titulo: data.titulo 
+        });
+      } else {
+        // 💾 GUARDAR COMO SESIÓN SIMPLE (Grabaciones_Hero)
+        const grabacion = await guardarGrabacion({
+          cancion_id: pendiente.cancionId,
+          modo: pendiente.tipo,
+          titulo: tituloLimpio,
+          descripcion: datos.descripcion?.trim() || '',
+          secuencia_grabada: pendiente.secuencia,
+          bpm: pendiente.bpm,
+          resolucion: pendiente.resolucion,
+          tonalidad: pendiente.tonalidad,
+          duracion_ms: pendiente.duracionMs,
+          precision_porcentaje: pendiente.precisionPorcentaje,
+          puntuacion: pendiente.puntuacion,
+          notas_totales: pendiente.notasTotales,
+          notas_correctas: pendiente.notasCorrectas,
+          metadata: pendiente.metadata,
+        });
+
+        setUltimaGrabacionGuardada({
+          id: grabacion.id,
+          tipo: pendiente.tipo,
+          titulo: grabacion.titulo || tituloLimpio,
+        });
+      }
+      
       setGrabacionPendiente(null);
       return true;
     } catch (error: any) {
-      setErrorGuardadoGrabacion(error?.message || 'No se pudo guardar la grabacion.');
+      setErrorGuardadoGrabacion(error?.message || 'Error al guardar.');
       return false;
     } finally {
       setGuardandoGrabacion(false);
@@ -1236,6 +1290,8 @@ export function useLogicaProMax() {
     totalTicks: reproductor.totalTicks,
     reproduciendo: reproductor.reproduciendo,
     pausado: reproductor.pausado,
+    secuencia: reproductor.secuencia,
+    secuenciaGrabacion: grabador.secuencia,
 
     // Acciones
     seleccionarCancion,
@@ -1244,6 +1300,7 @@ export function useLogicaProMax() {
     detenerJuego,
     alternarPausa,
     alternarPausaReproduccion,
+    detenerReproduccion: () => reproductor.detenerReproduccion(),
     pausarJuego,
     reanudarConConteo,
     volverASeleccion,
@@ -1263,6 +1320,7 @@ export function useLogicaProMax() {
       sincronizarAudioFondoEnTick(tick);
     },
     iniciarPracticaLibre,
+    reproducirSecuencia: reproductor.reproducirSecuencia,
     grabaciones: {
       grabando: grabandoHero,
       tiempoGrabacionMs,

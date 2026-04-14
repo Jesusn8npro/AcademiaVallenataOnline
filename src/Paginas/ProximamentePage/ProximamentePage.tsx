@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUsuario } from '../../contextos/UsuarioContext';
 import './ProximamentePage.css';
 
 interface TiempoRestante {
@@ -11,12 +12,30 @@ interface TiempoRestante {
 
 const ProximamentePage: React.FC = () => {
     const navigate = useNavigate();
+    const { usuario, esAdmin, inicializado } = useUsuario();
     const [tiempoRestante, setTiempoRestante] = useState<TiempoRestante>({
         dias: 0,
         horas: 0,
         minutos: 0,
         segundos: 0
     });
+
+    // 🔓 ACCESO ESPECIAL: shalom@gmail.com salta directo a la versión real
+    useEffect(() => {
+        // Esperar a que el usuario esté completamente cargado
+        if (!inicializado) {
+            console.log('⏳ Esperando que usuario se cargue...');
+            return;
+        }
+
+        const emailNormalizado = usuario?.email?.toLowerCase().trim() || '';
+        console.log('🔍 Email cargado:', emailNormalizado, '| Admin:', esAdmin);
+
+        if (emailNormalizado === 'shalom@gmail.com' || esAdmin) {
+            console.log('✅ Redirigiendo a shalom...');
+            navigate('/acordeon-pro-max/acordeon', { replace: true });
+        }
+    }, [inicializado, usuario?.email, esAdmin, navigate]);
 
     // Fecha de lanzamiento: 7 días desde ahora
     const FECHA_LANZAMIENTO = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -77,7 +96,7 @@ const ProximamentePage: React.FC = () => {
 
                 {/* Subtítulo */}
                 <h2 className="proximamente-subtitulo">
-                    Estamos finalizando y actualizando esta funcionalidad
+                    Estamos finalizando y actualizando esta funcionalidad mi bro
                 </h2>
 
                 {/* Mensaje */}

@@ -1,0 +1,291 @@
+/* ==========================================
+   PANEL LISTA ACORDES ADMIN - CSS INDEPENDIENTE
+   ========================================== */
+
+.panel-lista-acordes-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.panel-lista-acordes-admin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-lista-acordes-admin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.panel-lista-acordes-admin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.panel-lista-acordes-admin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* === HEADER === */
+.panel-lista-acordes-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-lista-acordes-admin-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panel-lista-acordes-admin-count {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(139, 92, 246, 0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* === FILTRO === */
+.panel-lista-acordes-admin-filter {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panel-lista-acordes-admin-search {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.05);
+  color: #fff;
+  font-size: 12px;
+}
+
+.panel-lista-acordes-admin-search::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-lista-acordes-admin-search:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.15);
+}
+
+/* === VISTA TOGGLE === */
+.panel-lista-acordes-admin-view-toggle {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-lista-acordes-admin-view-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-lista-acordes-admin-view-btn.activo {
+  background: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* === TABLA === */
+.panel-lista-acordes-admin-tabla {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-lista-acordes-admin-tabla-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  color: #c4b5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panel-lista-acordes-admin-tabla-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.05);
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.panel-lista-acordes-admin-tabla-row:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.panel-lista-acordes-admin-tabla-cell {
+  font-size: 12px;
+  color: #fff;
+}
+
+.panel-lista-acordes-admin-tabla-cell-tonalidad {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.panel-lista-acordes-admin-tabla-cell-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.panel-lista-acordes-admin-tabla-btn {
+  padding: 5px 8px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  background: transparent;
+  color: #c4b5fd;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-lista-acordes-admin-tabla-btn:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
+/* === GRID === */
+.panel-lista-acordes-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.panel-lista-acordes-admin-grid-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.05);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.panel-lista-acordes-admin-grid-card:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.panel-lista-acordes-admin-grid-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d8b4fe;
+  text-align: center;
+}
+
+.panel-lista-acordes-admin-grid-card-info {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.panel-lista-acordes-admin-grid-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.panel-lista-acordes-admin-grid-card-action-btn {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  background: transparent;
+  color: #c4b5fd;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-lista-acordes-admin-grid-card-action-btn:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
+/* === VACÍO === */
+.panel-lista-acordes-admin-vacio {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.panel-lista-acordes-admin-vacio-icon {
+  font-size: 50px;
+  margin-bottom: 12px;
+}
+
+.panel-lista-acordes-admin-vacio-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .panel-lista-acordes-admin {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .panel-lista-acordes-admin-tabla-header {
+    display: none;
+  }
+
+  .panel-lista-acordes-admin-tabla-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .panel-lista-acordes-admin-tabla-cell-actions {
+    justify-content: space-between;
+  }
+
+  .panel-lista-acordes-admin-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .panel-lista-acordes-admin-filter {
+    flex-direction: column;
+  }
+}

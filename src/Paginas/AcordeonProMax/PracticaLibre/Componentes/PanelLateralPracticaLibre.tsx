@@ -13,6 +13,7 @@ import {
 import { HILERAS_NATIVAS, TONALIDADES } from '../../../SimuladorDeAcordeon/notasAcordeonDiatonico';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
+import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminLibreria, PanelAdminUSB, PanelListaAcordesAdmin } from '../../Admin';
 
 interface PanelLateralPracticaLibreProps {
   visible: boolean;
@@ -47,6 +48,78 @@ interface PanelLateralPracticaLibreProps {
   onActualizarEfectos: (cambios: Partial<PreferenciasPracticaLibre['efectos']>) => void;
   volumenAcordeon: number;
   onAjustarVolumenAcordeon: (valor: number) => void;
+  // Props ADMIN
+  esAdmin?: boolean;
+  bpmRec?: number;
+  setBpmRec?: (bpm: number) => void;
+  grabandoRec?: boolean;
+  onIniciarGrabacionRec?: () => void;
+  onDetenerGrabacionRec?: () => void;
+  totalNotasRec?: number;
+  tiempoGrabacionRecMs?: number;
+  onCrearNuevoAcorde?: () => void;
+  onVerTodosAcordes?: () => void;
+  onAbrirBibliotecaAcordes?: () => void;
+  esp32Conectado?: boolean;
+  onConectarESP32?: () => void;
+  // Props para PanelAdminGestor (Diseño + Sonidos)
+  ajustes?: any;
+  setAjustes?: (a: any) => void;
+  tonalidadSeleccionadaGestor?: string;
+  setTonalidadSeleccionadaGestor?: (v: string) => void;
+  listaTonalidades_Gestor?: string[];
+  setListaTonalidades_Gestor?: (l: string[]) => void;
+  nombresTonalidades?: Record<string, string>;
+  actualizarNombreTonalidad?: (id: string, nombre: string) => void;
+  sonidosVirtuales?: any[];
+  setSonidosVirtuales?: (sv: any[]) => void;
+  eliminarTonalidad?: (t: string) => void;
+  mapaBotonesActual?: any;
+  botonSeleccionado?: string | null;
+  playPreview?: (r: string, p: number) => void;
+  stopPreview?: () => void;
+  reproduceTono?: (id: string) => { instances: any[] };
+  samplesBrillante?: string[];
+  samplesBajos?: string[];
+  samplesArmonizado?: string[];
+  muestrasDB?: any[];
+  soundsPerKey?: Record<string, string[]>;
+  obtenerRutasAudio?: (id: string) => string[];
+  guardarAjustes?: () => void;
+  resetearAjustes?: () => void;
+  sincronizarAudios?: () => void;
+  guardarNuevoSonidoVirtual?: (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante' | 'Armonizado') => void;
+  instrumentoIdGestor?: string;
+  setInstrumentoIdGestor?: (id: string) => void;
+  listaInstrumentosGestor?: any[];
+  // Props Librería
+  onReproducirLibreria?: (cancion: any) => void;
+  // Props Lista Acordes
+  onReproducirAcorde?: (botones: string[], fuelle: string, id?: string) => void;
+  onDetenerAcorde?: () => void;
+  idSonandoAcorde?: string | null;
+  onEditarAcordePanel?: (acorde: any) => void;
+  tonalidadActualAcordes?: string;
+  // Props para REC con backing track
+  pistaActualUrl?: string | null;
+  onPistaChange?: (url: string | null, archivo: File | null) => void;
+  reproduciendoHero?: boolean;
+  cancionActual?: any;
+  tickActual?: number;
+  totalTicks?: number;
+  onAlternarPausaHero?: () => void;
+  onDetenerHero?: () => void;  onBuscarTickHero?: (tick: number) => void;
+  bpmGrabacion?: number;
+  // PUNCH-IN / PRE-ROLL
+  punchInTick?: number | null;
+  setPunchInTick?: (tick: number | null) => void;
+  preRollSegundos?: number;
+  setPreRollSegundos?: (seg: number) => void;
+  cuentaAtrasPreRoll?: number | null;
+  onIniciarPunchIn?: () => void;
+  esperandoPunchIn?: boolean;
+  metronomoActivo?: boolean;
+  setMetronomoActivo?: (val: boolean) => void;
 }
 
 const CIRCULO_MAYOR = ['Do', 'Sol', 'Re', 'La', 'Mi', 'Si', 'Solb', 'Reb', 'Lab', 'Mib', 'Sib', 'Fa'];
@@ -89,6 +162,77 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
   onActualizarEfectos,
   volumenAcordeon,
   onAjustarVolumenAcordeon,
+  esAdmin = false,
+  bpmRec = 120,
+  setBpmRec,
+  grabandoRec = false,
+  onIniciarGrabacionRec,
+  onDetenerGrabacionRec,
+  totalNotasRec = 0,
+  tiempoGrabacionRecMs = 0,
+  onCrearNuevoAcorde,
+  onVerTodosAcordes,
+  onAbrirBibliotecaAcordes,
+  esp32Conectado = false,
+  onConectarESP32,
+  // Props Gestor
+  ajustes,
+  setAjustes,
+  tonalidadSeleccionadaGestor,
+  setTonalidadSeleccionadaGestor,
+  listaTonalidades_Gestor,
+  setListaTonalidades_Gestor,
+  nombresTonalidades,
+  actualizarNombreTonalidad,
+  sonidosVirtuales,
+  setSonidosVirtuales,
+  eliminarTonalidad,
+  mapaBotonesActual,
+  botonSeleccionado,
+  playPreview,
+  stopPreview,
+  reproduceTono,
+  samplesBrillante,
+  samplesBajos,
+  samplesArmonizado,
+  muestrasDB,
+  soundsPerKey,
+  obtenerRutasAudio,
+  guardarAjustes,
+  resetearAjustes,
+  sincronizarAudios,
+  guardarNuevoSonidoVirtual,
+  instrumentoIdGestor,
+  setInstrumentoIdGestor,
+  listaInstrumentosGestor,
+  // Props Librería
+  onReproducirLibreria,
+  // Props Lista Acordes
+  onReproducirAcorde,
+  onDetenerAcorde,
+  idSonandoAcorde,
+  onEditarAcordePanel,
+  tonalidadActualAcordes,
+  // Props REC
+  pistaActualUrl,
+  onPistaChange,
+  reproduciendoHero,
+  cancionActual,
+  tickActual,
+  totalTicks,
+  onAlternarPausaHero,
+  onDetenerHero,
+  onBuscarTickHero,
+  bpmGrabacion,
+  punchInTick,
+  setPunchInTick,
+  preRollSegundos,
+  setPreRollSegundos,
+  cuentaAtrasPreRoll,
+  onIniciarPunchIn,
+  esperandoPunchIn,
+  metronomoActivo,
+  setMetronomoActivo,
 }) => {
   const configuracionTonalidad = TONALIDADES[tonalidadSeleccionada as keyof typeof TONALIDADES] || TONALIDADES['ADG'];
   const hileras = HILERAS_NATIVAS[tonalidadSeleccionada] || [];
@@ -103,7 +247,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
       <div className="estudio-practica-libre-panel-encabezado">
         <div>
           <span className="estudio-practica-libre-panel-kicker">Panel del estudio</span>
-          <h3>{seccionActiva === 'sonido' ? 'Sonido y lectura' : seccionActiva === 'modelos' ? 'Modelos visuales' : seccionActiva === 'pistas' ? 'Pistas y capas' : seccionActiva === 'teoria' ? 'Teoria musical' : 'Efectos y mezcla'}</h3>
+          <h3>{seccionActiva === 'sonido' ? 'Sonido y lectura' : seccionActiva === 'modelos' ? 'Modelos visuales' : seccionActiva === 'pistas' ? 'Pistas y capas' : seccionActiva === 'teoria' ? 'Teoria musical' : seccionActiva === 'rec' ? 'Grabacion pro' : 'Efectos y mezcla'}</h3>
         </div>
         <div className="estudio-practica-libre-chip-simple">
           <ChevronRight size={14} />
@@ -151,7 +295,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
                 <div className="estudio-practica-libre-vacio">Cargando bancos del acordeon...</div>
               )}
 
-              {listaInstrumentos.map((instrumento) => (
+              {listaInstrumentos.map((instrumento: any) => (
                 <button
                   key={instrumento.id}
                   className={`estudio-practica-libre-item-lista ${instrumentoId === instrumento.id ? 'activo' : ''}`}
@@ -414,6 +558,102 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {esAdmin && seccionActiva === 'rec' && (
+        <PanelAdminRec
+          bpm={bpmRec}
+          setBpm={setBpmRec || (() => {})}
+          grabando={grabandoRec}
+          onIniciarGrabacion={onIniciarGrabacionRec || (() => {})}
+          onDetenerGrabacion={onDetenerGrabacionRec || (() => {})}
+          totalNotas={totalNotasRec}
+          tiempoGrabacionMs={tiempoGrabacionRecMs}
+          pistaActualUrl={pistaActualUrl || null}
+          onPistaChange={onPistaChange || (() => {})}
+          reproduciendoHero={reproduciendoHero || false}
+          cancionActual={cancionActual || null}
+          tickActual={tickActual || 0}
+          totalTicks={totalTicks || 0}
+          onAlternarPausaHero={onAlternarPausaHero || (() => {})}
+          onDetenerHero={onDetenerHero || (() => {})}
+          onBuscarTick={onBuscarTickHero || (() => {})}
+          bpmGrabacion={bpmGrabacion || bpmRec}
+          punchInTick={punchInTick}
+          setPunchInTick={setPunchInTick}
+          preRollSegundos={preRollSegundos}
+          setPreRollSegundos={setPreRollSegundos}
+          cuentaAtrasPreRoll={cuentaAtrasPreRoll}
+          onIniciarPunchIn={onIniciarPunchIn}
+          esperandoPunchIn={esperandoPunchIn}
+          metronomoActivo={metronomoActivo}
+          setMetronomoActivo={setMetronomoActivo || (() => {})}
+        />
+      )}
+
+      {esAdmin && seccionActiva === 'gestor' && ajustes && setAjustes && (
+        <PanelAdminGestor
+          ajustes={ajustes}
+          setAjustes={setAjustes}
+          tonalidadSeleccionada={tonalidadSeleccionadaGestor || tonalidadSeleccionada}
+          setTonalidadSeleccionada={setTonalidadSeleccionadaGestor || (() => {})}
+          listaTonalidades={listaTonalidades_Gestor || []}
+          setListaTonalidades={setListaTonalidades_Gestor || (() => {})}
+          nombresTonalidades={nombresTonalidades || {}}
+          actualizarNombreTonalidad={actualizarNombreTonalidad || (() => {})}
+          sonidosVirtuales={sonidosVirtuales || []}
+          setSonidosVirtuales={setSonidosVirtuales || (() => {})}
+          eliminarTonalidad={eliminarTonalidad || (() => {})}
+          mapaBotonesActual={mapaBotonesActual || {}}
+          botonSeleccionado={botonSeleccionado || null}
+          playPreview={playPreview || (() => {})}
+          stopPreview={stopPreview || (() => {})}
+          reproduceTono={reproduceTono || (() => ({ instances: [] }))}
+          samplesBrillante={samplesBrillante || []}
+          samplesBajos={samplesBajos || []}
+          samplesArmonizado={samplesArmonizado || []}
+          muestrasDB={muestrasDB || []}
+          soundsPerKey={soundsPerKey || {}}
+          obtenerRutasAudio={obtenerRutasAudio || (() => [])}
+          guardarAjustes={guardarAjustes || (() => {})}
+          resetearAjustes={resetearAjustes || (() => {})}
+          sincronizarAudios={sincronizarAudios || (() => {})}
+          guardarNuevoSonidoVirtual={guardarNuevoSonidoVirtual || (() => {})}
+          instrumentoId={instrumentoIdGestor || instrumentoId}
+          setInstrumentoId={setInstrumentoIdGestor || onSeleccionarInstrumento}
+          listaInstrumentos={listaInstrumentosGestor || listaInstrumentos}
+        />
+      )}
+
+      {esAdmin && seccionActiva === 'gestor_acordes' && (
+        <PanelAdminGestorAcordes
+          onCrearNuevo={onCrearNuevoAcorde || (() => {})}
+          onVerTodos={onVerTodosAcordes || (() => {})}
+          totalAcordes={0}
+        />
+      )}
+
+      {esAdmin && seccionActiva === 'lista_acordes' && (
+        <PanelListaAcordesAdmin
+          onReproducirAcorde={onReproducirAcorde || (() => {})}
+          onDetener={onDetenerAcorde || (() => {})}
+          idSonando={idSonandoAcorde || null}
+          onEditarAcorde={onEditarAcordePanel || (() => {})}
+          tonalidadActual={tonalidadActualAcordes || tonalidadSeleccionada}
+        />
+      )}
+
+      {esAdmin && seccionActiva === 'libreria' && (
+        <PanelAdminLibreria
+          onReproducir={onReproducirLibreria || (() => {})}
+        />
+      )}
+
+      {esAdmin && seccionActiva === 'usb' && (
+        <PanelAdminUSB
+          conectado={esp32Conectado}
+          onConectar={onConectarESP32 || (() => {})}
+        />
       )}
     </aside>
   );
