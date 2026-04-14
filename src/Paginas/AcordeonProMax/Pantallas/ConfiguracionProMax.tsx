@@ -23,7 +23,7 @@ import {
 import { supabase } from '../../servicios/clienteSupabase';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import { usePerfilStore } from '../../stores/perfilStore';
-import NavbarProMax from './Componentes/NavbarProMax';
+import NavbarProMax from '../Componentes/NavbarProMax';
 import './ConfiguracionProMax.css';
 
 /**

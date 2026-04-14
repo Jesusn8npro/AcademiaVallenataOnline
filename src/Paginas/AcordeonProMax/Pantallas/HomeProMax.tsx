@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomeProMax.css';
-import NavbarProMax from './Componentes/NavbarProMax';
-import FondoEspacialProMax from './Componentes/FondoEspacialProMax';
+import NavbarProMax from '../Componentes/NavbarProMax';
+import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
 import { Howl } from 'howler';
 import { 
   Info,

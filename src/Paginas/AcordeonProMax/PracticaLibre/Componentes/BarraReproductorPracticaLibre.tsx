@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Play, Pause, FastForward, Rewind, Square } from 'lucide-react';
-import '../EstudioPracticaLibre.css';
+import '../../Modos/BarraTransporte.css';
 
 interface BarraReproductorPracticaLibreProps {
   reproduciendo: boolean;

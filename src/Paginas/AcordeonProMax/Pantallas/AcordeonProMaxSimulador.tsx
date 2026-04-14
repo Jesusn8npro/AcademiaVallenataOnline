@@ -1,25 +1,25 @@
 import React from 'react';
-import HeaderHero from './Componentes/HeaderHero';
-import FondoEspacialProMax from './Componentes/FondoEspacialProMax';
-import { useLogicaProMax } from './Hooks/useLogicaProMax';
-import ModalMetronomo from '../SimuladorApp/Componentes/ModalMetronomo';
+import HeaderHero from '../Componentes/HeaderHero';
+import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
+import { useLogicaProMax } from '../Hooks/useLogicaProMax';
+import ModalMetronomo from '../../Paginas/SimuladorApp/Componentes/ModalMetronomo';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../../servicios/clienteSupabase';
+import { supabase } from '../../../servicios/clienteSupabase';
 
 // Componentes de Modos Pro Max
-import ModoPracticaLibre from './PracticaLibre/EstudioPracticaLibre';
-import ModoMaestroSolo from './Modos/ModoMaestroSolo';
-import ModoCompetitivo from './Modos/ModoCompetitivo';
-import ModoLibre from './Modos/ModoLibre';
-import ModoSynthesia from './Modos/ModoSynthesia';
-import PantallaPreJuegoProMax from './Componentes/PantallaPreJuegoProMax';
-import PantallaResultados from './Componentes/PantallaResultados';
+import ModoPracticaLibre from '../PracticaLibre/EstudioPracticaLibre';
+import ModoMaestroSolo from '../Modos/ModoMaestroSolo';
+import ModoCompetitivo from '../Modos/ModoCompetitivo';
+import ModoLibre from '../Modos/ModoLibre';
+import ModoSynthesia from '../Modos/ModoSynthesia';
+import PantallaPreJuegoProMax from '../Componentes/PantallaPreJuegoProMax';
+import PantallaResultados from '../Componentes/PantallaResultados';
 
-import PantallaGameOverProMax from './Componentes/PantallaGameOverProMax';
-import MenuPausaProMax from './Componentes/MenuPausaProMax';
+import PantallaGameOverProMax from '../Componentes/PantallaGameOverProMax';
+import MenuPausaProMax from '../Componentes/MenuPausaProMax';
 
-import './Modos/_BaseSimulador.css';
-import './Componentes/PantallaPreJuegoProMax.css';
+import '../Modos/_BaseSimulador.css';
+import '../Componentes/PantallaPreJuegoProMax.css';
 
 /**
  * ACORDEÓN PRO MAX - SIMULADOR 
