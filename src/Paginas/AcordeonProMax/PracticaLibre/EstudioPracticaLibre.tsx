@@ -11,7 +11,6 @@ import ModalGuardarPracticaLibre from './Componentes/ModalGuardarPracticaLibre';
 import ModalCreadorAcordes from '../../SimuladorDeAcordeon/Componentes/ModalCreadorAcordes';
 import ModalListaAcordes from '../../SimuladorDeAcordeon/Componentes/ModalListaAcordes';
 import { useGrabadorHero } from '../../SimuladorDeAcordeon/Hooks/useGrabadorHero';
-import { useReproductorHero } from '../../SimuladorDeAcordeon/Hooks/useReproductorHero';
 import ModalGuardarHero from '../../SimuladorDeAcordeon/Componentes/ModalGuardarHero';
 import PuenteNotas from '../Componentes/PuenteNotas';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
@@ -46,7 +45,7 @@ interface EstudioPracticaLibreProps {
   volumenAcordeon: number;
   setVolumenAcordeon: (v: number) => void;
   bpm: number;
-  onCambiarBpm: (bpm: number) => void;
+  onCambiarBpm: (bpm: number | ((prev: number) => number)) => void;
   onVolver?: () => void;
   esp32Conectado?: boolean;
   conectarESP32?: () => Promise<void>;
@@ -230,6 +229,51 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     audioUrl: pistaUrl,
     volumen: 0.8
   });
+
+  // 🎙️ GRABADOR LOCAL - Captura las notas REALMENTE presionadas
+  const grabadorLocal = useGrabadorHero(bpm);
+  const botonesActivosAnteriorRef = React.useRef<Record<string, any>>({});
+
+  // Sincronizar inicio/fin de grabación
+  React.useEffect(() => {
+    if (grabando && !grabadorLocal.grabando) {
+      console.log('🔴 Iniciando grabación local...');
+      grabadorLocal.iniciarGrabacion();
+    } else if (!grabando && grabadorLocal.grabando) {
+      console.log('⏹️ Deteniendo grabación local...');
+      const resultado = grabadorLocal.detenerGrabacion();
+      console.log('✅ Grabación local detenida. Notas capturadas:', resultado.secuencia.length);
+    }
+  }, [grabando, grabadorLocal]);
+
+  // Detectar presiones y liberaciones por cambios en botonesActivos
+  React.useEffect(() => {
+    if (!grabadorLocal.grabando) {
+      botonesActivosAnteriorRef.current = {};
+      return;
+    }
+
+    const botonActualesIds = Object.keys(logica.botonesActivos || {});
+    const botonesAnterioresIds = Object.keys(botonesActivosAnteriorRef.current);
+
+    // Detectar PRESIONES (nuevos botones que no estaban antes)
+    for (const id of botonActualesIds) {
+      if (!botonesActivosAnteriorRef.current[id]) {
+        const dirHero = logica.direccion === 'halar' ? 'abriendo' : 'cerrando';
+        grabadorLocal.registrarPresion(id, dirHero);
+      }
+    }
+
+    // Detectar LIBERACIONES (botones que estaban antes y ahora no)
+    for (const id of botonesAnterioresIds) {
+      if (!logica.botonesActivos[id]) {
+        grabadorLocal.registrarLiberacion(id);
+      }
+    }
+
+    // Actualizar referencia
+    botonesActivosAnteriorRef.current = { ...logica.botonesActivos };
+  }, [logica.botonesActivos, logica.direccion, grabadorLocal.grabando]);
 
   // Cargar sonidos de metrónomo al iniciar
   React.useEffect(() => {
@@ -488,23 +532,33 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
                 reproduciendo={reproduciendo || grabando}
                 pausado={pausado && !grabando}
                 onAlternarPausa={() => {
+                   // 🔒 🔒 🔒 COMPLETAMENTE INDEPENDIENTE: NUNCA dispara estado global
                    if (grabando) {
+                       // Si estamos grabando, detener grabación
                        onDetenerGrabacion();
                    } else {
+                       // Si estamos reproduciendo en PracticaLibre, pausar la reproducción
+                       // usando el callback del parent que pausa sin cambiar estado global
                        onAlternarPausa();
+                       console.log('⏸️ PracticaLibre: Pausa LOCAL (sin afectar estado global)');
                    }
                 }}
                 onDetener={() => {
+                   // 🔒 🔒 🔒 COMPLETAMENTE INDEPENDIENTE: Reinicia LOCAL SOLO
                    if (grabando) {
                        onDetenerGrabacion();
                    } else {
-                       onBuscarTick(0);
-                       if (reproduciendo && !pausado) onAlternarPausa();
+                       // Resetear a inicio SIN alterar estado global
+                       onBuscarTick?.(0);
+                       console.log('⏹️ PracticaLibre: Resetear a inicio (sin afectar estado global)');
                    }
                 }}
                 tickActual={tickActual || 0}
                 totalTicks={totalTicks || 2100}
-                onBuscarTick={onBuscarTick}
+                onBuscarTick={(tick) => {
+                   // 🔒 Buscar tick LOCAL SOLO
+                   onBuscarTick?.(tick);
+                }}
                 bpm={bpm}
                 onCambiarBpm={onCambiarBpm}
               />
@@ -814,33 +868,58 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             tonalidadActual={logica.tonalidadSeleccionada}
             onGuardar={async (datos) => {
               try {
-                console.log('💾 Guardando grabación con datos:', datos);
-                console.log('📝 Secuencia grabada:', secuenciaGrabacion);
-                console.log('🎵 Resumen:', resumenGrabacionPendiente);
-
-                const exito = await onGuardarGrabacion({
-                  ...datos,
-                  modo: 'practica_libre',
-                  secuencia: secuenciaGrabacion,
-                  bpm: bpmHero,
-                  tonalidad: logica.tonalidadSeleccionada,
-                  duracion_ms: resumenGrabacionPendiente?.duracionMs || 0,
-                  metadata: {
-                    uso_metronomo: usoMetronomoRef.current,
-                    pista_url: pistaUrl,
-                    pista_file: pistaFile ? pistaFile.name : null,
-                    efectos: estudio.preferencias.efectos,
-                    modelo_visual_id: estudio.preferencias.modeloVisualId
-                  }
+                console.log('💾 Guardando grabación...');
+                console.log('📝 Datos formulario:', datos);
+                console.log('📝 Secuencia local:', grabadorLocal.secuencia);
+                console.log('📊 Grabador estado:', {
+                  grabando: grabadorLocal.grabando,
+                  secuenciaLength: grabadorLocal.secuencia.length,
+                  bpm: bpm
                 });
-                if (exito) {
-                  console.log('✅ Grabación guardada exitosamente');
-                  setModalGuardarHeroVisible(false);
+
+                // ✅ USAR SECUENCIA DEL GRABADOR LOCAL (esto tiene las notas REALES)
+                const secuenciaFinal = grabadorLocal.secuencia && grabadorLocal.secuencia.length > 0
+                  ? grabadorLocal.secuencia
+                  : secuenciaGrabacion;
+
+                if (!secuenciaFinal || secuenciaFinal.length === 0) {
+                  console.error('❌ No hay notas grabadas');
+                  alert('❌ No hay notas grabadas. Presiona algunos botones del acordeón antes de guardar.');
+                  return;
+                }
+
+                console.log('✅ Secuencia válida:', {
+                  cantidad: secuenciaFinal.length,
+                  primera: secuenciaFinal[0],
+                  ultima: secuenciaFinal[secuenciaFinal.length - 1]
+                });
+
+                // 🎯 GUARDAR USANDO EL GRABADOR LOCAL (IGUAL A SIMULADOR)
+                // Esto usa useGrabadorHero.guardarSecuencia() que funciona en SimuladorDeAcordeon
+                const resultado = await grabadorLocal.guardarSecuencia({
+                  titulo: datos.titulo,
+                  autor: datos.autor,
+                  descripcion: datos.descripcion,
+                  tipo: datos.tipo,
+                  dificultad: datos.dificultad,
+                  usoMetronomo: usoMetronomoRef.current,
+                  tonalidad: logica.tonalidadSeleccionada,
+                  pistaFile: pistaFile
+                });
+
+                console.log('💾 Resultado guardado:', resultado);
+
+                if (resultado.error) {
+                  console.error('❌ Error al guardar:', resultado.error);
+                  alert('❌ Error al guardar: ' + (resultado.error as any).message);
                 } else {
-                  console.error('❌ Error al guardar grabación - respuesta falsa');
+                  console.log('✅ Grabación guardada exitosamente');
+                  alert('✅ ¡Se grabó correctamente en la nube!');
+                  setModalGuardarHeroVisible(false);
                 }
               } catch (error) {
                 console.error('❌ Error guardando:', error);
+                alert('❌ Error: ' + (error as any).message);
               }
             }}
           />

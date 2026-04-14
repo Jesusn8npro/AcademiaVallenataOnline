@@ -1037,7 +1037,8 @@ export function useLogicaProMax() {
   }, [actualizarLoopAB, reproductor.setLoopPoints]);
 
   const alternarPausaReproduccion = useCallback(() => {
-    if (estadoJuegoRef.current !== 'jugando' || !reproductor.reproduciendo) return;
+    const estado = estadoJuegoRef.current;
+    if ((estado !== 'jugando' && estado !== 'practica_libre') || !reproductor.reproduciendo) return;
     const vaAPausar = !reproductor.pausado;
     reproductor.alternarPausa();
     if (audioFondoRef.current) {
