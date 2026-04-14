@@ -12,8 +12,10 @@ import {
   Layers,
   List,
   Usb,
-  Settings,
   Music,
+  Home,
+  LogOut,
+  Settings,
 } from 'lucide-react';
 import type { SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
 
@@ -28,6 +30,7 @@ interface BarraSuperiorPracticaLibreProps {
   grabando: boolean;
   tiempoGrabacion: string;
   onAlternarGrabacion: () => void;
+  onVolver?: () => void;
   esAdmin?: boolean;
   esp32Conectado?: boolean;
 }
@@ -60,18 +63,28 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
   grabando,
   tiempoGrabacion,
   onAlternarGrabacion,
+  onVolver,
   esAdmin = false,
   esp32Conectado = false,
 }) => {
   return (
     <div className="estudio-practica-libre-topbar">
       <div className="estudio-practica-libre-topbar-copy">
-        <span className="estudio-practica-libre-kicker">Estudio Practica Libre</span>
-        <h2>Cabina de sonido y practica personalizada</h2>
-        <p>
-          Tono {tonalidad} · Timbre {timbre} · {nombreInstrumento} · {nombreModelo}
-          {nombrePista ? ` · Pista ${nombrePista}` : ' · Sin pista seleccionada'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {onVolver && (
+            <button className="estudio-practica-libre-btn-salir" onClick={onVolver} title="Volver al menú">
+               <Home size={18} />
+            </button>
+          )}
+          <div>
+            <span className="estudio-practica-libre-kicker">Estudio Practica Libre</span>
+            <h2>Cabina de sonido y practica</h2>
+            <p>
+              Tono {tonalidad} · Timbre {timbre} · {nombreInstrumento}
+              {nombrePista ? ` · Pista ${nombrePista}` : ''}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="estudio-practica-libre-topbar-acciones">

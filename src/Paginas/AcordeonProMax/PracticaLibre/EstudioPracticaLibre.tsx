@@ -17,6 +17,7 @@ import PuenteNotas from '../Componentes/PuenteNotas';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import { useAudioFondoPracticaLibre } from './Hooks/useAudioFondoPracticaLibre';
 import BarraReproductorPracticaLibre from './Componentes/BarraReproductorPracticaLibre';
+import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 import './EstudioPracticaLibre.css';
 
 // ✅ Removemos BarraTransporte import - ahora usamos BarraReproductorPracticaLibre independiente
@@ -210,6 +211,11 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   const [metronomoActivo, setMetronomoActivo] = React.useState(false);
   const [bpmOriginalGrabacion, setBpmOriginalGrabacion] = React.useState(120);
 
+  // Sincronizar ref para metadata
+  React.useEffect(() => {
+    usoMetronomoRef.current = metronomoActivo;
+  }, [metronomoActivo]);
+
   // 🎵 Hook para sincronizar audio de fondo con reproducción
   const audioRef = useAudioFondoPracticaLibre({
     reproduciendo,
@@ -230,6 +236,29 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_fuerte', '/audio/effects/du2.mp3').catch(() => {});
     motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_debil', '/audio/effects/du.mp3').catch(() => {});
   }, []);
+
+  // 🥁 Lógica de Metrónomo para Práctica Libre
+  React.useEffect(() => {
+    if (!metronomoActivo) return;
+
+    // Solo activamos el click manual si NO se está reproduciendo una secuencia (que ya tiene su propio metrónomo)
+    if (reproduciendo) return;
+
+    const intervalMs = (60 / bpm) * 1000;
+    let beatCount = 0;
+
+    const interval = setInterval(() => {
+      const beatEnCompas = beatCount % 4; // Asumimos 4/4 para práctica libre
+      motorAudioPro.reproducir(
+        beatEnCompas === 0 ? 'click_fuerte' : 'click_debil',
+        'metronomo',
+        beatEnCompas === 0 ? 0.6 : 0.4
+      );
+      beatCount++;
+    }, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [metronomoActivo, bpm, reproduciendo]);
 
   // 🎯 EFECTO: Mostrar modal cuando termina grabación (IGUAL A AcordeonSimulador)
   React.useEffect(() => {
@@ -386,6 +415,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
         onAlternarGrabacion={manejarGrabacion}
         esAdmin={esAdmin}
         esp32Conectado={logica.esp32Conectado}
+        onVolver={onVolver}
       />
 
       {!mostrarModalGuardar && errorGuardadoGrabacion && (
@@ -798,7 +828,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
                   metadata: {
                     uso_metronomo: usoMetronomoRef.current,
                     pista_url: pistaUrl,
-                    pista_file: pistaFile ? pistaFile.name : null
+                    pista_file: pistaFile ? pistaFile.name : null,
+                    efectos: estudio.preferencias.efectos,
+                    modelo_visual_id: estudio.preferencias.modeloVisualId
                   }
                 });
                 if (exito) {
