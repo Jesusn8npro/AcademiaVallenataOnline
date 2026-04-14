@@ -1,7 +1,7 @@
 .estudio-practica-libre {
   --estudio-acordeon-tamano: min(70vh, 65vw);
   --estudio-acordeon-x: 50%;
-  --estudio-acordeon-y: 60%;
+  --estudio-acordeon-y: 50%;
   position: relative;
   width: 100%;
   height: 100%;

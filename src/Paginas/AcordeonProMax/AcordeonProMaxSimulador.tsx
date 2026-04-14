@@ -257,7 +257,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
               totalTicks={hero.totalTicks}
               reproduciendo={hero.reproduciendo}
               pausado={hero.pausado}
-              onAlternarPausa={hero.alternarPausa}
+              onAlternarPausa={hero.alternarPausaReproduccion}
               onBuscarTick={hero.buscarTick}
               botonesActivosMaestro={hero.botonesActivosMaestro}
               direccionMaestro={hero.direccionMaestro}
@@ -440,7 +440,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
       />
 
       {/* ⏸️ MENÚ DE PAUSA PRO MAX — Solo visible con pausa manual del usuario */}
-      <MenuPausaProMax 
+      <MenuPausaProMax
           visible={hero.estadoJuego === 'pausado'}
           onReanudar={hero.reanudarConConteo}
           onReiniciar={() => {
