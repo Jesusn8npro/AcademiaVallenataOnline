@@ -304,30 +304,13 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     return () => clearInterval(interval);
   }, [metronomoActivo, bpm, reproduciendo]);
 
-  // 🎯 EFECTO: Mostrar modal cuando termina grabación (IGUAL A AcordeonSimulador)
+  // 🎯 EFECTO: Rastrear cambios en grabación (control ahora en parent)
   React.useEffect(() => {
-    console.log('🔄 Estado grabación:', { grabando, lastGrabando, resumenPendiente: resumenGrabacionPendiente?.notas });
-
     if (grabando) {
       // Registrar si se está usando metrónomo al iniciar
       usoMetronomoRef.current = metronomoActivo;
       setLastGrabando(true);
-    }
-
-    // Si estábamos grabando y ahora NO, mostrar modal
-    if (lastGrabando && !grabando) {
-      console.log('✅ Transición: Grabando → Parado. Mostrando modal...');
-
-      // Mostrar modal incluso si no tenemos resumen (el servidor lo calcula)
-      // Determinar tipo sugerido basado en uso de metrónomo
-      if (usoMetronomoRef.current) {
-        setTipoSugeridoGrabacion('secuencia');
-      } else {
-        setTipoSugeridoGrabacion('ejercicio');
-      }
-
-      // Mostrar modal de guardado
-      setModalGuardarHeroVisible(true);
+    } else if (lastGrabando && !grabando) {
       setLastGrabando(false);
     }
   }, [grabando, lastGrabando, metronomoActivo]);
@@ -851,76 +834,6 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
               logica.limpiarTodasLasNotas();
               setAcordeMaestroActivo(false);
               setIdSonandoCiclo(null);
-            }}
-          />
-
-          {/* Modal para guardar grabación PRÁCTICA LIBRE (Automático) */}
-          <ModalGuardarHero
-            visible={modalGuardarHeroVisible}
-            onCerrar={() => {
-              setModalGuardarHeroVisible(false);
-              // Limpiar estado si el usuario cancela
-              onCancelarGuardado?.();
-            }}
-            bpm={bpmHero}
-            totalNotas={resumenGrabacionPendiente?.notas || 0}
-            sugerenciaTipo={tipoSugeridoGrabacion}
-            tonalidadActual={logica.tonalidadSeleccionada}
-            onGuardar={async (datos) => {
-              try {
-                console.log('💾 Guardando grabación...');
-                console.log('📝 Datos formulario:', datos);
-                console.log('📝 Secuencia local:', grabadorLocal.secuencia);
-                console.log('📊 Grabador estado:', {
-                  grabando: grabadorLocal.grabando,
-                  secuenciaLength: grabadorLocal.secuencia.length,
-                  bpm: bpm
-                });
-
-                // ✅ USAR SECUENCIA DEL GRABADOR LOCAL (esto tiene las notas REALES)
-                const secuenciaFinal = grabadorLocal.secuencia && grabadorLocal.secuencia.length > 0
-                  ? grabadorLocal.secuencia
-                  : secuenciaGrabacion;
-
-                if (!secuenciaFinal || secuenciaFinal.length === 0) {
-                  console.error('❌ No hay notas grabadas');
-                  alert('❌ No hay notas grabadas. Presiona algunos botones del acordeón antes de guardar.');
-                  return;
-                }
-
-                console.log('✅ Secuencia válida:', {
-                  cantidad: secuenciaFinal.length,
-                  primera: secuenciaFinal[0],
-                  ultima: secuenciaFinal[secuenciaFinal.length - 1]
-                });
-
-                // 🎯 GUARDAR USANDO EL GRABADOR LOCAL (IGUAL A SIMULADOR)
-                // Esto usa useGrabadorHero.guardarSecuencia() que funciona en SimuladorDeAcordeon
-                const resultado = await grabadorLocal.guardarSecuencia({
-                  titulo: datos.titulo,
-                  autor: datos.autor,
-                  descripcion: datos.descripcion,
-                  tipo: datos.tipo,
-                  dificultad: datos.dificultad,
-                  usoMetronomo: usoMetronomoRef.current,
-                  tonalidad: logica.tonalidadSeleccionada,
-                  pistaFile: pistaFile
-                });
-
-                console.log('💾 Resultado guardado:', resultado);
-
-                if (resultado.error) {
-                  console.error('❌ Error al guardar:', resultado.error);
-                  alert('❌ Error al guardar: ' + (resultado.error as any).message);
-                } else {
-                  console.log('✅ Grabación guardada exitosamente');
-                  alert('✅ ¡Se grabó correctamente en la nube!');
-                  setModalGuardarHeroVisible(false);
-                }
-              } catch (error) {
-                console.error('❌ Error guardando:', error);
-                alert('❌ Error: ' + (error as any).message);
-              }
             }}
           />
 
