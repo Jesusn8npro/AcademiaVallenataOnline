@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Pause, FastForward, Rewind, Repeat } from 'lucide-react';
+import { Play, Pause, FastForward, Rewind, Repeat, Square } from 'lucide-react';
 import './BarraTransporte.css';
 
 interface BarraTransporteProps {
     reproduciendo: boolean;
     pausado: boolean;
     onAlternarPausa: () => void;
+    onDetener: () => void;
     tickActual: number;
     totalTicks: number;
     onBuscarTick: (tick: number) => void;
@@ -18,12 +19,14 @@ interface BarraTransporteProps {
     onAlternarLoop: () => void;
     onLimpiarLoop: () => void;
     onCambiarBpm: (bpm: number | ((prev: number) => number)) => void;
+    punchInTick?: number | null;
 }
 
 const BarraTransporte: React.FC<BarraTransporteProps> = ({
     reproduciendo,
     pausado,
     onAlternarPausa,
+    onDetener,
     tickActual,
     totalTicks,
     onBuscarTick,
@@ -36,6 +39,7 @@ const BarraTransporte: React.FC<BarraTransporteProps> = ({
     onAlternarLoop,
     onLimpiarLoop,
     onCambiarBpm,
+    punchInTick,
 }) => {
     const sliderWrapRef = useRef<HTMLDivElement | null>(null);
     const [draggingMarker, setDraggingMarker] = useState<'start' | 'end' | null>(null);
@@ -141,6 +145,17 @@ const BarraTransporte: React.FC<BarraTransporteProps> = ({
                                     )}
                                 </>
                             )}
+                            
+                            {punchInTick !== null && (
+                                <div 
+                                    className="punch-in-marker"
+                                    style={{ left: `${(punchInTick / maxSeguro) * 100}%` }}
+                                    title="Punto de Punch-In"
+                                >
+                                    🎯
+                                </div>
+                            )}
+
                             <input
                                 type="range"
                                 className="transporte-slider"
@@ -187,8 +202,17 @@ const BarraTransporte: React.FC<BarraTransporteProps> = ({
                         <button
                             className={`btn-circulo grande ${estaSonando ? 'activo' : ''}`}
                             onClick={onAlternarPausa}
+                            title={reproduciendo ? "Pausar" : "Reproducir"}
                         >
                             {estaSonando ? <Pause size={24} fill="white" /> : <Play size={24} fill="white" style={{ marginLeft: 3 }} />}
+                        </button>
+
+                        <button 
+                            className="btn-circulo small" 
+                            onClick={onDetener}
+                            title="Detener / Resetear"
+                        >
+                            <Square size={16} fill="white" />
                         </button>
 
                         <button className="btn-circulo small" onClick={() => onBuscarTick(Math.min(totalTicks, tickActual + 500))}>

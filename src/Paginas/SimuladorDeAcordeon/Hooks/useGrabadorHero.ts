@@ -56,21 +56,20 @@ export const useGrabadorHero = (bpmActual: number) => {
         return checkpointTicksRef.current + ticksAdicionales;
     }, []);
 
-    const iniciarGrabacion = useCallback(() => {
-        actualizarSecuencia([]);
+    const iniciarGrabacion = useCallback((existingSequence: NotaHero[] = [], startTick: number = 0) => {
+        // Si estamos haciendo Punch-In, conservamos las notas anteriores al punto de entrada
+        const sequenceBase = startTick > 0 
+            ? existingSequence.filter(n => n.tick < startTick)
+            : [];
+            
+        actualizarSecuencia(sequenceBase);
         let ahora = motorAudioPro.tiempoActual;
         
-        // ❌ ELIMINADA FASE CERO EXCESIVA:
-        // El Tick 0 debe coincidir EXACTAMENTE con el inicio del audio de la pista y de la tarjeta de sonido.
-        
         checkpointTimeRef.current = ahora;
-        checkpointTicksRef.current = 0;
+        checkpointTicksRef.current = startTick;
         notasAbiertasRef.current.clear();
         setGrabando(true);
 
-        // 🎧 COMPENSADOR DE LATENCIA MÁGICO:
-        // Si hay una pista cargada, su `.play()` gasta unos milisegundos cargando en memoria.
-        // Cuando por fin empieza a sonar, ejecutamos esto para que el Tick 0 caiga justo en ese momento.
         (window as any).sincronizarRelojConPista = () => {
              console.log('⏰ Audio Latency Compensado! Sincronizando inicio...');
              checkpointTimeRef.current = motorAudioPro.tiempoActual;

@@ -7,7 +7,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 
 // Componentes de Modos Pro Max
-import ModoPracticaLibre from './Modos/ModoPracticaLibre';
+import ModoPracticaLibre from './PracticaLibre/EstudioPracticaLibre';
 import ModoMaestroSolo from './Modos/ModoMaestroSolo';
 import ModoCompetitivo from './Modos/ModoCompetitivo';
 import ModoLibre from './Modos/ModoLibre';
@@ -230,12 +230,12 @@ const AcordeonProMaxSimulador: React.FC = () => {
               setModoAjuste={setModoAjuste}
               pestanaActiva={pestanaActiva}
               setPestanaActiva={setPestanaActiva}
-              onVolver={volverAlMenu}
               imagenFondo={IMG_ALUMNO}
               modosVista={MODOS_VISTA}
               grabando={hero.grabaciones.grabando}
               tiempoGrabacionMs={hero.grabaciones.tiempoGrabacionMs}
               mostrarModalGuardar={hero.grabaciones.mostrarModalGuardarPractica}
+              mostrarModalProfesional={hero.grabaciones.mostrarGuardadoResultado}
               guardandoGrabacion={hero.grabaciones.guardando}
               errorGuardadoGrabacion={hero.grabaciones.error}
               tituloSugeridoGrabacion={hero.grabaciones.tituloSugerido}
@@ -247,6 +247,31 @@ const AcordeonProMaxSimulador: React.FC = () => {
               onCancelarGuardado={hero.grabaciones.descartarPendiente}
               volumenAcordeon={hero.volumenAcordeon}
               setVolumenAcordeon={hero.setVolumenAcordeon}
+              onVolver={volverAlMenu}
+              bpm={hero.bpm}
+              onCambiarBpm={hero.cambiarBpm}
+              esp32Conectado={hero.logica.esp32Conectado}
+              conectarESP32={hero.logica.conectarESP32}
+              // Sincronización de reproductor
+              tickActual={hero.tickActual}
+              totalTicks={hero.totalTicks}
+              reproduciendo={hero.reproduciendo}
+              pausado={hero.pausado}
+              onAlternarPausa={hero.alternarPausa}
+              onBuscarTick={hero.buscarTick}
+              botonesActivosMaestro={hero.botonesActivosMaestro}
+              direccionMaestro={hero.direccionMaestro}
+              // Loop
+              loopAB={hero.loopAB}
+              onMarcarLoopInicio={hero.marcarLoopInicio}
+              onMarcarLoopFin={hero.marcarLoopFin}
+              onActualizarLoopInicio={hero.actualizarLoopInicioTick}
+              onActualizarLoopFin={hero.actualizarLoopFinTick}
+              onAlternarLoop={hero.alternarLoopAB}
+              onLimpiarLoop={hero.limpiarLoopAB}
+              onReproducirSecuencia={hero.reproducirSecuencia}
+              secuencia={hero.secuencia}
+              secuenciaGrabacion={hero.secuenciaGrabacion}
             />
           )}
 

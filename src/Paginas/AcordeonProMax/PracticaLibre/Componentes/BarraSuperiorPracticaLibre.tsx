@@ -8,6 +8,12 @@ import {
   SlidersHorizontal,
   Sparkles,
   Volume2,
+  Circle,
+  Layers,
+  List,
+  Usb,
+  Settings,
+  Music,
 } from 'lucide-react';
 import type { SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
 
@@ -22,6 +28,8 @@ interface BarraSuperiorPracticaLibreProps {
   grabando: boolean;
   tiempoGrabacion: string;
   onAlternarGrabacion: () => void;
+  esAdmin?: boolean;
+  esp32Conectado?: boolean;
 }
 
 const ACCIONES_PANEL: Array<{ clave: SeccionPanelPracticaLibre; label: string; icono: React.ReactNode }> = [
@@ -30,6 +38,15 @@ const ACCIONES_PANEL: Array<{ clave: SeccionPanelPracticaLibre; label: string; i
   { clave: 'pistas', label: 'Pistas', icono: <Music2 size={15} /> },
   { clave: 'teoria', label: 'Teoria', icono: <BookOpen size={15} /> },
   { clave: 'efectos', label: 'FX', icono: <SlidersHorizontal size={15} /> },
+];
+
+const ACCIONES_PANEL_ADMIN: Array<{ clave: SeccionPanelPracticaLibre; label: string; icono: React.ReactNode }> = [
+  { clave: 'rec', label: 'REC', icono: <Circle size={15} /> },
+  { clave: 'gestor', label: 'Gestor', icono: <Settings size={15} /> },
+  { clave: 'gestor_acordes', label: 'Crear', icono: <Layers size={15} /> },
+  { clave: 'lista_acordes', label: 'Acordes', icono: <List size={15} /> },
+  { clave: 'libreria', label: 'Libreria', icono: <Music size={15} /> },
+  { clave: 'usb', label: 'USB', icono: <Usb size={15} /> },
 ];
 
 const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
@@ -43,6 +60,8 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
   grabando,
   tiempoGrabacion,
   onAlternarGrabacion,
+  esAdmin = false,
+  esp32Conectado = false,
 }) => {
   return (
     <div className="estudio-practica-libre-topbar">
@@ -68,6 +87,25 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
             </button>
           ))}
         </div>
+
+        {esAdmin && (
+          <div className="estudio-practica-libre-grupo-paneles admin" style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '2px solid #3b82f6' }}>
+            <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#3b82f6', alignSelf: 'center', marginRight: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              ADMIN
+            </span>
+            {ACCIONES_PANEL_ADMIN.map(({ clave, label, icono }) => (
+              <button
+                key={clave}
+                className={`estudio-practica-libre-btn ${panelActivo === clave ? 'activo' : ''}`}
+                onClick={() => onAlternarPanel(clave)}
+                title={label}
+              >
+                {icono}
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <button
           className={`estudio-practica-libre-btn-grabar ${grabando ? 'grabando' : ''}`}

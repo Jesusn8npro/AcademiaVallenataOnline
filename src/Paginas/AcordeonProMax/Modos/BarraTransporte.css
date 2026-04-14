@@ -106,6 +106,22 @@
   font-weight: 700;
 }
 
+.punch-in-marker {
+  position: absolute;
+  top: -24px;
+  transform: translateX(-50%);
+  font-size: 16px;
+  filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+  z-index: 5;
+  pointer-events: none;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -5px); }
+}
+
 .transporte-slider {
   width: 100%;
   appearance: none;

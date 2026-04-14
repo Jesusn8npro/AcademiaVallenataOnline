@@ -209,5 +209,46 @@ export const scoresHeroService = {
         nivel: 1
       };
     }
+  },
+
+  /**
+   * Crea una nueva canción en la librería profesional (canciones_hero) 
+   * a partir de una captura de Admin.
+   */
+  crearCancionHeroDesdeGrabacion: async (datos: {
+    titulo: string;
+    autor: string;
+    descripcion: string;
+    youtube_id: string;
+    tipo: string;
+    dificultad: string;
+    secuencia: any[];
+    bpm: number;
+    tonalidad: string;
+    audio_fondo_url: string | null;
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from('canciones_hero')
+        .insert({
+          titulo: datos.titulo,
+          autor: datos.autor,
+          descripcion: datos.descripcion,
+          youtube_id: datos.youtube_id,
+          tipo: datos.tipo,
+          dificultad: datos.dificultad,
+          secuencia: JSON.stringify(datos.secuencia),
+          bpm: datos.bpm,
+          tonalidad: datos.tonalidad,
+          audio_fondo_url: datos.audio_fondo_url,
+          estado: 'activo'
+        })
+        .select('*')
+        .single();
+
+      return { data, error };
+    } catch (err: any) {
+      return { data: null, error: err };
+    }
   }
 };

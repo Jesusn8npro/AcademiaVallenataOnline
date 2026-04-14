@@ -1,0 +1,195 @@
+/* ==========================================
+   PANEL ADMIN GESTOR ACORDES - CSS INDEPENDIENTE
+   ========================================== */
+
+.panel-admin-gestor-acordes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.panel-admin-gestor-acordes::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-admin-gestor-acordes::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.panel-admin-gestor-acordes::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.panel-admin-gestor-acordes::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* === HEADER === */
+.panel-admin-gestor-acordes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-admin-gestor-acordes-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* === BLOQUE === */
+.panel-admin-gestor-acordes-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.panel-admin-gestor-acordes-bloque-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #d8b4fe;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* === LISTA DE ACORDES === */
+.panel-admin-gestor-acordes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-admin-gestor-acordes-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  transition: all 0.2s ease;
+}
+
+.panel-admin-gestor-acordes-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.panel-admin-gestor-acordes-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.panel-admin-gestor-acordes-item-tonalidad {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(139, 92, 246, 0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* === BOTONES === */
+.panel-admin-gestor-acordes-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-admin-gestor-acordes-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.panel-admin-gestor-acordes-btn-editar {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border-color: #6d28d9;
+}
+
+.panel-admin-gestor-acordes-btn-editar:hover {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+.panel-admin-gestor-acordes-btn-eliminar {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.panel-admin-gestor-acordes-btn-eliminar:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+
+/* === NUEVO ACORDE === */
+.panel-admin-gestor-acordes-new {
+  padding: 12px;
+  border: 2px dashed rgba(139, 92, 246, 0.5);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.05);
+  text-align: center;
+}
+
+.panel-admin-gestor-acordes-new-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-admin-gestor-acordes-new-btn:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .panel-admin-gestor-acordes {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .panel-admin-gestor-acordes-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .panel-admin-gestor-acordes-btn {
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+}
