@@ -10,6 +10,7 @@ import {
   cargarPreferenciasPracticaLibre,
   guardarPreferenciasPracticaLibre,
 } from '../Servicios/servicioPreferenciasPracticaLibre';
+import { motorAudioPro } from '../../../SimuladorDeAcordeon/AudioEnginePro';
 
 interface UseEstudioPracticaLibreArgs {
   tonalidadSeleccionada: string;
@@ -268,6 +269,19 @@ export function useEstudioPracticaLibre({
   React.useEffect(() => {
     actualizarVolumenPistas();
   }, [actualizarVolumenPistas]);
+
+  // 🔊 Sincronizar efectos con el motor de audio real
+  React.useEffect(() => {
+    if (!preferenciasListas) return;
+    
+    const { efectos } = preferencias;
+    // EQ: graves, medios, agudos
+    motorAudioPro.actualizarEQ(efectos.bajos, efectos.medios, efectos.agudos);
+    // Reverb: 0-100 -> 0.0-1.0
+    motorAudioPro.actualizarReverb(efectos.reverb / 100);
+    // Volumen Maestro
+    motorAudioPro.setVolumenMaestro(volumenAcordeon / 100);
+  }, [preferencias.efectos, volumenAcordeon, preferenciasListas]);
 
   React.useEffect(() => {
     if (!pistaActiva) {

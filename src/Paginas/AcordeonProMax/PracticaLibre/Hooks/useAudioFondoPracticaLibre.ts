@@ -13,9 +13,11 @@ interface UseAudioFondoProps {
 /**
  * Hook para sincronizar Audio HTML con el reproductor Hero.
  *
- * El reproductor Hero usa motorAudioPro (reloj de AudioContext microsegundos-precisión).
- * Este hook mantiene el HTML Audio element sincronizado calculando continuamente
- * la posición esperada basada en ticks y ajustando con pequeñas correcciones.
+ * Estrategia: Sistema de CHECKPOINT (igual a useReproductorHero)
+ * - Guarda un checkpoint (tick + tiempo de audio)
+ * - Cuando el BPM cambia, solo ajusta playbackRate
+ * - NO recalcula continuamente la posición esperada (eso causa saltos)
+ * - Solo sincroniza cuando hay un SALTO en ticks (seek del usuario)
  */
 export const useAudioFondoPracticaLibre = ({
   reproduciendo,
@@ -28,10 +30,14 @@ export const useAudioFondoPracticaLibre = ({
 }: UseAudioFondoProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const bpmOriginalRef = useRef(120);
+
+  // Sistema de CHECKPOINT: Guarda tick + tiempo de audio en un momento
+  const checkpointTickRef = useRef(0);
+  const checkpointTimeRef = useRef(0);
   const tickAnteriorRef = useRef(0);
+
   const estadoPrevioPlayRef = useRef(false);
   const syncFrameRef = useRef<number>(0);
-  const ultimoAjusteRef = useRef(0);
 
   // Crear elemento de audio una sola vez
   useEffect(() => {
@@ -59,17 +65,64 @@ export const useAudioFondoPracticaLibre = ({
     }
   }, [cancionData?.bpm]);
 
-  // 🎵 FUNCIÓN: Calcular segundos basado en ticks
-  const calcularSegundos = useCallback((tick: number, bpmActual: number): number => {
-    const bps = bpmActual / 60;
+  // 🎵 FUNCIÓN: Calcular segundos basado en ticks usando BPM ORIGINAL
+  // (No el BPM actual, porque el playbackRate ya maneja eso)
+  const calcularSegundosDesdeCheckpoint = useCallback((tick: number, bpmOriginal: number): number => {
+    const bps = bpmOriginal / 60;
     const ticksPorSegundo = bps * 192;
     return tick / ticksPorSegundo;
   }, []);
 
-  // 🎵 SINCRONIZADOR CONTINUO: Ajusta pequeñamente cada frame
+  // 🎵 EFECTO: Manejar play/pause y crear checkpoint inicial
   useEffect(() => {
-    if (!audioRef.current || !audioUrl || pausado) return;
-    if (!reproduciendo) return;
+    if (!audioRef.current || !audioUrl) return;
+
+    const debeReproducir = reproduciendo && !pausado;
+
+    if (debeReproducir && !estadoPrevioPlayRef.current) {
+      // Iniciando reproducción: establecer posición inicial
+      const tiempoInicio = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
+      audioRef.current.currentTime = tiempoInicio;
+
+      // CREAR CHECKPOINT INICIAL
+      checkpointTimeRef.current = tiempoInicio;
+      checkpointTickRef.current = tickActual;
+
+      audioRef.current.play().catch(e => console.warn('⚠️ Audio no pudo reproducirse:', e));
+    } else if (!debeReproducir && estadoPrevioPlayRef.current) {
+      // Pausando reproducción
+      audioRef.current.pause();
+    }
+
+    estadoPrevioPlayRef.current = debeReproducir;
+  }, [reproduciendo, pausado, audioUrl, calcularSegundosDesdeCheckpoint]);
+
+  // 🎵 SINCRONIZACIÓN CON CHECKBOX: Solo sincroniza si hay SALTO en ticks
+  // (Cuando el usuario hace seek, no cuando el BPM cambia)
+  useEffect(() => {
+    if (!audioRef.current || !audioUrl) return;
+
+    const diferenciaTickActual = Math.abs(tickActual - tickAnteriorRef.current);
+
+    // Si hay un salto > 50 ticks, es un seek del usuario
+    if (reproduciendo && diferenciaTickActual > 50) {
+      const tiempoSeek = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
+      audioRef.current.currentTime = tiempoSeek;
+
+      // Actualizar checkpoint después del seek
+      checkpointTimeRef.current = tiempoSeek;
+      checkpointTickRef.current = tickActual;
+
+      console.log('🔄 Seek detectado:', { tickAnterior: tickAnteriorRef.current, tickActual, tiempoSeek });
+    }
+
+    tickAnteriorRef.current = tickActual;
+  }, [tickActual, reproduciendo, audioUrl, calcularSegundosDesdeCheckpoint]);
+
+  // 🎵 MICRO-SINCRONIZACIÓN: Solo sincroniza si la diferencia es grande
+  // Usa el checkpoint para detectar desincronización
+  useEffect(() => {
+    if (!audioRef.current || !audioUrl || pausado || !reproduciendo) return;
 
     const syncLoop = () => {
       if (!audioRef.current || !reproduciendo || pausado) {
@@ -77,16 +130,18 @@ export const useAudioFondoPracticaLibre = ({
         return;
       }
 
-      const tiempoEsperado = calcularSegundos(tickActual, bpm);
+      // Calcular tiempo esperado desde el checkpoint
+      const tiempoDesdeCheckpoint = (tickActual - checkpointTickRef.current) / ((bpmOriginalRef.current / 60) * 192);
+      const tiempoEsperado = checkpointTimeRef.current + tiempoDesdeCheckpoint;
       const tiempoActual = audioRef.current.currentTime;
       const diferencia = Math.abs(tiempoEsperado - tiempoActual);
 
-      // Si la diferencia es mayor a 0.1 segundos, ajusta
-      // Pero no más de una vez cada 100ms para evitar saltos
-      const ahora = Date.now();
-      if (diferencia > 0.1 && (ahora - ultimoAjusteRef.current) > 100) {
+      // Si hay mucha desincronización (> 0.3s), sincronizar
+      if (diferencia > 0.3) {
+        console.log('🔧 Micro-sincronización:', { diferencia, tiempoEsperado, tiempoActual });
         audioRef.current.currentTime = tiempoEsperado;
-        ultimoAjusteRef.current = ahora;
+        checkpointTimeRef.current = tiempoEsperado;
+        checkpointTickRef.current = tickActual;
       }
 
       syncFrameRef.current = requestAnimationFrame(syncLoop);
@@ -97,46 +152,18 @@ export const useAudioFondoPracticaLibre = ({
     return () => {
       if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
     };
-  }, [reproduciendo, pausado, audioUrl, bpm, tickActual, calcularSegundos]);
+  }, [reproduciendo, pausado, audioUrl, tickActual]);
 
-  // 🎵 EFECTO: Manejar play/pause
-  useEffect(() => {
-    if (!audioRef.current || !audioUrl) return;
-
-    const debeReproducir = reproduciendo && !pausado;
-
-    if (debeReproducir && !estadoPrevioPlayRef.current) {
-      const tiempoInicio = calcularSegundos(tickActual, bpm);
-      audioRef.current.currentTime = tiempoInicio;
-      audioRef.current.play().catch(e => console.warn('⚠️ Audio no pudo reproducirse:', e));
-      ultimoAjusteRef.current = Date.now();
-    } else if (!debeReproducir && estadoPrevioPlayRef.current) {
-      audioRef.current.pause();
-    }
-
-    estadoPrevioPlayRef.current = debeReproducir;
-  }, [reproduciendo, pausado, audioUrl, bpm, tickActual, calcularSegundos]);
-
-  // 🎵 SINCRONIZADOR PARA SALTOS: Solo si hay salto > 10 ticks y no está reproduciendo
-  useEffect(() => {
-    if (!audioRef.current || !audioUrl) return;
-
-    if (!reproduciendo && Math.abs(tickActual - tickAnteriorRef.current) > 10) {
-      const tiempoSalto = calcularSegundos(tickActual, bpm);
-      audioRef.current.currentTime = tiempoSalto;
-      ultimoAjusteRef.current = Date.now();
-    }
-
-    tickAnteriorRef.current = tickActual;
-  }, [tickActual, reproduciendo, bpm, audioUrl, calcularSegundos]);
-
-  // 🎵 VELOCIDAD
+  // 🎵 VELOCIDAD: Solo cambiar playbackRate cuando BPM cambia
+  // Sin tocar la posición de audio (currentTime)
   useEffect(() => {
     if (!audioRef.current || !bpmOriginalRef.current) return;
 
     const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOriginalRef.current));
     audioRef.current.playbackRate = velocidad;
     (audioRef.current as any).preservesPitch = true;
+
+    console.log('⚡ BPM changed:', { bpm, bpmOriginal: bpmOriginalRef.current, velocidad });
   }, [bpm]);
 
   // 🎵 VOLUMEN

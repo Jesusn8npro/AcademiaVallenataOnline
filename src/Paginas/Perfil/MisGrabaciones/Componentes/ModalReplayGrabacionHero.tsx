@@ -85,7 +85,20 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
         logica.actualizarBotonActivo,
         logica.setDireccionSinSwap,
         logica.reproduceTono,
-        bpm
+        bpm,
+        undefined, // onBpmAplicado
+        (beatIndex) => {
+            // 🥁 Metrónomo en Replay
+            const metActivo = grabacion?.metadata?.metronomo_activo || grabacion?.metadata?.practica_libre?.efectos?.metronomoActivo;
+            if (!metActivo) return;
+
+            const beatEnCompas = beatIndex % 4; // Asumimos 4/4 por defecto en replay
+            motorAudioPro.reproducir(
+                beatEnCompas === 0 ? 'click_fuerte' : 'click_debil',
+                'metronomo',
+                beatEnCompas === 0 ? 0.6 : 0.4
+            );
+        }
     );
 
     const cancionReplay = useMemo(() => {
@@ -169,6 +182,17 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
     useEffect(() => {
         if (!grabacion) return;
         setBpm(grabacion.bpm || 120);
+
+        // 🔊 Restaurar Efectos (EQ / Reverb)
+        const efectos = grabacion.metadata?.efectos || grabacion.metadata?.practica_libre?.efectos;
+        if (efectos) {
+            motorAudioPro.actualizarEQ(efectos.bajos || 0, efectos.medios || 0, efectos.agudos || 0);
+            motorAudioPro.actualizarReverb((efectos.reverb || 0) / 100);
+        } else {
+            // Reset por defecto si no hay metadata
+            motorAudioPro.actualizarEQ(0, 0, 0);
+            motorAudioPro.actualizarReverb(0);
+        }
     }, [grabacion]);
 
     const precargarNotasReplay = useCallback(async () => {

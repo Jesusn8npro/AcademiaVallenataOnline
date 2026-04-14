@@ -58,11 +58,48 @@ export class MotorAudioPro {
         this.contexto = new AudioContextClass(opcionesContexto);
         this.bancos = new Map();
 
-        // NODO PRINCIPAL: Solo ganancia, SIN compresor
-        // El DynamicsCompressor costaba ~15ms extra de procesamiento por nota en Android
+        // 1. NODO PRINCIPAL: Ganancia Final
         this.nodoGananciaPrincipal = this.contexto.createGain();
         this.nodoGananciaPrincipal.gain.setValueAtTime(0.85, this.contexto.currentTime);
         this.nodoGananciaPrincipal.connect(this.contexto.destination);
+
+        // 2. EQUALIZADOR (3 Bandas)
+        this.filtroBajos = this.contexto.createBiquadFilter();
+        this.filtroBajos.type = 'lowshelf';
+        this.filtroBajos.frequency.value = 320;
+
+        this.filtroMedios = this.contexto.createBiquadFilter();
+        this.filtroMedios.type = 'peaking';
+        this.filtroMedios.frequency.value = 1000;
+        this.filtroMedios.Q.value = 0.7;
+
+        this.filtroAltos = this.contexto.createBiquadFilter();
+        this.filtroAltos.type = 'highshelf';
+        this.filtroAltos.frequency.value = 3200;
+
+        // Conectar EQ en cadena
+        this.filtroBajos.connect(this.filtroMedios);
+        this.filtroMedios.connect(this.filtroAltos);
+        this.filtroAltos.connect(this.nodoGananciaPrincipal);
+
+        // 3. REVERB (Algoritmica simple o por Convolver si hay impulso)
+        // Por ahora usaremos un GainNode intermedio para el EQ -> Principal
+        // y un envío paralelo para la Reverb.
+        this.mixBus = this.contexto.createGain();
+        this.mixBus.connect(this.filtroBajos);
+
+        this.reverbGanancia = this.contexto.createGain();
+        this.reverbGanancia.gain.value = 0; // Seco por defecto
+        
+        // Simulación de reverb simple (Delay + Feedback) si no tenemos impulso
+        // Para vallenato, un delay corto y múltiple funciona bien.
+        // Pero para ser pros, intentaremos crear un buffer de impulso sintético corto.
+        this.reverbNode = this.contexto.createConvolver();
+        this._crearImpulsoSintetico();
+        
+        this.mixBus.connect(this.reverbNode);
+        this.reverbNode.connect(this.reverbGanancia);
+        this.reverbGanancia.connect(this.nodoGananciaPrincipal);
 
         // 🏊 PRE-CREAR EL POOL DE VOCES
         // Cada voz tiene su GainNode YA CONECTADO al grafo.
@@ -77,9 +114,51 @@ export class MotorAudioPro {
         for (let i = 0; i < this.MAX_VOCES; i++) {
             const ganancia = this.contexto.createGain();
             ganancia.gain.setValueAtTime(0, this.contexto.currentTime);
-            ganancia.connect(this.nodoGananciaPrincipal);
+            ganancia.connect(this.mixBus); // Conectado al MixBus que tiene el EQ
             this.poolVoces.push({ ganancia, fuente: null, ocupada: false, tiempo: 0 });
         }
+    }
+
+    private _crearImpulsoSintetico() {
+        const duracion = 1.5;
+        const rate = this.contexto.sampleRate;
+        const length = rate * duracion;
+        const buffer = this.contexto.createBuffer(2, length, rate);
+        
+        for (let channel = 0; channel < 2; channel++) {
+            const data = buffer.getChannelData(channel);
+            for (let i = 0; i < length; i++) {
+                // Ruido blanco que decae exponencialmente
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
+            }
+        }
+        this.reverbNode.buffer = buffer;
+    }
+
+    private mixBus: GainNode;
+    private filtroBajos!: BiquadFilterNode;
+    private filtroMedios!: BiquadFilterNode;
+    private filtroAltos!: BiquadFilterNode;
+    private reverbNode!: ConvolverNode;
+    private reverbGanancia!: GainNode;
+
+    /**
+     * Actualiza el ecualizador en tiempo real
+     */
+    actualizarEQ(bajos: number, medios: number, altos: number) {
+        const cTime = this.contexto.currentTime;
+        this.filtroBajos.gain.setTargetAtTime(bajos, cTime, 0.05);
+        this.filtroMedios.gain.setTargetAtTime(medios, cTime, 0.05);
+        this.filtroAltos.gain.setTargetAtTime(altos, cTime, 0.05);
+    }
+
+    /**
+     * Actualiza la mezcla de reverb (0 a 1)
+     */
+    actualizarReverb(cantidad: number) {
+        const cTime = this.contexto.currentTime;
+        // Ajustamos la curva para que se sienta natural
+        this.reverbGanancia.gain.setTargetAtTime(cantidad * 0.5, cTime, 0.05);
     }
 
     private _obtenerVozLibre(): VozPooled {

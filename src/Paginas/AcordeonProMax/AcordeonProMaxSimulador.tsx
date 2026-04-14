@@ -193,7 +193,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
         </div>
       )}
 
-      {mostrarHeaderHero && (
+      {(mostrarHeaderHero && hero.estadoJuego !== 'practica_libre') && (
         <HeaderHero
           hero={hero}
           modosVista={MODOS_VISTA as any}
