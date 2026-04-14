@@ -22,7 +22,8 @@
       "Bash(grep -n \"reproducirSecuencia\\\\|onReproducirSecuencia\" \"c:\\\\\\\\PROGRAMACION\\\\\\\\AcademiaVallenataOnline-main\\\\\\\\src\\\\\\\\Paginas\\\\\\\\AcordeonProMax\\\\\\\\AcordeonProMaxSimulador.tsx\")",
       "Bash(grep -n \"reproducirSecuencia\\\\s*=\" \"c:\\\\\\\\PROGRAMACION\\\\\\\\AcademiaVallenataOnline-main\\\\\\\\src\\\\\\\\Paginas\\\\\\\\AcordeonProMax\\\\\\\\Hooks\\\\\\\\useLogicaProMax.ts\")",
       "Bash(grep -n \"const reproducirSecuencia\\\\|reproducirSecuencia:\" \"c:\\\\\\\\PROGRAMACION\\\\\\\\AcademiaVallenataOnline-main\\\\\\\\src\\\\\\\\Paginas\\\\\\\\AcordeonProMax\\\\\\\\Hooks\\\\\\\\useLogicaProMax.ts\")",
-      "Bash(grep -n \"botonesActivosMaestro\" \"c:\\\\\\\\PROGRAMACION\\\\\\\\AcademiaVallenataOnline-main\\\\\\\\src\\\\\\\\Paginas\\\\\\\\AcordeonProMax\\\\\\\\PracticaLibre\\\\\\\\EstudioPracticaLibre.tsx\")"
+      "Bash(grep -n \"botonesActivosMaestro\" \"c:\\\\\\\\PROGRAMACION\\\\\\\\AcademiaVallenataOnline-main\\\\\\\\src\\\\\\\\Paginas\\\\\\\\AcordeonProMax\\\\\\\\PracticaLibre\\\\\\\\EstudioPracticaLibre.tsx\")",
+      "Read(//c/PROGRAMACION/AcordeonProMax/Modos/**)"
     ],
     "additionalDirectories": [
       "\\tmp"

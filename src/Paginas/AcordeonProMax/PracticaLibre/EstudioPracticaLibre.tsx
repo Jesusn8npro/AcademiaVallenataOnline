@@ -12,12 +12,14 @@ import ModalCreadorAcordes from '../../SimuladorDeAcordeon/Componentes/ModalCrea
 import ModalListaAcordes from '../../SimuladorDeAcordeon/Componentes/ModalListaAcordes';
 import { useGrabadorHero } from '../../SimuladorDeAcordeon/Hooks/useGrabadorHero';
 import { useReproductorHero } from '../../SimuladorDeAcordeon/Hooks/useReproductorHero';
-import BarraTransporte from '../Modos/BarraTransporte';
 import ModalGuardarHero from '../../SimuladorDeAcordeon/Componentes/ModalGuardarHero';
 import PuenteNotas from '../Componentes/PuenteNotas';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import { useAudioFondoPracticaLibre } from './Hooks/useAudioFondoPracticaLibre';
+import BarraReproductorPracticaLibre from './Componentes/BarraReproductorPracticaLibre';
 import './EstudioPracticaLibre.css';
+
+// ✅ Removemos BarraTransporte import - ahora usamos BarraReproductorPracticaLibre independiente
 
 interface EstudioPracticaLibreProps {
   logica: any;
@@ -115,14 +117,8 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   pausado,
   onAlternarPausa,
   onBuscarTick,
-
-  loopAB,
-  onMarcarLoopInicio,
-  onMarcarLoopFin,
-  onActualizarLoopInicio,
-  onActualizarLoopFin,
-  onAlternarLoop,
-  onLimpiarLoop,
+  // Loop props - removidas de destructuración ya que PracticaLibre no usa bucles
+  // loopAB, onMarcarLoopInicio, onMarcarLoopFin, onActualizarLoopInicio, onActualizarLoopFin, onAlternarLoop, onLimpiarLoop,
   onReproducirSecuencia,
   secuencia,
   secuenciaGrabacion,
@@ -212,6 +208,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
 
   // Estados de grabación
   const [metronomoActivo, setMetronomoActivo] = React.useState(false);
+  const [bpmOriginalGrabacion, setBpmOriginalGrabacion] = React.useState(120);
 
   // 🎵 Hook para sincronizar audio de fondo con reproducción
   const audioRef = useAudioFondoPracticaLibre({
@@ -220,7 +217,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     bpm,
     tickActual,
     cancionData: {
-      bpm: bpm,
+      bpm: bpmOriginalGrabacion, // ✅ El BPM original de cuando se grabó
       resolucion: 192,
       audio_fondo_url: pistaUrl
     },
@@ -343,8 +340,10 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     console.log('🎵 Reproduciendo desde librería:', cancion);
 
     // 1. Actualizar BPM
-    setBpmHero(cancion.bpm || 120);
-    setBpmGrabacion(cancion.bpm || 120);
+    const bpmCancion = cancion.bpm || 120;
+    setBpmHero(bpmCancion);
+    setBpmGrabacion(bpmCancion);
+    setBpmOriginalGrabacion(bpmCancion); // ✅ Guarda el BPM original para que el audio escale correctamente
 
     // 2. Cargar pista de fondo si existe
     if (cancion.audio_fondo_url) {
@@ -452,10 +451,10 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             )}
           </div>
 
-          {/* 🚀 BARRA DE TRANSPORTE DE PRECISIÓN (ESTILO DAW) */}
+          {/* 🚀 BARRA DE REPRODUCCIÓN INDEPENDIENTE PARA PRÁCTICA LIBRE */}
           {(reproduciendo || grabando || pistaUrl) && (
             <div className="estudio-practica-libre-transport-fixed">
-              <BarraTransporte
+              <BarraReproductorPracticaLibre
                 reproduciendo={reproduciendo || grabando}
                 pausado={pausado && !grabando}
                 onAlternarPausa={() => {
@@ -478,14 +477,6 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
                 onBuscarTick={onBuscarTick}
                 bpm={bpm}
                 onCambiarBpm={onCambiarBpm}
-                // Loop Logic (Conectada al reproductor parent)
-                loopAB={loopAB}
-                onMarcarLoopInicio={onMarcarLoopInicio}
-                onMarcarLoopFin={onMarcarLoopFin}
-                onActualizarLoopInicio={onActualizarLoopInicio}
-                onActualizarLoopFin={onActualizarLoopFin}
-                onAlternarLoop={onAlternarLoop}
-                onLimpiarLoop={onLimpiarLoop}
               />
             </div>
           )}
