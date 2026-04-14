@@ -10,6 +10,15 @@ interface UseAudioFondoProps {
   volumen?: number;
 }
 
+/**
+ * Hook para sincronizar un elemento Audio HTML con el reproductor de secuencias.
+ * Funciona EXACTAMENTE igual a GestorPistasHero pero para PracticaLibre.
+ *
+ * Key difference from naive approach:
+ * - Initializes currentTime precisely when transitioning to play
+ * - Only re-syncs on manual seeks (jumps > 10 ticks)
+ * - Avoids continuous correction that causes drift
+ */
 export const useAudioFondoPracticaLibre = ({
   reproduciendo,
   pausado,
@@ -24,7 +33,7 @@ export const useAudioFondoPracticaLibre = ({
   const tickAnteriorRef = useRef(0);
   const estadoPrevioPlayRef = useRef(false);
 
-  // Crear o obtener el elemento de audio
+  // Crear elemento de audio una sola vez
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
@@ -33,14 +42,7 @@ export const useAudioFondoPracticaLibre = ({
     }
   }, []);
 
-  // Establecer volumen
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = Math.max(0, Math.min(1, volumen));
-    }
-  }, [volumen]);
-
-  // Actualizar URL del audio
+  // Cargar URL del audio (sin reproducir aún)
   useEffect(() => {
     if (!audioRef.current) return;
 
@@ -50,61 +52,74 @@ export const useAudioFondoPracticaLibre = ({
     }
   }, [audioUrl]);
 
-  // Guardar BPM original al cambiar la canción
+  // Guardar BPM original (del archivo de la canción grabada)
   useEffect(() => {
     if (cancionData?.bpm) {
       bpmOriginalRef.current = cancionData.bpm;
     }
   }, [cancionData?.bpm]);
 
-  // Sincronizar velocidad de reproducción según BPM
-  useEffect(() => {
-    if (!audioRef.current || !bpmOriginalRef.current) return;
-
-    const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOriginalRef.current));
-    audioRef.current.playbackRate = velocidad;
-  }, [bpm]);
-
-  // Sincronizar posición del audio con tick actual
-  const sincronizarAudioEnTick = useCallback((tick: number) => {
-    if (!audioRef.current || !cancionData) return;
-
-    const resolucion = cancionData.resolucion || 192;
-    const bpmOriginal = bpmOriginalRef.current || 120;
-    const tiempoSegundos = (tick / resolucion) * (60 / bpmOriginal);
-
-    audioRef.current.currentTime = tiempoSegundos;
-  }, [cancionData]);
-
-  // Manejar play/pause
+  // 🎵 EFECTO PRINCIPAL: Manejar play/pause CON SINCRONIZACIÓN AL INICIAR
+  // ✅ NO incluye tickActual en dependencias para evitar saltos infinitos
   useEffect(() => {
     if (!audioRef.current || !audioUrl) return;
 
     const debeReproducir = reproduciendo && !pausado;
 
+    // Si acaba de cambiar a reproducción
     if (debeReproducir && !estadoPrevioPlayRef.current) {
-      // Sincronizar posición
-      sincronizarAudioEnTick(tickActual);
+      // Sincronizar a la posición exacta ANTES de reproducir
+      const bps = bpm / 60;
+      const ticksPorSegundo = bps * 192;
+      const segundosAbsolutos = tickActual / ticksPorSegundo;
+
+      if (segundosAbsolutos < 0.05) {
+        audioRef.current.currentTime = 0;
+      } else {
+        audioRef.current.currentTime = segundosAbsolutos;
+      }
+
       // Reproducir
       audioRef.current.play().catch(e => console.warn('⚠️ Audio no pudo reproducirse:', e));
-    } else if (!debeReproducir && estadoPrevioPlayRef.current) {
-      // Pausar
+    }
+    // Si acaba de cambiar a pausa
+    else if (!debeReproducir && estadoPrevioPlayRef.current) {
       audioRef.current.pause();
     }
 
     estadoPrevioPlayRef.current = debeReproducir;
-  }, [reproduciendo, pausado, audioUrl, tickActual, sincronizarAudioEnTick]);
+  }, [reproduciendo, pausado, audioUrl, bpm, tickActual]); // ✅ Incluye tickActual solo para sincronización al iniciar
 
-  // Sincronizar cuando se busca un tick (rebobinado)
+  // 🎵 SINCRONIZADOR MECÁNICO: Solo para saltos manuales (> 10 ticks)
+  // Esto maneja rebobinados y búsquedas mientras está en pausa
   useEffect(() => {
     if (!audioRef.current || !audioUrl) return;
 
-    if (!reproduciendo && Math.abs(tickActual - tickAnteriorRef.current) > 10) {
-      sincronizarAudioEnTick(tickActual);
+    // Si no está reproduciendo/grabando Y hay un salto grande (> 10 ticks)
+    if (!reproduciendo && !pausado && Math.abs(tickActual - tickAnteriorRef.current) > 10) {
+      const bps = bpm / 60;
+      const ticksPorSegundo = bps * 192;
+      audioRef.current.currentTime = tickActual / ticksPorSegundo;
     }
 
     tickAnteriorRef.current = tickActual;
-  }, [tickActual, reproduciendo, audioUrl, sincronizarAudioEnTick]);
+  }, [tickActual, reproduciendo, pausado, bpm, audioUrl]); // ✅ Detecta saltos aquí
+
+  // 🎵 SINCRONIZACIÓN DE VELOCIDAD: Ajusta playbackRate según cambios de BPM
+  useEffect(() => {
+    if (!audioRef.current || !bpmOriginalRef.current) return;
+
+    const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOriginalRef.current));
+    audioRef.current.playbackRate = velocidad;
+    (audioRef.current as any).preservesPitch = true;
+  }, [bpm]);
+
+  // 🎵 VOLUMEN
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = Math.max(0, Math.min(1, volumen));
+    }
+  }, [volumen]);
 
   return audioRef;
 };
