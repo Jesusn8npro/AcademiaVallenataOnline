@@ -13,7 +13,7 @@ import {
 import { HILERAS_NATIVAS, TONALIDADES } from '../../../SimuladorDeAcordeon/notasAcordeonDiatonico';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
-import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminLibreria, PanelAdminUSB, PanelListaAcordesAdmin } from '../../Admin';
+import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminLibreria, PanelAdminUSB, PanelAdminListaAcordes } from '../../Admin';
 
 interface PanelLateralPracticaLibreProps {
   visible: boolean;
@@ -634,7 +634,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
       )}
 
       {esAdmin && seccionActiva === 'lista_acordes' && (
-        <PanelListaAcordesAdmin
+        <PanelAdminListaAcordes
           onReproducirAcorde={onReproducirAcorde || (() => {})}
           onDetener={onDetenerAcorde || (() => {})}
           idSonando={idSonandoAcorde || null}
