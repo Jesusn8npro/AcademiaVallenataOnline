@@ -16,3 +16,26 @@ export async function actualizarSecuenciaCancionHero(id: string, secuencia: Nota
 
     return data;
 }
+
+export async function actualizarCancionHeroCompleta(
+    id: string,
+    actualizaciones: {
+        secuencia_json?: NotaHero[];
+        secciones?: any[];
+        duracion_segundos?: number | null;
+    }
+) {
+    const tablaCanciones: any = supabase.from('canciones_hero' as any);
+
+    const { data, error } = await tablaCanciones
+        .update(actualizaciones as any)
+        .eq('id', id)
+        .select('*')
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}

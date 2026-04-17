@@ -921,12 +921,13 @@ export function useLogicaProMax() {
           if (arrancado) return;
           arrancado = true;
 
-          // Ahora que el audio está cargado (o timeout), arrancamos todo sincronizado
-          reproductor.reproducirSecuencia(cancion);
-
-          // Reproducir el audio EN ESTE MISMO INSTANTE, antes de que se ejecute el siguiente frame
-          // Permitimos que falle silenciosamente si no está listo
+          // ORDEN CRÍTICO: audio.play() PRIMERO para que el audio empiece a sonar
+          // antes o al mismo tiempo que el motor de ticks. Si el reproductor arranca
+          // primero, los ticks llevan ventaja sobre el audio y quedan desincronizados.
           audio.play().catch(() => console.warn('⚠️ Audio no pudo reproducirse aún'));
+
+          // Ahora arrancamos el reproductor de ticks, sincrónicamente en el mismo frame
+          reproductor.reproducirSecuencia(cancion);
 
           // Limpiar los listeners
           audio.removeEventListener('canplay', iniciarTodo);

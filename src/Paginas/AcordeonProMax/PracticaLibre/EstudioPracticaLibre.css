@@ -196,13 +196,15 @@
 .estudio-practica-libre-contenido {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+  display: flex;
+  flex-direction: row;
   gap: 14px;
 }
 
 .estudio-practica-libre-escenario {
   position: relative;
+  flex: 1;
+  min-width: 0;
   min-height: 0;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -664,8 +666,9 @@
     --estudio-acordeon-tamano: min(60vh, 72vw);
   }
 
-  .estudio-practica-libre-contenido {
-    grid-template-columns: minmax(0, 1fr);
+  .estudio-practica-libre-panel,
+  .modal-editor-secuencia {
+    display: none;
   }
 }
 
