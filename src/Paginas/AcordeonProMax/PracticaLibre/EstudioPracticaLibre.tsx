@@ -17,6 +17,7 @@ import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import { useAudioFondoPracticaLibre } from './Hooks/useAudioFondoPracticaLibre';
 import BarraReproductorPracticaLibre from './Componentes/BarraReproductorPracticaLibre';
 import BarraTransporte from '../Modos/BarraTransporte';
+import ModalEditorSecuencia from '../Admin/Componentes/ModalEditorSecuencia';
 import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 import type { NotaHero } from '../../SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
 import { actualizarSecuenciaCancionHero } from '../../../servicios/cancionesHeroService';
@@ -310,6 +311,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   const [bpmOriginalGrabacion, setBpmOriginalGrabacion] = React.useState(120);
   const [cancionActivaLibreria, setCancionActivaLibreria] = React.useState<any | null>(null);
   const [cancionEditandoSecuencia, setCancionEditandoSecuencia] = React.useState<any | null>(null);
+  const [cancionEnModalEditor, setCancionEnModalEditor] = React.useState<any | null>(null);
   const [secuenciaEditada, setSecuenciaEditada] = React.useState<NotaHero[]>([]);
   const [preRollSegundos, setPreRollSegundos] = React.useState(4);
   const [esperandoPunchIn, setEsperandoPunchIn] = React.useState(false);
@@ -787,6 +789,36 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     detenerReproduccionLocal(0);
   }, [cancionEditandoSecuencia, construirCancionHero, detenerReproduccionLocal, esperandoPunchIn, grabadorLocal.grabando, grabandoSesion, hayCambiosEdicionSecuencia, onLimpiarLoop, prepararCancionEnEscenario]);
 
+  const handleAbrirModalEditor = React.useCallback((cancion: any) => {
+    if (grabandoSesion || grabadorLocal.grabando || esperandoPunchIn) {
+      setMensajeEdicionSecuencia('Detén la grabación o el pre-roll actual antes de abrir el editor.');
+      return;
+    }
+
+    // Detener reproducción
+    onDetenerHero?.();
+    onBuscarTick?.(0);
+
+    // Cargar la canción en el reproductor
+    const cancionPreparada = construirCancionHero(cancion);
+    prepararCancionEnEscenario(cancionPreparada);
+
+    // Abrir el modal
+    setCancionEnModalEditor(cancion);
+  }, [grabandoSesion, grabadorLocal.grabando, esperandoPunchIn, onDetenerHero, onBuscarTick, construirCancionHero, prepararCancionEnEscenario]);
+
+  const handleNotasActualesDelModal = React.useCallback((notas: NotaHero[]) => {
+    // Limpiar todos los botones activos primero
+    logica.limpiarTodasLasNotas();
+
+    // Iluminar los botones de las notas actuales
+    notas.forEach((nota) => {
+      const fuelle = nota.fuelle === 'abriendo' ? 'halar' : 'empujar';
+      const idFinal = `${nota.botonId}-${fuelle}`;
+      logica.actualizarBotonActivo(idFinal, 'add', null, false, undefined, true);
+    });
+  }, [logica]);
+
   React.useEffect(() => {
     if (!esperandoPunchIn || modoCapturaRec !== 'edicion' || punchInTick === null || tickActual < punchInTick) {
       return;
@@ -899,8 +931,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
               )}
             </div>
 
-            {/* Puente de Notas (Falling Notes) */}
-            {(reproduciendo || hayGrabacionActiva) && (
+            {/* Puente de Notas (Falling Notes) - SOLO EN MODOS CON GAMEPLAY */}
+            {/* En Práctica Libre NO mostramos las notas cayendo */}
+            {false && (reproduciendo || hayGrabacionActiva) && (
               <PuenteNotas
                 cancion={{
                   id: 'practica-id',
@@ -1010,8 +1043,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           )}
         </div>
 
-        <PanelLateralPracticaLibre
-          visible={Boolean(estudio.panelActivo)}
+        {!cancionEnModalEditor && (
+          <PanelLateralPracticaLibre
+            visible={Boolean(estudio.panelActivo)}
           seccionActiva={estudio.panelActivo}
           tonalidadSeleccionada={logica.tonalidadSeleccionada}
           listaTonalidades={logica.listaTonalidades?.length ? logica.listaTonalidades : Object.keys(TONALIDADES)}
@@ -1093,7 +1127,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           tiempoGrabacionRecMs={tiempoGrabacionRecProMs}
           // Props Librería
           onReproducirLibreria={handleReproducirLibreria}
-          onEditarSecuenciaLibreria={handleEditarSecuenciaLibreria}
+          onEditarSecuenciaLibreria={handleAbrirModalEditor}
           onMarcarEntradaEdicionLibreria={marcarEntradaEdicion}
           onMarcarSalidaEdicionLibreria={marcarSalidaEdicion}
           onIniciarPunchInLibreria={iniciarPunchInEdicion}
@@ -1167,6 +1201,38 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           metronomoActivo={metronomoActivo}
           setMetronomoActivo={setMetronomoActivo}
         />
+        )}
+
+        {cancionEnModalEditor && (
+          <ModalEditorSecuencia
+            cancion={cancionEnModalEditor}
+            onCerrar={() => {
+              setCancionEnModalEditor(null);
+              logica.limpiarTodasLasNotas();
+              // Recargar la canción en la librería si fue modificada
+              if (cancionEnModalEditor?.id === cancionActivaLibreria?.id) {
+                // La canción se recarga automáticamente
+              }
+            }}
+            tickActual={tickActual}
+            totalTicks={totalTicksTransporte}
+            reproduciendoHero={reproduciendo}
+            onAlternarPausa={onAlternarPausa}
+            onDetener={onDetenerHero}
+            onBuscarTick={onBuscarTick}
+            bpm={bpm}
+            onCambiarBpm={onCambiarBpm}
+            grabando={estaGrabandoEdicionSecuencia}
+            tiempoGrabacionMs={tiempoGrabacionRecProMs}
+            cuentaAtrasPreRoll={esperandoPunchIn ? 4 : null}
+            onIniciarGrabacion={iniciarPunchInEdicion}
+            onDetenerGrabacion={detenerGrabacionRecPro}
+            punchInTick={punchInTick}
+            setPunchInTick={onActualizarLoopInicio}
+            notasGrabadas={grabadorLocal.secuencia}
+            onNotasActuales={handleNotasActualesDelModal}
+          />
+        )}
       </div>
 
       <PanelAjustes

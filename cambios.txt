@@ -1,0 +1,24 @@
+Perfect! I've completed all three layout and visualization fixes for the ModalEditorSecuencia. Here's what was implemented:
+
+FIX 1: Layout Integration ✅
+Changed .estudio-practica-libre-contenido from grid to flex layout
+Accordion now flexes to fill available space (flex: 1; min-width: 0)
+Modal renders inside the contenido div, appearing as a 400px right sidebar when open
+Accordion slides left to make room when modal opens
+PanelLateral only shown when modal isn't open
+FIX 2: Button Visualization ✅
+Added onNotasActuales callback to ModalEditorSecuencia
+Effect detects which notes are currently playing based on tickModal
+handleNotasActualesDelModal callback illuminates accordion buttons in real-time
+Buttons light up with correct fuelle direction (halar/empujar)
+Buttons clear when modal closes
+FIX 3: Duration Slider ✅
+Added always-visible MP3 playback slider in the modal
+Shows current time and total duration (mm:ss format)
+Draggable slider with visual progress indicator
+Green gradient fill showing playback position
+Allows seeking through the audio
+Below it is the duration input for the sequence duration
+TypeScript: No errors ✓
+
+The modal is now fully integrated into the accordion layout with real-time button feedback and a complete audio playback control interface.
