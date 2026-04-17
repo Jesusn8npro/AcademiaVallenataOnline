@@ -50,6 +50,7 @@ interface PanelLateralPracticaLibreProps {
   onAjustarVolumenAcordeon: (valor: number) => void;
   // Props ADMIN
   esAdmin?: boolean;
+  grabandoSesionActiva?: boolean;
   bpmRec?: number;
   setBpmRec?: (bpm: number) => void;
   grabandoRec?: boolean;
@@ -94,6 +95,22 @@ interface PanelLateralPracticaLibreProps {
   listaInstrumentosGestor?: any[];
   // Props Librería
   onReproducirLibreria?: (cancion: any) => void;
+  onEditarSecuenciaLibreria?: (cancion: any) => void;
+  onMarcarEntradaEdicionLibreria?: () => void;
+  onMarcarSalidaEdicionLibreria?: () => void;
+  onIniciarPunchInLibreria?: () => void;
+  onGuardarEdicionSecuenciaLibreria?: () => void;
+  onCancelarEdicionSecuenciaLibreria?: () => void;
+  onLimpiarRangoEdicionLibreria?: () => void;
+  cancionEditandoLibreriaId?: string | null;
+  tituloCancionEditandoLibreria?: string | null;
+  bpmCancionEditandoLibreria?: number;
+  mensajeEdicionSecuenciaLibreria?: string | null;
+  cancionActualizadaLibreria?: any | null;
+  guardandoEdicionSecuenciaLibreria?: boolean;
+  hayCambiosEdicionSecuenciaLibreria?: boolean;
+  grabandoEdicionSecuenciaLibreria?: boolean;
+  esperandoPunchInLibreria?: boolean;
   // Props Lista Acordes
   onReproducirAcorde?: (botones: string[], fuelle: string, id?: string) => void;
   onDetenerAcorde?: () => void;
@@ -107,6 +124,7 @@ interface PanelLateralPracticaLibreProps {
   cancionActual?: any;
   tickActual?: number;
   totalTicks?: number;
+  loopABHero?: { start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean };
   onAlternarPausaHero?: () => void;
   onDetenerHero?: () => void;  onBuscarTickHero?: (tick: number) => void;
   bpmGrabacion?: number;
@@ -163,6 +181,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
   volumenAcordeon,
   onAjustarVolumenAcordeon,
   esAdmin = false,
+  grabandoSesionActiva = false,
   bpmRec = 120,
   setBpmRec,
   grabandoRec = false,
@@ -207,6 +226,22 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
   listaInstrumentosGestor,
   // Props Librería
   onReproducirLibreria,
+  onEditarSecuenciaLibreria,
+  onMarcarEntradaEdicionLibreria,
+  onMarcarSalidaEdicionLibreria,
+  onIniciarPunchInLibreria,
+  onGuardarEdicionSecuenciaLibreria,
+  onCancelarEdicionSecuenciaLibreria,
+  onLimpiarRangoEdicionLibreria,
+  cancionEditandoLibreriaId,
+  tituloCancionEditandoLibreria,
+  bpmCancionEditandoLibreria = 120,
+  mensajeEdicionSecuenciaLibreria,
+  cancionActualizadaLibreria,
+  guardandoEdicionSecuenciaLibreria = false,
+  hayCambiosEdicionSecuenciaLibreria = false,
+  grabandoEdicionSecuenciaLibreria = false,
+  esperandoPunchInLibreria = false,
   // Props Lista Acordes
   onReproducirAcorde,
   onDetenerAcorde,
@@ -220,6 +255,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
   cancionActual,
   tickActual,
   totalTicks,
+  loopABHero,
   onAlternarPausaHero,
   onDetenerHero,
   onBuscarTickHero,
@@ -239,6 +275,27 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
   const notasPrimeraFila = extraerNotasFila(configuracionTonalidad.primeraFila);
   const notasSegundaFila = extraerNotasFila(configuracionTonalidad.segundaFila);
   const notasTerceraFila = extraerNotasFila(configuracionTonalidad.terceraFila);
+  const tituloSeccion = seccionActiva === 'sonido'
+    ? 'Sonido y lectura'
+    : seccionActiva === 'modelos'
+      ? 'Modelos visuales'
+      : seccionActiva === 'pistas'
+        ? 'Pistas y capas'
+        : seccionActiva === 'teoria'
+          ? 'Teoria musical'
+          : seccionActiva === 'efectos'
+            ? 'Efectos y mezcla'
+            : seccionActiva === 'rec'
+              ? 'Grabacion pro'
+              : seccionActiva === 'gestor'
+                ? 'Gestor de sonidos'
+                : seccionActiva === 'gestor_acordes'
+                  ? 'Creador de acordes'
+                  : seccionActiva === 'lista_acordes'
+                    ? 'Biblioteca de acordes'
+                    : seccionActiva === 'libreria'
+                      ? 'Libreria Hero'
+                      : 'Conexion USB';
 
   if (!visible || !seccionActiva) return null;
 
@@ -247,7 +304,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
       <div className="estudio-practica-libre-panel-encabezado">
         <div>
           <span className="estudio-practica-libre-panel-kicker">Panel del estudio</span>
-          <h3>{seccionActiva === 'sonido' ? 'Sonido y lectura' : seccionActiva === 'modelos' ? 'Modelos visuales' : seccionActiva === 'pistas' ? 'Pistas y capas' : seccionActiva === 'teoria' ? 'Teoria musical' : seccionActiva === 'rec' ? 'Grabacion pro' : 'Efectos y mezcla'}</h3>
+          <h3>{tituloSeccion}</h3>
         </div>
         <div className="estudio-practica-libre-chip-simple">
           <ChevronRight size={14} />
@@ -588,6 +645,7 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
           esperandoPunchIn={esperandoPunchIn}
           metronomoActivo={metronomoActivo}
           setMetronomoActivo={setMetronomoActivo || (() => {})}
+          bloqueadoPorSesion={grabandoSesionActiva}
         />
       )}
 
@@ -646,6 +704,27 @@ const PanelLateralPracticaLibre: React.FC<PanelLateralPracticaLibreProps> = ({
       {esAdmin && seccionActiva === 'libreria' && (
         <PanelAdminLibreria
           onReproducir={onReproducirLibreria || (() => {})}
+          onEditarSecuencia={onEditarSecuenciaLibreria || (() => {})}
+          onMarcarEntradaEdicion={onMarcarEntradaEdicionLibreria || (() => {})}
+          onMarcarSalidaEdicion={onMarcarSalidaEdicionLibreria || (() => {})}
+          onIniciarPunchIn={onIniciarPunchInLibreria || (() => {})}
+          onGuardarEdicionSecuencia={onGuardarEdicionSecuenciaLibreria || (() => {})}
+          onCancelarEdicionSecuencia={onCancelarEdicionSecuenciaLibreria || (() => {})}
+          onLimpiarRangoEdicion={onLimpiarRangoEdicionLibreria || (() => {})}
+          cancionEditandoId={cancionEditandoLibreriaId || null}
+          tituloCancionEditando={tituloCancionEditandoLibreria || null}
+          bpmCancionEditando={bpmCancionEditandoLibreria}
+          tickActual={tickActual || 0}
+          punchInTick={punchInTick ?? null}
+          punchOutTick={loopABHero?.hasEnd ? loopABHero.end : null}
+          preRollSegundos={preRollSegundos || 4}
+          setPreRollSegundos={setPreRollSegundos || (() => {})}
+          esperandoPunchIn={esperandoPunchInLibreria}
+          grabandoEdicionSecuencia={grabandoEdicionSecuenciaLibreria}
+          guardandoEdicionSecuencia={guardandoEdicionSecuenciaLibreria}
+          hayCambiosEdicionSecuencia={hayCambiosEdicionSecuenciaLibreria}
+          mensajeEdicionSecuencia={mensajeEdicionSecuenciaLibreria || null}
+          cancionActualizada={cancionActualizadaLibreria || null}
         />
       )}
 

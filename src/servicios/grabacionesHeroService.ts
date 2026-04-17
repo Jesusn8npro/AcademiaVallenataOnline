@@ -11,8 +11,8 @@ export interface GrabacionEstudianteHero {
     origen: string;
     titulo: string | null;
     descripcion: string | null;
-    secuencia_json?: NotaHero[];
     secuencia_grabada?: NotaHero[];
+    secuencia_json?: NotaHero[];
     bpm: number;
     resolucion: number;
     tonalidad: string | null;
@@ -58,6 +58,16 @@ interface DatosPublicarGrabacionHero {
 }
 
 const TABLA_GRABACIONES_HERO = 'grabaciones_estudiantes_hero';
+
+function normalizarGrabacionHero<T extends Record<string, any>>(grabacion: T): T & GrabacionEstudianteHero {
+    const secuencia = grabacion?.secuencia_grabada || grabacion?.secuencia_json || [];
+
+    return {
+        ...grabacion,
+        secuencia_grabada: secuencia,
+        metadata: grabacion?.metadata ?? {}
+    } as T & GrabacionEstudianteHero;
+}
 
 async function obtenerUsuarioAutenticado() {
     const { data, error } = await supabase.auth.getUser();
@@ -147,7 +157,7 @@ export async function guardarGrabacion(datos: DatosGuardarGrabacionHero): Promis
         origen: datos.origen || 'practica_libre',
         titulo: datos.titulo?.trim() || null,
         descripcion: datos.descripcion?.trim() || null,
-        secuencia_json: secuencia,
+        secuencia_grabada: secuencia,
         bpm: datos.bpm,
         resolucion: datos.resolucion ?? 192,
         tonalidad: datos.tonalidad || null,
@@ -171,7 +181,7 @@ export async function guardarGrabacion(datos: DatosGuardarGrabacionHero): Promis
         throw error;
     }
 
-    return data as GrabacionEstudianteHero;
+    return normalizarGrabacionHero(data as any);
 }
 
 export async function obtenerMisGrabaciones(usuarioId: string, modo?: ModoGrabacionHero) {
@@ -208,7 +218,8 @@ export async function obtenerGrabacionesUsuario(usuarioId: string, opciones: Opc
         throw error;
     }
 
-    return validarPublicacionesActivasDeGrabaciones(data || [], usuarioId);
+    const grabacionesValidadas = await validarPublicacionesActivasDeGrabaciones(data || [], usuarioId);
+    return (grabacionesValidadas || []).map((grabacion: any) => normalizarGrabacionHero(grabacion));
 }
 
 export async function obtenerGrabacionesPublicasUsuario(usuarioId: string, modo?: ModoGrabacionHero) {
@@ -239,7 +250,7 @@ export async function obtenerGrabacion(id: string) {
         throw error;
     }
 
-    return data;
+    return normalizarGrabacionHero(data as any);
 }
 
 export async function obtenerGrabacionPublica(id: string) {
@@ -264,7 +275,7 @@ export async function obtenerGrabacionPublica(id: string) {
         throw error;
     }
 
-    return data;
+    return normalizarGrabacionHero(data as any);
 }
 
 export async function actualizarTitulo(id: string, titulo: string, descripcion?: string | null) {
@@ -283,7 +294,7 @@ export async function actualizarTitulo(id: string, titulo: string, descripcion?:
         throw error;
     }
 
-    return data;
+    return normalizarGrabacionHero(data as any);
 }
 
 export async function eliminarGrabacion(id: string) {
@@ -332,7 +343,7 @@ export async function actualizarVisibilidadGrabacion(grabacionId: string, esPubl
         throw error;
     }
 
-    return data as GrabacionEstudianteHero;
+    return normalizarGrabacionHero(data as any);
 }
 
 export async function publicarGrabacionEnComunidad(grabacionId: string, datos: DatosPublicarGrabacionHero) {

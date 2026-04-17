@@ -7,8 +7,8 @@ import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
 import { useCancionesProMax } from '../Hooks/useLogicaProMax';
 import type { CancionHeroConTonalidad } from '../TiposProMax';
 import { Howl } from 'howler';
-import { supabase } from '../../servicios/clienteSupabase';
-import { useUsuario } from '../../contextos/UsuarioContext';
+import { supabase } from '../../../servicios/clienteSupabase';
+import { useUsuario } from '../../../contextos/UsuarioContext';
 import { 
   Search, 
   Star,

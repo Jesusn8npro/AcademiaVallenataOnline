@@ -27,8 +27,9 @@ interface BarraSuperiorPracticaLibreProps {
   nombreInstrumento: string;
   nombreModelo: string;
   nombrePista: string | null;
-  grabando: boolean;
-  tiempoGrabacion: string;
+  grabandoSesion: boolean;
+  tiempoGrabacionSesion: string;
+  grabandoRecPro?: boolean;
   onAlternarGrabacion: () => void;
   onVolver?: () => void;
   esAdmin?: boolean;
@@ -60,8 +61,9 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
   nombreInstrumento,
   nombreModelo,
   nombrePista,
-  grabando,
-  tiempoGrabacion,
+  grabandoSesion,
+  tiempoGrabacionSesion,
+  grabandoRecPro = false,
   onAlternarGrabacion,
   onVolver,
   esAdmin = false,
@@ -121,16 +123,22 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
         )}
 
         <button
-          className={`estudio-practica-libre-btn-grabar ${grabando ? 'grabando' : ''}`}
+          className={`estudio-practica-libre-btn-grabar ${grabandoSesion ? 'grabando' : ''}`}
           onClick={onAlternarGrabacion}
+          disabled={grabandoRecPro}
+          title={grabandoRecPro ? 'El REC Pro esta activo en la pestana REC.' : 'Grabar una sesion personal'}
         >
-          {grabando ? <PauseCircle size={16} /> : <Mic2 size={16} />}
-          {grabando ? `Detener ${tiempoGrabacion}` : 'Grabar sesion'}
+          {grabandoSesion ? <PauseCircle size={16} /> : <Mic2 size={16} />}
+          {grabandoSesion ? `Detener ${tiempoGrabacionSesion}` : 'Grabar sesion'}
         </button>
 
-        <div className={`estudio-practica-libre-pill ${grabando ? 'grabando' : ''}`}>
+        <div className={`estudio-practica-libre-pill ${grabandoSesion ? 'grabando' : ''}`}>
           <Sparkles size={14} />
-          {grabando ? `Grabando ${tiempoGrabacion}` : 'Studio listo'}
+          {grabandoSesion
+            ? `Grabando sesion ${tiempoGrabacionSesion}`
+            : grabandoRecPro
+              ? 'REC Pro activo'
+              : 'Studio listo'}
         </div>
       </div>
     </div>

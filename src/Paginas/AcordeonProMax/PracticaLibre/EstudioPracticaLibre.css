@@ -130,17 +130,26 @@
   cursor: pointer;
 }
 
-.estudio-practica-libre-btn:hover,
-.estudio-practica-libre-btn-grabar:hover,
+.estudio-practica-libre-btn:hover:not(:disabled),
+.estudio-practica-libre-btn-grabar:hover:not(:disabled),
 .estudio-practica-libre-chip-boton:hover,
 .estudio-practica-libre-card-boton:hover,
-.estudio-practica-libre-btn-linea:hover,
-.estudio-practica-libre-icon-btn:hover,
+.estudio-practica-libre-btn-linea:hover:not(:disabled),
+.estudio-practica-libre-icon-btn:hover:not(:disabled),
 .estudio-practica-libre-item-lista:hover,
 .estudio-practica-libre-modelo-card:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(96, 165, 250, 0.36);
+}
+
+.estudio-practica-libre-btn:disabled,
+.estudio-practica-libre-btn-grabar:disabled,
+.estudio-practica-libre-btn-linea:disabled,
+.estudio-practica-libre-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  transform: none;
 }
 
 .estudio-practica-libre-btn.activo,

@@ -155,6 +155,40 @@
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
+.panel-admin-libreria-btn-editar {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #bfdbfe;
+}
+
+.panel-admin-libreria-btn-editar.activo,
+.panel-admin-libreria-btn-editar:hover {
+  background: rgba(59, 130, 246, 0.28);
+  color: #fff;
+}
+
+.panel-admin-libreria-btn-guardar {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #bbf7d0;
+}
+
+.panel-admin-libreria-btn-guardar:hover {
+  background: rgba(16, 185, 129, 0.3);
+  color: #fff;
+}
+
+.panel-admin-libreria-btn-cerrar {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+}
+
+.panel-admin-libreria-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .panel-admin-libreria-btn-eliminar {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.3);
@@ -164,6 +198,88 @@
 .panel-admin-libreria-btn-eliminar:hover {
   background: rgba(239, 68, 68, 0.3);
   color: #fff;
+}
+
+.panel-admin-libreria-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(30, 41, 59, 0.92) 100%);
+}
+
+.panel-admin-libreria-editor-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel-admin-libreria-editor-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #60a5fa;
+  margin-bottom: 4px;
+}
+
+.panel-admin-libreria-editor-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.panel-admin-libreria-editor-resumen span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.panel-admin-libreria-editor-campos {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.panel-admin-libreria-editor-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.panel-admin-libreria-editor-campo input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.panel-admin-libreria-editor-acciones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.panel-admin-libreria-editor-acciones.principales {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-admin-libreria-editor-mensaje {
+  font-size: 11px;
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 10px;
+  padding: 9px 10px;
 }
 
 /* === VACÍO === */
@@ -197,6 +313,11 @@
   .panel-admin-libreria-btn {
     padding: 7px 10px;
     font-size: 10px;
+  }
+
+  .panel-admin-libreria-editor-acciones,
+  .panel-admin-libreria-editor-acciones.principales {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
   .panel-admin-libreria-filter-input {

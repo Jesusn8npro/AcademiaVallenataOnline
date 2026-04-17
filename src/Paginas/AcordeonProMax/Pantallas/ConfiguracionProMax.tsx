@@ -20,9 +20,9 @@ import {
   History,
   Lock
 } from 'lucide-react';
-import { supabase } from '../../servicios/clienteSupabase';
-import { useUsuario } from '../../contextos/UsuarioContext';
-import { usePerfilStore } from '../../stores/perfilStore';
+import { supabase } from '../../../servicios/clienteSupabase';
+import { useUsuario } from '../../../contextos/UsuarioContext';
+import { usePerfilStore } from '../../../stores/perfilStore';
 import NavbarProMax from '../Componentes/NavbarProMax';
 import './ConfiguracionProMax.css';
 

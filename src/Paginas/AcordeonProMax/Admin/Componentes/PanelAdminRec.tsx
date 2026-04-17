@@ -23,9 +23,16 @@ interface PanelAdminRecProps {
   onBuscarTick?: (tick: number) => void;
   bpmGrabacion?: number;
   // PUNCH-IN / PRE-ROLL
+  punchInTick?: number | null;
+  setPunchInTick?: (tick: number | null) => void;
+  preRollSegundos?: number;
+  setPreRollSegundos?: (seg: number) => void;
   cuentaAtrasPreRoll?: number | null;
+  onIniciarPunchIn?: () => void;
+  esperandoPunchIn?: boolean;
   metronomoActivo?: boolean;
   setMetronomoActivo?: (val: boolean) => void;
+  bloqueadoPorSesion?: boolean;
 }
 
 const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
@@ -49,6 +56,7 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
   cuentaAtrasPreRoll,
   metronomoActivo,
   setMetronomoActivo,
+  bloqueadoPorSesion = false,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -238,19 +246,22 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
           <button
             className="panel-admin-rec-btn"
             onClick={grabando ? onDetenerGrabacion : onIniciarGrabacion}
+            disabled={bloqueadoPorSesion && !grabando}
+            title={bloqueadoPorSesion && !grabando ? 'Termina la grabacion de sesion para usar REC Pro.' : undefined}
             style={{
-              background: grabando ? '#ef4444' : '#3b82f6',
+              background: bloqueadoPorSesion && !grabando ? 'rgba(71, 85, 105, 0.9)' : grabando ? '#ef4444' : '#3b82f6',
               color: 'white',
               border: 'none',
               padding: '14px',
               borderRadius: '12px',
               fontWeight: 'bold',
-              cursor: 'pointer',
+              cursor: bloqueadoPorSesion && !grabando ? 'not-allowed' : 'pointer',
+              opacity: bloqueadoPorSesion && !grabando ? 0.72 : 1,
               boxShadow: grabando ? '0 0 15px rgba(239, 68, 68, 0.4)' : 'none'
             }}
           >
             {grabando ? <Pause size={18} /> : <Circle size={18} fill="currentColor" />}
-            {grabando ? 'Detener Grabación' : 'Iniciar Grabación'}
+            {grabando ? 'Detener Grabacion' : bloqueadoPorSesion ? 'Sesion activa' : 'Iniciar Grabacion'}
           </button>
 
         </div>
