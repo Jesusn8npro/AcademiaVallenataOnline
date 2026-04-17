@@ -2,7 +2,7 @@ import React from 'react';
 import HeaderHero from '../Componentes/HeaderHero';
 import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
 import { useLogicaProMax } from '../Hooks/useLogicaProMax';
-import ModalMetronomo from '../../Paginas/SimuladorApp/Componentes/ModalMetronomo';
+import ModalMetronomo from '../../SimuladorApp/Componentes/ModalMetronomo';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../../servicios/clienteSupabase';
 

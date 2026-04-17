@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensaje Especial</title>
+    ‌<style>
+        /* Configuración básica para centrar todo */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            /* Fondo negro para que resalte */
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Contenedor del texto */
+        .container {
+            text-align: center;
+        }
+
+        /* Estilo del texto con animación de color y latido */
+        .mensaje {
+            font-size: 5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            cursor: default;
+
+            /* Gradiente de color para el texto */
+            background: linear-gradient(to right, #ff4b2b, #ff416c, #ff8e53,
+                    #ff4b2b);
+            background- size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            /* Animaciones: latido y movimiento de color */
+            animation:
+                latido 1.5s ease-in-out infinite,
+                brillo 3s linear infinite;
+        }
+
+        /* Animación de latido (escala) */
+        @keyframes latido {
+            0% {
+                transform: scale(1);
+            }
+
+            15% {
+                transform: scale(1.1);
+            }
+
+            30% {
+                transform: scale(1);
+            }
+
+            45% {
+                transform: scale(1.15);
+            }
+
+            60% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Animación de movimiento del gradiente */
+        @keyframes brillo {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Partículas de fondo (estrellas/brillos) */
+        .fondo-brillo {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px,
+                    transparent 1px);
+            background-size: 50px 50px;
+            animation: flotar 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes flotar {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-50px);
+            }
+        }
+
+        /* Responsivo para móviles */
+        @media (max-width: 600px) {
+            .mensaje {
+                font-size: 2.5rem;
+                letter-spacing: 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="fondo-brillo"></div>
+
+    <div class="container">
+        <h1 class="mensaje">DIOS TE AMA</h1>
+    </div>
+
+</body>
+
+</html>

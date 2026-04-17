@@ -16,10 +16,11 @@ import PuenteNotas from '../Componentes/PuenteNotas';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import { useAudioFondoPracticaLibre } from './Hooks/useAudioFondoPracticaLibre';
 import BarraReproductorPracticaLibre from './Componentes/BarraReproductorPracticaLibre';
+import BarraTransporte from '../Modos/BarraTransporte';
 import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
+import type { NotaHero } from '../../SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
+import { actualizarSecuenciaCancionHero } from '../../../servicios/cancionesHeroService';
 import './EstudioPracticaLibre.css';
-
-// ✅ Removemos BarraTransporte import - ahora usamos BarraReproductorPracticaLibre independiente
 
 interface EstudioPracticaLibreProps {
   logica: any;
@@ -59,7 +60,7 @@ interface EstudioPracticaLibreProps {
   onBuscarTick: (tick: number) => void;
 
   // Loop
-  loopAB: { start: number; end: number; activo: boolean };
+  loopAB: { start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean };
   onMarcarLoopInicio: () => void;
   onMarcarLoopFin: () => void;
   onActualizarLoopInicio: (tick: number) => void;
@@ -80,6 +81,100 @@ function formatearDuracion(ms: number) {
   const minutos = Math.floor(totalSegundos / 60);
   const segundos = totalSegundos % 60;
   return `${minutos}:${segundos.toString().padStart(2, '0')}`;
+}
+
+function normalizarSecuenciaHero(valor: any): NotaHero[] {
+  let secuencia = valor;
+
+  if (typeof secuencia === 'string') {
+    try {
+      secuencia = JSON.parse(secuencia);
+    } catch {
+      secuencia = [];
+    }
+  }
+
+  if (!Array.isArray(secuencia)) {
+    return [];
+  }
+
+  return [...secuencia]
+    .filter((nota) => nota && typeof nota.tick === 'number' && typeof nota.duracion === 'number' && typeof nota.botonId === 'string')
+    .map((nota) => ({
+      tick: Number(nota.tick),
+      botonId: nota.botonId,
+      duracion: Math.max(1, Math.floor(Number(nota.duracion) || 1)),
+      fuelle: (nota.fuelle === 'abriendo' ? 'abriendo' : 'cerrando') as NotaHero['fuelle']
+    }))
+    .sort((a, b) => a.tick - b.tick);
+}
+
+function calcularTotalTicksSecuencia(secuencia: NotaHero[]) {
+  return secuencia.reduce((maximo, nota) => Math.max(maximo, nota.tick + nota.duracion), 0);
+}
+
+function calcularTicksDesdeSegundos(segundos: number, bpmActual: number) {
+  return Math.max(0, Math.round(segundos * (Math.max(1, bpmActual) / 60) * 192));
+}
+
+function recortarNotasAntesDeTick(secuencia: NotaHero[], tickLimite: number) {
+  return secuencia.flatMap((nota) => {
+    const fin = nota.tick + nota.duracion;
+
+    if (fin <= tickLimite) {
+      return [nota];
+    }
+
+    if (nota.tick < tickLimite) {
+      return [{ ...nota, duracion: Math.max(1, tickLimite - nota.tick) }];
+    }
+
+    return [];
+  });
+}
+
+function recortarNotasDespuesDeTick(secuencia: NotaHero[], tickLimite: number) {
+  return secuencia.flatMap((nota) => {
+    const fin = nota.tick + nota.duracion;
+
+    if (nota.tick >= tickLimite) {
+      return [nota];
+    }
+
+    if (fin > tickLimite) {
+      return [{ ...nota, tick: tickLimite, duracion: Math.max(1, fin - tickLimite) }];
+    }
+
+    return [];
+  });
+}
+
+function combinarSecuenciasPorPunch(
+  secuenciaOriginal: NotaHero[],
+  secuenciaGrabada: NotaHero[],
+  tickInicio: number,
+  tickFin: number
+) {
+  const antes = recortarNotasAntesDeTick(secuenciaOriginal, tickInicio);
+  const tramoNuevo = secuenciaGrabada.flatMap((nota) => {
+    const fin = nota.tick + nota.duracion;
+
+    if (fin <= tickInicio || nota.tick >= tickFin) {
+      return [];
+    }
+
+    const tickNormalizado = Math.max(nota.tick, tickInicio);
+    const finNormalizado = Math.min(fin, tickFin);
+
+    return [{
+      ...nota,
+      tick: tickNormalizado,
+      duracion: Math.max(1, finNormalizado - tickNormalizado)
+    }];
+  });
+  const despues = recortarNotasDespuesDeTick(secuenciaOriginal, tickFin);
+
+  return [...antes, ...tramoNuevo, ...despues].sort((a, b) => a.tick - b.tick);
 }
 
 const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
@@ -117,8 +212,13 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   pausado,
   onAlternarPausa,
   onBuscarTick,
-  // Loop props - removidas de destructuración ya que PracticaLibre no usa bucles
-  // loopAB, onMarcarLoopInicio, onMarcarLoopFin, onActualizarLoopInicio, onActualizarLoopFin, onAlternarLoop, onLimpiarLoop,
+  loopAB,
+  onMarcarLoopInicio,
+  onMarcarLoopFin,
+  onActualizarLoopInicio,
+  onActualizarLoopFin,
+  onAlternarLoop,
+  onLimpiarLoop,
   onReproducirSecuencia,
   secuencia,
   secuenciaGrabacion,
@@ -200,20 +300,34 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   const [pistaFile, setPistaFile] = React.useState<File | null>(null);
   const [bpmGrabacion, setBpmGrabacion] = React.useState(120);
   const [modalGuardarHeroVisible, setModalGuardarHeroVisible] = React.useState(false);
-
-  // Rastrear si acaba de terminar la grabación
-  const [lastGrabando, setLastGrabando] = React.useState(false);
   const [tipoSugeridoGrabacion, setTipoSugeridoGrabacion] = React.useState<'secuencia' | 'cancion' | 'ejercicio'>('secuencia');
   const usoMetronomoRef = React.useRef(false);
+  const [tiempoGrabacionRecProMs, setTiempoGrabacionRecProMs] = React.useState(0);
+  const inicioGrabacionRecProRef = React.useRef<number | null>(null);
 
   // Estados de grabación
   const [metronomoActivo, setMetronomoActivo] = React.useState(false);
   const [bpmOriginalGrabacion, setBpmOriginalGrabacion] = React.useState(120);
+  const [cancionActivaLibreria, setCancionActivaLibreria] = React.useState<any | null>(null);
+  const [cancionEditandoSecuencia, setCancionEditandoSecuencia] = React.useState<any | null>(null);
+  const [secuenciaEditada, setSecuenciaEditada] = React.useState<NotaHero[]>([]);
+  const [preRollSegundos, setPreRollSegundos] = React.useState(4);
+  const [esperandoPunchIn, setEsperandoPunchIn] = React.useState(false);
+  const [modoCapturaRec, setModoCapturaRec] = React.useState<'libre' | 'edicion' | null>(null);
+  const [guardandoEdicionSecuencia, setGuardandoEdicionSecuencia] = React.useState(false);
+  const [hayCambiosEdicionSecuencia, setHayCambiosEdicionSecuencia] = React.useState(false);
+  const [mensajeEdicionSecuencia, setMensajeEdicionSecuencia] = React.useState<string | null>(null);
+  const [ultimaCancionLibreriaActualizada, setUltimaCancionLibreriaActualizada] = React.useState<any | null>(null);
+  const secuenciaEditadaRef = React.useRef<NotaHero[]>([]);
 
   // Sincronizar ref para metadata
   React.useEffect(() => {
     usoMetronomoRef.current = metronomoActivo;
   }, [metronomoActivo]);
+
+  React.useEffect(() => {
+    secuenciaEditadaRef.current = secuenciaEditada;
+  }, [secuenciaEditada]);
 
   // 🎵 Hook para sincronizar audio de fondo con reproducción
   const audioRef = useAudioFondoPracticaLibre({
@@ -231,20 +345,20 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   });
 
   // 🎙️ GRABADOR LOCAL - Captura las notas REALMENTE presionadas
-  const grabadorLocal = useGrabadorHero(bpm);
+  const grabadorLocal = useGrabadorHero(bpmHero);
   const botonesActivosAnteriorRef = React.useRef<Record<string, any>>({});
+  const grabandoSesion = grabando;
+  const grabandoRecPro = grabadorLocal.grabando;
+  const hayGrabacionActiva = grabandoSesion || grabandoRecPro;
+  const estaGrabandoEdicionSecuencia = grabandoRecPro && modoCapturaRec === 'edicion';
+  const punchInTick = loopAB.hasStart ? loopAB.start : null;
+  const punchOutTick = loopAB.hasEnd ? loopAB.end : null;
 
-  // Sincronizar inicio/fin de grabación
   React.useEffect(() => {
-    if (grabando && !grabadorLocal.grabando) {
-      console.log('🔴 Iniciando grabación local...');
-      grabadorLocal.iniciarGrabacion();
-    } else if (!grabando && grabadorLocal.grabando) {
-      console.log('⏹️ Deteniendo grabación local...');
-      const resultado = grabadorLocal.detenerGrabacion();
-      console.log('✅ Grabación local detenida. Notas capturadas:', resultado.secuencia.length);
+    if (cancionActivaLibreria || cancionEditandoSecuencia || reproduciendo || grabandoRecPro) {
+      setBpmHero(bpm);
     }
-  }, [grabando, grabadorLocal]);
+  }, [bpm, cancionActivaLibreria, cancionEditandoSecuencia, grabandoRecPro, reproduciendo]);
 
   // Detectar presiones y liberaciones por cambios en botonesActivos
   React.useEffect(() => {
@@ -275,6 +389,25 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     botonesActivosAnteriorRef.current = { ...logica.botonesActivos };
   }, [logica.botonesActivos, logica.direccion, grabadorLocal.grabando]);
 
+  React.useEffect(() => {
+    if (!grabandoRecPro || inicioGrabacionRecProRef.current === null) {
+      if (!grabandoRecPro) {
+        setTiempoGrabacionRecProMs(0);
+      }
+      return;
+    }
+
+    const actualizarCronometro = () => {
+      if (inicioGrabacionRecProRef.current !== null) {
+        setTiempoGrabacionRecProMs(Date.now() - inicioGrabacionRecProRef.current);
+      }
+    };
+
+    actualizarCronometro();
+    const intervalo = window.setInterval(actualizarCronometro, 250);
+    return () => window.clearInterval(intervalo);
+  }, [grabandoRecPro]);
+
   // Cargar sonidos de metrónomo al iniciar
   React.useEffect(() => {
     motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_fuerte', '/audio/effects/du2.mp3').catch(() => {});
@@ -288,7 +421,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     // Solo activamos el click manual si NO se está reproduciendo una secuencia (que ya tiene su propio metrónomo)
     if (reproduciendo) return;
 
-    const intervalMs = (60 / bpm) * 1000;
+    const intervalMs = (60 / bpmHero) * 1000;
     let beatCount = 0;
 
     const interval = setInterval(() => {
@@ -302,18 +435,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [metronomoActivo, bpm, reproduciendo]);
-
-  // 🎯 EFECTO: Rastrear cambios en grabación (control ahora en parent)
-  React.useEffect(() => {
-    if (grabando) {
-      // Registrar si se está usando metrónomo al iniciar
-      usoMetronomoRef.current = metronomoActivo;
-      setLastGrabando(true);
-    } else if (lastGrabando && !grabando) {
-      setLastGrabando(false);
-    }
-  }, [grabando, lastGrabando, metronomoActivo]);
+  }, [metronomoActivo, bpmHero, reproduciendo]);
 
   const [estudioCargado, setEstudioCargado] = React.useState(false);
   const timerPreRollRef = React.useRef<any>(null);
@@ -364,68 +486,349 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     };
   }, [logica.ajustes?.timbre, logica.guardarAjustes, logica.instrumentoId, logica.modoVista, logica.tonalidadSeleccionada]);
 
-  // Effect: mostrar modal de guardar cuando REC termina
-  // (Ahora se maneja en el parent o vía props)
+  const formatearTickComoTiempo = React.useCallback((tick: number) => {
+    return formatearDuracion((tick / 192) * (60 / Math.max(1, bpm)) * 1000);
+  }, [bpm]);
 
+  const construirCancionHero = React.useCallback((cancionBase: any, secuenciaForzada?: NotaHero[]) => {
+    const secuenciaNormalizada = secuenciaForzada || normalizarSecuenciaHero(cancionBase?.secuencia || cancionBase?.secuencia_json);
 
-  const manejarGrabacion = async () => {
-    if (grabando) {
+    return {
+      ...cancionBase,
+      secuencia: secuenciaNormalizada,
+      secuencia_json: secuenciaNormalizada,
+      bpm: cancionBase?.bpm || 120,
+      tonalidad: cancionBase?.tonalidad || 'ADG',
+      id: cancionBase?.id || `cancion-${Date.now()}`
+    };
+  }, []);
+
+  const prepararCancionEnEscenario = React.useCallback((cancionPreparada: any) => {
+    const bpmCancion = cancionPreparada?.bpm || 120;
+
+    onCambiarBpm(bpmCancion);
+    setBpmHero(bpmCancion);
+    setBpmGrabacion(bpmCancion);
+    setBpmOriginalGrabacion(bpmCancion);
+    setPistaUrl(cancionPreparada?.audio_fondo_url || null);
+    setPistaFile(null);
+    setCancionActivaLibreria(cancionPreparada);
+  }, [onCambiarBpm]);
+
+  const reproducirCancionActivaDesdeTick = React.useCallback((tickInicio = 0, cancionForzada?: any) => {
+    const cancionBase = cancionForzada
+      || (cancionEditandoSecuencia
+        ? construirCancionHero(cancionEditandoSecuencia, secuenciaEditadaRef.current)
+        : cancionActivaLibreria
+          ? construirCancionHero(
+              cancionActivaLibreria,
+              cancionEditandoSecuencia?.id === cancionActivaLibreria.id ? secuenciaEditadaRef.current : undefined
+            )
+          : null);
+
+    if (!cancionBase) {
+      return;
+    }
+
+    prepararCancionEnEscenario(cancionBase);
+    window.setTimeout(() => {
+      onReproducirSecuencia(cancionBase);
+      window.setTimeout(() => {
+        onBuscarTick(Math.max(0, Math.floor(tickInicio)));
+      }, 0);
+    }, 0);
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario]);
+
+  const detenerReproduccionLocal = React.useCallback((tickDestino = 0) => {
+    if (reproduciendo && !pausado) {
+      onAlternarPausa();
+    }
+
+    onBuscarTick(Math.max(0, Math.floor(tickDestino)));
+  }, [onAlternarPausa, onBuscarTick, pausado, reproduciendo]);
+
+  const manejarGrabacionSesion = async () => {
+    if (grabandoRecPro || esperandoPunchIn) {
+      return;
+    }
+
+    if (grabandoSesion) {
       onDetenerGrabacion();
       return;
     }
 
-    // 1. Preparar pista de fondo si existe
     if (estudio.pistaActiva) {
       await estudio.prepararPistaParaGrabar();
     }
 
-    // 2. Determinar tipo de grabación
-    const tipo = (esAdmin && estudio.panelActivo === 'rec') ? 'competencia' : 'practica_libre';
-
-    // 3. Iniciar grabación
-    onIniciarGrabacion(tipo);
+    onIniciarGrabacion('practica_libre');
   };
 
+  const iniciarGrabacionRecPro = React.useCallback(() => {
+    if (grabandoSesion || grabadorLocal.grabando || esperandoPunchIn) {
+      return;
+    }
+
+    setModoCapturaRec('libre');
+    usoMetronomoRef.current = metronomoActivo;
+    inicioGrabacionRecProRef.current = Date.now();
+    setTiempoGrabacionRecProMs(0);
+    grabadorLocal.iniciarGrabacion();
+  }, [esperandoPunchIn, grabandoSesion, grabadorLocal, metronomoActivo]);
+
+  const finalizarGrabacionEdicion = React.useCallback((tickFinForzado?: number) => {
+    if (!grabadorLocal.grabando || punchInTick === null) {
+      return null;
+    }
+
+    const resultado = grabadorLocal.detenerGrabacion();
+    inicioGrabacionRecProRef.current = null;
+
+    const tickFin = Math.max(
+      punchInTick + 1,
+      Math.floor(typeof tickFinForzado === 'number' ? tickFinForzado : resultado.tickFinal)
+    );
+
+    const secuenciaCombinada = combinarSecuenciasPorPunch(
+      secuenciaEditadaRef.current,
+      resultado.secuencia,
+      punchInTick,
+      tickFin
+    );
+
+    const cancionActualizada = cancionEditandoSecuencia
+      ? construirCancionHero(cancionEditandoSecuencia, secuenciaCombinada)
+      : null;
+
+    setSecuenciaEditada(secuenciaCombinada);
+    setHayCambiosEdicionSecuencia(true);
+    setEsperandoPunchIn(false);
+    setModoCapturaRec(null);
+    setMensajeEdicionSecuencia(
+      `Tramo actualizado de ${formatearTickComoTiempo(punchInTick)} a ${formatearTickComoTiempo(tickFin)}.`
+    );
+
+    if (cancionActualizada) {
+      setCancionEditandoSecuencia(cancionActualizada);
+      setCancionActivaLibreria(cancionActualizada);
+    }
+
+    return { tickInicio: punchInTick, tickFin, secuenciaCombinada };
+  }, [cancionEditandoSecuencia, construirCancionHero, formatearTickComoTiempo, grabadorLocal, punchInTick]);
+
+  const detenerGrabacionRecPro = React.useCallback(() => {
+    if (!grabadorLocal.grabando) {
+      if (esperandoPunchIn) {
+        setEsperandoPunchIn(false);
+        setModoCapturaRec(null);
+        setMensajeEdicionSecuencia('Punch-in cancelado antes de comenzar a grabar.');
+        detenerReproduccionLocal(Math.max(0, (punchInTick || 0) - calcularTicksDesdeSegundos(preRollSegundos, bpm)));
+      }
+      return;
+    }
+
+    if (modoCapturaRec === 'edicion') {
+      const resumen = finalizarGrabacionEdicion();
+      if (reproduciendo && !pausado) {
+        onAlternarPausa();
+      }
+      if (resumen) {
+        onBuscarTick(Math.max(0, resumen.tickInicio - calcularTicksDesdeSegundos(preRollSegundos, bpm)));
+      }
+      return;
+    }
+
+    const resultado = grabadorLocal.detenerGrabacion();
+    inicioGrabacionRecProRef.current = null;
+    setModoCapturaRec(null);
+
+    if (!resultado.secuencia.length) {
+      alert('❌ No hay notas grabadas. Presiona algunos botones del acordeon antes de guardar.');
+      return;
+    }
+
+    setTipoSugeridoGrabacion(usoMetronomoRef.current ? 'secuencia' : 'ejercicio');
+    setModalGuardarHeroVisible(true);
+  }, [bpm, esperandoPunchIn, finalizarGrabacionEdicion, grabadorLocal, modoCapturaRec, onAlternarPausa, onBuscarTick, pausado, preRollSegundos, punchInTick, reproduciendo, detenerReproduccionLocal]);
 
   const handlePistaChange = (url: string | null, archivo: File | null) => {
     setPistaUrl(url);
     setPistaFile(archivo);
   };
 
-  const handleReproducirLibreria = (cancion: any) => {
-    console.log('🎵 Reproduciendo desde librería:', cancion);
+  const marcarEntradaEdicion = React.useCallback(() => {
+    onActualizarLoopInicio(Math.max(0, Math.floor(tickActual)));
+    setMensajeEdicionSecuencia('Entrada de punch marcada en el cursor actual.');
+  }, [onActualizarLoopInicio, tickActual]);
 
-    // 1. Actualizar BPM
-    const bpmCancion = cancion.bpm || 120;
-    setBpmHero(bpmCancion);
-    setBpmGrabacion(bpmCancion);
-    setBpmOriginalGrabacion(bpmCancion); // ✅ Guarda el BPM original para que el audio escale correctamente
+  const marcarSalidaEdicion = React.useCallback(() => {
+    onActualizarLoopFin(Math.max(0, Math.floor(tickActual)));
+    setMensajeEdicionSecuencia('Salida de punch marcada en el cursor actual.');
+  }, [onActualizarLoopFin, tickActual]);
 
-    // 2. Cargar pista de fondo si existe
-    if (cancion.audio_fondo_url) {
-      console.log('🔊 Cargando pista de fondo:', cancion.audio_fondo_url);
-      setPistaUrl(cancion.audio_fondo_url);
-      setPistaFile(null);
+  const limpiarRangoEdicion = React.useCallback(() => {
+    onLimpiarLoop();
+    setMensajeEdicionSecuencia('Rango de edicion limpio.');
+  }, [onLimpiarLoop]);
+
+  const guardarEdicionSecuencia = React.useCallback(async () => {
+    if (!cancionEditandoSecuencia) {
+      return;
     }
 
-    // 3. Resetear posición y reproducir desde cero
-    onBuscarTick(0);
+    if (!hayCambiosEdicionSecuencia) {
+      setMensajeEdicionSecuencia('No hay cambios nuevos por guardar.');
+      return;
+    }
 
-    // 4. Asegurar que la secuencia tenga el formato correcto
-    const secuenciaParaReproducir = {
-      ...cancion,
-      secuencia: cancion.secuencia || cancion.secuencia_json || [],
-      bpm: cancion.bpm || 120,
-      tonalidad: cancion.tonalidad || 'ADG',
-      id: cancion.id || 'grabacion-' + Date.now()
-    };
+    if (grabadorLocal.grabando || esperandoPunchIn) {
+      setMensajeEdicionSecuencia('Deten el punch-in antes de guardar la secuencia.');
+      return;
+    }
 
-    console.log('📝 Secuencia a reproducir:', secuenciaParaReproducir.secuencia?.length, 'notas');
+    try {
+      setGuardandoEdicionSecuencia(true);
+      const data = await actualizarSecuenciaCancionHero(cancionEditandoSecuencia.id, secuenciaEditadaRef.current);
+      const cancionGuardada = construirCancionHero(data, secuenciaEditadaRef.current);
 
-    // 5. Reproducir la secuencia (esto sincroniza ticks automáticamente)
-    // y se mostrarán las notas visualmente
-    onReproducirSecuencia(secuenciaParaReproducir);
-  };
+      setCancionEditandoSecuencia(cancionGuardada);
+      setCancionActivaLibreria(cancionGuardada);
+      setUltimaCancionLibreriaActualizada(cancionGuardada);
+      setHayCambiosEdicionSecuencia(false);
+      setMensajeEdicionSecuencia('Secuencia guardada correctamente en canciones_hero.');
+    } catch (error: any) {
+      console.error('❌ Error guardando secuencia editada:', error);
+      setMensajeEdicionSecuencia(error?.message || 'No se pudo guardar la secuencia editada.');
+    } finally {
+      setGuardandoEdicionSecuencia(false);
+    }
+  }, [cancionEditandoSecuencia, construirCancionHero, esperandoPunchIn, grabadorLocal.grabando, hayCambiosEdicionSecuencia]);
+
+  const cancelarEdicionSecuencia = React.useCallback(() => {
+    if ((hayCambiosEdicionSecuencia || esperandoPunchIn || grabadorLocal.grabando) && !window.confirm('Tienes una edicion activa con cambios sin guardar. ¿Deseas salir del editor?')) {
+      return;
+    }
+
+    if (grabadorLocal.grabando) {
+      grabadorLocal.detenerGrabacion();
+    }
+
+    setEsperandoPunchIn(false);
+    setModoCapturaRec(null);
+    setHayCambiosEdicionSecuencia(false);
+    setMensajeEdicionSecuencia(null);
+    setCancionEditandoSecuencia(null);
+    setSecuenciaEditada([]);
+    onLimpiarLoop();
+    detenerReproduccionLocal(0);
+  }, [detenerReproduccionLocal, esperandoPunchIn, grabadorLocal, hayCambiosEdicionSecuencia, onLimpiarLoop]);
+
+  const iniciarPunchInEdicion = React.useCallback(() => {
+    if (!cancionEditandoSecuencia) {
+      setMensajeEdicionSecuencia('Primero elige una cancion de la libreria para editar.');
+      return;
+    }
+
+    if (grabandoSesion || grabadorLocal.grabando) {
+      setMensajeEdicionSecuencia('Deten la grabacion actual antes de iniciar un punch-in.');
+      return;
+    }
+
+    if (punchInTick === null) {
+      setMensajeEdicionSecuencia('Marca la entrada de punch antes de grabar el reemplazo.');
+      return;
+    }
+
+    if (loopAB.activo) {
+      onAlternarLoop();
+    }
+
+    const cancionPreparada = construirCancionHero(cancionEditandoSecuencia, secuenciaEditadaRef.current);
+    const tickPreRoll = Math.max(0, punchInTick - calcularTicksDesdeSegundos(preRollSegundos, bpm));
+
+    setEsperandoPunchIn(true);
+    setModoCapturaRec('edicion');
+    setMensajeEdicionSecuencia('Reproduciendo pre-roll. La grabacion arrancara en la entrada marcada.');
+    inicioGrabacionRecProRef.current = null;
+
+    reproducirCancionActivaDesdeTick(tickPreRoll, cancionPreparada);
+  }, [bpm, cancionEditandoSecuencia, construirCancionHero, grabandoSesion, grabadorLocal, loopAB.activo, onAlternarLoop, preRollSegundos, punchInTick, reproducirCancionActivaDesdeTick]);
+
+  const handleReproducirLibreria = React.useCallback((cancion: any) => {
+    const secuenciaActiva = cancionEditandoSecuencia?.id === cancion.id
+      ? secuenciaEditadaRef.current
+      : undefined;
+    const cancionPreparada = construirCancionHero(cancion, secuenciaActiva);
+
+    reproducirCancionActivaDesdeTick(0, cancionPreparada);
+  }, [cancionEditandoSecuencia?.id, construirCancionHero, reproducirCancionActivaDesdeTick]);
+
+  const handleEditarSecuenciaLibreria = React.useCallback((cancion: any) => {
+    if (cancionEditandoSecuencia && hayCambiosEdicionSecuencia && cancion.id !== cancionEditandoSecuencia.id) {
+      const confirmado = window.confirm('Hay cambios sin guardar en la cancion actual. ¿Deseas abrir otra cancion y perder esos cambios?');
+      if (!confirmado) {
+        return;
+      }
+    }
+
+    if (grabandoSesion || grabadorLocal.grabando || esperandoPunchIn) {
+      setMensajeEdicionSecuencia('Deten la grabacion o el pre-roll actual antes de abrir otra secuencia.');
+      return;
+    }
+
+    const cancionPreparada = construirCancionHero(cancion);
+
+    prepararCancionEnEscenario(cancionPreparada);
+    setCancionEditandoSecuencia(cancionPreparada);
+    setSecuenciaEditada(cancionPreparada.secuencia || []);
+    setHayCambiosEdicionSecuencia(false);
+    setMensajeEdicionSecuencia('Editor de secuencia listo. Marca entrada y salida para grabar por tramos.');
+    onLimpiarLoop();
+    detenerReproduccionLocal(0);
+  }, [cancionEditandoSecuencia, construirCancionHero, detenerReproduccionLocal, esperandoPunchIn, grabadorLocal.grabando, grabandoSesion, hayCambiosEdicionSecuencia, onLimpiarLoop, prepararCancionEnEscenario]);
+
+  React.useEffect(() => {
+    if (!esperandoPunchIn || modoCapturaRec !== 'edicion' || punchInTick === null || tickActual < punchInTick) {
+      return;
+    }
+
+    usoMetronomoRef.current = metronomoActivo;
+    inicioGrabacionRecProRef.current = Date.now();
+    setTiempoGrabacionRecProMs(0);
+    setEsperandoPunchIn(false);
+    setMensajeEdicionSecuencia('Grabando reemplazo desde la entrada marcada.');
+    grabadorLocal.iniciarGrabacion(secuenciaEditadaRef.current, punchInTick);
+  }, [esperandoPunchIn, grabadorLocal, metronomoActivo, modoCapturaRec, punchInTick, tickActual]);
+
+  React.useEffect(() => {
+    if (!estaGrabandoEdicionSecuencia || punchOutTick === null || tickActual < punchOutTick) {
+      return;
+    }
+
+    const resumen = finalizarGrabacionEdicion(punchOutTick);
+    if (reproduciendo && !pausado) {
+      onAlternarPausa();
+    }
+    if (resumen) {
+      onBuscarTick(Math.max(0, resumen.tickInicio - calcularTicksDesdeSegundos(preRollSegundos, bpm)));
+    }
+  }, [bpm, estaGrabandoEdicionSecuencia, finalizarGrabacionEdicion, onAlternarPausa, onBuscarTick, pausado, preRollSegundos, punchOutTick, reproduciendo, tickActual]);
+
+  const secuenciaVisualActiva = React.useMemo(() => {
+    if (cancionEditandoSecuencia) {
+      return secuenciaEditada;
+    }
+
+    return cancionActivaLibreria?.secuencia || secuencia || [];
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, secuencia, secuenciaEditada]);
+
+  const totalTicksTransporte = React.useMemo(() => {
+    if (cancionEditandoSecuencia) {
+      return Math.max(totalTicks || 0, calcularTotalTicksSecuencia(secuenciaEditada));
+    }
+
+    return totalTicks || 2100;
+  }, [cancionEditandoSecuencia, secuenciaEditada, totalTicks]);
 
   return (
     <section className="estudio-practica-libre">
@@ -437,9 +840,10 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
         nombreInstrumento={nombreInstrumento}
         nombreModelo={modeloActivo.nombre}
         nombrePista={estudio.pistaActiva?.nombre || estudio.preferencias.pistaNombre}
-        grabando={grabando}
-        tiempoGrabacion={formatearDuracion(tiempoGrabacionMs)}
-        onAlternarGrabacion={manejarGrabacion}
+        grabandoSesion={grabandoSesion}
+        tiempoGrabacionSesion={formatearDuracion(tiempoGrabacionMs)}
+        grabandoRecPro={grabandoRecPro || esperandoPunchIn}
+        onAlternarGrabacion={manejarGrabacionSesion}
         esAdmin={esAdmin}
         esp32Conectado={logica.esp32Conectado}
         onVolver={onVolver}
@@ -447,6 +851,10 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
 
       {!mostrarModalGuardar && errorGuardadoGrabacion && (
         <div className="estudio-practica-libre-alerta">{errorGuardadoGrabacion}</div>
+      )}
+
+      {mensajeEdicionSecuencia && (
+        <div className="estudio-practica-libre-alerta">{mensajeEdicionSecuencia}</div>
       )}
 
       <div className="estudio-practica-libre-contenido">
@@ -458,7 +866,15 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             {estudio.pistaActiva && (
               <div className="estudio-practica-libre-escenario-chip">Pista {estudio.pistaActiva.nombre}</div>
             )}
-            {ultimaGrabacionGuardada && !grabando && (
+            {cancionActivaLibreria && (
+              <div className="estudio-practica-libre-escenario-chip">Hero {cancionActivaLibreria.titulo || 'Sin titulo'}</div>
+            )}
+            {cancionEditandoSecuencia && (
+              <div className="estudio-practica-libre-escenario-chip">
+                Editando secuencia{hayCambiosEdicionSecuencia ? ' *' : ''}
+              </div>
+            )}
+            {ultimaGrabacionGuardada && !hayGrabacionActiva && (
               <div className="estudio-practica-libre-escenario-chip">Guardada {ultimaGrabacionGuardada.titulo}</div>
             )}
           </div>
@@ -484,13 +900,13 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             </div>
 
             {/* Puente de Notas (Falling Notes) */}
-            {(reproduciendo || grabando) && (
+            {(reproduciendo || hayGrabacionActiva) && (
               <PuenteNotas
                 cancion={{
                   id: 'practica-id',
                   titulo: 'Práctica',
-                  secuencia: (reproduciendo ? secuencia : secuenciaGrabacion) || [],
-                  bpm: bpm,
+                  secuencia: (reproduciendo ? secuenciaVisualActiva : grabandoRecPro ? grabadorLocal.secuencia : secuenciaGrabacion) || [],
+                  bpm: grabandoRecPro ? bpmHero : bpm,
                   tonalidad: logica.tonalidadSeleccionada
                 } as any}
                 tickActual={tickActual}
@@ -509,42 +925,87 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           </div>
 
           {/* 🚀 BARRA DE REPRODUCCIÓN INDEPENDIENTE PARA PRÁCTICA LIBRE */}
-          {(reproduciendo || grabando || pistaUrl) && (
+          {(reproduciendo || hayGrabacionActiva || pistaUrl || Boolean(cancionEditandoSecuencia)) && (
             <div className="estudio-practica-libre-transport-fixed">
-              <BarraReproductorPracticaLibre
-                reproduciendo={reproduciendo || grabando}
-                pausado={pausado && !grabando}
-                onAlternarPausa={() => {
-                   // 🔒 🔒 🔒 COMPLETAMENTE INDEPENDIENTE: NUNCA dispara estado global
-                   if (grabando) {
-                       // Si estamos grabando, detener grabación
-                       onDetenerGrabacion();
-                   } else {
-                       // Si estamos reproduciendo en PracticaLibre, pausar la reproducción
-                       // usando el callback del parent que pausa sin cambiar estado global
-                       onAlternarPausa();
-                       console.log('⏸️ PracticaLibre: Pausa LOCAL (sin afectar estado global)');
-                   }
-                }}
-                onDetener={() => {
-                   // 🔒 🔒 🔒 COMPLETAMENTE INDEPENDIENTE: Reinicia LOCAL SOLO
-                   if (grabando) {
-                       onDetenerGrabacion();
-                   } else {
-                       // Resetear a inicio SIN alterar estado global
-                       onBuscarTick?.(0);
-                       console.log('⏹️ PracticaLibre: Resetear a inicio (sin afectar estado global)');
-                   }
-                }}
-                tickActual={tickActual || 0}
-                totalTicks={totalTicks || 2100}
-                onBuscarTick={(tick) => {
-                   // 🔒 Buscar tick LOCAL SOLO
-                   onBuscarTick?.(tick);
-                }}
-                bpm={bpm}
-                onCambiarBpm={onCambiarBpm}
-              />
+              {cancionEditandoSecuencia ? (
+                <BarraTransporte
+                  reproduciendo={reproduciendo || hayGrabacionActiva}
+                  pausado={pausado && !hayGrabacionActiva}
+                  onAlternarPausa={() => {
+                    if (grabandoSesion) {
+                      onDetenerGrabacion();
+                    } else if (grabandoRecPro || esperandoPunchIn) {
+                      detenerGrabacionRecPro();
+                    } else if (!reproduciendo) {
+                      reproducirCancionActivaDesdeTick(tickActual || 0);
+                    } else {
+                      onAlternarPausa();
+                    }
+                  }}
+                  onDetener={() => {
+                    if (grabandoSesion) {
+                      onDetenerGrabacion();
+                    } else if (grabandoRecPro || esperandoPunchIn) {
+                      detenerGrabacionRecPro();
+                    } else {
+                      detenerReproduccionLocal(0);
+                    }
+                  }}
+                  tickActual={tickActual || 0}
+                  totalTicks={totalTicksTransporte}
+                  onBuscarTick={(tick) => onBuscarTick?.(tick)}
+                  bpm={bpm}
+                  loopAB={loopAB}
+                  onMarcarLoopInicio={onMarcarLoopInicio}
+                  onMarcarLoopFin={onMarcarLoopFin}
+                  onActualizarLoopInicio={onActualizarLoopInicio}
+                  onActualizarLoopFin={onActualizarLoopFin}
+                  onAlternarLoop={onAlternarLoop}
+                  onLimpiarLoop={onLimpiarLoop}
+                  onCambiarBpm={(valor) => {
+                    onCambiarBpm(valor);
+                    if (typeof valor === 'number') {
+                      setBpmHero(valor);
+                    }
+                  }}
+                  punchInTick={punchInTick}
+                />
+              ) : (
+                <BarraReproductorPracticaLibre
+                  reproduciendo={reproduciendo || hayGrabacionActiva}
+                  pausado={pausado && !hayGrabacionActiva}
+                  onAlternarPausa={() => {
+                     // 🔒 🔒 🔒 COMPLETAMENTE INDEPENDIENTE: NUNCA dispara estado global
+                      if (grabandoSesion) {
+                          onDetenerGrabacion();
+                      } else if (grabandoRecPro) {
+                          detenerGrabacionRecPro();
+                      } else if (!reproduciendo && cancionActivaLibreria) {
+                          reproducirCancionActivaDesdeTick(tickActual || 0);
+                      } else {
+                         onAlternarPausa();
+                         console.log('⏸️ PracticaLibre: Pausa LOCAL (sin afectar estado global)');
+                     }
+                  }}
+                  onDetener={() => {
+                      if (grabandoSesion) {
+                          onDetenerGrabacion();
+                      } else if (grabandoRecPro) {
+                          detenerGrabacionRecPro();
+                      } else {
+                          onBuscarTick?.(0);
+                         console.log('⏹️ PracticaLibre: Resetear a inicio (sin afectar estado global)');
+                     }
+                  }}
+                  tickActual={tickActual || 0}
+                  totalTicks={totalTicksTransporte}
+                  onBuscarTick={(tick) => {
+                     onBuscarTick?.(tick);
+                  }}
+                  bpm={grabandoRecPro ? bpmHero : bpm}
+                  onCambiarBpm={grabandoRecPro ? setBpmHero : onCambiarBpm}
+                />
+              )}
             </div>
           )}
         </div>
@@ -586,6 +1047,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           volumenAcordeon={estudio.volumenAcordeon}
           onAjustarVolumenAcordeon={estudio.ajustarVolumenAcordeon}
           esAdmin={esAdmin}
+          grabandoSesionActiva={grabandoSesion}
           onCrearNuevoAcorde={() => setModalCreadorAcordesVisible(true)}
           onVerTodosAcordes={() => setModalListaAcordesVisible(true)}
           onAbrirBibliotecaAcordes={() => setModalListaAcordesVisible(true)}
@@ -624,13 +1086,29 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           // Props REC básicos
           bpmRec={bpmHero}
           setBpmRec={setBpmHero}
-          grabandoRec={grabando}
-          onIniciarGrabacionRec={onIniciarGrabacion}
-          onDetenerGrabacionRec={onDetenerGrabacion}
-          totalNotasRec={secuenciaGrabacion.length}
-          tiempoGrabacionRecMs={tiempoGrabacionMs}
+          grabandoRec={grabandoRecPro || esperandoPunchIn}
+          onIniciarGrabacionRec={cancionEditandoSecuencia ? iniciarPunchInEdicion : iniciarGrabacionRecPro}
+          onDetenerGrabacionRec={detenerGrabacionRecPro}
+          totalNotasRec={grabadorLocal.secuencia.length}
+          tiempoGrabacionRecMs={tiempoGrabacionRecProMs}
           // Props Librería
           onReproducirLibreria={handleReproducirLibreria}
+          onEditarSecuenciaLibreria={handleEditarSecuenciaLibreria}
+          onMarcarEntradaEdicionLibreria={marcarEntradaEdicion}
+          onMarcarSalidaEdicionLibreria={marcarSalidaEdicion}
+          onIniciarPunchInLibreria={iniciarPunchInEdicion}
+          onGuardarEdicionSecuenciaLibreria={guardarEdicionSecuencia}
+          onCancelarEdicionSecuenciaLibreria={cancelarEdicionSecuencia}
+          onLimpiarRangoEdicionLibreria={limpiarRangoEdicion}
+          cancionEditandoLibreriaId={cancionEditandoSecuencia?.id || null}
+          tituloCancionEditandoLibreria={cancionEditandoSecuencia?.titulo || null}
+          bpmCancionEditandoLibreria={cancionEditandoSecuencia?.bpm || bpm}
+          mensajeEdicionSecuenciaLibreria={mensajeEdicionSecuencia}
+          cancionActualizadaLibreria={ultimaCancionLibreriaActualizada}
+          guardandoEdicionSecuenciaLibreria={guardandoEdicionSecuencia}
+          hayCambiosEdicionSecuenciaLibreria={hayCambiosEdicionSecuencia}
+          grabandoEdicionSecuenciaLibreria={estaGrabandoEdicionSecuencia}
+          esperandoPunchInLibreria={esperandoPunchIn}
           // Props Lista Acordes
           onReproducirAcorde={(botones, fuelle, id) => {
             logica.limpiarTodasLasNotas();
@@ -673,11 +1151,19 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           reproduciendoHero={reproduciendo}
           cancionActual={null} // O pasar cancionSeleccionada si se agrega a props
           tickActual={tickActual}
-          totalTicks={totalTicks}
+          totalTicks={totalTicksTransporte}
+          loopABHero={loopAB}
           onAlternarPausaHero={onAlternarPausa}
           onDetenerHero={onDetenerHero}
           onBuscarTickHero={onBuscarTick}
           bpmGrabacion={bpmGrabacion}
+          punchInTick={punchInTick}
+          setPunchInTick={onActualizarLoopInicio}
+          preRollSegundos={preRollSegundos}
+          setPreRollSegundos={setPreRollSegundos}
+          cuentaAtrasPreRoll={null}
+          onIniciarPunchIn={iniciarPunchInEdicion}
+          esperandoPunchIn={esperandoPunchIn}
           metronomoActivo={metronomoActivo}
           setMetronomoActivo={setMetronomoActivo}
         />
@@ -834,6 +1320,74 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
               logica.limpiarTodasLasNotas();
               setAcordeMaestroActivo(false);
               setIdSonandoCiclo(null);
+            }}
+          />
+
+          {/* Modal para guardar grabación REC PRO en canciones_hero */}
+          <ModalGuardarHero
+            visible={modalGuardarHeroVisible}
+            onCerrar={() => {
+              setModalGuardarHeroVisible(false);
+            }}
+            bpm={bpmHero}
+            totalNotas={grabadorLocal.secuencia.length}
+            sugerenciaTipo={tipoSugeridoGrabacion}
+            tonalidadActual={logica.tonalidadSeleccionada}
+            onGuardar={async (datos) => {
+              try {
+                console.log('💾 Guardando grabación...');
+                console.log('📝 Datos formulario:', datos);
+                console.log('📝 Secuencia local:', grabadorLocal.secuencia);
+                console.log('📊 Grabador estado:', {
+                  grabando: grabadorLocal.grabando,
+                  secuenciaLength: grabadorLocal.secuencia.length,
+                  bpm: bpmHero
+                });
+
+                const secuenciaFinal = grabadorLocal.secuencia;
+
+                if (!secuenciaFinal || secuenciaFinal.length === 0) {
+                  console.error('❌ No hay notas grabadas');
+                  alert('❌ No hay notas grabadas. Presiona algunos botones del acordeon antes de guardar.');
+                  return;
+                }
+
+                console.log('✅ Secuencia válida:', {
+                  cantidad: secuenciaFinal.length,
+                  primera: secuenciaFinal[0],
+                  ultima: secuenciaFinal[secuenciaFinal.length - 1]
+                });
+
+                // 🎯 GUARDAR USANDO EL GRABADOR LOCAL (IGUAL A SIMULADOR)
+                // Esto usa useGrabadorHero.guardarSecuencia() que funciona en SimuladorDeAcordeon
+                const resultado = await grabadorLocal.guardarSecuencia({
+                  titulo: datos.titulo,
+                  autor: datos.autor,
+                  descripcion: datos.descripcion,
+                  tipo: datos.tipo,
+                  dificultad: datos.dificultad,
+                  usoMetronomo: usoMetronomoRef.current,
+                  tonalidad: logica.tonalidadSeleccionada,
+                  pistaFile: pistaFile
+                });
+
+                console.log('💾 Resultado guardado:', resultado);
+
+                if (resultado.error) {
+                  const mensajeError = typeof resultado.error === 'string'
+                    ? resultado.error
+                    : (resultado.error as any)?.message || 'Error al guardar';
+                  console.error('❌ Error al guardar:', resultado.error);
+                  alert('❌ Error al guardar: ' + mensajeError);
+                } else {
+                  console.log('✅ Grabación guardada exitosamente');
+                  alert('✅ ¡Se grabó correctamente en la nube!');
+                  setModalGuardarHeroVisible(false);
+                }
+              } catch (error) {
+                console.error('❌ Error guardando:', error);
+                alert('❌ Error: ' + (error as any).message);
+              }
             }}
           />
 
