@@ -162,9 +162,11 @@ export const usePointerAcordeon = ({
             const zonaFuelle = ventanaAltura * 0.15;
             const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
 
-            // Si levantamos fuera de la zona del fuelle y no hay más dedos, volver a HALAR
+            // Si levantamos fuera de la zona del fuelle y no hay más dedos, volver a HALAR.
+            // ejecutarSwapDireccion es seguro aquí porque actualizarBotonActivo(silencioso:true)
+            // ya borró la nota del ref de forma síncrona antes de llegar a esta línea.
             if (!esZonaFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
-                logicaRef.current.setDireccion('halar');
+                logicaRef.current.ejecutarSwapDireccion('halar');
             }
         };
 
