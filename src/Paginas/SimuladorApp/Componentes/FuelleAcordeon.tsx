@@ -15,8 +15,8 @@ const FuelleAcordeon: React.FC<FuelleAcordeonProps> = ({
     direccion = 'cerrando',
     nombreAcordeon = 'Cassoto'
 }) => {
-    // Número de pliegues: más cuando abriendo, menos cuando cerrando
-    const numPliegues = direccion === 'abriendo' ? 20 : 12;
+    // Fijo en 16 — el efecto visual se logra solo con CSS (height de .pliegue-cuerpo)
+    const numPliegues = 16;
 
     return (
         <div className={`fuelle-acordeon fuelle-${direccion}`}>
