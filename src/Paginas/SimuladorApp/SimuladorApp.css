@@ -141,7 +141,20 @@
     gap: var(--pitos-dist-h);
 }
 
-/* 6. LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
+/* 6. BLINDAJE TÁCTIL iOS — Suprimir lupa, menú contextual y highlight */
+.pito-boton,
+.boton-bajo-contenedor,
+.seccion-bajos-contenedor,
+.indicador-fuelle,
+.boton-bajos-superior,
+.barra-herramientas-contenedor {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
 .pito-boton {
     width: calc(11vh * var(--escala-acordeon, 1));
     height: calc(11vh * var(--escala-acordeon, 1));
