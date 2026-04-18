@@ -30,6 +30,8 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
     const draggingRef = useRef(false);
     const startXRef = useRef(0);
     const currentXRef = useRef(0);
+    // Ref para cancelar el revert-a-halar cuando el fuelle se vuelve a presionar antes del timeout
+    const fuelleRevertRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 🚀 LÓGICA DE DRAG
     useEffect(() => {
@@ -136,18 +138,19 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                 onPointerDown={(e) => {
                     const target = e.target as HTMLElement;
                     if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        // Solo cambiar fuelle si no hay botones de pitos activos
-                        const hayBotonesActivos = logica.botonesActivos &&
-                            Object.values(logica.botonesActivos as Record<string, boolean>).some(Boolean);
-                        if (!hayBotonesActivos) {
-                            manejarCambioFuelle('empujar', motorAudioPro);
+                        // Cancelar revert pendiente de un toque anterior para evitar cambio fantasma
+                        if (fuelleRevertRef.current !== null) {
+                            clearTimeout(fuelleRevertRef.current);
+                            fuelleRevertRef.current = null;
                         }
+                        manejarCambioFuelle('empujar', motorAudioPro);
                     }
                 }}
                 onPointerUp={(e) => {
                     const target = e.target as HTMLElement;
                     if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        setTimeout(() => {
+                        fuelleRevertRef.current = setTimeout(() => {
+                            fuelleRevertRef.current = null;
                             manejarCambioFuelle('halar', motorAudioPro);
                         }, 50);
                     }

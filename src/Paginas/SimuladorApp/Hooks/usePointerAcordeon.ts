@@ -97,11 +97,6 @@ export const usePointerAcordeon = ({
             const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
 
             if (pos) {
-                // Cambiar dirección automáticamente si tocas el fuelle
-                if (esZonaFuelle && logicaRef.current.direccion === 'halar') {
-                    logicaRef.current.setDireccion('empujar');
-                }
-
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
@@ -119,16 +114,9 @@ export const usePointerAcordeon = ({
             const data = pointersMap.current.get(pointerId);
             if (!data) return;
 
-            // ⚡ AUTO-DETECTAR DIRECCIÓN: Si deslizas hacia zona inferior = empujar
-            const ventanaAltura = window.innerHeight;
-            const zonaFuelle = ventanaAltura * 0.15;
-            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
-
-            if (esZonaFuelle && logicaRef.current.direccion === 'halar') {
-                logicaRef.current.setDireccion('empujar');
-            } else if (!esZonaFuelle && logicaRef.current.direccion === 'empujar' && pointersMap.current.size <= 1) {
-                logicaRef.current.setDireccion('halar');
-            }
+            // La dirección se controla EXCLUSIVAMENTE desde ContenedorBajos via manejarCambioFuelle.
+            // Nunca llamar setDireccion aquí — cambia el estado sin actualizar los sonidos
+            // y genera condiciones de carrera con manejarCambioFuelle.
 
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
             if (pos !== data.pos) {
