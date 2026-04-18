@@ -1417,7 +1417,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
         pestanaActiva, setPestanaActiva, tonalidadSeleccionada, setTonalidadSeleccionada,
         listaTonalidades, setListaTonalidades, nombresTonalidades, actualizarNombreTonalidad, sonidosVirtuales, setSonidosVirtuales,
-        limpiarTodasLasNotas, actualizarBotonActivo, guardarAjustes, resetearAjustes, 
+        limpiarTodasLasNotas, actualizarBotonActivo, ejecutarSwapDireccion, guardarAjustes, resetearAjustes,
         setDireccionSinSwap, muestrasDB, obtenerRutasAudio, sincronizarAudios: cargarMuestrasLocales,
         guardarNuevoSonidoVirtual, eliminarTonalidad,
         playPreview, stopPreview, reproduceTono: reproducirTono,
