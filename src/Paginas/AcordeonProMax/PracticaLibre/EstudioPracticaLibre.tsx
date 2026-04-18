@@ -21,6 +21,7 @@ import ModalEditorSecuencia from '../Admin/Componentes/ModalEditorSecuencia';
 import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 import type { NotaHero } from '../../SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
 import { actualizarSecuenciaCancionHero } from '../../../servicios/cancionesHeroService';
+import { useReproductorAcordesAdmin } from './Hooks/useReproductorAcordesAdmin';
 import './EstudioPracticaLibre.css';
 
 interface EstudioPracticaLibreProps {
@@ -77,106 +78,13 @@ interface EstudioPracticaLibreProps {
   direccionMaestro?: 'halar' | 'empujar';
 }
 
-function formatearDuracion(ms: number) {
-  const totalSegundos = Math.max(0, Math.floor(ms / 1000));
-  const minutos = Math.floor(totalSegundos / 60);
-  const segundos = totalSegundos % 60;
-  return `${minutos}:${segundos.toString().padStart(2, '0')}`;
-}
-
-function normalizarSecuenciaHero(valor: any): NotaHero[] {
-  let secuencia = valor;
-
-  if (typeof secuencia === 'string') {
-    try {
-      secuencia = JSON.parse(secuencia);
-    } catch {
-      secuencia = [];
-    }
-  }
-
-  if (!Array.isArray(secuencia)) {
-    return [];
-  }
-
-  return [...secuencia]
-    .filter((nota) => nota && typeof nota.tick === 'number' && typeof nota.duracion === 'number' && typeof nota.botonId === 'string')
-    .map((nota) => ({
-      tick: Number(nota.tick),
-      botonId: nota.botonId,
-      duracion: Math.max(1, Math.floor(Number(nota.duracion) || 1)),
-      fuelle: (nota.fuelle === 'abriendo' ? 'abriendo' : 'cerrando') as NotaHero['fuelle']
-    }))
-    .sort((a, b) => a.tick - b.tick);
-}
-
-function calcularTotalTicksSecuencia(secuencia: NotaHero[]) {
-  return secuencia.reduce((maximo, nota) => Math.max(maximo, nota.tick + nota.duracion), 0);
-}
-
-function calcularTicksDesdeSegundos(segundos: number, bpmActual: number) {
-  return Math.max(0, Math.round(segundos * (Math.max(1, bpmActual) / 60) * 192));
-}
-
-function recortarNotasAntesDeTick(secuencia: NotaHero[], tickLimite: number) {
-  return secuencia.flatMap((nota) => {
-    const fin = nota.tick + nota.duracion;
-
-    if (fin <= tickLimite) {
-      return [nota];
-    }
-
-    if (nota.tick < tickLimite) {
-      return [{ ...nota, duracion: Math.max(1, tickLimite - nota.tick) }];
-    }
-
-    return [];
-  });
-}
-
-function recortarNotasDespuesDeTick(secuencia: NotaHero[], tickLimite: number) {
-  return secuencia.flatMap((nota) => {
-    const fin = nota.tick + nota.duracion;
-
-    if (nota.tick >= tickLimite) {
-      return [nota];
-    }
-
-    if (fin > tickLimite) {
-      return [{ ...nota, tick: tickLimite, duracion: Math.max(1, fin - tickLimite) }];
-    }
-
-    return [];
-  });
-}
-
-function combinarSecuenciasPorPunch(
-  secuenciaOriginal: NotaHero[],
-  secuenciaGrabada: NotaHero[],
-  tickInicio: number,
-  tickFin: number
-) {
-  const antes = recortarNotasAntesDeTick(secuenciaOriginal, tickInicio);
-  const tramoNuevo = secuenciaGrabada.flatMap((nota) => {
-    const fin = nota.tick + nota.duracion;
-
-    if (fin <= tickInicio || nota.tick >= tickFin) {
-      return [];
-    }
-
-    const tickNormalizado = Math.max(nota.tick, tickInicio);
-    const finNormalizado = Math.min(fin, tickFin);
-
-    return [{
-      ...nota,
-      tick: tickNormalizado,
-      duracion: Math.max(1, finNormalizado - tickNormalizado)
-    }];
-  });
-  const despues = recortarNotasDespuesDeTick(secuenciaOriginal, tickFin);
-
-  return [...antes, ...tramoNuevo, ...despues].sort((a, b) => a.tick - b.tick);
-}
+import { 
+  formatearDuracion,
+  normalizarSecuenciaHero,
+  calcularTotalTicksSecuencia,
+  calcularTicksDesdeSegundos,
+  combinarSecuenciasPorPunch 
+} from './Utilidades/SecuenciaLogic';
 
 const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   logica,
@@ -290,10 +198,21 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   const [modalCreadorAcordesVisible, setModalCreadorAcordesVisible] = React.useState(false);
   const [modalListaAcordesVisible, setModalListaAcordesVisible] = React.useState(false);
   const [acordeAEditar, setAcordeAEditar] = React.useState<any>(null);
-  const [idSonandoCiclo, setIdSonandoCiclo] = React.useState<string | null>(null);
-  const [acordeMaestroActivo, setAcordeMaestroActivo] = React.useState(false);
-  const timerAutostopRef = React.useRef<any>(null);
-  const cicloActivoRef = React.useRef(false);
+
+  const {
+    idSonandoCiclo,
+    acordeMaestroActivo,
+    onReproducirAcorde,
+    onDetener,
+    onEditarAcorde,
+    onNuevoAcordeEnCirculo,
+    onReproducirCirculoCompleto
+  } = useReproductorAcordesAdmin(
+    logica,
+    setModalListaAcordesVisible,
+    setAcordeAEditar,
+    setModalCreadorAcordesVisible
+  );
 
   // Estados para REC con backing track
   const [bpmHero, setBpmHero] = React.useState(120);
@@ -320,6 +239,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   const [hayCambiosEdicionSecuencia, setHayCambiosEdicionSecuencia] = React.useState(false);
   const [mensajeEdicionSecuencia, setMensajeEdicionSecuencia] = React.useState<string | null>(null);
   const [ultimaCancionLibreriaActualizada, setUltimaCancionLibreriaActualizada] = React.useState<any | null>(null);
+  const [secuenciaVisualModal, setSecuenciaVisualModal] = React.useState<NotaHero[]>([]);
   const secuenciaEditadaRef = React.useRef<NotaHero[]>([]);
 
   // Sincronizar ref para metadata
@@ -515,7 +435,14 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     setPistaUrl(cancionPreparada?.audio_fondo_url || null);
     setPistaFile(null);
     setCancionActivaLibreria(cancionPreparada);
-  }, [onCambiarBpm]);
+
+    // 🎹 SINCRONIZACIÓN DE TONALIDAD:
+    // Poner el acordeón en el tono en el que se grabó la canción automáticamente
+    if (cancionPreparada?.tonalidad && cancionPreparada.tonalidad !== logica.tonalidadSeleccionada) {
+      console.log(`🎵 Cambiando tonalidad automáticamente a: ${cancionPreparada.tonalidad}`);
+      logica.setTonalidadSeleccionada(cancionPreparada.tonalidad);
+    }
+  }, [onCambiarBpm, logica.tonalidadSeleccionada, logica.setTonalidadSeleccionada]);
 
   const reproducirCancionActivaDesdeTick = React.useCallback((tickInicio = 0, cancionForzada?: any) => {
     const cancionBase = cancionForzada
@@ -807,16 +734,54 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     setCancionEnModalEditor(cancion);
   }, [grabandoSesion, grabadorLocal.grabando, esperandoPunchIn, onDetenerHero, onBuscarTick, construirCancionHero, prepararCancionEnEscenario]);
 
-  const handleNotasActualesDelModal = React.useCallback((notas: NotaHero[]) => {
-    // Limpiar todos los botones activos primero
-    logica.limpiarTodasLasNotas();
+  const notasCheadasModalRef = React.useRef<Set<string>>(new Set());
 
-    // Iluminar los botones de las notas actuales
-    notas.forEach((nota) => {
-      const fuelle = nota.fuelle === 'abriendo' ? 'halar' : 'empujar';
-      const idFinal = `${nota.botonId}-${fuelle}`;
-      logica.actualizarBotonActivo(idFinal, 'add', null, false, undefined, true);
+  const handleNotasActualesDelModal = React.useCallback((notas: NotaHero[]) => {
+    if (!logica) return;
+
+    // 🔄 Sincronizar dirección del fuelle con las notas de la secuencia (para que se vean las 'cerrando')
+    if (notas.length > 0) {
+      const dirRequerida = (notas[0].fuelle === 'abriendo' || notas[0].fuelle === 'halar') ? 'halar' : 'empujar';
+      if (logica.direccion !== dirRequerida) {
+        logica.setDireccion(dirRequerida);
+      }
+    }
+
+    // 🔍 CONSTRUIR IDS EXACTOS PARA EL MOTOR DE AUDIO
+    const idsNuevos = new Set(notas.map(n => {
+      const fuelle = n.fuelle === 'abriendo' ? 'halar' : 'empujar';
+      
+      // Limpiamos el ID base de rastros de fuelle anteriores para normalizar
+      let baseId = n.botonId.replace('-halar', '').replace('-empujar', '');
+      
+      if (baseId.includes('-bajo')) {
+        // Formato Bajo: id-fuelle-bajo
+        baseId = baseId.replace('-bajo', '');
+        return `${baseId}-${fuelle}-bajo`;
+      }
+      
+      // Formato Pito: id-fuelle
+      return `${baseId}-${fuelle}`;
+    }));
+
+    const notasAnteriores = notasCheadasModalRef.current;
+
+    // 1. Quitar las que ya no están (Fade out)
+    notasAnteriores.forEach(id => {
+      if (!idsNuevos.has(id)) {
+        logica.actualizarBotonActivo(id, 'remove', null, false, undefined);
+      }
     });
+
+    // 2. Agregar las nuevas que no estaban (Fade in suave / Ataque)
+    idsNuevos.forEach(id => {
+      if (!notasAnteriores.has(id)) {
+        logica.actualizarBotonActivo(id, 'add', null, false, undefined, true);
+      }
+    });
+
+    // 3. Sincronizar referencia para el próximo frame
+    notasCheadasModalRef.current = idsNuevos;
   }, [logica]);
 
   React.useEffect(() => {
@@ -847,12 +812,15 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   }, [bpm, estaGrabandoEdicionSecuencia, finalizarGrabacionEdicion, onAlternarPausa, onBuscarTick, pausado, preRollSegundos, punchOutTick, reproduciendo, tickActual]);
 
   const secuenciaVisualActiva = React.useMemo(() => {
+    if (cancionEnModalEditor) {
+      return secuenciaVisualModal;
+    }
     if (cancionEditandoSecuencia) {
       return secuenciaEditada;
     }
 
     return cancionActivaLibreria?.secuencia || secuencia || [];
-  }, [cancionActivaLibreria, cancionEditandoSecuencia, secuencia, secuenciaEditada]);
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, cancionEnModalEditor, secuencia, secuenciaEditada, secuenciaVisualModal]);
 
   const totalTicksTransporte = React.useMemo(() => {
     if (cancionEditandoSecuencia) {
@@ -931,14 +899,13 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
               )}
             </div>
 
-            {/* Puente de Notas (Falling Notes) - SOLO EN MODOS CON GAMEPLAY */}
-            {/* En Práctica Libre NO mostramos las notas cayendo */}
-            {false && (reproduciendo || hayGrabacionActiva) && (
+            {/* Puente de Notas (Falling Notes) - SOLO EN MODOS CON GAMEPLAY (No en Editor) */}
+            {(reproduciendo || hayGrabacionActiva) && !cancionEnModalEditor && (
               <PuenteNotas
                 cancion={{
                   id: 'practica-id',
                   titulo: 'Práctica',
-                  secuencia: (reproduciendo ? secuenciaVisualActiva : grabandoRecPro ? grabadorLocal.secuencia : secuenciaGrabacion) || [],
+                  secuencia: secuenciaVisualActiva || [],
                   bpm: grabandoRecPro ? bpmHero : bpm,
                   tonalidad: logica.tonalidadSeleccionada
                 } as any}
@@ -1144,38 +1111,8 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           grabandoEdicionSecuenciaLibreria={estaGrabandoEdicionSecuencia}
           esperandoPunchInLibreria={esperandoPunchIn}
           // Props Lista Acordes
-          onReproducirAcorde={(botones, fuelle, id) => {
-            logica.limpiarTodasLasNotas();
-            if (timerAutostopRef.current) clearTimeout(timerAutostopRef.current);
-
-            const dirNueva = fuelle === 'abriendo' ? 'halar' : 'empujar';
-            logica.setDireccion(dirNueva);
-            if (id) setIdSonandoCiclo(id);
-
-            // Pequeño delay para asegurar que el cambio de dirección (fuelle)
-            // se procese antes de activar las notas.
-            setTimeout(() => {
-              botones.forEach((idBoton: string) => {
-                // El ID que viene de la DB puede ser "4-2" pero necesitamos
-                // el ID completo "4-2-halar" o "4-2-empujar"
-                const parts = idBoton.split('-');
-                const esBajo = idBoton.includes('bajo');
-                const idFinal = `${parts[0]}-${parts[1]}-${dirNueva}${esBajo ? '-bajo' : ''}`;
-                logica.actualizarBotonActivo(idFinal, 'add', null, false, undefined, true);
-              });
-            }, 50);
-
-            // Auto-stop después de 5 segundos
-            timerAutostopRef.current = setTimeout(() => {
-              logica.limpiarTodasLasNotas();
-              setIdSonandoCiclo(null);
-            }, 5000);
-          }}
-          onDetenerAcorde={() => {
-            if (timerAutostopRef.current) clearTimeout(timerAutostopRef.current);
-            logica.limpiarTodasLasNotas();
-            setIdSonandoCiclo(null);
-          }}
+          onReproducirAcorde={onReproducirAcorde}
+          onDetenerAcorde={onDetener}
           idSonandoAcorde={idSonandoCiclo}
           onEditarAcordePanel={setAcordeAEditar}
           tonalidadActualAcordes={logica.tonalidadSeleccionada}
@@ -1209,6 +1146,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             onCerrar={() => {
               setCancionEnModalEditor(null);
               logica.limpiarTodasLasNotas();
+              notasCheadasModalRef.current.clear();
               // Recargar la canción en la librería si fue modificada
               if (cancionEnModalEditor?.id === cancionActivaLibreria?.id) {
                 // La canción se recarga automáticamente
@@ -1231,6 +1169,8 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             setPunchInTick={onActualizarLoopInicio}
             notasGrabadas={grabadorLocal.secuencia}
             onNotasActuales={handleNotasActualesDelModal}
+            onSecuenciaChange={setSecuenciaVisualModal}
+            duracionAudioProp={audioRef.current?.duration || 0}
           />
         )}
       </div>
@@ -1304,89 +1244,12 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             visible={modalListaAcordesVisible}
             onCerrar={() => setModalListaAcordesVisible(false)}
             tonalidadActual={logica.tonalidadSeleccionada}
-            onReproducirAcorde={(botones, fuelle, id) => {
-              logica.limpiarTodasLasNotas();
-              if (timerAutostopRef.current) clearTimeout(timerAutostopRef.current);
-
-              const dirNueva = fuelle === 'abriendo' ? 'halar' : 'empujar';
-              logica.setDireccion(dirNueva);
-              setAcordeMaestroActivo(true);
-              if (id) setIdSonandoCiclo(id);
-
-              setTimeout(() => {
-                botones.forEach((idNote: string) => {
-                  const originalParts = idNote.split('-');
-                  const esBajo = idNote.includes('bajo');
-                  const idFinal = `${originalParts[0]}-${originalParts[1]}-${dirNueva}${esBajo ? '-bajo' : ''}`;
-                  logica.actualizarBotonActivo(idFinal, 'add', null, false, undefined, true);
-                });
-              }, 50);
-
-              timerAutostopRef.current = setTimeout(() => {
-                logica.limpiarTodasLasNotas();
-                setAcordeMaestroActivo(false);
-                setIdSonandoCiclo(null);
-              }, 5000);
-            }}
-            onDetener={() => {
-              if (timerAutostopRef.current) clearTimeout(timerAutostopRef.current);
-              cicloActivoRef.current = false;
-              logica.limpiarTodasLasNotas();
-              setAcordeMaestroActivo(false);
-              setIdSonandoCiclo(null);
-            }}
+            onReproducirAcorde={onReproducirAcorde}
+            onDetener={onDetener}
             idSonando={idSonandoCiclo || (acordeMaestroActivo ? 'activo' : null)}
-            onEditarAcorde={(acorde) => {
-              setModalListaAcordesVisible(false);
-              setAcordeAEditar(acorde);
-              setModalCreadorAcordesVisible(true);
-            }}
-            onNuevoAcordeEnCirculo={(tonalidad, modalidad) => {
-              setModalListaAcordesVisible(false);
-              setAcordeAEditar({
-                grado: tonalidad || '',
-                modalidad_circulo: modalidad || 'Mayor',
-              });
-              setModalCreadorAcordesVisible(true);
-            }}
-            onReproducirCirculoCompleto={async (acordes) => {
-              if (cicloActivoRef.current) {
-                cicloActivoRef.current = false;
-                logica.limpiarTodasLasNotas();
-                setAcordeMaestroActivo(false);
-                return;
-              }
-
-              cicloActivoRef.current = true;
-              setAcordeMaestroActivo(true);
-
-              for (const ac of acordes) {
-                setIdSonandoCiclo(ac.id);
-
-                logica.limpiarTodasLasNotas();
-                const dirNueva = ac.fuelle === 'abriendo' ? 'halar' : 'empujar';
-                logica.setDireccion(dirNueva);
-
-                await new Promise((r) => setTimeout(r, 50));
-                if (!cicloActivoRef.current) break;
-
-                ac.botones.forEach((id: string) => {
-                  const originalParts = id.split('-');
-                  const esBajo = id.includes('bajo');
-                  const idFinal = `${originalParts[0]}-${originalParts[1]}-${dirNueva}${esBajo ? '-bajo' : ''}`;
-                  logica.actualizarBotonActivo(idFinal, 'add', null, false, undefined, true);
-                });
-
-                await new Promise((r) => {
-                  timerAutostopRef.current = setTimeout(r, 3000);
-                });
-              }
-
-              cicloActivoRef.current = false;
-              logica.limpiarTodasLasNotas();
-              setAcordeMaestroActivo(false);
-              setIdSonandoCiclo(null);
-            }}
+            onEditarAcorde={onEditarAcorde}
+            onNuevoAcordeEnCirculo={onNuevoAcordeEnCirculo}
+            onReproducirCirculoCompleto={onReproducirCirculoCompleto}
           />
 
           {/* Modal para guardar grabación REC PRO en canciones_hero */}

@@ -77,24 +77,44 @@ export const useAudioFondoPracticaLibre = ({
   useEffect(() => {
     if (!audioRef.current || !audioUrl) return;
 
+    const audio = audioRef.current;
     const debeReproducir = reproduciendo && !pausado;
+
+    // 🎧 COMPENSADOR DE LATENCIA: Sincronizar el reloj del motor cuando el audio REALMENTE empieza a sonar
+    const manejarSyncAlReproducir = () => {
+      console.log('🎵 Audio está sonando realmente, sincronizando motor...');
+      if (typeof (window as any).sincronizarRelojConPista === 'function') {
+        (window as any).sincronizarRelojConPista();
+      }
+    };
 
     if (debeReproducir && !estadoPrevioPlayRef.current) {
       // Iniciando reproducción: establecer posición inicial
       const tiempoInicio = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
-      audioRef.current.currentTime = tiempoInicio;
+      audio.currentTime = tiempoInicio;
 
       // CREAR CHECKPOINT INICIAL
       checkpointTimeRef.current = tiempoInicio;
       checkpointTickRef.current = tickActual;
 
-      audioRef.current.play().catch(e => console.warn('⚠️ Audio no pudo reproducirse:', e));
+      // Escuchar el inicio real del sonido para compensar latencia de buffer/primera-carga
+      audio.addEventListener('playing', manejarSyncAlReproducir, { once: true });
+
+      audio.play().catch(e => {
+        console.warn('⚠️ Audio no pudo reproducirse:', e);
+        audio.removeEventListener('playing', manejarSyncAlReproducir);
+      });
     } else if (!debeReproducir && estadoPrevioPlayRef.current) {
       // Pausando reproducción
-      audioRef.current.pause();
+      audio.pause();
+      audio.removeEventListener('playing', manejarSyncAlReproducir);
     }
 
     estadoPrevioPlayRef.current = debeReproducir;
+
+    return () => {
+      audio.removeEventListener('playing', manejarSyncAlReproducir);
+    };
   }, [reproduciendo, pausado, audioUrl, calcularSegundosDesdeCheckpoint]);
 
   // 🎵 SINCRONIZACIÓN CON CHECKBOX: Solo sincroniza si hay SALTO en ticks
@@ -104,8 +124,8 @@ export const useAudioFondoPracticaLibre = ({
 
     const diferenciaTickActual = Math.abs(tickActual - tickAnteriorRef.current);
 
-    // Si hay un salto > 50 ticks, es un seek del usuario
-    if (reproduciendo && diferenciaTickActual > 50) {
+    // Si hay un salto > 50 ticks, es un seek del usuario (funciona incluso en pausa)
+    if (diferenciaTickActual > 50) {
       const tiempoSeek = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
       audioRef.current.currentTime = tiempoSeek;
 
@@ -113,7 +133,7 @@ export const useAudioFondoPracticaLibre = ({
       checkpointTimeRef.current = tiempoSeek;
       checkpointTickRef.current = tickActual;
 
-      console.log('🔄 Seek detectado:', { tickAnterior: tickAnteriorRef.current, tickActual, tiempoSeek });
+      console.log('🔄 Seek detectado (Audio Sync):', { tickAnterior: tickAnteriorRef.current, tickActual, tiempoSeek });
     }
 
     tickAnteriorRef.current = tickActual;
@@ -136,12 +156,17 @@ export const useAudioFondoPracticaLibre = ({
       const tiempoActual = audioRef.current.currentTime;
       const diferencia = Math.abs(tiempoEsperado - tiempoActual);
 
-      // Si hay mucha desincronización (> 0.3s), sincronizar
-      if (diferencia > 0.3) {
+      // 🕒 COOLDOWN: Evitar corregir demasiado seguido (causa entrecortado)
+      const ahoraMs = Date.now();
+      const lastSync = (window as any)._lastSyncAudio || 0;
+
+      // Si hay mucha desincronización (> 0.15s), sincronizar pero con calma
+      if (diferencia > 0.15 && (ahoraMs - lastSync > 2000)) {
         console.log('🔧 Micro-sincronización:', { diferencia, tiempoEsperado, tiempoActual });
         audioRef.current.currentTime = tiempoEsperado;
         checkpointTimeRef.current = tiempoEsperado;
         checkpointTickRef.current = tickActual;
+        (window as any)._lastSyncAudio = ahoraMs;
       }
 
       syncFrameRef.current = requestAnimationFrame(syncLoop);
