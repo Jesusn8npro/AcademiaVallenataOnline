@@ -63,6 +63,8 @@ const SimuladorApp: React.FC = () => {
     // 3. Refs y MotionValues
     const x = useMotionValue(0);
     const trenRef = useRef<HTMLDivElement>(null);
+    const audioContextIniciadoRef = useRef(false);
+    const [audioListo, setAudioListo] = useState(false);
     const refsModales = {
         menu: useRef(null),
         tonalidades: useRef(null),
@@ -136,16 +138,27 @@ const SimuladorApp: React.FC = () => {
 
     // 6. Efectos
     useEffect(() => {
-        // 🔄 TODO VIENE DEL CSS - SIN SOBRESCRITURAS DE JAVASCRIPT
-        // Los estilos se controlan ÚNICAMENTE desde SimuladorApp.css (:root)
-        // Nota: localStorage ya no sobrescribe los valores del CSS
-
         const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
         window.addEventListener('resize', check);
         document.body.classList.add('bloquear-scroll-simulador');
         return () => {
             window.removeEventListener('resize', check);
             document.body.classList.remove('bloquear-scroll-simulador');
+        };
+    }, []);
+
+    // Inicializar AudioContext en el primer toque del usuario (requisito iOS)
+    useEffect(() => {
+        const inicializarAudio = () => {
+            if (audioContextIniciadoRef.current) return;
+            audioContextIniciadoRef.current = true;
+            motorAudioPro.activarContexto();
+            setAudioListo(true);
+            document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
+        };
+        document.addEventListener('pointerdown', inicializarAudio, { capture: true });
+        return () => {
+            document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
     }, []);
 
@@ -258,6 +271,12 @@ const SimuladorApp: React.FC = () => {
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
 
             {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
+
+            {!audioListo && (
+                <div className="overlay-audio-inicio" aria-hidden="true">
+                    Toca para comenzar
+                </div>
+            )}
         </div>
     );
 };
