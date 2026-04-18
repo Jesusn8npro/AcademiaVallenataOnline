@@ -135,18 +135,18 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                 className={`seccion-bajos-contenedor ${escala < 0.8 ? 'modo-estirado' : ''}`}
                 onPointerDown={(e) => {
                     const target = e.target as HTMLElement;
-                    // Si tocas el fuelle (la zona de abajo sin estar en los bajos), cambia a EMPUJAR
                     if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        e.preventDefault();
-                        manejarCambioFuelle('empujar', motorAudioPro);
+                        // Solo cambiar fuelle si no hay botones de pitos activos
+                        const hayBotonesActivos = logica.botonesActivos &&
+                            Object.values(logica.botonesActivos as Record<string, boolean>).some(Boolean);
+                        if (!hayBotonesActivos) {
+                            manejarCambioFuelle('empujar', motorAudioPro);
+                        }
                     }
                 }}
                 onPointerUp={(e) => {
                     const target = e.target as HTMLElement;
-                    // Cuando sueltas, vuelve a HALAR (comportamiento toggle)
                     if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        e.preventDefault();
-                        // ⚡ Pequeño delay para evitar cambios muy frecuentes
                         setTimeout(() => {
                             manejarCambioFuelle('halar', motorAudioPro);
                         }, 50);
