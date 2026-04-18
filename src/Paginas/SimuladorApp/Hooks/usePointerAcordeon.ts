@@ -69,13 +69,12 @@ export const usePointerAcordeon = ({
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            if (pos) {
-                // ⚡ AUTO-DETECTAR DIRECCIÓN: Si tocas en la zona inferior = empujar, superior = halar
-                // Esto permite ejecutar rápido SIN necesidad de mantener dedo en el fuelle
-                const ventanaAltura = window.innerHeight;
-                const zonaFuelle = ventanaAltura * 0.15; // Los 15% inferiores de la pantalla
-                const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
 
+            const ventanaAltura = window.innerHeight;
+            const zonaFuelle = ventanaAltura * 0.15;
+            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
+
+            if (pos) {
                 // Cambiar dirección automáticamente si tocas el fuelle
                 if (esZonaFuelle && logicaRef.current.direccion === 'halar') {
                     logicaRef.current.setDireccion('empujar');
@@ -86,6 +85,10 @@ export const usePointerAcordeon = ({
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
+            } else if (esZonaFuelle) {
+                // Registrar el pointer del fuelle con pos vacío para que el deslizamiento
+                // hacia un botón sea detectado por procesarMove sin interrupción
+                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
             }
         };
 
