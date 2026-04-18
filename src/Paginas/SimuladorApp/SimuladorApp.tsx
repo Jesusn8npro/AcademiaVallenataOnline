@@ -125,7 +125,7 @@ const SimuladorApp: React.FC = () => {
     const desactivarAudio = useMemo(() => Object.values(modales).some(v => v), [modales]);
 
     // 5. Hook de Entrada (PointerEvents Engine)
-    const { manejarCambioFuelle } = usePointerAcordeon({
+    const { manejarCambioFuelle, limpiarGeometria } = usePointerAcordeon({
         x,
         logica,
         actualizarVisualBoton,
@@ -149,9 +149,10 @@ const SimuladorApp: React.FC = () => {
         };
     }, []);
 
-    // ⚡ Limpiar caché de elementos cuando cambia la tonalidad (se re-renderizan los botones)
+    // ⚡ Limpiar caché de elementos y geometría cuando cambia la tonalidad
     useEffect(() => {
         elementosCache.current.clear();
+        limpiarGeometria();
     }, [logica.tonalidadSeleccionada]);
 
     useEffect(() => {

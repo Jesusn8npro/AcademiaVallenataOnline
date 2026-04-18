@@ -16,6 +16,8 @@ export const usePointerAcordeon = ({
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
+    // Flag: true después del primer cálculo; no se resetea por cambios de dirección
+    const geometriaListaRef = useRef(false);
 
     // 🚀 THROTTLING: RAF para pointermove (reduce de 120 eventos/seg a 1 por frame)
     const rafPendingRef = useRef<number | null>(null);
@@ -28,7 +30,7 @@ export const usePointerAcordeon = ({
         const tren = trenRef.current;
         if (!tren) return;
 
-        const actualizarGeometriaBase = () => {
+        const calcularGeometria = () => {
             if (!tren) return;
             const elPitos = tren.querySelectorAll('.pito-boton');
             const currentX = x.get();
@@ -45,11 +47,31 @@ export const usePointerAcordeon = ({
                     });
                 }
             });
+            geometriaListaRef.current = true;
         };
 
-        window.addEventListener('resize', actualizarGeometriaBase);
-        // ⚡ Carga inmediata en el próximo frame (no esperar 1 segundo)
-        requestAnimationFrame(actualizarGeometriaBase);
+        // Recalcula solo si la geometría no está lista (evita limpiar el cache
+        // en cada re-run del effect por cambio de deps como grabando/dirección)
+        const actualizarGeometriaBase = () => {
+            if (geometriaListaRef.current) {
+                // Solo actualizar la posición del tren, no los rects de los botones
+                if (!tren) return;
+                const currentX = x.get();
+                const trenBase = tren.getBoundingClientRect();
+                lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
+                return;
+            }
+            calcularGeometria();
+        };
+
+        const forzarRecalculo = () => {
+            geometriaListaRef.current = false;
+            calcularGeometria();
+        };
+
+        window.addEventListener('resize', forzarRecalculo);
+        // Primer cálculo en el siguiente frame después de montar
+        requestAnimationFrame(calcularGeometria);
 
         const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
             if (!lastTrenRect.current) return null;
@@ -164,12 +186,11 @@ export const usePointerAcordeon = ({
         document.addEventListener('pointercancel', handlePointerUp, { capture: true });
 
         return () => {
-            window.removeEventListener('resize', actualizarGeometriaBase);
+            window.removeEventListener('resize', forzarRecalculo);
             document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
             document.removeEventListener('pointermove', handlePointerMove, { capture: true });
             document.removeEventListener('pointerup', handlePointerUp, { capture: true });
             document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
-            // Limpiar RAF pendiente
             if (rafPendingRef.current !== null) {
                 cancelAnimationFrame(rafPendingRef.current);
                 rafPendingRef.current = null;
@@ -177,7 +198,29 @@ export const usePointerAcordeon = ({
         };
     }, [x, actualizarVisualBoton, registrarEvento, trenRef]);
 
-    return { pointersMap, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
+    // Llamar desde SimuladorApp cuando cambia la tonalidad (botones se re-renderizan)
+    const limpiarGeometria = () => {
+        geometriaListaRef.current = false;
+        rectsCache.current.clear();
+        const tren = trenRef.current;
+        if (tren) requestAnimationFrame(() => {
+            const elPitos = tren.querySelectorAll('.pito-boton');
+            const currentX = x.get();
+            const trenBase = tren.getBoundingClientRect();
+            lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
+            elPitos.forEach(el => {
+                const pos = (el as HTMLElement).dataset.pos;
+                const r = el.getBoundingClientRect();
+                if (pos) rectsCache.current.set(pos, {
+                    left: r.left - trenBase.left, right: r.right - trenBase.left,
+                    top: r.top - trenBase.top, bottom: r.bottom - trenBase.top
+                });
+            });
+            geometriaListaRef.current = true;
+        });
+    };
+
+    return { pointersMap, limpiarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         motorAudioPro.activarContexto();
         motorAudioPro.detenerTodo(0.012);
