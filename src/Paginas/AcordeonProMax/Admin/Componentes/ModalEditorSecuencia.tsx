@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   X, Play, Pause, RotateCcw, Clock, Save, Trash2,
-  Plus, Layout, Activity, Zap, RefreshCw, MapPin
+  Plus, Layout, Activity, Zap, RefreshCw, MapPin, 
+  Scissors, Volume2, Ear, Square, SkipBack, SkipForward
 } from 'lucide-react';
 import type { NotaHero } from '../../TiposProMax';
 import { actualizarCancionHeroCompleta } from '../../../../servicios/cancionesHeroService';
@@ -30,10 +31,32 @@ interface Seccion {
 interface ModalEditorSecuenciaProps {
   cancion: any;
   onCerrar: () => void;
-  onSecuenciaChange: (nuevaSecuencia: NotaHero[], duracionSegundos: number, secciones: any[]) => void;
+  tickActual: number;
+  totalTicks: number;
+  reproduciendoHero: boolean;
+  onAlternarPausa: () => void;
+  onDetener: () => void;
+  onBuscarTick: (tick: number) => void;
+  bpm: number;
+  onCambiarBpm: (bpm: number) => void;
+  grabando: boolean;
+  tiempoGrabacionMs: number;
+  cuentaAtrasPreRoll: number | null;
+  onIniciarGrabacion: () => void;
+  onDetenerGrabacion: () => void;
+  punchInTick: number | null;
+  setPunchInTick: (tick: number | null) => void;
+  punchOutTick: number | null;
+  setPunchOutTick: (tick: number | null) => void;
+  notasGrabadas: NotaHero[];
   onNotasActuales?: (notas: NotaHero[]) => void;
-  onBuscarTick?: (tick: number) => void;
-  duracionAudioProp?: number;
+  onSecuenciaChange: (secuencia: NotaHero[]) => void;
+  duracionAudioProp: number;
+  preRollSegundos: number;
+  setPreRollSegundos: (s: number) => void;
+  metronomoActivo: boolean;
+  setMetronomoActivo: (v: boolean) => void;
+  mensajeEdicionProp: string | null;
 }
 
 function formatearTiempoDesdeSegundos(s: number) {
@@ -63,10 +86,32 @@ function fmtSeg(s: number, conDecimas = false) {
 const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   cancion,
   onCerrar,
-  onSecuenciaChange,
-  onNotasActuales,
+  tickActual,
+  totalTicks,
+  reproduciendoHero,
+  onAlternarPausa,
+  onDetener,
   onBuscarTick,
-  duracionAudioProp = 0
+  bpm,
+  onCambiarBpm,
+  grabando,
+  tiempoGrabacionMs,
+  cuentaAtrasPreRoll,
+  onIniciarGrabacion,
+  onDetenerGrabacion,
+  punchInTick,
+  setPunchInTick,
+  punchOutTick,
+  setPunchOutTick,
+  notasGrabadas,
+  onNotasActuales,
+  onSecuenciaChange,
+  duracionAudioProp,
+  preRollSegundos,
+  setPreRollSegundos,
+  metronomoActivo,
+  setMetronomoActivo,
+  mensajeEdicionProp
 }) => {
   const [tickModal, setTickModal] = useState(0);
   const [reproduciendoModal, setReproduciendoModal] = useState(false);
@@ -104,12 +149,13 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   const resolucion = cancion?.resolucion || 192;
 
   // totalTicks = el mayor entre las notas Y la duración configurada (en ticks)
-  const totalTicksModal = Math.max(
-    secuenciaEditada.length > 0
-      ? Math.max(...secuenciaEditada.map(n => n.tick + n.duracion))
-      : 0,
-    Math.round(duracionSegundosModal * (bpmModal / 60) * resolucion)
-  );
+  const ticksDeDuracion = Math.round(duracionSegundosModal * (bpmModal / 60) * resolucion);
+  const ultimoTickNotas = secuenciaEditada.length > 0
+    ? Math.max(...secuenciaEditada.map(n => n.tick + n.duracion))
+    : 0;
+
+  // La duración programada manda sobre el timeline. 
+  const totalTicksModal = ticksDeDuracion > 0 ? ticksDeDuracion : Math.max(resolucion * 4, ultimoTickNotas);
 
   const duracionCambiada = Math.abs(duracionSegundosModal - duracionGuardada) > 0.05;
 
@@ -140,9 +186,10 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
       audio.onloadedmetadata = () => {
         const dur = audio.duration;
         setDuracionAudio(dur);
-        // Siempre usa la duración real del MP3 automáticamente
-        setDuracionSegundosModal(dur);
-        setDuracionGuardada(dur);
+        // Si la canción no tiene duración guardada o es inválida (> real), sugerimos la real
+        if (!cancion.duracion_segundos || cancion.duracion_segundos > dur) {
+          setDuracionSegundosModal(dur);
+        }
       };
     }
     return () => {
@@ -154,6 +201,19 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   }, [cancion?.audio_fondo_url]);
 
   // ─── Sincronizar notas con el acordeón ───────────────────────────────────
+  // ─── Sincronización con el estudio ───
+  useEffect(() => {
+    setTickModal(tickActual);
+  }, [tickActual]);
+
+  useEffect(() => {
+    setReproduciendoModal(reproduciendoHero);
+  }, [reproduciendoHero]);
+
+  useEffect(() => {
+    setBpmModal(bpm);
+  }, [bpm]);
+
   useEffect(() => {
     if (!onNotasActuales) return;
     if (!reproduciendoModal) { onNotasActuales([]); return; }
@@ -163,71 +223,35 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
     onNotasActuales(notasActuales);
   }, [tickModal, reproduciendoModal, secuenciaEditada, onNotasActuales]);
 
-  // ─── Bucle de reproducción ───────────────────────────────────────────────
+  // ─── Bucle de audio local (solo para streaming del audioRef) ───
   useEffect(() => {
     if (!reproduciendoModal) return;
-
-    const loop = (timestamp: number) => {
-      if (ultimoTimestampRef.current === 0) ultimoTimestampRef.current = timestamp;
-      const delta = timestamp - ultimoTimestampRef.current;
-      ultimoTimestampRef.current = timestamp;
-
-      const ticksPorMs = (bpmModal / 60) * resolucion / 1000;
-      setTickModal(prev => {
-        const next = prev + ticksPorMs * delta;
-        // Para cuando se llega al final de la duración configurada
-        if (next >= totalTicksModal) {
-          setReproduciendoModal(false);
-          return totalTicksModal;
-        }
-        return next;
-      });
-
+    const updateAudio = () => {
       if (audioRef.current) setTiempoAudioActual(audioRef.current.currentTime);
-      rAFRef.current = requestAnimationFrame(loop);
+      rAFRef.current = requestAnimationFrame(updateAudio);
     };
-
-    ultimoTimestampRef.current = performance.now();
-    rAFRef.current = requestAnimationFrame(loop);
-
-    return () => {
-      cancelAnimationFrame(rAFRef.current);
-      ultimoTimestampRef.current = 0;
-    };
-  }, [reproduciendoModal, bpmModal, totalTicksModal, resolucion]);
+    rAFRef.current = requestAnimationFrame(updateAudio);
+    return () => cancelAnimationFrame(rAFRef.current);
+  }, [reproduciendoModal]);
 
   // ─── Controles de reproducción ───────────────────────────────────────────
   const togglePlay = () => {
-    if (!reproduciendoModal) {
-      motorAudioPro.activarContexto();
-      if (audioRef.current) {
-        const startTime = (tickModal / resolucion) * (60 / bpmModal);
-        audioRef.current.currentTime = startTime;
-        audioRef.current.play().catch(console.error);
-      }
-      setReproduciendoModal(true);
-    } else {
-      if (audioRef.current) audioRef.current.pause();
-      setReproduciendoModal(false);
-    }
+    onAlternarPausa();
   };
 
-  const handleSeek = useCallback((val: number) => {
-    setTickModal(val);
-    if (audioRef.current) {
-      audioRef.current.currentTime = (val / resolucion) * (60 / bpmModal);
-    }
-    onBuscarTick?.(val);
-  }, [resolucion, bpmModal, onBuscarTick]);
+  const handleSeek = (val: number) => {
+    onBuscarTick(val);
+  };
 
-  const handleReset = useCallback(() => {
-    setReproduciendoModal(false);
-    setReproduciendoSeccion(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-    setTickModal(0);
-    setSeccionCursorSeg(0);
-    onBuscarTick?.(0);
-  }, [onBuscarTick]);
+  const handleReset = () => {
+    onDetener();
+  };
+
+  const saltarSegundos = (seg: number) => {
+    const ticksSaltar = Math.round(seg * (bpmModal / 60) * resolucion);
+    const nuevoTick = Math.max(0, Math.min(totalTicksModal, tickModal + ticksSaltar));
+    onBuscarTick(nuevoTick);
+  };
 
   // ─── Loop reproduccion del panel Secciones ───────────────────────────────────────
   useEffect(() => {
@@ -350,29 +374,29 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="modal-editor-secuencia">
+    <div className="editor-secuencia-modal">
       {/* HEADER */}
-      <div className="modal-editor-secuencia-header">
+      <div className="editor-cabecera">
         <div>
-          <div className="modal-editor-secuencia-kicker">Panel Edición Profesional</div>
+          <div className="editor-subtitulo">Panel Edición Profesional</div>
           <h2>{cancion?.titulo || 'Editor'}</h2>
         </div>
-        <button className="modal-editor-secuencia-btn-cerrar" onClick={onCerrar}>
+        <button className="editor-boton-cerrar" onClick={onCerrar}>
           <X size={20} />
         </button>
       </div>
 
-      <div className="modal-editor-secuencia-contenido">
+      <div className="editor-cuerpo">
 
         {/* ── TIMELINE & CONTROL ── */}
-        <section className="modal-editor-secuencia-zona">
-          <div className="modal-editor-secuencia-zona-titulo">
+        <section className="editor-seccion">
+          <div className="editor-seccion-titulo">
             <Activity size={16} /> Timeline &amp; Control
           </div>
 
-          <div className="modal-editor-secuencia-reproductor-master">
+          <div className="editor-reproductor-principal">
             {/* Timeline visual con secciones coloreadas */}
-            <div className="modal-editor-secuencia-timeline-visual">
+            <div className="editor-timeline-visual">
               {/* Capas de secciones */}
               {secciones.map((s, i) => {
                 const color = PALETA_SECCIONES[i % PALETA_SECCIONES.length];
@@ -381,7 +405,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                 return (
                   <div
                     key={i}
-                    className="timeline-seccion-banda"
+                    className="timeline-banda-seccion"
                     style={{
                       left: `${leftPct}%`,
                       width: `${Math.max(widthPct, 0.5)}%`,
@@ -391,7 +415,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                     title={`${s.nombre}: ${formatearTiempoDesdeTicks(s.tickInicio, bpmModal)} → ${formatearTiempoDesdeTicks(s.tickFin, bpmModal)}`}
                   >
                     {widthPct > 5 && (
-                      <span className="timeline-seccion-label" style={{ color: color.texto }}>
+                      <span className="timeline-etiqueta-seccion" style={{ color: color.texto }}>
                         {s.nombre}
                       </span>
                     )}
@@ -411,73 +435,236 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                 );
               })()}
 
+              {/* Marcadores de Punch */}
+              {punchInTick !== null && (
+                <div 
+                  className="timeline-punto-punch"
+                  style={{ left: `${(punchInTick / totalTicksModal) * 100}%` }}
+                />
+              )}
+              {punchOutTick !== null && (
+                <div 
+                  className="timeline-punto-punch out"
+                  style={{ left: `${(punchOutTick / totalTicksModal) * 100}%` }}
+                />
+              )}
+
               {/* Slider de posición */}
               <input
                 type="range" min={0} max={totalTicksModal} value={tickModal}
                 onChange={e => handleSeek(Number(e.target.value))}
-                className="timeline-input"
+                className="timeline-control-seek"
               />
             </div>
 
             {/* Tiempos */}
-            <div className="modal-editor-secuencia-tiempos-fila">
-              <div className="time-block main">
-                <span className="current">{formatearTiempoDesdeTicks(tickModal, bpmModal)}</span>
+            <div className="editor-tiempos-fila">
+              <div className="bloque-tiempo principal">
+                <span className="actual">{formatearTiempoDesdeTicks(tickModal, bpmModal)}</span>
                 <span className="sep">/</span>
                 <span className="total">{formatearTiempoDesdeTicks(totalTicksModal, bpmModal)}</span>
               </div>
               {duracionAudio > 0 && (
-                <div className="time-block sub">
+                <div className="bloque-tiempo secundario">
                   🎵 MP3: {fmtSeg(tiempoAudioActual, true)} / {fmtSeg(duracionAudio)}
                 </div>
               )}
             </div>
 
             {/* Controles */}
-            <div className="modal-editor-secuencia-controles-reproduccion">
-              <button onClick={handleReset} className="modal-editor-secuencia-btn-icon" title="Reiniciar">
+            <div className="editor-controles-reproduccion">
+              <button onClick={handleReset} className="editor-boton-icono" title="Al inicio">
                 <RotateCcw size={18} />
               </button>
+              
+              <button 
+                onClick={() => saltarSegundos(-10)} 
+                className="editor-boton-icono" 
+                title="Atrás 10s"
+              >
+                <SkipBack size={20} />
+              </button>
+
               <button
                 onClick={togglePlay}
-                className={`modal-editor-secuencia-btn-play-big ${reproduciendoModal ? 'active' : ''}`}
+                className={`editor-boton-play-grande ${reproduciendoModal ? 'activo' : ''}`}
               >
                 {reproduciendoModal ? <Pause size={28} /> : <Play size={28} fill="currentColor" />}
               </button>
-              <div className="modal-editor-secuencia-control-bpm-mini">
+
+              <button 
+                onClick={() => saltarSegundos(10)} 
+                className="editor-boton-icono" 
+                title="Adelante 10s"
+              >
+                <SkipForward size={20} />
+              </button>
+
+              <div className="editor-control-bpm-mini">
                 <Zap size={14} />
                 <input
                   type="number" value={bpmModal}
-                  onChange={e => setBpmModal(Number(e.target.value))}
+                  onChange={e => {
+                    const v = Number(e.target.value);
+                    setBpmModal(v);
+                    onCambiarBpm(v);
+                  }}
                 />
                 <span>BPM</span>
               </div>
             </div>
           </div>
         </section>
+        {/* ── EDICIÓN QUIRÚRGICA (PUNCH-IN) ── */}
+        <section className="editor-seccion seccion-edicion-quirurgica">
+          <div className="editor-seccion-titulo">
+            <Scissors size={16} /> Edición Quirúrgica de Notas
+          </div>
+
+          <div className="edicion-quirurgica-card">
+            <div className="edicion-quirurgica-info">
+              <div className="tecnica-ajuste-texto">
+                <span className="tecnica-ajuste-nombre">Grabación Programada</span>
+                <p className="tecnica-ajuste-ayuda">Reemplaza una parte de la secuencia con una toma nueva.</p>
+              </div>
+
+              {grabando ? (
+                <div className="edicion-status-badge grabando">
+                  <Activity size={14} /> GRABANDO...
+                </div>
+              ) : cuentaAtrasPreRoll !== null ? (
+                <div className="edicion-status-badge espera">
+                  <Clock size={14} /> PRE-ROLL: {cuentaAtrasPreRoll}s
+                </div>
+              ) : (
+                <div className="edicion-status-badge">
+                  LISTO
+                </div>
+              )}
+            </div>
+
+            <div className="edicion-controles-punch">
+              {/* Selector de Punto de Entrada */}
+              <button 
+                className={`btn-punch-config ${punchInTick !== null ? 'activo' : ''}`}
+                onClick={() => setPunchInTick(tickModal)}
+                title="Marca el inicio de la grabación"
+              >
+                <strong>Entrada In</strong>
+                <span>{punchInTick !== null ? formatearTiempoDesdeTicks(punchInTick, bpmModal) : 'Sin marcar'}</span>
+              </button>
+
+              {/* Selector de Punto de Salida */}
+              <button 
+                className={`btn-punch-config out ${punchOutTick !== null ? 'activo' : ''}`}
+                onClick={() => setPunchOutTick(tickModal)}
+                title="Opcional: Marca el final automático"
+              >
+                <strong>Salida Out</strong>
+                <span>{punchOutTick !== null ? formatearTiempoDesdeTicks(punchOutTick, bpmModal) : 'Libre'}</span>
+              </button>
+
+              <button 
+                className={`btn-punch-config ${metronomoActivo ? 'activo' : ''}`}
+                onClick={() => setMetronomoActivo(!metronomoActivo)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong>Metrónomo</strong>
+                  {metronomoActivo ? <Volume2 size={14} /> : <Ear size={14} />}
+                </div>
+                <span>{metronomoActivo ? 'OK' : 'OFF'}</span>
+              </button>
+            </div>
+
+            {/* Fila intermedia: Escuchar lo grabado */}
+            {punchInTick !== null && !grabando && cuentaAtrasPreRoll === null && (
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <button 
+                  className="btn-punch-config"
+                  style={{ flex: 1, background: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6' }}
+                  onClick={() => {
+                    onBuscarTick(Math.max(0, punchInTick - (bpmModal / 60) * resolucion * 2)); // 2s antes
+                    setTimeout(() => onAlternarPausa(), 100);
+                  }}
+                >
+                  <Play size={14} fill="currentColor" /> Escuchar Toma
+                </button>
+                {(punchInTick !== null || punchOutTick !== null) && (
+                  <button 
+                    className="btn-punch-config"
+                    style={{ width: '40px' }}
+                    onClick={() => { setPunchInTick(null); setPunchOutTick(null); }}
+                    title="Limpiar marcas"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Ajuste de Pre-Roll */}
+            <div className="punch-metropoli">
+              <div className="punch-metropoli-head">
+                <span>Preparación (Pre-roll)</span>
+                <span>{preRollSegundos} seg</span>
+              </div>
+              <input 
+                type="range" min={1} max={8} step={1} 
+                value={preRollSegundos}
+                onChange={(e) => setPreRollSegundos(Number(e.target.value))}
+                className="tecnica-slider"
+                disabled={grabando || cuentaAtrasPreRoll !== null}
+              />
+            </div>
+
+            {/* BOTÓN PRINCIPAL DE ACCIÓN */}
+            {!grabando && cuentaAtrasPreRoll === null ? (
+              <button 
+                className="btn-iniciar-edicion-pro"
+                onClick={onIniciarGrabacion}
+                disabled={punchInTick === null}
+              >
+                <Play size={18} fill="currentColor" /> Iniciar Edición Programada
+              </button>
+            ) : (
+              <button 
+                className="btn-iniciar-edicion-pro detener"
+                onClick={onDetenerGrabacion}
+              >
+                <Square size={18} fill="currentColor" /> Detener Grabación
+              </button>
+            )}
+
+            {mensajeEdicionProp && (
+              <div className="formulario-error-msj" style={{ margin: 0, padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                💡 {mensajeEdicionProp}
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* ── DURACIÓN del MP3: ya gestionada dentro del acordeon de secciones ── */}
 
         {/* ── SECCIONES (colapsable) ── */}
-        <section className="modal-editor-secuencia-zona">
+        <section className="editor-seccion">
 
           {/* Header colapsable */}
           <button
-            className="secciones-acordeon-header"
+            className="secciones-cabecera-acordeon"
             onClick={() => setSeccionesAbiertas(v => !v)}
           >
-            <div className="modal-editor-secuencia-zona-titulo" style={{ marginBottom: 0 }}>
+            <div className="editor-seccion-titulo" style={{ marginBottom: 0 }}>
               <Layout size={16} /> Estructura de Secciones
               {secciones.length > 0 && (
-                <span className="secciones-count-badge">{secciones.length}</span>
+                <span className="secciones-contador-badge">{secciones.length}</span>
               )}
             </div>
-            <div className="secciones-acordeon-right">
+            <div className="secciones-cabecera-derecha">
               {secciones.length > 0 && seccionesAbiertas && (
                 <button
                   onClick={e => { e.stopPropagation(); handleGuardarSecciones(); }}
                   disabled={guardandoSecciones}
-                  className="secciones-btn-guardar-mini"
+                  className="secciones-boton-guardar-mini"
                 >
                   {guardandoSecciones
                     ? <><RefreshCw size={12} className="spin" /> Guardando…</>
@@ -485,7 +672,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                   }
                 </button>
               )}
-              <span className="secciones-acordeon-chevron">
+              <span className="secciones-acordeon-icono">
                 {seccionesAbiertas ? '▲' : '▼'}
               </span>
             </div>
@@ -493,64 +680,12 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
           {/* Contenido colapsable */}
           {seccionesAbiertas && (
-            <div className="secciones-acordeon-body">
-
-              {/* ── Configuración de duración de uso ── */}
-              <div className="dur-config-card">
-                <div className="dur-config-header">
-                  <Clock size={14} />
-                  <span>Duración de uso</span>
-                  {duracionAudio > 0 && (
-                    <span className="dur-config-real">
-                      MP3 real: {fmtSeg(duracionAudio)}
-                    </span>
-                  )}
-                  {duracionCambiada && (
-                    <span className="dur-config-badge">⚠ Sin guardar</span>
-                  )}
-                </div>
-
-                {/* Valor actual grande */}
-                <div className="dur-config-valor">{fmtSeg(duracionSegundosModal)}</div>
-
-                {/* Slider limitado a la duración real del MP3 */}
-                <input
-                  type="range"
-                  min={1}
-                  max={duracionAudio || 600}
-                  step={1}
-                  value={duracionSegundosModal}
-                  onChange={e => setDuracionSegundosModal(Number(e.target.value))}
-                  className="dur-config-slider"
-                />
-
-                {/* Acciones */}
-                <div className="dur-config-acciones">
-                  {duracionAudio > 0 && duracionSegundosModal !== duracionAudio && (
-                    <button
-                      onClick={() => setDuracionSegundosModal(duracionAudio)}
-                      className="dur-config-btn-sync"
-                    >
-                      ⚡ Usar duración completa ({fmtSeg(duracionAudio)})
-                    </button>
-                  )}
-                  <button
-                    onClick={handleGuardarDuracion}
-                    disabled={!duracionCambiada || guardandoDuracion}
-                    className={`dur-config-btn-guardar ${duracionCambiada ? 'activo' : ''}`}
-                  >
-                    {guardandoDuracion
-                      ? <><RefreshCw size={12} className="spin" /> Guardando…</>
-                      : <><Save size={12} /> Guardar duración</>
-                    }
-                  </button>
-                </div>
-              </div>
+            <div className="secciones-cuerpo-acordeon">
 
               {/* Lista de secciones existentes */}
-              <div className="modal-editor-secuencia-lista">
+              <div className="editor-lista-secciones">
                 {secciones.length === 0 && (
-                  <div className="modal-editor-secuencia-vacio">
+                  <div className="editor-vacio-notificacion">
                     Sin secciones aún. Añade la primera usando el formulario de abajo.
                   </div>
                 )}
@@ -559,11 +694,11 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                   return (
                     <div
                       key={i}
-                      className="seccion-item-pro"
+                      className="seccion-fila-pro"
                       style={{ borderLeft: `3px solid ${color.borde}` }}
                     >
-                      <div className="seccion-item-color-dot" style={{ background: color.borde }} />
-                      <div className="modal-editor-secuencia-seccion-info">
+                      <div className="seccion-punto-color" style={{ background: color.borde }} />
+                      <div className="seccion-info-texto">
                         <strong style={{ color: color.texto }}>{s.nombre}</strong>
                         <span>
                           {fmtSeg((s.tickInicio / resolucion) * (60 / bpmModal))} →{' '}
@@ -572,14 +707,14 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                       </div>
                       <button
                         onClick={() => handleSeek(s.tickInicio)}
-                        className="seccion-btn-ir"
+                        className="seccion-boton-ir"
                         title="Ir al inicio de esta sección"
                       >
                         <Play size={12} fill="currentColor" />
                       </button>
                       <button
                         onClick={() => eliminarSeccion(i)}
-                        className="modal-editor-secuencia-btn-chico"
+                        className="seccion-boton-eliminar"
                         title="Eliminar sección"
                       >
                         <Trash2 size={12} />
@@ -590,18 +725,18 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
               </div>
 
               {/* Formulario nueva sección */}
-              <div className="nueva-seccion-form">
-                <div className="nueva-seccion-form-titulo">
+              <div className="formulario-nueva-seccion">
+                <div className="formulario-titulo">
                   <Plus size={13} /> Nueva sección
                 </div>
 
                 {/* REPRODUCTOR de posición + controles */}
-                <div className="seccion-pos-slider-wrap">
+                <div className="formulario-posicion-contenedor">
 
                   {/* Tiempos */}
-                  <div className="seccion-pos-header">
-                    <span className="seccion-cursor-valor">{fmtSeg(seccionCursorSeg, true)}</span>
-                    <span className="seccion-cursor-label" style={{ marginLeft: 'auto' }}>
+                  <div className="formulario-posicion-cabecera">
+                    <span className="formulario-cursor-valor">{fmtSeg(seccionCursorSeg, true)}</span>
+                    <span className="formulario-cursor-etiqueta" style={{ marginLeft: 'auto' }}>
                       / {fmtSeg(duracionAudio || duracionSegundosModal)}
                     </span>
                   </div>
@@ -618,20 +753,20 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                       setSeccionCursorSeg(v);
                       if (audioRef.current) audioRef.current.currentTime = v;
                     }}
-                    className="seccion-pos-slider"
+                    className="formulario-posicion-slider"
                   />
 
                   {/* Controles de reproduccion */}
-                  <div className="seccion-controles-repro">
+                  <div className="formulario-controles-audio">
                     <button
                       onClick={() => saltarSeccion(-10)}
-                      className="seccion-ctrl-btn" title="-10 segundos"
+                      className="formulario-boton-control" title="-10 segundos"
                     >
                       ⏪ -10s
                     </button>
                     <button
                       onClick={togglePlaySeccion}
-                      className={`seccion-ctrl-btn seccion-ctrl-play ${reproduciendoSeccion ? 'playing' : ''}`}
+                      className={`formulario-boton-control formulario-boton-play ${reproduciendoSeccion ? 'playing' : ''}`}
                     >
                       {reproduciendoSeccion
                         ? <Pause size={16} />
@@ -640,13 +775,13 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                     </button>
                     <button
                       onClick={stopSeccion}
-                      className="seccion-ctrl-btn" title="Detener y volver al inicio"
+                      className="formulario-boton-control" title="Detener y volver al inicio"
                     >
                       ⏹
                     </button>
                     <button
                       onClick={() => saltarSeccion(10)}
-                      className="seccion-ctrl-btn" title="+10 segundos"
+                      className="formulario-boton-control" title="+10 segundos"
                     >
                       +10s ⏩
                     </button>
@@ -657,19 +792,19 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                   placeholder="Nombre de la sección (ej: Intro, Estrofa, Coro…)"
                   value={seccionNombre}
                   onChange={e => setSeccionNombre(e.target.value)}
-                  className="nueva-seccion-input"
+                  className="formulario-input-nombre"
                 />
 
-                <div className="nueva-seccion-marcadores">
+                <div className="formulario-botones-marcadores">
                   {/* Botón Inicio */}
                   <button
                     onClick={() => setSeccionTickInicio(
                       Math.round(seccionCursorSeg * (bpmModal / 60) * resolucion)
                     )}
-                    className={`btn-marker btn-marker-inicio ${seccionTickInicio > 0 ? 'marcado' : ''}`}
+                    className={`boton-marcador ${seccionTickInicio > 0 ? 'marcado' : ''}`}
                   >
                     📌 Marcar Inicio
-                    <span className={`marker-tiempo ${seccionTickInicio > 0 ? 'activo' : ''}`}>
+                    <span className={`marcador-tiempo-v ${seccionTickInicio > 0 ? 'activo' : ''}`}>
                       {seccionTickInicio > 0
                         ? fmtSeg((seccionTickInicio / resolucion) * (60 / bpmModal))
                         : '--:--'
@@ -682,10 +817,10 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                     onClick={() => setSeccionTickFin(
                       Math.round(seccionCursorSeg * (bpmModal / 60) * resolucion)
                     )}
-                    className={`btn-marker btn-marker-fin ${seccionTickFin > 0 ? 'marcado' : ''}`}
+                    className={`boton-marcador ${seccionTickFin > 0 ? 'marcado' : ''}`}
                   >
                     🏁 Marcar Fin
-                    <span className={`marker-tiempo ${seccionTickFin > 0 ? 'activo' : ''}`}>
+                    <span className={`marcador-tiempo-v ${seccionTickFin > 0 ? 'activo' : ''}`}>
                       {seccionTickFin > 0
                         ? fmtSeg((seccionTickFin / resolucion) * (60 / bpmModal))
                         : '--:--'
@@ -697,13 +832,13 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                 <button
                   onClick={agregarSeccion}
                   disabled={!seccionNombre.trim() || seccionTickFin <= seccionTickInicio}
-                  className="modal-editor-secuencia-btn-add-section"
+                  className="formulario-boton-agregar"
                 >
                   <Plus size={16} /> Agregar Sección
                 </button>
 
                 {seccionTickFin > 0 && seccionTickFin <= seccionTickInicio && (
-                  <div className="nueva-seccion-error">
+                  <div className="formulario-error-msj">
                     ⚠ El tiempo de fin debe ser mayor que el inicio.
                   </div>
                 )}
@@ -713,14 +848,84 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
           )}
         </section>
 
+        {/* ── SECCIÓN: CONFIGURACIÓN MP3 (NUEVA) ── */}
+        <section className="editor-seccion seccion-tecnica-mp3">
+          <div className="editor-seccion-titulo">
+             <Activity size={16} /> Configuración Técnica MP3
+          </div>
+
+          <div className="tecnica-tarjeta">
+            <div className="tecnica-info-superior">
+              <div className="tecnica-info-col">
+                <span className="tecnica-etiqueta-mini">Duración Actual (Base Datos)</span>
+                <span className="tecnica-valor-db">{fmtSeg(duracionGuardada)}</span>
+              </div>
+              <div className="tecnica-info-col">
+                <span className="tecnica-etiqueta-mini">Longitud Real Archivo MP3</span>
+                <span className="tecnica-valor-real">{duracionAudio > 0 ? fmtSeg(duracionAudio) : 'Cargando...'}</span>
+              </div>
+            </div>
+
+            <div className="tecnica-ajuste-contenedor">
+              <div className="tecnica-ajuste-cabecera">
+                <Clock size={18} className="icon-main" />
+                <div className="tecnica-ajuste-texto">
+                  <span className="tecnica-ajuste-nombre">Duración Programada</span>
+                  <p className="tecnica-ajuste-ayuda">Define cuánto tiempo se reproducirá el audio en el simulador.</p>
+                </div>
+                {duracionCambiada && (
+                  <span className="tecnica-badge-alerta pulso">⚠ Cambios Pendientes</span>
+                )}
+              </div>
+
+              <div className="tecnica-valor-central">
+                {fmtSeg(duracionSegundosModal, true)} 
+                <span className="unidad-segundos">seg</span>
+              </div>
+
+              <input
+                type="range"
+                min={1}
+                max={duracionAudio > 0 ? duracionAudio : 600}
+                step={0.1}
+                value={duracionSegundosModal}
+                onChange={e => setDuracionSegundosModal(Number(e.target.value))}
+                className="tecnica-slider"
+              />
+
+              <div className="tecnica-acciones-finales">
+                <button
+                  onClick={() => setDuracionSegundosModal(duracionAudio)}
+                  disabled={!duracionAudio || Math.abs(duracionSegundosModal - duracionAudio) < 0.2}
+                  className="tecnica-boton-sincronizar"
+                  title="Ajustar exactamente a la duración completa del archivo MP3"
+                >
+                  <RefreshCw size={14} /> Usar MP3 Completo
+                </button>
+
+                <button
+                  onClick={handleGuardarDuracion}
+                  disabled={!duracionCambiada || guardandoDuracion}
+                  className={`tecnica-boton-guardar ${duracionCambiada ? 'activo' : ''}`}
+                >
+                  {guardandoDuracion
+                    ? <><RefreshCw size={14} className="spin" /> Guardando...</>
+                    : <><Save size={14} /> Guardar Duración</>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
 
       {/* FOOTER */}
-      <div className="modal-editor-secuencia-footer">
-        <button className="modal-editor-secuencia-btn-secundario" onClick={onCerrar}>
+      <div className="editor-pie">
+        <button className="editor-boton-secundario" onClick={onCerrar}>
           Cancelar
         </button>
-        <button className="modal-editor-secuencia-btn-primario" onClick={handleGuardar}>
+        <button className="editor-boton-primario" onClick={handleGuardar}>
           <Save size={16} /> Guardar Todo
         </button>
       </div>

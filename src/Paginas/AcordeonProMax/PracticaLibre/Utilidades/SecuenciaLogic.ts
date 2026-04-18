@@ -100,3 +100,11 @@ export function combinarSecuenciasPorPunch(
 
   return [...antes, ...tramoNuevo, ...despues].sort((a, b) => a.tick - b.tick);
 }
+
+export function formatearTickComoTiempo(tick: number, bpmActual: number = 120): string {
+  if (tick === null || tick === undefined) return "0:00";
+  const segundosTotales = tick / (192 * (Math.max(1, bpmActual) / 60));
+  const minutos = Math.floor(segundosTotales / 60);
+  const segundosRestantes = Math.floor(segundosTotales % 60);
+  return `${minutos}:${segundosRestantes.toString().padStart(2, "0")}`;
+}
