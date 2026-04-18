@@ -211,14 +211,15 @@ export const usePointerAcordeon = ({
     return { pointersMap, limpiarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         motorAudioPro.activarContexto();
-        motorAudioPro.detenerTodo(0.012);
+        // ejecutarSwapDireccion hace crossfade por nota (para+arranca en 15ms por canal)
+        // sin gap audible. También llama setDireccion internamente.
+        logicaRef.current.ejecutarSwapDireccion(nuevaDireccion);
+        // Sincronizar pointersMap con los nuevos musicalIds para que handlePointerUp
+        // pueda remover las notas correctamente al soltar los dedos
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
-                const nextId = `${data.pos}-${nuevaDireccion}`;
-                logicaRef.current.actualizarBotonActivo(nextId, 'add', null, true);
-                pointersMap.current.set(pId, { ...data, musicalId: nextId });
+                pointersMap.current.set(pId, { ...data, musicalId: `${data.pos}-${nuevaDireccion}` });
             }
         });
-        logicaRef.current.setDireccion(nuevaDireccion);
     }};
 };
