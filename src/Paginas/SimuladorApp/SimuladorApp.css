@@ -389,3 +389,27 @@
         opacity: 1;
     }
 }
+
+/* 10. OVERLAY "TOCA PARA COMENZAR" - Solo visible antes del primer toque */
+.overlay-audio-inicio {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 255, 255, 0.65);
+    padding: 7px 22px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    animation: pulso-audio 2.2s ease-in-out infinite;
+}
+
+@keyframes pulso-audio {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
