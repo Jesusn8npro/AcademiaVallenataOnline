@@ -212,6 +212,13 @@ export const usePointerAcordeon = ({
 
     return { pointersMap, limpiarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
+        // Guard: si el revert es a 'halar' pero hay dedos activos en botones,
+        // no interrumpir — el timer del fuelle llegó tarde, el usuario está tocando.
+        if (nuevaDireccion === 'halar') {
+            for (const data of pointersMap.current.values()) {
+                if (data.pos !== '') return;
+            }
+        }
         motorAudioPro.activarContexto();
         // ejecutarSwapDireccion hace crossfade por nota (para+arranca en 15ms por canal)
         // sin gap audible. También llama setDireccion internamente.
