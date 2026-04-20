@@ -106,9 +106,11 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     pointer-events: none;
+    /* Empuja los botones justo debajo de la barra de herramientas (height: 42px) */
+    padding-top: 42px;
 
     /* Optimización de motor gráfico */
     contain: layout size style;
