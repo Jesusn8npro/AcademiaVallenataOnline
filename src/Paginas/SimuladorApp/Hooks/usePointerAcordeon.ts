@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
 
 interface PointerLogicProps {
