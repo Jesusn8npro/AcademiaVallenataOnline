@@ -193,6 +193,9 @@ export const usePointerAcordeon = ({
             }
         }
         motorAudioPro.activarContexto();
+        // Si la geometría no estaba lista (primer toque en fuelle antes del RAF de mount),
+        // calcularla ahora para que los botones respondan correctamente después.
+        if (!geometriaListaRef.current) actualizarGeometria();
         // ejecutarSwapDireccion hace crossfade por nota (para+arranca en 15ms por canal)
         // sin gap audible. También llama setDireccion internamente.
         logicaRef.current.ejecutarSwapDireccion(nuevaDireccion);
