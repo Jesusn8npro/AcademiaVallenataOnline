@@ -2,7 +2,7 @@
 
 .barra-herramientas-contenedor {
     position: absolute;
-    top: 0;
+    top: 10px;
     bottom: auto;
     left: 0;
     right: 0;
@@ -21,10 +21,11 @@
     overflow: hidden;
 }
 
-/* 📱 MÓVIL: sin offset, la barra siempre en top:0 */
+/* 📱 MÓVIL: Reduce el espacio entre barra y botones */
 @media (max-width: 768px) {
     .barra-herramientas-contenedor {
-        top: 0;
+        top: 2px;
+        /* Reduce de 10px a 2px en móvil para cerrar el gap */
     }
 }
 
