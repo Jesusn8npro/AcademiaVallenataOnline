@@ -16,7 +16,6 @@ export const usePointerAcordeon = ({
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
-    // Flag: true después del primer cálculo; no se resetea por cambios de dirección
     const geometriaListaRef = useRef(false);
 
     // 🚀 THROTTLING: RAF para pointermove (reduce de 120 eventos/seg a 1 por frame)
@@ -26,59 +25,46 @@ export const usePointerAcordeon = ({
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
 
+    // Recálculo completo de geometría — definido fuera del effect para ser estable y reutilizable.
+    // Sólo usa refs, así que no necesita estar en el array de deps del effect.
+    const actualizarGeometria = useCallback(() => {
+        const tren = trenRef.current;
+        if (!tren) return;
+        const elPitos = tren.querySelectorAll('.pito-boton');
+        const currentX = x.get();
+        const trenBase = tren.getBoundingClientRect();
+        lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
+        rectsCache.current.clear();
+        elPitos.forEach(el => {
+            const pos = (el as HTMLElement).dataset.pos;
+            const r = el.getBoundingClientRect();
+            if (pos) rectsCache.current.set(pos, {
+                left: r.left - trenBase.left, right: r.right - trenBase.left,
+                top: r.top - trenBase.top, bottom: r.bottom - trenBase.top
+            });
+        });
+        geometriaListaRef.current = true;
+    }, [trenRef, x]);
+
     useEffect(() => {
         const tren = trenRef.current;
         if (!tren) return;
 
-        const calcularGeometria = () => {
-            if (!tren) return;
-            const elPitos = tren.querySelectorAll('.pito-boton');
-            const currentX = x.get();
-            const trenBase = tren.getBoundingClientRect();
-            lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
-            rectsCache.current.clear();
-            elPitos.forEach(el => {
-                const pos = (el as HTMLElement).dataset.pos;
-                const r = el.getBoundingClientRect();
-                if (pos) {
-                    rectsCache.current.set(pos, {
-                        left: r.left - trenBase.left, right: r.right - trenBase.left,
-                        top: r.top - trenBase.top, bottom: r.bottom - trenBase.top
-                    });
-                }
-            });
-            geometriaListaRef.current = true;
-        };
-
-        // Recalcula solo si la geometría no está lista (evita limpiar el cache
-        // en cada re-run del effect por cambio de deps como grabando/dirección)
-        const actualizarGeometriaBase = () => {
-            if (geometriaListaRef.current) {
-                // Solo actualizar la posición del tren, no los rects de los botones
-                if (!tren) return;
-                const currentX = x.get();
-                const trenBase = tren.getBoundingClientRect();
-                lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
-                return;
-            }
-            calcularGeometria();
-        };
-
         const forzarRecalculo = () => {
             geometriaListaRef.current = false;
-            calcularGeometria();
+            actualizarGeometria();
         };
 
         window.addEventListener('resize', forzarRecalculo);
         // Primer cálculo en el siguiente frame después de montar
-        requestAnimationFrame(calcularGeometria);
+        requestAnimationFrame(actualizarGeometria);
 
         const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
             if (!lastTrenRect.current) return null;
             const currentX = x.get();
             const relX = clientX - (lastTrenRect.current.left + currentX);
             const relY = clientY - lastTrenRect.current.top;
-            const IMAN = 25;
+            const IMAN = 8;
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (relX >= r.left - IMAN && relX <= r.right + IMAN && relY >= r.top - IMAN && relY <= r.bottom + IMAN) return pos;
             }
@@ -90,6 +76,8 @@ export const usePointerAcordeon = ({
             const target = e.target as HTMLElement;
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
+            // Recálculo síncrono si la geometría aún no está lista (primer toque muy rápido tras montar)
+            if (!geometriaListaRef.current) actualizarGeometria();
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
 
             const ventanaAltura = window.innerHeight;
@@ -186,31 +174,16 @@ export const usePointerAcordeon = ({
                 rafPendingRef.current = null;
             }
         };
-    }, [x, actualizarVisualBoton, registrarEvento, trenRef]);
+    }, [x, actualizarVisualBoton, registrarEvento, trenRef, actualizarGeometria]);
 
-    // Llamar desde SimuladorApp cuando cambia la tonalidad (botones se re-renderizan)
-    const limpiarGeometria = () => {
+    // Llamar desde SimuladorApp cuando cambia la tonalidad o la escala
+    const limpiarGeometria = useCallback(() => {
         geometriaListaRef.current = false;
         rectsCache.current.clear();
-        const tren = trenRef.current;
-        if (tren) requestAnimationFrame(() => {
-            const elPitos = tren.querySelectorAll('.pito-boton');
-            const currentX = x.get();
-            const trenBase = tren.getBoundingClientRect();
-            lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
-            elPitos.forEach(el => {
-                const pos = (el as HTMLElement).dataset.pos;
-                const r = el.getBoundingClientRect();
-                if (pos) rectsCache.current.set(pos, {
-                    left: r.left - trenBase.left, right: r.right - trenBase.left,
-                    top: r.top - trenBase.top, bottom: r.bottom - trenBase.top
-                });
-            });
-            geometriaListaRef.current = true;
-        });
-    };
+        requestAnimationFrame(actualizarGeometria);
+    }, [actualizarGeometria]);
 
-    return { pointersMap, limpiarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
+    return { pointersMap, limpiarGeometria, actualizarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         // Guard: si el revert es a 'halar' pero hay dedos activos en botones,
         // no interrumpir — el timer del fuelle llegó tarde, el usuario está tocando.
