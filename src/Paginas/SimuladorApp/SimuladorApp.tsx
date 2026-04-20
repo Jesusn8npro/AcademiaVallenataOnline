@@ -127,7 +127,7 @@ const SimuladorApp: React.FC = () => {
     const desactivarAudio = useMemo(() => Object.values(modales).some(v => v), [modales]);
 
     // 5. Hook de Entrada (PointerEvents Engine)
-    const { manejarCambioFuelle, limpiarGeometria } = usePointerAcordeon({
+    const { manejarCambioFuelle, limpiarGeometria, actualizarGeometria } = usePointerAcordeon({
         x,
         logica,
         actualizarVisualBoton,
@@ -153,6 +153,8 @@ const SimuladorApp: React.FC = () => {
             if (audioContextIniciadoRef.current) return;
             audioContextIniciadoRef.current = true;
             motorAudioPro.activarContexto();
+            // Asegurar que la geometría esté lista para el primer toque en botones
+            actualizarGeometria();
             setAudioListo(true);
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
@@ -160,7 +162,7 @@ const SimuladorApp: React.FC = () => {
         return () => {
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
-    }, []);
+    }, [actualizarGeometria]);
 
     // ⚡ Limpiar caché de elementos y geometría cuando cambia la tonalidad
     useEffect(() => {
@@ -170,7 +172,10 @@ const SimuladorApp: React.FC = () => {
 
     useEffect(() => {
         document.documentElement.style.setProperty('--escala-acordeon', escala.toString());
-    }, [escala]);
+        // Esperar a que termine la transición CSS (200ms) antes de recalcular geometría
+        const id = setTimeout(() => limpiarGeometria(), 250);
+        return () => clearTimeout(id);
+    }, [escala, limpiarGeometria]);
 
     // 7. Handlers
     const toggleModal = (nombre: keyof typeof modales) => {
