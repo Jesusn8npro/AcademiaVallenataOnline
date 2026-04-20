@@ -80,9 +80,8 @@ export const usePointerAcordeon = ({
             if (!geometriaListaRef.current) actualizarGeometria();
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
 
-            const ventanaAltura = window.innerHeight;
-            const zonaFuelle = ventanaAltura * 0.15;
-            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
+            // Detección por elemento — funciona sin importar la posición en pantalla del fuelle
+            const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
 
             if (pos) {
                 const mId = `${pos}-${logicaRef.current.direccion}`;
@@ -90,9 +89,9 @@ export const usePointerAcordeon = ({
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
-            } else if (esZonaFuelle) {
-                // Registrar el pointer del fuelle con pos vacío para que el deslizamiento
-                // hacia un botón sea detectado por procesarMove sin interrupción
+            } else if (esToqueFuelle) {
+                // Registrar el pointer del fuelle (pos vacío) para que el guard de manejarCambioFuelle
+                // sepa que el fuelle está activo y no revierta a halar prematuramente
                 pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
             }
         };
@@ -145,15 +144,11 @@ export const usePointerAcordeon = ({
             }
             pointersMap.current.delete(e.pointerId);
 
-            // ⚡ Volver a HALAR cuando no hay dedos presionados (excepto en zona del fuelle)
-            const ventanaAltura = window.innerHeight;
-            const zonaFuelle = ventanaAltura * 0.15;
-            const esZonaFuelle = e.clientY > ventanaAltura - zonaFuelle;
-
-            // Si levantamos fuera de la zona del fuelle y no hay más dedos, volver a HALAR.
-            // ejecutarSwapDireccion es seguro aquí porque actualizarBotonActivo(silencioso:true)
-            // ya borró la nota del ref de forma síncrona antes de llegar a esta línea.
-            if (!esZonaFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
+            // Auto-revert a HALAR: solo si el pointer que se levantó era de un BOTÓN (pos !== ''),
+            // no de un fuelle (pos === ''). El fuelle gestiona su propio revert via ContenedorBajos.
+            // También verifica que no quede ningún otro pointer activo (ni botón ni fuelle).
+            const eraPointerFuelle = data !== undefined && data.pos === '';
+            if (!eraPointerFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
                 logicaRef.current.ejecutarSwapDireccion('halar');
             }
         };
