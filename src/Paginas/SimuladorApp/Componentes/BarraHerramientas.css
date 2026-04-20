@@ -21,7 +21,12 @@
     overflow: hidden;
 }
 
-/* top: 0 aplica en todos los tamaños — la barra ocupa el borde superior del canvas */
+/* 📱 MÓVIL: sin offset, la barra siempre en top:0 */
+@media (max-width: 768px) {
+    .barra-herramientas-contenedor {
+        top: 0;
+    }
+}
 
 .seccion-barra {
     display: flex;

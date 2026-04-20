@@ -103,8 +103,9 @@
 /* Marco del diapasón con inclinación estilo Cassotto */
 .diapason-marco {
     position: absolute;
+    top: 42px;                      /* justo debajo de la barra (height: 42px, top: 0) */
     width: 90%;
-    height: 100%;
+    height: calc(100% - 42px);      /* ocupa el resto del canvas bajo la barra */
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
