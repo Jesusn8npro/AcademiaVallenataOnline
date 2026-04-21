@@ -1,6 +1,9 @@
 node_modules
+dist
 .git
+.vscode
+*.log
+build
+.netlify
 .env
-src/referencias_migracion
-.agent
-npm-debug.log
+.DS_Store

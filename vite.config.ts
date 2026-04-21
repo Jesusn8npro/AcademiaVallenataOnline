@@ -1,35 +1,30 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { exec } from 'child_process'
-import path from 'path'
-
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 import obfuscator from 'rollup-plugin-obfuscator';
 
-// Plugin para sincronizar audios automáticamente al detectar cambios en las carpetas de audio
-const syncAudioPlugin = () => ({
-  name: 'sync-audio-plugin',
-  configureServer(server: any) {
-    const runSync = () => {
-      exec('node scripts/sync-samples.cjs', (err) => {
-        if (err) console.error('Error sincronizando audios:', err);
-        else console.log('🎵 Audios sincronizados automáticamente');
-      });
-    };
-
-    // Vigilar cambios en las carpetas de audio
-    server.watcher.add(path.resolve(__dirname, 'public/audio/Muestras_Cromaticas/**'));
-    server.watcher.on('add', runSync);
-    server.watcher.on('unlink', runSync);
-  }
-});
-
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    syncAudioPlugin(),
-    // obfuscator({ ... }) // COMENTADO TEMPORALMENTE: Está tumbando el servidor por falta de recursos
-  ],
+    // 🛡️ PROTECCIÓN DE CÓDIGO: Solo se activa en producción para no ralentizar el desarrollo
+    // y evitar que el servidor de build se quede sin RAM.
+    process.env.NODE_ENV === 'production' ? obfuscator({
+      options: {
+        compact: true,
+        controlFlowFlattening: true,
+        controlFlowFlatteningThreshold: 0.5,
+        numbersToExpressions: true,
+        simplify: true,
+        stringArray: true,
+        stringArrayThreshold: 0.75,
+        splitStrings: true,
+        splitStringsChunkLength: 10,
+        unicodeEscapeSequence: false
+      }
+    }) : null
+  ].filter(Boolean),
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -46,26 +41,20 @@ export default defineConfig({
       '$stores': path.resolve(__dirname, './src/stores')
     }
   },
-  esbuild: {
-    drop: ['debugger'], // Solo debuggers, permitimos console para el aviso de seguridad
-  },
   build: {
+    target: 'esnext',
     minify: 'esbuild',
-    sourcemap: false,
-    chunkSizeWarningLimit: 5000, 
     reportCompressedSize: false,
+    chunkSizeWarningLimit: 2000,
     assetsDir: 'static',
     rollupOptions: {
       output: {
-        entryFileNames: `static/js/[hash].js`,
-        chunkFileNames: `static/js/[hash].js`,
-        assetFileNames: `static/media/[hash].[ext]`,
         manualChunks(id) {
-          if (id.includes('node_modules/framer-motion')) return 'vendor-framer';
-          if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
-          if (id.includes('node_modules/tone') || id.includes('node_modules/standardized-audio-context')) return 'vendor-audio';
-        }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
       }
     }
   }
-})
+});
