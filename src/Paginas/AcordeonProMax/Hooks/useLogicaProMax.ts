@@ -11,6 +11,7 @@ import { useReproductorHero } from '../../SimuladorDeAcordeon/Hooks/useReproduct
 import { TONALIDADES } from '../../SimuladorDeAcordeon/notasAcordeonDiatonico';
 import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 import { guardarGrabacion } from '../../../servicios/grabacionesHeroService';
+import { supabase } from '../../../servicios/clienteSupabase';
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { obtenerSnapshotMetadataPracticaLibre } from '../PracticaLibre/Servicios/servicioPreferenciasPracticaLibre';
@@ -1363,8 +1364,7 @@ export function useCancionesProMax() {
       setCargando(true);
       setError(null);
       try {
-        const m = await import('../../../servicios/clienteSupabase');
-        const { data, error: err } = await m.supabase
+        const { data, error: err } = await supabase
           .from('canciones_hero')
           .select('*')
           .order('creado_en', { ascending: false });
