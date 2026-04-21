@@ -77,6 +77,14 @@ export const usePointerAcordeon = ({
 
         const handlePointerDown = (e: PointerEvent) => {
             if (desactivarAudioRef.current) return; // 🔇 SILENCIO TOTAL SI HAY MODAL
+            
+            // 🚀 BLINDAJE TOTAL: Evitar que el navegador robe el evento para scroll o zoom
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            // 🔊 PERSISTENCIA DE AUDIO: Asegurar que el contexto esté vivo en cada interacción
+            motorAudioPro.activarContexto();
+
             const target = e.target as HTMLElement;
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
@@ -136,6 +144,9 @@ export const usePointerAcordeon = ({
 
         // ⚡ RAF-throttled pointermove: acumula eventos y procesa en batch
         const handlePointerMove = (e: PointerEvent) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
             pendingMoveRef.current.set(e.pointerId, e);
             if (rafPendingRef.current !== null) return; // Ya hay un frame pendiente
             rafPendingRef.current = requestAnimationFrame(() => {
@@ -146,6 +157,9 @@ export const usePointerAcordeon = ({
         };
 
         const handlePointerUp = (e: PointerEvent) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
             const data = pointersMap.current.get(e.pointerId);
             if (data?.pos) {
                 logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
@@ -168,12 +182,14 @@ export const usePointerAcordeon = ({
             // Si el usuario está tocando MUY rápido, este check evita saltos innecesarios
             // si el siguiente pointerdown ocurre en el mismo tick de React.
             if (!eraPointerFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
-                // Pequeño delay de 10ms para agrupar eventos rápidos y evitar "stalling"
+                // ⏱️ TIEMPO DE GRACIA (Vallenato Pro): Aumentamos a 60ms para que en ejecuciones 
+                // rápidas (trinos) el fuelle no "salte" entre notas si el usuario levanta el dedo
+                // por una fracción de segundo.
                 setTimeout(() => {
                     if (pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
                         logicaRef.current.ejecutarSwapDireccion('halar');
                     }
-                }, 10);
+                }, 60);
             }
         };
 

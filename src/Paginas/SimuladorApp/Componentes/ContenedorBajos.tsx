@@ -130,31 +130,64 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
             .map(b => renderBotonBajo(b, datosFila));
     };
 
+    // 🚀 LISTENERS DE FUELLE (Manuales para control total de pasividad)
+    const seccionFuelleRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = seccionFuelleRef.current;
+        if (!el) return;
+
+        const handleDown = (e: PointerEvent) => {
+            if (desactivarAudio) return;
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            // 🔊 PERSISTENCIA: Activar audio en cada toque para evitar suspensiones
+            motorAudioPro.activarContexto();
+
+            const target = e.target as HTMLElement;
+            // Si tocamos el fuelle pero NO los botones de bajos ni la barra
+            if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
+                // Cancelar revert pendiente
+                if (fuelleRevertRef.current !== null) {
+                    clearTimeout(fuelleRevertRef.current);
+                    fuelleRevertRef.current = null;
+                }
+                manejarCambioFuelle('empujar', motorAudioPro);
+            }
+        };
+
+        const handleUp = (e: PointerEvent) => {
+            if (desactivarAudio) return;
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            const target = e.target as HTMLElement;
+            if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
+                fuelleRevertRef.current = setTimeout(() => {
+                    fuelleRevertRef.current = null;
+                    manejarCambioFuelle('halar', motorAudioPro);
+                }, 60); // Aumentado a 60ms para trinos profesionales
+            }
+        };
+
+        el.addEventListener('pointerdown', handleDown, { passive: false });
+        el.addEventListener('pointerup', handleUp, { passive: false });
+        el.addEventListener('pointercancel', handleUp, { passive: false });
+
+        return () => {
+            el.removeEventListener('pointerdown', handleDown);
+            el.removeEventListener('pointerup', handleUp);
+            el.removeEventListener('pointercancel', handleUp);
+        };
+    }, [visible, manejarCambioFuelle, desactivarAudio]);
+
     return (
         <>
             {/* 🎵 ZONA DE FUELLE - Ahora es un TOGGLE, no requiere sostener dedo */}
             <div
+                ref={seccionFuelleRef}
                 className={`seccion-bajos-contenedor ${escala < 0.8 ? 'modo-estirado' : ''}`}
-                onPointerDown={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        // Cancelar revert pendiente de un toque anterior para evitar cambio fantasma
-                        if (fuelleRevertRef.current !== null) {
-                            clearTimeout(fuelleRevertRef.current);
-                            fuelleRevertRef.current = null;
-                        }
-                        manejarCambioFuelle('empujar', motorAudioPro);
-                    }
-                }}
-                onPointerUp={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                        fuelleRevertRef.current = setTimeout(() => {
-                            fuelleRevertRef.current = null;
-                            manejarCambioFuelle('halar', motorAudioPro);
-                        }, 10); // Reducido de 50ms a 10ms para respuesta ultra-rápida (especial para trinos)
-                    }
-                }}
                 style={{ touchAction: 'none' }}
             >
                 {!visible && (
