@@ -1412,9 +1412,27 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         soundsPerKeyRef.current = {};
     }, [instrumentoId]);
 
+    // Unlock iOS una sola vez por sesión (fix silenciador físico del iPhone)
+    const iOSUnlockRef = useRef(false);
+
     // Activa el AudioContext desde un gesto de usuario (llamado por usePointerAcordeon al tocar pitos)
     const setFuelleVirtual = useCallback((activo: boolean) => {
-        if (activo) motorAudioPro.activarContexto();
+        if (!activo) return;
+        motorAudioPro.activarContexto();
+        // Fix silenciador iPhone: reproduce un buffer vacío de 1 muestra para promover
+        // la sesión de audio de "ambient" (silenciada) a "playback" (no silenciada).
+        // Solo se ejecuta una vez por sesión.
+        if (!iOSUnlockRef.current) {
+            iOSUnlockRef.current = true;
+            try {
+                const ctx = motorAudioPro.contextoAudio;
+                const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.start(0);
+            } catch (_) {}
+        }
     }, []);
 
     return {
