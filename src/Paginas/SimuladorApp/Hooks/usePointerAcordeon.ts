@@ -84,8 +84,8 @@ export const usePointerAcordeon = ({
             if (!geometriaListaRef.current) actualizarGeometria();
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
 
-            // Detección por elemento — funciona sin importar la posición en pantalla del fuelle
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
+            const esMarco = !!target.closest('.diapason-marco');
 
             if (pos) {
                 // Fuelle Virtual: despierta el AudioContext (fix iOS/Android + silenciador iPhone)
@@ -98,6 +98,10 @@ export const usePointerAcordeon = ({
             } else if (esToqueFuelle) {
                 // Registrar el pointer del fuelle (pos vacío) para que el guard de manejarCambioFuelle
                 // sepa que el fuelle está activo y no revierta a halar prematuramente
+                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
+            } else if (esMarco) {
+                // 🎯 SOPORTE PARA GLISSANDO: Capturar toques en los "gaps" o marco para permitir
+                // deslizarse hacia un botón y que este reaccione de inmediato.
                 pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
             }
         };
@@ -159,8 +163,17 @@ export const usePointerAcordeon = ({
             // no de un fuelle (pos === ''). El fuelle gestiona su propio revert via ContenedorBajos.
             // También verifica que no quede ningún otro pointer activo (ni botón ni fuelle).
             const eraPointerFuelle = data !== undefined && data.pos === '';
+            
+            // 🚀 OPTIMIZACIÓN: Solo revertimos si realmente estamos solos y en modo empujar.
+            // Si el usuario está tocando MUY rápido, este check evita saltos innecesarios
+            // si el siguiente pointerdown ocurre en el mismo tick de React.
             if (!eraPointerFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
-                logicaRef.current.ejecutarSwapDireccion('halar');
+                // Pequeño delay de 10ms para agrupar eventos rápidos y evitar "stalling"
+                setTimeout(() => {
+                    if (pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
+                        logicaRef.current.ejecutarSwapDireccion('halar');
+                    }
+                }, 10);
             }
         };
 

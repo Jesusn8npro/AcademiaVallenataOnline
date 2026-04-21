@@ -152,7 +152,7 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                         fuelleRevertRef.current = setTimeout(() => {
                             fuelleRevertRef.current = null;
                             manejarCambioFuelle('halar', motorAudioPro);
-                        }, 50);
+                        }, 10); // Reducido de 50ms a 10ms para respuesta ultra-rápida (especial para trinos)
                     }
                 }}
                 style={{ touchAction: 'none' }}

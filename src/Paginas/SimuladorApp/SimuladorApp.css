@@ -1,14 +1,13 @@
 /* 🎹 SIMULADOR DE ACORDEÓN PRO - PANEL DE CONTROL CSS */
 :root {
-    /* 📏 DISTANCIAS PITOS (HILERAS) */
-    --pitos-dist-h: 3.80vh;
+    /* 📏 MEDIDAS DE BOTONES */
+    --pito-boton-size: 16vh;
+    --pitos-dist-h: 3.4vh;
     /* Separación entre botones */
-    --pitos-dist-v: 2.6vh;
+    --pitos-dist-v: 2.0vh;
     /* Separación entre hileras */
-    --pitos-fuente: 3.80vh;
+    --pitos-fuente: 3.4vh;
     /* Tamaño de letra en botones */
-
-
 
     /* 🎨 COLORES Y AJUSTES */
     --color-halar: #3b82f6;
@@ -84,9 +83,11 @@
 .simulador-canvas {
     position: relative;
     width: 100% !important;
-    /* 📏 Altura exacta: barra(42px) + 3 hileras(33vh*escala) + 2 gaps + padding-bottom
-         Con flex-end en el marco, los botones aterrizan justo en top:42px sin gap visible */
-    height: calc(45vh * var(--escala-acordeon, 1) + 12px * var(--escala-acordeon, 1) + (var(--pitos-dist-v, 2.6vh) * 2) + 52px + var(--offset-ios, 0px)) !important;
+    /* 📏 Altura dinámica: (3 botones + 2 gaps) * escala + barra de herramientas + márgenes */
+    height: calc(
+        (var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) 
+        + 62px + var(--offset-ios, 0px)
+    ) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -157,8 +158,8 @@
 
 /* LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
 .pito-boton {
-    width: calc(15vh * var(--escala-acordeon, 1));
-    height: calc(15vh * var(--escala-acordeon, 1));
+    width: calc(var(--pito-boton-size) * var(--escala-acordeon, 1));
+    height: calc(var(--pito-boton-size) * var(--escala-acordeon, 1));
     border-radius: 50%;
 
     /* Textura de domo esférico */
