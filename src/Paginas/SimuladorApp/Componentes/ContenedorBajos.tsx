@@ -130,64 +130,39 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
             .map(b => renderBotonBajo(b, datosFila));
     };
 
-    // 🚀 LISTENERS DE FUELLE (Manuales para control total de pasividad)
-    const seccionFuelleRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const el = seccionFuelleRef.current;
-        if (!el) return;
-
-        const handleDown = (e: PointerEvent) => {
-            if (desactivarAudio) return;
+    const handlePointerDownFuelle = (e: React.PointerEvent) => {
+        const target = e.target as HTMLElement;
+        // Solo actuar si tocamos el "cuero" o el fondo, NO los botones de la interfaz
+        if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
             if (e.cancelable) e.preventDefault();
             e.stopPropagation();
-
-            // 🔊 PERSISTENCIA: Activar audio en cada toque para evitar suspensiones
-            motorAudioPro.activarContexto();
-
-            const target = e.target as HTMLElement;
-            // Si tocamos el fuelle pero NO los botones de bajos ni la barra
-            if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                // Cancelar revert pendiente
-                if (fuelleRevertRef.current !== null) {
-                    clearTimeout(fuelleRevertRef.current);
-                    fuelleRevertRef.current = null;
-                }
-                manejarCambioFuelle('empujar', motorAudioPro);
+            // Cancelar revert pendiente
+            if (fuelleRevertRef.current !== null) {
+                clearTimeout(fuelleRevertRef.current);
+                fuelleRevertRef.current = null;
             }
-        };
+            manejarCambioFuelle('empujar', motorAudioPro);
+        }
+    };
 
-        const handleUp = (e: PointerEvent) => {
-            if (desactivarAudio) return;
-            if (e.cancelable) e.preventDefault();
-            e.stopPropagation();
-
-            const target = e.target as HTMLElement;
-            if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-                fuelleRevertRef.current = setTimeout(() => {
-                    fuelleRevertRef.current = null;
-                    manejarCambioFuelle('halar', motorAudioPro);
-                }, 60); // Aumentado a 60ms para trinos profesionales
-            }
-        };
-
-        el.addEventListener('pointerdown', handleDown, { passive: false });
-        el.addEventListener('pointerup', handleUp, { passive: false });
-        el.addEventListener('pointercancel', handleUp, { passive: false });
-
-        return () => {
-            el.removeEventListener('pointerdown', handleDown);
-            el.removeEventListener('pointerup', handleUp);
-            el.removeEventListener('pointercancel', handleUp);
-        };
-    }, [visible, manejarCambioFuelle, desactivarAudio]);
+    const handlePointerUpFuelle = (e: React.PointerEvent) => {
+        const target = e.target as HTMLElement;
+        if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
+            fuelleRevertRef.current = setTimeout(() => {
+                fuelleRevertRef.current = null;
+                manejarCambioFuelle('halar', motorAudioPro);
+            }, 60);
+        }
+    };
 
     return (
         <>
             {/* 🎵 ZONA DE FUELLE - Ahora es un TOGGLE, no requiere sostener dedo */}
             <div
-                ref={seccionFuelleRef}
                 className={`seccion-bajos-contenedor ${escala < 0.8 ? 'modo-estirado' : ''}`}
+                onPointerDown={handlePointerDownFuelle}
+                onPointerUp={handlePointerUpFuelle}
+                onPointerCancel={handlePointerUpFuelle}
                 style={{ touchAction: 'none' }}
             >
                 {!visible && (

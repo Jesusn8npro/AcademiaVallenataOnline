@@ -76,16 +76,18 @@ export const usePointerAcordeon = ({
         };
 
         const handlePointerDown = (e: PointerEvent) => {
-            if (desactivarAudioRef.current) return; // 🔇 SILENCIO TOTAL SI HAY MODAL
-            
-            // 🚀 BLINDAJE TOTAL: Evitar que el navegador robe el evento para scroll o zoom
-            if (e.cancelable) e.preventDefault();
-            e.stopPropagation();
-
-            // 🔊 PERSISTENCIA DE AUDIO: Asegurar que el contexto esté vivo en cada interacción
-            motorAudioPro.activarContexto();
+            if (desactivarAudioRef.current) return; 
 
             const target = e.target as HTMLElement;
+            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+
+            // 🚀 BLINDAJE SELECTIVO: Solo prevenir default si estamos en el área de toque del acordeón
+            // Esto permite que los botones del menú, modales y barra superior funcionen normalmente.
+            if (esAreaJuego && e.cancelable) e.preventDefault();
+            
+            // 🔊 PERSISTENCIA DE AUDIO
+            motorAudioPro.activarContexto();
+
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
             // Recálculo síncrono si la geometría aún no está lista (primer toque muy rápido tras montar)
@@ -144,8 +146,10 @@ export const usePointerAcordeon = ({
 
         // ⚡ RAF-throttled pointermove: acumula eventos y procesa en batch
         const handlePointerMove = (e: PointerEvent) => {
-            if (e.cancelable) e.preventDefault();
-            e.stopPropagation();
+            const target = e.target as HTMLElement;
+            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+            
+            if (esAreaJuego && e.cancelable) e.preventDefault();
 
             pendingMoveRef.current.set(e.pointerId, e);
             if (rafPendingRef.current !== null) return; // Ya hay un frame pendiente
@@ -157,8 +161,10 @@ export const usePointerAcordeon = ({
         };
 
         const handlePointerUp = (e: PointerEvent) => {
-            if (e.cancelable) e.preventDefault();
-            e.stopPropagation();
+            const target = e.target as HTMLElement;
+            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+            
+            if (esAreaJuego && e.cancelable) e.preventDefault();
 
             const data = pointersMap.current.get(e.pointerId);
             if (data?.pos) {
