@@ -1412,6 +1412,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         soundsPerKeyRef.current = {};
     }, [instrumentoId]);
 
+    // Activa el AudioContext desde un gesto de usuario (llamado por usePointerAcordeon al tocar pitos)
+    const setFuelleVirtual = useCallback((activo: boolean) => {
+        if (activo) motorAudioPro.activarContexto();
+    }, []);
+
     return {
         botonesActivos, direccion, setDireccion, modoAjuste, setModoAjuste, modoVista, setModoVista,
         vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
@@ -1429,6 +1434,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         tipoFuelleActivo, setTipoFuelleActivo,
         samplesBrillante: samplesPitos, samplesBajos, samplesArmonizado,
         mapaBotonesActual: mapaBotonesActual.current,
-        preprogramarTono
+        preprogramarTono, setFuelleVirtual
     };
 };
