@@ -9,7 +9,7 @@
 
 [phases.install]
     # Usamos caché para que no tenga que descargar 4700+ módulos cada vez
-    cmds = ["npm install --include=dev --legacy-peer-deps"]
+    cmds = ["npm install --legacy-peer-deps"]
     cacheDirectories = ["node_modules", "root/.npm"]
 
 [phases.build]
