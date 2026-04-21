@@ -13,11 +13,12 @@ export default defineConfig({
       options: {
         compact: true,
         controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.5,
+        controlFlowFlatteningThreshold: 0.1, // Reducido para mayor velocidad en build
         numbersToExpressions: true,
         simplify: true,
         stringArray: true,
-        stringArrayThreshold: 0.75,
+        stringArrayThreshold: 0.5, // Reducido para no saturar memoria
+        stringArrayWrappersCount: 1,
         splitStrings: true,
         splitStringsChunkLength: 10,
         unicodeEscapeSequence: false
