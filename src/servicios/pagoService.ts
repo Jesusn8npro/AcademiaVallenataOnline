@@ -480,7 +480,7 @@ export async function crearPago(datosEntrada: {
 		}
 
 		// 6. Preparar URLs de respuesta 
-		const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5173';
+		const baseUrl = import.meta.env.VITE_BASE_URL || 'https://academiavallenataonline.com';
 		const responseUrl = `${baseUrl}/pago-exitoso`;
 		const confirmationUrl = `${baseUrl}/api/pagos/confirmar`;
 

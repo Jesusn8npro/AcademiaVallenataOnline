@@ -4,6 +4,6 @@ export const SUPABASE_CONFIG = {
 };
 
 export const APP_CONFIG = {
-  baseUrl: import.meta.env.VITE_APP_URL || 'http://localhost:5173',
+  baseUrl: import.meta.env.VITE_APP_URL || 'https://academiavallenataonline.com',
   environment: import.meta.env.NODE_ENV || 'development'
 };

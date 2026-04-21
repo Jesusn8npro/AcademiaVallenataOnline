@@ -128,8 +128,8 @@ export async function diagnosticarConfiguracionSupabase() {
       diagnostico.recomendaciones.push('');
       diagnostico.recomendaciones.push('🔧 SOLUCIONES INMEDIATAS:');
       diagnostico.recomendaciones.push('1. En Supabase Dashboard > Authentication > Settings > General:');
-      diagnostico.recomendaciones.push('   ✅ Site URL: http://localhost:5173');
-      diagnostico.recomendaciones.push('   ✅ Redirect URLs: http://localhost:5173/**, http://localhost:5173/recuperar-contrasena');
+      diagnostico.recomendaciones.push('   ✅ Site URL: https://academiavallenataonline.com');
+      diagnostico.recomendaciones.push('   ✅ Redirect URLs: https://academiavallenataonline.com/**, https://academiavallenataonline.com/recuperar-contrasena');
       diagnostico.recomendaciones.push('');
       diagnostico.recomendaciones.push('2. En Authentication > Settings > Email Templates:');
       diagnostico.recomendaciones.push('   ✅ Habilita "Enable email confirmations"');
