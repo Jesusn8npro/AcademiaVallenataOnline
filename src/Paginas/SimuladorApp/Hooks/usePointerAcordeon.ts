@@ -191,13 +191,6 @@ export const usePointerAcordeon = ({
 
     return { pointersMap, limpiarGeometria, actualizarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
-        // Guard: si el revert es a 'halar' pero hay dedos activos en botones,
-        // no interrumpir — el timer del fuelle llegó tarde, el usuario está tocando.
-        if (nuevaDireccion === 'halar') {
-            for (const data of pointersMap.current.values()) {
-                if (data.pos !== '') return;
-            }
-        }
         motorAudioPro.activarContexto();
         // Si la geometría no estaba lista (primer toque en fuelle antes del RAF de mount),
         // calcularla ahora para que los botones respondan correctamente después.

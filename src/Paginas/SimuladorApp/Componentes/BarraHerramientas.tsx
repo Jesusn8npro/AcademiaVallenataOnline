@@ -100,8 +100,8 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
         }
     };
 
-    const aumentarTam = () => setEscala(prev => Math.min(prev + 0.05, 1.4));
-    const disminuirTam = () => setEscala(prev => Math.max(prev - 0.05, 0.7));
+    const aumentarTam = () => setEscala(prev => Math.min(prev + 0.10, 1.8));
+    const disminuirTam = () => setEscala(prev => Math.max(prev - 0.10, 0.5));
 
     return (
         <div className="barra-herramientas-contenedor">
