@@ -60,6 +60,11 @@ export default defineConfig({
         entryFileNames: `static/js/[hash].js`,
         chunkFileNames: `static/js/[hash].js`,
         assetFileNames: `static/media/[hash].[ext]`,
+        manualChunks(id) {
+          if (id.includes('node_modules/framer-motion')) return 'vendor-framer';
+          if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
+          if (id.includes('node_modules/tone') || id.includes('node_modules/standardized-audio-context')) return 'vendor-audio';
+        }
       }
     }
   }
