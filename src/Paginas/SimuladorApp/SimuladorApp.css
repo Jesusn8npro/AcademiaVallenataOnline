@@ -1,17 +1,17 @@
 /* 🎹 SIMULADOR DE ACORDEÓN PRO - PANEL DE CONTROL CSS */
 :root {
     /* 📏 MEDIDAS DE BOTONES */
-    --pito-boton-size: 16vh;
-    --pitos-dist-h: 3.4vh;
-    /* Separación entre botones */
-    --pitos-dist-v: 2.0vh;
+    --pito-boton-size: 17vh;
+    --pitos-dist-h: 2.5vh;
     /* Separación entre hileras */
     --pitos-fuente: 3.4vh;
     /* Tamaño de letra en botones */
 
     /* 🎨 COLORES Y AJUSTES */
-    --color-halar: #3b82f6;
-    --color-empujar: #fb923c;
+    --color-halar: #38bdf8;
+    /* Azul Celeste Clarito (como la foto) */
+    --color-empujar: #ff0000;
+    /* Rojo Intenso */
     --escala-inicial: 1.0;
 }
 
@@ -84,10 +84,7 @@
     position: relative;
     width: 100% !important;
     /* 📏 Altura dinámica: (3 botones + 2 gaps) * escala + barra de herramientas + márgenes */
-    height: calc(
-        (var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) 
-        + 62px + var(--offset-ios, 0px)
-    ) !important;
+    height: calc((var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) + 62px + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -162,65 +159,68 @@
     height: calc(var(--pito-boton-size) * var(--escala-acordeon, 1));
     border-radius: 50%;
 
-    /* Textura de domo esférico */
-    background: radial-gradient(circle at 35% 30%, #fff 0%, #f8f8f8 30%, #e0e0e0 70%, #b0b0b0 100%),
+    /* 🐚 TEXTURA DE NÁCAR (PERLA + IMAGEN REAL) */
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
         url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
-    background-blend-mode: soft-light;
+    background-blend-mode: multiply;
     background-size: cover;
     background-position: center;
 
-    /* Relieve y profundidad */
+    /* 🌑 ANILLO DE PROFUNDIDAD */
     box-shadow:
         inset 0px 2px 4px rgba(255, 255, 255, 1),
-        inset 0px 8px 15px rgba(255, 255, 255, 0.8),
-        inset 0px -4px 8px rgba(0, 0, 0, 0.2),
-        0px 5px 0px #999,
-        0px 8px 20px rgba(0, 0, 0, 0.7);
+        inset 0px -4px 10px rgba(0, 0, 0, 0.15),
+        0px 2px 0px #1a1a1a,
+        /* Anillo exterior fino */
+        0px 6px 10px rgba(0, 0, 0, 0.5);
 
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     touch-action: none;
-    transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+    transition: transform 0.05s cubic-bezier(0.1, 0.7, 0.1, 1), box-shadow 0.05s ease;
     outline: none;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 3px solid #1a1a1a;
+    /* El 'encastre' del botón */
 }
 
 /* 7. RESPUESTA VISUAL AL TOCAR (GLOW DINÁMICO) */
 
-/* MODO HALAR (Abriendo - Azul) */
+/* MODO HALAR (Azul Clarito de la referencia + Hueco Grande) */
 .modo-halar .pito-boton.nota-activa {
-    transform: translateY(4px) scale(0.98);
-    background: radial-gradient(circle at 35% 30%, #88bbfc 0%, var(--color-halar, #3b82f6) 40%, #1e3a8a 100%) !important;
+    transform: translateY(6px) scale(0.95);
+    background: radial-gradient(circle at 50% 80%, #7dd3fc 0%, #0ea5e9 70%, #0c4a6e 100%) !important;
+    border-color: #000;
     box-shadow:
-        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
-        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
-        0px 2px 0px #1e40af,
-        0px 0px 30px rgba(59, 130, 246, 0.9),
-        0px 0px 60px rgba(59, 130, 246, 0.4) !important;
+        inset 0px 10px 15px rgba(0, 0, 0, 0.9),
+        /* El hoyo se ve más grande */
+        0px 0px 0px 6px #000,
+        /* Simulación de anillo negro del chasis */
+        0px 0px 25px rgba(56, 189, 248, 0.7) !important;
 }
 
-/* MODO EMPUJAR (Cerrando - Rojo) */
+/* MODO EMPUJAR (Rojo Intenso + Hueco Grande) */
 .modo-empujar .pito-boton.nota-activa {
-    transform: translateY(4px) scale(0.98);
-    background: radial-gradient(circle at 35% 30%, #ff8888 0%, var(--color-empujar, #ef4444) 40%, #991b1b 100%) !important;
+    transform: translateY(6px) scale(0.95);
+    background: radial-gradient(circle at 50% 80%, var(--color-empujar) 0%, #440000 100%) !important;
+    border-color: #000;
     box-shadow:
-        inset 0px 2px 4px rgba(255, 255, 255, 0.8),
-        inset 0px -4px 10px rgba(0, 0, 0, 0.4),
-        0px 2px 0px #7f1d1d,
-        0px 0px 30px rgba(239, 68, 68, 0.9),
-        0px 0px 60px rgba(239, 68, 68, 0.4) !important;
+        inset 0px 10px 15px rgba(0, 0, 0, 0.9),
+        0px 0px 0px 6px #000,
+        0px 0px 20px rgba(255, 0, 0, 0.6) !important;
 }
 
 /* Etiquetas de las notas (C, D, E, etc.) */
 .nota-etiqueta {
-    font-size: var(--pitos-fuente, 2.8vh);
-    font-weight: 900;
-    color: #222;
+    font-size: var(--pitos-fuente, 1.8vh);
+    /* Tamaño optimizado al nuevo botón */
+    font-weight: 800;
+    color: #000;
+    text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.5);
     pointer-events: none;
     line-height: 1;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
 }
 
 /* ✨ VISTA DOBLE: Layout de doble nota */
