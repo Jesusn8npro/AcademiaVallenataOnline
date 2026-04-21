@@ -117,9 +117,7 @@
     contain: layout style;
     will-change: transform;
     transform: translateZ(0);
-
-    /* Forma trapezoidal realista */
-    clip-path: polygon(0% 0%, 100% 0%, 98.5% 100%, 1.5% 100%);
+    overflow: hidden;
 }
 
 .diapason-marco * {
@@ -159,8 +157,8 @@
 
 /* LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
 .pito-boton {
-    width: min(calc(13vh * var(--escala-acordeon, 1)), calc((90vw - 11 * var(--pitos-dist-h, 3.10vh)) / 12));
-    height: min(calc(13vh * var(--escala-acordeon, 1)), calc((90vw - 11 * var(--pitos-dist-h, 3.10vh)) / 12));
+    width: calc(13vh * var(--escala-acordeon, 1));
+    height: calc(13vh * var(--escala-acordeon, 1));
     border-radius: 50%;
 
     /* Textura de domo esférico */
