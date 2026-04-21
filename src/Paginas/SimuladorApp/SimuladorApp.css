@@ -102,9 +102,9 @@
 
 /* Marco del diapasón con inclinación estilo Cassotto */
 .diapason-marco {
-    position: absolute;
+    flex: 1;
+    position: relative;
     width: 90%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -112,7 +112,7 @@
     pointer-events: none;
 
     /* Optimización de motor gráfico */
-    contain: layout size style;
+    contain: layout style;
     will-change: transform;
     transform: translateZ(0);
 
@@ -133,7 +133,6 @@
     width: auto;
     gap: var(--pitos-dist-v);
     padding-bottom: calc(var(--offset-ios, 0px) + 12px * var(--escala-acordeon, 1));
-    margin-top: 10vh;
 }
 
 /* Hileras de botones horizontales */

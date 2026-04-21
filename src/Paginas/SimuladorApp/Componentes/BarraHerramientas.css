@@ -1,14 +1,11 @@
 /* 🛠️ BARRA DE HERRAMIENTAS - DISEÑO PREMIUM CASSOTO */
 
 .barra-herramientas-contenedor {
-    position: absolute;
-    top: 10px;
-    bottom: auto;
-    left: 0;
-    right: 0;
+    position: relative;
     width: 92%;
     margin: 0 auto;
     height: 42px;
+    flex-shrink: 0;
     background: linear-gradient(180deg, #333333 0%, #111111 100%);
     border: 2px solid #555;
     border-radius: 8px;
@@ -19,14 +16,6 @@
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
     z-index: 200;
     overflow: hidden;
-}
-
-/* 📱 MÓVIL: Reduce el espacio entre barra y botones */
-@media (max-width: 768px) {
-    .barra-herramientas-contenedor {
-        top: 2px;
-        /* Reduce de 10px a 2px en móvil para cerrar el gap */
-    }
 }
 
 .seccion-barra {
