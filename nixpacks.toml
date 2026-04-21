@@ -2,7 +2,7 @@
     NODE_ENV = "production"
     NIXPACKS_METRI_MODE = "true"
     # Sincronizamos con los 6GB de Easypanel para evitar el "Orange" por falta de RAM
-    NODE_OPTIONS = "--max-old-space-size=6144"
+    NODE_OPTIONS = "--max-old-space-size=3072"
 
 [phases.setup]
     nixPkgs = ["nodejs", "python3", "pkg-config", "vips"]
