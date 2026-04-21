@@ -75,7 +75,7 @@ export const usePointerAcordeon = ({
             return null;
         };
 
-        const handlePointerDown = (e: PointerEvent) => {
+        const handlePointerDown = async (e: PointerEvent) => {
             if (desactivarAudioRef.current) return; // 🔇 SILENCIO TOTAL SI HAY MODAL
             const target = e.target as HTMLElement;
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
@@ -88,12 +88,18 @@ export const usePointerAcordeon = ({
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
 
             if (pos) {
-                motorAudioPro.activarContexto(); // Mantener AudioContext activo en ejecuciones rápidas
                 const mId = `${pos}-${logicaRef.current.direccion}`;
+                // Registrar pointer y feedback visual inmediatamente (sin esperar audio)
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
+                // Fuelle Virtual: activar contexto de audio antes de reproducir (fix iOS/Android)
+                logicaRef.current.setFuelleVirtual?.(true);
+                await motorAudioPro.activarContexto();
+                // Solo reproducir si el dedo sigue en el mismo botón (no se movió ni soltó durante el await)
+                if (pointersMap.current.get(e.pointerId)?.musicalId === mId) {
+                    logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
+                }
             } else if (esToqueFuelle) {
                 // Registrar el pointer del fuelle (pos vacío) para que el guard de manejarCambioFuelle
                 // sepa que el fuelle está activo y no revierta a halar prematuramente
@@ -148,6 +154,11 @@ export const usePointerAcordeon = ({
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
             pointersMap.current.delete(e.pointerId);
+
+            // Fuelle Virtual: desactivar cuando no quedan dedos en pantalla
+            if (pointersMap.current.size === 0) {
+                logicaRef.current.setFuelleVirtual?.(false);
+            }
 
             // Auto-revert a HALAR: solo si el pointer que se levantó era de un BOTÓN (pos !== ''),
             // no de un fuelle (pos === ''). El fuelle gestiona su propio revert via ContenedorBajos.
