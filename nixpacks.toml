@@ -1,16 +1,22 @@
 [variables]
     NODE_ENV = "production"
     NIXPACKS_METRI_MODE = "true"
-    NODE_OPTIONS = "--max-old-space-size=4096"
+    # Sincronizamos con los 6GB de Easypanel para evitar el "Orange" por falta de RAM
+    NODE_OPTIONS = "--max-old-space-size=6144"
 
 [phases.setup]
-    nixPkgs = ["nodejs", "python3", "pkg-config"]
+    nixPkgs = ["nodejs", "python3", "pkg-config", "vips"]
 
 [phases.install]
+    # Usamos caché para que no tenga que descargar 4700+ módulos cada vez
     cmds = ["npm install --include=dev --legacy-peer-deps"]
+    cacheDirectories = ["node_modules", "root/.npm"]
 
 [phases.build]
     cmds = ["npm run build"]
+    # Cacheamos el build anterior para que el plugin de ofuscación sea más veloz
+    cacheDirectories = ["dist", "node_modules/.vite"]
 
 [start]
+    # Comando de arranque optimizado
     cmd = "npm run preview"
