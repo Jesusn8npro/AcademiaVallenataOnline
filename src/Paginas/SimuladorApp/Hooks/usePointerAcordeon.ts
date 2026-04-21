@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
+import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
 
 interface PointerLogicProps {
     x: MotionValue<number>;
@@ -24,6 +25,9 @@ export const usePointerAcordeon = ({
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
+
+    const desactivarAudioRef = useRef(desactivarAudio);
+    useEffect(() => { desactivarAudioRef.current = desactivarAudio; }, [desactivarAudio]);
 
     // Recálculo completo de geometría — definido fuera del effect para ser estable y reutilizable.
     // Sólo usa refs, así que no necesita estar en el array de deps del effect.
@@ -72,7 +76,7 @@ export const usePointerAcordeon = ({
         };
 
         const handlePointerDown = (e: PointerEvent) => {
-            if (desactivarAudio) return; // 🔇 SILENCIO TOTAL SI HAY MODAL
+            if (desactivarAudioRef.current) return; // 🔇 SILENCIO TOTAL SI HAY MODAL
             const target = e.target as HTMLElement;
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
@@ -84,6 +88,7 @@ export const usePointerAcordeon = ({
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
 
             if (pos) {
+                motorAudioPro.activarContexto(); // Mantener AudioContext activo en ejecuciones rápidas
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
