@@ -86,7 +86,7 @@
     width: 100% !important;
     /* 📏 Altura exacta: barra(42px) + 3 hileras(33vh*escala) + 2 gaps + padding-bottom
          Con flex-end en el marco, los botones aterrizan justo en top:42px sin gap visible */
-    height: calc(30vh * var(--escala-acordeon, 1) + 12px * var(--escala-acordeon, 1) + (var(--pitos-dist-v, 2.2vh) * 2) + 52px + var(--offset-ios, 0px)) !important;
+    height: calc(39vh * var(--escala-acordeon, 1) + 12px * var(--escala-acordeon, 1) + (var(--pitos-dist-v, 2.2vh) * 2) + 52px + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -159,8 +159,8 @@
 
 /* LOS PITOS (BOTONES): Diseño 3D realista con textura de nácar */
 .pito-boton {
-    width: calc(10vh * var(--escala-acordeon, 1));
-    height: calc(10vh * var(--escala-acordeon, 1));
+    width: min(calc(13vh * var(--escala-acordeon, 1)), calc((90vw - 11 * var(--pitos-dist-h, 3.10vh)) / 12));
+    height: min(calc(13vh * var(--escala-acordeon, 1)), calc((90vw - 11 * var(--pitos-dist-h, 3.10vh)) / 12));
     border-radius: 50%;
 
     /* Textura de domo esférico */
