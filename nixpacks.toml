@@ -8,13 +8,13 @@
     nixPkgs = ["nodejs", "python3", "pkg-config", "vips"]
 
 [phases.install]
-    # Usamos caché para que no tenga que descargar 4700+ módulos cada vez
+    # Cambio de ID para forzar limpieza de cache: V14PROMAX
     cmds = ["npm install --legacy-peer-deps"]
     cacheDirectories = ["node_modules", "root/.npm"]
 
 [phases.build]
     cmds = ["npm run build"]
-    # Cacheamos el build anterior para que el plugin de ofuscación sea más veloz
+    # Cacheamos con nuevo ID para asegurar que Vite se instale
     cacheDirectories = ["dist", "node_modules/.vite"]
 
 [start]
