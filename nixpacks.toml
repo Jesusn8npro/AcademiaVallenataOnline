@@ -8,14 +8,10 @@
     nixPkgs = ["nodejs", "python3", "pkg-config", "vips"]
 
 [phases.install]
-    # Cambio de ID para forzar limpieza de cache: V14PROMAX
     cmds = ["npm install --legacy-peer-deps"]
-    cacheDirectories = ["node_modules", "root/.npm"]
 
 [phases.build]
     cmds = ["npm run build"]
-    # Cacheamos con nuevo ID para asegurar que Vite se instale
-    cacheDirectories = ["dist", "node_modules/.vite"]
 
 [start]
     # Comando de arranque optimizado
