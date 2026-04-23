@@ -10,7 +10,7 @@ import {
   cargarPreferenciasPracticaLibre,
   guardarPreferenciasPracticaLibre,
 } from '../Servicios/servicioPreferenciasPracticaLibre';
-import { motorAudioPro } from '../../../SimuladorDeAcordeon/AudioEnginePro';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 
 interface UseEstudioPracticaLibreArgs {
   tonalidadSeleccionada: string;

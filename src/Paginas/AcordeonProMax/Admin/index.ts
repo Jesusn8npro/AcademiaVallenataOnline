@@ -2,6 +2,9 @@
  * MÓDULO ADMIN - Exporta todos los componentes y tipos
  */
 
+// Páginas
+export { default as EstudioAdmin } from './Paginas/EstudioAdmin';
+
 // Componentes
 export { default as PanelAdminRec } from './Componentes/PanelAdminRec';
 export { default as PanelAdminGestor } from './Componentes/PanelAdminGestor';

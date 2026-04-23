@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { useNavigate } from 'react-router-dom'
+import { formatearPrecio, formatearFecha } from './utils/formatadores'
+import ModalEliminarCuenta from './ModalEliminarCuenta'
 import './ConfiguracionPerfil.css'
 
 export default function ConfiguracionPerfil() {
@@ -177,23 +179,6 @@ export default function ConfiguracionPerfil() {
         await cerrarSesionContext()
         resetearPerfil()
         navigate('/sesion_cerrada')
-    }
-
-    function formatearPrecio(precio: number): string {
-        return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(precio)
-    }
-
-    function formatearFecha(fecha: string): string {
-        return new Date(fecha).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        })
     }
 
     return (
@@ -401,36 +386,13 @@ export default function ConfiguracionPerfil() {
                 </>
             )}
 
-            {/* Modal eliminar cuenta */}
-            {mostrarModalEliminar && (
-                <div className="modal-fondo" onClick={() => setMostrarModalEliminar(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>⚠️ Eliminar cuenta</h3>
-                        <p>Esta acción <strong>NO se puede deshacer</strong>. Perderás acceso a todos tus cursos y datos.</p>
-
-                        <div className="campo-confirmacion">
-                            <label>Para confirmar, escribe: <strong>ELIMINAR MI CUENTA</strong></label>
-                            <input
-                                type="text"
-                                value={confirmacionEliminar}
-                                onChange={(e) => setConfirmacionEliminar(e.target.value)}
-                                placeholder="Escribe: ELIMINAR MI CUENTA"
-                            />
-                        </div>
-
-                        <div className="botones">
-                            <button className="boton-cancelar" onClick={() => setMostrarModalEliminar(false)}>Cancelar</button>
-                            <button
-                                className="boton-danger"
-                                onClick={eliminarCuenta}
-                                disabled={confirmacionEliminar !== 'ELIMINAR MI CUENTA'}
-                            >
-                                Eliminar cuenta
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ModalEliminarCuenta
+                visible={mostrarModalEliminar}
+                confirmacion={confirmacionEliminar}
+                onConfirmacionChange={setConfirmacionEliminar}
+                onCerrar={() => setMostrarModalEliminar(false)}
+                onEliminar={eliminarCuenta}
+            />
         </div>
     )
 }

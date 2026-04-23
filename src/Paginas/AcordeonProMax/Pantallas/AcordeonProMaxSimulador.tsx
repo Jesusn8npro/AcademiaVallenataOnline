@@ -9,8 +9,7 @@ import { supabase } from '../../../servicios/clienteSupabase';
 // Componentes de Modos Pro Max
 import ModoPracticaLibre from '../PracticaLibre/EstudioPracticaLibre';
 import ModoMaestroSolo from '../Modos/ModoMaestroSolo';
-import ModoCompetitivo from '../Modos/ModoCompetitivo';
-import ModoLibre from '../Modos/ModoLibre';
+import ModoJuego from '../Modos/ModoJuego';
 import ModoSynthesia from '../Modos/ModoSynthesia';
 import PantallaPreJuegoProMax from '../Componentes/PantallaPreJuegoProMax';
 import PantallaResultados from '../Componentes/PantallaResultados';
@@ -20,22 +19,16 @@ import MenuPausaProMax from '../Componentes/MenuPausaProMax';
 
 import '../Modos/_BaseSimulador.css';
 import '../Componentes/PantallaPreJuegoProMax.css';
+import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
 
 /**
- * ACORDEÓN PRO MAX - SIMULADOR 
+ * ACORDEÓN PRO MAX - SIMULADOR
  * ---------------------------------
  * Esta es la evolución del simulador original, integrada en el ecosistema Pro Max.
  * Soporta modo "Práctica Libre" y modo "Canción" mediante slugs de URL.
  */
 
 const IMG_ALUMNO = '/Acordeon PRO MAX.png';
-
-const MODOS_VISTA: { valor: any; label: string }[] = [
-  { valor: 'teclas',  label: 'T'   },
-  { valor: 'numeros', label: '123' },
-  { valor: 'notas',   label: '♪'   },
-  { valor: 'cifrado', label: 'ABC' },
-];
 
 const AcordeonProMaxSimulador: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
@@ -235,7 +228,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
               grabando={hero.grabaciones.grabando}
               tiempoGrabacionMs={hero.grabaciones.tiempoGrabacionMs}
               mostrarModalGuardar={hero.grabaciones.mostrarModalGuardarPractica}
-              mostrarModalProfesional={hero.grabaciones.mostrarGuardadoResultado}
               guardandoGrabacion={hero.grabaciones.guardando}
               errorGuardadoGrabacion={hero.grabaciones.error}
               tituloSugeridoGrabacion={hero.grabaciones.tituloSugerido}
@@ -248,30 +240,8 @@ const AcordeonProMaxSimulador: React.FC = () => {
               volumenAcordeon={hero.volumenAcordeon}
               setVolumenAcordeon={hero.setVolumenAcordeon}
               onVolver={volverAlMenu}
-              bpm={hero.bpm}
-              onCambiarBpm={hero.cambiarBpm}
               esp32Conectado={hero.logica.esp32Conectado}
               conectarESP32={hero.logica.conectarESP32}
-              // Sincronización de reproductor
-              tickActual={hero.tickActual}
-              totalTicks={hero.totalTicks}
-              reproduciendo={hero.reproduciendo}
-              pausado={hero.pausado}
-              onAlternarPausa={hero.alternarPausaReproduccion}
-              onBuscarTick={hero.buscarTick}
-              botonesActivosMaestro={hero.botonesActivosMaestro}
-              direccionMaestro={hero.direccionMaestro}
-              // Loop
-              loopAB={hero.loopAB}
-              onMarcarLoopInicio={hero.marcarLoopInicio}
-              onMarcarLoopFin={hero.marcarLoopFin}
-              onActualizarLoopInicio={hero.actualizarLoopInicioTick}
-              onActualizarLoopFin={hero.actualizarLoopFinTick}
-              onAlternarLoop={hero.alternarLoopAB}
-              onLimpiarLoop={hero.limpiarLoopAB}
-              onReproducirSecuencia={hero.reproducirSecuencia}
-              secuencia={hero.secuencia}
-              secuenciaGrabacion={hero.secuenciaGrabacion}
             />
           )}
 
@@ -305,25 +275,9 @@ const AcordeonProMaxSimulador: React.FC = () => {
             />
           )}
 
-          {hero.estadoJuego !== 'practica_libre' && hero.modoPractica === 'ninguno' && (
-            <ModoCompetitivo
-              cancion={hero.cancionSeleccionada}
-              tickActual={hero.tickActual}
-              botonesActivosMaestro={hero.botonesActivosMaestro}
-              direccionMaestro={hero.direccionMaestro}
-              logica={hero.logica}
-              configTonalidad={hero.logica.configTonalidad}
-              estadisticas={hero.estadisticas}
-              efectosVisuales={hero.efectosVisuales}
-              notasImpactadas={hero.notasImpactadas}
-              imagenFondo={IMG_ALUMNO}
-              actualizarBotonActivo={hero.logica.actualizarBotonActivo}
-              registrarPosicionGolpe={hero.registrarPosicionGolpe}
-            />
-          )}
-
-          {hero.estadoJuego !== 'practica_libre' && hero.modoPractica === 'libre' && (
-            <ModoLibre
+          {hero.estadoJuego !== 'practica_libre' && (hero.modoPractica === 'ninguno' || hero.modoPractica === 'libre') && (
+            <ModoJuego
+              conPenalizacion={hero.modoPractica === 'ninguno'}
               cancion={hero.cancionSeleccionada}
               tickActual={hero.tickActual}
               botonesActivosMaestro={hero.botonesActivosMaestro}

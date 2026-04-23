@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FormularioPaquete from '../../../../componentes/paquetes/FormularioPaquete';
 import type { PaqueteTutorial } from '../../../../servicios/paquetesService';
@@ -22,7 +22,6 @@ const EditarPaquete: React.FC = () => {
   }, [id]);
 
   const manejarGuardado = (paquete: PaqueteTutorial) => {
-    console.log('✅ Paquete actualizado exitosamente:', paquete);
     setMostrandoExito(true);
 
     // Mostrar mensaje de éxito por 2 segundos y luego redirigir

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './PestanaCursos.css';
 import { obtenerTodosPaquetes, obtenerTutorialesDisponibles, obtenerItemsPaquete } from '../../../../../servicios/paquetesService';
 import { obtenerCursosDisponibles } from '../../../../../servicios/cursosServicio';
@@ -115,9 +115,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
       await cargarPaquetesInscritos();
 
       // Cargar cursos disponibles desde Supabase
-      console.log('🔍 Cargando cursos desde Supabase...');
       const cursosResult = await obtenerCursosDisponibles();
-      console.log('📊 Resultado cursos:', cursosResult);
 
       if (cursosResult.success && cursosResult.data) {
         const cursos = cursosResult.data.map((curso: any) => ({
@@ -130,16 +128,12 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           tipo: 'curso' as const,
           precio: curso.precio_rebajado || curso.precio_normal || 0
         }));
-        console.log('✅ Cursos procesados:', cursos);
         setCursosDisponibles(cursos);
       } else {
-        console.log('❌ Error cargando cursos:', cursosResult.error);
       }
 
       // Cargar tutoriales disponibles desde Supabase
-      console.log('🔍 Cargando tutoriales desde Supabase...');
       const tutorialesResult = await obtenerTutorialesDisponibles();
-      console.log('📊 Resultado tutoriales:', tutorialesResult);
 
       if (tutorialesResult.success && tutorialesResult.data) {
         const tutoriales = tutorialesResult.data.map((tutorial: any) => ({
@@ -152,16 +146,12 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           descripcion: tutorial.descripcion || '',
           precio: tutorial.precio_rebajado || tutorial.precio_normal || 0
         }));
-        console.log('✅ Tutoriales procesados:', tutoriales);
         setTutorialesDisponibles(tutoriales);
       } else {
-        console.log('❌ Error cargando tutoriales:', tutorialesResult.error);
       }
 
       // Cargar paquetes disponibles desde Supabase
-      console.log('🔍 Cargando paquetes desde Supabase...');
       const paquetesResult = await obtenerTodosPaquetes();
-      console.log('📊 Resultado paquetes:', paquetesResult);
 
       if (paquetesResult.success && paquetesResult.data) {
         const paquetes = paquetesResult.data.map((paquete: any) => ({
@@ -175,10 +165,8 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
           nivel: paquete.nivel || 'Principiante',
           categoria: paquete.categoria || 'General'
         }));
-        console.log('✅ Paquetes procesados:', paquetes);
         setPaquetesDisponibles(paquetes);
       } else {
-        console.log('❌ Error cargando paquetes:', paquetesResult.error);
       }
 
     } catch (err) {
@@ -193,7 +181,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   // Cargar cursos inscritos del usuario (exactamente como en Svelte original)
   const cargarCursosInscritos = async () => {
     try {
-      console.log('🔍 Cargando cursos inscritos para usuario:', _usuario.id);
 
       // Cargar inscripciones básicas primero (como en Svelte)
       const { data: inscripciones, error: inscripcionesError } = await supabase
@@ -206,7 +193,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         return;
       }
 
-      console.log('📋 Inscripciones encontradas:', inscripciones);
       const cursosInscritosTemp: Inscripcion[] = [];
 
       // Para cada inscripción, cargar los detalles del curso o tutorial (como en Svelte)
@@ -256,7 +242,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         }
       }
 
-      console.log('✅ Cursos inscritos cargados:', cursosInscritosTemp);
       setCursosInscritos(cursosInscritosTemp);
     } catch (error) {
       console.error('❌ Error cargando cursos inscritos:', error);
@@ -267,7 +252,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   // Cargar paquetes inscritos del usuario
   const cargarPaquetesInscritos = async () => {
     try {
-      console.log('📦 Cargando paquetes inscritos para usuario:', _usuario.id);
 
       // Cargar inscripciones de paquetes
       const { data: inscripciones, error: inscripcionesError } = await supabase
@@ -294,7 +278,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         return;
       }
 
-      console.log('📋 Paquetes inscritos encontrados:', inscripciones);
       setPaquetesInscritos(inscripciones || []);
     } catch (error) {
       console.error('❌ Error cargando paquetes inscritos:', error);
@@ -317,7 +300,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   const agregarTutorialAUsuario = async (tutorialId: string) => {
     try {
       setCargandoCursos(true);
-      console.log('📝 Agregando tutorial al usuario:', tutorialId);
 
       // Insertar inscripción en Supabase
       const { data, error } = await supabase
@@ -338,7 +320,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         throw error;
       }
 
-      console.log('✅ Tutorial agregado exitosamente:', data);
 
       // Recargar cursos inscritos
       await cargarCursosInscritos();
@@ -355,7 +336,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   const agregarCursoAUsuario = async (cursoId: string) => {
     try {
       setCargandoCursos(true);
-      console.log('📝 Agregando curso al usuario:', cursoId);
 
       // Insertar inscripción en Supabase
       const { data, error } = await supabase
@@ -376,7 +356,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         throw error;
       }
 
-      console.log('✅ Curso agregado exitosamente:', data);
 
       // Recargar cursos inscritos
       await cargarCursosInscritos();
@@ -393,7 +372,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
   const agregarPaqueteAUsuario = async (paqueteId: string) => {
     try {
       setCargandoPaquetes(true);
-      console.log('📦 Agregando paquete al usuario:', paqueteId);
 
       // 1. Insertar inscripción del PAQUETE
       const { data: paqueteData, error: paqueteError } = await supabase
@@ -414,13 +392,11 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         throw paqueteError;
       }
 
-      console.log('✅ Paquete agregado exitosamente:', paqueteData);
 
       // 2. Obtener los tutoriales individuales del paquete
       const { success, data: tutorialIds } = await obtenerItemsPaquete(paqueteId);
 
       if (success && tutorialIds && tutorialIds.length > 0) {
-        console.log(`📝 Encontrados ${tutorialIds.length} tutoriales en el paquete.`);
 
         // Filtrar tutoriales que el usuario ya tiene inscritos
         const tutorialesYaInscritos = cursosInscritos
@@ -429,7 +405,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
 
         const tutorialesNuevos = tutorialIds.filter(id => !tutorialesYaInscritos.includes(id));
 
-        console.log(`📝 ${tutorialesYaInscritos.length} ya inscritos, agregando ${tutorialesNuevos.length} nuevos...`);
 
         if (tutorialesNuevos.length > 0) {
           // Crear array de inscripciones SOLO para los nuevos
@@ -451,10 +426,8 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
             console.error('⚠️ Error agregando tutoriales individuales:', tutorialesError);
             alert('El paquete se agregó, pero hubo un problema agregando algunos tutoriales individuales.');
           } else {
-            console.log('✅ Tutoriales individuales agregados exitosamente');
           }
         } else {
-          console.log('✅ El usuario ya tenía todos los tutoriales del paquete');
         }
       }
 
@@ -482,7 +455,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
 
     try {
       setCargandoCursos(true);
-      console.log('🗑️ Eliminando inscripción:', inscripcionId);
 
       const { error } = await supabase
         .from('inscripciones')
@@ -494,7 +466,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         throw error;
       }
 
-      console.log('✅ Curso eliminado exitosamente');
 
       // Recargar cursos inscritos
       await cargarCursosInscritos();
@@ -515,7 +486,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
 
     try {
       setCargandoPaquetes(true);
-      console.log('🗑️ Eliminando paquete:', inscripcionId);
 
       const { error } = await supabase
         .from('inscripciones')
@@ -527,7 +497,6 @@ const PestanaCursos: React.FC<Props> = ({ usuario: _usuario }) => {
         throw error;
       }
 
-      console.log('✅ Paquete eliminado exitosamente');
 
       // Recargar paquetes inscritos
       await cargarPaquetesInscritos();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import DetectorRetencion from './DetectorRetencion';
 import { RefreshCw, MessageCircle, Eye, Clock, BookOpen, Timer, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
@@ -36,7 +36,6 @@ const PestanaRetencion = () => {
     const cargarUsuariosInactivos = async () => {
         try {
             setCargandoUsuariosInactivos(true);
-            console.log('⚠️ [RETENCIÓN] Cargando usuarios inactivos...');
 
             const { data: usuariosConActividad } = await supabase
                 .from('perfiles')
@@ -155,7 +154,6 @@ const PestanaRetencion = () => {
 
     const verDetallesUsuario = (usuarioId: string) => {
         // window.open(`/administrador/usuarios?usuario=${usuarioId}&pestana=actividad`, '_blank');
-        console.log("Ver detalles de", usuarioId);
     };
 
     return (

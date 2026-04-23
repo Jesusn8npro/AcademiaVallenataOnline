@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import './BlogAdminManager.css';
 import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
@@ -30,7 +30,6 @@ const BlogAdminManager = () => {
 
     const iniciarNuevoArticulo = () => {
         // Navegar a crear o mostrar modal
-        console.log("Crear nuevo artículo");
     };
 
     const formatearFecha = (fecha: string) => {

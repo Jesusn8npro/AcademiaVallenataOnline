@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormularioPaquete from '../../../../componentes/paquetes/FormularioPaquete';
 import type { PaqueteTutorial } from '../../../../servicios/paquetesService';
@@ -9,7 +9,6 @@ const CrearPaquete: React.FC = () => {
   const [mostrandoExito, setMostrandoExito] = useState(false);
 
   const manejarGuardado = (paquete: PaqueteTutorial) => {
-    console.log('✅ Paquete creado exitosamente:', paquete);
     setMostrandoExito(true);
 
     // Mostrar mensaje de éxito por 2 segundos y luego redirigir

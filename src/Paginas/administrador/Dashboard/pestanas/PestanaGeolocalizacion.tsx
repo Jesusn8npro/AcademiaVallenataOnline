@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './PestanaGeolocalizacion.css';
 import { Gauge, Shield, PieChart, Users, Play, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../../servicios/clienteSupabase';
@@ -31,7 +31,6 @@ const PestanaGeolocalizacion = () => {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.warn('Tabla geolocalizacion_usuarios no encontrada o error de permisos');
             }
 
             const hoy = new Date().toISOString().split('T')[0];
@@ -56,7 +55,6 @@ const PestanaGeolocalizacion = () => {
         setResultadoTest('🔄 Probando rastreo de ubicación con ipapi.co...');
 
         try {
-            console.log('🧪 [TEST] Iniciando prueba manual con ipapi.co...');
 
             // Usar el servicio profesional portado de Svelte
             const exito = await servicioGeolocalizacion.rastreoCompleto();

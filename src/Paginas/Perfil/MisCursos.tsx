@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import GridMisCursos from '../../componentes/MisCursos/GridMisCursos'
 import PorcentajePerfil from '../../componentes/Perfil/PorcentajePerfil'
 import BannerSlider from '../../componentes/Banners/BannerSlider'

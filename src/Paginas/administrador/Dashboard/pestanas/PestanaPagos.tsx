@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import {
     Download,
@@ -62,7 +62,6 @@ const PestanaPagos: React.FC = () => {
     async function cargarDatosPagos() {
         try {
             setCargandoPagos(true);
-            console.log('💰 [PAGOS] Cargando datos financieros...');
 
             await Promise.all([
                 cargarEstadisticasPagos(),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import {
     Rocket,
@@ -63,7 +63,6 @@ const PestanaConfiguracion: React.FC = () => {
             if (storedConfig) {
                 setConfiguracion(JSON.parse(storedConfig));
             }
-            console.log('⚙️ [CONFIG] Configuración cargada');
         } catch (error) {
             console.error('❌ [CONFIG] Error cargando configuración:', error);
         }
@@ -132,13 +131,11 @@ const PestanaConfiguracion: React.FC = () => {
             // Guardar en localStorage
             localStorage.setItem('academia_config', JSON.stringify(configuracion));
 
-            console.log('✅ [CONFIG] Configuración guardada:', configuracion);
             setConfiguracionCambiada(false);
             setGuardandoConfiguracion(false); // Ensure this is set to false
 
             // Aplicar cambios inmediatos
             if (configuracion.mantenimientoActivo) {
-                console.log('🔧 [MANTENIMIENTO] Modo activado');
             }
 
             alert('✅ Configuración guardada exitosamente\n\n' +
@@ -156,7 +153,6 @@ const PestanaConfiguracion: React.FC = () => {
 
     const ejecutarBackupManual = async () => {
         try {
-            console.log('💾 [BACKUP] Iniciando backup manual...');
 
             // Simular proceso
             await new Promise(resolve => setTimeout(resolve, 3000));
@@ -193,19 +189,16 @@ const PestanaConfiguracion: React.FC = () => {
 
     const limpiarCacheSistema = async () => {
         try {
-            console.log('🗑️ [CACHÉ] Limpiando caché del sistema...');
 
             if ('caches' in window) {
                 const cacheNames = await caches.keys();
                 const deletePromises = cacheNames.map(name => caches.delete(name));
                 await Promise.all(deletePromises);
-                console.log(`🗑️ [CACHÉ] ${cacheNames.length} cachés eliminados`);
             }
 
             if (window.confirm('¿También deseas limpiar datos locales del navegador?')) {
                 localStorage.clear();
                 sessionStorage.clear();
-                console.log('🗑️ [CACHÉ] Storage local limpiado');
             }
 
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -260,7 +253,6 @@ const PestanaConfiguracion: React.FC = () => {
         }
 
         try {
-            console.log('🔄 [SISTEMA] Iniciando reinicio...');
             alert('🔄 Iniciando reinicio del sistema...\n\nEsto puede tomar unos momentos.');
 
             await new Promise(resolve => setTimeout(resolve, 2000));

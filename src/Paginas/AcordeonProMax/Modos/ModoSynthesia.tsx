@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import CuerpoAcordeon from '../../SimuladorDeAcordeon/Componentes/CuerpoAcordeon';
+import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import PuenteNotas from '../Componentes/PuenteNotas';
+import JuicioOverlay from '../Componentes/JuicioOverlay';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import type {
   CancionHeroConTonalidad,
@@ -267,36 +268,7 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
                 notasImpactadas={notasImpactadas}
             />
 
-            <div className="hero-pro-judgment-overlay">
-                <AnimatePresence mode="wait">
-                    {estadisticas.rachaActual >= 5 && (
-                        <motion.div
-                            key={`combo-${estadisticas.rachaActual}`}
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 1.5, opacity: 0 }}
-                            className="hero-pro-combo"
-                        >
-                            <span className="combo-label">COMBO</span>
-                            <span className="combo-num">{estadisticas.rachaActual}</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <AnimatePresence mode="wait">
-                    {efectosVisuales.length > 0 && efectosVisuales[efectosVisuales.length - 1].creado > Date.now() - 800 && (
-                        <motion.div
-                            key={efectosVisuales[efectosVisuales.length - 1].id}
-                            initial={{ y: 20, opacity: 0, scale: 0.8 }}
-                            animate={{ y: 0, opacity: 1, scale: 1.1 }}
-                            exit={{ y: -20, opacity: 0, scale: 1.3 }}
-                            className={`hero-pro-label ${efectosVisuales[efectosVisuales.length - 1].resultado}`}
-                        >
-                            {efectosVisuales[efectosVisuales.length - 1].resultado.toUpperCase()}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+            <JuicioOverlay estadisticas={estadisticas} efectosVisuales={efectosVisuales} />
         </div>
     );
 };

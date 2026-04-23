@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { ChevronUp, MoveHorizontal } from 'lucide-react';
-import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import imagenBajos from '../Parte restante Bajos.jpg';
 import './ContenedorBajos.css';
 

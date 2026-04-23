@@ -1,0 +1,106 @@
+/* ─── Admin override layer ───────────────────────────────────────────────── */
+/* Inherits ALL layout from EstudioPracticaLibre.css.
+   This file only adds the visual identity layer for the admin panel.       */
+
+:root {
+  --admin-cyan: #00d4ff;
+  --admin-cyan-dim: rgba(0, 212, 255, 0.18);
+  --admin-cyan-border: rgba(0, 212, 255, 0.25);
+  --admin-bg-overlay: rgba(0, 10, 20, 0.08);
+}
+
+/* ── Topbar: admin identity ────────────────────────────────────────────── */
+.admin-topbar {
+  border-bottom-color: var(--admin-cyan-border) !important;
+  background: linear-gradient(
+    to right,
+    rgba(0, 20, 35, 0.6),
+    rgba(0, 10, 20, 0.4)
+  ) !important;
+}
+
+.admin-kicker {
+  color: var(--admin-cyan) !important;
+  letter-spacing: 0.08em;
+}
+
+.admin-titulo {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(90deg, var(--admin-cyan), #7dd3fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.04em;
+}
+
+.admin-mensaje {
+  font-size: 11px !important;
+  color: rgba(125, 211, 252, 0.75) !important;
+  font-style: italic;
+}
+
+/* ── Admin panel buttons ────────────────────────────────────────────────── */
+.admin-btn {
+  border-color: var(--admin-cyan-border) !important;
+}
+
+.admin-btn:hover {
+  background: var(--admin-cyan-dim) !important;
+  border-color: var(--admin-cyan) !important;
+  color: var(--admin-cyan) !important;
+}
+
+.admin-btn.activo {
+  background: var(--admin-cyan-dim) !important;
+  border-color: var(--admin-cyan) !important;
+  color: var(--admin-cyan) !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3) !important;
+}
+
+/* ── "Ver como Estudiante" button ────────────────────────────────────────── */
+.admin-ver-estudiante {
+  border: 1px solid rgba(125, 211, 252, 0.4) !important;
+  color: #7dd3fc !important;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.admin-ver-estudiante:hover {
+  background: rgba(125, 211, 252, 0.12) !important;
+  border-color: #7dd3fc !important;
+}
+
+/* ── Status pill ─────────────────────────────────────────────────────────── */
+.admin-pill {
+  border-color: var(--admin-cyan-border) !important;
+  color: var(--admin-cyan) !important;
+}
+
+.admin-pill.grabando {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #fca5a5 !important;
+}
+
+/* ── Escenario: subtle cyan glow border ─────────────────────────────────── */
+.estudio-admin .estudio-practica-libre-escenario {
+  border: 1px solid var(--admin-cyan-border);
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.06), inset 0 0 40px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Panel lateral: admin accent ────────────────────────────────────────── */
+.estudio-admin .estudio-practica-libre-panel {
+  border-left: 2px solid var(--admin-cyan-border);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 20, 35, 0.35),
+    rgba(0, 10, 20, 0.2)
+  ) !important;
+}
+
+/* ── Chips: admin accent ─────────────────────────────────────────────────── */
+.estudio-admin .estudio-practica-libre-escenario-chip {
+  border-color: var(--admin-cyan-border);
+  color: rgba(125, 211, 252, 0.8);
+}

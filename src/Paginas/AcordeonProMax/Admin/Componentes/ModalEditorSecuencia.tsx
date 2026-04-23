@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { NotaHero } from '../../TiposProMax';
 import { actualizarCancionHeroCompleta } from '../../../../servicios/cancionesHeroService';
-import { motorAudioPro } from '../../../SimuladorDeAcordeon/AudioEnginePro';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import './ModalEditorSecuencia.css';
 
 // ─── Paleta de colores para secciones ───────────────────────────────────────

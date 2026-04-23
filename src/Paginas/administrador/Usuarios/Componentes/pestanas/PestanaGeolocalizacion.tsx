@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import './PestanaGeolocalizacion.css';
 import {
   obtenerIPPublica,
@@ -70,7 +70,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
           }
         }
       } catch (err: any) {
-        console.warn("No se pudo obtener ubicación actual automática:", err);
         // No seteamos error global para no ocultar el historial
       }
 

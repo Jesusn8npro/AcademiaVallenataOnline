@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/PROGRAMACION/Academia\" show HEAD~1:\"src/Paginas/SimuladorDeAcordeon/AcordeonSimulador.css\")",
+      "Bash(git -C \"c:/PROGRAMACION/Academia\" show HEAD:\"src/Paginas/SimuladorDeAcordeon/AcordeonSimulador.css\")",
+      "Bash(npx tsc *)",
+      "Bash(echo \"TypeScript/React: $\\(find src/Paginas/administrador -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(sed -n '70,80p' c:/PROGRAMACION/Academia/src/App.tsx)",
+      "Bash(sed -n '120,130p' c:/PROGRAMACION/Academia/src/App.tsx)"
+    ]
+  }
+}

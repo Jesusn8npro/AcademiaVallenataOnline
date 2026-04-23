@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { createPortal } from 'react-dom';
 import { Disc3, Globe, Lock, Radio, RefreshCcw, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -12,6 +10,7 @@ import {
     type ModoGrabacionHero,
 } from '../../../servicios/grabacionesHeroService';
 import ModalReplayGrabacionHero, { type GrabacionReplayHero } from './Componentes/ModalReplayGrabacionHero';
+import { obtenerSubtituloGrabacion, obtenerMetaGrabacion, obtenerTituloInicialPublicacion, obtenerTextoBadge } from './utilsGrabaciones';
 import './MisGrabaciones.css';
 
 interface VistaGrabacionesHeroProps {
@@ -21,70 +20,6 @@ interface VistaGrabacionesHeroProps {
 }
 
 type FiltroGrabacion = 'todas' | ModoGrabacionHero;
-
-function formatearDuracion(ms?: number | null) {
-    const totalSegundos = Math.max(0, Math.floor((ms || 0) / 1000));
-    const minutos = Math.floor(totalSegundos / 60);
-    const segundos = totalSegundos % 60;
-    return `${minutos}:${segundos.toString().padStart(2, '0')}`;
-}
-
-function formatearFechaRelativa(fecha?: string | null) {
-    if (!fecha) return 'Hace un momento';
-
-    try {
-        const texto = formatDistanceToNow(new Date(fecha), { addSuffix: true, locale: es });
-        return texto.charAt(0).toUpperCase() + texto.slice(1);
-    } catch {
-        return 'Hace un momento';
-    }
-}
-
-function obtenerSubtituloGrabacion(grabacion: GrabacionReplayHero) {
-    if (grabacion.modo === 'competencia') {
-        return `${grabacion.canciones_hero?.titulo || 'Competencia'}${grabacion.canciones_hero?.autor ? ` · ${grabacion.canciones_hero.autor}` : ''}`;
-    }
-
-    return `Practica libre · ${grabacion.bpm} BPM`;
-}
-
-function obtenerMetaGrabacion(grabacion: GrabacionReplayHero) {
-    if (grabacion.modo === 'competencia') {
-        const partes = [
-            grabacion.puntuacion ? `${grabacion.puntuacion.toLocaleString('es-CO')} pts` : null,
-            grabacion.notas_totales ? `${grabacion.notas_totales} notas` : null,
-            formatearFechaRelativa(grabacion.created_at)
-        ].filter(Boolean);
-
-        return partes.join(' · ');
-    }
-
-    const partes = [
-        `Duracion ${formatearDuracion(grabacion.duracion_ms)}`,
-        grabacion.tonalidad || null,
-        formatearFechaRelativa(grabacion.created_at)
-    ].filter(Boolean);
-
-    return partes.join(' · ');
-}
-
-function obtenerTituloInicialPublicacion(grabacion: GrabacionReplayHero) {
-    if (grabacion.modo === 'competencia') {
-        const precision = Math.round(grabacion.precision_porcentaje || 0);
-        const cancion = grabacion.canciones_hero?.titulo || grabacion.titulo || 'esta cancion';
-        return `Logre el ${precision}% en ${cancion}`;
-    }
-
-    return grabacion.titulo || 'Comparto esta practica libre';
-}
-
-function obtenerTextoBadge(grabacion: GrabacionReplayHero) {
-    if (grabacion.modo === 'competencia') {
-        return `${Math.round(grabacion.precision_porcentaje || 0)}%`;
-    }
-
-    return formatearDuracion(grabacion.duracion_ms);
-}
 
 export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuario }: VistaGrabacionesHeroProps) {
     const [filtro, setFiltro] = useState<FiltroGrabacion>('todas');

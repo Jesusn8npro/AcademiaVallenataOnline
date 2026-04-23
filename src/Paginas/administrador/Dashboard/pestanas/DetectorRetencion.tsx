@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, Eye, EyeOff, User, MessageCircle } from 'lucide-react';
 import './DetectorRetencion.css';
@@ -36,7 +36,6 @@ const DetectorRetencion = () => {
     const detectarUsuariosEnRiesgo = async () => {
         try {
             setCargando(true);
-            console.log('🎯 [RETENCIÓN] Iniciando análisis de riesgo...');
 
             const { data: usuarios } = await supabase
                 .from('perfiles')
@@ -65,7 +64,6 @@ const DetectorRetencion = () => {
             setUsuariosEnRiesgo(usuariosOrdenados);
             calcularEstadisticas(usuariosOrdenados);
 
-            console.log(`✅ [RETENCIÓN] ${usuariosOrdenados.length} usuarios en riesgo detectados`);
 
         } catch (error) {
             console.error('❌ [RETENCIÓN] Error:', error);
@@ -198,7 +196,6 @@ const DetectorRetencion = () => {
     const verPerfilCompleto = (usuarioId: string) => {
         // En SPA real, usaríamos history.push o similar, pero aquí simulamos
         // window.open(`/administrador/usuarios?usuario=${usuarioId}&pestana=actividad`, '_blank');
-        console.log("Navegar a perfil de usuario:", usuarioId);
     };
 
     return (

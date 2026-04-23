@@ -16,10 +16,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
     cargarDatosPerfil()
 
     const safetyTimer = setTimeout(() => {
-      if (!inicializado && !perfil) {
-        console.warn('⚠️ Safety check del layout disparado: Forzando inicialización')
-        forzarInicializacion()
-      }
+      if (!inicializado && !perfil) forzarInicializacion()
     }, 3000)
 
     return () => clearTimeout(safetyTimer)

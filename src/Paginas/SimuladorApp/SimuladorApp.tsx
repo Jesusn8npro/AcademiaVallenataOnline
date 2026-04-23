@@ -6,8 +6,8 @@ import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 
 // Hooks de Lógica
-import { useLogicaAcordeon } from '../SimuladorDeAcordeon/Hooks/useLogicaAcordeon';
-import { motorAudioPro } from '../SimuladorDeAcordeon/AudioEnginePro';
+import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
+import { motorAudioPro } from '../../Core/audio/AudioEnginePro';
 import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
 
 // Componentes UI

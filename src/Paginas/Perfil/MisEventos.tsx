@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { eventosService, type EventoCompleto } from '../../servicios/eventosService'
 import './MisEventos.css'
