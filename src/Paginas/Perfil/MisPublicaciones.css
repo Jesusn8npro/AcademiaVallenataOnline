@@ -1,34 +1,15 @@
-.contenido-publicaciones {
-    padding: 0;
-}
+.contenido-publicaciones { padding: 0 }
 
-.header-seccion {
-    margin-bottom: 0;
-    text-align: center;
-}
+.header-seccion { margin-bottom: 0; text-align: center }
+.header-seccion h1 { font-size: 2rem; font-weight: 700; color: #1f2937; margin-bottom: .5rem }
+.header-seccion p { color: #6b7280; font-size: 1.1rem }
 
-.header-seccion h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-}
-
-.header-seccion p {
-    color: #6b7280;
-    font-size: 1.1rem;
-}
-
-.timeline-grid {
-    display: flex;
-    width: 100%;
-    gap: 24px;
-}
+.timeline-grid { display: flex; width: 100%; gap: 24px }
 
 .columna-timeline {
     border-radius: 12px;
     min-height: 300px;
-    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,.04);
     padding: 18px 10px;
     align-items: center;
     display: flex;
@@ -39,7 +20,7 @@
     flex: 1.5;
     max-width: 350px;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
     border-radius: 12px;
     border: 1.5px solid #f3f3f3;
     padding: 14px 10px 18px 10px;
@@ -49,18 +30,14 @@
     align-items: stretch;
 }
 
-.bloque-ranking-nuevo {
-    width: 100%;
-    margin-bottom: 24px;
-}
-
+.bloque-ranking-nuevo { width: 100%; margin-bottom: 24px }
 
 .columna-derecha {
     flex: 1.5;
     min-width: 220px;
     max-width: 350px;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
     border-radius: 12px;
     border: 1.5px solid #f3f3f3;
     padding: 18px 14px;
@@ -71,14 +48,7 @@
     justify-content: flex-start;
 }
 
-.columna-central {
-    flex: 5;
-    padding: 0 1rem;
-    margin: 0 auto;
-    max-width: 800px;
-    width: 100%;
-}
-
+.columna-central { flex: 5; padding: 0 1rem; margin: 0 auto; max-width: 800px; width: 100% }
 
 .estado-carga {
     display: flex;
@@ -99,81 +69,27 @@
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+@keyframes spin { to { transform: rotate(360deg) } }
 
+.boton-accion { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color .2s ease }
+.boton-accion:hover { background: #2563eb }
 
-.boton-accion {
-    display: inline-block;
-    background: #3b82f6;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: background-color 0.2s ease;
-}
-
-.boton-accion:hover {
-    background: #2563eb;
-}
-
-/* 📱 RESPONSIVE DESIGN - OCULTAR COLUMNAS LATERALES EN 1300PX */
 @media (max-width: 1350px) {
-
-    .columna-izquierda,
-    .columna-derecha {
-        display: none;
-    }
-
-    .timeline-grid {
-        justify-content: center;
-    }
-
-    .columna-central {
-        flex: 1;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 0 2rem;
-    }
+    .columna-izquierda, .columna-derecha { display: none }
+    .timeline-grid { justify-content: center }
+    .columna-central { flex: 1; max-width: 800px; margin: 0 auto; padding: 0 2rem }
 }
 
 @media (max-width: 768px) {
-    .columna-central {
-        padding: 0 1rem;
-    }
-
-    .header-seccion h1 {
-        font-size: 1.75rem;
-    }
-
-    .header-seccion p {
-        font-size: 1rem;
-    }
+    .columna-central { padding: 0 1rem }
+    .header-seccion h1 { font-size: 1.75rem }
+    .header-seccion p { font-size: 1rem }
 }
 
 @media (max-width: 640px) {
-    .contenido-publicaciones {
-        padding: 0;
-    }
-
-    .columna-central {
-        padding: 0 0.5rem;
-    }
-
-    .header-seccion {
-        margin-bottom: 1.5rem;
-    }
-
-    .header-seccion h1 {
-        font-size: 1.5rem;
-    }
-
-    .estado-vacio,
-    .estado-carga {
-        padding: 2rem 1rem;
-    }
+    .contenido-publicaciones { padding: 0 }
+    .columna-central { padding: 0 .5rem }
+    .header-seccion { margin-bottom: 1.5rem }
+    .header-seccion h1 { font-size: 1.5rem }
+    .estado-vacio, .estado-carga { padding: 2rem 1rem }
 }
