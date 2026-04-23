@@ -23,55 +23,20 @@
     margin-bottom: 20px;
 }
 
-.mis-grabaciones-eyebrow {
-    margin: 0 0 10px;
-    color: #64748b;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
+.mis-grabaciones-eyebrow { margin: 0 0 10px; color: #64748b; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase }
 
-.mis-grabaciones-hero h1 {
-    margin: 0;
-    color: #0f172a;
-    font-size: clamp(2rem, 4vw, 3.3rem);
-    line-height: 1;
-}
+.mis-grabaciones-hero h1 { margin: 0; color: #0f172a; font-size: clamp(2rem, 4vw, 3.3rem); line-height: 1 }
 
-.mis-grabaciones-subtitulo {
-    max-width: 720px;
-    margin: 12px 0 0;
-    color: #475569;
-    font-size: 1rem;
-    line-height: 1.6;
-}
+.mis-grabaciones-subtitulo { max-width: 720px; margin: 12px 0 0; color: #475569; font-size: 1rem; line-height: 1.6 }
 
-.mis-grabaciones-hero-acciones {
-    display: flex;
-    align-items: end;
-    gap: 12px;
-    flex-wrap: wrap;
-}
+.mis-grabaciones-hero-acciones { display: flex; align-items: end; gap: 12px; flex-wrap: wrap }
 
-.mis-grabaciones-filtro {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.mis-grabaciones-filtro span {
-    color: #64748b;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
+.mis-grabaciones-filtro { display: flex; flex-direction: column; gap: 7px }
+.mis-grabaciones-filtro span { color: #64748b; font-size: .8rem; font-weight: 700 }
 
 .mis-grabaciones-filtro select,
 .mis-grabaciones-boton-secundario,
-.mis-grabaciones-boton-principal {
-    border-radius: 16px;
-    font: inherit;
-}
+.mis-grabaciones-boton-principal { border-radius: 16px; font: inherit }
 
 .mis-grabaciones-filtro select {
     min-width: 180px;
@@ -90,14 +55,10 @@
     padding: 12px 16px;
     text-decoration: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
-.mis-grabaciones-boton-secundario {
-    border: 1px solid #d8e1ec;
-    background: #fff;
-    color: #1f2937;
-}
+.mis-grabaciones-boton-secundario { border: 1px solid #d8e1ec; background: #fff; color: #1f2937 }
 
 .mis-grabaciones-boton-principal {
     border: none;
@@ -108,15 +69,9 @@
 }
 
 .mis-grabaciones-boton-secundario:hover,
-.mis-grabaciones-boton-principal:hover {
-    transform: translateY(-1px);
-}
+.mis-grabaciones-boton-principal:hover { transform: translateY(-1px) }
 
-.mis-grabaciones-resumen-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-}
+.mis-grabaciones-resumen-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px }
 
 .mis-grabaciones-resumen-card {
     padding: 16px 18px;
@@ -125,41 +80,15 @@
     background: rgba(255, 255, 255, 0.82);
 }
 
-.mis-grabaciones-resumen-card span {
-    display: block;
-    color: #64748b;
-    font-size: 0.84rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
+.mis-grabaciones-resumen-card span { display: block; color: #64748b; font-size: .84rem; font-weight: 700; margin-bottom: 8px }
+.mis-grabaciones-resumen-card strong { color: #0f172a; font-size: 1.9rem; line-height: 1 }
 
-.mis-grabaciones-resumen-card strong {
-    color: #0f172a;
-    font-size: 1.9rem;
-    line-height: 1;
-}
+.mis-grabaciones-resumen-card.acento-azul { background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%) }
+.mis-grabaciones-resumen-card.acento-dorado { background: linear-gradient(180deg, #fff8eb 0%, #ffffff 100%) }
+.mis-grabaciones-resumen-card.acento-verde { background: linear-gradient(180deg, #eefcf1 0%, #ffffff 100%) }
+.mis-grabaciones-resumen-card.acento-oscuro { background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) }
 
-.mis-grabaciones-resumen-card.acento-azul {
-    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
-}
-
-.mis-grabaciones-resumen-card.acento-dorado {
-    background: linear-gradient(180deg, #fff8eb 0%, #ffffff 100%);
-}
-
-.mis-grabaciones-resumen-card.acento-verde {
-    background: linear-gradient(180deg, #eefcf1 0%, #ffffff 100%);
-}
-
-.mis-grabaciones-resumen-card.acento-oscuro {
-    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.mis-grabaciones-lista {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
+.mis-grabaciones-lista { display: flex; flex-direction: column; gap: 16px }
 
 .mis-grabaciones-card {
     display: grid;
@@ -185,58 +114,18 @@
     text-align: center;
 }
 
-.mis-grabaciones-card-marca span {
-    font-size: 0.78rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
+.mis-grabaciones-card-marca span { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em }
+.mis-grabaciones-card-marca strong { font-size: 1.6rem; line-height: 1 }
 
-.mis-grabaciones-card-marca strong {
-    font-size: 1.6rem;
-    line-height: 1;
-}
+.mis-grabaciones-card-marca.competencia { background: linear-gradient(135deg, #fff8e6 0%, #f4ead0 100%); color: #8a5b14 }
+.mis-grabaciones-card-marca.practica { background: linear-gradient(135deg, #eefbe9 0%, #ddf2d0 100%); color: #356b2d }
 
-.mis-grabaciones-card-marca.competencia {
-    background: linear-gradient(135deg, #fff8e6 0%, #f4ead0 100%);
-    color: #8a5b14;
-}
+.mis-grabaciones-card-titulo-linea { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.mis-grabaciones-card-cuerpo h3 { margin: 0; color: #0f172a; font-size: 1.18rem }
+.mis-grabaciones-card-subtitulo { margin: 6px 0 0; color: #334155; font-weight: 600 }
+.mis-grabaciones-card-meta { margin: 8px 0 0; color: #64748b; font-size: .92rem }
 
-.mis-grabaciones-card-marca.practica {
-    background: linear-gradient(135deg, #eefbe9 0%, #ddf2d0 100%);
-    color: #356b2d;
-}
-
-.mis-grabaciones-card-titulo-linea {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.mis-grabaciones-card-cuerpo h3 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 1.18rem;
-}
-
-.mis-grabaciones-card-subtitulo {
-    margin: 6px 0 0;
-    color: #334155;
-    font-weight: 600;
-}
-
-.mis-grabaciones-card-meta {
-    margin: 8px 0 0;
-    color: #64748b;
-    font-size: 0.92rem;
-}
-
-.mis-grabaciones-card-chips {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.mis-grabaciones-card-chips { display: flex; align-items: center; gap: 8px }
 
 .mis-grabaciones-chip,
 .mis-grabaciones-chip-badge {
@@ -246,40 +135,17 @@
     gap: 6px;
     padding: 6px 12px;
     border-radius: 999px;
-    font-size: 0.76rem;
+    font-size: .76rem;
     font-weight: 800;
 }
 
-.mis-grabaciones-chip.publicada {
-    background: #ecfdf3;
-    color: #0f8a4b;
-}
+.mis-grabaciones-chip.publicada { background: #ecfdf3; color: #0f8a4b }
+.mis-grabaciones-chip.publica { background: #eff6ff; color: #1d4ed8 }
+.mis-grabaciones-chip.privada { background: #f3f4f6; color: #4b5563 }
+.mis-grabaciones-chip-badge.competencia { background: #fff2d7; color: #8a5b14 }
+.mis-grabaciones-chip-badge.practica { background: #eaf8e3; color: #356b2d }
 
-.mis-grabaciones-chip.publica {
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
-.mis-grabaciones-chip.privada {
-    background: #f3f4f6;
-    color: #4b5563;
-}
-
-.mis-grabaciones-chip-badge.competencia {
-    background: #fff2d7;
-    color: #8a5b14;
-}
-
-.mis-grabaciones-chip-badge.practica {
-    background: #eaf8e3;
-    color: #356b2d;
-}
-
-.mis-grabaciones-card-acciones {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+.mis-grabaciones-card-acciones { display: flex; flex-direction: column; gap: 10px }
 
 .mis-grabaciones-estado {
     display: flex;
@@ -295,13 +161,8 @@
     text-align: center;
 }
 
-.mis-grabaciones-estado.error {
-    background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
-}
-
-.mis-grabaciones-estado.vacio {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-}
+.mis-grabaciones-estado.error { background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%) }
+.mis-grabaciones-estado.vacio { background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) }
 
 .mis-grabaciones-estado-icono {
     width: 64px;
@@ -315,15 +176,9 @@
 }
 
 .mis-grabaciones-estado h3,
-.mis-grabaciones-estado p {
-    margin: 0;
-}
+.mis-grabaciones-estado p { margin: 0 }
 
-.mis-grabaciones-estado p {
-    max-width: 580px;
-    color: #64748b;
-    line-height: 1.6;
-}
+.mis-grabaciones-estado p { max-width: 580px; color: #64748b; line-height: 1.6 }
 
 .mis-grabaciones-spinner {
     width: 42px;
@@ -331,7 +186,7 @@
     border-radius: 50%;
     border: 3px solid #dbeafe;
     border-top-color: #2563eb;
-    animation: mis-grabaciones-spin 0.9s linear infinite;
+    animation: mis-grabaciones-spin .9s linear infinite;
 }
 
 .mis-grabaciones-publicar-overlay {
@@ -365,29 +220,11 @@
     margin-bottom: 18px;
 }
 
-.mis-grabaciones-publicar-modal h2 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 1.6rem;
-}
+.mis-grabaciones-publicar-modal h2 { margin: 0; color: #0f172a; font-size: 1.6rem }
+.mis-grabaciones-publicar-modal p { margin: 8px 0 0; color: #64748b }
 
-.mis-grabaciones-publicar-modal p {
-    margin: 8px 0 0;
-    color: #64748b;
-}
-
-.mis-grabaciones-campo {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.mis-grabaciones-campo span {
-    color: #334155;
-    font-size: 0.84rem;
-    font-weight: 700;
-}
+.mis-grabaciones-campo { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px }
+.mis-grabaciones-campo span { color: #334155; font-size: .84rem; font-weight: 700 }
 
 .mis-grabaciones-campo input,
 .mis-grabaciones-campo textarea {
@@ -400,86 +237,30 @@
     font: inherit;
 }
 
-.mis-grabaciones-campo textarea {
-    min-height: 150px;
-    resize: vertical;
-}
+.mis-grabaciones-campo textarea { min-height: 150px; resize: vertical }
 
 .mis-grabaciones-campo input:focus,
-.mis-grabaciones-campo textarea:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
-}
+.mis-grabaciones-campo textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14) }
 
-.mis-grabaciones-error-publicacion {
-    margin: 0 0 14px;
-    color: #b91c1c;
-    font-size: 0.84rem;
-    font-weight: 700;
-}
+.mis-grabaciones-error-publicacion { margin: 0 0 14px; color: #b91c1c; font-size: .84rem; font-weight: 700 }
+.mis-grabaciones-ayuda-publicacion { margin: 0 0 14px; color: #475569; font-size: .88rem; line-height: 1.5 }
 
-.mis-grabaciones-ayuda-publicacion {
-    margin: 0 0 14px;
-    color: #475569;
-    font-size: 0.88rem;
-    line-height: 1.5;
-}
-
-.mis-grabaciones-publicar-acciones {
-    display: grid;
-    grid-template-columns: 1fr 1.35fr;
-    gap: 12px;
-}
+.mis-grabaciones-publicar-acciones { display: grid; grid-template-columns: 1fr 1.35fr; gap: 12px }
 
 .mis-grabaciones-boton-secundario:disabled,
-.mis-grabaciones-boton-principal:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-    transform: none;
-    box-shadow: none;
-}
+.mis-grabaciones-boton-principal:disabled { cursor: not-allowed; opacity: .7; transform: none; box-shadow: none }
 
-@keyframes mis-grabaciones-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
+@keyframes mis-grabaciones-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
 @media (max-width: 980px) {
-    .mis-grabaciones-resumen-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .mis-grabaciones-card {
-        grid-template-columns: 1fr;
-    }
-
-    .mis-grabaciones-card-acciones {
-        width: 100%;
-    }
+    .mis-grabaciones-resumen-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+    .mis-grabaciones-card { grid-template-columns: 1fr }
+    .mis-grabaciones-card-acciones { width: 100% }
 }
 
 @media (max-width: 720px) {
-    .mis-grabaciones-hero,
-    .mis-grabaciones-publicar-modal {
-        padding: 20px;
-    }
-
-    .mis-grabaciones-hero-contenido,
-    .mis-grabaciones-hero-acciones,
-    .mis-grabaciones-publicar-encabezado {
-        flex-direction: column;
-    }
-
-    .mis-grabaciones-resumen-grid,
-    .mis-grabaciones-publicar-acciones {
-        grid-template-columns: 1fr;
-    }
-
-    .mis-grabaciones-filtro,
-    .mis-grabaciones-filtro select,
-    .mis-grabaciones-boton-secundario,
-    .mis-grabaciones-boton-principal {
-        width: 100%;
-    }
+    .mis-grabaciones-hero, .mis-grabaciones-publicar-modal { padding: 20px }
+    .mis-grabaciones-hero-contenido, .mis-grabaciones-hero-acciones, .mis-grabaciones-publicar-encabezado { flex-direction: column }
+    .mis-grabaciones-resumen-grid, .mis-grabaciones-publicar-acciones { grid-template-columns: 1fr }
+    .mis-grabaciones-filtro, .mis-grabaciones-filtro select, .mis-grabaciones-boton-secundario, .mis-grabaciones-boton-principal { width: 100% }
 }
