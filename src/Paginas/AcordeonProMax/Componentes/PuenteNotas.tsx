@@ -6,8 +6,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { mapaTeclas } from '../../SimuladorDeAcordeon/mapaTecladoYFrecuencias';
-import type { ModoVista } from '../../SimuladorDeAcordeon/TiposAcordeon';
+import { mapaTeclas } from '../../../Core/acordeon/mapaTecladoYFrecuencias';
+import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
 import type { CancionHeroConTonalidad } from '../TiposProMax';
 import {
   TICKS_VIAJE,

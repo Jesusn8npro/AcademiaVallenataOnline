@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../../servicios/clienteSupabase';
 import type { UsuarioAdmin } from '../../../../../servicios/usuariosAdminService';
 import './PestanaActividad.css';
@@ -67,7 +67,6 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
 
     try {
       setCargandoActividad(true);
-      console.log('ðŸ“Š [ACTIVIDAD] Cargando datos reales para usuario:', usuario.nombre);
 
       // 1ï¸âƒ£ OBTENER RESUMEN DE SESIONES_USUARIO
       const { data: resumenSesiones } = await supabase
@@ -100,7 +99,6 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
       // PROCESAR Y CALCULAR MÉTRICAS
       await procesarDatosActividad(resumenSesiones || [], eventosActividad || [], progresoInscripciones || []);
 
-      console.log('âœ… [ACTIVIDAD] Datos cargados:', datosActividad);
 
     } catch (error) {
       console.error('âŒ [ACTIVIDAD] Error cargando datos:', error);

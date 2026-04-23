@@ -122,11 +122,6 @@ const ReproductorAudio = ({ texto }: { texto: string }) => {
     useEffect(() => {
         const cargarVoces = () => {
             const voces = window.speechSynthesis.getVoices();
-            console.log("Voces disponibles:", voces.map(v => `${v.name} (${v.lang})`)); // Debug para el usuario si mira consola
-
-            // 1. Prioridad: Español Colombia (es-CO)
-            // 2. Prioridad: Voces masculinas conocidas en español (Microsoft Pablo, Google español de Latinoamérica)
-            // 3. Fallback: Cualquier español
 
             let vozElegida = voces.find(v => v.lang === 'es-CO');
 
@@ -143,7 +138,6 @@ const ReproductorAudio = ({ texto }: { texto: string }) => {
             }
 
             if (vozElegida) {
-                console.log("Voz seleccionada:", vozElegida.name);
                 setVozSeleccionada(vozElegida);
             }
         };

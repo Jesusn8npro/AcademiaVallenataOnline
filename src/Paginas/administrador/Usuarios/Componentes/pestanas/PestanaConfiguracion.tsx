@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './PestanaConfiguracion.css';
 import { supabase } from '../../../../../servicios/clienteSupabase';
 import { cambiarPasswordUsuario, enviarEmailRestablecimiento } from '../../../../../servicios/passwordService';
@@ -148,7 +148,6 @@ const PestanaConfiguracion: React.FC<Props> = ({ usuario, onUsuarioActualizado }
       setCargandoPassword(true);
       setError('');
 
-      console.log('Cambiando contraseña para usuario:', usuario.id);
 
       // Usar función RPC para cambiar contraseña directamente
       const resultado = await cambiarPasswordUsuario(usuario.id, nuevaPassword);

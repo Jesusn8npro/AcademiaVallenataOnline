@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 import MostradorCursosTutoriales from './panel-contenido/componentes/MostradorCursosTutoriales';
@@ -43,25 +43,21 @@ const PanelContenido = () => {
         estado: string,
         tipo: string
     ) => {
-        console.log('🔍 [FILTROS] Aplicando filtros:', { busqueda, estado, tipo });
 
         let items = [
             ...cursos.map(c => ({ ...c, tipo: 'curso' as const })),
             ...tutoriales.map(t => ({ ...t, tipo: 'tutorial' as const }))
         ];
 
-        console.log('📋 [UNIFICADO] Total items antes de filtrar:', items.length);
 
         // FILTRO POR TIPO
         if (tipo !== 'todos') {
             items = items.filter(item => item.tipo === tipo);
-            console.log(`🎯 [TIPO] Filtrado por "${tipo}":`, items.length, 'items');
         }
 
         // FILTRO POR ESTADO
         if (estado !== 'todos') {
             items = items.filter(item => item.estado === estado);
-            console.log(`📌 [ESTADO] Filtrado por "${estado}":`, items.length, 'items');
         }
 
         // FILTRO POR BÚSQUEDA
@@ -78,11 +74,9 @@ const PanelContenido = () => {
                 item.nivel?.toLowerCase().includes(busquedaLower) ||
                 item.estado?.toLowerCase().includes(busquedaLower)
             );
-            console.log(`🔍 [BÚSQUEDA] Filtrado por "${busqueda}":`, items.length, 'items');
         }
 
         const resultado = items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        console.log('✅ [RESULTADO] Items finales:', resultado.length);
 
         return resultado;
     };
@@ -106,7 +100,6 @@ const PanelContenido = () => {
 
     const cargarContenido = async () => {
         try {
-            console.log('🔄 Cargando contenido del panel admin...');
 
             const [cursosRes, tutorialesRes, modulosRes, leccionesRes, inscripcionesRes, partesRes] = await Promise.all([
                 // CURSOS básicos
@@ -147,11 +140,6 @@ const PanelContenido = () => {
             const inscripcionesData = inscripcionesRes.data || [];
             const partesData = partesRes.data || [];
 
-            console.log('📊 Datos auxiliares cargados:');
-            console.log('- Módulos:', modulosData.length);
-            console.log('- Lecciones:', leccionesData.length);
-            console.log('- Inscripciones:', inscripcionesData.length);
-            console.log('- Partes:', partesData.length);
 
             if (!cursosRes.error) {
                 const cursosConConteos = (cursosRes.data || []).map((curso: any) => {
@@ -167,7 +155,6 @@ const PanelContenido = () => {
                     };
                 });
                 setCursos(cursosConConteos);
-                console.log('✅ Cursos procesados:', cursosConConteos.length);
             }
 
             if (!tutorialesRes.error) {
@@ -182,14 +169,12 @@ const PanelContenido = () => {
                     };
                 });
                 setTutoriales(tutorialesConConteos);
-                console.log('✅ Tutoriales procesados:', tutorialesConConteos.length);
             }
 
         } catch (error) {
             console.error('❌ Error general cargando datos:', error);
         } finally {
             setCargando(false);
-            console.log('✅ Panel de contenido cargado completamente');
         }
     };
 

@@ -1,5 +1,5 @@
 import { supabase } from './clienteSupabase';
-import type { NotaHero } from '../Paginas/SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
+import type { NotaHero } from '../Core/hero/tipos_Hero';
 
 export async function actualizarSecuenciaCancionHero(id: string, secuencia: NotaHero[]) {
     const tablaCanciones: any = supabase.from('canciones_hero' as any);

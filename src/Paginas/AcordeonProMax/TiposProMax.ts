@@ -5,7 +5,7 @@
  * Este archivo independiza al simulador de la carpeta AcordeonHero.
  */
 
-import type { CancionHero, NotaHero, DireccionFuelle } from '../SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
+import type { CancionHero, NotaHero, DireccionFuelle } from '../../Core/hero/tipos_Hero';
 export type { CancionHero, NotaHero, DireccionFuelle };
 
 // ─── Estados del juego ──────────────────────────────────────────────────────

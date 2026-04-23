@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 
 type SonidoEfecto = 'Electrónico' | 'Madera' | 'Aplausos' | 'Campana 1' | 'Campana 2' | 'Tono' | 'Silencioso' | 'Baqueta';
 

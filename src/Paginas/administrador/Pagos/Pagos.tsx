@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../servicios/clienteSupabase';
 import './Pagos.css';
 
@@ -99,7 +99,6 @@ const Pagos: React.FC = () => {
                             .single();
                         if (usuario) pagoEnriquecido.perfiles = usuario;
                     } catch (error) {
-                        console.log('Error obteniendo usuario:', error);
                     }
                 }
 
@@ -112,7 +111,6 @@ const Pagos: React.FC = () => {
                             .single();
                         if (curso) pagoEnriquecido.cursos = curso;
                     } catch (error) {
-                        console.log('Error obteniendo curso:', error);
                     }
                 }
 
@@ -125,7 +123,6 @@ const Pagos: React.FC = () => {
                             .single();
                         if (tutorial) pagoEnriquecido.tutoriales = tutorial;
                     } catch (error) {
-                        console.log('Error obteniendo tutorial:', error);
                     }
                 }
 
@@ -308,7 +305,6 @@ const Pagos: React.FC = () => {
                     );
 
                     if (!response.ok) {
-                        console.log(`Referencia ${pago.ref_payco} no encontrada en ePayco`);
                         continue;
                     }
 

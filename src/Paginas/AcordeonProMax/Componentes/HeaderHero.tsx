@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import './HeaderHero.css';
-import type { ModoVista } from '../../SimuladorDeAcordeon/TiposAcordeon';
+import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
 
 interface HeaderHeroProps {
   hero: any;

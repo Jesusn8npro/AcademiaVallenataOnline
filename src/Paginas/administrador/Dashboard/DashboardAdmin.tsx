@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { actividadService } from '../../../servicios/actividadService';
@@ -43,7 +43,6 @@ const DashboardAdmin: React.FC = () => {
                     table: 'sesiones_usuario'
                 },
                 (payload) => {
-                    console.log('🔔 Cambio en sesiones_usuario:', payload.eventType);
                     // Recargar datos cuando hay cambios
                     cargarDatosTiempoReal();
                 }
@@ -68,13 +67,10 @@ const DashboardAdmin: React.FC = () => {
     const iniciarIntervalo = () => {
         detenerIntervalo();
         intervalRef.current = setInterval(async () => {
-            console.log('🔄 [AUTO] Actualizando dashboard (30s)...');
             // Limpiar sesiones expiradas
             try {
                 await supabase.rpc('limpiar_sesiones_expiradas');
-                console.log('✅ Sesiones expiradas limpiadas');
             } catch (err) {
-                console.warn('⚠️ Error limpiando sesiones:', err);
             }
             // Actualizar datos en tiempo real
             cargarDatosTiempoReal();

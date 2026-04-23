@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModalBusqueda from '../../componentes/Busqueda/ModalBusqueda';
+import { useParticulasFlotantes } from './Hooks/useParticulasFlotantes';
 import './Pagina404.css';
 
 const Pagina404: React.FC = () => {
@@ -73,30 +74,7 @@ const Pagina404: React.FC = () => {
     const irAInicio = () => navigate('/');
     const irAContacto = () => navigate('/contacto');
 
-    // Efecto de partículas flotantes
-    useEffect(() => {
-        crearParticulasFlotantes();
-    }, []);
-
-    const crearParticulasFlotantes = () => {
-        const container = document.querySelector('.academia-particulas-container');
-        if (!container) return;
-
-        // Limpiar partículas existentes si React re-renderiza
-        container.innerHTML = '';
-
-        const particulas = ['🎵', '🎶', '🎼', '🎤', '🎸', '🥁'];
-
-        for (let i = 0; i < 15; i++) {
-            const particula = document.createElement('div');
-            particula.className = 'academia-particula-flotante';
-            particula.textContent = particulas[Math.floor(Math.random() * particulas.length)];
-            particula.style.left = Math.random() * 100 + '%';
-            particula.style.animationDelay = Math.random() * 10 + 's';
-            particula.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            container.appendChild(particula);
-        }
-    };
+    useParticulasFlotantes();
 
     return (
         <>

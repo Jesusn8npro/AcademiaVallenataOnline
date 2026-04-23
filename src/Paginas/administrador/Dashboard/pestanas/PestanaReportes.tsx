@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import {
@@ -58,7 +58,6 @@ const PestanaReportes: React.FC = () => {
     async function cargarReportes() {
         try {
             setCargandoReporte(true);
-            console.log('📊 [REPORTES] Generando análisis...');
 
             await Promise.all([
                 calcularMetricasNegocio(),
@@ -113,7 +112,6 @@ const PestanaReportes: React.FC = () => {
                     ? Math.round((inscripciones.filter((i: any) => i.completado).length / inscripciones.length) * 100)
                     : 0;
             } catch (e) {
-                console.log('Tabla inscripciones no encontrada o vacía, usando 0');
             }
 
             // Curso más popular
@@ -137,7 +135,6 @@ paquete_id,
                     cursosPopulares = masPopular ? masPopular[0] : 'N/A';
                 }
             } catch (e) {
-                console.log('Error calculando populares');
             }
 
             // Retención

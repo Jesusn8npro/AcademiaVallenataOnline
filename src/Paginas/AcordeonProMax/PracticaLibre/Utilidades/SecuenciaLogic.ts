@@ -1,4 +1,4 @@
-import type { NotaHero } from '../../../SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
+import type { NotaHero } from '../../../../Core/hero/tipos_Hero';
 
 export function formatearDuracion(ms: number): string {
   const totalSegundos = Math.max(0, Math.floor(ms / 1000));

@@ -63,20 +63,20 @@ import AdminChats from './Paginas/administrador/chats/AdminChats'
 import Notificaciones from './Paginas/Notificaciones/Notificaciones'
 import AdminNotificaciones from './Paginas/administrador/notificaciones/AdminNotificaciones'
 import Pagina404 from './Paginas/404/Pagina404'
-import SimuladorGaming from './Paginas/SimuladorDeAcordeon/SimuladorGaming';
+
 import SimuladorApp from './Paginas/SimuladorApp/SimuladorApp';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
 import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
 import ValidacionesAdmin from './Paginas/administrador/Validaciones/ValidacionesAdmin';
 import PaginaEjemplo3D from './Paginas/Ejemplos3d1';
 import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
-import AgenciaIAPage from './Paginas/AgenciaIA';
-import GrabadorHero from './Paginas/SimuladorDeAcordeon/videojuego_acordeon/GrabadorHero';
+
 // import HomeProMax from './Paginas/AcordeonProMax/HomeProMax'; (line neighbor)
 import HomeProMax from './Paginas/AcordeonProMax/Pantallas/HomeProMax';
 import ListaCancionesProMax from './Paginas/AcordeonProMax/Pantallas/ListaCancionesProMax';
 import ConfiguracionProMax from './Paginas/AcordeonProMax/Pantallas/ConfiguracionProMax';
 import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxSimulador';
+import EstudioAdmin from './Paginas/AcordeonProMax/Admin/Paginas/EstudioAdmin';
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
@@ -120,11 +120,10 @@ const AppContent = () => {
   const esRecuperarContrasena = pathname === '/recuperar-contrasena';
 
   const esAcordeonProMax = pathname.startsWith('/acordeon-pro-max') || pathname === '/acordeon-promax' || pathname === '/acordeon-promax-menu';
-  const esAgencia = pathname === '/agencia-ia';
 
   // Agregar clase al body cuando el usuario está autenticado y NO estamos en vistas inmersivas
   useEffect(() => {
-    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp || esAcordeonProMax || esAgencia || esRecuperarContrasena;
+    const esInmersivo = esModoLectura || esLandingVenta || esSimuladorApp || esAcordeonProMax || esRecuperarContrasena;
 
     if (estaAutenticado && !esInmersivo) {
       document.body.classList.add('con-sidebar')
@@ -143,7 +142,7 @@ const AppContent = () => {
     <>
       {!location.pathname.startsWith('/simulador') && <CursorPersonalizado />}
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
-      {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+      {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         estaAutenticado ? (
           <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
         ) : (
@@ -152,15 +151,15 @@ const AppContent = () => {
       )}
 
       {/* Mostrar banner de email faltante si está autenticado */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         <EmailCompletarWrapper />
       )}
 
       {/* Sidebar Admin - Solo visible si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <SidebarAdmin />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && <SidebarAdmin />}
 
       {/* Menú Inferior Responsivo - Solo visible en móvil y solo si está autenticado Y NO es clase, landing venta o SIMULADOR */}
-      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && <MenuInferiorResponsivo />}
+      {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && <MenuInferiorResponsivo />}
 
 
       <Routes>
@@ -214,7 +213,6 @@ const AppContent = () => {
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
-        <Route path="/agencia-ia" element={<AgenciaIAPage />} />
         <Route path="/acordeon-pro-max" element={<ProtegidoAcordeonProMax><HomeProMax /></ProtegidoAcordeonProMax>} />
         <Route path="/acordeon-pro-max/lista" element={<ProtegidoAcordeonProMax><ListaCancionesProMax /></ProtegidoAcordeonProMax>} />
         <Route path="/acordeon-pro-max/acordeon" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
@@ -223,10 +221,8 @@ const AppContent = () => {
 
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
-          <Route path="/grabador-hero" element={<GrabadorHero />} />
-
+          <Route path="/acordeon-pro-max/admin/practica" element={<EstudioAdmin />} />
           <Route path="/acordeon-pro-max/configuracion" element={<ConfiguracionProMax />} />
-          <Route path="/simulador-gaming" element={<SimuladorGaming />} />
           <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />
           <Route path="/administrador/contenido" element={<PanelContenido />} />
@@ -250,15 +246,15 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+      {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         <>
           {!estaAutenticado && <ChatEnVivo />}
           {!estaAutenticado && <BotonWhatsapp />}
         </>
       )}
-      
+
       {/* Footer - Solo en páginas públicas, NO en app autenticada, NO en vistas inmersivas */}
-      {!estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esAgencia && !esRecuperarContrasena && (
+      {!estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         <Footer />
       )}
     </>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import {
     Users,
@@ -49,7 +49,6 @@ const PestanaUsuarios: React.FC = () => {
     async function cargarEstadisticasUsuarios() {
         try {
             setCargando(true);
-            console.log('👥 [USUARIOS] Cargando estadísticas...');
 
             await Promise.all([
                 cargarEstadisticasGenerales(),

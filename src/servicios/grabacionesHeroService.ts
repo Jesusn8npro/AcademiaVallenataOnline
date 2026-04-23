@@ -1,5 +1,5 @@
 import { supabase } from './clienteSupabase';
-import type { NotaHero } from '../Paginas/SimuladorDeAcordeon/videojuego_acordeon/tipos_Hero';
+import type { NotaHero } from '../Core/hero/tipos_Hero';
 
 export type ModoGrabacionHero = 'practica_libre' | 'competencia';
 

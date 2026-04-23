@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './GeolocalizacionUsuarios.css';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, MapPin } from 'lucide-react';
@@ -70,7 +70,6 @@ const GeolocalizacionUsuarios: React.FC = () => {
             }
 
             if (!geoData || geoData.length === 0) {
-                console.log('📋 [GEO-WIDGET] No hay datos de geolocalización');
                 setUbicaciones([]);
                 setHayDatosReales(false);
                 return;
@@ -130,7 +129,6 @@ const GeolocalizacionUsuarios: React.FC = () => {
                 paisesPrincipales
             });
 
-            console.log('✅ [GEO-WIDGET] Datos cargados:', ubicacionesProcesadas.length, 'ubicaciones');
 
         } catch (error) {
             console.error('❌ [GEO-WIDGET] Error cargando ubicaciones:', error);

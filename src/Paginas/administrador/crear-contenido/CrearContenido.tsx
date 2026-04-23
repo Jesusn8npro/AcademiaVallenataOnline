@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardContenido from '../../../componentes/CrearContenido/WizardContenido';
 import { supabase } from '../../../servicios/clienteSupabase';
@@ -13,7 +13,6 @@ const CrearContenido = () => {
   const [errorCarga, setErrorCarga] = useState('');
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  console.log('🔄 [CREAR CONTENIDO] Render:', { modoEdicion, tipoContenido, datosIniciales, titulo: datosIniciales?.titulo });
 
   const tituloPrincipal = modoEdicion
     ? `✏️ Editar ${tipoContenido === 'curso' ? 'Curso' : 'Tutorial'}${datosIniciales?.titulo || datosIniciales?.nombre ? `: ${datosIniciales?.titulo || datosIniciales?.nombre}` : ''}`
@@ -37,7 +36,6 @@ const CrearContenido = () => {
     setErrorCarga('');
 
     try {
-      console.log('🔍 [EDICIÓN] Cargando datos para:', { slugContenido, tipo });
 
       const esUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugContenido);
       const esNumerico = /^\d+$/.test(slugContenido);

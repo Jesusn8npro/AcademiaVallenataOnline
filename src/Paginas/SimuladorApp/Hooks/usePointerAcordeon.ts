@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
-import { motorAudioPro } from '../../SimuladorDeAcordeon/AudioEnginePro';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 
 interface PointerLogicProps {
     x: MotionValue<number>;

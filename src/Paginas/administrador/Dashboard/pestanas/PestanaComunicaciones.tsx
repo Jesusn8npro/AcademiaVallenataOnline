@@ -1,4 +1,4 @@
-import { supabase } from '../../../../servicios/clienteSupabase';
+﻿import { supabase } from '../../../../servicios/clienteSupabase';
 import {
     Mail,
     MessageSquare,
@@ -260,12 +260,6 @@ id, nombre, apellido, correo_electronico, whatsapp, rol, created_at,
             }
 
             // Simular envío
-            console.log('📧 [COMUNICACIÓN] Enviando campaña...', {
-                titulo: nuevaCampaña.titulo,
-                tipo: nuevaCampaña.tipo,
-                destinatarios: destinatariosFiltrados.length,
-                programada: nuevaCampaña.fechaProgramada ? true : false
-            });
 
             // Crear nueva campaña
             const nuevaCampañaObj: CampañaComunicacion = {

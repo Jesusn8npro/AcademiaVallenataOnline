@@ -1,8 +1,8 @@
 import React from 'react';
 import { Save, RotateCcw, RefreshCw } from 'lucide-react';
-import PestanaDiseno from '../../../SimuladorDeAcordeon/Componentes/PanelAjustes/PestanaDiseno';
-import PestanaSonido from '../../../SimuladorDeAcordeon/Componentes/PanelAjustes/PestanaSonido';
-import type { AjustesAcordeon, SonidoVirtual } from '../../../SimuladorDeAcordeon/TiposAcordeon';
+import PestanaDiseno from '../../../../Core/componentes/PanelAjustes/PestanaDiseno';
+import PestanaSonido from '../../../../Core/componentes/PanelAjustes/PestanaSonido';
+import type { AjustesAcordeon, SonidoVirtual } from '../../../../Core/acordeon/TiposAcordeon';
 import './PanelAdminGestor.css';
 
 interface PanelAdminGestorProps {

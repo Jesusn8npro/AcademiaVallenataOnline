@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Crosshair, AlertCircle } from 'lucide-react';
-import CuerpoAcordeon from '../../SimuladorDeAcordeon/Componentes/CuerpoAcordeon';
+import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import BarraTransporte from './BarraTransporte';
 import './ModoMaestroSolo.css';
 
