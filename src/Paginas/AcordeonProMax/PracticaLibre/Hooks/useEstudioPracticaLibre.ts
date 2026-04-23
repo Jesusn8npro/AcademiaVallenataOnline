@@ -171,10 +171,15 @@ export function useEstudioPracticaLibre({
       audio.currentTime = tiempoInicial;
     });
 
+    let ultimaActualizacionUI = 0;
     maestro.addEventListener('timeupdate', () => {
       tiempoActualRef.current = maestro.currentTime;
-      setTiempoPistaActual(maestro.currentTime);
-      setDuracionPista(Number.isFinite(maestro.duration) ? maestro.duration : 0);
+      // Actualizar UI del tiempo solo cada 500ms para no provocar re-renders excesivos
+      const ahora = Date.now();
+      if (ahora - ultimaActualizacionUI >= 500) {
+        ultimaActualizacionUI = ahora;
+        setTiempoPistaActual(maestro.currentTime);
+      }
     });
 
     maestro.addEventListener('loadedmetadata', () => {

@@ -978,34 +978,125 @@
   background: #ef4444;
 }
 
-.btn-iniciar-edicion-pro {
-  background: #3b82f6;
-  color: white;
-  border: none;
+/* --- Estados del Panel Punch-In --- */
+
+.edicion-status-badge {
+  /* estado neutro (idle) */
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Pre-roll box */
+.punch-preroll-box {
+  text-align: center;
+  padding: 20px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 12px;
-  padding: 14px;
-  font-weight: 700;
+}
+
+.punch-preroll-numero {
+  font-size: 3.5em;
+  font-weight: 900;
+  color: #f59e0b;
+  line-height: 1;
+  font-family: var(--fuente-mono);
+}
+
+.punch-preroll-label {
+  font-size: 0.85em;
+  color: #fcd34d;
+  margin-top: 6px;
+}
+
+/* Grabando box */
+.punch-grabando-box {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+}
+
+.punch-grabando-pulso {
+  font-size: 2em;
+  color: #ef4444;
+  animation: pulseAnim 0.8s infinite;
+}
+
+.punch-grabando-titulo {
+  font-size: 1em;
+  font-weight: 800;
+  color: #ef4444;
+  letter-spacing: 2px;
+}
+
+.punch-grabando-contador {
+  font-size: 0.8em;
+  color: #fca5a5;
+  margin-top: 2px;
+}
+
+/* Panel de revisión */
+.punch-revisando-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.punch-revisando-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.punch-revisando-ayuda {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 1.5;
+}
+
+.punch-revisando-ayuda strong {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.punch-acciones-fila {
+  display: flex;
   gap: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
 }
 
-.btn-iniciar-edicion-pro:hover:not(:disabled) {
-  background: #2563eb;
-  transform: scale(1.02);
+.punch-acciones-fila .btn-iniciar-edicion-pro {
+  flex: 1;
+  padding: 14px 12px;
+  font-size: 13px;
 }
 
-.btn-iniciar-edicion-pro.detener {
-  background: #ef4444;
+.punch-activo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.btn-iniciar-edicion-pro:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.punch-mensaje-resultado {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Remove duplicate definition below (kept for override safety) */
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -1014,7 +1105,7 @@
 
 .spin {
   animation: spin 1s linear infinite;
-}/* --- Controles de Reproducci�n --- */
+}/* --- Controles de Reproducci�n --- */
 .editor-controles-reproduccion {
   display: flex;
   align-items: center;
@@ -1096,4 +1187,46 @@
   text-transform: uppercase;
   color: #64748b;
   font-weight: 800;
+}
+
+/* --- Animaciones de Acordeón --- */
+.secciones-cuerpo-acordeon {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.secciones-cuerpo-acordeon.abierto {
+  padding: 25px 0;
+  max-height: 5000px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.secciones-acordeon-icono {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  display: inline-block;
+  color: var(--editor-texto-tenue);
+}
+
+.secciones-cabecera-acordeon.abierto .secciones-acordeon-icono {
+  transform: rotate(180deg);
+  color: #fff;
+}
+
+.formulario-error-msj {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 1.5;
 }
