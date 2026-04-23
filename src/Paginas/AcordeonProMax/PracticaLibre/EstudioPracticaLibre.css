@@ -1,7 +1,7 @@
 .estudio-practica-libre {
-  --estudio-acordeon-tamano: min(70vh, 65vw);
+  --estudio-acordeon-tamano: min(65vh, 65vw);
   --estudio-acordeon-x: 50%;
-  --estudio-acordeon-y: 50%;
+  --estudio-acordeon-y: 52%;
   position: relative;
   width: 100%;
   height: 100%;
@@ -661,68 +661,7 @@
   color: #fff;
 }
 
-@media (max-width: 1180px) {
-  .estudio-practica-libre {
-    --estudio-acordeon-tamano: min(60vh, 72vw);
-  }
 
-  .estudio-practica-libre-panel,
-  .editor-secuencia-modal {
-    display: none;
-  }
-}
-
-@media (max-width: 760px) {
-  .estudio-practica-libre {
-    padding: 10px;
-  }
-
-  .estudio-practica-libre-topbar,
-  .estudio-practica-libre-panel,
-  .estudio-practica-libre-escenario,
-  .estudio-practica-libre-footer {
-    border-radius: 18px;
-  }
-
-  .estudio-practica-libre-grid-modelos,
-  .estudio-practica-libre-teoria-columnas {
-    grid-template-columns: 1fr;
-  }
-
-  .estudio-practica-libre-footer {
-    position: static;
-    margin: 12px;
-  }
-}
-
-@media (max-width: 560px) {
-  .estudio-practica-libre {
-    --estudio-acordeon-tamano: min(54vh, 90vw);
-  }
-
-  .estudio-practica-libre-topbar,
-  .estudio-practica-libre-panel {
-    padding: 12px;
-  }
-
-  .estudio-practica-libre-grupo-paneles,
-  .estudio-practica-libre-topbar-acciones {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .estudio-practica-libre-btn,
-  .estudio-practica-libre-btn-grabar {
-    flex: 1 1 130px;
-  }
-}
-
-@media (max-width: 560px) {
-  .estudio-practica-libre-transport-fixed {
-    bottom: 10px;
-    width: 100%;
-  }
-}
 
 .estudio-practica-libre-transport-fixed {
   position: absolute;

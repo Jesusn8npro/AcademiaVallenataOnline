@@ -86,36 +86,64 @@ function fmtSeg(s: number, conDecimas = false) {
 const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   cancion,
   onCerrar,
-  tickActual,
-  totalTicks,
-  reproduciendoHero,
-  onAlternarPausa,
-  onDetener,
-  onBuscarTick,
+  tickActual: _tickActual,
+  totalTicks: _totalTicks,
+  reproduciendoHero: _reproduciendoHero,
+  onAlternarPausa: _onAlternarPausa,
+  onDetener: _onDetener,
+  onBuscarTick: _onBuscarTick,
   bpm,
   onCambiarBpm,
-  grabando,
-  tiempoGrabacionMs,
-  cuentaAtrasPreRoll,
+  grabando: _grabando,
+  tiempoGrabacionMs: _tiempoGrabacionMs,
+  cuentaAtrasPreRoll: _cuentaAtrasPreRoll,
   onIniciarGrabacion,
   onDetenerGrabacion,
-  punchInTick,
-  setPunchInTick,
-  punchOutTick,
-  setPunchOutTick,
+  punchInTick: _punchInTick,
+  setPunchInTick: _setPunchInTick,
+  punchOutTick: _punchOutTick,
+  setPunchOutTick: _setPunchOutTick,
   notasGrabadas,
   onNotasActuales,
   onSecuenciaChange,
-  duracionAudioProp,
+  duracionAudioProp: _duracionAudioProp,
   preRollSegundos,
   setPreRollSegundos,
   metronomoActivo,
   setMetronomoActivo,
-  mensajeEdicionProp
+  mensajeEdicionProp: _mensajeEdicionProp
 }) => {
-  const [tickModal, setTickModal] = useState(0);
-  const [reproduciendoModal, setReproduciendoModal] = useState(false);
+  // Reproductor local independiente del padre
+  const [tickLocal, setTickLocal] = useState(0);
+  const [reproduciendoLocal, setReproduciendoLocal] = useState(false);
   const [bpmModal, setBpmModal] = useState(cancion?.bpm || 120);
+
+  // Refs para el loop RAF (evitar closures obsoletos)
+  const tickLocalRef = useRef(0);
+  const inicioLocalRef = useRef<{ ts: number; tick: number } | null>(null);
+  const rAFLocalRef = useRef<number>(0);
+
+  // Punch-in local
+  const [punchInTickLocal, setPunchInTickLocal] = useState<number | null>(null);
+  const [preRollSegsLocal, setPreRollSegsLocal] = useState(preRollSegundos || 4);
+  const [metronomoLocal, setMetronomoLocal] = useState(metronomoActivo);
+  const [modoEdicion, setModoEdicion] = useState<'idle' | 'preroll' | 'grabando' | 'revisando'>('idle');
+  const [cuentaAtrasLocal, setCuentaAtrasLocal] = useState<number | null>(null);
+  const [guardandoToma, setGuardandoToma] = useState(false);
+  const [mensajeLocal, setMensajeLocal] = useState<string | null>(null);
+
+  // Preview de la toma grabada (antes de guardar)
+  const [secuenciaPreview, setSecuenciaPreview] = useState<NotaHero[]>([]);
+
+  // Refs para punch-in
+  const punchActivoRef = useRef(false);
+  const punchTickTargetRef = useRef<number | null>(null);
+  const notasAntesDelPunch = useRef<NotaHero[]>([]);
+  const punchInTickSnapshot = useRef<number | null>(null);
+
+  // Refs para el slider del timeline (evita el problema de controlled input a 60fps)
+  const sliderRef = useRef<HTMLInputElement>(null);
+  const isSeekingRef = useRef(false);
 
   // Duración: valor actual vs valor guardado (para detectar cambios)
   const [duracionSegundosModal, setDuracionSegundosModal] = useState<number>(cancion?.duracion_segundos || 30);
@@ -124,7 +152,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
   const [secuenciaEditada, setSecuenciaEditada] = useState<NotaHero[]>([]);
   const [secciones, setSecciones] = useState<Seccion[]>([]);
-  const [duracionAudio, setDuracionAudio] = useState(duracionAudioProp);
+  const [duracionAudio, setDuracionAudio] = useState(_duracionAudioProp);
   const [tiempoAudioActual, setTiempoAudioActual] = useState(0);
 
   // Formulario de nueva sección
@@ -136,6 +164,11 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
   // Panel secciones colapsable — cerrado por defecto
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(false);
+
+  // Estados de colapso para los otros 3 bloques
+  const [timelineAbierto, setTimelineAbierto] = useState(true);
+  const [edicionAbierta, setEdicionAbierta] = useState(false);
+  const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
   // Reproducción independiente dentro del panel de secciones
   const [reproduciendoSeccion, setReproduciendoSeccion] = useState(false);
 
@@ -143,10 +176,19 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   const [guardandoSecciones, setGuardandoSecciones] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const rAFRef = useRef<number>(0);
-  const ultimoTimestampRef = useRef<number>(0);
-  const rAFSeccionRef = useRef<number>(0);   // loop exclusivo del panel secciones
+  const rAFSeccionRef = useRef<number>(0);
+  const checkpointTickRef = useRef(0);
+  const checkpointTimeRef = useRef(0);
+  const tickAnteriorRef = useRef(-1);
+  const bpmOriginalRef = useRef(cancion?.bpm || 120);
+  const syncAudioRef = useRef<number>(0);
   const resolucion = cancion?.resolucion || 192;
+
+  // Refs que espejean estado para uso dentro del RAF loop (60fps, sin closures obsoletos)
+  const secuenciaEditadaRef = useRef<NotaHero[]>([]);
+  const secuenciaPreviewRef = useRef<NotaHero[]>([]);
+  const modoEdicionRef = useRef<'idle' | 'preroll' | 'grabando' | 'revisando'>('idle');
+  const onNotasActualesRef = useRef(onNotasActuales);
 
   // totalTicks = el mayor entre las notas Y la duración configurada (en ticks)
   const ticksDeDuracion = Math.round(duracionSegundosModal * (bpmModal / 60) * resolucion);
@@ -158,6 +200,12 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   const totalTicksModal = ticksDeDuracion > 0 ? ticksDeDuracion : Math.max(resolucion * 4, ultimoTickNotas);
 
   const duracionCambiada = Math.abs(duracionSegundosModal - duracionGuardada) > 0.05;
+
+  // ─── Sincronizar refs con estado (para uso en RAF sin closures obsoletos) ──
+  useEffect(() => { secuenciaEditadaRef.current = secuenciaEditada; }, [secuenciaEditada]);
+  useEffect(() => { secuenciaPreviewRef.current = secuenciaPreview; }, [secuenciaPreview]);
+  useEffect(() => { modoEdicionRef.current = modoEdicion; }, [modoEdicion]);
+  useEffect(() => { onNotasActualesRef.current = onNotasActuales; }, [onNotasActuales]);
 
   // ─── Inicializar datos ────────────────────────────────────────────────────
   useEffect(() => {
@@ -190,6 +238,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
         if (!cancion.duracion_segundos || cancion.duracion_segundos > dur) {
           setDuracionSegundosModal(dur);
         }
+        bpmOriginalRef.current = cancion?.bpm || 120;
       };
     }
     return () => {
@@ -200,60 +249,276 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
     };
   }, [cancion?.audio_fondo_url]);
 
-  // ─── Sincronizar notas con el acordeón ───────────────────────────────────
-  // ─── Sincronización con el estudio ───
-  useEffect(() => {
-    setTickModal(tickActual);
-  }, [tickActual]);
+  // ─── Sincronizar BPM con el padre ────────────────────────────────────────
+  useEffect(() => { setBpmModal(bpm); }, [bpm]);
 
-  useEffect(() => {
-    setReproduciendoModal(reproduciendoHero);
-  }, [reproduciendoHero]);
-
-  useEffect(() => {
-    setBpmModal(bpm);
-  }, [bpm]);
-
+  // ─── Limpiar notas al acordeón cuando se detiene la reproducción ─────────
+  // Las notas durante reproducción las dispara el RAF loop a 60fps (frame-precise)
   useEffect(() => {
     if (!onNotasActuales) return;
-    if (!reproduciendoModal) { onNotasActuales([]); return; }
-    const notasActuales = secuenciaEditada.filter(
-      n => tickModal >= n.tick && tickModal < (n.tick + n.duracion)
-    );
-    onNotasActuales(notasActuales);
-  }, [tickModal, reproduciendoModal, secuenciaEditada, onNotasActuales]);
+    if (!reproduciendoLocal || modoEdicion === 'grabando') { onNotasActuales([]); }
+  }, [reproduciendoLocal, modoEdicion, onNotasActuales]);
 
-  // ─── Bucle de audio local (solo para streaming del audioRef) ───
+  // ─── Construir preview de la toma cuando el padre termina de grabar ───────
   useEffect(() => {
-    if (!reproduciendoModal) return;
-    const updateAudio = () => {
-      if (audioRef.current) setTiempoAudioActual(audioRef.current.currentTime);
-      rAFRef.current = requestAnimationFrame(updateAudio);
+    if (!_grabando && modoEdicion === 'revisando' && punchInTickSnapshot.current !== null) {
+      const punchTick = punchInTickSnapshot.current;
+      const notasNuevas = notasGrabadas.map(n => ({ ...n, tick: n.tick + punchTick }));
+      const preview = [...notasAntesDelPunch.current, ...notasNuevas].sort((a, b) => a.tick - b.tick);
+      setSecuenciaPreview(preview);
+      // Situar el reproductor un poco antes del punto de punch para escuchar
+      const startPreview = Math.max(0, punchTick - Math.round(2 * (bpmModal / 60) * resolucion));
+      tickLocalRef.current = startPreview;
+      setTickLocal(startPreview);
+      if (sliderRef.current) sliderRef.current.value = String(startPreview);
+    }
+  }, [_grabando, modoEdicion, notasGrabadas, bpmModal, resolucion]);
+
+  // ─── Bucle RAF local: avance de tick + sync audio + disparo punch-in ─────
+  useEffect(() => {
+    if (!reproduciendoLocal) {
+      cancelAnimationFrame(rAFLocalRef.current);
+      inicioLocalRef.current = null;
+      if (audioRef.current && !reproduciendoSeccion) audioRef.current.pause();
+      return;
+    }
+
+    let lastUIUpdate = 0;
+    const bpmOriginal = cancion?.bpm || 120;
+
+    if (audioRef.current) {
+      const velocidad = Math.min(4, Math.max(0.1, bpmModal / Math.max(1, bpmOriginal)));
+      audioRef.current.playbackRate = velocidad;
+      (audioRef.current as any).preservesPitch = true;
+    }
+
+    const loop = () => {
+      // Usar el reloj del AudioContext (igual que useReproductorHero) para precisión de hardware
+      const ahora = motorAudioPro.tiempoActual;
+      if (!inicioLocalRef.current) {
+        inicioLocalRef.current = { ts: ahora, tick: tickLocalRef.current };
+      }
+      const elapsed = ahora - inicioLocalRef.current.ts; // en segundos
+      const newTick = Math.min(
+        totalTicksModal,
+        inicioLocalRef.current.tick + elapsed * (bpmModal / 60) * resolucion
+      );
+
+      tickLocalRef.current = newTick;
+
+      // Disparar notas al acordeón a 60fps (igual que useReproductorHero, frame-precise)
+      if (onNotasActualesRef.current && modoEdicionRef.current !== 'grabando') {
+        const seq = modoEdicionRef.current === 'revisando'
+          ? secuenciaPreviewRef.current
+          : secuenciaEditadaRef.current;
+        const notasActuales = seq.filter(n => newTick >= n.tick && newTick < n.tick + n.duracion);
+        onNotasActualesRef.current(notasActuales);
+      }
+
+      // Actualizar slider imperativo (siempre) y estado UI (throttled a ~15fps)
+      if (!isSeekingRef.current) {
+        if (sliderRef.current) sliderRef.current.value = String(newTick);
+        const ahoraMs = ahora * 1000;
+        if (ahoraMs - lastUIUpdate >= 67) {
+          lastUIUpdate = ahoraMs;
+          setTickLocal(newTick);
+          if (audioRef.current) setTiempoAudioActual(audioRef.current.currentTime);
+        }
+      }
+
+      // Disparar grabación cuando llega al punto de punch
+      if (punchActivoRef.current && punchTickTargetRef.current !== null) {
+        const rem = (punchTickTargetRef.current - newTick) / resolucion * (60 / Math.max(1, bpmModal));
+        if (rem <= 0) {
+          punchActivoRef.current = false;
+          punchTickTargetRef.current = null;
+          setCuentaAtrasLocal(null);
+          setModoEdicion('grabando');
+          onIniciarGrabacion();
+        } else {
+          setCuentaAtrasLocal(Math.ceil(rem));
+        }
+      }
+
+      if (newTick < totalTicksModal) {
+        rAFLocalRef.current = requestAnimationFrame(loop);
+      } else {
+        setReproduciendoLocal(false);
+      }
     };
-    rAFRef.current = requestAnimationFrame(updateAudio);
-    return () => cancelAnimationFrame(rAFRef.current);
-  }, [reproduciendoModal]);
 
-  // ─── Controles de reproducción ───────────────────────────────────────────
-  const togglePlay = () => {
-    onAlternarPausa();
-  };
+    rAFLocalRef.current = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(rAFLocalRef.current);
+      inicioLocalRef.current = null;
+    };
+  }, [reproduciendoLocal, bpmModal, resolucion, totalTicksModal, onIniciarGrabacion, reproduciendoSeccion]);
 
-  const handleSeek = (val: number) => {
-    onBuscarTick(val);
-  };
+  // ─── Iniciar audio al arrancar reproducción (checkpoint inicial) ─────────
+  useEffect(() => {
+    if (!audioRef.current || !reproduciendoLocal) return;
+    // Usar el ref (no el estado) para evitar valor obsoleto
+    const tiempoSeek = tickLocalRef.current / ((bpmOriginalRef.current / 60) * resolucion);
+    audioRef.current.currentTime = tiempoSeek;
+    checkpointTickRef.current = tickLocalRef.current;
+    checkpointTimeRef.current = tiempoSeek;
+    tickAnteriorRef.current = tickLocalRef.current;
+    motorAudioPro.activarContexto();
+    audioRef.current.play().catch(console.error);
+  }, [reproduciendoLocal]);
 
-  const handleReset = () => {
-    onDetener();
-  };
+  // ─── Seek cuando el usuario mueve el slider ───────────────────────────────
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const delta = Math.abs(tickLocal - tickAnteriorRef.current);
+    if (delta > 50) {
+      const t = tickLocal / ((bpmOriginalRef.current / 60) * resolucion);
+      audioRef.current.currentTime = t;
+      checkpointTimeRef.current = t;
+      checkpointTickRef.current = tickLocal;
+    }
+    tickAnteriorRef.current = tickLocal;
+    setTiempoAudioActual(audioRef.current.currentTime);
+  }, [tickLocal]);
 
-  const saltarSegundos = (seg: number) => {
-    const ticksSaltar = Math.round(seg * (bpmModal / 60) * resolucion);
-    const nuevoTick = Math.max(0, Math.min(totalTicksModal, tickModal + ticksSaltar));
-    onBuscarTick(nuevoTick);
-  };
+  // ─── Micro-sincronización: corrige deriva entre reloj y audio ────────────
+  useEffect(() => {
+    if (!reproduciendoLocal) return;
+    const sync = () => {
+      if (!audioRef.current || audioRef.current.paused) return;
+      const tiempoDesdeCheckpoint = (tickLocalRef.current - checkpointTickRef.current)
+        / ((bpmOriginalRef.current / 60) * resolucion);
+      const tiempoEsperado = checkpointTimeRef.current + tiempoDesdeCheckpoint;
+      const diferencia = Math.abs(tiempoEsperado - audioRef.current.currentTime);
+      if (diferencia > 0.15) {
+        audioRef.current.currentTime = tiempoEsperado;
+        checkpointTimeRef.current = tiempoEsperado;
+        checkpointTickRef.current = tickLocalRef.current;
+      }
+      syncAudioRef.current = requestAnimationFrame(sync);
+    };
+    syncAudioRef.current = requestAnimationFrame(sync);
+    return () => cancelAnimationFrame(syncAudioRef.current);
+  }, [reproduciendoLocal]);
 
-  // ─── Loop reproduccion del panel Secciones ───────────────────────────────────────
+  // ─── Controles de reproducción local ─────────────────────────────────────
+  const togglePlay = useCallback(() => {
+    if (reproduciendoLocal) {
+      setReproduciendoLocal(false);
+      if (audioRef.current) audioRef.current.pause(); // pausa síncrona para no interferir con secciones
+    } else {
+      if (reproduciendoSeccion) setReproduciendoSeccion(false);
+      inicioLocalRef.current = null;
+      setReproduciendoLocal(true); // el efecto de reproduciendoLocal inicia el audio
+    }
+  }, [reproduciendoLocal, reproduciendoSeccion]);
+
+  const handleSeek = useCallback((val: number) => {
+    const t = Math.max(0, Math.min(totalTicksModal, val));
+    tickLocalRef.current = t;
+    setTickLocal(t);
+    inicioLocalRef.current = null;
+    if (sliderRef.current) sliderRef.current.value = String(t);
+    if (audioRef.current) {
+      const bpmOriginal = cancion?.bpm || 120;
+      const seg = (t / resolucion) * (60 / Math.max(1, bpmOriginal));
+      audioRef.current.currentTime = seg;
+    }
+  }, [bpmModal, resolucion, totalTicksModal]);
+
+  const handleReset = useCallback(() => {
+    setReproduciendoLocal(false);
+    tickLocalRef.current = 0;
+    setTickLocal(0);
+    inicioLocalRef.current = null;
+    if (sliderRef.current) sliderRef.current.value = '0';
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+  }, []);
+
+  const saltarSegundos = useCallback((seg: number) => {
+    const ticks = Math.round(seg * (bpmModal / 60) * resolucion);
+    const nuevo = Math.max(0, Math.min(totalTicksModal, tickLocalRef.current + ticks));
+    handleSeek(nuevo);
+  }, [bpmModal, resolucion, totalTicksModal, handleSeek]);
+
+  // ─── Punch-In: funciones de edición programada ───────────────────────────
+  const iniciarEdicionPunch = useCallback(() => {
+    if (punchInTickLocal === null) return;
+    notasAntesDelPunch.current = secuenciaEditada.filter(n => n.tick < punchInTickLocal);
+    punchInTickSnapshot.current = punchInTickLocal;
+
+    const preRollTicks = Math.round(preRollSegsLocal * (bpmModal / 60) * resolucion);
+    const startTick = Math.max(0, punchInTickLocal - preRollTicks);
+
+    tickLocalRef.current = startTick;
+    setTickLocal(startTick);
+    inicioLocalRef.current = null;
+
+    punchActivoRef.current = true;
+    punchTickTargetRef.current = punchInTickLocal;
+    setModoEdicion('preroll');
+    setCuentaAtrasLocal(Math.ceil(preRollSegsLocal));
+
+    if (audioRef.current) {
+      motorAudioPro.activarContexto();
+      const bpmOriginal = cancion?.bpm || 120;
+      const velocidad = Math.min(4, Math.max(0.1, bpmModal / Math.max(1, bpmOriginal)));
+      audioRef.current.playbackRate = velocidad;
+      (audioRef.current as any).preservesPitch = true;
+      const seg = (startTick / resolucion) * (60 / Math.max(1, bpmOriginal));
+      audioRef.current.currentTime = seg;
+      audioRef.current.play().catch(console.error);
+    }
+    setReproduciendoLocal(true);
+  }, [punchInTickLocal, preRollSegsLocal, bpmModal, resolucion, secuenciaEditada]);
+
+  const detenerEdicionPunch = useCallback(() => {
+    punchActivoRef.current = false;
+    punchTickTargetRef.current = null;
+    setCuentaAtrasLocal(null);
+    setReproduciendoLocal(false);
+    if (audioRef.current) audioRef.current.pause();
+    onDetenerGrabacion();
+    setModoEdicion('revisando');
+  }, [onDetenerGrabacion]);
+
+  const guardarToma = useCallback(async () => {
+    if (!secuenciaPreview.length && punchInTickSnapshot.current === null) return;
+    setGuardandoToma(true);
+    setMensajeLocal(null);
+    try {
+      // secuenciaPreview ya está construida por el useEffect de _grabando
+      const merged = secuenciaPreview.length > 0
+        ? secuenciaPreview
+        : [...notasAntesDelPunch.current, ...notasGrabadas.map(n => ({ ...n, tick: n.tick + (punchInTickSnapshot.current ?? 0) }))].sort((a, b) => a.tick - b.tick);
+      setSecuenciaEditada(merged);
+      onSecuenciaChange(merged);
+      await actualizarCancionHeroCompleta(cancion.id, { secuencia_json: merged });
+      setMensajeLocal('✅ Toma guardada correctamente');
+      setTimeout(() => {
+        setModoEdicion('idle');
+        setPunchInTickLocal(null);
+        punchInTickSnapshot.current = null;
+        notasAntesDelPunch.current = [];
+        setSecuenciaPreview([]);
+        setMensajeLocal(null);
+      }, 1500);
+    } catch (e: any) {
+      setMensajeLocal('❌ Error: ' + e.message);
+    } finally {
+      setGuardandoToma(false);
+    }
+  }, [secuenciaPreview, notasGrabadas, onSecuenciaChange, cancion?.id]);
+
+  const descartarToma = useCallback(() => {
+    setModoEdicion('idle');
+    punchInTickSnapshot.current = null;
+    notasAntesDelPunch.current = [];
+    setSecuenciaPreview([]);
+    setMensajeLocal(null);
+  }, []);
+
+  // ─── Loop reproduccion del panel Secciones ───────────────────────────────
   useEffect(() => {
     if (!reproduciendoSeccion) {
       cancelAnimationFrame(rAFSeccionRef.current);
@@ -280,18 +545,19 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
     if (reproduciendoSeccion) {
       audioRef.current.pause();
       setReproduciendoSeccion(false);
-      // Pausa también el modal principal si estuviese corriendo
-      setReproduciendoModal(false);
     } else {
-      // Detiene el timeline principal si estuviese corrriendo
-      setReproduciendoModal(false);
-      cancelAnimationFrame(rAFRef.current);
+      // Detiene el reproductor local si estuviese corriendo
+      if (reproduciendoLocal) {
+        cancelAnimationFrame(rAFLocalRef.current);
+        inicioLocalRef.current = null;
+        setReproduciendoLocal(false);
+      }
       motorAudioPro.activarContexto();
       audioRef.current.currentTime = seccionCursorSeg;
       audioRef.current.play().catch(console.error);
       setReproduciendoSeccion(true);
     }
-  }, [reproduciendoSeccion, seccionCursorSeg]);
+  }, [reproduciendoSeccion, reproduciendoLocal, seccionCursorSeg]);
 
   const stopSeccion = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
@@ -390,10 +656,22 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
         {/* ── TIMELINE & CONTROL ── */}
         <section className="editor-seccion">
-          <div className="editor-seccion-titulo">
-            <Activity size={16} /> Timeline &amp; Control
-          </div>
+          <button
+            className={`secciones-cabecera-acordeon ${timelineAbierto ? 'abierto' : ''}`}
+            onClick={() => setTimelineAbierto(v => !v)}
+          >
+            <div className="editor-seccion-titulo" style={{ marginBottom: 0 }}>
+              <Activity size={16} /> Timeline &amp; Control
+              {reproduciendoLocal && (
+                <span className="secciones-contador-badge">▶ Reproduciendo</span>
+              )}
+            </div>
+            <div className="secciones-cabecera-derecha">
+              <span className="secciones-acordeon-icono">▼</span>
+            </div>
+          </button>
 
+          <div className={`secciones-cuerpo-acordeon ${timelineAbierto ? 'abierto' : ''}`}>
           <div className="editor-reproductor-principal">
             {/* Timeline visual con secciones coloreadas */}
             <div className="editor-timeline-visual">
@@ -435,32 +713,47 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                 );
               })()}
 
-              {/* Marcadores de Punch */}
-              {punchInTick !== null && (
-                <div 
+              {/* Marcador de Punch-In */}
+              {punchInTickLocal !== null && (
+                <div
                   className="timeline-punto-punch"
-                  style={{ left: `${(punchInTick / totalTicksModal) * 100}%` }}
-                />
-              )}
-              {punchOutTick !== null && (
-                <div 
-                  className="timeline-punto-punch out"
-                  style={{ left: `${(punchOutTick / totalTicksModal) * 100}%` }}
+                  style={{ left: `${(punchInTickLocal / totalTicksModal) * 100}%` }}
                 />
               )}
 
-              {/* Slider de posición */}
+              {/* Slider de posición — uncontrolled para que el drag funcione fluidamente */}
               <input
-                type="range" min={0} max={totalTicksModal} value={tickModal}
-                onChange={e => handleSeek(Number(e.target.value))}
+                ref={sliderRef}
+                type="range"
+                min={0}
+                max={totalTicksModal}
+                defaultValue={0}
+                step={1}
                 className="timeline-control-seek"
+                onPointerDown={() => { isSeekingRef.current = true; }}
+                onPointerUp={e => {
+                  isSeekingRef.current = false;
+                  handleSeek(Number((e.target as HTMLInputElement).value));
+                }}
+                onPointerCancel={() => { isSeekingRef.current = false; }}
+                onChange={e => {
+                  // Actualizar tick mientras se arrastra (sin conflicto con RAF)
+                  const v = Number(e.target.value);
+                  tickLocalRef.current = v;
+                  setTickLocal(v);
+                  inicioLocalRef.current = null;
+                  if (audioRef.current) {
+                    const bpmOriginal = cancion?.bpm || 120;
+                    audioRef.current.currentTime = (v / resolucion) * (60 / Math.max(1, bpmOriginal));
+                  }
+                }}
               />
             </div>
 
             {/* Tiempos */}
             <div className="editor-tiempos-fila">
               <div className="bloque-tiempo principal">
-                <span className="actual">{formatearTiempoDesdeTicks(tickModal, bpmModal)}</span>
+                <span className="actual">{formatearTiempoDesdeTicks(tickLocal, bpmModal)}</span>
                 <span className="sep">/</span>
                 <span className="total">{formatearTiempoDesdeTicks(totalTicksModal, bpmModal)}</span>
               </div>
@@ -487,9 +780,9 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
               <button
                 onClick={togglePlay}
-                className={`editor-boton-play-grande ${reproduciendoModal ? 'activo' : ''}`}
+                className={`editor-boton-play-grande ${reproduciendoLocal ? 'activo' : ''}`}
               >
-                {reproduciendoModal ? <Pause size={28} /> : <Play size={28} fill="currentColor" />}
+                {reproduciendoLocal ? <Pause size={28} /> : <Play size={28} fill="currentColor" />}
               </button>
 
               <button 
@@ -514,133 +807,233 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
               </div>
             </div>
           </div>
+          </div>{/* /secciones-cuerpo-acordeon timeline */}
         </section>
         {/* ── EDICIÓN QUIRÚRGICA (PUNCH-IN) ── */}
         <section className="editor-seccion seccion-edicion-quirurgica">
-          <div className="editor-seccion-titulo">
-            <Scissors size={16} /> Edición Quirúrgica de Notas
-          </div>
+          <button
+            className={`secciones-cabecera-acordeon ${edicionAbierta ? 'abierto' : ''}`}
+            onClick={() => setEdicionAbierta(v => !v)}
+          >
+            <div className="editor-seccion-titulo" style={{ marginBottom: 0 }}>
+              <Scissors size={16} /> Edición Quirúrgica de Notas
+              {(modoEdicion === 'grabando' || modoEdicion === 'preroll') && (
+                <span className="secciones-contador-badge" style={{ background: '#ef4444' }}>⚡ Activo</span>
+              )}
+            </div>
+            <div className="secciones-cabecera-derecha">
+              <span className="secciones-acordeon-icono">▼</span>
+            </div>
+          </button>
 
+          <div className={`secciones-cuerpo-acordeon ${edicionAbierta ? 'abierto' : ''}`}>
           <div className="edicion-quirurgica-card">
             <div className="edicion-quirurgica-info">
               <div className="tecnica-ajuste-texto">
-                <span className="tecnica-ajuste-nombre">Grabación Programada</span>
-                <p className="tecnica-ajuste-ayuda">Reemplaza una parte de la secuencia con una toma nueva.</p>
+                <span className="tecnica-ajuste-nombre">Grabación Quirúrgica (Punch-In)</span>
+                <p className="tecnica-ajuste-ayuda">Marca un punto, toca el acordeón y la grabación reemplaza esa sección automáticamente con pre-roll.</p>
               </div>
-
-              {grabando ? (
-                <div className="edicion-status-badge grabando">
-                  <Activity size={14} /> GRABANDO...
-                </div>
-              ) : cuentaAtrasPreRoll !== null ? (
-                <div className="edicion-status-badge espera">
-                  <Clock size={14} /> PRE-ROLL: {cuentaAtrasPreRoll}s
-                </div>
-              ) : (
-                <div className="edicion-status-badge">
-                  LISTO
-                </div>
+              {modoEdicion === 'grabando' && (
+                <div className="edicion-status-badge grabando"><Activity size={14} /> GRABANDO...</div>
+              )}
+              {modoEdicion === 'preroll' && (
+                <div className="edicion-status-badge espera"><Clock size={14} /> PRE-ROLL: {cuentaAtrasLocal}s</div>
+              )}
+              {modoEdicion === 'revisando' && (
+                <div className="edicion-status-badge"><Ear size={14} /> REVISIÓN</div>
+              )}
+              {modoEdicion === 'idle' && (
+                <div className="edicion-status-badge">LISTO</div>
               )}
             </div>
 
-            <div className="edicion-controles-punch">
-              {/* Selector de Punto de Entrada */}
-              <button 
-                className={`btn-punch-config ${punchInTick !== null ? 'activo' : ''}`}
-                onClick={() => setPunchInTick(tickModal)}
-                title="Marca el inicio de la grabación"
-              >
-                <strong>Entrada In</strong>
-                <span>{punchInTick !== null ? formatearTiempoDesdeTicks(punchInTick, bpmModal) : 'Sin marcar'}</span>
-              </button>
-
-              {/* Selector de Punto de Salida */}
-              <button 
-                className={`btn-punch-config out ${punchOutTick !== null ? 'activo' : ''}`}
-                onClick={() => setPunchOutTick(tickModal)}
-                title="Opcional: Marca el final automático"
-              >
-                <strong>Salida Out</strong>
-                <span>{punchOutTick !== null ? formatearTiempoDesdeTicks(punchOutTick, bpmModal) : 'Libre'}</span>
-              </button>
-
-              <button 
-                className={`btn-punch-config ${metronomoActivo ? 'activo' : ''}`}
-                onClick={() => setMetronomoActivo(!metronomoActivo)}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong>Metrónomo</strong>
-                  {metronomoActivo ? <Volume2 size={14} /> : <Ear size={14} />}
+            {/* ── ESTADO: REVISANDO ── */}
+            {modoEdicion === 'revisando' && (
+              <div className="punch-revisando-panel">
+                <div className="punch-revisando-stats">
+                  <div className="tecnica-info-col">
+                    <span className="tecnica-etiqueta-mini">Notas grabadas</span>
+                    <span className="tecnica-valor-db">{notasGrabadas.length}</span>
+                  </div>
+                  <div className="tecnica-info-col">
+                    <span className="tecnica-etiqueta-mini">Punto de entrada</span>
+                    <span className="tecnica-valor-real">
+                      {punchInTickSnapshot.current !== null
+                        ? formatearTiempoDesdeTicks(punchInTickSnapshot.current, bpmModal)
+                        : '—'}
+                    </span>
+                  </div>
+                  <div className="tecnica-info-col">
+                    <span className="tecnica-etiqueta-mini">En preview</span>
+                    <span className="tecnica-valor-real">{secuenciaPreview.length} notas</span>
+                  </div>
                 </div>
-                <span>{metronomoActivo ? 'OK' : 'OFF'}</span>
-              </button>
-            </div>
 
-            {/* Fila intermedia: Escuchar lo grabado */}
-            {punchInTick !== null && !grabando && cuentaAtrasPreRoll === null && (
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                <button 
+                {/* Instrucción de escucha */}
+                <div className="punch-revisando-ayuda">
+                  Usa el <strong>Play ▶</strong> del Timeline para escuchar la toma. El acordeón reproduce la nueva grabación desde el punto de entrada.
+                </div>
+
+                {/* Botón de ir al punto de punch para escuchar */}
+                <button
                   className="btn-punch-config"
-                  style={{ flex: 1, background: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6' }}
+                  style={{ width: '100%', background: 'rgba(99,102,241,0.15)', borderColor: '#6366f1' }}
                   onClick={() => {
-                    onBuscarTick(Math.max(0, punchInTick - (bpmModal / 60) * resolucion * 2)); // 2s antes
-                    setTimeout(() => onAlternarPausa(), 100);
+                    const t = Math.max(0, (punchInTickSnapshot.current ?? 0) - Math.round(2 * (bpmModal / 60) * resolucion));
+                    handleSeek(t);
+                    if (!reproduciendoLocal) togglePlay();
                   }}
                 >
-                  <Play size={14} fill="currentColor" /> Escuchar Toma
+                  <Play size={14} fill="currentColor" /> Escuchar desde el punto de entrada
                 </button>
-                {(punchInTick !== null || punchOutTick !== null) && (
-                  <button 
-                    className="btn-punch-config"
-                    style={{ width: '40px' }}
-                    onClick={() => { setPunchInTick(null); setPunchOutTick(null); }}
-                    title="Limpiar marcas"
+
+                <div className="punch-acciones-fila">
+                  <button
+                    className="btn-iniciar-edicion-pro"
+                    onClick={guardarToma}
+                    disabled={guardandoToma}
                   >
-                    <Trash2 size={14} />
+                    {guardandoToma
+                      ? <><RefreshCw size={16} className="spin" /> Guardando...</>
+                      : <><Save size={16} /> Guardar Toma</>
+                    }
                   </button>
+                  <button
+                    className="btn-iniciar-edicion-pro detener"
+                    onClick={() => {
+                      if (reproduciendoLocal) setReproduciendoLocal(false);
+                      setModoEdicion('idle');
+                      setPunchInTickLocal(punchInTickSnapshot.current);
+                      punchInTickSnapshot.current = null;
+                      notasAntesDelPunch.current = [];
+                      setSecuenciaPreview([]);
+                      setMensajeLocal(null);
+                    }}
+                  >
+                    <RefreshCw size={16} /> Repetir toma
+                  </button>
+                  <button
+                    className="btn-iniciar-edicion-pro detener"
+                    onClick={descartarToma}
+                    style={{ flex: '0 0 auto', minWidth: 0 }}
+                    title="Descartar y volver sin guardar"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {mensajeLocal && (
+                  <div className="punch-mensaje-resultado">{mensajeLocal}</div>
                 )}
               </div>
             )}
 
-            {/* Ajuste de Pre-Roll */}
-            <div className="punch-metropoli">
-              <div className="punch-metropoli-head">
-                <span>Preparación (Pre-roll)</span>
-                <span>{preRollSegundos} seg</span>
+            {/* ── ESTADO: GRABANDO o PRE-ROLL ── */}
+            {(modoEdicion === 'grabando' || modoEdicion === 'preroll') && (
+              <div className="punch-activo-panel">
+                {modoEdicion === 'preroll' && (
+                  <div className="punch-preroll-box">
+                    <div className="punch-preroll-numero">{cuentaAtrasLocal}</div>
+                    <div className="punch-preroll-label">Preparando grabación...</div>
+                  </div>
+                )}
+                {modoEdicion === 'grabando' && (
+                  <div className="punch-grabando-box">
+                    <div className="punch-grabando-pulso">●</div>
+                    <div>
+                      <div className="punch-grabando-titulo">GRABANDO</div>
+                      <div className="punch-grabando-contador">{notasGrabadas.length} notas capturadas</div>
+                    </div>
+                  </div>
+                )}
+                <button className="btn-iniciar-edicion-pro detener" onClick={detenerEdicionPunch}>
+                  <Square size={18} fill="currentColor" /> Detener Grabación
+                </button>
               </div>
-              <input 
-                type="range" min={1} max={8} step={1} 
-                value={preRollSegundos}
-                onChange={(e) => setPreRollSegundos(Number(e.target.value))}
-                className="tecnica-slider"
-                disabled={grabando || cuentaAtrasPreRoll !== null}
-              />
-            </div>
-
-            {/* BOTÓN PRINCIPAL DE ACCIÓN */}
-            {!grabando && cuentaAtrasPreRoll === null ? (
-              <button 
-                className="btn-iniciar-edicion-pro"
-                onClick={onIniciarGrabacion}
-                disabled={punchInTick === null}
-              >
-                <Play size={18} fill="currentColor" /> Iniciar Edición Programada
-              </button>
-            ) : (
-              <button 
-                className="btn-iniciar-edicion-pro detener"
-                onClick={onDetenerGrabacion}
-              >
-                <Square size={18} fill="currentColor" /> Detener Grabación
-              </button>
             )}
 
-            {mensajeEdicionProp && (
-              <div className="formulario-error-msj" style={{ margin: 0, padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                💡 {mensajeEdicionProp}
-              </div>
+            {/* ── ESTADO: IDLE ── */}
+            {modoEdicion === 'idle' && (
+              <>
+                <div className="edicion-controles-punch">
+                  <button
+                    className={`btn-punch-config ${punchInTickLocal !== null ? 'activo' : ''}`}
+                    onClick={() => { setPunchInTickLocal(Math.round(tickLocalRef.current)); setMensajeLocal(null); }}
+                    title="Marca el instante actual del timeline como inicio de grabación"
+                  >
+                    <MapPin size={14} />
+                    <strong>Marcar Entrada (In)</strong>
+                    <span>{punchInTickLocal !== null
+                      ? formatearTiempoDesdeTicks(punchInTickLocal, bpmModal)
+                      : 'Clic para marcar posición actual'}
+                    </span>
+                  </button>
+
+                  <button
+                    className={`btn-punch-config ${metronomoLocal ? 'activo' : ''}`}
+                    onClick={() => { const v = !metronomoLocal; setMetronomoLocal(v); setMetronomoActivo(v); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong>Metrónomo</strong>
+                      {metronomoLocal ? <Volume2 size={14} /> : <Ear size={14} />}
+                    </div>
+                    <span>{metronomoLocal ? 'Activado' : 'Desactivado'}</span>
+                  </button>
+
+                  {punchInTickLocal !== null && (
+                    <button
+                      className="btn-punch-config"
+                      style={{ width: '44px', justifyContent: 'center' }}
+                      onClick={() => { setPunchInTickLocal(null); setMensajeLocal(null); }}
+                      title="Limpiar marca"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="punch-metropoli">
+                  <div className="punch-metropoli-head">
+                    <span>Preparación (Pre-roll)</span>
+                    <span>{preRollSegsLocal}s</span>
+                  </div>
+                  <input
+                    type="range" min={1} max={8} step={1}
+                    value={preRollSegsLocal}
+                    onChange={e => { const v = Number(e.target.value); setPreRollSegsLocal(v); setPreRollSegundos(v); }}
+                    className="tecnica-slider"
+                  />
+                </div>
+
+                {punchInTickLocal !== null && (
+                  <div style={{ marginBottom: '4px' }}>
+                    <button
+                      className="btn-punch-config"
+                      style={{ width: '100%', background: 'rgba(59,130,246,0.15)', borderColor: '#3b82f6' }}
+                      onClick={() => handleSeek(Math.max(0, punchInTickLocal - Math.round(preRollSegsLocal * (bpmModal / 60) * resolucion)))}
+                      title="Ir al inicio del pre-roll para escuchar el contexto"
+                    >
+                      <Play size={14} fill="currentColor" /> Previsualizar contexto (ir al pre-roll)
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  className="btn-iniciar-edicion-pro"
+                  onClick={iniciarEdicionPunch}
+                  disabled={punchInTickLocal === null}
+                >
+                  <Play size={18} fill="currentColor" /> Iniciar Edición Programada
+                </button>
+
+                {mensajeLocal && (
+                  <div className="formulario-error-msj" style={{ margin: 0, padding: '10px' }}>
+                    {mensajeLocal}
+                  </div>
+                )}
+              </>
             )}
           </div>
+          </div>{/* /secciones-cuerpo-acordeon edicion */}
         </section>
 
         {/* ── DURACIÓN del MP3: ya gestionada dentro del acordeon de secciones ── */}
@@ -650,7 +1043,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
 
           {/* Header colapsable */}
           <button
-            className="secciones-cabecera-acordeon"
+            className={`secciones-cabecera-acordeon ${seccionesAbiertas ? 'abierto' : ''}`}
             onClick={() => setSeccionesAbiertas(v => !v)}
           >
             <div className="editor-seccion-titulo" style={{ marginBottom: 0 }}>
@@ -672,15 +1065,12 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                   }
                 </button>
               )}
-              <span className="secciones-acordeon-icono">
-                {seccionesAbiertas ? '▲' : '▼'}
-              </span>
+              <span className="secciones-acordeon-icono">▼</span>
             </div>
           </button>
 
-          {/* Contenido colapsable */}
-          {seccionesAbiertas && (
-            <div className="secciones-cuerpo-acordeon">
+          {/* Contenido colapsable — siempre en DOM, animado con clase CSS */}
+          <div className={`secciones-cuerpo-acordeon ${seccionesAbiertas ? 'abierto' : ''}`}>
 
               {/* Lista de secciones existentes */}
               <div className="editor-lista-secciones">
@@ -844,8 +1234,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
                 )}
               </div>
 
-            </div>
-          )}
+          </div>{/* /secciones-cuerpo-acordeon secciones */}
         </section>
 
         {/* ── SECCIÓN: CONFIGURACIÓN MP3 (NUEVA) ── */}

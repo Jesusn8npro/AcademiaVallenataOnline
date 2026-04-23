@@ -1,6 +1,8 @@
 import React from 'react';
 import PanelAjustes from '../../SimuladorDeAcordeon/Componentes/PanelAjustes/PanelAjustes';
-import CuerpoAcordeon from '../../SimuladorDeAcordeon/Componentes/CuerpoAcordeon';
+import CuerpoAcordeonBase from '../../SimuladorDeAcordeon/Componentes/CuerpoAcordeon';
+
+const CuerpoAcordeon = React.memo(CuerpoAcordeonBase);
 import { TONALIDADES } from '../../SimuladorDeAcordeon/notasAcordeonDiatonico';
 import { obtenerModeloVisualPorId, resolverImagenModeloAcordeon } from './Datos/modelosVisualesAcordeon';
 import { useEstudioPracticaLibre } from './Hooks/useEstudioPracticaLibre';
@@ -396,6 +398,22 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     const actual = logica.listaInstrumentos?.find((instrumento: any) => instrumento.id === logica.instrumentoId);
     return actual?.nombre || 'Acordeon original';
   }, [logica.instrumentoId, logica.listaInstrumentos]);
+
+  // Props estables para CuerpoAcordeon → evitan re-renders por estado ajeno al acordeón
+  const botonesActivosAcordeon = React.useMemo(
+    () => (reproduciendo && botonesActivosMaestro ? botonesActivosMaestro : logica.botonesActivos),
+    [reproduciendo, botonesActivosMaestro, logica.botonesActivos]
+  );
+
+  const direccionAcordeon = React.useMemo(
+    () => (reproduciendo && direccionMaestro ? direccionMaestro : logica.direccion),
+    [reproduciendo, direccionMaestro, logica.direccion]
+  );
+
+  const imagenFondoAcordeon = React.useMemo(
+    () => resolverImagenModeloAcordeon(estudio.preferencias.modeloVisualId, imagenFondo),
+    [estudio.preferencias.modeloVisualId, imagenFondo]
+  );
 
   React.useEffect(() => {
     if (typeof logica.guardarAjustes !== 'function') return;
@@ -923,11 +941,11 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             <div className="estudio-practica-libre-acordeon">
               {logica.disenoCargado && (
                 <CuerpoAcordeon
-                  imagenFondo={resolverImagenModeloAcordeon(estudio.preferencias.modeloVisualId, imagenFondo)}
+                  imagenFondo={imagenFondoAcordeon}
                   ajustes={ajustesPractica as any}
-                  direccion={reproduciendo && direccionMaestro ? direccionMaestro : logica.direccion}
+                  direccion={direccionAcordeon}
                   configTonalidad={logica.configTonalidad}
-                  botonesActivos={reproduciendo && botonesActivosMaestro ? botonesActivosMaestro : logica.botonesActivos}
+                  botonesActivos={botonesActivosAcordeon}
                   modoAjuste={modoAjuste}
                   botonSeleccionado={logica.botonSeleccionado}
                   modoVista={logica.modoVista}
