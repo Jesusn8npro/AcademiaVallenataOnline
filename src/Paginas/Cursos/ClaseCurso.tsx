@@ -60,8 +60,6 @@ export default function ClaseCurso() {
         if (!slug) return;
         setCargando(true); setError(null);
         try {
-            // 1. Obtener curso por slug (buscando solo el necesario para optimizar API)
-            // Usamos .or para soportar tanto slugs explícitos como títulos
             const { data: cursoData, error: errC } = await supabase
                 .from('cursos')
                 .select('*')
@@ -71,7 +69,6 @@ export default function ClaseCurso() {
             if (errC) throw errC;
             if (!cursoData) throw new Error('Curso no encontrado');
 
-            // 2. Obtener módulos y lecciones
             const { data: mods, error: errM } = await supabase
                 .from('modulos')
                 .select(`
@@ -98,8 +95,7 @@ export default function ClaseCurso() {
             setCurso(cursoData);
             setModulos(modulosProcesados);
         } catch (e: any) {
-            console.error('Error al cargar curso:', e);
-            setError(e.message || 'Error al cargar el curso');
+            setError((e as Error).message || 'Error al cargar el curso');
             setCargando(false);
         }
     }
@@ -108,7 +104,6 @@ export default function ClaseCurso() {
         if (!moduloSlug || !leccionSlug || !curso || modulos.length === 0) return;
 
         try {
-            // 1. Obtener usuario actual (si no está cargado)
             let user = usuarioActual;
             if (!user) {
                 const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -116,7 +111,6 @@ export default function ClaseCurso() {
                 setUsuarioActual(user);
             }
 
-            // 2. Encontrar la lección específica en los módulos ya cargados
             let leccionEncontrada: any = null;
             for (const m of modulos) {
                 if (m.slug === moduloSlug) {
@@ -128,19 +122,14 @@ export default function ClaseCurso() {
             if (!leccionEncontrada) throw new Error('Lección no encontrada');
             setLeccion(leccionEncontrada);
 
-            // 3. Cargar progreso si hay usuario
             if (user) {
-                // IDs de todas las lecciones del curso para filtrar progreso
                 const idsLecciones = modulos.flatMap((m: any) => m.lecciones.map((l: any) => l.id));
 
-                // Consultar solo el progreso necesario (optimización crítica)
-                const { data: progs, error: errP } = await supabase
+                const { data: progs } = await supabase
                     .from('progreso_lecciones')
                     .select('leccion_id, estado, porcentaje_completado')
                     .eq('usuario_id', user.id)
                     .in('leccion_id', idsLecciones);
-
-                if (errP) console.warn('Error cargando progreso:', errP);
 
                 const map: Record<string, number> = {};
                 let completadasCount = 0;
@@ -168,8 +157,7 @@ export default function ClaseCurso() {
                 });
             }
         } catch (e: any) {
-            console.error('Error en cargarLeccionYProgreso:', e);
-            setError(e.message || 'Error al cargar lección');
+            setError((e as Error).message || 'Error al cargar lección');
         } finally {
             setCargando(false);
         }
@@ -188,13 +176,11 @@ export default function ClaseCurso() {
     const nextLeccion = indiceActual >= 0 && indiceActual < leccionesPlanas.length - 1 ? leccionesPlanas[indiceActual + 1] : null
 
     async function marcarComoCompletada() {
-        console.log('✅ [DEBUG] Ejecutando marcarComoCompletada (Versión corregida MANUAL)');
         setCargandoCompletar(true); setErrorCompletar('')
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user || !curso || !leccion) return
 
-            // Método manual para evitar errores 400 con upsert/conflictos
             const { data: existente } = await supabase
                 .from('progreso_lecciones')
                 .select('id')
@@ -202,52 +188,34 @@ export default function ClaseCurso() {
                 .eq('leccion_id', leccion.id)
                 .maybeSingle()
 
+            const ahora = new Date().toISOString()
+            const actualizarEstado = () => {
+                setCompletada(true)
+                setProgresoMap(prev => ({ ...prev, [leccion.id]: 100 }))
+                setEstadisticasProgreso(prev => {
+                    const nuevaCount = prev.completadas + 1
+                    return { ...prev, completadas: nuevaCount, porcentaje: Math.round((nuevaCount / prev.total) * 100) }
+                })
+            }
+
             if (existente) {
                 const { error: errUpd } = await supabase
                     .from('progreso_lecciones')
-                    .update({
-                        estado: 'completada',
-                        porcentaje_completado: 100,
-                        updated_at: new Date().toISOString(),
-                        ultima_actividad: new Date().toISOString()
-                    })
+                    .update({ estado: 'completada', porcentaje_completado: 100, updated_at: ahora, ultima_actividad: ahora })
                     .eq('id', existente.id)
                 if (errUpd) setErrorCompletar(errUpd.message)
-                else {
-                    setCompletada(true)
-                    setProgresoMap(prev => ({ ...prev, [leccion.id]: 100 }))
-                    // Actualizar estadísticas también
-                    setEstadisticasProgreso(prev => {
-                        const nuevaCount = prev.completadas + 1
-                        return { ...prev, completadas: nuevaCount, porcentaje: Math.round((nuevaCount / prev.total) * 100) }
-                    })
-                }
+                else actualizarEstado()
             } else {
-                const payload = {
-                    usuario_id: user.id,
-                    leccion_id: leccion.id,
-                    estado: 'completada',
-                    porcentaje_completado: 100,
-                    tiempo_total: 0,
-                    ultima_actividad: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                };
-
                 const { error: errIns } = await supabase
                     .from('progreso_lecciones')
-                    .insert(payload)
-
-                if (errIns) setErrorCompletar(errIns.message)
-                else {
-                    setCompletada(true)
-                    setProgresoMap(prev => ({ ...prev, [leccion.id]: 100 }))
-                    // Actualizar estadísticas también
-                    setEstadisticasProgreso(prev => {
-                        const nuevaCount = prev.completadas + 1
-                        return { ...prev, completadas: nuevaCount, porcentaje: Math.round((nuevaCount / prev.total) * 100) }
+                    .insert({
+                        usuario_id: user.id, leccion_id: leccion.id,
+                        estado: 'completada', porcentaje_completado: 100,
+                        tiempo_total: 0, ultima_actividad: ahora,
+                        created_at: ahora, updated_at: ahora
                     })
-                }
+                if (errIns) setErrorCompletar(errIns.message)
+                else actualizarEstado()
             }
         } finally {
             setCargandoCompletar(false)

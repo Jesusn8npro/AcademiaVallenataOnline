@@ -56,6 +56,8 @@ export const useMetronomo = (bpmInicial: number) => {
             case 'Baqueta': freq = isFirstBeat ? 1500 : 1000; type = 'sine'; break;
             case 'Tono': freq = isFirstBeat ? 440 : 330; decay = 0.2; break;
             case 'Campana 1': freq = isFirstBeat ? 2000 : 1500; decay = 0.3; break;
+            case 'Campana 2': freq = isFirstBeat ? 2600 : 2000; decay = 0.3; break;
+            case 'Aplausos':  freq = isFirstBeat ? 800  :  600; type = 'sawtooth'; decay = 0.06; break;
         }
 
         if (isSubdivision) { freq *= 0.8; decay *= 0.5; }

@@ -1,11 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { supabase } from '../../servicios/clienteSupabase';
+import React from 'react';
+import { useComunidadPublicar } from './Hooks/useComunidadPublicar';
+import type { Usuario } from '../../Paginas/Comunidad/tipos';
 import './ComunidadPublicar.css';
-
-interface Usuario {
-  id: string;
-  nombre: string;
-}
 
 interface ComunidadPublicarProps {
   usuario: Usuario | null;
@@ -13,264 +9,17 @@ interface ComunidadPublicarProps {
 }
 
 const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublicar }) => {
-  // Estados principales
-  const [showModal, setShowModal] = useState(false);
-  const [tipo, setTipo] = useState<'texto' | 'foto' | 'video' | 'encuesta' | 'gif'>('texto');
-  const [texto, setTexto] = useState('');
-  const [titulo, setTitulo] = useState('');
-
-  // Estados de publicación
-  const [publicando, setPublicando] = useState(false);
-  const [publicandoMensaje, setPublicandoMensaje] = useState('');
-
-  // Estados de archivos
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-
-  // Estados de GIF
-  const [showGifPicker, setShowGifPicker] = useState(false);
-  const [gifSeleccionado, setGifSeleccionado] = useState<string | null>(null);
-
-  // Estados de emojis
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  // Estados de encuesta
-  const [mostrarModalEncuesta, setMostrarModalEncuesta] = useState(false);
-  const [datosEncuesta, setDatosEncuesta] = useState<any>(null);
-
-  // Referencias
-  const emojiBtnRef = useRef<HTMLButtonElement>(null);
-  const gifPickerBtnRef = useRef<HTMLButtonElement>(null);
-
-  // Constantes
-  const GIPHY_KEY = import.meta.env.VITE_GIPHY_API_KEY || '';
-
-  // Funciones de archivos
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'foto' | 'video') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (fileType === 'foto') {
-      setFotoFile(file);
-      const reader = new FileReader();
-      reader.onload = (ev) => setFotoPreview(ev.target?.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setVideoFile(file);
-    }
-  };
-
-  const removeFile = (fileType: 'foto' | 'video') => {
-    if (fileType === 'foto') {
-      setFotoFile(null);
-      setFotoPreview(null);
-    } else {
-      setVideoFile(null);
-    }
-  };
-
-  // Funciones de modal
-  const abrirModal = (tipoPublicacion: typeof tipo = 'texto') => {
-    setTipo(tipoPublicacion);
-    setShowModal(true);
-  };
-
-  const cerrarModal = () => {
-    setShowModal(false);
-    setTipo('texto');
-    setTexto('');
-    setTitulo('');
-    setFotoFile(null);
-    setFotoPreview(null);
-    setVideoFile(null);
-    setGifSeleccionado(null);
-    setShowGifPicker(false);
-    setShowEmojiPicker(false);
-    setMostrarModalEncuesta(false);
-    setDatosEncuesta(null);
-    setPublicando(false);
-    setPublicandoMensaje('');
-  };
-
-  // Funciones de pickers
-  const togglePicker = (pickerType: 'emoji' | 'gif') => {
-    if (pickerType === 'emoji') {
-      setShowEmojiPicker(!showEmojiPicker);
-      setShowGifPicker(false);
-    } else {
-      setShowGifPicker(!showGifPicker);
-      setShowEmojiPicker(false);
-    }
-  };
-
-  const selectEmoji = (emoji: string) => {
-    setTexto(texto + emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const selectGif = (url: string) => {
-    setGifSeleccionado(url);
-    setShowGifPicker(false);
-  };
-
-  // Función para verificar si el usuario es administrador
-  const esUsuarioAdministrador = async (userId: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('perfiles')
-        .select('rol, nombre, correo_electronico')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error verificando rol del usuario:', error);
-        return false;
-      }
-
-      if (!data) {
-        console.error('NO SE ENCONTRÓ USUARIO CON ID:', userId);
-        return false;
-      }
-
-      const esAdmin = data.rol === 'admin';
-      console.log('¿ES ADMIN?:', esAdmin);
-
-      return esAdmin;
-    } catch (error) {
-      console.error('Error inesperado verificando rol:', error);
-      return false;
-    }
-  };
-
-  // Función para subir archivo a Supabase Storage
-  const subirArchivoComunidad = async (file: File, bucket: string) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
-
-      if (error) {
-        throw error;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
-    } catch (error) {
-      return { url: null, error: error };
-    }
-  };
-
-  // Función principal de publicación
-  const publicar = async () => {
-    if (publicando) {
-      console.log('🛑 YA SE ESTÁ PUBLICANDO, IGNORANDO CLIC');
-      return;
-    }
-
-    setPublicando(true);
-    setPublicandoMensaje(tipo === 'foto' ? 'Subiendo imagen...' :
-      tipo === 'video' ? 'Subiendo video...' :
-        'Publicando...');
-
-    console.log('🚀 INICIANDO PUBLICACIÓN');
-    console.log('👤 Usuario:', usuario);
-
-    try {
-      let url_media = null;
-
-      // Manejo de archivos
-      if (tipo === 'foto' && fotoFile) {
-        const { url, error } = await subirArchivoComunidad(fotoFile, 'imagenes');
-        if (error) throw new Error(error);
-        url_media = url;
-      } else if (tipo === 'video' && videoFile) {
-        const { url, error } = await subirArchivoComunidad(videoFile, 'videos');
-        if (error) throw new Error(error);
-        url_media = url;
-      } else if (gifSeleccionado) {
-        url_media = gifSeleccionado;
-      }
-
-      // Preparar datos para inserción
-      const insertData: any = {
-        usuario_id: usuario?.id,
-        usuario_nombre: usuario?.nombre,
-        usuario_avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'Usuario')}&background=667eea&color=fff`,
-        titulo,
-        descripcion: texto,
-        tipo,
-        fecha_creacion: new Date().toISOString()
-      };
-
-      console.log('📝 DATOS A INSERTAR:', insertData);
-
-      // Asignar campos de media según tipo
-      if (tipo === 'foto' && url_media) insertData.url_imagen = url_media;
-      else if (tipo === 'video' && url_media) insertData.url_video = url_media;
-      else if (tipo === 'gif' && url_media) insertData.url_gif = url_media;
-
-      // Intentar insertar en Supabase
-      console.log('💾 INSERTANDO EN SUPABASE...');
-      try {
-        const { data, error } = await supabase
-          .from('comunidad_publicaciones')
-          .insert([insertData])
-          .select();
-
-        console.log('📊 RESPUESTA SUPABASE:', { data, error });
-
-        if (error) {
-          console.error('❌ ERROR SUPABASE:', error);
-          throw error;
-        }
-
-        console.log('✅ PUBLICACIÓN EXITOSA');
-
-        // 🔔 ENVIAR NOTIFICACIONES (SOLO SI ES ADMIN)
-        if (data && data.length > 0 && usuario?.id) {
-          const publicacionCreada = data[0];
-          console.log('🔍 VERIFICANDO ROL DEL USUARIO...');
-
-          const esAdmin = await esUsuarioAdministrador(usuario.id);
-          console.log('👑 ¿Es administrador?', esAdmin);
-
-          if (esAdmin) {
-            console.log('👑 ✅ CONFIRMADO: USUARIO ES ADMIN - PROCEDIENDO CON NOTIFICACIONES...');
-            // Aquí implementarías el sistema de notificaciones
-          } else {
-            console.log('🚫 USUARIO NO ES ADMIN - NO SE ENVIARÁN NOTIFICACIONES');
-          }
-        }
-      } catch (supabaseError) {
-        console.error('💥 ERROR DE SUPABASE:', supabaseError);
-        // En caso de error de Supabase, simular éxito para desarrollo
-        console.log('🔄 MODO DESARROLLO: Simulando publicación exitosa');
-      }
-
-      if (onPublicar) {
-        onPublicar();
-      }
-      cerrarModal();
-    } catch (error: any) {
-      console.error('💥 ERROR EN PUBLICACIÓN:', error);
-      alert(`Error al publicar: ${error.message || error}`);
-    } finally {
-      setPublicando(false);
-      setPublicandoMensaje('');
-    }
-  };
+  const {
+    showModal, tipo, texto, titulo, publicando, publicandoMensaje,
+    fotoFile, fotoPreview, videoFile, gifSeleccionado,
+    emojiBtnRef, gifPickerBtnRef,
+    setTexto, setTitulo, setTipo, setShowModal,
+    handleFileChange, removeFile, abrirModal, cerrarModal,
+    togglePicker, publicar,
+  } = useComunidadPublicar(usuario, onPublicar);
 
   return (
     <>
-      {/* Caja inicial moderna */}
       <div className="comunidad-publicar-contenedor">
         <div className="comunidad-publicar-header">
           <div className="comunidad-publicar-avatar-usuario">
@@ -310,7 +59,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
               <span className="comunidad-publicar-texto-btn">Video</span>
             </button>
 
-            <button className="comunidad-publicar-btn-accion" onClick={() => { setShowModal(true); setMostrarModalEncuesta(true); }}>
+            <button className="comunidad-publicar-btn-accion" onClick={() => setShowModal(true)}>
               <span className="comunidad-publicar-icono-btn">📊</span>
               <span className="comunidad-publicar-texto-btn">Encuesta</span>
             </button>
@@ -322,11 +71,9 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
         </div>
       </div>
 
-      {/* Modal moderno y responsivo */}
       {showModal && (
         <div className="comunidad-publicar-modal-overlay" onClick={cerrarModal}>
           <div className="comunidad-publicar-modal-contenedor" onClick={(e) => e.stopPropagation()}>
-            {/* Header del modal */}
             <div className="comunidad-publicar-modal-header">
               <h2 className="comunidad-publicar-modal-titulo">Crear publicación</h2>
               <button className="comunidad-publicar-modal-cerrar" onClick={cerrarModal}>
@@ -336,7 +83,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
               </button>
             </div>
 
-            {/* Info del usuario */}
             <div className="comunidad-publicar-info-usuario">
               <img
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'Usuario')}`}
@@ -351,23 +97,20 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
               </div>
             </div>
 
-            {/* Formulario principal */}
             <form className="comunidad-publicar-modal-formulario" onSubmit={(e) => { e.preventDefault(); publicar(); }}>
-              {/* Preview de GIF seleccionado */}
               {gifSeleccionado && (
                 <div className="comunidad-publicar-preview-gif">
                   <img src={gifSeleccionado} alt="GIF seleccionado" className="comunidad-publicar-imagen-gif" />
                   <button
                     type="button"
                     className="comunidad-publicar-btn-remover"
-                    onClick={() => setGifSeleccionado(null)}
+                    onClick={() => setShowModal(false)}
                   >
                     ×
                   </button>
                 </div>
               )}
 
-              {/* Área de texto */}
               {tipo === 'texto' && (
                 <textarea
                   className="comunidad-publicar-textarea-contenido"
@@ -377,7 +120,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                 />
               )}
 
-              {/* Sección de imagen */}
               {tipo === 'foto' && (
                 <>
                   <div className="comunidad-publicar-area-subida-archivo">
@@ -411,7 +153,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                       </div>
                     )}
                   </div>
-
                   <textarea
                     className="comunidad-publicar-textarea-contenido comunidad-publicar-textarea-compacto"
                     value={texto}
@@ -421,7 +162,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                 </>
               )}
 
-              {/* Sección de video */}
               {tipo === 'video' && (
                 <>
                   <div className="comunidad-publicar-area-subida-archivo">
@@ -455,7 +195,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                       </div>
                     )}
                   </div>
-
                   <textarea
                     className="comunidad-publicar-textarea-contenido comunidad-publicar-textarea-compacto"
                     value={texto}
@@ -465,7 +204,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                 </>
               )}
 
-              {/* Barra de herramientas */}
               <div className="comunidad-publicar-toolbar">
                 <div className="comunidad-publicar-botones-herramienta">
                   <button type="button" className="comunidad-publicar-btn-herramienta" onClick={() => setTipo('foto')}>📷</button>
@@ -485,7 +223,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                   <button
                     type="button"
                     className="comunidad-publicar-btn-herramienta"
-                    onClick={() => setMostrarModalEncuesta(true)}
+                    onClick={() => {}}
                   >
                     📊
                   </button>
