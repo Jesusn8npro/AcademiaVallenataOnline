@@ -1,15 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../servicios/clienteSupabase';
-import ModalReplayGrabacionHero, { type GrabacionReplayHero } from '../../Paginas/Perfil/MisGrabaciones/Componentes/ModalReplayGrabacionHero';
-import { obtenerGrabacionPublica } from '../../servicios/grabacionesHeroService';
-import { eliminarPublicacion } from '../../servicios/comunidadService';
+import React from 'react';
+import ModalReplayGrabacionHero from '../../Paginas/Perfil/MisGrabaciones/Componentes/ModalReplayGrabacionHero';
+import { useFeedPublicacion } from './Hooks/useFeedPublicacion';
+import type { Usuario } from '../../Paginas/Comunidad/tipos';
 import './FeedPublicaciones.css';
-
-interface Usuario {
-  id: string;
-  nombre: string;
-  rol: string;
-}
 
 interface FeedPublicacionesProps {
   id: string;
@@ -24,7 +17,7 @@ interface FeedPublicacionesProps {
   url_video?: string;
   url_gif?: string;
   tipo: string;
-  encuesta?: any;
+  encuesta?: unknown;
   me_gusta: string[];
   total_comentarios: number;
   total_compartidos: number;
@@ -50,215 +43,21 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
   total_comentarios,
   total_compartidos,
   usuario,
-  onEliminar
+  onEliminar,
 }) => {
-  // Estados locales
-  const [contadorComentarios, setContadorComentarios] = useState(total_comentarios);
-  const [meGusta, setMeGusta] = useState<string[]>(me_gusta);
-  const [cargandoMeGusta, setCargandoMeGusta] = useState(false);
-  const [errorMeGusta, setErrorMeGusta] = useState('');
-  const [mostrarComentarios, setMostrarComentarios] = useState(false);
-  const [enfoqueAutomaticoComentario, setEnfoqueAutomaticoComentario] = useState(false);
-  const [nuevoComentario, setNuevoComentario] = useState('');
-  const [cargandoComentario, setCargandoComentario] = useState(false);
-  const [mostrarMenu, setMostrarMenu] = useState(false);
-  const [eliminando, setEliminando] = useState(false);
-  const [grabacionHero, setGrabacionHero] = useState<GrabacionReplayHero | null>(null);
-  const [cargandoGrabacionHero, setCargandoGrabacionHero] = useState(false);
-  const [mostrarReplayHero, setMostrarReplayHero] = useState(false);
+  const {
+    contadorComentarios, meGusta, cargandoMeGusta,
+    mostrarComentarios, enfoqueAutomaticoComentario, nuevoComentario,
+    cargandoComentario, mostrarMenu, eliminando, grabacionHero,
+    cargandoGrabacionHero, mostrarReplayHero, yaDioMeGusta, esDuenioOAdmin,
+    setMostrarMenu, setMostrarReplayHero, setEnfoqueAutomaticoComentario, setNuevoComentario,
+    alternarMeGusta, alternarComentarios, enviarComentario, manejarEliminar, formatearFecha,
+  } = useFeedPublicacion({ id, me_gusta, total_comentarios, usuario_id, tipo, encuesta, usuario, onEliminar });
 
-  // Saber si el usuario actual ya dio like
-  const yaDioMeGusta = usuario && meGusta.includes(usuario.id);
-
-  // Saber si el usuario es dueño de la publicación o admin
-  const esDuenioOAdmin = usuario && (usuario.id === usuario_id || usuario.rol === 'admin');
-
-  // Cargar contador de comentarios y likes reales desde Supabase
-  useEffect(() => {
-    const cargarDatosReales = async () => {
-      try {
-        // Comentarios
-        const { count, error } = await supabase
-          .from('comunidad_comentarios')
-          .select('*', { count: 'exact', head: true })
-          .eq('publicacion_id', id);
-
-        if (!error && typeof count === 'number') {
-          setContadorComentarios(count);
-        }
-
-        // Likes
-        await recargarConteoLikes();
-      } catch (error) {
-        console.error('Error cargando datos reales:', error);
-      }
-    };
-
-    cargarDatosReales();
-  }, [id]);
-
-  useEffect(() => {
-    const grabacionId = encuesta?.grabacion_id;
-    if (tipo !== 'grabacion_hero' || !grabacionId) return;
-
-    const cargarGrabacionHero = async () => {
-      try {
-        setCargandoGrabacionHero(true);
-        const data = await obtenerGrabacionPublica(grabacionId);
-        setGrabacionHero(data as GrabacionReplayHero);
-      } catch (error) {
-        console.error('Error cargando replay de comunidad:', error);
-      } finally {
-        setCargandoGrabacionHero(false);
-      }
-    };
-
-    cargarGrabacionHero();
-  }, [encuesta?.grabacion_id, tipo]);
-
-  // Recargar conteo de likes
-  const recargarConteoLikes = async () => {
-    try {
-      const { data: likesData, error: likesError } = await supabase
-        .from('comunidad_publicaciones_likes')
-        .select('usuario_id')
-        .eq('publicacion_id', id);
-
-      if (!likesError && likesData) {
-        const likesUsuarios = likesData.map((like: any) => like.usuario_id);
-        setMeGusta(likesUsuarios);
-      }
-    } catch (error) {
-      console.error('Error recargando likes:', error);
-    }
-  };
-
-  // Alternar me gusta
-  const alternarMeGusta = async () => {
-    if (!usuario || cargandoMeGusta) return;
-
-    setCargandoMeGusta(true);
-    setErrorMeGusta('');
-
-    try {
-      if (yaDioMeGusta) {
-        // Quitar like
-        const { error } = await supabase
-          .from('comunidad_publicaciones_likes')
-          .delete()
-          .eq('publicacion_id', id)
-          .eq('usuario_id', usuario.id);
-
-        if (error) throw error;
-
-        setMeGusta(prev => prev.filter(id => id !== usuario.id));
-      } else {
-        // Agregar like
-        const { error } = await supabase
-          .from('comunidad_publicaciones_likes')
-          .insert([{
-            publicacion_id: id,
-            usuario_id: usuario.id
-          }] as any);
-
-        if (error) throw error;
-
-        setMeGusta(prev => [...prev, usuario.id]);
-      }
-    } catch (error) {
-      console.error('Error alternando me gusta:', error);
-      setErrorMeGusta('Error al actualizar me gusta');
-    } finally {
-      setCargandoMeGusta(false);
-    }
-  };
-
-  // Alternar comentarios
-  const alternarComentarios = () => {
-    setMostrarComentarios(!mostrarComentarios);
-    if (!mostrarComentarios) {
-      setEnfoqueAutomaticoComentario(true);
-    }
-  };
-
-  // Enviar comentario
-  const enviarComentario = async () => {
-    if (!usuario || !nuevoComentario.trim() || cargandoComentario) return;
-
-    setCargandoComentario(true);
-
-    try {
-      const { error } = await supabase
-        .from('comunidad_comentarios')
-        .insert([{
-          publicacion_id: id,
-          usuario_id: usuario.id,
-          usuario_nombre: usuario.nombre,
-          comentario: nuevoComentario.trim(),
-          fecha_creacion: new Date().toISOString()
-        }] as any);
-
-      if (error) throw error;
-
-      setNuevoComentario('');
-      setContadorComentarios(prev => prev + 1);
-    } catch (error) {
-      console.error('Error enviando comentario:', error);
-    } finally {
-      setCargandoComentario(false);
-    }
-  };
-
-  // Eliminar publicación
-  const manejarEliminar = async () => {
-    if (!esDuenioOAdmin || eliminando) return;
-
-    if (!window.confirm('¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
-    setEliminando(true);
-    try {
-      await eliminarPublicacion(id);
-
-      if (onEliminar) {
-        onEliminar(id);
-      }
-    } catch (error) {
-      console.error('Error eliminando publicación:', error);
-      alert('Error al eliminar la publicación');
-    } finally {
-      setEliminando(false);
-      setMostrarMenu(false);
-    }
-  };
-
-  // Navegar al perfil
-  const navegarAlPerfil = () => {
-    console.log(`🔗 Navegando al perfil de: ${usuario_nombre} `);
-    // Aquí implementarías la navegación
-    // navigate(`/ usuarios / ${ usuario_slug } `);
-  };
-
-  // Formatear fecha
-  const formatearFecha = (fechaString: string) => {
-    try {
-      const fecha = new Date(fechaString);
-      return fecha.toLocaleString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return fechaString;
-    }
-  };
+  const enc = encuesta as Record<string, unknown> | undefined;
 
   return (
-    <article className="feed-publicaciones-tarjeta" id={`publicacion - ${id} `}>
-      {/* Encabezado de la publicación */}
+    <article className="feed-publicaciones-tarjeta" id={`publicacion-${id}`}>
       <header className="feed-publicaciones-encabezado">
         <div className="feed-publicaciones-info-usuario">
           <div className="feed-publicaciones-contenedor-avatar">
@@ -267,20 +66,16 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
                 src={url_foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario_nombre)}&background=667eea&color=fff`}
                 alt={usuario_nombre}
                 className="feed-publicaciones-avatar"
-                onClick={navegarAlPerfil}
               />
-            </div >
+            </div>
             <div className="feed-publicaciones-indicador-estado"></div>
-          </div >
+          </div>
           <div className="feed-publicaciones-detalles-usuario">
             <button
               className="feed-publicaciones-boton-nombre-usuario feed-publicaciones-clickeable"
-              onClick={navegarAlPerfil}
               aria-label={`Ver perfil de ${usuario_nombre}`}
             >
-              <h3 className="feed-publicaciones-nombre-usuario">
-                {usuario_nombre}
-              </h3>
+              <h3 className="feed-publicaciones-nombre-usuario">{usuario_nombre}</h3>
             </button>
             <div className="feed-publicaciones-metadatos-publicacion">
               <time className="feed-publicaciones-fecha-publicacion">{formatearFecha(fecha)}</time>
@@ -293,7 +88,7 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
               </span>
             </div>
           </div>
-        </div >
+        </div>
         <div className="feed-publicaciones-acciones-encabezado">
           <div className="feed-publicaciones-contenedor-menu">
             <button
@@ -334,10 +129,9 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
             )}
           </div>
         </div>
-      </header >
+      </header>
 
-      {/* Contenido de la publicación */}
-      < div className="feed-publicaciones-contenido-principal" >
+      <div className="feed-publicaciones-contenido-principal">
         {tipo === 'foto_perfil' ? (
           <p className="feed-publicaciones-texto-publicacion-automatica">
             <span className="feed-publicaciones-accion-automatica">Actualizó su foto de perfil</span>
@@ -356,15 +150,14 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
         {tipo === 'grabacion_hero' && (
           <div className="feed-publicaciones-grabacion-hero">
             <div className="feed-publicaciones-grabacion-meta">
-              <span className={`feed-publicaciones-grabacion-badge ${encuesta?.modo === 'competencia' ? 'competencia' : 'practica'}`}>
-                {encuesta?.modo === 'competencia' ? `${Math.round(encuesta?.precision_porcentaje || 0)}% · competencia` : 'practica libre'}
+              <span className={`feed-publicaciones-grabacion-badge ${enc?.modo === 'competencia' ? 'competencia' : 'practica'}`}>
+                {enc?.modo === 'competencia' ? `${Math.round(Number(enc?.precision_porcentaje) || 0)}% · competencia` : 'practica libre'}
               </span>
               <span className="feed-publicaciones-grabacion-resumen">
-                {encuesta?.cancion_titulo || encuesta?.titulo_grabacion || 'Replay Hero'}
-                {encuesta?.puntuacion ? ` · ${Number(encuesta.puntuacion).toLocaleString('es-CO')} pts` : ''}
+                {String(enc?.cancion_titulo || enc?.titulo_grabacion || 'Replay Hero')}
+                {enc?.puntuacion ? ` · ${Number(enc.puntuacion).toLocaleString('es-CO')} pts` : ''}
               </span>
             </div>
-
             <div className="feed-publicaciones-grabacion-player">
               <button
                 className="feed-publicaciones-grabacion-btn"
@@ -383,73 +176,58 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
           </div>
         )}
 
-        {/* Media de la publicación */}
-        {
-          url_imagen && (
-            <div className={`feed-publicaciones-contenedor-media ${tipo === 'foto_perfil' ? 'feed-publicaciones-media-perfil' : ''}`}>
-              <img
-                src={url_imagen}
-                alt="Imagen de la publicación"
-                className="feed-publicaciones-imagen-publicacion"
-                loading="lazy"
-              />
-            </div>
-          )
-        }
+        {url_imagen && (
+          <div className={`feed-publicaciones-contenedor-media ${tipo === 'foto_perfil' ? 'feed-publicaciones-media-perfil' : ''}`}>
+            <img
+              src={url_imagen}
+              alt="Imagen de la publicación"
+              className="feed-publicaciones-imagen-publicacion"
+              loading="lazy"
+            />
+          </div>
+        )}
 
-        {
-          url_video && (
-            <div className="feed-publicaciones-contenedor-media">
-              <video
-                src={url_video}
-                controls
-                className="feed-publicaciones-video-publicacion"
-                preload="metadata"
-                aria-label="Video de la publicación"
-              >
-                <track kind="captions" src="" label="Sin subtítulos disponibles" default />
-                Su navegador no soporta la reproducción de video.
-              </video>
-            </div>
-          )
-        }
+        {url_video && (
+          <div className="feed-publicaciones-contenedor-media">
+            <video
+              src={url_video}
+              controls
+              className="feed-publicaciones-video-publicacion"
+              preload="metadata"
+              aria-label="Video de la publicación"
+            >
+              <track kind="captions" src="" label="Sin subtítulos disponibles" default />
+              Su navegador no soporta la reproducción de video.
+            </video>
+          </div>
+        )}
 
-        {
-          url_gif && (
-            <div className="feed-publicaciones-contenedor-media">
-              <img
-                src={url_gif}
-                alt="GIF de la publicación"
-                className="feed-publicaciones-gif-publicacion"
-                loading="lazy"
-              />
-            </div>
-          )
-        }
+        {url_gif && (
+          <div className="feed-publicaciones-contenedor-media">
+            <img
+              src={url_gif}
+              alt="GIF de la publicación"
+              className="feed-publicaciones-gif-publicacion"
+              loading="lazy"
+            />
+          </div>
+        )}
 
-        {/* Encuesta */}
-        {
-          encuesta && encuesta.opciones && encuesta.opciones.length > 0 && (
-            <div className="feed-publicaciones-encuesta">
-              <h4 className="feed-publicaciones-titulo-encuesta">{encuesta.pregunta}</h4>
-              <div className="feed-publicaciones-opciones-encuesta">
-                {encuesta.opciones.map((opcion: string, index: number) => (
-                  <button
-                    key={index}
-                    className="feed-publicaciones-opcion-encuesta"
-                    onClick={() => console.log('Votar por:', opcion)}
-                  >
-                    {opcion}
-                  </button>
-                ))}
-              </div>
+        {enc?.opciones && Array.isArray(enc.opciones) && enc.opciones.length > 0 && (
+          <div className="feed-publicaciones-encuesta">
+            <h4 className="feed-publicaciones-titulo-encuesta">{String(enc.pregunta)}</h4>
+            <div className="feed-publicaciones-opciones-encuesta">
+              {(enc.opciones as string[]).map((opcion, index) => (
+                <button key={index} className="feed-publicaciones-opcion-encuesta">
+                  {opcion}
+                </button>
+              ))}
             </div>
-          )
-        }
-      </div >
+          </div>
+        )}
+      </div>
 
-      {/* Barra de estadísticas */}
-      < div className="feed-publicaciones-barra-estadisticas" >
+      <div className="feed-publicaciones-barra-estadisticas">
         <div className="feed-publicaciones-reacciones-info">
           {meGusta.length > 0 && (
             <>
@@ -481,10 +259,9 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
             </>
           )}
         </div>
-      </div >
+      </div>
 
-      {/* Barra de acciones */}
-      < div className="feed-publicaciones-barra-acciones" >
+      <div className="feed-publicaciones-barra-acciones">
         <button
           className={`feed-publicaciones-boton-accion ${yaDioMeGusta ? 'activo' : ''}`}
           onClick={alternarMeGusta}
@@ -495,9 +272,7 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
             <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
           </svg>
           <span className="feed-publicaciones-texto-accion">{yaDioMeGusta ? 'Te gusta' : 'Me gusta'}</span>
-          {cargandoMeGusta && (
-            <div className="feed-publicaciones-indicador-carga"></div>
-          )}
+          {cargandoMeGusta && <div className="feed-publicaciones-indicador-carga"></div>}
         </button>
 
         <button
@@ -511,68 +286,62 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
           <span className="feed-publicaciones-texto-accion">Comentar</span>
         </button>
 
-        <button
-          className="feed-publicaciones-boton-accion"
-          aria-label="Compartir publicación"
-        >
+        <button className="feed-publicaciones-boton-accion" aria-label="Compartir publicación">
           <svg className="feed-publicaciones-icono-accion" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
           </svg>
           <span className="feed-publicaciones-texto-accion">Compartir</span>
         </button>
-      </div >
+      </div>
 
-      {/* Sección de comentarios */}
-      {
-        mostrarComentarios && (
-          <div className="feed-publicaciones-seccion-comentarios">
-            <div className="feed-publicaciones-formulario-comentario">
-              <div className="feed-publicaciones-contenedor-avatar-usuario">
-                <img
-                  src={usuario ? `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=667eea&color=fff` : ''}
-                  alt="Tu avatar"
-                  className="feed-publicaciones-avatar-usuario-actual"
+      {mostrarComentarios && (
+        <div className="feed-publicaciones-seccion-comentarios">
+          <div className="feed-publicaciones-formulario-comentario">
+            <div className="feed-publicaciones-contenedor-avatar-usuario">
+              <img
+                src={usuario ? `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=667eea&color=fff` : ''}
+                alt="Tu avatar"
+                className="feed-publicaciones-avatar-usuario-actual"
+              />
+            </div>
+            <div className="feed-publicaciones-contenedor-input-comentario">
+              <div className="feed-publicaciones-input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Escribe un comentario..."
+                  value={nuevoComentario}
+                  onChange={(e) => setNuevoComentario(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && enviarComentario()}
+                  className="feed-publicaciones-input-comentario"
+                  autoFocus={enfoqueAutomaticoComentario}
+                  onFocus={() => setEnfoqueAutomaticoComentario(false)}
+                  maxLength={500}
                 />
-              </div>
-              <div className="feed-publicaciones-contenedor-input-comentario">
-                <div className="feed-publicaciones-input-wrapper">
-                  <input
-                    type="text"
-                    placeholder="Escribe un comentario..."
-                    value={nuevoComentario}
-                    onChange={(e) => setNuevoComentario(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && enviarComentario()}
-                    className="feed-publicaciones-input-comentario"
-                    autoFocus={enfoqueAutomaticoComentario}
-                    onFocus={() => setEnfoqueAutomaticoComentario(false)}
-                    maxLength={500}
-                  />
-                  <div className="feed-publicaciones-contador-caracteres">
-                    {nuevoComentario.length}/500
-                  </div>
+                <div className="feed-publicaciones-contador-caracteres">
+                  {nuevoComentario.length}/500
                 </div>
-                <button
-                  className="feed-publicaciones-boton-enviar-comentario"
-                  onClick={enviarComentario}
-                  disabled={!nuevoComentario.trim() || cargandoComentario}
-                >
-                  <svg className="feed-publicaciones-icono-enviar" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                  </svg>
-                  {cargandoComentario ? 'Enviando...' : 'Enviar'}
-                </button>
               </div>
+              <button
+                className="feed-publicaciones-boton-enviar-comentario"
+                onClick={enviarComentario}
+                disabled={!nuevoComentario.trim() || cargandoComentario}
+              >
+                <svg className="feed-publicaciones-icono-enviar" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+                {cargandoComentario ? 'Enviando...' : 'Enviar'}
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       <ModalReplayGrabacionHero
         abierta={mostrarReplayHero}
         grabacion={grabacionHero}
         onCerrar={() => setMostrarReplayHero(false)}
       />
-    </article >
+    </article>
   );
 };
 

@@ -1,20 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useUsuario } from '../../contextos/UsuarioContext';
-import { supabase } from '../../servicios/clienteSupabase';
-import { crearRegistroPago } from '../../servicios/pagoService';
+import { useModalPago } from './Hooks/useModalPago';
+import type { ContenidoCompra } from './Hooks/useModalPago';
 import './ModalPagoInteligente.css';
-
-// Interface para el contenido (paquete, curso, tutorial, etc.)
-interface ContenidoCompra {
-    id: string | number;
-    titulo?: string;
-    nombre?: string;
-    precio_normal?: number;
-    precio_rebajado?: number;
-    precio?: number; // Para membresías
-    precio_mensual?: number; // Para membresías
-    [key: string]: any;
-}
 
 interface ModalPagoInteligenteProps {
     mostrar: boolean;
@@ -23,625 +9,14 @@ interface ModalPagoInteligenteProps {
     tipoContenido?: 'curso' | 'tutorial' | 'paquete' | 'membresia';
 }
 
-interface DatosPago {
-    nombre: string;
-    apellido: string;
-    email: string;
-    telefono: string;
-    whatsapp: string;
-    tipo_documento: string;
-    numero_documento: string;
-    direccion: string;
-    ciudad: string;
-    pais: string;
-    codigo_postal: string;
-    password?: string;
-    confirmarPassword?: string;
-    fecha_nacimiento?: string;
-    profesion?: string;
-    como_nos_conocio?: string;
-}
-
-// URLs de ePayco - Usar SIEMPRE URLs de producción, incluso en desarrollo local
-// ePayco rechaza URLs de localhost
-const EPAYCO_RESPONSE_URL = 'https://academiavallenataonline.com/pago-exitoso';
-const EPAYCO_CONFIRMATION_URL = 'https://tbijzvtyyewhtwgakgka.supabase.co/functions/v1/epayco-webhook';
-
 const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso' }: ModalPagoInteligenteProps) => {
-    const { usuario } = useUsuario();
-
-    // Estados
-    const [pasoActual, setPasoActual] = useState(1);
-    const [cargando, setCargando] = useState(false);
-    const [procesandoPago, setProcesandoPago] = useState(false);
-    const [error, setError] = useState('');
-    const [pagoExitoso, setPagoExitoso] = useState(false);
-    const [usuarioEstaRegistrado, setUsuarioEstaRegistrado] = useState(false);
-    const [ultimoIntentoPago, setUltimoIntentoPago] = useState(0);
-
-    const [datosPago, setDatosPago] = useState<DatosPago>({
-        nombre: '',
-        apellido: '',
-        email: '',
-        telefono: '',
-        whatsapp: '',
-        tipo_documento: 'CC',
-        numero_documento: '',
-        direccion: '',
-        ciudad: '',
-        pais: 'Colombia',
-        codigo_postal: '',
-        password: '',
-        confirmarPassword: ''
-    });
-
-    const [erroresValidacion, setErroresValidacion] = useState({
-        email: '',
-        telefono: '',
-        documento: '',
-        password: ''
-    });
-
-    // Variables de entorno (asegúrate de que estén definidas en .env)
-    // En Vite usamos import.meta.env, pero checkeamos si existe process (por si acaso)
-    const EPAYCO_PUBLIC_KEY = import.meta.env.VITE_EPAYCO_PUBLIC_KEY;
-
-    useEffect(() => {
-        if (mostrar) {
-            verificarUsuario();
-        } else {
-            // Reset al cerrar
-            setTimeout(() => {
-                setPasoActual(1);
-                setError('');
-                setCargando(false);
-                setPagoExitoso(false);
-            }, 300);
-        }
-    }, [mostrar, usuario]);
-
-    const verificarUsuario = async () => {
-        if (usuario) {
-            setUsuarioEstaRegistrado(true);
-            setPasoActual(1);
-
-            try {
-                // Consultar perfil completo del usuario en Supabase
-                console.log('👤 Cargando datos del perfil del usuario:', usuario.id);
-                const { data: perfil, error } = await supabase
-                    .from('perfiles')
-                    .select('nombre, apellido, correo_electronico, whatsapp, documento_tipo, documento_numero, direccion_completa, ciudad, pais, codigo_postal')
-                    .eq('id', usuario.id)
-                    .single();
-
-                if (error) {
-                    console.warn('⚠️ Error cargando perfil:', error);
-                    // Si hay error, usar datos del contexto solamente
-                    setDatosPago(prev => ({
-                        ...prev,
-                        nombre: usuario.nombre || '',
-                        email: usuario.email || '',
-                        telefono: (usuario as any).telefono || '',
-                        whatsapp: (usuario as any).telefono || '',
-                        ciudad: (usuario as any).ciudad || '',
-                        pais: (usuario as any).pais || 'Colombia'
-                    }));
-                    return;
-                }
-
-                if (perfil) {
-                    console.log('✅ Perfil cargado:', perfil);
-                    // Pre-llenar con datos completos de Supabase
-                    setDatosPago(prev => ({
-                        ...prev,
-                        nombre: perfil.nombre || '',
-                        apellido: perfil.apellido || '',
-                        email: perfil.correo_electronico || usuario.email || '',
-                        telefono: perfil.whatsapp || '',
-                        whatsapp: perfil.whatsapp || '',
-                        tipo_documento: perfil.documento_tipo || 'CC',
-                        numero_documento: perfil.documento_numero || '',
-                        direccion: perfil.direccion_completa || '',
-                        ciudad: perfil.ciudad || '',
-                        pais: perfil.pais || 'Colombia',
-                        codigo_postal: perfil.codigo_postal || ''
-                    }));
-                } else {
-                    console.warn('⚠️ No se encontró perfil para usuario');
-                    // Fallback a datos del contexto
-                    setDatosPago(prev => ({
-                        ...prev,
-                        nombre: usuario.nombre || '',
-                        email: usuario.email || '',
-                        telefono: (usuario as any).telefono || '',
-                        whatsapp: (usuario as any).telefono || '',
-                        ciudad: (usuario as any).ciudad || '',
-                        pais: (usuario as any).pais || 'Colombia'
-                    }));
-                }
-            } catch (err) {
-                console.error('❌ Error en verificarUsuario:', err);
-                // Fallback seguro
-                setDatosPago(prev => ({
-                    ...prev,
-                    nombre: usuario.nombre || '',
-                    email: usuario.email || '',
-                    telefono: (usuario as any).telefono || '',
-                    whatsapp: (usuario as any).telefono || '',
-                    ciudad: (usuario as any).ciudad || '',
-                    pais: (usuario as any).pais || 'Colombia'
-                }));
-            }
-        } else {
-            setUsuarioEstaRegistrado(false);
-            setPasoActual(1);
-        }
-    };
-
-    // Función para limpiar teléfono (quitar códigos de país +57, +1, etc)
-    const limpiarTelefono = (tel: string): string => {
-        if (!tel) return '';
-        return tel
-            .replace(/^\+\d{1,3}/, '') // Quitar +57, +1, etc
-            .replace(/\s/g, '')        // Quitar espacios
-            .replace(/\D+/g, (match) => match === '' ? '' : match) // Mantener solo dígitos y separadores válidos
-            .trim();
-    };
-
-    // Función para guardar/actualizar datos del usuario en tabla perfiles
-    const guardarPerfilUsuario = async (usuarioId: string) => {
-        try {
-            const datosActualizar: Record<string, string | null> = {};
-
-            // Solo actualizar campos que tengan valor
-            if (datosPago.nombre) datosActualizar.nombre = datosPago.nombre;
-            if (datosPago.apellido) datosActualizar.apellido = datosPago.apellido;
-
-            // Concatenar nombre completo
-            if (datosPago.nombre && datosPago.apellido) {
-                datosActualizar.nombre_completo = `${datosPago.nombre} ${datosPago.apellido}`;
-            }
-
-            // Email
-            if (datosPago.email) datosActualizar.correo_electronico = datosPago.email;
-
-            // Teléfono limpio (sin código de país)
-            const telefonoLimpio = limpiarTelefono(datosPago.telefono || datosPago.whatsapp);
-            if (telefonoLimpio) datosActualizar.whatsapp = telefonoLimpio;
-
-            // Documento
-            if (datosPago.tipo_documento) datosActualizar.documento_tipo = datosPago.tipo_documento;
-            if (datosPago.numero_documento) datosActualizar.documento_numero = datosPago.numero_documento;
-
-            // Dirección y ubicación
-            if (datosPago.direccion) datosActualizar.direccion_completa = datosPago.direccion;
-            if (datosPago.ciudad) datosActualizar.ciudad = datosPago.ciudad;
-            if (datosPago.pais) datosActualizar.pais = datosPago.pais;
-            if (datosPago.codigo_postal) datosActualizar.codigo_postal = datosPago.codigo_postal;
-
-            // Solo actualizar si hay datos para guardar
-            if (Object.keys(datosActualizar).length > 0) {
-                console.log('💾 Guardando datos de perfil:', datosActualizar);
-
-                const { error } = await supabase
-                    .from('perfiles')
-                    .update(datosActualizar)
-                    .eq('id', usuarioId);
-
-                if (error) {
-                    console.warn('⚠️ No se pudieron guardar datos en perfil:', error);
-                    // No bloquear el flujo de pago si esto falla
-                } else {
-                    console.log('✅ Datos de perfil guardados exitosamente');
-                }
-            }
-        } catch (err) {
-            console.warn('⚠️ Error al guardar perfil de usuario:', err);
-            // No bloquear el flujo de pago
-        }
-    };
-
-    const cerrarModal = () => {
-        setMostrar(false);
-    };
-
-    // Validaciones
-    const validarEmail = (email: string) => {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!email) {
-            setErroresValidacion(prev => ({ ...prev, email: '' }));
-        } else if (!emailRegex.test(email.trim())) {
-            setErroresValidacion(prev => ({ ...prev, email: 'Email inválido' }));
-        } else {
-            setErroresValidacion(prev => ({ ...prev, email: '' }));
-        }
-    };
-
-    const validarTelefono = (telefono: string) => {
-        const telefonoLimpio = telefono.replace(/[\s\-\(\)]/g, '');
-        if (!telefono) {
-            setErroresValidacion(prev => ({ ...prev, telefono: '' }));
-        } else if (!/^\d{7,15}$/.test(telefonoLimpio)) {
-            setErroresValidacion(prev => ({ ...prev, telefono: 'Teléfono debe tener 7-15 dígitos' }));
-        } else {
-            setErroresValidacion(prev => ({ ...prev, telefono: '' }));
-        }
-    };
-
-    const validarDocumento = (documento: string, tipo: string) => {
-        const docLimpio = documento.replace(/[\s\-\.]/g, '');
-        if (!documento) {
-            setErroresValidacion(prev => ({ ...prev, documento: '' }));
-        } else if (tipo === 'CC' && (docLimpio.length < 6 || docLimpio.length > 10)) {
-            setErroresValidacion(prev => ({ ...prev, documento: 'Cédula: 6-10 dígitos' }));
-        } else if (tipo === 'NIT' && (docLimpio.length < 9 || docLimpio.length > 12)) {
-            setErroresValidacion(prev => ({ ...prev, documento: 'NIT: 9-12 dígitos' }));
-        } else {
-            setErroresValidacion(prev => ({ ...prev, documento: '' }));
-        }
-    };
-
-    const validarPassword = (password: string | undefined) => {
-        if (!password) return;
-        if (password.length < 8) {
-            setErroresValidacion(prev => ({ ...prev, password: 'Mínimo 8 caracteres' }));
-        } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-            setErroresValidacion(prev => ({ ...prev, password: 'Debe tener letra y número' }));
-        } else {
-            setErroresValidacion(prev => ({ ...prev, password: '' }));
-        }
-    };
-
-    const validarDatosPago = (): boolean => {
-        // Validar campos requeridos básicos
-        if (!datosPago.nombre || !datosPago.email || !datosPago.telefono) {
-            setError('Por favor completa nombre, email y teléfono');
-            return false;
-        }
-
-        // Validar documento y dirección si estamos en paso 2
-        if (!datosPago.numero_documento || !datosPago.direccion || !datosPago.ciudad) {
-            setError('Por favor completa los datos de facturación');
-            return false;
-        }
-
-        // Validar password si es usuario nuevo
-        if (!usuarioEstaRegistrado) {
-            if (!datosPago.password || datosPago.password.length < 8) {
-                setError('La contraseña es inválida');
-                return false;
-            }
-            if (datosPago.password !== datosPago.confirmarPassword) {
-                setError('Las contraseñas no coinciden');
-                return false;
-            }
-        }
-
-        // Chequear errores de validación en tiempo real
-        if (erroresValidacion.email || erroresValidacion.telefono || erroresValidacion.documento || erroresValidacion.password) {
-            setError('Corrige los errores marcados en rojo');
-            return false;
-        }
-
-        return true;
-    };
-
-    const loadEpaycoScript = (): Promise<boolean> => {
-        return new Promise((resolve, reject) => {
-            if ((window as any).ePayco && document.querySelector('script[src="https://checkout.epayco.co/checkout.js"]')) {
-                resolve(true);
-                return;
-            }
-            const script = document.createElement('script');
-            script.src = 'https://checkout.epayco.co/checkout.js';
-            script.async = true;
-            script.onload = () => {
-                if ((window as any).ePayco) {
-                    resolve(true);
-                } else {
-                    setTimeout(() => {
-                        if ((window as any).ePayco) resolve(true);
-                        else reject(new Error('ePayco no inicializado'));
-                    }, 1000);
-                }
-            };
-            script.onerror = () => reject(new Error('Error cargando ePayco'));
-            document.head.appendChild(script);
-        });
-    };
-
-    // Crear usuario en Supabase Auth si es nuevo y obtener su ID
-    const crearOObtenerUsuario = async (): Promise<string | null> => {
-        // Si ya está registrado, retornar su ID
-        if (usuario?.id) {
-            return usuario.id;
-        }
-
-        try {
-            // Intentar signUp
-            const { data: authData, error: signUpError } = await supabase.auth.signUp({
-                email: datosPago.email,
-                password: datosPago.password,
-                options: {
-                    data: {
-                        nombre: datosPago.nombre,
-                        apellido: datosPago.apellido
-                    }
-                }
-            });
-
-            if (signUpError) {
-                // Si el error es que el usuario ya existe, intentar signIn
-                if (signUpError.message?.includes('already registered') || signUpError.message?.includes('User already exists')) {
-                    console.log('📧 Email ya registrado, intentando signIn...');
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email: datosPago.email,
-                        password: datosPago.password
-                    });
-
-                    if (signInError) {
-                        throw new Error('El email ya existe pero la contraseña es incorrecta');
-                    }
-
-                    // Establecer sesión para signIn
-                    if (signInData?.session) {
-                        await supabase.auth.setSession({
-                            access_token: signInData.session.access_token,
-                            refresh_token: signInData.session.refresh_token
-                        });
-                        console.log('✅ Sesión establecida (signIn)');
-                    }
-
-                    return signInData?.user?.id || null;
-                } else {
-                    throw signUpError;
-                }
-            }
-
-            // Establecer sesión para signUp
-            if (authData?.session) {
-                await supabase.auth.setSession({
-                    access_token: authData.session.access_token,
-                    refresh_token: authData.session.refresh_token
-                });
-                console.log('✅ Sesión establecida (signUp)');
-            }
-
-            return authData?.user?.id || null;
-
-        } catch (error: any) {
-            console.error('Error creando/obteniendo usuario:', error);
-            throw new Error(error.message || 'Error al registrar usuario');
-        }
-    };
-
-    const procesarPago = async () => {
-        const ahora = Date.now();
-        if (procesandoPago || ahora - ultimoIntentoPago < 3000) return;
-
-        setProcesandoPago(true);
-        setUltimoIntentoPago(ahora);
-        setCargando(true);
-        setError('');
-
-        try {
-            // 1️⃣ Si es usuario nuevo, crear cuenta en Supabase Auth primero
-            let usuarioId: string | null = null;
-
-            if (!usuarioEstaRegistrado) {
-                console.log('👤 Creando usuario nuevo en Supabase Auth...');
-                usuarioId = await crearOObtenerUsuario();
-
-                if (!usuarioId) {
-                    throw new Error('No se pudo obtener ID de usuario');
-                }
-                console.log('✅ Usuario creado/obtenido:', usuarioId);
-            } else {
-                usuarioId = usuario?.id || null;
-            }
-
-            await loadEpaycoScript();
-
-            // Preparar datos para pago
-            const precio = obtenerPrecio(contenido);
-            if (precio <= 0) {
-                // Lógica gratuito
-                setPagoExitoso(true);
-                setCargando(false);
-                setProcesandoPago(false);
-                return;
-            }
-
-            // 2️⃣ CREAR REGISTRO EN SUPABASE ANTES DE ABRIR EPAYCO
-            console.log('💾 Creando registro de pago en Supabase...');
-
-            // Generar referencia única para el pago
-            const refPayco = generarRefPaycoReal();
-
-            // Calcular IVA
-            const { base, iva, total } = calcularIVA(precio);
-
-            // Construir datos del pago
-            const datosRegistroPago = {
-                usuario_id: usuarioId,
-                curso_id: tipoContenido === 'curso' ? String(contenido?.id || '') : undefined,
-                tutorial_id: tipoContenido === 'tutorial' ? String(contenido?.id || '') : undefined,
-                paquete_id: tipoContenido === 'paquete' ? String(contenido?.id || '') : undefined,
-                membresia_id: tipoContenido === 'membresia' ? String(contenido?.id || '') : undefined,
-                nombre_producto: obtenerTitulo(contenido),
-                descripcion: `${obtenerLabelTipo()}: ${obtenerTitulo(contenido)}`,
-                valor: total,
-                iva: iva,
-                base_iva: base,
-                moneda: 'COP',
-                ref_payco: refPayco,
-                factura: refPayco,
-                nombre: datosPago.nombre,
-                apellido: datosPago.apellido,
-                email: datosPago.email,
-                telefono: datosPago.telefono,
-                whatsapp: datosPago.whatsapp,
-                fecha_nacimiento: datosPago.fecha_nacimiento,
-                profesion: datosPago.profesion,
-                documento_tipo: datosPago.tipo_documento,
-                documento_numero: datosPago.numero_documento,
-                direccion_completa: datosPago.direccion,
-                ciudad: datosPago.ciudad,
-                pais: datosPago.pais,
-                codigo_postal: datosPago.codigo_postal,
-                como_nos_conocio: datosPago.como_nos_conocio,
-                user_agent: navigator.userAgent
-            };
-
-            // Llamar a crearRegistroPago
-            const resultadoRegistro = await crearRegistroPago(datosRegistroPago);
-
-            if (!resultadoRegistro.success) {
-                throw new Error(resultadoRegistro.message || 'Error al registrar el pago en la base de datos');
-            }
-
-            console.log('✅ Pago registrado en Supabase:', resultadoRegistro.data);
-
-            // 💾 GUARDAR DATOS DEL USUARIO EN TABLA PERFILES (antes de abrir ePayco)
-            if (usuarioId) {
-                await guardarPerfilUsuario(usuarioId);
-            }
-
-            const epaycoData = {
-                key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1',
-                test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true'
-            };
-
-            if ((window as any).ePayco) {
-                const handler = (window as any).ePayco.checkout.configure({
-                    key: epaycoData.key,
-                    test: epaycoData.test
-                });
-
-                const dataPago = {
-                    name: obtenerTitulo(contenido),
-                    description: obtenerTitulo(contenido),
-                    invoice: refPayco,
-                    currency: 'cop',
-                    amount: total.toString(),
-                    tax_base: base.toString(),
-                    tax: iva.toString(),
-                    country: 'co',
-                    lang: 'es',
-
-                    // Atributos del cliente
-                    name_billing: datosPago.nombre + ' ' + datosPago.apellido,
-                    address_billing: datosPago.direccion,
-                    type_doc_billing: datosPago.tipo_documento,
-                    mobilephone_billing: limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
-                    number_doc_billing: datosPago.numero_documento,
-                    email_billing: datosPago.email,
-
-                    // Funciones de callback con nuestro ref_payco como parámetro
-                    response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
-                    url_response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
-                    confirmation: EPAYCO_CONFIRMATION_URL,
-
-                    method: 'GET'
-                };
-
-                // 3️⃣ CERRAR MODAL antes de abrir ePayco
-                setMostrar(false);
-
-                // 4️⃣ Abrir checkout
-                handler.open(dataPago);
-
-                // 4️⃣ Detectar si el usuario cierra ePayco sin pagar (después de 30 segundos, volver a mostrar modal)
-                const timeoutHandle = setTimeout(() => {
-                    // Si el modal sigue cerrado después de 30s, probablemente cerró ePayco sin pagar
-                    // Volver a mostrar el modal
-                    setMostrar(true);
-                    setError('');
-                    setCargando(false);
-                    setProcesandoPago(false);
-                }, 30000);
-
-                setCargando(false);
-                setProcesandoPago(false);
-
-                // Limpiar timeout si el usuario completa el pago (redirige a pago-exitoso)
-                return () => clearTimeout(timeoutHandle);
-
-            } else {
-                throw new Error('Epayco no disponible');
-            }
-
-        } catch (err: any) {
-            console.error(err);
-            setError(err.message || 'Error procesando el pago');
-            setCargando(false);
-            setProcesandoPago(false);
-        }
-    };
-
-    const handleSiguiente = () => {
-        if (pasoActual === 1) {
-            if (!usuarioEstaRegistrado) {
-                setPasoActual(2);
-            } else {
-                // Si faltan datos, ir al 2
-                if (!datosPago.numero_documento || !datosPago.direccion) {
-                    setPasoActual(2);
-                } else {
-                    procesarPago();
-                }
-            }
-        } else if (pasoActual === 2) {
-            if (validarDatosPago()) {
-                procesarPago();
-            }
-        }
-    };
-
-    const obtenerPrecio = (item: any) => {
-        if (!item) return 0;
-        if (tipoContenido === 'membresia') return item.precio || item.precio_mensual || 0;
-        return item.precio_rebajado || item.precio_normal || 0;
-    };
-
-    const obtenerTitulo = (item: any) => {
-        if (!item) return 'Contenido';
-        if (tipoContenido === 'membresia') return item.nombre || 'Membresía';
-        return item.titulo || 'Producto';
-    };
-
-    const obtenerLabelTipo = () => {
-        if (tipoContenido === 'curso') return 'Curso';
-        if (tipoContenido === 'tutorial') return 'Tutorial';
-        if (tipoContenido === 'paquete') return 'Paquete';
-        return 'Membresía';
-    };
-
-    const calcularIVA = (valor: number) => {
-        const iva = Math.round(valor * 0.19);
-        const base = valor - iva;
-        return { base, iva, total: valor };
-    };
-
-    const obtenerPrefijoRef = () => {
-        if (tipoContenido === 'curso') return 'CUR';
-        if (tipoContenido === 'tutorial') return 'TUT';
-        if (tipoContenido === 'paquete') return 'PAQ';
-        return 'MEM';
-    };
-
-    const generarRefPaycoReal = () => {
-        const prefijo = obtenerPrefijoRef();
-        const timestamp = Date.now().toString();
-        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const idSanitizado = String(contenido?.id ?? 'ITEM')
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, '');
-        const longitudFija = prefijo.length + timestamp.length + random.length + 3;
-        const maxIdLength = Math.max(1, 32 - longitudFija);
-        const idRecortado = (idSanitizado || 'ITEM').substring(0, maxIdLength);
-        return `${prefijo}-${idRecortado}-${timestamp}-${random}`.substring(0, 32);
-    };
+    const {
+        usuario, pasoActual, setPasoActual, cargando, procesandoPago,
+        error, pagoExitoso, usuarioEstaRegistrado,
+        datosPago, setDatosPago, erroresValidacion,
+        validarEmail, validarTelefono, validarDocumento, validarPassword,
+        handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
+    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido });
 
     if (!mostrar) return null;
 
@@ -650,25 +25,30 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
             <div className="mpi-modal-content" onClick={e => e.stopPropagation()}>
                 <button className="mpi-close-btn" onClick={cerrarModal}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
                 <div className="mpi-modal-body">
                     {pasoActual !== 4 && (
                         <h2 className="mpi-title">
-                            {pasoActual === 1 ? (usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra') : 'Datos de Facturación'}
+                            {pasoActual === 1
+                                ? (usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra')
+                                : 'Datos de Facturación'}
                         </h2>
                     )}
 
-                    {/* Resumen Producto */}
                     {contenido && pasoActual !== 4 && (
                         <div className="mpi-product-summary">
                             <div className="mpi-summary-flex">
                                 <div>
                                     <h3 className="mpi-product-title">{obtenerTitulo(contenido)}</h3>
                                     <p className="mpi-product-subtitle">
-                                        {tipoContenido === 'curso' ? '🎓 Curso completo' : (tipoContenido === 'paquete' ? '📦 Paquete completo' : '🎵 Tutorial individual')}
+                                        {tipoContenido === 'curso'
+                                            ? '🎓 Curso completo'
+                                            : tipoContenido === 'paquete'
+                                                ? '📦 Paquete completo'
+                                                : `🎵 ${obtenerLabelTipo()} individual`}
                                     </p>
                                 </div>
                                 <div>
@@ -680,12 +60,9 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                     )}
 
                     {error && (
-                        <div className="mpi-alert mpi-alert-error">
-                            <p>{error}</p>
-                        </div>
+                        <div className="mpi-alert mpi-alert-error"><p>{error}</p></div>
                     )}
 
-                    {/* Paso 1 */}
                     {pasoActual === 1 && (
                         usuarioEstaRegistrado ? (
                             <div className="text-center">
@@ -705,68 +82,44 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                         )
                     )}
 
-                    {/* Paso 2: Formulario */}
                     {pasoActual === 2 && (
                         <div className="space-y-4">
-                            {/* Datos Personales */}
                             <div className="mpi-form-section">
                                 <h4 className="mpi-section-title">👤 Datos Personales</h4>
                                 <div className="mpi-grid-2">
-                                    <input
-                                        type="text"
-                                        className="mpi-input"
-                                        placeholder="Nombres"
+                                    <input type="text" className="mpi-input" placeholder="Nombres"
                                         value={datosPago.nombre}
-                                        onChange={e => setDatosPago({ ...datosPago, nombre: e.target.value })}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="mpi-input"
-                                        placeholder="Apellidos"
+                                        onChange={e => setDatosPago({ ...datosPago, nombre: e.target.value })} />
+                                    <input type="text" className="mpi-input" placeholder="Apellidos"
                                         value={datosPago.apellido}
-                                        onChange={e => setDatosPago({ ...datosPago, apellido: e.target.value })}
-                                    />
+                                        onChange={e => setDatosPago({ ...datosPago, apellido: e.target.value })} />
                                 </div>
                                 <div className="mpi-grid-2" style={{ marginTop: '0.5rem' }}>
                                     <div>
-                                        <input
-                                            type="email"
+                                        <input type="email"
                                             className={`mpi-input ${erroresValidacion.email ? 'mpi-input-error' : ''}`}
                                             placeholder="tu@email.com"
                                             value={datosPago.email}
-                                            onChange={e => {
-                                                setDatosPago({ ...datosPago, email: e.target.value });
-                                                validarEmail(e.target.value);
-                                            }}
-                                        />
+                                            onChange={e => { setDatosPago({ ...datosPago, email: e.target.value }); validarEmail(e.target.value); }} />
                                         {erroresValidacion.email && <p className="mpi-error-text">{erroresValidacion.email}</p>}
                                     </div>
                                     <div>
-                                        <input
-                                            type="tel"
+                                        <input type="tel"
                                             className={`mpi-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}
                                             placeholder="+57 300 123 4567"
                                             value={datosPago.telefono}
-                                            onChange={e => {
-                                                setDatosPago({ ...datosPago, telefono: e.target.value });
-                                                validarTelefono(e.target.value);
-                                            }}
-                                        />
+                                            onChange={e => { setDatosPago({ ...datosPago, telefono: e.target.value }); validarTelefono(e.target.value); }} />
                                         {erroresValidacion.telefono && <p className="mpi-error-text">{erroresValidacion.telefono}</p>}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Facturación */}
                             <div className="mpi-form-section">
                                 <h4 className="mpi-section-title">📄 Identificación y Facturación</h4>
                                 <div className="mpi-grid-3">
                                     <div>
-                                        <select
-                                            className="mpi-input"
-                                            value={datosPago.tipo_documento}
-                                            onChange={e => setDatosPago({ ...datosPago, tipo_documento: e.target.value })}
-                                        >
+                                        <select className="mpi-input" value={datosPago.tipo_documento}
+                                            onChange={e => setDatosPago({ ...datosPago, tipo_documento: e.target.value })}>
                                             <option value="CC">CC</option>
                                             <option value="CE">CE</option>
                                             <option value="Pasaporte">Pasaporte</option>
@@ -774,82 +127,52 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                                         </select>
                                     </div>
                                     <div className="mpi-col-span-2">
-                                        <input
-                                            type="text"
+                                        <input type="text"
                                             className={`mpi-input ${erroresValidacion.documento ? 'mpi-input-error' : ''}`}
                                             placeholder="Número de documento"
                                             value={datosPago.numero_documento}
-                                            onChange={e => {
-                                                setDatosPago({ ...datosPago, numero_documento: e.target.value });
-                                                validarDocumento(e.target.value, datosPago.tipo_documento);
-                                            }}
-                                        />
+                                            onChange={e => { setDatosPago({ ...datosPago, numero_documento: e.target.value }); validarDocumento(e.target.value, datosPago.tipo_documento); }} />
                                         {erroresValidacion.documento && <p className="mpi-error-text">{erroresValidacion.documento}</p>}
                                     </div>
                                 </div>
                                 <div style={{ marginTop: '0.5rem' }}>
-                                    <input
-                                        type="text"
-                                        className="mpi-input"
-                                        placeholder="Dirección completa"
+                                    <input type="text" className="mpi-input" placeholder="Dirección completa"
                                         value={datosPago.direccion}
-                                        onChange={e => setDatosPago({ ...datosPago, direccion: e.target.value })}
-                                    />
+                                        onChange={e => setDatosPago({ ...datosPago, direccion: e.target.value })} />
                                 </div>
                                 <div className="mpi-grid-3" style={{ marginTop: '0.5rem' }}>
-                                    <input
-                                        type="text"
-                                        className="mpi-input"
-                                        placeholder="Ciudad"
+                                    <input type="text" className="mpi-input" placeholder="Ciudad"
                                         value={datosPago.ciudad}
-                                        onChange={e => setDatosPago({ ...datosPago, ciudad: e.target.value })}
-                                    />
-                                    <select
-                                        className="mpi-input"
-                                        value={datosPago.pais}
-                                        onChange={e => setDatosPago({ ...datosPago, pais: e.target.value })}
-                                    >
+                                        onChange={e => setDatosPago({ ...datosPago, ciudad: e.target.value })} />
+                                    <select className="mpi-input" value={datosPago.pais}
+                                        onChange={e => setDatosPago({ ...datosPago, pais: e.target.value })}>
                                         <option value="Colombia">Colombia</option>
                                         <option value="Mexico">México</option>
                                         <option value="USA">USA</option>
                                         <option value="Otro">Otro</option>
                                     </select>
-                                    <input
-                                        type="text"
-                                        className="mpi-input"
-                                        placeholder="Cod. Postal"
+                                    <input type="text" className="mpi-input" placeholder="Cod. Postal"
                                         value={datosPago.codigo_postal}
-                                        onChange={e => setDatosPago({ ...datosPago, codigo_postal: e.target.value })}
-                                    />
+                                        onChange={e => setDatosPago({ ...datosPago, codigo_postal: e.target.value })} />
                                 </div>
                             </div>
 
-                            {/* Password si es nuevo */}
                             {!usuarioEstaRegistrado && (
                                 <div className="mpi-alert mpi-alert-success mpi-form-section" style={{ borderColor: 'rgba(34, 197, 94, 0.5)' }}>
                                     <h4 className="mpi-section-title" style={{ color: '#86efac' }}>🔐 Crear tu Cuenta</h4>
                                     <div className="mpi-grid-2">
                                         <div>
-                                            <input
-                                                type="password"
+                                            <input type="password"
                                                 className={`mpi-input ${erroresValidacion.password ? 'mpi-input-error' : ''}`}
                                                 placeholder="Contraseña (min. 8)"
                                                 value={datosPago.password}
-                                                onChange={e => {
-                                                    setDatosPago({ ...datosPago, password: e.target.value });
-                                                    validarPassword(e.target.value);
-                                                }}
-                                            />
+                                                onChange={e => { setDatosPago({ ...datosPago, password: e.target.value }); validarPassword(e.target.value); }} />
                                             {erroresValidacion.password && <p className="mpi-error-text">{erroresValidacion.password}</p>}
                                         </div>
                                         <div>
-                                            <input
-                                                type="password"
-                                                className="mpi-input"
-                                                placeholder="Confirmar contraseña"
+                                            <input type="password" className="mpi-input" placeholder="Confirmar contraseña"
                                                 value={datosPago.confirmarPassword}
-                                                onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })}
-                                            />
+                                                onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })} />
                                         </div>
                                     </div>
                                 </div>
@@ -857,13 +180,12 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                         </div>
                     )}
 
-                    {/* Paso 4: Loading */}
                     {cargando && (
                         <div className="text-center py-8">
                             <div className="mpi-spinner-lg mx-auto mpi-spinner">
                                 <svg fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
                             </div>
                             <p className="font-semibold text-lg">Conectando con ePayco...</p>
@@ -871,7 +193,6 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                         </div>
                     )}
 
-                    {/* Paso 5: Éxito */}
                     {pagoExitoso && (
                         <div className="text-center py-8">
                             <h2 className="text-2xl font-bold mb-2 text-green-500">¡Pago Exitoso!</h2>
@@ -881,26 +202,23 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                             </button>
                         </div>
                     )}
-
                 </div>
 
-                {/* Footer Buttons */}
                 {!cargando && !pagoExitoso && (
                     <div className="mpi-footer">
-                        {pasoActual === 2 ? (
-                            <button className="mpi-btn-back" onClick={() => setPasoActual(1)}>
-                                &larr; Atrás
-                            </button>
-                        ) : <div></div>}
-
+                        {pasoActual === 2
+                            ? <button className="mpi-btn-back" onClick={() => setPasoActual(1)}>&larr; Atrás</button>
+                            : <div />}
                         <button
                             className="mpi-btn-primary"
                             onClick={handleSiguiente}
                             disabled={procesandoPago || !contenido}
                         >
-                            {procesandoPago ? 'Procesando...' : (
-                                pasoActual === 1 ? `💳 Pagar $${obtenerPrecio(contenido).toLocaleString('es-CO')}` : '💳 Procesar Pago'
-                            )}
+                            {procesandoPago
+                                ? 'Procesando...'
+                                : pasoActual === 1
+                                    ? `💳 Pagar $${obtenerPrecio(contenido).toLocaleString('es-CO')}`
+                                    : '💳 Procesar Pago'}
                         </button>
                     </div>
                 )}

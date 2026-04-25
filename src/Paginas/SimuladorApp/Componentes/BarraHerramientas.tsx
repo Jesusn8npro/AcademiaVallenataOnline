@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    BookOpen,
     Circle,
     Music,
     ShoppingCart,
@@ -108,11 +107,6 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
 
             {/* 🛑 SECCIÓN IZQUIERDA */}
             <div className="seccion-barra seccion-izquierda">
-                <div className="boton-herramienta boton-aprende">
-                    <BookOpen size={20} />
-                    <span>APRENDE</span>
-                </div>
-
                 <div
                     ref={refs?.instrumentos}
                     className={`boton-herramienta ${modalesVisibles.instrumentos ? 'activo' : ''}`}

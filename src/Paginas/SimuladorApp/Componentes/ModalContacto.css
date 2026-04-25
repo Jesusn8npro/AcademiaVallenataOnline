@@ -126,24 +126,6 @@
     /* ← Caja de mensaje más alta */
 }
 
-.contacto-textarea {
-    width: 100%;
-    height: 100%;
-    min-height: 80px;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    resize: none;
-    font-family: inherit;
-    font-size: 11px;
-    padding: 4px;
-}
-
-.contacto-textarea::placeholder {
-    color: #444;
-}
-
 /* Footer y Botón Enviar */
 .modal-contacto-footer {
     display: flex;

@@ -5,14 +5,11 @@ import {
     MessageCircle,
     HelpCircle,
     Settings,
-    Star,
-    Gift,
     X,
     RotateCcw,
     ChevronUp,
     ArrowLeftRight,
     ArrowUpDown,
-    Info,
     Crown
 } from 'lucide-react';
 import './MenuOpciones.css';

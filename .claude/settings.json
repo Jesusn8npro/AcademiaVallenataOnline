@@ -6,7 +6,10 @@
       "Bash(npx tsc *)",
       "Bash(echo \"TypeScript/React: $\\(find src/Paginas/administrador -name \"*.tsx\" -o -name \"*.ts\")",
       "Bash(sed -n '70,80p' c:/PROGRAMACION/Academia/src/App.tsx)",
-      "Bash(sed -n '120,130p' c:/PROGRAMACION/Academia/src/App.tsx)"
+      "Bash(sed -n '120,130p' c:/PROGRAMACION/Academia/src/App.tsx)",
+      "Bash(find c:\\\\\\\\PROGRAMACION\\\\\\\\Academia/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.css\" \\\\\\))",
+      "Bash(xargs wc *)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
     ]
   }
 }
