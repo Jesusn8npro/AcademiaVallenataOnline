@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { actividadService } from '../../../servicios/actividadService';
@@ -84,7 +84,7 @@ const DashboardAdmin: React.FC = () => {
         }
     };
 
-    // Carga de datos pesada (EstadÃ­sticas completas)
+    // Carga de datos pesada (Estadísticas completas)
     const cargarDatosCompletos = async () => {
         try {
             setCargando(true);
@@ -97,7 +97,6 @@ const DashboardAdmin: React.FC = () => {
 
             setUltimaActualizacion(new Date().toLocaleTimeString());
         } catch (err) {
-            console.error('Error cargando dashboard:', err);
             setError('Error al cargar datos');
         } finally {
             setCargando(false);
@@ -116,7 +115,6 @@ const DashboardAdmin: React.FC = () => {
             setAlumnosActivos(alumnos);
             setUltimaActualizacion(new Date().toLocaleTimeString());
         } catch (err) {
-            console.error('Error actualizaciÃ³n tiempo real:', err);
         }
     };
 
@@ -148,7 +146,7 @@ const DashboardAdmin: React.FC = () => {
             const pagosReales = pagos || [];
             const ventasTotalesMes = pagosReales.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
 
-            // 5. Inscripciones recientes (30 dÃ­as)
+            // 5. Inscripciones recientes (30 días)
             const hace30Dias = new Date();
             hace30Dias.setDate(hace30Dias.getDate() - 30);
             const { count: countInscripciones } = await supabase
@@ -173,7 +171,6 @@ const DashboardAdmin: React.FC = () => {
             });
 
         } catch (error) {
-            console.error('Error cargando estadÃ­sticas:', error);
         }
     };
 
@@ -185,11 +182,11 @@ const DashboardAdmin: React.FC = () => {
                         <i className="fas fa-chart-line"></i>
                     </div>
                     <div className="detalles-panel">
-                        <h1>Panel AdministraciÃ³n</h1>
-                        <p>Academia Vallenata Online â€¢ {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <h1>Panel Administración</h1>
+                        <p>Academia Vallenata Online • {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         <p className="ultima-actualizacion">
                             <i className="fas fa-clock"></i>
-                            Ãšltima actualizaciÃ³n: {ultimaActualizacion}
+                            Última actualización: {ultimaActualizacion}
                         </p>
                     </div>
                 </div>
@@ -222,8 +219,8 @@ const DashboardAdmin: React.FC = () => {
             {cargando && !estadisticas ? (
                 <div className="cargando-datos">
                     <div className="spinner-grande"></div>
-                    <h3>Cargando estadÃ­sticas...</h3>
-                    <p>Obteniendo mÃ©tricas de la academia</p>
+                    <h3>Cargando estadísticas...</h3>
+                    <p>Obteniendo métricas de la academia</p>
                 </div>
             ) : (
                 <div className="contenido-panel">

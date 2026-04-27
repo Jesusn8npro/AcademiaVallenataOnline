@@ -76,7 +76,6 @@ export default function PerfilPublicoLayout() {
 
       const usuarioId = usuario.id
 
-      // Cargar inscripciones para contar cursos y tutoriales
       const { data: inscripciones } = await supabase
         .from('inscripciones')
         .select('curso_id, tutorial_id')
@@ -85,29 +84,21 @@ export default function PerfilPublicoLayout() {
       const cursosCount = inscripciones?.filter(i => i.curso_id).length || 0;
       const tutorialesCount = inscripciones?.filter(i => i.tutorial_id).length || 0;
 
-      // Cargar ranking - Usamos la misma lógica que en la página de Ranking
       let ranking = 0;
       try {
-        // Obtenemos el ranking global (top 100) y buscamos al usuario
-        // Esto asegura que el número coincida exactamente con lo que se ve en la tabla de líderes
         const rankingList = await GamificacionServicio.obtenerRanking('general', 100);
         const rankingUser = rankingList.find(r => r.usuario_id === usuarioId);
 
         if (rankingUser) {
           ranking = rankingUser.posicion;
         } else {
-          // Fallback: Si no está en el top 100, intentamos buscarlo individualmente
-          // aunque obtenerPosicionUsuario consulta la tabla directa y puede diferir del RPC
           const rankingData = await GamificacionServicio.obtenerPosicionUsuario(usuarioId, 'general');
           if (rankingData && rankingData.posicion) {
             ranking = rankingData.posicion;
           }
         }
-      } catch (e) {
-        console.error('Error cargando ranking:', e);
-      }
+      } catch { }
 
-      // Cargar publicaciones (si se mantiene esta métrica)
       const { count: publicacionesCount } = await supabase
         .from('comunidad_publicaciones')
         .select('*', { count: 'exact', head: true })
@@ -121,8 +112,7 @@ export default function PerfilPublicoLayout() {
       })
 
       setCargando(false)
-    } catch (e) {
-      console.error('Error cargando perfil:', e);
+    } catch {
       setError('Error cargando perfil público'); setCargando(false)
     }
   }

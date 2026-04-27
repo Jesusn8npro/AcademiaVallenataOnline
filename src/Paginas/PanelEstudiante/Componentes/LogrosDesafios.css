@@ -1,8 +1,5 @@
-/* LogrosDesafios.css */
-
 .academia-progreso-semanal {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    /* Purple Gradient Premium */
     border-radius: 20px;
     padding: 20px;
     margin: 20px 0;
@@ -24,7 +21,6 @@
     gap: 10px;
 }
 
-/* 🔄 LOADING */
 .academia-loading-skeleton {
     padding: 20px;
     text-align: center;
@@ -36,32 +32,26 @@
     margin-top: 10px;
 }
 
-/* 📊 GRID DE ESTADÍSTICAS */
 .academia-stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* Siempre 2 columnas */
     gap: 16px;
     margin-bottom: 24px;
 }
 
-/* 🃏 TARJETA DE ESTADÍSTICA */
 .academia-stat-card {
     background: rgba(255, 255, 255, 0.15);
-    /* Glass Effect */
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 16px;
     display: flex;
     flex-direction: column;
-    /* Apilar verticalmente SIEMPRE */
     align-items: center;
     justify-content: center;
     text-align: center;
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     min-height: 140px;
-    /* Asegurar altura consistente */
 }
 
 .academia-stat-card:hover {
@@ -84,7 +74,6 @@
     margin-bottom: 4px;
     line-height: 1.1;
     text-shadow: 0 2px 4px #000000, 0 0 8px rgba(0, 0, 0, 0.5);
-    /* Sombra negra fuerte solicitada */
 }
 
 .academia-logros-label {
@@ -94,14 +83,11 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     text-shadow: 0 2px 4px #000000;
-    /* Sombra negra fuerte */
 }
 
-/* 🔘 ACCIONES */
 .academia-acciones {
     display: flex;
     flex-direction: column;
-    /* Botones uno debajo del otro en móvil */
     gap: 12px;
 }
 
@@ -130,10 +116,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* 📱 RESPONSIVE */
 @media (min-width: 640px) {
-
-    /* En pantallas más grandes, los botones pueden ir lado a lado */
     .academia-acciones {
         flex-direction: row;
     }
@@ -158,7 +141,6 @@
         font-size: 0.7rem;
     }
 
-    /* Asegurar que el grid mantenga 2 columnas incluso en pantallas muy pequeñas */
     .academia-stats-grid {
         grid-template-columns: 1fr 1fr;
     }

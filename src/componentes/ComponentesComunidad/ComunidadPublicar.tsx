@@ -10,7 +10,7 @@ interface ComunidadPublicarProps {
 
 const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublicar }) => {
   const {
-    showModal, tipo, texto, titulo, publicando, publicandoMensaje,
+    showModal, tipo, texto, titulo, publicando, publicandoMensaje, errorPublicar,
     fotoFile, fotoPreview, videoFile, gifSeleccionado,
     emojiBtnRef, gifPickerBtnRef,
     setTexto, setTitulo, setTipo, setShowModal,
@@ -253,6 +253,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                   )}
                 </button>
               </div>
+              {errorPublicar && <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>{errorPublicar}</p>}
             </form>
           </div>
         </div>

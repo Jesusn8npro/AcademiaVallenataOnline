@@ -77,7 +77,6 @@ export class EstadosDeterministas {
             valorInicialFinal = valorParseado;
           }
         } catch (error) {
-          console.warn(`⚠️ [ESTADOS] Error parseando estado cacheado ${nombre}:`, error);
         }
       }
     }
@@ -94,7 +93,6 @@ export class EstadosDeterministas {
           }
           localStorage.setItem(`estado_${nombre}`, JSON.stringify(valor));
         } catch (error) {
-          console.warn(`⚠️ [ESTADOS] Error persistiendo estado ${nombre}:`, error);
         }
       });
     }
@@ -141,14 +139,12 @@ export class EstadosDeterministas {
     if (!browser) return;
 
     try {
-      console.log('🔄 [ESTADOS] Reseteando estados a valores iniciales...');
 
       // ✅ SOLUCIÓN: Resetear cada store a su valor inicial
       for (const [nombre, store] of this.estadosCache.entries()) {
         const valorInicial = this.estadosIniciales.get(nombre);
         if (valorInicial !== undefined) {
           store.set(valorInicial);
-          console.log(`✅ [ESTADOS] Estado ${nombre} reseteado a:`, valorInicial);
         }
       }
 
@@ -157,9 +153,7 @@ export class EstadosDeterministas {
         localStorage.removeItem(`estado_${nombre}`);
       }
 
-      console.log('✅ [ESTADOS] Todos los estados han sido reseteados');
     } catch (error) {
-      console.error('❌ [ESTADOS] Error reseteando estados:', error);
     }
   }
 
@@ -331,7 +325,6 @@ export function verificarConsistenciaEstadosGlobal(): {
 export function logEstados(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [ESTADOS] ${mensaje}`, datos || '');
 }
 
 /**

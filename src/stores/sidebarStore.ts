@@ -104,15 +104,11 @@ export function actualizarSidebar(
           modo: estadoValidado.modo
         };
         localStorage.setItem('sidebar_estado', JSON.stringify(datosPersistir));
-        console.log('✅ [SIDEBAR] Estado persistido en localStorage');
       } catch (error) {
-        console.warn('⚠️ [SIDEBAR] Error persistiendo estado:', error);
       }
     }
 
-    console.log('✅ [SIDEBAR] Sidebar actualizado:', actualizaciones);
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error actualizando sidebar:', error);
   }
 }
 
@@ -127,9 +123,7 @@ export function alternarColapsoSidebar(): void {
       { persistir: true, transicion: true }
     );
 
-    console.log('🔄 [SIDEBAR] Colapso alternado a:', nuevoColapsado);
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error alternando colapso:', error);
   }
 }
 
@@ -144,9 +138,7 @@ export function alternarVisibilidadSidebar(): void {
       { persistir: true, transicion: true }
     );
 
-    console.log('👁️ [SIDEBAR] Visibilidad alternada a:', nuevaVisibilidad);
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error alternando visibilidad:', error);
   }
 }
 
@@ -171,9 +163,7 @@ export function cambiarModoSidebar(modo: 'desktop' | 'mobile' | 'tablet'): void 
 
     actualizarSidebar(ajustes, { persistir: true });
 
-    console.log('📱 [SIDEBAR] Modo cambiado a:', modo);
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error cambiando modo:', error);
   }
 }
 
@@ -185,15 +175,12 @@ export function ajustarAnchoSidebar(nuevoAncho: number): void {
     const anchoMaximo = 400;
 
     if (nuevoAncho < anchoMinimo || nuevoAncho > anchoMaximo) {
-      console.warn(`⚠️ [SIDEBAR] Ancho ${nuevoAncho} fuera de rango [${anchoMinimo}-${anchoMaximo}]`);
       return;
     }
 
     actualizarSidebar({ ancho: nuevoAncho }, { persistir: true });
 
-    console.log('📏 [SIDEBAR] Ancho ajustado a:', nuevoAncho);
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error ajustando ancho:', error);
   }
 }
 
@@ -205,12 +192,9 @@ export function resetearSidebar(): void {
     // ✅ SOLUCIÓN: Limpiar localStorage
     if (browser) {
       localStorage.removeItem('sidebar_estado');
-      console.log('✅ [SIDEBAR] Estado limpiado de localStorage');
     }
 
-    console.log('🔄 [SIDEBAR] Sidebar reseteado a estado inicial');
   } catch (error) {
-    console.error('❌ [SIDEBAR] Error reseteando sidebar:', error);
   }
 }
 
@@ -251,7 +235,6 @@ export function detectarModoResponsive(): void {
       cambiarModoSidebar(modo);
     }
   } catch (error) {
-    console.warn('⚠️ [SIDEBAR] Error detectando modo responsive:', error);
   }
 }
 
@@ -272,13 +255,10 @@ export function restaurarEstadoSidebar(): void {
         };
 
         actualizarSidebar(estadoRestaurado, { persistir: false });
-        console.log('✅ [SIDEBAR] Estado restaurado desde localStorage');
       } else {
-        console.warn('⚠️ [SIDEBAR] Estado en localStorage inválido, usando inicial');
       }
     }
   } catch (error) {
-    console.warn('⚠️ [SIDEBAR] Error restaurando estado desde localStorage:', error);
     localStorage.removeItem('sidebar_estado');
   }
 }

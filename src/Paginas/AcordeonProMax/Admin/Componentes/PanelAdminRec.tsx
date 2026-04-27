@@ -80,7 +80,7 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
         audioRef.current.currentTime = segundosAbsolutos;
       }
 
-      audioRef.current.play().catch(e => console.warn('Error autoplay pista:', e));
+      audioRef.current.play().catch(() => {});
     } else if (!debeReproducir && estadoPrevioPlay.current) {
       audioRef.current.pause();
     }

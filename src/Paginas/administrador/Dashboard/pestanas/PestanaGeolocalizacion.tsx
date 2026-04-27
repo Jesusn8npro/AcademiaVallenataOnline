@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PestanaGeolocalizacion.css';
 import { Gauge, Shield, PieChart, Users, Play, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../../servicios/clienteSupabase';
@@ -24,7 +24,7 @@ const PestanaGeolocalizacion = () => {
 
     const cargarEstadisticasGenerales = async () => {
         try {
-            // Conectamos con la tabla real de geolocalizaci√≥n
+            // Conectamos con la tabla real de geolocalizaciÛn
             const { data: registros, error } = await supabase
                 .from('geolocalizacion_usuarios')
                 .select('id, usuario_id, pais, created_at')
@@ -46,13 +46,12 @@ const PestanaGeolocalizacion = () => {
             });
 
         } catch (error) {
-            console.error('Error cargando stats geo:', error);
         }
     };
 
     const probarRastreoManual = async () => {
         setEjecutandoTest(true);
-        setResultadoTest('üîÑ Probando rastreo de ubicaci√≥n con ipapi.co...');
+        setResultadoTest('?? Probando rastreo de ubicaciÛn con ipapi.co...');
 
         try {
 
@@ -60,15 +59,14 @@ const PestanaGeolocalizacion = () => {
             const exito = await servicioGeolocalizacion.rastreoCompleto();
 
             if (exito) {
-                setResultadoTest('üéâ ¬°√âXITO! Rastreo de ubicaci√≥n completado con ipapi.co');
-                // Recargar estad√≠sticas despu√©s del test exitoso
+                setResultadoTest('?? °…XITO! Rastreo de ubicaciÛn completado con ipapi.co');
+                // Recargar estadÌsticas despuÈs del test exitoso
                 setTimeout(cargarEstadisticasGenerales, 1000);
             } else {
-                setResultadoTest('‚ùå Error en el rastreo. Revisa la consola (F12) para m√°s detalles.');
+                setResultadoTest('? Error en el rastreo. Revisa la consola (F12) para m·s detalles.');
             }
         } catch (error: any) {
-            console.error('‚ùå [TEST] Error en prueba:', error);
-            setResultadoTest(`‚ùå Error: ${error.message || 'Error desconocido'}`);
+            setResultadoTest(`? Error: ${error.message || 'Error desconocido'}`);
         } finally {
             setEjecutandoTest(false);
         }
@@ -79,11 +77,11 @@ const PestanaGeolocalizacion = () => {
             {/* ENCABEZADO PRINCIPAL */}
             <div className="geo-header-main">
                 <div className="geo-titulo-principal">
-                    <h2>üåç Geolocalizaci√≥n Avanzada</h2>
-                    <p>Ubicaciones y seguridad geogr√°fica - Powered by ipapi.co (30K requests/mes gratis)</p>
+                    <h2>?? GeolocalizaciÛn Avanzada</h2>
+                    <p>Ubicaciones y seguridad geogr·fica - Powered by ipapi.co (30K requests/mes gratis)</p>
                 </div>
 
-                {/* ESTAD√çSTICAS R√ÅPIDAS */}
+                {/* ESTADÕSTICAS R¡PIDAS */}
                 <div className="geo-stats-grid">
                     <div className="geo-stat-card">
                         <div className="geo-stat-valor">{estadisticasGenerales.totalRegistros}</div>
@@ -95,7 +93,7 @@ const PestanaGeolocalizacion = () => {
                     </div>
                     <div className="geo-stat-card">
                         <div className="geo-stat-valor">{estadisticasGenerales.paisesDetectados}</div>
-                        <div className="geo-stat-label">Pa√≠ses Detectados</div>
+                        <div className="geo-stat-label">PaÌses Detectados</div>
                     </div>
                     <div className={`geo-stat-card geo-ubicaciones-hoy ${estadisticasGenerales.ubicacionesHoy > 0 ? 'activo' : ''}`}>
                         <div className="geo-stat-valor">{estadisticasGenerales.ubicacionesHoy}</div>
@@ -104,7 +102,7 @@ const PestanaGeolocalizacion = () => {
                 </div>
             </div>
 
-            {/* NAVEGACI√ìN DE PESTA√ëAS */}
+            {/* NAVEGACI”N DE PESTA—AS */}
             <div className="geo-tabs-navegacion">
                 <button
                     className={`geo-tab-btn ${vistaActiva === 'overview' ? 'activo' : ''}`}
@@ -127,7 +125,7 @@ const PestanaGeolocalizacion = () => {
                     onClick={() => setVistaActiva('analytics')}
                 >
                     <PieChart className="mr-2" size={20} />
-                    Analytics Geogr√°ficos
+                    Analytics Geogr·ficos
                 </button>
 
                 <button
@@ -135,11 +133,11 @@ const PestanaGeolocalizacion = () => {
                     onClick={() => setVistaActiva('usuarios')}
                 >
                     <Users className="mr-2" size={20} />
-                    Gesti√≥n de Usuarios
+                    GestiÛn de Usuarios
                 </button>
             </div>
 
-            {/* CONTENIDO DIN√ÅMICO */}
+            {/* CONTENIDO DIN¡MICO */}
             <div className="geo-content-area">
                 {vistaActiva === 'overview' && (
                     <div className="vista-overview">
@@ -152,8 +150,8 @@ const PestanaGeolocalizacion = () => {
                                 border: '2px solid #e2e8f0',
                                 height: 'fit-content'
                             }}>
-                                <h3 style={{ color: '#1a202c', margin: '0 0 1rem 0', fontWeight: 800 }}>üß™ Centro de Pruebas</h3>
-                                <p style={{ color: '#4a5568', marginBottom: '2rem' }}>Herramientas para probar y verificar el sistema de geolocalizaci√≥n</p>
+                                <h3 style={{ color: '#1a202c', margin: '0 0 1rem 0', fontWeight: 800 }}>?? Centro de Pruebas</h3>
+                                <p style={{ color: '#4a5568', marginBottom: '2rem' }}>Herramientas para probar y verificar el sistema de geolocalizaciÛn</p>
 
                                 <div className="acciones-prueba" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <button
@@ -194,7 +192,7 @@ const PestanaGeolocalizacion = () => {
                     <GeolocalizacionUsuarios />
                 )}
 
-                {/* Placeholder eliminado porque ya todas las secciones est√°n implementadas */}
+                {/* Placeholder eliminado porque ya todas las secciones est·n implementadas */}
             </div>
         </div>
     );

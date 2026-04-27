@@ -24,7 +24,6 @@ export function ejecutarEnCliente(fn: () => void, delay: number = 100): void {
     try {
       fn();
     } catch (error) {
-      console.warn('⚠️ [HIDRATACIÓN] Error ejecutando función en cliente:', error);
     }
   }, delay);
 }
@@ -48,7 +47,6 @@ export function prevenirPerdidaEstilos(): void {
     estilosCriticos.forEach(estilo => {
       const linkElement = document.querySelector(`link[href*="${estilo}"]`);
       if (!linkElement) {
-        console.warn(`⚠️ [HIDRATACIÓN] Estilo crítico no encontrado: ${estilo}`);
       }
     });
     
@@ -70,14 +68,11 @@ export function prevenirPerdidaEstilos(): void {
       // Verificar que los estilos base estén aplicados
       if (!body.classList.contains('estilos-activos')) {
         body.classList.add('estilos-activos');
-        console.log('✅ [HIDRATACIÓN] Estilos base reactivados');
       }
     }
     
-    console.log('✅ [HIDRATACIÓN] Prevención de pérdida de estilos ejecutada');
     
   } catch (error) {
-    console.error('❌ [HIDRATACIÓN] Error previniendo pérdida de estilos:', error);
   }
 }
 
@@ -89,7 +84,6 @@ export function rehidratarEstilos(): void {
   if (!browser) return;
   
   try {
-    console.log('🔄 [HIDRATACIÓN] Re-hidratando estilos...');
     
     // ✅ FORZAR RE-CARGA DE ESTILOS CRÍTICOS
     const links = document.querySelectorAll('link[rel="stylesheet"]');
@@ -120,13 +114,10 @@ export function rehidratarEstilos(): void {
     const header = document.querySelector('header, .header, .nav, .navigation');
     if (header) {
       header.style.display = header.style.display;
-      console.log('✅ [HIDRATACIÓN] Header re-hidratado');
     }
     
-    console.log('✅ [HIDRATACIÓN] Estilos re-hidratados correctamente');
     
   } catch (error) {
-    console.error('❌ [HIDRATACIÓN] Error re-hidratando estilos:', error);
   }
 }
 
@@ -155,7 +146,6 @@ export function verificarIntegridadEstilos(): boolean {
     });
     
     if (estilosPerdidos.length > 0) {
-      console.warn('⚠️ [HIDRATACIÓN] Estilos perdidos detectados:', estilosPerdidos);
       return false;
     }
     
@@ -173,14 +163,12 @@ export function verificarIntegridadEstilos(): boolean {
     });
     
     if (componentesSinEstilos > componentesCriticos.length * 0.3) {
-      console.warn('⚠️ [HIDRATACIÓN] Muchos componentes sin estilos:', componentesSinEstilos);
       return false;
     }
     
     return true;
     
   } catch (error) {
-    console.error('❌ [HIDRATACIÓN] Error verificando integridad de estilos:', error);
     return false;
   }
 }
@@ -198,15 +186,12 @@ export function iniciarMonitoreoEstilos(): void {
       const estilosIntegros = verificarIntegridadEstilos();
       
       if (!estilosIntegros) {
-        console.warn('🚨 [HIDRATACIÓN] Pérdida de estilos detectada, re-hidratando...');
         rehidratarEstilos();
       }
     }, 2000);
     
-    console.log('✅ [HIDRATACIÓN] Monitoreo de estilos iniciado');
     
   } catch (error) {
-    console.error('❌ [HIDRATACIÓN] Error iniciando monitoreo de estilos:', error);
   }
 }
 
@@ -226,7 +211,6 @@ export function aplicarClaseSegura(selector: string, className: string): void {
       }
     });
   } catch (error) {
-    console.warn('⚠️ [HIDRATACIÓN] Error aplicando clase:', error);
   }
 }
 
@@ -246,7 +230,6 @@ export function removerClaseSegura(selector: string, className: string): void {
       }
     });
   } catch (error) {
-    console.warn('⚠️ [HIDRATACIÓN] Error removiendo clase:', error);
   }
 }
 
@@ -261,7 +244,6 @@ export function elementoExiste(selector: string): boolean {
   try {
     return document.querySelector(selector) !== null;
   } catch (error) {
-    console.warn('⚠️ [HIDRATACIÓN] Error verificando elemento:', error);
     return false;
   }
 }
@@ -339,7 +321,6 @@ export function crearHookHidratacion(
 export function logHidratacion(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [HIDRATACIÓN] ${mensaje}`, datos || '');
 }
 
 /**

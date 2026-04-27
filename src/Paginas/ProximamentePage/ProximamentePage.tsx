@@ -20,24 +20,16 @@ const ProximamentePage: React.FC = () => {
         segundos: 0
     });
 
-    // 🔓 ACCESO ESPECIAL: shalom@gmail.com salta directo a la versión real
     useEffect(() => {
-        // Esperar a que el usuario esté completamente cargado
-        if (!inicializado) {
-            console.log('⏳ Esperando que usuario se cargue...');
-            return;
-        }
+        if (!inicializado) return;
 
         const emailNormalizado = usuario?.email?.toLowerCase().trim() || '';
-        console.log('🔍 Email cargado:', emailNormalizado, '| Admin:', esAdmin);
 
         if (emailNormalizado === 'shalom@gmail.com' || esAdmin) {
-            console.log('✅ Redirigiendo a shalom...');
             navigate('/acordeon-pro-max/acordeon', { replace: true });
         }
     }, [inicializado, usuario?.email, esAdmin, navigate]);
 
-    // Fecha de lanzamiento: 7 días desde ahora
     const FECHA_LANZAMIENTO = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     useEffect(() => {
@@ -63,10 +55,8 @@ const ProximamentePage: React.FC = () => {
             });
         };
 
-        // Actualizar inmediatamente
         actualizarContador();
 
-        // Actualizar cada segundo
         const intervalo = setInterval(actualizarContador, 1000);
 
         return () => clearInterval(intervalo);
@@ -79,32 +69,26 @@ const ProximamentePage: React.FC = () => {
     return (
         <div className="proximamente-container">
             <div className="proximamente-contenido">
-                {/* Logo */}
                 <div className="proximamente-logo">
                     <img src="/logo.png" alt="Academia Vallenata Online" style={{ maxWidth: '200px', marginBottom: '2rem' }} />
                 </div>
 
-                {/* Ícono musical */}
                 <div className="proximamente-icono">
                     🪗
                 </div>
 
-                {/* Título */}
                 <h1 className="proximamente-titulo">
                     Acordeón Pro Max
                 </h1>
 
-                {/* Subtítulo */}
                 <h2 className="proximamente-subtitulo">
                     Estamos finalizando y actualizando esta funcionalidad mi bro
                 </h2>
 
-                {/* Mensaje */}
                 <p className="proximamente-mensaje">
                     Muy pronto tendrás acceso a una experiencia completamente renovada para aprender acordeón como nunca antes. ¡Prepárate para lo increíble!
                 </p>
 
-                {/* Contador regresivo */}
                 <div className="contador-regresivo">
                     <div className="caja-tiempo">
                         <div className="numero-tiempo">
@@ -135,12 +119,10 @@ const ProximamentePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Botón volver */}
                 <button className="boton-volver" onClick={() => navigate('/mis-cursos')}>
                     ← Ir a Mis Cursos
                 </button>
 
-                {/* Mensaje adicional */}
                 <p className="proximamente-footer">
                     ✉️ Déjanos saber si tienes sugerencias en <strong>contacto@academiavallenataonline.com</strong>
                 </p>

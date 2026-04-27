@@ -18,7 +18,6 @@ const PagoError: React.FC = () => {
 
     useEffect(() => {
         try {
-            // Obtener parámetros de la URL
             const refPayco = searchParams.get('ref_payco');
             const codigo = searchParams.get('cod_response');
             const descripcion = searchParams.get('response_reason_text');
@@ -32,14 +31,12 @@ const PagoError: React.FC = () => {
             });
 
             setLoading(false);
-        } catch (err) {
-            console.error('Error cargando datos del error:', err);
+        } catch {
             setLoading(false);
         }
     }, [searchParams]);
 
     const intentarDeNuevo = () => {
-        // Volver a la página anterior
         window.history.back();
     };
 
@@ -60,16 +57,13 @@ const PagoError: React.FC = () => {
                 </div>
             ) : (
                 <div className="error-card">
-                    {/* Icono de error */}
                     <div className="error-icon">
                         <div className="x-mark">✕</div>
                     </div>
 
-                    {/* Título principal */}
                     <h1>¡Oops! Algo salió mal</h1>
                     <p className="subtitle">Tu pago no pudo ser procesado correctamente</p>
 
-                    {/* Información del error */}
                     {datosError && (
                         <div className="error-info">
                             <h2>Detalles del error</h2>
@@ -98,7 +92,6 @@ const PagoError: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Posibles causas */}
                     <div className="causes-info">
                         <h3>Posibles causas:</h3>
                         <ul>
@@ -110,7 +103,6 @@ const PagoError: React.FC = () => {
                         </ul>
                     </div>
 
-                    {/* Acciones */}
                     <div className="actions">
                         <button onClick={intentarDeNuevo} className="btn btn-primary">
                             🔄 Intentar de Nuevo
@@ -125,7 +117,6 @@ const PagoError: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Mensaje de ayuda */}
                     <div className="help-info">
                         <p>
                             <strong>¿Necesitas ayuda?</strong><br />

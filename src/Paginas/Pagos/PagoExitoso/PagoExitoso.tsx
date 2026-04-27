@@ -54,7 +54,6 @@ const PagoExitoso: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {/* ✅ ACEPTADA */}
                             {estadoPago === 'aceptada' && datosPago && datosUsuarioNuevo && (
                                 <div className="tarjeta-exito tarjeta-aceptada">
                                     <div className="encabezado-exito">
@@ -128,7 +127,6 @@ const PagoExitoso: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ⏳ PENDIENTE — una sola tarjeta unificada con polling activo */}
                             {estadoPago === 'pendiente' && datosPago && (
                                 <div className="tarjeta-exito tarjeta-pendiente">
                                     <div className="encabezado-exito">
@@ -178,7 +176,6 @@ const PagoExitoso: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ❌ RECHAZADA / FALLIDA */}
                             {(estadoPago === 'rechazada' || estadoPago === 'fallida') && datosPago && (
                                 <div className="tarjeta-exito tarjeta-rechazada">
                                     <div className="encabezado-exito">
@@ -224,7 +221,6 @@ const PagoExitoso: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ❓ NO ENCONTRADA */}
                             {estadoPago === 'no_encontrada' && (
                                 <div className="tarjeta-exito tarjeta-no-encontrada">
                                     <div className="encabezado-exito">

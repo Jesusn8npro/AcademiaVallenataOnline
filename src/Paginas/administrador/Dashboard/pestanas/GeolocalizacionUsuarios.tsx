@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './GeolocalizacionUsuarios.css';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, MapPin } from 'lucide-react';
@@ -45,11 +45,11 @@ const GeolocalizacionUsuarios: React.FC = () => {
 
             await Promise.all([
                 cargarUbicaciones(),
-                // Estad√≠sticas simples calculadas en el cliente por ahora para no depender de RPCs complejos
+                // EstadÌsticas simples calculadas en el cliente por ahora para no depender de RPCs complejos
             ]);
 
         } catch (err) {
-            setError('Error cargando datos de geolocalizaci√≥n');
+            setError('Error cargando datos de geolocalizaciÛn');
         } finally {
             setCargando(false);
         }
@@ -65,7 +65,6 @@ const GeolocalizacionUsuarios: React.FC = () => {
                 .limit(10);
 
             if (geoError) {
-                console.error('‚ùå [GEO-WIDGET] Error en consulta:', geoError);
                 return;
             }
 
@@ -75,7 +74,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
                 return;
             }
 
-            // Obtener informaci√≥n de usuarios
+            // Obtener informaciÛn de usuarios
             const usuarioIds = geoData.map((g: any) => g.usuario_id);
             const { data: perfiles, error: perfilError } = await supabase
                 .from('perfiles')
@@ -83,7 +82,6 @@ const GeolocalizacionUsuarios: React.FC = () => {
                 .in('id', usuarioIds);
 
             if (perfilError) {
-                console.error('‚ùå [GEO-WIDGET] Error consultando perfiles:', perfilError);
             }
 
             // Combinar datos
@@ -108,11 +106,11 @@ const GeolocalizacionUsuarios: React.FC = () => {
             setUbicaciones(ubicacionesProcesadas);
             setHayDatosReales(true);
 
-            // Calcular estad√≠sticas b√°sicas en cliente
+            // Calcular estadÌsticas b·sicas en cliente
             const paisesUnicos = new Set(geoData.map((g: any) => g.pais)).size;
             const totalVisitas = geoData.reduce((sum: number, g: any) => sum + (g.visitas_totales || 1), 0);
 
-            // Agrupar por pa√≠s
+            // Agrupar por paÌs
             const paisesCount: Record<string, number> = {};
             geoData.forEach((g: any) => {
                 paisesCount[g.pais] = (paisesCount[g.pais] || 0) + 1;
@@ -131,7 +129,6 @@ const GeolocalizacionUsuarios: React.FC = () => {
 
 
         } catch (error) {
-            console.error('‚ùå [GEO-WIDGET] Error cargando ubicaciones:', error);
         }
     };
 
@@ -153,7 +150,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
             {/* HEADER */}
             <div className="widget-header">
                 <div className="header-info">
-                    <h3>üåç Geolocalizaci√≥n de Usuarios</h3>
+                    <h3>?? GeolocalizaciÛn de Usuarios</h3>
                     <p className="header-subtitle">
                         {hayDatosReales ? (
                             <>
@@ -163,7 +160,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
                         ) : (
                             <>
                                 <span className="badge-vacio" style={{ marginRight: '8px' }}>SIN DATOS</span>
-                                Esperando usuarios con geolocalizaci√≥n
+                                Esperando usuarios con geolocalizaciÛn
                             </>
                         )}
                     </p>
@@ -180,7 +177,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
             {cargando && !hayDatosReales ? (
                 <div className="estado-carga">
                     <div className="spinner-widget"></div>
-                    <p>Cargando datos de geolocalizaci√≥n...</p>
+                    <p>Cargando datos de geolocalizaciÛn...</p>
                 </div>
             ) : error ? (
                 <div className="estado-error">
@@ -188,7 +185,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    {/* ESTAD√çSTICAS */}
+                    {/* ESTADÕSTICAS */}
                     <div className="estadisticas-grid">
                         <div className="stat-card-widget">
                             <div className="stat-numero-widget">{estadisticas.totalUsuarios}</div>
@@ -196,7 +193,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
                         </div>
                         <div className="stat-card-widget">
                             <div className="stat-numero-widget">{estadisticas.paisesUnicos}</div>
-                            <div className="stat-label-widget">Pa√≠ses</div>
+                            <div className="stat-label-widget">PaÌses</div>
                         </div>
                         <div className="stat-card-widget">
                             <div className="stat-numero-widget">{estadisticas.totalVisitas}</div>
@@ -206,7 +203,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
 
                     {/* LISTA DE UBICACIONES */}
                     <div className="ubicaciones-contenedor">
-                        <h4>üìç Ubicaciones Recientes ({ubicaciones.length})</h4>
+                        <h4>?? Ubicaciones Recientes ({ubicaciones.length})</h4>
 
                         {ubicaciones.length > 0 ? (
                             <div className="ubicaciones-lista">
@@ -228,7 +225,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
                                                 <span className="ubicacion-texto">{ubicacion.ciudad}, {ubicacion.pais}</span>
                                             </div>
                                             <div className="geo-tiempo">
-                                                {formatearTiempoRelativo(ubicacion.ultima_visita)} ‚Ä¢ {ubicacion.visitas_totales} visitas
+                                                {formatearTiempoRelativo(ubicacion.ultima_visita)} ï {ubicacion.visitas_totales} visitas
                                             </div>
                                         </div>
                                     </div>
@@ -236,18 +233,18 @@ const GeolocalizacionUsuarios: React.FC = () => {
                             </div>
                         ) : (
                             <div className="sin-datos">
-                                <div className="sin-datos-icono">üåç</div>
-                                <h4>No hay datos de geolocalizaci√≥n</h4>
-                                <p>Las ubicaciones aparecer√°n cuando los usuarios visiten el sitio.</p>
-                                <p><strong>‚úÖ El tracking autom√°tico est√° activado con ipapi.co</strong></p>
+                                <div className="sin-datos-icono">??</div>
+                                <h4>No hay datos de geolocalizaciÛn</h4>
+                                <p>Las ubicaciones aparecer·n cuando los usuarios visiten el sitio.</p>
+                                <p><strong>? El tracking autom·tico est· activado con ipapi.co</strong></p>
                             </div>
                         )}
                     </div>
 
-                    {/* PA√çSES PRINCIPALES */}
+                    {/* PAÕSES PRINCIPALES */}
                     {estadisticas.paisesPrincipales.length > 0 && (
                         <div className="paises-principales">
-                            <h4>üèÜ Pa√≠ses Principales</h4>
+                            <h4>?? PaÌses Principales</h4>
                             <div className="paises-lista">
                                 {estadisticas.paisesPrincipales.map((pais, index) => (
                                     <div key={index} className="pais-item">

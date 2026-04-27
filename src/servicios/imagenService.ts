@@ -158,7 +158,6 @@ export async function subirImagenPaquete(
             });
         
         if (error) {
-            console.error('Error subiendo imagen:', error);
             return {
                 success: false,
                 error: `Error subiendo imagen: ${error.message}`
@@ -180,7 +179,6 @@ export async function subirImagenPaquete(
         };
         
     } catch (error: any) {
-        console.error('Error en subirImagenPaquete:', error);
         return {
             success: false,
             error: `Error inesperado: ${error.message}`
@@ -198,7 +196,6 @@ export async function eliminarImagenPaquete(pathArchivo: string): Promise<{ succ
             .remove([pathArchivo]);
         
         if (error) {
-            console.error('Error eliminando imagen:', error);
             return {
                 success: false,
                 error: `Error eliminando imagen: ${error.message}`
@@ -208,7 +205,6 @@ export async function eliminarImagenPaquete(pathArchivo: string): Promise<{ succ
         return { success: true };
         
     } catch (error: any) {
-        console.error('Error en eliminarImagenPaquete:', error);
         return {
             success: false,
             error: `Error inesperado: ${error.message}`

@@ -42,7 +42,6 @@ export async function obtenerPlanesMembresia(): Promise<{ data: Membresia[] | nu
 
 		return { data, error };
 	} catch (error) {
-		console.error('Error obteniendo planes:', error);
 		return { data: null, error };
 	}
 }
@@ -71,7 +70,6 @@ export async function obtenerMembresiaUsuario(usuarioId: string): Promise<{ data
 
 		return { data, error };
 	} catch (error) {
-		console.error('Error obteniendo membresía del usuario:', error);
 		return { data: null, error };
 	}
 }
@@ -84,7 +82,6 @@ export async function usuarioTieneMembresia(usuarioId: string): Promise<boolean>
 		const { data } = await obtenerMembresiaUsuario(usuarioId);
 		return !!data;
 	} catch (error) {
-		console.error('Error verificando membresía:', error);
 		return false;
 	}
 }
@@ -104,7 +101,6 @@ export async function usuarioTienePermiso(usuarioId: string, permiso: string): P
 
 		return permisos[permiso] === true;
 	} catch (error) {
-		console.error('Error verificando permiso:', error);
 		return false;
 	}
 }
@@ -131,7 +127,6 @@ export async function obtenerHistorialSuscripciones(usuarioId: string): Promise<
 
 		return { data, error };
 	} catch (error) {
-		console.error('Error obteniendo historial:', error);
 		return { data: null, error };
 	}
 }
@@ -237,7 +232,6 @@ export async function crearSuscripcionPendiente(
 
 		return { data, error };
 	} catch (error) {
-		console.error('Error creando suscripción pendiente:', error);
 		return { data: null, error };
 	}
 }
@@ -271,7 +265,6 @@ export async function activarSuscripcion(refPayco: string, transactionId: string
 
 		return { success: true };
 	} catch (error) {
-		console.error('Error activando suscripción:', error);
 		return { success: false, error };
 	}
 }
@@ -295,7 +288,6 @@ export async function cancelarSuscripcion(usuarioId: string): Promise<{ success:
 
 		return { success: true };
 	} catch (error) {
-		console.error('Error cancelando suscripción:', error);
 		return { success: false, error };
 	}
 }
@@ -325,14 +317,12 @@ export async function verificarRenovaciones(): Promise<{ procesadas: number; err
 
 				procesadas++;
 			} catch (error) {
-				console.error(`Error procesando suscripción ${suscripcion.id}:`, error);
 				errores++;
 			}
 		}
 
 		return { procesadas, errores };
 	} catch (error) {
-		console.error('Error verificando renovaciones:', error);
 		return { procesadas: 0, errores: 1 };
 	}
 }
@@ -348,7 +338,6 @@ export async function obtenerEstadisticasMembresias(): Promise<{ data: any | nul
 
 		return { data, error };
 	} catch (error) {
-		console.error('Error obteniendo estadísticas:', error);
 		return { data: null, error };
 	}
 } 

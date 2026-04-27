@@ -19,6 +19,7 @@ export function useLandingCurso() {
     const [estaInscrito, setEstaInscrito] = useState(false);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState(false);
+    const [errorAccion, setErrorAccion] = useState('');
     const [instructorInfo, setInstructorInfo] = useState<{ full_name?: string; avatar_url?: string } | null>(null);
 
     useEffect(() => {
@@ -166,7 +167,7 @@ export function useLandingCurso() {
             setEstaInscrito(true);
             verContenido();
         } catch {
-            alert('Hubo un error al inscribirse. Por favor intenta nuevamente.');
+            setErrorAccion('Hubo un error al inscribirse. Por favor intenta nuevamente.');
         }
     };
 
@@ -188,7 +189,7 @@ export function useLandingCurso() {
                 const leccionSlug = leccionesSueltas[0].slug || generarSlug(leccionesSueltas[0].titulo);
                 navigate(`/cursos/${cursoSlug}/leccion/${leccionSlug}`);
             } else {
-                alert('Este curso no tiene lecciones disponibles.');
+                setErrorAccion('Este curso no tiene lecciones disponibles.');
             }
             return;
         }
@@ -200,7 +201,7 @@ export function useLandingCurso() {
             return;
         }
 
-        alert('No se encontró la primera lección o clase.');
+        setErrorAccion('No se encontró la primera lección o clase.');
     };
 
     const irACursos = () => navigate('/cursos');
@@ -210,6 +211,7 @@ export function useLandingCurso() {
     return {
         cargando,
         error,
+        errorAccion,
         contenido,
         estaInscrito,
         instructorInfo,

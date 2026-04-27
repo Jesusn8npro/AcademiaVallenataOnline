@@ -7,7 +7,7 @@ export type { Modulo, Leccion, Contenido, DatosVista } from './tipos';
 
 const LandingCurso = () => {
     const {
-        cargando, error, contenido, estaInscrito, instructorInfo,
+        cargando, error, errorAccion, contenido, estaInscrito, instructorInfo,
         manejarInscripcion, verContenido, irACursos, Vista,
     } = useLandingCurso();
 
@@ -36,18 +36,25 @@ const LandingCurso = () => {
     }
 
     return (
-        <Vista
-            data={{
-                contenido,
-                estaInscrito,
-                instructor: instructorInfo
-                    ? { full_name: instructorInfo.full_name || '', avatar_url: instructorInfo.avatar_url || '' }
-                    : undefined
-            }}
-            handleInscripcion={manejarInscripcion}
-            verContenido={verContenido}
-            irAPrimeraClase={verContenido}
-        />
+        <>
+            {errorAccion && (
+                <div style={{ background: '#fed7d7', color: '#c53030', padding: '0.75rem 1.25rem', borderRadius: '0.5rem', margin: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    {errorAccion}
+                </div>
+            )}
+            <Vista
+                data={{
+                    contenido,
+                    estaInscrito,
+                    instructor: instructorInfo
+                        ? { full_name: instructorInfo.full_name || '', avatar_url: instructorInfo.avatar_url || '' }
+                        : undefined
+                }}
+                handleInscripcion={manejarInscripcion}
+                verContenido={verContenido}
+                irAPrimeraClase={verContenido}
+            />
+        </>
     );
 };
 

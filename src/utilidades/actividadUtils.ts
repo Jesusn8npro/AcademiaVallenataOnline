@@ -13,7 +13,6 @@ let trackingInicializado = false;
  */
 export async function inicializarTrackingGlobal(): Promise<void> {
   if (trackingInicializado) {
-    console.log('⚠️ [TRACKING GLOBAL] Ya está inicializado');
     return;
   }
 
@@ -22,22 +21,18 @@ export async function inicializarTrackingGlobal(): Promise<void> {
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
-      console.log('📝 [TRACKING GLOBAL] Usuario no autenticado - skip tracking');
       return;
     }
 
     // Inicializar tracking para el usuario
-    console.log('🚀 [TRACKING GLOBAL] Inicializando para usuario:', user.id);
     await actividadService.inicializarTracking(user.id, window.location.pathname);
     
     trackingInicializado = true;
-    console.log('✅ [TRACKING GLOBAL] Activado correctamente');
 
     // Configurar eventos específicos de la aplicación
     configurarEventosEspecificos(user.id);
 
   } catch (error) {
-    console.error('❌ [TRACKING GLOBAL] Error al inicializar:', error);
   }
 }
 
@@ -69,7 +64,6 @@ function configurarEventosEspecificos(usuarioId: string): void {
     }
   });
 
-  console.log('🎯 [EVENTOS ESPECÍFICOS] Configurados para academia de acordeón');
 }
 
 /**
@@ -81,10 +75,8 @@ export async function finalizarTrackingGlobal(): Promise<void> {
     return;
   }
 
-  console.log('🛑 [TRACKING GLOBAL] Finalizando...');
   await actividadService.finalizarSesion();
   trackingInicializado = false;
-  console.log('✅ [TRACKING GLOBAL] Finalizado correctamente');
 }
 
 /**

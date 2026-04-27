@@ -60,14 +60,11 @@ class ChatService {
         .single();
 
       if (error) {
-        console.error('❌ Error guardando mensaje:', error);
         return null;
       }
 
-      console.log('✅ Mensaje guardado exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('❌ Error en guardarMensaje:', error);
       return null;
     }
   }
@@ -85,14 +82,11 @@ class ChatService {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('❌ Error obteniendo conversación:', error);
         return [];
       }
 
-      console.log(`📖 Conversación obtenida para ${chatId}:`, data?.length || 0, 'mensajes');
       return data || [];
     } catch (error) {
-      console.error('❌ Error en obtenerConversacion:', error);
       return [];
     }
   }
@@ -108,13 +102,11 @@ class ChatService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error obteniendo conversaciones:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Error en obtenerTodasConversaciones:', error);
       return [];
     }
   }
@@ -131,13 +123,11 @@ class ChatService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error en buscarConversaciones:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Error en buscarConversaciones:', error);
       return [];
     }
   }

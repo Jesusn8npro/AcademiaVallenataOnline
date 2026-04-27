@@ -58,12 +58,10 @@ export class RoutingInteligente {
     try {
       // ✅ SOLUCIÓN: Verificar si la navegación está en progreso
       if (this.navegacionEnProgreso) {
-        console.log('⚠️ [ROUTING] Navegación en progreso, esperando...');
         return;
       }
 
       this.navegacionEnProgreso = true;
-      console.log('🚀 [ROUTING] Iniciando navegación inteligente a:', ruta);
 
       // ✅ SOLUCIÓN: Verificar si es una ruta crítica
       if (this.rutasCriticas.has(ruta)) {
@@ -78,9 +76,7 @@ export class RoutingInteligente {
         this.verificarEstabilidadPostNavegacion(ruta);
       }, 100);
 
-      console.log('✅ [ROUTING] Navegación completada a:', ruta);
     } catch (error) {
-      console.error('❌ [ROUTING] Error en navegación:', error);
       this.manejarErrorNavegacion(error, ruta);
     } finally {
       this.navegacionEnProgreso = false;
@@ -96,11 +92,9 @@ export class RoutingInteligente {
     try {
       // ✅ SOLUCIÓN: Verificar si ya está en cache
       if (this.rutasEnCache.has(ruta)) {
-        console.log('📦 [ROUTING] Ruta ya en cache:', ruta);
         return;
       }
 
-      console.log('📦 [ROUTING] Prefetch de ruta crítica:', ruta);
 
       // ✅ SOLUCIÓN: Simular prefetch para rutas críticas
       this.rutasEnCache.set(ruta, { timestamp: Date.now() });
@@ -108,9 +102,7 @@ export class RoutingInteligente {
       // ✅ SOLUCIÓN: Delay para simular prefetch
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      console.log('✅ [ROUTING] Prefetch completado para:', ruta);
     } catch (error) {
-      console.warn('⚠️ [ROUTING] Error en prefetch:', error);
     }
   }
 
@@ -124,13 +116,10 @@ export class RoutingInteligente {
       const rutaActual = get(page).url.pathname;
 
       if (rutaActual === ruta) {
-        console.log('✅ [ROUTING] Estabilidad confirmada para:', ruta);
         this.optimizarRendimientoPostNavegacion(ruta);
       } else {
-        console.warn('⚠️ [ROUTING] Inestabilidad detectada en:', ruta);
       }
     } catch (error) {
-      console.warn('⚠️ [ROUTING] Error verificando estabilidad:', error);
     }
   }
 
@@ -147,9 +136,7 @@ export class RoutingInteligente {
       // ✅ SOLUCIÓN: Optimizar scroll y focus
       this.optimizarScrollYFocus(ruta);
 
-      console.log('🚀 [ROUTING] Rendimiento optimizado para:', ruta);
     } catch (error) {
-      console.warn('⚠️ [ROUTING] Error optimizando rendimiento:', error);
     }
   }
 
@@ -163,7 +150,6 @@ export class RoutingInteligente {
     for (const [ruta, datos] of this.rutasEnCache.entries()) {
       if (ahora - datos.timestamp > tiempoMaximoCache) {
         this.rutasEnCache.delete(ruta);
-        console.log('🧹 [ROUTING] Cache limpiado para:', ruta);
       }
     }
   }
@@ -184,9 +170,7 @@ export class RoutingInteligente {
         elementoPrincipal.focus();
       }
 
-      console.log('🎯 [ROUTING] Scroll y focus optimizados para:', ruta);
     } catch (error) {
-      console.warn('⚠️ [ROUTING] Error optimizando scroll y focus:', error);
     }
   }
 
@@ -194,7 +178,6 @@ export class RoutingInteligente {
    * ✅ SOLUCIÓN: Manejar errores de navegación
    */
   private manejarErrorNavegacion(error: any, ruta: string): void {
-    console.error('❌ [ROUTING] Error en navegación a:', ruta, error);
 
     // ✅ SOLUCIÓN: Intentar navegación de fallback
     this.navegacionFallback(ruta);
@@ -207,14 +190,11 @@ export class RoutingInteligente {
     if (!browser) return;
 
     try {
-      console.log('🔄 [ROUTING] Intentando navegación de fallback a:', ruta);
 
       // ✅ SOLUCIÓN: Navegación con replaceState para evitar problemas
       await goto(ruta, { replaceState: true });
 
-      console.log('✅ [ROUTING] Navegación de fallback exitosa a:', ruta);
     } catch (fallbackError) {
-      console.error('❌ [ROUTING] Error en navegación de fallback:', fallbackError);
 
       // ✅ SOLUCIÓN: Redirección hard como último recurso
       window.location.href = ruta;
@@ -269,7 +249,6 @@ export function obtenerParametrosRuta(): Record<string, string> {
   try {
     return get(page).params;
   } catch (error) {
-    console.warn('⚠️ [ROUTING] Error obteniendo parámetros:', error);
     return {};
   }
 }
@@ -280,7 +259,6 @@ export function obtenerParametrosRuta(): Record<string, string> {
 export function logRouting(mensaje: string, datos?: any): void {
   if (!browser) return;
 
-  console.log(`🔧 [ROUTING] ${mensaje}`, datos || '');
 }
 
 /**

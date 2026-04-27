@@ -12,7 +12,6 @@ export default function ChatPage() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
-  // Agregar clase 'modo-chat-abierto' al body para ocultar menús en móvil
   useEffect(() => {
     document.body.classList.add('modo-chat-abierto');
     return () => {
@@ -26,15 +25,12 @@ export default function ChatPage() {
         if (!chatId) return
         setCargando(true)
 
-        // 1. Obtener usuario actual
         const { data: auth } = await supabase.auth.getUser()
         if (!auth.user) { setError('No autenticado'); setCargando(false); return }
 
-        // Cargar perfil completo para pasar a ChatVista
         const { data: perfil } = await supabase.from('perfiles').select('*').eq('id', auth.user.id).single()
-        if (activo) setUsuarioActual(perfil || { id: auth.user.id, email: auth.user.email }) // Fallback minima
+        if (activo) setUsuarioActual(perfil || { id: auth.user.id, email: auth.user.email })
 
-        // 2. Obtener chat
         const { data, error } = await supabase
           .from('chats')
           .select(`*, miembros_chat(*, usuario:perfiles!miembros_chat_usuario_id_fkey(nombre_completo,url_foto_perfil,nombre_usuario,rol))`)

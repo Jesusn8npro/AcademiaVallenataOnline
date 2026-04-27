@@ -79,7 +79,6 @@ class SeguridadGeograficaService {
    */
   async detectarCuentasCompartidas(): Promise<any[]> {
     try {
-      console.log('🔍 [SEGURIDAD] Detectando cuentas compartidas...');
 
       const ahora = new Date();
       const hace30min = new Date(ahora.getTime() - 30 * 60 * 1000);
@@ -124,11 +123,9 @@ class SeguridadGeograficaService {
         }
       });
 
-      console.log(`✅ [SEGURIDAD] Detectadas ${cuentasSospechosas.length} cuentas sospechosas`);
       return cuentasSospechosas;
 
     } catch (error) {
-      console.error('❌ [SEGURIDAD] Error detectando cuentas compartidas:', error);
       return [];
     }
   }
@@ -138,7 +135,6 @@ class SeguridadGeograficaService {
    */
   async detectarCambiosUbicacionSospechosos(): Promise<any[]> {
     try {
-      console.log('🔍 [SEGURIDAD] Detectando cambios de ubicación sospechosos...');
 
       const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -192,11 +188,9 @@ class SeguridadGeograficaService {
         usuariosProcesados.set(usuarioId, ubicacion);
       });
 
-      console.log(`✅ [SEGURIDAD] Detectados ${cambiosSospechosos.length} cambios sospechosos`);
       return cambiosSospechosos;
 
     } catch (error) {
-      console.error('❌ [SEGURIDAD] Error detectando cambios sospechosos:', error);
       return [];
     }
   }
@@ -206,7 +200,6 @@ class SeguridadGeograficaService {
    */
   async detectarDatacentersYProxies(): Promise<any[]> {
     try {
-      console.log('🔍 [SEGURIDAD] Detectando data centers y proxies...');
 
       const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -264,11 +257,9 @@ class SeguridadGeograficaService {
         }
       });
 
-      console.log(`✅ [SEGURIDAD] Detectadas ${conexionesSospechosas.length} conexiones sospechosas`);
       return conexionesSospechosas;
 
     } catch (error) {
-      console.error('❌ [SEGURIDAD] Error detectando data centers:', error);
       return [];
     }
   }
@@ -278,7 +269,6 @@ class SeguridadGeograficaService {
    */
   async obtenerAnalyticsGeograficos(): Promise<AnalyticsGeografico> {
     try {
-      console.log('📊 [ANALYTICS] Obteniendo analytics geográficos...');
 
       // Estadísticas básicas
       const { data: estadisticas, error: errorStats } = await supabase.rpc('obtener_estadisticas_geograficas_espanol');
@@ -315,11 +305,9 @@ class SeguridadGeograficaService {
         patrones_horarios: patronesHorarios
       };
 
-      console.log('✅ [ANALYTICS] Analytics geográficos obtenidos');
       return analytics;
 
     } catch (error) {
-      console.error('❌ [ANALYTICS] Error obteniendo analytics:', error);
       return {
         total_paises: 0,
         total_ciudades: 0,
@@ -356,7 +344,6 @@ class SeguridadGeograficaService {
       })) || [];
 
     } catch (error) {
-      console.error('❌ [MAPA] Error obteniendo datos del mapa:', error);
       return [];
     }
   }

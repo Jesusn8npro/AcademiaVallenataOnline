@@ -151,7 +151,6 @@ export class SincronizacionService {
       }
     }
     
-    console.log('🔧 Configuración de sincronización actualizada:', this.configuracion);
   }
 
   /**
@@ -201,7 +200,6 @@ export class SincronizacionService {
   iniciarGrabacion(metadatos: SesionGrabacion['metadatos'] = {}): boolean {
     try {
       if (this.estadoGrabacion.grabando) {
-        console.warn('Ya hay una grabación en curso');
         return false;
       }
 
@@ -235,11 +233,9 @@ export class SincronizacionService {
       this.notasTemporales.clear();
       this.marcadoresTiempo = [];
 
-      console.log('🔴 Grabación iniciada:', this.sesionActual.id);
       this.emitirEvento('grabacion_iniciada', { sesion: this.sesionActual });
       return true;
     } catch (error) {
-      console.error('❌ Error iniciando grabación:', error);
       this.emitirEvento('error', { error });
       return false;
     }
@@ -259,7 +255,6 @@ export class SincronizacionService {
       this.metronomo.detener();
     }
 
-    console.log('⏸️ Grabación pausada');
     this.emitirEvento('grabacion_pausada', { duracion: this.estadoGrabacion.duracion_grabacion });
   }
 
@@ -277,7 +272,6 @@ export class SincronizacionService {
       this.metronomo.iniciar();
     }
 
-    console.log('▶️ Grabación reanudada');
     this.emitirEvento('grabacion_iniciada', { reanudada: true });
   }
 
@@ -319,11 +313,9 @@ export class SincronizacionService {
       const sesionCompleta = this.sesionActual;
       this.sesionActual = null;
 
-      console.log('⏹️ Grabación detenida:', sesionCompleta?.id);
       this.emitirEvento('grabacion_detenida', { sesion: sesionCompleta });
       return sesionCompleta;
     } catch (error) {
-      console.error('❌ Error deteniendo grabación:', error);
       this.emitirEvento('error', { error });
       return null;
     }
@@ -387,11 +379,9 @@ export class SincronizacionService {
       this.estadoGrabacion.notas_grabadas++;
       this.estadoGrabacion.ultima_nota_ms = tiempoRelativo;
 
-      console.log('🎵 Nota grabada:', notaGrabada.nota_nombre, 'en', tiempoRelativo + 'ms');
       this.emitirEvento('nota_grabada', { nota: notaGrabada });
       return true;
     } catch (error) {
-      console.error('❌ Error grabando nota:', error);
       this.emitirEvento('error', { error });
       return false;
     }
@@ -426,11 +416,9 @@ export class SincronizacionService {
       }
       this.notasTemporales.delete(nota_id);
 
-      console.log('🎵 Nota liberada:', notaTemporal.nota_nombre, 'duración:', notaTemporal.duracion_ms + 'ms');
       this.emitirEvento('nota_liberada', { nota: notaTemporal });
       return true;
     } catch (error) {
-      console.error('❌ Error grabando liberación:', error);
       this.emitirEvento('error', { error });
       return false;
     }
@@ -463,7 +451,6 @@ export class SincronizacionService {
     }
 
     this.notasTemporales.clear();
-    console.log('🎯 Procesadas notas temporales pendientes');
   }
 
   // =====================================================
@@ -487,11 +474,9 @@ export class SincronizacionService {
       this.marcadoresTiempo.push(nuevoMarcador);
       this.marcadoresTiempo.sort((a, b) => a.timestamp_ms - b.timestamp_ms);
 
-      console.log('📍 Marcador agregado:', nuevoMarcador.nombre, 'en', tiempoRelativo + 'ms');
       this.emitirEvento('marcador_agregado', { marcador: nuevoMarcador });
       return true;
     } catch (error) {
-      console.error('❌ Error agregando marcador:', error);
       this.emitirEvento('error', { error });
       return false;
     }
@@ -600,7 +585,6 @@ export class SincronizacionService {
         try {
           callback(evento);
         } catch (error) {
-          console.error('Error ejecutando callback de evento:', error);
         }
       });
     }
@@ -651,7 +635,6 @@ export class SincronizacionService {
     this.marcadoresTiempo = [];
     this.listeners = {};
     
-    console.log('🧹 Servicio de sincronización limpiado');
   }
 }
 

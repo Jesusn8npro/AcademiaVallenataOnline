@@ -30,16 +30,13 @@ export const useSesionTracker = (usuarioId: string | null) => {
           );
 
         if (error) {
-          console.error('❌ Error registrando sesión:', error);
         } else {
-          console.log('✅ Sesión actualizada:', {
             usuario_id: usuarioId,
             pagina: location.pathname,
             timestamp: ahora.toISOString(),
           });
         }
       } catch (err) {
-        console.error('❌ Error en registrarSesion:', err);
       }
     };
 
@@ -66,9 +63,7 @@ export const useSesionTracker = (usuarioId: string | null) => {
           .eq('usuario_id', usuarioId)
           .eq('fecha', fecha);
 
-        console.log('👋 Usuario marcado como inactivo');
       } catch (err) {
-        console.error('❌ Error marcando usuario inactivo:', err);
       }
     };
 

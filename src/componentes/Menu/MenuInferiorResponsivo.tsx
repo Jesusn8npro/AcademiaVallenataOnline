@@ -104,7 +104,6 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
 
     // Navegación
     const navegarA = (ruta: string) => {
-        console.log('Navegando a:', ruta);
         navigate(ruta);
     };
 
@@ -123,14 +122,12 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
         if (!esPaginaClase) return; // Solo en páginas de clases
 
         setMenuVisible(false);
-        console.log('📱 [MENU] Ocultando menú por inactividad');
     };
 
     const mostrarMenu = () => {
         if (!esPaginaClase) return; // Solo en páginas de clases
 
         setMenuVisible(true);
-        console.log('📱 [MENU] Mostrando menú por actividad');
     };
 
     const reiniciarTimeoutInactividad = () => {
@@ -156,8 +153,6 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
             return;
         }
 
-        console.log('🚀 [MENU] Configurando detectores de actividad para página de clase...');
-
         const eventos = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
         eventos.forEach(evento => {
             document.addEventListener(evento, detectarActividad, { passive: true } as any);
@@ -174,7 +169,6 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
         }, 1000);
 
         return () => {
-            console.log('❌ [MENU] Limpiando detectores de actividad');
             if (timeoutInactividad) {
                 clearTimeout(timeoutInactividad);
             }

@@ -55,7 +55,6 @@ export const servicioSeguridad = {
 
             return cuentasCompartidas;
         } catch (error) {
-            console.error('Error detectando cuentas compartidas:', error);
             return [];
         }
     },
@@ -112,7 +111,6 @@ export const servicioSeguridad = {
 
             return cambiosSospechosos;
         } catch (error) {
-            console.error('Error detectando cambios sospechosos:', error);
             return [];
         }
     },

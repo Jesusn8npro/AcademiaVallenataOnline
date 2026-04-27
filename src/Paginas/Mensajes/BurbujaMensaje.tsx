@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import type { Mensaje } from '../../servicios/mensajeriaService'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import './BurbujaMensaje.css' // Importar estilos nuevos
+import './BurbujaMensaje.css'
 
 interface Props {
     mensaje: Mensaje
@@ -15,7 +15,6 @@ interface Props {
 export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguiente, chatEsGrupal, onResponder }: Props) {
     const [mostrarAcciones, setMostrarAcciones] = useState(false)
 
-    // Lógica para agrupar visualmente
     const esPrimero = !mensajeAnterior || mensajeAnterior.usuario_id !== mensaje.usuario_id
     const esUltimo = !mensajeSiguiente || mensajeSiguiente.usuario_id !== mensaje.usuario_id
 
@@ -25,7 +24,6 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
             onMouseEnter={() => setMostrarAcciones(true)}
             onMouseLeave={() => setMostrarAcciones(false)}
         >
-            {/* Avatar Izquierdo (Para Otros) */}
             {!mensaje.es_mio && (
                 <div className="bm-avatar-container bm-mr">
                     {esUltimo ? (
@@ -40,25 +38,20 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
                 </div>
             )}
 
-            {/* Contenido */}
             <div className="bm-content-wrapper">
-                {/* Nombre en Grupos (Solo el primero del bloque) */}
                 {!mensaje.es_mio && chatEsGrupal && esPrimero && (
                     <span className="bm-username">
                         {mensaje.usuario?.nombre_completo || 'Usuario'}
                     </span>
                 )}
 
-                {/* Burbuja */}
                 <div className="bm-bubble">
-                    {/* Texto o Media */}
                     {mensaje.tipo === 'imagen' && mensaje.url_media ? (
                         <img src={mensaje.url_media} alt="adjunto" className="rounded-lg max-w-full h-auto mb-1" />
                     ) : (
                         <span>{mensaje.contenido}</span>
                     )}
 
-                    {/* Metadata Flotante (Hora + Leído) */}
                     <div className="bm-meta">
                         <span className="bm-time">
                             {formatDistanceToNow(new Date(mensaje.creado_en), { addSuffix: false, locale: es })}
@@ -81,7 +74,6 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
                 </div>
             </div>
 
-            {/* Avatar Derecho (Opcional para 'Mio' si se desea, por ahora oculto para look WhatsApp/Svelte standard) */}
         </div>
     )
 }

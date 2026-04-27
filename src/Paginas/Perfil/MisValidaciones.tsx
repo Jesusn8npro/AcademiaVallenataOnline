@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 import { useUsuario } from '../../contextos/UsuarioContext';
@@ -26,57 +26,52 @@ export default function MisValidaciones() {
   const [tutorialesActivos, setTutorialesActivos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  // Estados modal nuevo
   const [modalAbierto, setModalAbierto] = useState(false);
   const [tutorialSeleccionado, setTutorialSeleccionado] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState('');
+
+  const cargarDatos = useCallback(async () => {
+    if (!usuario?.id) return;
+    try {
+      const { data: valData, error: valErr } = await supabase
+        .from('validaciones_tutorial')
+        .select(`*, tutoriales ( titulo )`)
+        .eq('usuario_id', usuario.id)
+        .order('created_at', { ascending: false });
+
+      if (valErr) throw valErr;
+      setValidaciones((valData as unknown) as Validacion[]);
+
+      const { data: tutData } = await supabase
+        .from('tutoriales')
+        .select('id, titulo')
+        .eq('estado', 'publicado')
+        .order('titulo', { ascending: true });
+
+      if (tutData) {
+        const tutorials = tutData as any[];
+        setTutorialesActivos(tutorials);
+        if (tutorials.length > 0) setTutorialSeleccionado(tutorials[0].id);
+      }
+    } catch {
+      // silent
+    } finally {
+      setCargando(false);
+    }
+  }, [usuario?.id]);
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      if (!usuario?.id) return;
-      
-      try {
-        // Cargar validaciones
-        const { data: valData, error: valErr } = await supabase
-          .from('validaciones_tutorial')
-          .select(`
-            *,
-            tutoriales ( titulo )
-          `)
-          .eq('usuario_id', usuario.id)
-          .order('created_at', { ascending: false });
-
-        if (valErr) throw valErr;
-        setValidaciones((valData as unknown) as Validacion[]);
-
-        // Cargar tutoriales disponibles
-        const { data: tutData } = await supabase
-          .from('tutoriales')
-          .select('id, titulo')
-          .eq('estado', 'publicado') // Solo publicados
-          .order('titulo', { ascending: true });
-          
-        if (tutData) {
-          const tutorials = tutData as any[];
-          setTutorialesActivos(tutorials);
-          if (tutorials.length > 0) setTutorialSeleccionado(tutorials[0].id);
-        }
-      } catch (err) {
-        console.error('Error al cargar validaciones:', err);
-      } finally {
-        setCargando(false);
-      }
-    };
-
     cargarDatos();
-  }, [usuario?.id]);
+  }, [cargarDatos]);
 
   const enviarValidacion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!usuario?.id || !tutorialSeleccionado || !videoUrl) return;
-    
+
     setEnviando(true);
+    setErrorEnvio('');
     try {
       const table = supabase.from('validaciones_tutorial') as any;
       const { data, error } = await table
@@ -87,21 +82,18 @@ export default function MisValidaciones() {
           estado: 'pendiente'
         })
         .select(`*, tutoriales(titulo)`);
-        
+
       if (error) throw error;
-      
+
       if (data && data.length > 0) {
         setValidaciones([data[0] as unknown as Validacion, ...validaciones]);
-        setModalAbierto(false);
-        setVideoUrl('');
       } else {
-         // Si la subida fue exitosa pero no retorna el objeto con join, recargamos
-         window.location.reload();
+        await cargarDatos();
       }
-      
-    } catch (err) {
-      console.error('Error enviando validacion:', err);
-      alert('Hubo un error al enviar tu video. Verifica la URL y reintenta.');
+      setModalAbierto(false);
+      setVideoUrl('');
+    } catch {
+      setErrorEnvio('Hubo un error al enviar tu video. Verifica la URL y reintenta.');
     } finally {
       setEnviando(false);
     }
@@ -153,11 +145,11 @@ export default function MisValidaciones() {
                   {new Date(val.created_at).toLocaleDateString('es-CO')}
                 </span>
               </div>
-              
+
               <h3 className="validacion-tutorial-titulo">
                 {val.tutoriales?.titulo || 'Tutorial no encontrado'}
               </h3>
-              
+
               <a href={val.video_url} target="_blank" rel="noopener noreferrer" className="validacion-link">
                 🔗 Ver Video Enviado
               </a>
@@ -194,11 +186,11 @@ export default function MisValidaciones() {
               <h3>Enviar Nueva Ejecución</h3>
               <button className="btn-close-modal" onClick={() => setModalAbierto(false)}>✕</button>
             </div>
-            
+
             <form className="modal-envio-body" onSubmit={enviarValidacion}>
               <div className="form-group">
                 <label>¿Qué tutorial estás validando?</label>
-                <select 
+                <select
                   value={tutorialSeleccionado}
                   onChange={(e) => setTutorialSeleccionado(e.target.value)}
                   required
@@ -211,15 +203,15 @@ export default function MisValidaciones() {
 
               <div className="form-group">
                 <label>Enlace de tu video (YouTube o Google Drive)</label>
-                <input 
-                  type="url" 
+                <input
+                  type="url"
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=... o https://drive.google.com/..."
                   required
                 />
               </div>
-              
+
               <div className="modal-envio-instruccion">
                 <strong>¿Cómo subir tu video?</strong>
                 <ul>
@@ -228,6 +220,10 @@ export default function MisValidaciones() {
                 </ul>
                 <span className="instruccion-alerta">⚠️ Si el enlace es Privado, el profesor no podrá evaluarlo.</span>
               </div>
+
+              {errorEnvio && (
+                <p className="error-envio">{errorEnvio}</p>
+              )}
 
               <div className="modal-envio-footer">
                 <button type="button" className="btn-cancelar" onClick={() => setModalAbierto(false)} disabled={enviando}>Cancelar</button>

@@ -48,7 +48,6 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
             try {
                 localStorage.setItem('usuario_actual', JSON.stringify(nuevoUsuario))
             } catch (error) {
-                console.warn('⚠️ Error persistiendo usuario:', error)
             }
         } else {
             localStorage.removeItem('usuario_actual')
@@ -58,20 +57,17 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
     // Función robusta para cargar usuario
     const cargarUsuario = useCallback(async () => {
         try {
-            console.log('🔍 Cargando usuario...')
 
             // 1. Obtener Sesión de Auth
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
             if (sessionError || !session?.user) {
-                console.log('❌ No hay sesión activa o error')
                 setUsuario(null)
                 setInicializado(true)
                 return
             }
 
             const user = session.user
-            console.log('✅ Sesión activa:', user.email)
 
             // 2. Intentar obtener perfil de BD con Timeout
             const fetchPerfil = async () => {
@@ -113,7 +109,6 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                 const { data: perfil, error: perfilError } = await Promise.race([fetchPerfil(), timeoutPromise])
 
                 if (perfil && !perfilError) {
-                    console.log('✅ Perfil cargado de BD')
                     setUsuario({
                         ...usuarioBasico, // Defaults
                         ...perfil,       // Overrides de BD
@@ -121,17 +116,14 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                         nombre: perfil.nombre || perfil.nombre_completo || usuarioBasico.nombre
                     })
                 } else {
-                    console.warn('⚠️ Perfil no encontrado en BD o error, usando fallback Auth')
                     setUsuario(usuarioBasico) // Fallback seguro
                 }
 
             } catch (err) {
-                console.error('⚠️ Timeout o error crítico cargando perfil, usando fallback:', err)
                 setUsuario(usuarioBasico) // Fallback seguro en caso de timeout
             }
 
         } catch (error) {
-            console.error('❌ Error fatal en cargarUsuario:', error)
             setUsuario(null)
         } finally {
             setInicializado(true)
@@ -156,7 +148,6 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
             setUsuario(null)
             localStorage.removeItem('usuario_actual')
         } catch (error) {
-            console.error('❌ Error cerrando sesión:', error)
         }
     }, [setUsuario])
 

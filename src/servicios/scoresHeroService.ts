@@ -99,7 +99,6 @@ export const scoresHeroService = {
         .single();
         
       if (insertError) {
-        console.error('Error insertando score en scores_hero:', insertError);
         return null;
       }
 
@@ -137,7 +136,6 @@ export const scoresHeroService = {
       };
 
     } catch (err) {
-      console.error('Error en scoresHeroService.guardarScoreGame:', err);
       return null;
     }
   },
@@ -167,7 +165,6 @@ export const scoresHeroService = {
         mejorPuntuacion: maxScore
       };
     } catch (err) {
-      console.error('Error obteniendo historial:', err);
       return { historial: [], mejorPuntuacion: 0 };
     }
   },
@@ -199,7 +196,6 @@ export const scoresHeroService = {
       }
       return data;
     } catch (err) {
-      console.error('Error en obtenerExperienciaUsuario:', err);
       return {
         xp_simulador: 0,
         xp_cursos: 0,

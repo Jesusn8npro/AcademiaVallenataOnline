@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../../servicios/clienteSupabase'
 import { generarSlug } from '../../utilidades/slug'
@@ -19,7 +19,6 @@ export default function ClaseTutorial() {
   const [errorCompletar, setErrorCompletar] = useState('')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // En desktop (>= 1024px) mostrar sidebar por defecto, en móvil/tablet ocultar
   const [mostrarSidebar, setMostrarSidebar] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 1024
@@ -38,24 +37,20 @@ export default function ClaseTutorial() {
 
   async function cargar() {
     if (!slug || !claseSlug) return
-    console.log('🔍 [CLASE TUTORIAL] Cargando tutorial:', slug, 'clase:', claseSlug);
     setCargando(true); setError(null)
     try {
       const { data: tuts, error: errT } = await supabase.from('tutoriales').select('*')
       if (errT) {
-        console.error('❌ [CLASE TUTORIAL] Error tutoriales:', errT);
         setError(errT.message);
         return
       }
 
       let tut = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug) || (tuts || []).find((t: any) => (t as any).slug === slug)
       if (!tut) {
-        console.error('❌ [CLASE TUTORIAL] Tutorial no encontrado:', slug);
         setError('Tutorial no encontrado');
         return
       }
       setTutorial(tut)
-      console.log('✅ [CLASE TUTORIAL] Tutorial:', tut.titulo);
 
       const { data: partes, error: errP } = await supabase
         .from('partes_tutorial')
@@ -64,16 +59,14 @@ export default function ClaseTutorial() {
         .order('orden', { ascending: true })
 
       if (errP) {
-        console.error('❌ [CLASE TUTORIAL] Error partes:', errP);
         setError(errP.message);
         return
       }
       const lista = partes || []
       setClases(lista)
 
-      // Búsqueda robusta de la clase actual
       const safeGenerateSlug = (text: string) => {
-        try { return generarSlug(text || ''); } catch (e) { return ''; }
+        try { return generarSlug(text || ''); } catch { return ''; }
       };
 
       const actual = lista.find((p: any) =>
@@ -83,10 +76,7 @@ export default function ClaseTutorial() {
       ) || lista[0]
 
       if (actual) {
-        console.log('✅ [CLASE TUTORIAL] Clase actual encontrada:', actual.titulo, actual.id);
         setClase(actual)
-      } else {
-        console.warn('⚠️ [CLASE TUTORIAL] No se encontró la clase para el slug:', claseSlug);
       }
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -99,7 +89,6 @@ export default function ClaseTutorial() {
           .maybeSingle()
         setCompletada(!!prog?.completado)
 
-        // Cargar mapa de progreso completo
         const { data: progAll } = await supabase
           .from('progreso_tutorial')
           .select('parte_tutorial_id, completado')
@@ -125,7 +114,6 @@ export default function ClaseTutorial() {
         setEstadisticasProgreso({ completadas: 0, total: lista.length, porcentaje: 0 })
       }
     } catch (e: any) {
-      console.error('💥 [CLASE TUTORIAL] Error FATAL:', e)
       setError(e.message || 'Error cargando clase')
     } finally {
       setCargando(false)
@@ -141,7 +129,6 @@ export default function ClaseTutorial() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !tutorial || !clase) return
-      // Buscar si ya existe el registro (Lógica replicada de Svelte para evitar error 400 en upsert)
       const { data: existente } = await supabase
         .from('progreso_tutorial')
         .select('id')

@@ -1,0 +1,99 @@
+@keyframes floatPattern {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-60px) rotate(360deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 12px 35px rgba(251, 191, 36, 0.5);
+  }
+}
+
+@keyframes flyIn {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes flyInFromRight {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.cta-principal:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 25px 60px rgba(220, 38, 38, 0.6);
+}
+
+.img-maestro:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .seccion-instructor {
+    padding: 4rem 0 !important;
+  }
+
+  .contenido-split {
+    grid-template-columns: 1fr !important;
+    gap: 3rem !important;
+  }
+
+  .lado-izquierdo { order: 1; }
+  .lado-derecho { order: 2; }
+
+  .foto-principal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto;
+  }
+
+  .img-maestro {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+  }
+
+  .collage-maestro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-experiencia {
+    top: 10px !important;
+    right: 10px !important;
+    padding: 0.75rem !important;
+  }
+
+  .numero-anos { font-size: 1.5rem !important; }
+  .texto-anos { font-size: 0.7rem !important; }
+}
+
+@media (max-width: 480px) {
+  .seccion-instructor { padding: 3rem 0 !important; }
+  .contenedor { padding: 0 1rem !important; }
+  .header-emocional { margin-bottom: 3rem !important; }
+  .badge-question { font-size: 0.75rem !important; padding: 0.6rem 1.5rem !important; }
+  .titulo-emocional { font-size: 2rem !important; }
+  .saludo-personal { font-size: 1.75rem !important; }
+  .subtitulo-personal { font-size: 1.1rem !important; }
+
+  .parrafo-principal,
+  .parrafo-garantia,
+  .parrafo-diferencia,
+  .parrafo-urgencia { font-size: 1rem !important; }
+
+  .cta-principal { padding: 1.5rem !important; font-size: 1rem !important; }
+}

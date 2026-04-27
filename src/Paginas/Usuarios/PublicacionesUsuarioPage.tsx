@@ -29,7 +29,7 @@ export default function PublicacionesUsuarioPage() {
       if (err) { setError('Error al cargar las publicaciones'); setCargando(false); return }
       setPublicaciones(Array.isArray(data) ? data as Publicacion[] : [])
       setCargando(false)
-    } catch (e) { setError('Error al cargar las publicaciones'); setCargando(false) }
+    } catch { setError('Error al cargar las publicaciones'); setCargando(false) }
   }
 
   return (

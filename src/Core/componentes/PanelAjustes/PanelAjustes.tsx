@@ -51,6 +51,13 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
         instrumentoId, setInstrumentoId, listaInstrumentos
     } = props;
 
+    const [mensajePanelAjustes, setMensajePanelAjustes] = React.useState<{ texto: string; exito: boolean } | null>(null);
+
+    const mostrarMensaje = (texto: string, exito: boolean) => {
+        setMensajePanelAjustes({ texto, exito });
+        setTimeout(() => setMensajePanelAjustes(null), 3500);
+    };
+
     if (!modoAjuste) return null;
 
     const exportarConfiguracion = () => {
@@ -67,7 +74,7 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
         dl.setAttribute("href", dataStr);
         dl.setAttribute("download", `BACKUP_ACORDEON_${new Date().toISOString().slice(0, 10)}.json`);
         dl.click();
-        alert('✅ ¡Copia de seguridad generada!');
+        mostrarMensaje('✅ ¡Copia de seguridad generada!', true);
     };
 
     return (
@@ -111,12 +118,17 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
                 )}
             </div>
 
+            {mensajePanelAjustes && (
+                <div style={{ padding: '10px 14px', borderRadius: '10px', marginTop: '10px', background: mensajePanelAjustes.exito ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${mensajePanelAjustes.exito ? '#6ee7b7' : '#fca5a5'}`, color: mensajePanelAjustes.exito ? '#6ee7b7' : '#fca5a5', fontSize: '12px', fontWeight: '700' }}>
+                    {mensajePanelAjustes.texto}
+                </div>
+            )}
             <div style={{ display: 'flex', gap: '10px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <button onClick={() => { stopPreview(); guardarAjustes(); }} style={{ background: '#22c55e', color: 'white', flex: 2, padding: '12px', borderRadius: '12px', border: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
                     <Save size={18} /> GUARDAR
                 </button>
                 <button onClick={() => { stopPreview(); resetearAjustes(); }} style={{ background: '#ef4444', color: 'white', flex: 1, padding: '12px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>RESET</button>
-                <button onClick={() => (sincronizarAudios as any)(true)} style={{ background: '#8b5cf6', color: 'white', flex: 1, padding: '12px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '10px' }}>ACTUALIZAR AUDIOS</button>
+                <button onClick={async () => { await (sincronizarAudios as any)(true); mostrarMensaje('✅ Audios actualizados', true); }} style={{ background: '#8b5cf6', color: 'white', flex: 1, padding: '12px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '10px' }}>ACTUALIZAR AUDIOS</button>
             </div>
 
             <div style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
@@ -143,8 +155,8 @@ const PanelAjustes: React.FC<PanelAjustesProps> = (props) => {
                                 if (data.sonidosVirtuales) {
                                     setSonidosVirtuales(data.sonidosVirtuales);
                                 }
-                                alert('✅ ¡Configuración cargada temporalmente! Dale a GUARDAR para persistir en la nube.');
-                            } catch (e) { alert('❌ Error al importar'); }
+                                mostrarMensaje('✅ ¡Configuración cargada! Dale a GUARDAR para persistir en la nube.', true);
+                            } catch (e) { mostrarMensaje('❌ Error al importar', false); }
                         };
                         reader.readAsText(file);
                     }} />

@@ -103,7 +103,6 @@ export class AudioService {
     try {
       // Verificar compatibilidad
       if (!window.AudioContext && !(window as any).webkitAudioContext) {
-        console.error('Web Audio API no es compatible');
         return false;
       }
 
@@ -123,10 +122,8 @@ export class AudioService {
         await this.contextoAudio.resume();
       }
       
-      console.log('✅ Audio inicializado correctamente');
       return true;
     } catch (error) {
-      console.error('❌ Error inicializando audio:', error);
       return false;
     }
   }
@@ -142,7 +139,6 @@ export class AudioService {
       this.nodoVolumen.gain.value = configuracion.volumen;
     }
     
-    console.log('🔧 Configuración de audio actualizada:', this.configuracion);
   }
 
   /**
@@ -161,7 +157,6 @@ export class AudioService {
    */
   async cargarAudio(url: string): Promise<ArchivoAudio | null> {
     try {
-      console.log('📂 Cargando archivo de audio:', url);
       
       if (!this.contextoAudio) {
         await this.inicializar();
@@ -186,7 +181,6 @@ export class AudioService {
       this.archivoActual = archivo;
       this.estado.duracion_total_ms = audioBuffer.duration * 1000;
 
-      console.log('✅ Archivo cargado exitosamente:', {
         duracion: archivo.duracion_segundos,
         canales: audioBuffer.numberOfChannels,
         sample_rate: audioBuffer.sampleRate
@@ -195,7 +189,6 @@ export class AudioService {
       this.emitirEvento('loaded', { archivo });
       return archivo;
     } catch (error) {
-      console.error('❌ Error cargando archivo:', error);
       this.emitirEvento('error', { error });
       return null;
     }
@@ -227,7 +220,6 @@ export class AudioService {
   async reproducir(tiempoInicio: number = 0): Promise<boolean> {
     try {
       if (!this.contextoAudio || !this.archivoActual?.buffer) {
-        console.error('❌ Audio no inicializado o archivo no cargado');
         return false;
       }
 
@@ -259,11 +251,9 @@ export class AudioService {
       // Iniciar tracking de tiempo
       this.iniciarTrackingTiempo();
 
-      console.log('✅ Reproducción iniciada desde:', tiempoInicio);
       this.emitirEvento('play', { tiempo_ms: tiempoInicio * 1000 });
       return true;
     } catch (error) {
-      console.error('❌ Error reproduciendo audio:', error);
       this.emitirEvento('error', { error });
       return false;
     }
@@ -279,7 +269,6 @@ export class AudioService {
     this.estado.pausado = true;
     this.estado.reproduciendo = false;
     
-    console.log('⏸️ Reproducción pausada');
     this.emitirEvento('pause', { tiempo_ms: this.estado.tiempo_actual_ms });
   }
 
@@ -301,7 +290,6 @@ export class AudioService {
     this.estado.pausado = false;
     this.limpiarIntervalo();
     
-    console.log('⏹️ Reproducción detenida');
     this.emitirEvento('stop', { tiempo_ms: this.estado.tiempo_actual_ms });
   }
 
@@ -336,7 +324,6 @@ export class AudioService {
       this.nodoVolumen.gain.value = volumen;
     }
     
-    console.log('🔊 Volumen cambiado a:', volumen);
   }
 
   // =====================================================
@@ -473,7 +460,6 @@ export class AudioService {
         try {
           callback(evento);
         } catch (error) {
-          console.error('Error ejecutando callback de evento:', error);
         }
       });
     }
@@ -494,7 +480,6 @@ export class AudioService {
       try {
         this.contextoAudio.close();
       } catch (error) {
-        console.warn('Error cerrando contexto de audio:', error);
       }
     }
     
@@ -504,7 +489,6 @@ export class AudioService {
     this.archivoActual = null;
     this.listeners = {};
     
-    console.log('🧹 Servicio de audio destruido');
   }
 
   // =====================================================

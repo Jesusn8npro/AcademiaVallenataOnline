@@ -19,12 +19,10 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
   const [mensajeEnRespuesta, setMensajeEnRespuesta] = useState<Mensaje | null>(null)
   const [mostrarInfoPanel, setMostrarInfoPanel] = useState(false)
   const [estadoConexion, setEstadoConexion] = useState('SUBSCRIBED')
-  const [modoOscuro] = useState(false)
-
+  const [errorEnvio, setErrorEnvio] = useState('')
   const contenedorMensajes = useRef<HTMLDivElement>(null)
   const mensajesEndRef = useRef<HTMLDivElement>(null)
 
-  // Info del otro usuario (para el header)
   const otroUsuario = React.useMemo(() => {
     if (!chat || !usuarioActual) return null
     if (chat.es_grupal) {
@@ -42,7 +40,6 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     }
   }, [chat, usuarioActual])
 
-  // Cargar mensajes y suscripciones
   useEffect(() => {
     let sub: any
 
@@ -57,10 +54,8 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
 
     cargar()
 
-    // Suscripción Realtime
     sub = mensajeriaService.suscribirseAChat(chat.id, (nuevoMensaje) => {
       setMensajes(prev => {
-        // Evitar duplicados
         if (prev.some(m => m.id === nuevoMensaje.id)) return prev
         return [...prev, nuevoMensaje]
       })
@@ -85,13 +80,14 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     })
 
     if (error) {
-      alert('Error enviando mensaje: ' + error)
+      setErrorEnvio(error || 'Error enviando mensaje')
     } else if (mensaje) {
+      setErrorEnvio('')
       scrollToBottom()
     }
   }
 
-  const navegarAlPerfilUsuario = () => console.log('Navegar al perfil de usuario');
+  const navegarAlPerfilUsuario = () => {};
   const alternarInfoPanel = () => setMostrarInfoPanel(prev => !prev);
   const responderMensaje = (msg: Mensaje) => setMensajeEnRespuesta(msg);
   const cancelarRespuesta = () => setMensajeEnRespuesta(null);
@@ -101,7 +97,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
   };
 
   return (
-    <div className={`msg_chat_view ${modoOscuro ? 'dark' : ''} ${mostrarInfoPanel ? 'panel-abierto' : ''}`}>
+    <div className={`msg_chat_view ${mostrarInfoPanel ? 'panel-abierto' : ''}`}>
       {!chat ? (
         <div className="estado-vacio">
           <div className="icono-chat">💬</div>
@@ -113,9 +109,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
           <div className="msg_chat_area">
             <div className="msg_header">
 
-              {/* Sección Izquierda: Usuario + Volver */}
               <div className="msg_header_user_info">
-                {/* Botón Regresar: Siempre visible y blanco */}
                 {onRegresar && (
                   <button className="btn-regresar" onClick={onRegresar} title="Volver" style={{ marginRight: '8px' }}>
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +121,6 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
                 {otroUsuario && (
                   <>
                     <button className="avatar-container btn-perfil" onClick={navegarAlPerfilUsuario} title={`Ver perfil de ${otroUsuario.nombre}`}>
-                      {/* Avatar con fallback */}
                       <img
                         src={otroUsuario.avatar || '/images/default-user.png'}
                         alt={otroUsuario.nombre}
@@ -152,7 +145,6 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
                 )}
               </div>
 
-              {/* Sección Derecha: Estado + Acciones */}
               <div className="msg_header_right_section">
                 <div className={`indicador-conexion ${estadoConexion === 'SUBSCRIBED' ? 'conectado' : ''}`}>
                   {estadoConexion === 'SUBSCRIBED' ? (
@@ -194,7 +186,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
                   <BurbujaMensaje
                     key={mensaje.id}
                     mensaje={mensaje}
-                    chatEsGrupal={chat.es_grupal} // Pass correctly
+                    chatEsGrupal={chat.es_grupal}
                     mensajeAnterior={index > 0 ? mensajes[index - 1] : undefined}
                     mensajeSiguiente={index < mensajes.length - 1 ? mensajes[index + 1] : undefined}
                     onResponder={() => responderMensaje(mensaje)}
@@ -215,6 +207,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
                 </div>
               )}
 
+              {errorEnvio && <div className="error"><p>❌ {errorEnvio}</p></div>}
               <div className="msg_input_container">
                 <EntradaMensaje chat={chat} mensajeEnRespuesta={mensajeEnRespuesta} onEnviar={enviarMensaje} />
               </div>

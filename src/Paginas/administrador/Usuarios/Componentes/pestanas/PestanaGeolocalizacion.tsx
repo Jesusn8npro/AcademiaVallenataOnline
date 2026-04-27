@@ -34,26 +34,17 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
       setCargando(true);
       setError('');
 
-      // Verificamos auth pero no es estrictamente necesario para cargar historial, solo para capturar.
-      // Pero mantendremos el flujo original.
-
-      // Cargar Historial y Estadísticas primero (no dependen de IP actual)
       const hist = await obtenerHistorialUsuario(usuario.id, 10);
       setHistorial(hist || []);
 
       const stats = await obtenerEstadisticasUsuario(usuario.id);
       setEstadisticas(stats || { totalRegistros: 0, visitas: 0, paisesUnicos: 0 });
 
-      // Intentar obtener ubicación actual (IP pública) pero no bloquear si falla
       try {
         const ip = await obtenerIPPublica();
         if (ip) {
           const datos = await obtenerDatosGeolocalizacion(ip);
           setUbicacionActual(datos);
-
-          // Solo guardamos si capturamos explícitamente o es la primera vez?
-          // La lógica original guardaba automáticamente al cargar. 
-          // Mantenemos eso pero con cuidado de permisos.
 
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
@@ -65,7 +56,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
               const isAdmin = rolLc.includes('admin') || rolLc.includes('administrador');
               targetUserId = isAdmin ? usuario.id : user.id;
             }
-            // Opcional: auto-guardar al visitar la pestaña (tracking pasivo)
             await guardarGeolocalizacionUsuario(targetUserId, datos);
           }
         }
@@ -74,7 +64,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
       }
 
     } catch (e: any) {
-      console.error(e);
       setError(e.message || 'Error cargando historial');
     } finally {
       setCargando(false);
@@ -103,7 +92,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
 
       await guardarGeolocalizacionUsuario(targetUserId, datos);
 
-      // Recargar historial
       const hist = await obtenerHistorialUsuario(usuario.id, 10);
       setHistorial(hist || []);
       const stats = await obtenerEstadisticasUsuario(usuario.id);
@@ -168,7 +156,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
         <div className="ugeo-loading">{error}</div>
       ) : (
         <>
-          {/* SECCIÓN UBICACIÓN ACTUAL */}
           <div className="ugeo-current-location">
             <div className="ugeo-location-header">
               <h4>Ubicación Actual (Detectada)</h4>
@@ -232,7 +219,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
             )}
           </div>
 
-          {/* ESTADÍSTICAS */}
           <div className="ugeo-stats-grid">
             <div className="ugeo-stat-item">
               <div className="ugeo-stat-numero">{estadisticas.totalRegistros}</div>
@@ -248,7 +234,6 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
             </div>
           </div>
 
-          {/* HISTORIAL */}
           <div className="ugeo-history-section">
             <h4>Historial de Ubicación</h4>
             {historial.length === 0 ? (

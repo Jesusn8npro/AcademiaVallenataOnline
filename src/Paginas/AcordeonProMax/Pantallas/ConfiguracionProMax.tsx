@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
   Shield,
-  Palette,
-  Gamepad2,
   LogOut,
   Check,
   AlertCircle,
@@ -13,120 +11,17 @@ import {
   Mail as MailIcon,
   ChevronRight,
   UserCircle,
-  FileText,
-  Layout,
-  GraduationCap,
-  Trophy,
-  History,
   Lock
 } from 'lucide-react';
-import { supabase } from '../../../servicios/clienteSupabase';
-import { useUsuario } from '../../../contextos/UsuarioContext';
-import { usePerfilStore } from '../../../stores/perfilStore';
 import NavbarProMax from '../Componentes/NavbarProMax';
+import { useConfiguracionProMax } from './useConfiguracionProMax';
 import './ConfiguracionProMax.css';
 
-/**
- * ⚙️ CONFIGURACIÓN PRO MAX
- * Réplica premium y FUNCIONAL de la página de cuenta/ajustes.
- * Incluye estadísticas en tiempo real y edición de información personal.
- */
 const ConfiguracionProMax: React.FC = () => {
-    const { usuario, estaAutenticado } = useUsuario();
-    const { perfil, stats, actualizarPerfil, cargarDatosPerfil } = usePerfilStore();
-    const [cargando, setCargando] = useState(false);
-    const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error', texto: string } | null>(null);
-
-    // Campos del formulario alineados con 'perfiles' table
-    const [form, setForm] = useState({
-        nombre: '',
-        apellido: '',
-        nombre_usuario: '',
-        biografia: '',
-        url_foto_perfil: '',
-        whatsapp: '',
-        ciudad: ''
-    });
-
-    // 🔄 Efecto para cargar datos reales al montar el componente
-    useEffect(() => {
-        if (estaAutenticado) {
-            cargarDatosPerfil(true);
-        }
-    }, [estaAutenticado]);
-
-    // 📋 Sincronizar formulario con datos del perfil una vez cargados
-    useEffect(() => {
-        if (perfil) {
-            setForm({
-                nombre: perfil.nombre || '',
-                apellido: perfil.apellido || '',
-                nombre_usuario: perfil.nombre_usuario || '',
-                biografia: perfil.biografia || '',
-                url_foto_perfil: perfil.url_foto_perfil || '',
-                whatsapp: perfil.whatsapp || '',
-                ciudad: perfil.ciudad || perfil.pais || ''
-            });
-        }
-    }, [perfil]);
-
-    const handleLogin = async (provider: 'google' | 'facebook' | 'email') => {
-        if (provider === 'email') {
-            window.location.href = '/mi-perfil'; 
-            return;
-        }
-        await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + '/acordeon-pro-max/configuracion' } });
-    };
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-    };
-
-    const handleSave = async () => {
-        if (!usuario || !perfil) return;
-        setCargando(true);
-        setMensaje(null);
-        try {
-            // Construir nombre completo
-            const nombreCompleto = `${form.nombre} ${form.apellido}`.trim();
-            
-            // Objeto de actualización compatible con la tabla 'perfiles'
-            const updates = { 
-                ...form,
-                nombre_completo: nombreCompleto,
-                fecha_actualizacion: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-
-            const { error } = await supabase
-                .from('perfiles')
-                .update(updates)
-                .eq('id', usuario.id);
-
-            if (error) throw error;
-            
-            // Actualizar el store global para que el Navbar y otros componentes se refresquen
-            actualizarPerfil(updates as any);
-            
-            setMensaje({ tipo: 'exito', texto: '¡Información actualizada con éxito!' });
-            setTimeout(() => setMensaje(null), 3000);
-        } catch (err: any) {
-            console.error('Error al guardar perfil:', err);
-            setMensaje({ tipo: 'error', texto: err.message || 'Error al guardar los cambios' });
-        } finally {
-            setCargando(false);
-        }
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
+    const { usuario, estaAutenticado, perfil, form, cargando, mensaje, handleLogin, handleLogout, handleSave, handleChange } = useConfiguracionProMax();
 
     return (
         <div className="promax-config-wrapper">
-            {/* 🎬 FONDO DINÁMICO */}
             <div className="promax-space-bg">
                 <video src="/videos/fondo_blue_paint.mp4" autoPlay loop muted playsInline />
                 <div className="promax-bg-overlay" />
@@ -137,7 +32,7 @@ const ConfiguracionProMax: React.FC = () => {
             <main className="promax-config-content">
                 <AnimatePresence mode="wait">
                     {!estaAutenticado ? (
-                        <motion.div 
+                        <motion.div
                             key="auth-prompt"
                             className="auth-prompt-center"
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -169,13 +64,12 @@ const ConfiguracionProMax: React.FC = () => {
                             </div>
                         </motion.div>
                     ) : (
-                        <motion.div 
+                        <motion.div
                             key="settings-panel"
                             className="settings-panel-container"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
-                            {/* User Header Card */}
                             <div className="settings-header-card glass-morphism">
                                 <div className="user-profile-summary">
                                     <div className="user-avatar-wrapper">
@@ -198,9 +92,9 @@ const ConfiguracionProMax: React.FC = () => {
                                         <div className="user-level-row">
                                             <span className="level-tag">Nivel {perfil?.nivel_usuario || 1}</span>
                                             <div className="exp-bar-base">
-                                                <div 
-                                                    className="exp-bar-fill" 
-                                                    style={{ width: `${(perfil?.experiencia_total ? (perfil.experiencia_total % 1000) / 10 : 15)}%` }} 
+                                                <div
+                                                    className="exp-bar-fill"
+                                                    style={{ width: `${(perfil?.experiencia_total ? (perfil.experiencia_total % 1000) / 10 : 15)}%` }}
                                                 />
                                             </div>
                                         </div>
@@ -211,9 +105,7 @@ const ConfiguracionProMax: React.FC = () => {
                                 </button>
                             </div>
 
-                            {/* Settings Grid */}
                             <div className="settings-grid">
-                                {/* Profile Settings */}
                                 <section className="settings-section">
                                     <div className="section-title">
                                         <User size={20} /> Información Personal
@@ -221,30 +113,15 @@ const ConfiguracionProMax: React.FC = () => {
                                     <div className="section-form">
                                         <div className="form-group">
                                             <label>Nombre</label>
-                                            <input 
-                                                name="nombre"
-                                                value={form.nombre} 
-                                                onChange={handleChange} 
-                                                placeholder="Tu primer nombre"
-                                            />
+                                            <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Tu primer nombre" />
                                         </div>
                                         <div className="form-group">
                                             <label>Apellido</label>
-                                            <input 
-                                                name="apellido"
-                                                value={form.apellido} 
-                                                onChange={handleChange} 
-                                                placeholder="Tu(s) apellido(s)"
-                                            />
+                                            <input name="apellido" value={form.apellido} onChange={handleChange} placeholder="Tu(s) apellido(s)" />
                                         </div>
                                         <div className="form-group">
                                             <label>Nombre de Usuario</label>
-                                            <input 
-                                                name="nombre_usuario"
-                                                value={form.nombre_usuario} 
-                                                onChange={handleChange} 
-                                                placeholder="@usuario"
-                                            />
+                                            <input name="nombre_usuario" value={form.nombre_usuario} onChange={handleChange} placeholder="@usuario" />
                                         </div>
                                         <div className="form-group">
                                             <label>Correo Electrónico</label>
@@ -252,18 +129,11 @@ const ConfiguracionProMax: React.FC = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Biografía</label>
-                                            <textarea 
-                                                name="biografia"
-                                                value={form.biografia} 
-                                                onChange={handleChange} 
-                                                rows={3}
-                                                placeholder="Cuéntanos un poco sobre ti..."
-                                            />
+                                            <textarea name="biografia" value={form.biografia} onChange={handleChange} rows={3} placeholder="Cuéntanos un poco sobre ti..." />
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* Extra Settings */}
                                 <section className="settings-section">
                                     <div className="section-title">
                                         <Shield size={20} /> Seguridad y Contacto
@@ -271,30 +141,15 @@ const ConfiguracionProMax: React.FC = () => {
                                     <div className="section-form">
                                         <div className="form-group">
                                             <label>WhatsApp / Contacto</label>
-                                            <input 
-                                                name="whatsapp"
-                                                value={form.whatsapp} 
-                                                onChange={handleChange} 
-                                                placeholder="+57..."
-                                            />
+                                            <input name="whatsapp" value={form.whatsapp} onChange={handleChange} placeholder="+57..." />
                                         </div>
                                         <div className="form-group">
                                             <label>Ciudad</label>
-                                            <input 
-                                                name="ciudad"
-                                                value={form.ciudad} 
-                                                onChange={handleChange} 
-                                                placeholder="Tu ubicación"
-                                            />
+                                            <input name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Tu ubicación" />
                                         </div>
                                         <div className="form-group">
                                             <label>URL Imagen de Perfil</label>
-                                            <input 
-                                                name="url_foto_perfil"
-                                                value={form.url_foto_perfil} 
-                                                onChange={handleChange} 
-                                                placeholder="https://..."
-                                            />
+                                            <input name="url_foto_perfil" value={form.url_foto_perfil} onChange={handleChange} placeholder="https://..." />
                                         </div>
                                         <div className="form-group">
                                             <label>Acciones de Seguridad</label>
@@ -306,7 +161,6 @@ const ConfiguracionProMax: React.FC = () => {
                                 </section>
                             </div>
 
-                            {/* Floating Save Bar */}
                             <div className="settings-action-bar">
                                 <div className="save-bar-left">
                                     {mensaje ? (
@@ -318,7 +172,7 @@ const ConfiguracionProMax: React.FC = () => {
                                         <div className="save-hint">Modifica tus datos y mantén tu perfil al día.</div>
                                     )}
                                 </div>
-                                <button 
+                                <button
                                     className={`btn-save-promax ${cargando ? 'loading' : ''}`}
                                     onClick={handleSave}
                                     disabled={cargando}
@@ -330,7 +184,6 @@ const ConfiguracionProMax: React.FC = () => {
                     )}
                 </AnimatePresence>
 
-                {/* 🛡️ APP INFO FOOTER */}
                 <footer className="promax-config-footer">
                     <p>App version: v2.4.0-promax · Build: {new Date().getTime().toString(16)}</p>
                     <p>Academia Vallenata Online — Módulo de Simulación Premium</p>

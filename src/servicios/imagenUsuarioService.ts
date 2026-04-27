@@ -70,7 +70,6 @@ export async function obtenerOCrearImagenUsuario(
       .single();
 
     if (errorCrear) {
-      console.error('Error creando imagen:', errorCrear);
       return null;
     }
 
@@ -84,7 +83,6 @@ export async function obtenerOCrearImagenUsuario(
 
     return nuevaImagen;
   } catch (error) {
-    console.error('Error en obtenerOCrearImagenUsuario:', error);
     return null;
   }
 }
@@ -125,7 +123,6 @@ export async function obtenerEstadisticasImagen(
       yaLikee
     };
   } catch (error) {
-    console.error('Error obteniendo estadísticas:', error);
     return {
       totalLikes: 0,
       totalComentarios: 0,
@@ -148,7 +145,6 @@ export async function obtenerLikesImagen(imagenId: string): Promise<UsuarioImage
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error obteniendo likes:', error);
     return [];
   }
 }
@@ -167,7 +163,6 @@ export async function obtenerComentariosImagen(imagenId: string): Promise<Usuari
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error obteniendo comentarios:', error);
     return [];
   }
 }
@@ -228,7 +223,6 @@ export async function toggleLikeImagen(
       };
     }
   } catch (error) {
-    console.error('Error en toggleLikeImagen:', error);
     return {
       exito: false,
       yaLikee: false,
@@ -270,7 +264,6 @@ export async function agregarComentarioImagen(
       comentario: data
     };
   } catch (error) {
-    console.error('Error agregando comentario:', error);
     return {
       exito: false
     };
@@ -306,7 +299,6 @@ export async function eliminarComentarioImagen(
 
     return { exito: true };
   } catch (error) {
-    console.error('Error eliminando comentario:', error);
     return { exito: false };
   }
 }
@@ -334,7 +326,6 @@ export async function obtenerComentariosConRespuestas(imagenId: string): Promise
 
     return comentariosConRespuestas;
   } catch (error) {
-    console.error('Error obteniendo comentarios con respuestas:', error);
     return [];
   }
 }

@@ -34,7 +34,6 @@ export class MonitoreoRealTime {
     if (!browser) return;
 
     try {
-      console.log('🔧 [MONITOREO] Sistema de monitoreo en tiempo real inicializado');
       
       // ✅ SOLUCIÓN: Monitorear rendimiento del navegador
       this.monitorearRendimientoNavegador();
@@ -55,7 +54,6 @@ export class MonitoreoRealTime {
       this.monitorearEstadoAplicacion();
       
     } catch (error) {
-      console.error('❌ [MONITOREO] Error inicializando monitoreo:', error);
     }
   }
 
@@ -108,10 +106,8 @@ export class MonitoreoRealTime {
         this.metricas.set('recursos', recursos);
       });
 
-      console.log('✅ [MONITOREO] Rendimiento del navegador monitoreado');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error monitoreando rendimiento del navegador:', error);
     }
   }
 
@@ -149,10 +145,8 @@ export class MonitoreoRealTime {
       }, 5000); // Cada 5 segundos
 
       this.intervalos.set('memoria', intervalo);
-      console.log('✅ [MONITOREO] Memoria y recursos monitoreados');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error monitoreando memoria:', error);
     }
   }
 
@@ -184,10 +178,8 @@ export class MonitoreoRealTime {
         });
       });
 
-      console.log('✅ [MONITOREO] Errores de JavaScript monitoreados');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error configurando monitoreo de errores:', error);
     }
   }
 
@@ -221,10 +213,8 @@ export class MonitoreoRealTime {
         }
       }
 
-      console.log('✅ [MONITOREO] Rendimiento de red monitoreado');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error monitoreando red:', error);
     }
   }
 
@@ -269,10 +259,8 @@ export class MonitoreoRealTime {
       }, 1000);
 
       this.intervalos.set('interacciones', intervalo);
-      console.log('✅ [MONITOREO] Interacciones del usuario monitoreadas');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error monitoreando interacciones:', error);
     }
   }
 
@@ -314,10 +302,8 @@ export class MonitoreoRealTime {
         });
       });
 
-      console.log('✅ [MONITOREO] Estado de la aplicación monitoreado');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error monitoreando estado de la aplicación:', error);
     }
   }
 
@@ -348,10 +334,8 @@ export class MonitoreoRealTime {
         });
       }
 
-      console.warn(`⚠️ [MONITOREO] Error registrado: ${tipo}`, datos);
 
     } catch (error) {
-      console.error('❌ [MONITOREO] Error registrando error:', error);
     }
   }
 
@@ -371,10 +355,8 @@ export class MonitoreoRealTime {
         detail: { id, ...datos }
       }));
 
-      console.log(`🚨 [MONITOREO] Alerta creada: ${id}`, datos);
 
     } catch (error) {
-      console.error('❌ [MONITOREO] Error creando alerta:', error);
     }
   }
 
@@ -437,10 +419,8 @@ export class MonitoreoRealTime {
         }
       });
 
-      console.log('🧹 [MONITOREO] Métricas antiguas limpiadas');
 
     } catch (error) {
-      console.warn('⚠️ [MONITOREO] Error limpiando métricas:', error);
     }
   }
 
@@ -458,10 +438,8 @@ export class MonitoreoRealTime {
       this.alertas.clear();
       this.logs = [];
 
-      console.log('🧹 [MONITOREO] Monitoreo limpiado completamente');
 
     } catch (error) {
-      console.error('❌ [MONITOREO] Error limpiando monitoreo:', error);
     }
   }
 
@@ -568,7 +546,6 @@ export const verificarSaludMonitoreo = () => {
 export function logMonitoreo(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [MONITOREO] ${mensaje}`, datos || '');
 }
 
 /**

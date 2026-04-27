@@ -34,12 +34,12 @@ export default function ValidacionesAdmin() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [validacionActual, setValidacionActual] = useState<Validacion | null>(null);
   
-  // States for revision form
   const [nuevoEstado, setNuevoEstado] = useState('aprobado');
   const [comentario, setComentario] = useState('');
   const [otorgarFase1, setOtorgarFase1] = useState(false);
   const [otorgarFase2, setOtorgarFase2] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [mensajeAccion, setMensajeAccion] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
 
   useEffect(() => {
     cargarValidaciones();
@@ -64,8 +64,8 @@ export default function ValidacionesAdmin() {
       const { data, error } = await query;
       if (error) throw error;
       setValidaciones((data as unknown) as Validacion[]);
-    } catch (err) {
-      console.error('Error cargando validaciones:', err);
+    } catch {
+      // error no fatal — tabla vacía
     } finally {
       setCargando(false);
     }
@@ -102,18 +102,16 @@ export default function ValidacionesAdmin() {
         
       if (error) throw error;
       
-      // Actualizar lista local
-      setValidaciones(prev => prev.map(v => 
-        v.id === validacionActual.id 
+      setValidaciones(prev => prev.map(v =>
+        v.id === validacionActual.id
           ? { ...v, estado: nuevoEstado, comentario_profesor: comentario, fase1_otorgada: otorgarFase1, fase2_otorgada: otorgarFase2, profesor_id: usuario.id }
           : v
       ));
-      
       cerrarRevision();
-      alert('Revisión guardada exitosamente.');
-    } catch (err) {
-      console.error('Error guardando revisión:', err);
-      alert('Error al guardar la revisión.');
+      setMensajeAccion({ tipo: 'exito', texto: 'Revisión guardada exitosamente.' });
+      setTimeout(() => setMensajeAccion(null), 3000);
+    } catch {
+      setMensajeAccion({ tipo: 'error', texto: 'Error al guardar la revisión.' });
     } finally {
       setGuardando(false);
     }
@@ -121,6 +119,11 @@ export default function ValidacionesAdmin() {
 
   return (
     <div className="admin-validaciones-container">
+      {mensajeAccion && (
+        <div style={{ background: mensajeAccion.tipo === 'exito' ? '#f0fff4' : '#fff5f5', color: mensajeAccion.tipo === 'exito' ? '#276749' : '#c53030', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+          {mensajeAccion.texto}
+        </div>
+      )}
       <div className="admin-header">
         <h2>Panel de Validaciones (Profesor)</h2>
         <div className="filtros">

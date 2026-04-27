@@ -78,7 +78,6 @@ function crearPerfilStore() {
         ranking: posicionRanking || 0
       };
     } catch (error) {
-      console.error('Error cargando estadísticas:', error);
       return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
     }
   }
@@ -87,17 +86,14 @@ function crearPerfilStore() {
     subscribe,
 
     async cargarDatosPerfil(forzarRecarga = false) {
-      console.log('🔄 [PERFIL STORE] Cargando datos del perfil...', { forzarRecarga, inicializado: currentStore.inicializado, cargando: currentStore.cargando });
 
       // Si ya está inicializado y no es recarga forzada, no hacer nada
       if (currentStore.inicializado && !forzarRecarga) {
-        console.log('✅ [PERFIL STORE] Datos ya inicializados, saltando carga');
         return;
       }
 
       // Si ya está cargando, no iniciar otra carga
       if (currentStore.cargando && !forzarRecarga) {
-        console.log('⏳ [PERFIL STORE] Ya está cargando, saltando nueva carga');
         return;
       }
 
@@ -107,7 +103,6 @@ function crearPerfilStore() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
         if (userError || !user) {
-          console.warn('⚠️ [PERFIL STORE] Usuario no autenticado:', userError?.message);
           update(state => ({
             ...state,
             cargando: false,
@@ -117,7 +112,6 @@ function crearPerfilStore() {
           return;
         }
 
-        console.log('👤 [PERFIL STORE] Usuario autenticado:', user.id);
 
         // Obtener datos del perfil desde Supabase
         const { data: perfilData, error: perfilError } = await supabase
@@ -127,11 +121,9 @@ function crearPerfilStore() {
           .single();
 
         if (perfilError && perfilError.code !== 'PGRST116') {
-          console.error('❌ [PERFIL STORE] Error obteniendo perfil:', perfilError);
           // En lugar de throw, continuar con datos básicos
         }
 
-        console.log('📄 [PERFIL STORE] Datos de perfil obtenidos:', perfilData);
 
         // Cargar estadísticas (con timeout para evitar bloqueos)
         let statsResult = { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
@@ -142,7 +134,6 @@ function crearPerfilStore() {
           );
           statsResult = await Promise.race([statsPromise, timeoutPromise]) as StatsData;
         } catch (error) {
-          console.warn('⚠️ [PERFIL STORE] Error/timeout cargando estadísticas:', error);
         }
 
         const perfilCompleto: PerfilData = perfilData || {
@@ -173,10 +164,8 @@ function crearPerfilStore() {
           inicializado: true
         }));
 
-        console.log('✅ [PERFIL STORE] Datos cargados exitosamente:', perfilCompleto);
 
       } catch (error) {
-        console.error('❌ [PERFIL STORE] Error crítico cargando datos del perfil:', error);
         update(state => ({
           ...state,
           cargando: false,
@@ -205,7 +194,6 @@ function crearPerfilStore() {
           ranking: posicionRanking || 0
         };
       } catch (error) {
-        console.error('Error cargando estadísticas:', error);
         return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
       }
     },
@@ -270,7 +258,6 @@ export const PerfilProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 if (typeof window !== 'undefined') {
   supabase.auth.onAuthStateChange(async (event: any, session: any) => {
     if (event === 'SIGNED_OUT') {
-      console.log('🚪 [PERFIL STORE] Usuario desautenticado, reseteando store');
       perfilStore.resetear();
     }
     // Removimos la auto-carga en SIGNED_IN para evitar conflictos con el layout

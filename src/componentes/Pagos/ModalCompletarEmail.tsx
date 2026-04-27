@@ -42,7 +42,6 @@ export default function ModalCompletarEmail({ mostrar, setMostrar, usuarioId, on
             const { error: errorAuth } = await supabase.auth.updateUser({ email })
 
             if (errorAuth) {
-                console.error('Error actualizando auth:', errorAuth)
                 throw new Error(errorAuth.message || 'Error al actualizar email en autenticación')
             }
 
@@ -53,7 +52,6 @@ export default function ModalCompletarEmail({ mostrar, setMostrar, usuarioId, on
                 .eq('id', usuarioId)
 
             if (errorPerfil) {
-                console.error('Error actualizando perfil:', errorPerfil)
                 throw new Error(errorPerfil.message || 'Error al guardar email en perfil')
             }
 
@@ -68,7 +66,6 @@ export default function ModalCompletarEmail({ mostrar, setMostrar, usuarioId, on
             }, 1500)
 
         } catch (err: any) {
-            console.error('Error guardando email:', err)
             setError(err.message || 'Error al guardar email. Intenta de nuevo')
         } finally {
             setGuardando(false)

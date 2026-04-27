@@ -11,6 +11,7 @@ interface Props {
 
 const ModalObjetivo: React.FC<Props> = ({ alCerrar, alGuardar, alEliminar, objetivoExistente }) => {
     const [cargando, setCargando] = useState(false);
+    const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
     const [datos, setDatos] = useState<NuevoObjetivo>({
         titulo: '',
         descripcion: '',
@@ -48,8 +49,7 @@ const ModalObjetivo: React.FC<Props> = ({ alCerrar, alGuardar, alEliminar, objet
             }
             alCerrar();
         } catch (error) {
-            console.error(error);
-            alert('Error al guardar el objetivo');
+            setErrorGuardado('Error al guardar el objetivo');
         } finally {
             setCargando(false);
         }
@@ -67,6 +67,11 @@ const ModalObjetivo: React.FC<Props> = ({ alCerrar, alGuardar, alEliminar, objet
                     </button>
                 </div>
 
+                {errorGuardado && (
+                    <div style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                        {errorGuardado}
+                    </div>
+                )}
                 <form onSubmit={manejarEnvio}>
                     <div className="form-grupo">
                         <label className="form-label">Título del Objetivo</label>

@@ -45,7 +45,6 @@ const AnalyticsGeograficos: React.FC = () => {
             setDatosMapaMundial(datosMapa);
             setUltimaActualizacion(new Date());
         } catch (error) {
-            console.error('Error cargando analytics:', error);
         } finally {
             setCargando(false);
         }

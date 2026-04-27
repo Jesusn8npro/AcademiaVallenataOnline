@@ -16,7 +16,6 @@ function aleatorioRating(): string {
 
 export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rating: string; estudiantes: string })[]; error?: string }> {
   try {
-    console.log('Iniciando carga de catálogo...');
 
     // Promesa de carga de datos
     const loadData = async () => {
@@ -26,7 +25,6 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (cursosError) console.error('Error cargando cursos:', cursosError);
 
       // Cargar tutoriales
       const { data: tutsData, error: tutsError } = await supabaseAnonimo
@@ -34,7 +32,6 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (tutsError) console.error('Error cargando tutoriales:', tutsError);
 
       if (cursosError && tutsError) {
         throw new Error(`Error: Cursos (${cursosError.message}), Tutoriales (${tutsError.message})`);
@@ -69,12 +66,10 @@ export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rat
       .filter((i: any) => i.titulo && i.imagen_url)
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-    console.log(`Catálogo cargado: ${cursos.length} cursos, ${tutoriales.length} tutoriales`);
 
     return { items }
 
   } catch (err: any) {
-    console.error('Error general en obtenerCatalogo:', err);
     return { items: [], error: err.message || 'Error desconocido al cargar el catálogo' }
   }
 }
@@ -90,7 +85,6 @@ export async function obtenerCursosDisponibles(): Promise<{ success: boolean; da
     if (error) throw error
     return { success: true, data: data || [] }
   } catch (e: any) {
-    console.error('Error al obtener cursos disponibles:', e)
     return { success: false, data: [], error: e.message }
   }
 }

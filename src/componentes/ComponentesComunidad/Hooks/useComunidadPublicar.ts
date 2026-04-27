@@ -11,6 +11,7 @@ export function useComunidadPublicar(usuario: Usuario | null, onPublicar?: () =>
   const [titulo, setTitulo] = useState('');
   const [publicando, setPublicando] = useState(false);
   const [publicandoMensaje, setPublicandoMensaje] = useState('');
+  const [errorPublicar, setErrorPublicar] = useState('');
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -57,6 +58,7 @@ export function useComunidadPublicar(usuario: Usuario | null, onPublicar?: () =>
     setShowEmojiPicker(false);
     setPublicando(false);
     setPublicandoMensaje('');
+    setErrorPublicar('');
   };
 
   const togglePicker = (pickerType: 'emoji' | 'gif') => {
@@ -129,7 +131,7 @@ export function useComunidadPublicar(usuario: Usuario | null, onPublicar?: () =>
       cerrarModal();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      alert(`Error al publicar: ${msg}`);
+      setErrorPublicar(`Error al publicar: ${msg}`);
     } finally {
       setPublicando(false);
       setPublicandoMensaje('');
@@ -137,7 +139,7 @@ export function useComunidadPublicar(usuario: Usuario | null, onPublicar?: () =>
   };
 
   return {
-    showModal, tipo, texto, titulo, publicando, publicandoMensaje,
+    showModal, tipo, texto, titulo, publicando, publicandoMensaje, errorPublicar,
     fotoFile, fotoPreview, videoFile, showGifPicker, gifSeleccionado,
     showEmojiPicker, emojiBtnRef, gifPickerBtnRef,
     setTexto, setTitulo, setTipo, setShowModal,

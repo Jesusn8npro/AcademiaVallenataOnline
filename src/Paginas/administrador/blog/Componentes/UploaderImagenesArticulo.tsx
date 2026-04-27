@@ -22,6 +22,7 @@ interface UploaderImagenesArticuloProps {
 const UploaderImagenesArticulo: React.FC<UploaderImagenesArticuloProps> = ({ onImagenesChange, imagenesIniciales = [] }) => {
     const [imagenes, setImagenes] = useState<ImagenArticulo[]>([]);
     const [cargando, setCargando] = useState(false);
+    const [confirmarEliminarId, setConfirmarEliminarId] = useState<string | null>(null);
 
     useEffect(() => {
         // Inicializa el estado con una estructura unificada
@@ -66,16 +67,13 @@ const UploaderImagenesArticulo: React.FC<UploaderImagenesArticuloProps> = ({ onI
         disabled: cargando,
     });
 
-    const eliminarImagen = (id: string) => {
-        // eslint-disable-next-line no-restricted-globals
-        const confirmacion = window.confirm('¿Estás seguro de que quieres eliminar esta imagen?');
-        if (!confirmacion) return;
-
+    const ejecutarEliminarImagen = (id: string) => {
         setImagenes(prev => {
             const nuevasImagenes = prev.filter(img => img.id !== id);
             onImagenesChange(nuevasImagenes);
             return nuevasImagenes;
         });
+        setConfirmarEliminarId(null);
     };
 
     const actualizarCampo = (id: string, campo: keyof ImagenArticulo, valor: string) => {
@@ -134,10 +132,19 @@ const UploaderImagenesArticulo: React.FC<UploaderImagenesArticuloProps> = ({ onI
                                 <option value="contenido">Contenido</option>
                                 <option value="meta">Meta (SEO)</option>
                             </select>
-                            <button onClick={() => eliminarImagen(imagen.id)} className="btn-eliminar" aria-label="Eliminar imagen">
+                            <button onClick={() => setConfirmarEliminarId(imagen.id)} className="btn-eliminar" aria-label="Eliminar imagen">
                                 <Trash2 size={16} />
                             </button>
                         </div>
+                        {confirmarEliminarId === imagen.id && (
+                            <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '6px', padding: '8px 10px', marginTop: '6px' }}>
+                                <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#c53030' }}>¿Eliminar esta imagen?</p>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button onClick={() => ejecutarEliminarImagen(imagen.id)} style={{ flex: 1, padding: '4px', background: '#e53e3e', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>Eliminar</button>
+                                    <button onClick={() => setConfirmarEliminarId(null)} style={{ flex: 1, padding: '4px', background: '#edf2f7', color: '#4a5568', border: 'none', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>Cancelar</button>
+                                </div>
+                            </div>
+                        )}
                         {imagen.error && <p className="error-message">{imagen.error}</p>}
                     </div>
                 ))}

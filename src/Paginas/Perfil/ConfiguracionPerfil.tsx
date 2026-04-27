@@ -1,185 +1,20 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../servicios/clienteSupabase'
-import { useUsuario } from '../../contextos/UsuarioContext'
-import { usePerfilStore } from '../../stores/perfilStore'
-import { useNavigate } from 'react-router-dom'
-import { formatearPrecio, formatearFecha } from './utils/formatadores'
-import ModalEliminarCuenta from './ModalEliminarCuenta'
-import './ConfiguracionPerfil.css'
+import { useConfiguracionPerfil } from './Hooks/useConfiguracionPerfil';
+import { formatearPrecio, formatearFecha } from './utils/formatadores';
+import ModalEliminarCuenta from './ModalEliminarCuenta';
+import './ConfiguracionPerfil.css';
 
 export default function ConfiguracionPerfil() {
-    const { usuario, cerrarSesion: cerrarSesionContext } = useUsuario()
-    const { perfil, actualizarPerfil, resetear: resetearPerfil } = usePerfilStore()
-    const navigate = useNavigate()
-
-    const [cargando, setCargando] = useState(true)
-    const [guardando, setGuardando] = useState(false)
-    const [mensaje, setMensaje] = useState('')
-    const [membresiaActual, setMembresiaActual] = useState<any>(null)
-    const [historialPagos, setHistorialPagos] = useState<any[]>([])
-
-    const [configuraciones, setConfiguraciones] = useState({
-        notificaciones_email: true,
-        notificaciones_push: true,
-        publico_perfil: true
-    })
-
-    const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false)
-    const [mostrarFormularioContrasena, setMostrarFormularioContrasena] = useState(false)
-    const [correoRecuperar, setCorreoRecuperar] = useState('')
-    const [cargandoRecuperar, setCargandoRecuperar] = useState(false)
-    const [mensajeRecuperar, setMensajeRecuperar] = useState('')
-    const [confirmacionEliminar, setConfirmacionEliminar] = useState('')
-
-    const [datosPersonales, setDatosPersonales] = useState({
-        nombre_completo: '',
-        correo_electronico: '',
-        whatsapp: '',
-        ciudad: '',
-        fecha_creacion: ''
-    })
-
-    useEffect(() => {
-        cargarDatosUsuario()
-    }, [usuario])
-
-    async function cargarDatosUsuario() {
-        if (!usuario?.id) return
-
-        try {
-            setCargando(true)
-
-            // Obtener perfil actualizado
-            const { data: perfilData, error: errorPerfil } = await supabase
-                .from('perfiles')
-                .select('*')
-                .eq('id', usuario.id)
-                .single()
-
-            if (errorPerfil) throw errorPerfil
-
-            if (perfilData?.suscripcion && perfilData.suscripcion !== 'free') {
-                const { data: membresia } = await supabase
-                    .from('membresias')
-                    .select('*')
-                    .eq('nombre', perfilData.suscripcion)
-                    .single()
-                setMembresiaActual(membresia)
-            }
-
-            const { data: pagos } = await supabase
-                .from('pagos_epayco')
-                .select('*')
-                .eq('usuario_id', usuario.id)
-                .eq('estado', 'Aceptada')
-                .order('created_at', { ascending: false })
-                .limit(3)
-
-            setHistorialPagos(pagos || [])
-
-            setConfiguraciones({
-                notificaciones_email: perfilData.notificaciones_email ?? true,
-                notificaciones_push: perfilData.notificaciones_push ?? true,
-                publico_perfil: perfilData.publico_perfil ?? true
-            })
-
-            setDatosPersonales({
-                nombre_completo: perfilData.nombre_completo || '',
-                correo_electronico: perfilData.correo_electronico || '',
-                whatsapp: perfilData.whatsapp || '',
-                ciudad: perfilData.ciudad || perfilData.pais || '',
-                fecha_creacion: new Date(perfilData.fecha_creacion).toLocaleDateString('es-ES')
-            })
-
-            setCorreoRecuperar(perfilData.correo_electronico || '')
-
-        } catch (error) {
-            console.error('Error cargando datos:', error)
-            setMensaje('Error cargando la configuración')
-        } finally {
-            setCargando(false)
-        }
-    }
-
-    async function guardarConfiguracion() {
-        if (!usuario?.id) return
-
-        setGuardando(true)
-
-        try {
-            const { error } = await supabase
-                .from('perfiles')
-                .update(configuraciones)
-                .eq('id', usuario.id)
-
-            if (error) throw error
-
-            setMensaje('¡Configuración guardada exitosamente!')
-            actualizarPerfil(configuraciones)
-        } catch (error: any) {
-            setMensaje('Error al guardar configuración: ' + error.message)
-        } finally {
-            setGuardando(false)
-            setTimeout(() => setMensaje(''), 3000)
-        }
-    }
-
-    async function enviarRecuperacionContrasena() {
-        if (!correoRecuperar) return
-
-        setCargandoRecuperar(true)
-        setMensajeRecuperar('')
-
-        try {
-            const isProduction = window.location.hostname === 'academiavallenataonline.com';
-            const redirectURL = isProduction 
-                ? 'https://academiavallenataonline.com/recuperar-contrasena'
-                : window.location.origin + '/recuperar-contrasena';
-
-            const { error } = await supabase.auth.resetPasswordForEmail(correoRecuperar, {
-                redirectTo: redirectURL
-            })
-
-            if (error) throw error
-
-            setMensajeRecuperar('¡Revisa tu correo para restablecer la contraseña!')
-            setMostrarFormularioContrasena(false)
-        } catch (error: any) {
-            setMensajeRecuperar('Error: ' + error.message)
-        } finally {
-            setCargandoRecuperar(false)
-        }
-    }
-
-    async function eliminarCuenta() {
-        if (confirmacionEliminar !== 'ELIMINAR MI CUENTA') {
-            setMensaje('Debes escribir exactamente "ELIMINAR MI CUENTA" para confirmar')
-            return
-        }
-
-        if (!usuario?.id) return
-
-        try {
-            const { error } = await supabase
-                .from('perfiles')
-                .update({ eliminado: true })
-                .eq('id', usuario.id)
-
-            if (error) throw error
-
-            await cerrarSesionContext()
-            resetearPerfil()
-            navigate('/sesion_cerrada')
-        } catch (error: any) {
-            setMensaje('Error al eliminar cuenta: ' + error.message)
-        }
-    }
-
-    async function cerrarSesion() {
-        await cerrarSesionContext()
-        resetearPerfil()
-        navigate('/sesion_cerrada')
-    }
+    const {
+        cargando, guardando, mensaje, membresiaActual, historialPagos,
+        configuraciones, setConfiguraciones,
+        mostrarModalEliminar, setMostrarModalEliminar,
+        mostrarFormularioContrasena, setMostrarFormularioContrasena,
+        correoRecuperar, setCorreoRecuperar,
+        cargandoRecuperar, mensajeRecuperar,
+        confirmacionEliminar, setConfirmacionEliminar,
+        datosPersonales,
+        guardarConfiguracion, enviarRecuperacionContrasena, cancelarRecuperacion, eliminarCuenta, cerrarSesion
+    } = useConfiguracionPerfil();
 
     return (
         <div className="contenido-configuracion">
@@ -196,7 +31,6 @@ export default function ConfiguracionPerfil() {
                     </div>
 
                     <div className="grid">
-                        {/* Información de cuenta */}
                         <div className="seccion">
                             <h2>👤 Mi cuenta</h2>
                             <div className="info">
@@ -224,7 +58,6 @@ export default function ConfiguracionPerfil() {
                             <a href="/mi-perfil" className="boton-secundario">✏️ Editar información</a>
                         </div>
 
-                        {/* Membresía */}
                         <div className="seccion">
                             <h2>💎 Mi membresía</h2>
                             {membresiaActual ? (
@@ -252,7 +85,6 @@ export default function ConfiguracionPerfil() {
                             </a>
                         </div>
 
-                        {/* Historial de pagos */}
                         {historialPagos.length > 0 && (
                             <div className="seccion">
                                 <h2>💳 Pagos recientes</h2>
@@ -270,7 +102,6 @@ export default function ConfiguracionPerfil() {
                             </div>
                         )}
 
-                        {/* Notificaciones */}
                         <div className="seccion">
                             <h2>🔔 Notificaciones</h2>
                             <div className="opciones">
@@ -302,7 +133,6 @@ export default function ConfiguracionPerfil() {
                             </div>
                         </div>
 
-                        {/* Privacidad */}
                         <div className="seccion">
                             <h2>🔒 Privacidad</h2>
                             <div className="opciones">
@@ -321,7 +151,6 @@ export default function ConfiguracionPerfil() {
                             </div>
                         </div>
 
-                        {/* Seguridad */}
                         <div className="seccion">
                             <h2>🔐 Seguridad</h2>
                             <div className="opciones">
@@ -343,10 +172,7 @@ export default function ConfiguracionPerfil() {
                                             <button className="boton-principal" onClick={enviarRecuperacionContrasena} disabled={cargandoRecuperar}>
                                                 {cargandoRecuperar ? 'Enviando...' : 'Enviar enlace'}
                                             </button>
-                                            <button className="boton-cancelar" onClick={() => {
-                                                setMostrarFormularioContrasena(false)
-                                                setMensajeRecuperar('')
-                                            }}>
+                                            <button className="boton-cancelar" onClick={cancelarRecuperacion}>
                                                 Cancelar
                                             </button>
                                         </div>
@@ -360,7 +186,6 @@ export default function ConfiguracionPerfil() {
                             </div>
                         </div>
 
-                        {/* Acciones */}
                         <div className="seccion">
                             <h2>⚙️ Acciones</h2>
                             <div className="acciones">
@@ -370,14 +195,12 @@ export default function ConfiguracionPerfil() {
                         </div>
                     </div>
 
-                    {/* Botón guardar */}
                     <div className="acciones-principales">
                         <button className="boton-guardar" onClick={guardarConfiguracion} disabled={guardando}>
                             {guardando ? 'Guardando...' : '💾 Guardar configuración'}
                         </button>
                     </div>
 
-                    {/* Mensajes */}
                     {mensaje && (
                         <div className={`mensaje ${mensaje.includes('exitosamente') ? 'exito' : 'error'}`}>
                             {mensaje}
@@ -394,5 +217,5 @@ export default function ConfiguracionPerfil() {
                 onEliminar={eliminarCuenta}
             />
         </div>
-    )
+    );
 }

@@ -106,7 +106,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data.id;
     } catch (error) {
-      console.error('Error iniciando sesión:', error);
       throw error;
     }
   }
@@ -176,7 +175,6 @@ export class SimuladorAcordeonService {
       };
       
     } catch (error) {
-      console.error('Error finalizando sesión:', error);
       throw error;
     }
   }
@@ -201,7 +199,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo lecciones:', error);
       throw error;
     }
   }
@@ -227,7 +224,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo progreso lecciones:', error);
       throw error;
     }
   }
@@ -263,7 +259,6 @@ export class SimuladorAcordeonService {
       
       await this.actualizarEstadisticas(usuarioId);
     } catch (error) {
-      console.error('Error completando lección:', error);
       throw error;
     }
   }
@@ -291,7 +286,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo canciones:', error);
       throw error;
     }
   }
@@ -317,7 +311,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo progreso canciones:', error);
       throw error;
     }
   }
@@ -338,7 +331,6 @@ export class SimuladorAcordeonService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo desafíos:', error);
       throw error;
     }
   }
@@ -374,7 +366,6 @@ export class SimuladorAcordeonService {
       
       await this.actualizarEstadisticas(usuarioId);
     } catch (error) {
-      console.error('Error completando desafío:', error);
       throw error;
     }
   }
@@ -393,7 +384,6 @@ export class SimuladorAcordeonService {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     } catch (error) {
-      console.error('Error obteniendo estadísticas:', error);
       throw error;
     }
   }
@@ -452,7 +442,6 @@ export class SimuladorAcordeonService {
         .upsert(estadisticas);
         
     } catch (error) {
-      console.error('Error actualizando estadísticas:', error);
       throw error;
     }
   }
@@ -519,7 +508,6 @@ export class SimuladorAcordeonService {
       
       return logrosNuevos;
     } catch (error) {
-      console.error('Error verificando logros:', error);
       throw error;
     }
   }
@@ -567,7 +555,6 @@ export class SimuladorAcordeonService {
         desafios: desafios.slice(0, 2)
       };
     } catch (error) {
-      console.error('Error obteniendo recomendaciones:', error);
       throw error;
     }
   }

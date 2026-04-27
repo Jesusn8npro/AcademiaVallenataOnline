@@ -130,7 +130,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 }
             }
         } catch (e) {
-            console.warn('Error en carga inicial de localStorage:', e);
+            // ignore
         }
         return defaults;
     });
@@ -151,10 +151,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             else setSamplesBajos(data.bajos || []); // Al menos cargar bajos
             if (manual) {
                 motorAudioPro.limpiarBanco(instrumentoId);
-                alert(`✅ ¡Audios actualizados!\nSe encontraron ${data.pitos?.length || 0} pitos brillantes, ${data.armonizado?.length || 0} armonizados y ${data.bajos?.length || 0} bajos.`);
             }
         } catch (e) {
-            console.warn('No se pudo cargar muestrasLocales.json');
+            // ignore
         }
     }, [instrumentoId]);
 
@@ -229,8 +228,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             });
         });
 
-        console.log(`%c 🎵 TIMBRE CAMBIADO → ${timbreActivo} (${listaActivePitos.length} pitos desde /Muestras_Cromaticas/${carpetaPitos}/) `, 'background:#8b5cf6;color:white;padding:4px;border-radius:4px;');
-
         // ✅ Actualizar la ref SÍNCRONAMENTE antes de setState - evita que obtenerRutasAudio lea el DB viejo
         muestrasLocalesDBRef.current = mLocales;
         setMuestrasLocalesDB(mLocales);
@@ -245,15 +242,13 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // Activar AudioContext con el primer gesto del usuario
     useEffect(() => {
         const activarAudio = async () => {
-            console.log("%c 🔊 INTENTANDO ACTIVAR AUDIO... ", "background: #3498db; color: white; padding: 5px;");
             try {
                 await motorAudioPro.activarContexto();
-                console.log("%c ✅ SISTEMA DE AUDIO LISTO ", "background: #27ae60; color: white; padding: 5px;");
                 window.removeEventListener('mousedown', activarAudio);
                 window.removeEventListener('keydown', activarAudio);
                 window.removeEventListener('touchstart', activarAudio);
             } catch (err) {
-                console.error("❌ Error activando audio:", err);
+                // ignore
             }
         };
         window.addEventListener('mousedown', activarAudio);
@@ -347,7 +342,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     setListaTonalidades(Object.keys(TONALIDADES));
                 }
             } catch (error) {
-                console.error("Error cargando datos de usuario:", error);
                 setListaTonalidades(Object.keys(TONALIDADES));
             } finally {
                 setCargandoCloud(false);
@@ -374,7 +368,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 soundsPerKeyRef.current = {};
 
             } catch (e) {
-                console.warn('Error cargando muestras desde Supabase:', e);
+                // ignore
             } finally {
                 setCargandoCloud(false);
             }
@@ -679,8 +673,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const ejecutarSwapDireccion = useCallback((nuevaDir: 'halar' | 'empujar') => {
         if (nuevaDir === direccionRef.current) return;
 
-        console.log(`%c 🔄 SWAP DIRECTO → ${nuevaDir} `, 'background:#f59e0b;color:white;font-weight:bold;');
-
         const prev = { ...botonesActivosRef.current };
         const next: Record<string, any> = {};
         let huboCambio = false;
@@ -890,7 +882,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 if ((data as any)?.instrumento_id) setInstrumentoId((data as any).instrumento_id);
 
             } catch (e) {
-                console.error('Error cargando ajustes:', e);
+                // ignore
             }
         };
 
@@ -956,7 +948,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // --- 🔌 WEB SERIAL API (Conexión directa con ESP32, sin Hairless ni loopMIDI) ---
     const conectarESP32 = useCallback(async () => {
         if (!(navigator as any).serial) {
-            alert('❌ Tu navegador no soporta Web Serial. Usa Chrome o Edge y asegúrate de estar en localhost o HTTPS.');
             return;
         }
         try {
@@ -964,7 +955,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             await port.open({ baudRate: 115200 });
             esp32PortRef.current = port;
             setEsp32Conectado(true);
-            console.log('%c ✅ CONEXIÓN ESTABLE: MODO TEXTO CSV 🪗 ', 'background: #27ae60; color: white; padding: 10px; font-weight: bold;');
 
             const decoder = new TextDecoderStream();
             port.readable.pipeTo(decoder.writable);
@@ -1003,7 +993,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                                     continue;
                                 }
 
-                                console.log(`%c 💨 EVENTO FUELLE (${tipo}): ${val} `, 'background: #f39c12; color: white; font-weight: bold;');
                                 const nuevaDir = val === "ABRIR" ? "halar" : "empujar";
                                 if (nuevaDir !== direccionRef.current) {
                                     // 🔄 SWAP ATÓMICO: Sincronizar sonidos y mapa inmediatamente
@@ -1119,7 +1108,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                         }
                     }
                 } catch (err) {
-                    console.error("Error en loop de lectura:", err);
                     setEsp32Conectado(false);
                 } finally {
                     reader.releaseLock();
@@ -1128,7 +1116,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
             readLoop();
         } catch (err) {
-            console.error('Error conectando al ESP32:', err);
             setEsp32Conectado(false);
         }
     }, [actualizarBotonActivo, limpiarTodasLasNotas]);
@@ -1245,9 +1232,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 bajosTop: ajustes.bajosTop
             }));
 
-            console.log('✨ Sincronización Global Exitosa');
         } catch (e) {
-            console.error('Error en guardado:', e);
+            // ignore
         }
     };
 
@@ -1306,7 +1292,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     updated_at: new Date().toISOString()
                 } as any).eq('usuario_id', usuarioId) as any); // Added (as any)
             } catch (e) {
-                console.error('Error al actualizar nombre de tonalidad:', e);
+                // ignore
             }
         }
     };
@@ -1357,52 +1343,43 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                         updated_at: new Date().toISOString()
                     } as any, { onConflict: 'usuario_id' }) as any;
 
-                if (error) console.error("Error guardando tonalidades:", error);
             } catch (error) {
-                console.error("Error preservando configuraciones de tonalidades:", error);
+                // ignore
             }
         };
         persistir();
     }, [nombresTonalidades, listaTonalidades, usuarioId]);
 
     const eliminarTonalidad = async (tonalidad: string) => {
-        if (listaTonalidades.length <= 1) return alert('Debe conservar al menos una tonalidad.');
-        if (confirm(`¿Eliminar la tonalidad ${tonalidad}? Esta acción no se puede deshacer.`)) {
-            const nueva = listaTonalidades.filter(t => t !== tonalidad);
+        if (listaTonalidades.length <= 1) return;
+        const nueva = listaTonalidades.filter(t => t !== tonalidad);
 
-            // 1. Actualización inmediata del estado (UI)
-            setListaTonalidades(nueva);
+        setListaTonalidades(nueva);
 
-            if (tonalidad === tonalidadSeleccionada) {
-                setTonalidadSeleccionada(nueva[0]);
-            }
+        if (tonalidad === tonalidadSeleccionada) {
+            setTonalidadSeleccionada(nueva[0]);
+        }
 
-            // 2. Sincronización PROFUNDA en Supabase
-            if (usuarioId) {
-                try {
-                    const key = `ajustes_acordeon_vPRO_${tonalidad}`;
+        if (usuarioId) {
+            try {
+                const key = `ajustes_acordeon_vPRO_${tonalidad}`;
 
-                    // Primero obtenemos las configuraciones actuales
-                    const { data } = await (supabase
-                        .from('sim_ajustes_usuario')
-                        .select('tonalidades_configuradas')
-                        .eq('usuario_id', usuarioId)
-                        .maybeSingle() as any);
+                const { data } = await (supabase
+                    .from('sim_ajustes_usuario')
+                    .select('tonalidades_configuradas')
+                    .eq('usuario_id', usuarioId)
+                    .maybeSingle() as any);
 
-                    const nuevasConfigs = { ...((data as any)?.tonalidades_configuradas || {}) };
-                    delete nuevasConfigs[key];
+                const nuevasConfigs = { ...((data as any)?.tonalidades_configuradas || {}) };
+                delete nuevasConfigs[key];
 
-                    // Guardamos la lista actualizada y eliminamos la configuración específica
-                    await ((supabase.from('sim_ajustes_usuario') as any).update({
-                        tonalidades_configuradas: nuevasConfigs,
-                        lista_tonalidades_activa: nueva,
-                        updated_at: new Date().toISOString()
-                    } as any).eq('usuario_id', usuarioId) as any);
-
-                    console.log(`✅ Tonalidad ${tonalidad} eliminada de raíz.`);
-                } catch (e) {
-                    console.error('Error al eliminar tonalidad en la nube:', e);
-                }
+                await ((supabase.from('sim_ajustes_usuario') as any).update({
+                    tonalidades_configuradas: nuevasConfigs,
+                    lista_tonalidades_activa: nueva,
+                    updated_at: new Date().toISOString()
+                } as any).eq('usuario_id', usuarioId) as any);
+            } catch (e) {
+                // ignore
             }
         }
     };

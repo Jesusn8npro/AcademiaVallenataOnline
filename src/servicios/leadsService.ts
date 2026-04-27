@@ -29,7 +29,6 @@ class LeadsService {
    */
   async crearLead(leadData: Omit<LeadChatAnonimo, 'id' | 'created_at' | 'updated_at' | 'convertido_a_usuario'>): Promise<LeadChatAnonimo | null> {
     try {
-      console.log('🔄 Creando lead:', leadData);
       
       const { data, error } = await supabase
         .from(this.tabla)
@@ -41,14 +40,11 @@ class LeadsService {
         .single();
 
       if (error) {
-        console.error('❌ Error creando lead:', error);
         throw error;
       }
 
-      console.log('✅ Lead creado exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('❌ Error en crearLead:', error);
       return null;
     }
   }
@@ -65,13 +61,11 @@ class LeadsService {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-        console.error('❌ Error obteniendo lead por chat_id:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      console.error('❌ Error en obtenerPorChatId:', error);
       return null;
     }
   }
@@ -87,13 +81,11 @@ class LeadsService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error obteniendo todos los leads:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Error en obtenerTodos:', error);
       return [];
     }
   }
@@ -112,13 +104,11 @@ class LeadsService {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error obteniendo lead por email:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      console.error('❌ Error en obtenerPorEmail:', error);
       return null;
     }
   }
@@ -128,7 +118,6 @@ class LeadsService {
    */
   async marcarComoConvertido(identifier: string, usuarioId: string, porEmail: boolean = false): Promise<boolean> {
     try {
-      console.log('🔄 Marcando lead como convertido:', { identifier, usuarioId, porEmail });
       
       const query = supabase
         .from(this.tabla)
@@ -149,14 +138,11 @@ class LeadsService {
       const { error } = await query;
 
       if (error) {
-        console.error('❌ Error marcando como convertido:', error);
         throw error;
       }
 
-      console.log('✅ Lead marcado como convertido exitosamente');
       return true;
     } catch (error) {
-      console.error('❌ Error en marcarComoConvertido:', error);
       return false;
     }
   }
@@ -175,7 +161,6 @@ class LeadsService {
         .eq('convertido_a_usuario', false);
 
       if (errorLeads) {
-        console.error('❌ Error obteniendo leads no convertidos:', errorLeads);
         return 0;
       }
 
@@ -191,7 +176,6 @@ class LeadsService {
         .in('correo_electronico', emails);
 
       if (errorPerfiles) {
-        console.error('❌ Error verificando perfiles existentes:', errorPerfiles);
         return 0;
       }
 
@@ -206,10 +190,8 @@ class LeadsService {
          if (convertido) conversiones++;
        }
 
-      console.log(`✅ ${conversiones} leads convertidos automáticamente`);
       return conversiones;
     } catch (error) {
-      console.error('❌ Error en verificarConversiones:', error);
       return 0;
     }
   }
@@ -224,7 +206,6 @@ class LeadsService {
         .select('convertido_a_usuario, tipo_consulta, created_at');
 
       if (error) {
-        console.error('❌ Error obteniendo estadísticas:', error);
         throw error;
       }
 
@@ -242,7 +223,6 @@ class LeadsService {
         por_tipo: porTipo
       };
     } catch (error) {
-      console.error('❌ Error en obtenerEstadisticas:', error);
       return null;
     }
   }
@@ -259,13 +239,11 @@ class LeadsService {
         .range(offset, offset + limite - 1);
 
       if (error) {
-        console.error('❌ Error listando leads:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Error en listarTodos:', error);
       return [];
     }
   }
@@ -281,14 +259,11 @@ class LeadsService {
         .eq('id', id);
 
       if (error) {
-        console.error('❌ Error eliminando lead:', error);
         throw error;
       }
 
-      console.log('✅ Lead eliminado exitosamente');
       return true;
     } catch (error) {
-      console.error('❌ Error en eliminar:', error);
       return false;
     }
   }

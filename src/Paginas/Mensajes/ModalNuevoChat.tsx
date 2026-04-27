@@ -18,19 +18,19 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
   const [descripcionGrupo, setDescripcionGrupo] = useState('')
   const [cargando, setCargando] = useState(false)
   const [buscando, setBuscando] = useState(false)
+  const [errorCreacion, setErrorCreacion] = useState('')
 
-  // Referencias (para posibles usos futuros, aunque overlay maneja cierre)
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!abierto) {
-      // Resetear estados al cerrar
       setTermino('')
       setResultados([])
       setSeleccionados([])
       setNombreGrupo('')
       setDescripcionGrupo('')
       setEsGrupal(false)
+      setErrorCreacion('')
     }
   }, [abierto])
 
@@ -45,7 +45,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
     const { usuarios, error } = await mensajeriaService.buscarUsuarios(t)
 
     if (!error && usuarios) {
-      // Filtrar usuarios ya seleccionados
       setResultados(usuarios.filter((u: any) => !seleccionados.some(s => s.id === u.id)))
     }
     setBuscando(false)
@@ -67,6 +66,7 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
     if (esGrupal && !nombreGrupo.trim()) return
 
     setCargando(true)
+    setErrorCreacion('')
 
     const { chat, error } = await mensajeriaService.crearChat({
       es_grupal: esGrupal,
@@ -76,7 +76,7 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
     })
 
     if (error || !chat) {
-      alert('Error al crear el chat: ' + error)
+      setErrorCreacion(typeof error === 'string' ? error : 'Error al crear el chat')
       setCargando(false)
       return
     }
@@ -92,7 +92,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
     <div className="mnc-overlay">
       <div className="mnc-container" ref={modalRef}>
 
-        {/* Header */}
         <div className="mnc-header">
           <div className="mnc-title-wrapper">
             <div className="mnc-icon-box">
@@ -105,10 +104,8 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
           </button>
         </div>
 
-        {/* Body */}
         <div className="mnc-body">
 
-          {/* Toggle Grupo */}
           <div className="mnc-group-toggle">
             <label className="mnc-toggle-label">
               <div className={`mnc-toggle-switch ${esGrupal ? 'active' : ''}`}>
@@ -124,7 +121,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
             </label>
           </div>
 
-          {/* Campos de Grupo */}
           {esGrupal && (
             <div className="mnc-input-group animate-in fade-in slide-in-from-top-2">
               <div>
@@ -150,7 +146,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
             </div>
           )}
 
-          {/* Búsqueda */}
           <div className="mnc-input-group">
             <label className="mnc-label">Agregar participantes</label>
             <div className="mnc-search-box">
@@ -167,9 +162,7 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
             </p>
           </div>
 
-          {/* Resultados y Seleccionados */}
           <div>
-            {/* Chips de Seleccionados */}
             {seleccionados.length > 0 && (
               <div className="mnc-chips-container">
                 {seleccionados.map(u => (
@@ -183,7 +176,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
               </div>
             )}
 
-            {/* Lista de Resultados */}
             <div className="mnc-results-list custom-scrollbar">
               {buscando && (
                 <div className="text-center py-4 text-gray-500">Buscando usuarios...</div>
@@ -206,7 +198,6 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
                   />
                   <div className="mnc-user-info">
                     <div className="mnc-user-name">{u.nombre_usuario}</div>
-                    {/* Nombre completo oculto por seguridad */}
                   </div>
                   <div className="mnc-add-icon">
                     <UserPlus size={16} />
@@ -217,8 +208,8 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mnc-footer">
+          {errorCreacion && <p style={{ color: '#ef4444', marginBottom: '0.5rem', fontSize: '0.875rem' }}>❌ {errorCreacion}</p>}
           <button className="mnc-btn mnc-btn-cancel" onClick={onCerrar}>
             Cancelar
           </button>

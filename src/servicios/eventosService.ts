@@ -123,7 +123,6 @@ class EventosService {
       const { data, count, error } = await query;
 
       if (error) {
-        console.error('Error al obtener todos los eventos:', error);
         return { eventos: [], total: 0, error: 'Error al cargar eventos' };
       }
 
@@ -155,7 +154,6 @@ class EventosService {
 
       return { eventos, total: count || 0 };
     } catch (error) {
-      console.error('Error en obtenerEventos:', error);
       return { eventos: [], total: 0, error: 'Error al cargar eventos' };
     }
   }
@@ -224,7 +222,6 @@ class EventosService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error al obtener eventos del usuario:', error);
         throw error;
       }
 
@@ -254,7 +251,6 @@ class EventosService {
         modalidad: evento.modalidad || 'online'
       }));
     } catch (error) {
-      console.error('Error en obtenerEventosUsuario:', error);
       throw error;
     }
   }
@@ -271,7 +267,6 @@ class EventosService {
         .single();
 
       if (error) {
-        console.error('Error al obtener evento:', error);
         return null;
       }
 
@@ -300,7 +295,6 @@ class EventosService {
         modalidad: data.modalidad || 'online'
       };
     } catch (error) {
-      console.error('Error en obtenerEventoPorId:', error);
       return null;
     }
   }
@@ -318,13 +312,11 @@ class EventosService {
         });
 
       if (error) {
-        console.error('Error al inscribirse en evento:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error en inscribirseEnEvento:', error);
       return false;
     }
   }
@@ -342,13 +334,11 @@ class EventosService {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error al verificar inscripción:', error);
         return false;
       }
 
       return !!data;
     } catch (error) {
-      console.error('Error en verificarInscripcion:', error);
       return false;
     }
   }
@@ -364,14 +354,12 @@ class EventosService {
         .not('categoria', 'is', null);
 
       if (error) {
-        console.error('Error al obtener categorías:', error);
         return [];
       }
 
       const categorias = [...new Set(data.map((item: any) => item.categoria).filter(Boolean))] as string[];
       return categorias;
     } catch (error) {
-      console.error('Error en obtenerCategorias:', error);
       return [];
     }
   }
@@ -387,14 +375,12 @@ class EventosService {
         .not('tipo_evento', 'is', null);
 
       if (error) {
-        console.error('Error al obtener tipos de evento:', error);
         return [];
       }
 
       const tipos = [...new Set(data.map((item: any) => item.tipo_evento).filter(Boolean))] as string[];
       return tipos;
     } catch (error) {
-      console.error('Error en obtenerTiposEvento:', error);
       return [];
     }
   }

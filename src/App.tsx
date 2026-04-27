@@ -37,7 +37,6 @@ import PagoError from './Paginas/Pagos/PagoError/PagoError'
 import PagoExitoso from './Paginas/Pagos/PagoExitoso/PagoExitoso'
 import ProteccionRuta from './SeguridadApp/ProteccionRuta'
 import ProteccionAdmin from './SeguridadApp/ProteccionAdmin'
-import ProtegidoAcordeonProMax from './SeguridadApp/ProtegidoAcordeonProMax'
 import Terminos from './Paginas/Legales/Terminos'
 import Privacidad from './Paginas/Legales/Privacidad'
 import RecuperarContrasena from './Paginas/Legales/RecuperarContrasena'
@@ -213,14 +212,12 @@ const AppContent = () => {
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
-        <Route path="/acordeon-pro-max" element={<ProtegidoAcordeonProMax><HomeProMax /></ProtegidoAcordeonProMax>} />
-        <Route path="/acordeon-pro-max/lista" element={<ProtegidoAcordeonProMax><ListaCancionesProMax /></ProtegidoAcordeonProMax>} />
-        <Route path="/acordeon-pro-max/acordeon" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
-        <Route path="/acordeon-pro-max/acordeon/:slug" element={<ProtegidoAcordeonProMax><AcordeonProMaxSimulador /></ProtegidoAcordeonProMax>} />
-
-
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
+          <Route path="/acordeon-pro-max" element={<HomeProMax />} />
+          <Route path="/acordeon-pro-max/lista" element={<ListaCancionesProMax />} />
+          <Route path="/acordeon-pro-max/acordeon" element={<AcordeonProMaxSimulador />} />
+          <Route path="/acordeon-pro-max/acordeon/:slug" element={<AcordeonProMaxSimulador />} />
           <Route path="/acordeon-pro-max/admin/practica" element={<EstudioAdmin />} />
           <Route path="/acordeon-pro-max/configuracion" element={<ConfiguracionProMax />} />
           <Route path="/simulador-app" element={<SimuladorApp />} />

@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Clock, Star, ChevronDown, AlertTriangle, Loader, Play, Pause } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import './ArticuloBlog.css';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
 import SkeletonBlog from '../../componentes/Skeletons/SkeletonBlog';
 import { supabaseAnonimo } from '../../servicios/clienteSupabase';
+import BarraProgresoLectura from '../../componentes/ui/BarraProgresoLectura';
+import ReproductorAudio from './ReproductorAudio';
 
-// Propiedades de las secciones del artículo
 interface ContenidoSeccion {
     tipo: string;
     contenido: string;
@@ -32,18 +34,12 @@ interface ArticuloData {
     cta: { items: any[] };
 }
 
-// Función utilitaria para slugs consistentes
-const slugify = (text: string) => {
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')     // Reemplazar espacios con -
-        .replace(/[^\w\-]+/g, '') // Eliminar caracteres no permitidos
-        .replace(/\-\-+/g, '-');  // Reemplazar múltiples guiones
-};
+const slugify = (text: string) =>
+    text.toString().toLowerCase().trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-');
 
-// Componente para renderizar el contenido dinámico del artículo
 const RenderizadorContenido = ({ secciones }: { secciones: ContenidoSeccion[] }) => {
     if (!Array.isArray(secciones)) {
         return <p>El contenido del artículo no es válido.</p>;
@@ -86,158 +82,24 @@ const RenderizadorContenido = ({ secciones }: { secciones: ContenidoSeccion[] })
     );
 };
 
-// Componente Banner CTA Final
-const BannerCtaBlog = () => {
-    return (
-        <div className="cta-banner-final">
-            <div className="icono-musica-flotante nota-1">♪</div>
-            <div className="icono-musica-flotante nota-2">♫</div>
-            <div className="icono-musica-flotante nota-3">♩</div>
-
-            <h3 className="cta-banner-titulo">
-                ¿Te gustó este artículo? 🎵
-            </h3>
-            <p className="cta-banner-descripcion">
-                Únete a nuestra academia y aprende acordeón vallenato con Jesús González. Técnicas, teoría y práctica en un solo lugar.
-            </p>
-
-            <div className="cta-banner-acciones">
-                <Link to="/cursos" className="btn-banner primary">Ver Cursos</Link>
-                <Link to="/blog" className="btn-banner outline">Más Artículos</Link>
-            </div>
+const BannerCtaBlog = () => (
+    <div className="cta-banner-final">
+        <div className="icono-musica-flotante nota-1">♪</div>
+        <div className="icono-musica-flotante nota-2">♫</div>
+        <div className="icono-musica-flotante nota-3">♩</div>
+        <h3 className="cta-banner-titulo">¿Te gustó este artículo? 🎵</h3>
+        <p className="cta-banner-descripcion">
+            Únete a nuestra academia y aprende acordeón vallenato con Jesús González. Técnicas, teoría y práctica en un solo lugar.
+        </p>
+        <div className="cta-banner-acciones">
+            <Link to="/cursos" className="btn-banner primary">Ver Cursos</Link>
+            <Link to="/blog" className="btn-banner outline">Más Artículos</Link>
         </div>
-    );
-};
+    </div>
+);
 
-// Componente para el reproductor de audio TTS Mejorado
-const ReproductorAudio = ({ texto }: { texto: string }) => {
-    const [reproduciendo, setReproduciendo] = useState(false);
-    const [progreso, setProgreso] = useState(0);
-    const [tiempoActual, setTiempoActual] = useState('0:00');
-    const [duracion, setDuracion] = useState('0:00');
-    const [vozSeleccionada, setVozSeleccionada] = useState<SpeechSynthesisVoice | null>(null);
-    const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-
-    // Cargar voces y seleccionar una mejor (Prioridad: Colombia > Latino > Español)
-    useEffect(() => {
-        const cargarVoces = () => {
-            const voces = window.speechSynthesis.getVoices();
-
-            let vozElegida = voces.find(v => v.lang === 'es-CO');
-
-            if (!vozElegida) {
-                // Intentar buscar voces masculinas latinas conocidas
-                vozElegida = voces.find(v =>
-                    (v.name.includes('Pablo') || v.name.includes('Raul') || v.name.includes('Latinoamérica')) && v.lang.startsWith('es')
-                );
-            }
-
-            if (!vozElegida) {
-                // Fallback general a español
-                vozElegida = voces.find(v => v.lang.startsWith('es'));
-            }
-
-            if (vozElegida) {
-                setVozSeleccionada(vozElegida);
-            }
-        };
-
-        window.speechSynthesis.onvoiceschanged = cargarVoces;
-        cargarVoces();
-
-        return () => { window.speechSynthesis.onvoiceschanged = null; };
-    }, []);
-
-    const formatearTiempo = (segundos: number) => {
-        if (!isFinite(segundos) || isNaN(segundos)) return "0:00";
-        const s = Math.floor(segundos);
-        return `${Math.floor(s / 60)}:${('0' + (s % 60)).slice(-2)}`;
-    };
-
-    const limpiarSpeech = () => {
-        window.speechSynthesis.cancel();
-    };
-
-    // Inicializar Utterance
-    useEffect(() => {
-        if (!texto) return;
-
-        // Limpiamos cualquier instancia previa
-        limpiarSpeech();
-
-        const ut = new SpeechSynthesisUtterance(texto);
-        ut.rate = 1.0; // Velocidad normal
-        ut.pitch = 1.0;
-        if (vozSeleccionada) ut.voice = vozSeleccionada;
-        else ut.lang = 'es-ES';
-
-        // Estimación de duración (aprox 150 palabras por minuto ~ 2.5 palabras por segundo)
-        const palabras = texto.split(/\s+/).length;
-        const duracionEstimadaSegundos = palabras / 2.5;
-        setDuracion(formatearTiempo(duracionEstimadaSegundos));
-
-        utteranceRef.current = ut;
-
-        return () => limpiarSpeech();
-    }, [texto, vozSeleccionada]);
-
-    const togglePlay = () => {
-        const synth = window.speechSynthesis;
-        if (!utteranceRef.current) return;
-
-        if (reproduciendo) {
-            synth.pause();
-            setReproduciendo(false);
-        } else {
-            if (synth.paused) {
-                synth.resume();
-            } else {
-                // Configurar eventos justo antes de hablar para asegurar consistencia
-                utteranceRef.current.onend = () => {
-                    setReproduciendo(false);
-                    setProgreso(100);
-                };
-                utteranceRef.current.onboundary = (event) => {
-                    const charIndex = event.charIndex;
-                    const textLen = utteranceRef.current?.text.length || 1;
-                    const percent = (charIndex / textLen) * 100;
-                    setProgreso(percent);
-
-                    // Actualizar tiempo actual basado en porcentaje
-                    const palabras = texto.split(/\s+/).length;
-                    const totalSeg = palabras / 2.5;
-                    setTiempoActual(formatearTiempo((percent / 100) * totalSeg));
-                };
-
-                synth.speak(utteranceRef.current);
-            }
-            setReproduciendo(true);
-        }
-    };
-
-    if (!texto) return null;
-
-    return (
-        <div className="reproductor-audio">
-            <span className="reproductor-label">Audio Artículo</span>
-            <button onClick={togglePlay} className="btn-play" aria-label={reproduciendo ? 'Pausar' : 'Escuchar'}>
-                {reproduciendo ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginLeft: '2px' }} />}
-            </button>
-            <div className="progreso-audio">
-                <div className="barra-progreso" style={{ width: `${progreso}%` }}></div>
-            </div>
-            <div className="tiempo-audio">{tiempoActual}</div>
-        </div>
-    );
-};
-
-
-import BarraProgresoLectura from '../../componentes/ui/BarraProgresoLectura';
-
-// Página de detalle de artículo con contenido completo y tabla de contenidos
 export default function ArticuloBlog() {
     const { slug } = useParams();
-    const [resumenExpandido, setResumenExpandido] = useState(false);
     const [articuloData, setArticuloData] = useState<ArticuloData | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -251,20 +113,13 @@ export default function ArticuloBlog() {
     };
 
     useEffect(() => {
-        // Scroll top al cargar
         window.scrollTo(0, 0);
 
-        // Lógica de carga
         let activo = true;
         async function cargar() {
-            if (!slug) {
-                setCargando(false);
-                return;
-            }
-
+            if (!slug) { setCargando(false); return; }
             setCargando(true);
             setError(null);
-
             try {
                 const { data, error: err } = await supabaseAnonimo
                     .from('blog_articulos')
@@ -277,17 +132,15 @@ export default function ArticuloBlog() {
 
                 if (activo) {
                     if (data) {
-                        // Parsear campos JSON si vienen como string (depende de la versión de supabase-js a veces)
+                        // supabase-js sometimes returns JSON fields as strings
                         const secciones = typeof data.secciones === 'string' ? JSON.parse(data.secciones) : data.secciones;
                         const cta = typeof data.cta === 'string' ? JSON.parse(data.cta) : data.cta;
                         setArticuloData({ ...data, secciones, cta });
                     } else {
-                        // Intento de fallback o error
                         setArticuloData(null);
                     }
                 }
-            } catch (e: any) {
-                console.error(e);
+            } catch {
                 if (activo) setError('No pudimos cargar el artículo.');
             } finally {
                 if (activo) setCargando(false);
@@ -297,10 +150,7 @@ export default function ArticuloBlog() {
         return () => { activo = false; };
     }, [slug]);
 
-    if (cargando) {
-        return <SkeletonBlog />;
-    }
-
+    if (cargando) return <SkeletonBlog />;
     if (!articuloData) return <div className="pagina-blog-estado"><h2>Artículo no encontrado</h2><Link to="/blog" className="btn-cta">Volver</Link></div>;
 
     const cabecera = {
@@ -309,7 +159,6 @@ export default function ArticuloBlog() {
         autorIniciales: articuloData.autor_iniciales || "JG",
         fecha: formatearFecha(articuloData.fecha_publicacion),
         lecturaMin: articuloData.lectura_min ?? 5,
-        rating: articuloData.calificacion ?? 5,
         portada: articuloData.portada_url || '/placeholder-blog.jpg'
     };
 
@@ -319,10 +168,9 @@ export default function ArticuloBlog() {
         ...(Array.isArray(articuloData.secciones) ? articuloData.secciones.map(s => s.contenido).filter(Boolean) : [])
     ].join('. ');
 
-    const encabezados = Array.isArray(articuloData.secciones) ? articuloData.secciones.filter(s => s.tipo === 'encabezado') : [];
-
-    // Función simple de slug para anchor links
-    const slugify = (text: string) => text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    const encabezados = Array.isArray(articuloData.secciones)
+        ? articuloData.secciones.filter(s => s.tipo === 'encabezado')
+        : [];
 
     return (
         <div className="pagina-blog">
@@ -340,8 +188,7 @@ export default function ArticuloBlog() {
                                 <span className="dot">•</span>
                                 <span className="lectura"><Clock size={14} /> {cabecera.lecturaMin} min</span>
                             </div>
-
-                            <ReproductorAudio texto={textoParaHablar} duracionEstimadaMinutos={cabecera.lecturaMin} />
+                            <ReproductorAudio texto={textoParaHablar} />
                         </header>
 
                         <div className="articulo-imagen">
@@ -369,7 +216,6 @@ export default function ArticuloBlog() {
                             )}
 
                             <RenderizadorContenido secciones={articuloData.secciones} />
-
                             <BannerCtaBlog />
                         </div>
                     </article>
@@ -380,5 +226,3 @@ export default function ArticuloBlog() {
         </div>
     );
 }
-
-

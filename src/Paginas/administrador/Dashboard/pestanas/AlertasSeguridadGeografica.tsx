@@ -38,7 +38,6 @@ const AlertasSeguridadGeografica: React.FC = () => {
             });
             setUltimaActualizacion(new Date());
         } catch (error) {
-            console.error(error);
         } finally {
             setCargando(false);
         }

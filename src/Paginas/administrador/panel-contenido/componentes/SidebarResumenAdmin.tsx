@@ -48,7 +48,6 @@ const SidebarResumenAdmin = () => {
                 tutorialesRecientes: tutoriales.slice(0, 3)
             });
         } catch (error) {
-            console.error('Error cargando estadísticas:', error);
         } finally {
             setCargando(false);
         }

@@ -17,21 +17,15 @@ const EditarPaquete: React.FC = () => {
       setCargando(false);
       return;
     }
-    // El FormularioPaquete se encarga de cargar los datos
     setCargando(false);
   }, [id]);
 
-  const manejarGuardado = (paquete: PaqueteTutorial) => {
+  const manejarGuardado = (_paquete: PaqueteTutorial) => {
     setMostrandoExito(true);
-
-    // Mostrar mensaje de éxito por 2 segundos y luego redirigir
-    setTimeout(() => {
-      navigate('/administrador/paquetes');
-    }, 2000);
+    setTimeout(() => navigate('/administrador/paquetes'), 2000);
   };
 
   const manejarError = (error: string) => {
-    console.error('❌ Error actualizando paquete:', error);
     setError(error);
   };
 

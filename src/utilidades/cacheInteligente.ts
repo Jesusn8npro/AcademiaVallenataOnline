@@ -76,10 +76,8 @@ export class CacheInteligente {
           }
         });
         
-        console.log('✅ [CACHE] Cache persistente restaurado desde localStorage');
       }
     } catch (error) {
-      console.warn('⚠️ [CACHE] Error restaurando cache persistente:', error);
       localStorage.removeItem('cache_inteligente');
     }
   }
@@ -94,7 +92,6 @@ export class CacheInteligente {
     try {
       const politica = this.politicasCache.get(tipo);
       if (!politica) {
-        console.warn(`⚠️ [CACHE] Tipo de cache no configurado: ${tipo}`);
         return null;
       }
 
@@ -103,7 +100,6 @@ export class CacheInteligente {
         const dato = this.cacheMemoria.get(clave);
         if (this.esValido(dato, politica.ttl)) {
           this.registrarHit(clave);
-          console.log(`📦 [CACHE] Hit en memoria para: ${clave}`);
           return dato.valor;
         } else {
           this.cacheMemoria.delete(clave);
@@ -117,7 +113,6 @@ export class CacheInteligente {
           // ✅ SOLUCIÓN: Mover a memoria para acceso rápido
           this.cacheMemoria.set(clave, dato);
           this.registrarHit(clave);
-          console.log(`📦 [CACHE] Hit en persistente para: ${clave}`);
           return dato.valor;
         } else {
           this.cachePersistente.delete(clave);
@@ -126,11 +121,9 @@ export class CacheInteligente {
 
       // ✅ SOLUCIÓN: Cache miss
       this.registrarMiss(clave);
-      console.log(`❌ [CACHE] Miss para: ${clave}`);
       return null;
 
     } catch (error) {
-      console.warn(`⚠️ [CACHE] Error obteniendo ${clave}:`, error);
       return null;
     }
   }
@@ -151,7 +144,6 @@ export class CacheInteligente {
     try {
       const politica = this.politicasCache.get(tipo);
       if (!politica) {
-        console.warn(`⚠️ [CACHE] Tipo de cache no configurado: ${tipo}`);
         return;
       }
 
@@ -180,10 +172,8 @@ export class CacheInteligente {
       // ✅ SOLUCIÓN: Limpiar cache si excede tamaño máximo
       this.limpiarCacheSiNecesario(tipo);
 
-      console.log(`💾 [CACHE] Dato almacenado: ${clave} (${tipo})`);
 
     } catch (error) {
-      console.error(`❌ [CACHE] Error almacenando ${clave}:`, error);
     }
   }
 
@@ -247,7 +237,6 @@ export class CacheInteligente {
         this.cacheMemoria.delete(key);
       });
 
-      console.log(`🧹 [CACHE] Limpieza automática para ${tipo}: ${entradasARemover.length} entradas removidas`);
     }
   }
 
@@ -258,7 +247,6 @@ export class CacheInteligente {
     if (!browser) return;
 
     try {
-      console.log('🚀 [CACHE] Iniciando preload de datos críticos...');
       
       // ✅ SOLUCIÓN: Preload de datos del usuario
       const usuarioGuardado = localStorage.getItem('usuario_actual');
@@ -266,9 +254,7 @@ export class CacheInteligente {
         try {
           const usuario = JSON.parse(usuarioGuardado);
           this.almacenar('usuario_actual', usuario, 'usuario', { persistir: true });
-          console.log('✅ [CACHE] Usuario precargado en cache');
         } catch (error) {
-          console.warn('⚠️ [CACHE] Error precargando usuario:', error);
         }
       }
 
@@ -278,16 +264,12 @@ export class CacheInteligente {
         try {
           const preferencias = JSON.parse(preferenciasGuardadas);
           this.almacenar('sidebar_estado', preferencias, 'sidebar', { persistir: true });
-          console.log('✅ [CACHE] Preferencias precargadas en cache');
         } catch (error) {
-          console.warn('⚠️ [CACHE] Error precargando preferencias:', error);
         }
       }
 
-      console.log('✅ [CACHE] Preload de datos críticos completado');
 
     } catch (error) {
-      console.error('❌ [CACHE] Error en preload de datos críticos:', error);
     }
   }
 
@@ -298,9 +280,7 @@ export class CacheInteligente {
     try {
       this.cacheMemoria.delete(clave);
       this.cachePersistente.delete(clave);
-      console.log(`🗑️ [CACHE] Cache invalidado para: ${clave}`);
     } catch (error) {
-      console.warn(`⚠️ [CACHE] Error invalidando ${clave}:`, error);
     }
   }
 
@@ -327,10 +307,8 @@ export class CacheInteligente {
         }
       }
       
-      console.log(`🗑️ [CACHE] Cache invalidado para tipo ${tipo}: ${contador} entradas removidas`);
       
     } catch (error) {
-      console.error(`❌ [CACHE] Error invalidando tipo ${tipo}:`, error);
     }
   }
 
@@ -339,7 +317,6 @@ export class CacheInteligente {
    */
   limpiarCache(): void {
     try {
-      console.log('🧹 [CACHE] Limpiando cache completo...');
       
       this.cacheMemoria.clear();
       this.cachePersistente.clear();
@@ -350,10 +327,8 @@ export class CacheInteligente {
         localStorage.removeItem('cache_inteligente');
       }
       
-      console.log('✅ [CACHE] Cache completo limpiado');
       
     } catch (error) {
-      console.error('❌ [CACHE] Error limpiando cache:', error);
     }
   }
 
@@ -373,7 +348,6 @@ export class CacheInteligente {
       localStorage.setItem('cache_inteligente', JSON.stringify(cacheParaPersistir));
       
     } catch (error) {
-      console.warn('⚠️ [CACHE] Error persistiendo cache:', error);
     }
   }
 
@@ -546,7 +520,6 @@ export const preloadDatosCriticos = async (): Promise<void> => {
 export function logCache(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [CACHE] ${mensaje}`, datos || '');
 }
 
 /**

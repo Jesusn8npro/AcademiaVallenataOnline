@@ -544,34 +544,6 @@
     gap: 8px;
 }
 
-.academia-auto-indicator {
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-}
-
-.academia-auto-indicator.academia-active {
-    color: #10b981;
-    animation: academia-autoPlayPulse 3s infinite;
-}
-
-.academia-auto-indicator.academia-paused {
-    color: #f59e0b;
-    opacity: 0.8;
-}
-
-@keyframes academia-autoPlayPulse {
-
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.6;
-        transform: scale(0.9);
-    }
-}
 
 /* 🎯 MENSAJE MOTIVACIONAL MIENTRAS CARGA */
 .academia-hero-motivacional {
@@ -1012,8 +984,3 @@
     font-size: 1.2rem;
 }
 
-.academia-contador {
-    opacity: 0.8;
-    font-size: 0.85rem;
-    margin-left: 8px;
-}

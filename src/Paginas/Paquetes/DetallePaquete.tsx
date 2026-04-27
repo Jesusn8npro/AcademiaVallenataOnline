@@ -26,15 +26,12 @@ const DetallePaquete: React.FC = () => {
                 setCargando(false);
                 return;
             }
-            console.log('🔍 Buscando paquete con slug:', slug);
             let resultado = await obtenerPaquetePorSlug(slug);
-            console.log('📦 Resultado obtenerPaquetePorSlug:', resultado);
 
             if (resultado.success && resultado.data) {
                 const paqueteData = resultado.data;
                 setPaquete(paqueteData);
 
-                // Use id safely
                 if (paqueteData.id) {
                     const resultadoTutoriales = await obtenerTutorialesPaquete(paqueteData.id);
                     if (resultadoTutoriales.success) {
@@ -45,11 +42,9 @@ const DetallePaquete: React.FC = () => {
                     }
                 }
             } else {
-                console.error('❌ Error obteniendo paquete:', resultado.error);
                 setError('Paquete no encontrado');
             }
-        } catch (err: any) {
-            console.error('❌ Error cargando paquete:', err);
+        } catch {
             setError('Error cargando el paquete');
         } finally {
             setCargando(false);
@@ -70,7 +65,6 @@ const DetallePaquete: React.FC = () => {
     };
 
     const comprarPaquete = () => {
-        console.log('🛒 Comprando paquete:', paquete?.titulo);
         setMostrarModalPago(true);
     };
 
@@ -102,7 +96,6 @@ const DetallePaquete: React.FC = () => {
 
     return (
         <div className="paq-det-container">
-            {/* Hero */}
             <header className="paq-det-hero">
                 <div className="paq-det-hero-content">
                     <div className="paq-det-hero-text">
@@ -141,7 +134,6 @@ const DetallePaquete: React.FC = () => {
             </header>
 
             <div className="paq-det-main-grid">
-                {/* Contenido */}
                 <main className="paq-det-content">
                     <section className="paq-det-tutorials">
                         <h2>📚 Tutoriales Incluidos</h2>
@@ -165,7 +157,6 @@ const DetallePaquete: React.FC = () => {
                     </section>
                 </main>
 
-                {/* Sidebar de compra */}
                 <aside className="paq-det-sidebar">
                     <div className="paq-det-price-card">
                         <div className="paq-det-prices">
@@ -226,7 +217,6 @@ const DetallePaquete: React.FC = () => {
                 </aside>
             </div>
 
-            {/* Modal de Pago Inteligente */}
             <ModalPagoInteligente
                 mostrar={mostrarModalPago}
                 setMostrar={setMostrarModalPago}

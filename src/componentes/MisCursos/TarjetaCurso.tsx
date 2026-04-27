@@ -64,7 +64,6 @@ export default function TarjetaCurso({ inscripcion }: { inscripcion: any }) {
         setProgreso({ porcentaje, completadas, total })
       }
     } catch (err) {
-      console.error('Error cargando progreso:', err)
     } finally { setCargandoProgreso(false) }
   }
 
@@ -143,7 +142,6 @@ export default function TarjetaCurso({ inscripcion }: { inscripcion: any }) {
 
         navigate(`/cursos/${slug}`);
       } catch (err) {
-        console.error('Error navegando curso:', err);
         navigate(`/cursos/${slug}`);
       }
     } else if (esTutorial) {
@@ -178,7 +176,6 @@ export default function TarjetaCurso({ inscripcion }: { inscripcion: any }) {
         const claseSlug = proxima.slug || generarSlug(proxima.titulo);
         navigate(`/tutoriales/${slug}/clase/${claseSlug}`);
       } catch (err) {
-        console.error('Error navegando tutorial:', err);
         navigate(`/tutoriales/${slug}/contenido`);
       }
     }

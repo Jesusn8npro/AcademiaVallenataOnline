@@ -1,0 +1,62 @@
+@keyframes girar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes aparecerArriba {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1200px) {
+  .contenido-principal {
+    grid-template-columns: 1fr 280px !important;
+    gap: 3rem !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .contenido-principal {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3rem !important;
+  }
+  .area-articulos {
+    width: 100% !important;
+    order: 1 !important;
+  }
+  .barra-lateral {
+    width: 100% !important;
+    order: 2 !important;
+    margin-top: 1rem;
+  }
+  .grilla-articulos {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .seccion-articulos {
+    padding: 2rem 1rem !important;
+  }
+  .paginacion {
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+  }
+  .numeros-pagina {
+    order: -1;
+  }
+}
+
+@media (max-width: 500px) {
+  .estado-carga, .estado-error, .estado-vacio {
+    min-height: 300px !important;
+    padding: 2rem 1rem !important;
+  }
+  .boton-pagina {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  .numero-pagina {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 0.9rem !important;
+  }
+}

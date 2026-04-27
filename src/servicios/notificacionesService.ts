@@ -85,13 +85,11 @@ class NotificacionesService {
             const { data, error } = await query;
 
             if (error) {
-                console.error('Error al obtener notificaciones:', error);
                 return { notificaciones: [], error: error.message };
             }
 
             return { notificaciones: data || [], error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { notificaciones: [], error: 'Error inesperado al obtener notificaciones' };
         }
     }
@@ -132,7 +130,6 @@ class NotificacionesService {
 
             return { estadisticas, error: null };
         } catch (err) {
-            console.error('Error al obtener estadísticas:', err);
             return { estadisticas: null, error: 'Error inesperado' };
         }
     }
@@ -153,14 +150,11 @@ class NotificacionesService {
                 .eq('archivada', false);
 
             if (error) {
-                console.error('Error en contador de notificaciones:', error);
                 return 0;
             }
 
-            console.log('📊 Contador de notificaciones no leídas:', count);
             return count || 0;
         } catch (error) {
-            console.error('Error al obtener contador de notificaciones:', error);
             return 0;
         }
     }
@@ -184,13 +178,11 @@ class NotificacionesService {
                 .eq('usuario_id', user.id);
 
             if (error) {
-                console.error('Error al marcar como leída:', error);
                 return { exito: false, error: error.message };
             }
 
             return { exito: true, error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { exito: false, error: 'Error inesperado' };
         }
     }
@@ -212,13 +204,11 @@ class NotificacionesService {
                 .eq('leida', false);
 
             if (error) {
-                console.error('Error al marcar todas como leídas:', error);
                 return { exito: false, error: error.message };
             }
 
             return { exito: true, error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { exito: false, error: 'Error inesperado' };
         }
     }
@@ -240,13 +230,11 @@ class NotificacionesService {
                 .eq('usuario_id', user.id);
 
             if (error) {
-                console.error('Error al archivar notificación:', error);
                 return { exito: false, error: error.message };
             }
 
             return { exito: true, error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { exito: false, error: 'Error inesperado' };
         }
     }
@@ -289,15 +277,12 @@ class NotificacionesService {
             });
 
             if (error) {
-                console.warn('RPC crear_notificacion failed, falling back to direct insert if permissions allow');
                 // You might want to handle fallback here or just return error
-                console.error('Error al crear notificación:', error);
                 return { exito: false, error: error.message };
             }
 
             return { exito: true, error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { exito: false, error: 'Error inesperado' };
         }
     }
@@ -318,13 +303,11 @@ class NotificacionesService {
                 .eq('usuario_id', user.id);
 
             if (error) {
-                console.error('Error al obtener preferencias:', error);
                 return { preferencias: [], error: error.message };
             }
 
             return { preferencias: data || [], error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { preferencias: [], error: 'Error inesperado' };
         }
     }
@@ -350,14 +333,12 @@ class NotificacionesService {
                     });
 
                 if (error) {
-                    console.error('Error al actualizar preferencia:', error);
                     return { exito: false, error: error.message };
                 }
             }
 
             return { exito: true, error: null };
         } catch (err) {
-            console.error('Error inesperado:', err);
             return { exito: false, error: 'Error inesperado' };
         }
     }
@@ -436,11 +417,9 @@ class NotificacionesService {
                     }
                 )
                 .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') console.log('✅ Suscrito a notificaciones');
                 });
 
         } catch (error) {
-            console.error('Error iniciando realtime:', error);
         }
     }
 
@@ -482,7 +461,6 @@ class NotificacionesService {
      */
     desuscribirseDeNotificaciones(): void {
         if (this.channel) {
-            console.log('🔕 Desuscribiéndose de notificaciones en tiempo real');
             this.channel.unsubscribe();
             this.channel = null;
         }
@@ -694,7 +672,6 @@ export async function notificarNuevoArticuloBlog(payload: { articulo_id: string;
 
 export async function notificarNuevoMensaje(destinatarioId: string, remitenteNombre: string, mensajePreview: string, chatId: string) {
     try {
-        console.log(`🔔 Intentando enviar notificación de mensaje a ${destinatarioId} via RPC...`);
 
         // 1. Intentar usando RPC (Bypassea RLS si está configurado como SECURITY DEFINER)
         const { error: errorRpc } = await supabase.rpc('crear_notificacion', {
@@ -709,11 +686,9 @@ export async function notificarNuevoMensaje(destinatarioId: string, remitenteNom
         });
 
         if (!errorRpc) {
-            console.log('✅ Notificación enviada exitosamente vía RPC');
             return { success: true };
         }
 
-        console.warn('⚠️ Falló RPC crear_notificacion, intentando insert directo (puede fallar por RLS):', errorRpc);
 
         // 2. Fallback: Insert directo (Fallará si RLS no permite insertar a otros usuarios)
         const { error: errorInsert } = await supabase.from('notificaciones').insert({
@@ -728,14 +703,11 @@ export async function notificarNuevoMensaje(destinatarioId: string, remitenteNom
         });
 
         if (errorInsert) {
-            console.error('❌ Error enviando notificación (Insert Directo):', errorInsert);
             return { success: false, error: errorInsert };
         }
 
-        console.log('✅ Notificación enviada exitosamente vía Insert Directo');
         return { success: true };
     } catch (error) {
-        console.error('❌ Error inesperado enviando notificación de mensaje:', error);
         return { success: false, error };
     }
 }

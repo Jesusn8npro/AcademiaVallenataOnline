@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, RotateCcw, Settings, LogOut } from 'lucide-react';
 import type { ModoPractica, ModoAudioSynthesia } from '../TiposProMax';
+import { useMenuPausa } from './useMenuPausa';
 
 interface MenuPausaProMaxProps {
     visible: boolean;
     onReanudar: () => void;
     onReiniciar: () => void;
     onSalir: () => void;
-    // Opciones avanzadas
     maestroSuena: boolean;
     onToggleMaestroSuena: (v: boolean) => void;
     modoPractica: ModoPractica;
@@ -25,10 +25,6 @@ interface MenuPausaProMaxProps {
     onCambiarVolumenAcordeon: (v: number) => void;
 }
 
-/**
- * ⏸️ MENÚ DE PAUSA PRO MAX
- * Réplica del "Pause Menu" estilo Rhythm-Plus, con Glassmorphism y navegación por teclado.
- */
 const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
     visible,
     onReanudar,
@@ -48,8 +44,7 @@ const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
     volumenAcordeon,
     onCambiarVolumenAcordeon
 }) => {
-    const [vista, setVista] = useState<'principal' | 'opciones'>('principal');
-    const [seleccionado, setSeleccionado] = useState(0);
+    const { vista, setVista, seleccionado, setSeleccionado } = useMenuPausa({ visible, onReanudar, onReiniciar, onSalir });
 
     const opciones = [
         { label: 'Reanudar', icon: <Play size={20} fill="currentColor" />, action: onReanudar },
@@ -57,55 +52,6 @@ const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
         { label: 'Opciones', icon: <Settings size={20} />, action: () => setVista('opciones') },
         { label: 'Salir del Juego', icon: <LogOut size={20} />, action: onSalir }
     ];
-
-    useEffect(() => {
-        if (!visible) {
-            setVista('principal');
-            return;
-        }
-
-        setSeleccionado(0); // Resetear selección al abrir
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (vista === 'opciones') {
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    setVista('principal');
-                }
-                return; // Navegación de opciones se usa con mouse por simplicidad
-            }
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSeleccionado((prev) => (prev + 1) % opciones.length);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSeleccionado((prev) => (prev - 1 + opciones.length) % opciones.length);
-            } else if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                opciones[seleccionado].action();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                onReanudar();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [visible, seleccionado, opciones, onReanudar]);
-
-    // 🛠️ EXORCISMO DE CURSOR Y BLOQUEOS
-    useEffect(() => {
-        if (visible) {
-            // Asegurar que el mouse sea visible y no esté bloqueado (Pointer Lock)
-            document.body.style.cursor = 'default';
-            if (document.pointerLockElement) {
-                document.exitPointerLock();
-            }
-        } else {
-            // No resetear para no romper la lógica del juego al reanudar si él lo oculta
-        }
-    }, [visible]);
 
     if (!visible) return null;
 
@@ -119,32 +65,30 @@ const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                zIndex: 2147483647, // EL Z-INDEX MÁXIMO POSIBLE EN NAVEGADORES (VALOR DE INT 32-bit)
+                zIndex: 2147483647,
                 pointerEvents: 'auto',
                 cursor: 'default'
             }}
         >
-            {/* FORCE ALL SURFACES TO HAVE CURSOR */}
             <style>{`
                 #menuPausaPortal,
                 #menuPausaPortal *,
                 body, html {
                     cursor: default !important;
                 }
-                #menuPausaPortal button, 
-                #menuPausaPortal input, 
+                #menuPausaPortal button,
+                #menuPausaPortal input,
                 #menuPausaPortal select,
                 #menuPausaPortal .pause-menu-btn {
                     cursor: pointer !important;
                 }
             `}</style>
 
-            {/* Background Overlay Full-Screen */}
             <div
                 style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'rgba(5, 5, 25, 0.6)', // Más transparente aún 
+                    background: 'rgba(5, 5, 25, 0.6)',
                     pointerEvents: 'auto',
                     backdropFilter: 'blur(3px)',
                     cursor: 'default'
@@ -152,7 +96,6 @@ const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
                 onClick={(e) => { e.stopPropagation(); onReanudar(); }}
             />
 
-            {/* Menu Card */}
             <div
                 className="rhythm-pause-menu-card"
                 style={{
@@ -329,7 +272,6 @@ const MenuPausaProMax: React.FC<MenuPausaProMaxProps> = ({
         </div>,
         document.body
     );
-
 };
 
 export default MenuPausaProMax;

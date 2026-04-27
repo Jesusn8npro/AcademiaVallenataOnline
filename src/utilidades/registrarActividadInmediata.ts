@@ -10,17 +10,14 @@ import { supabase } from './clienteSupabase';
  */
 export async function registrarActividadInmediata(): Promise<boolean> {
   try {
-    console.log('🔥 [ACTIVIDAD INMEDIATA] Iniciando...');
 
     // Obtener usuario actual
     const { data: { user }, error: errorUser } = await supabase.auth.getUser();
     
     if (errorUser || !user) {
-      console.log('⚠️ [ACTIVIDAD INMEDIATA] No hay usuario autenticado');
       return false;
     }
 
-    console.log('👤 [ACTIVIDAD INMEDIATA] Usuario encontrado:', user.id);
 
     // Registrar actividad usando función SQL
     const { error: errorActividad } = await supabase.rpc('actualizar_actividad_usuario', {
@@ -31,11 +28,9 @@ export async function registrarActividadInmediata(): Promise<boolean> {
     });
 
     if (errorActividad) {
-      console.error('❌ [ACTIVIDAD INMEDIATA] Error al registrar:', errorActividad);
       return false;
     }
 
-    console.log('✅ [ACTIVIDAD INMEDIATA] Registrada correctamente');
 
     // Verificar que se registró
     const { data: verificacion, error: errorVerif } = await supabase
@@ -46,19 +41,16 @@ export async function registrarActividadInmediata(): Promise<boolean> {
       .single();
 
     if (!errorVerif && verificacion) {
-      console.log('🎯 [VERIFICACIÓN] Actividad confirmada:', {
         ultima_actividad: verificacion.ultima_actividad,
         esta_activo: verificacion.esta_activo,
         tiempo_sesion: verificacion.tiempo_sesion_actual
       });
       return true;
     } else {
-      console.warn('⚠️ [VERIFICACIÓN] No se pudo confirmar actividad');
       return false;
     }
 
   } catch (error) {
-    console.error('❌ [ACTIVIDAD INMEDIATA] Error general:', error);
     return false;
   }
 }
@@ -68,17 +60,14 @@ export async function registrarActividadInmediata(): Promise<boolean> {
  * Llama esto cada minuto para mantener al usuario como "activo"
  */
 export function mantenerActividadActiva(): () => void {
-  console.log('🔄 [MANTENER ACTIVO] Iniciando...');
 
   const interval = setInterval(async () => {
     const exito = await registrarActividadInmediata();
-    console.log(`🔄 [MANTENER ACTIVO] ${exito ? 'Éxito' : 'Fallo'} - ${new Date().toLocaleTimeString()}`);
   }, 60000); // Cada minuto
 
   // Retornar función para limpiar
   return () => {
     clearInterval(interval);
-    console.log('🛑 [MANTENER ACTIVO] Detenido');
   };
 }
 
@@ -108,18 +97,14 @@ export async function verificarActividadActual(): Promise<any[]> {
       .order('ultima_actividad', { ascending: false });
 
     if (error) {
-      console.error('❌ [VERIFICAR ACTIVIDAD] Error:', error);
       return [];
     }
 
-    console.log('📊 [VERIFICAR ACTIVIDAD] Usuarios activos:', data?.length || 0);
     data?.forEach((usuario: any, index: number) => {
-      console.log(`👤 [ACTIVO ${index + 1}] ${usuario.perfiles?.nombre} (${usuario.perfiles?.rol}) - ${usuario.pagina_actual}`);
     });
 
     return data || [];
   } catch (error) {
-    console.error('❌ [VERIFICAR ACTIVIDAD] Error general:', error);
     return [];
   }
 } 

@@ -33,7 +33,6 @@ export default function EmailCompletarWrapper() {
                 .single()
 
             if (error) {
-                console.warn('Error verificando correo:', error)
                 setCargando(false)
                 return
             }
@@ -53,7 +52,6 @@ export default function EmailCompletarWrapper() {
                 setMostrarBanner(false)
             }
         } catch (err) {
-            console.error('Error en verificarCorreoUsuario:', err)
         } finally {
             setCargando(false)
         }

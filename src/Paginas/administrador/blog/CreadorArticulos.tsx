@@ -7,14 +7,13 @@ import CrearArticuloIA from './Componentes/CrearArticuloIA';
 import './CreadorArticulos.css';
 
 const CreadorArticulos: React.FC = () => {
-    const { slug } = useParams(); // Si editamos, viene el slug
+    const { slug } = useParams();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<'formulario' | 'ia'>('formulario');
     const [articuloEditar, setArticuloEditar] = useState<any>(null);
-    const [cargando, setCargando] = useState(!!slug); // Cargando solo si hay slug
+    const [cargando, setCargando] = useState(!!slug);
 
     useEffect(() => {
-        // Si hay slug, cargamos el artículo para editar
         if (slug) {
             const cargarArticulo = async () => {
                 try {
@@ -26,18 +25,15 @@ const CreadorArticulos: React.FC = () => {
 
                     if (error) throw error;
                     setArticuloEditar(data);
-                } catch (error) {
-                    console.error("Error cargando artículo para editar:", error);
+                } catch {
+                    // error no fatal — se muestra formulario vacío
                 } finally {
                     setCargando(false);
                 }
             };
             cargarArticulo();
         } else {
-            // Chequear si venimos por query param para activar tab IA inmediatamente
-            if (searchParams.get('mode') === 'ia') {
-                setActiveTab('ia');
-            }
+            if (searchParams.get('mode') === 'ia') setActiveTab('ia');
         }
     }, [slug, searchParams]);
 

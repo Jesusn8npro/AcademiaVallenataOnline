@@ -23,6 +23,7 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
   const [progresoSubida, setProgresoSubida] = useState(0)
   const [errorSubida, setErrorSubida] = useState('')
   const [imagenError, setImagenError] = useState(false)
+  const [errorTitulo, setErrorTitulo] = useState('')
   const [tipo_acceso, setTipoAcceso] = useState<string>(datos.tipo_acceso || 'gratuito')
   const [precio_normal, setPrecioNormal] = useState<string>(datos.precio_normal || datos.precio || '')
   const [precio_rebajado, setPrecioRebajado] = useState<string>(datos.precio_rebajado || datos.precio_descuento || '')
@@ -58,7 +59,6 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
 
   // CRÍTICO: Actualizar todos los estados cuando cambien los datos
   useEffect(() => {
-    console.log('🔄 [PASO 1] Actualizando formulario con datos:', datos);
     if (datos && Object.keys(datos).length > 0) {
       setTitulo(datos.titulo || '');
       setDescripcion(datos.descripcion || '');
@@ -83,7 +83,6 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
       setAcordeonista(datos.acordeonista || '');
       setArtista(datos.artista || '');
       setTonalidad(datos.tonalidad || '');
-      console.log('✅ [PASO 1] Formulario actualizado correctamente');
     }
   }, [datos])
 
@@ -109,7 +108,7 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
 
   function continuar() {
     if (!titulo.trim()) {
-      alert('Por favor, ingresa un título para el ' + (tipo === 'curso' ? 'curso' : 'tutorial'))
+      setErrorTitulo('Por favor, ingresa un título para el ' + (tipo === 'curso' ? 'curso' : 'tutorial'))
       return
     }
 
@@ -145,8 +144,9 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
             <h3 className="subtitulo-seccion"><span className="numero-seccion">1</span>Información Básica</h3>
             <div className="campo-formulario campo-completo">
               <label className="etiqueta-campo"><span className="texto-etiqueta">Título del {tipo}</span><span className="descripcion-campo">Escribe un título claro y descriptivo</span></label>
-              <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} className="input-destacado" placeholder={`Ej: Aprende acordeón desde cero`} maxLength={100} />
+              <input type="text" value={titulo} onChange={e => { setTitulo(e.target.value); setErrorTitulo('') }} className="input-destacado" placeholder={`Ej: Aprende acordeón desde cero`} maxLength={100} />
               <div className="contador-caracteres">{titulo.length}/100</div>
+              {errorTitulo && <p style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: 4 }}>{errorTitulo}</p>}
             </div>
             <div className="campo-formulario campo-completo">
               <label className="etiqueta-campo"><span className="texto-etiqueta">Descripción</span><span className="descripcion-campo">Describe qué aprenderán los estudiantes</span></label>

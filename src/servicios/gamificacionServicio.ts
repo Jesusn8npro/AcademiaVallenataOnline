@@ -156,7 +156,6 @@ export class GamificacionServicio {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error obteniendo experiencia:', error);
         return null;
       }
 
@@ -166,7 +165,6 @@ export class GamificacionServicio {
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerExperienciaUsuario:', error);
       return null;
     }
   }
@@ -193,13 +191,11 @@ export class GamificacionServicio {
         .single();
 
       if (error) {
-        console.error('Error inicializando experiencia:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en inicializarExperienciaUsuario:', error);
       return null;
     }
   }
@@ -267,7 +263,6 @@ export class GamificacionServicio {
         .single();
 
       if (error) {
-        console.error('Error actualizando XP:', error);
         return { success: false, nivelAnterior, nivelNuevo: nivelAnterior, subioNivel: false, experiencia: null };
       }
 
@@ -298,7 +293,6 @@ export class GamificacionServicio {
         experiencia: data
       };
     } catch (error) {
-      console.error('Error en agregarXP:', error);
       return { success: false, nivelAnterior: 1, nivelNuevo: 1, subioNivel: false, experiencia: null };
     }
   }
@@ -317,13 +311,11 @@ export class GamificacionServicio {
         .order('orden_mostrar');
 
       if (error) {
-        console.error('Error obteniendo logros del sistema:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerLogrosSistema:', error);
       return [];
     }
   }
@@ -340,13 +332,11 @@ export class GamificacionServicio {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error obteniendo logros del usuario:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerLogrosUsuario:', error);
       return [];
     }
   }
@@ -417,7 +407,6 @@ export class GamificacionServicio {
       return result as RankingGlobal[];
 
     } catch (error) {
-      console.error('Error obteniendo ranking:', error);
       return [] // Retornar vacío en error/timeout para no bloquear la UI
     }
   }
@@ -449,13 +438,11 @@ export class GamificacionServicio {
         .single();
 
       if (error) {
-        console.error('Error obteniendo estadísticas:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerEstadisticasUsuario:', error);
       return null;
     }
   }
@@ -476,13 +463,11 @@ export class GamificacionServicio {
         });
 
       if (error) {
-        console.error('Error creando notificación gaming:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error en crearNotificacionGaming:', error);
       return false;
     }
   }

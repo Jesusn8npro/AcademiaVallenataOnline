@@ -18,7 +18,6 @@ export class StorageService {
    */
   static async verificarYCrearBucket(): Promise<boolean> {
     try {
-      console.log('🔍 Verificando bucket de storage...');
 
       // Intentar listar archivos del bucket
       const { data, error } = await supabase.storage
@@ -26,12 +25,10 @@ export class StorageService {
         .list('', { limit: 1 });
 
       if (!error) {
-        console.log('✅ Bucket ya existe y es accesible');
         return true;
       }
 
       // Si el bucket no existe, intentar crearlo
-      console.log('📁 Creando bucket de storage...');
       const { data: bucketData, error: createError } = await supabase.storage
         .createBucket(this.BUCKET_CANCIONES, {
           public: true,
@@ -40,15 +37,12 @@ export class StorageService {
         });
 
       if (createError) {
-        console.error('❌ Error creando bucket:', createError);
         return false;
       }
 
-      console.log('✅ Bucket creado exitosamente:', bucketData);
       return true;
 
     } catch (error) {
-      console.error('❌ Error verificando bucket:', error);
       return false;
     }
   }
@@ -74,7 +68,6 @@ export class StorageService {
         return { success: false, error: validacion.error };
       }
 
-      console.log('📤 Subiendo archivo:', archivo.name);
 
       // Simular progreso si se proporciona callback
       if (onProgress) {
@@ -94,7 +87,6 @@ export class StorageService {
       }
 
       if (error) {
-        console.error('❌ Error subiendo archivo:', error);
         return { success: false, error: error.message };
       }
 
@@ -107,11 +99,9 @@ export class StorageService {
         onProgress(100);
       }
 
-      console.log('✅ Archivo subido exitosamente:', publicUrl);
       return { success: true, url: publicUrl };
 
     } catch (error: any) {
-      console.error('❌ Error en subida:', error);
       return { success: false, error: error.message };
     }
   }
@@ -164,14 +154,11 @@ export class StorageService {
         .remove([ruta]);
 
       if (error) {
-        console.error('❌ Error eliminando archivo:', error);
         return false;
       }
 
-      console.log('✅ Archivo eliminado:', ruta);
       return true;
     } catch (error) {
-      console.error('❌ Error eliminando archivo:', error);
       return false;
     }
   }
@@ -185,13 +172,11 @@ export class StorageService {
         .getBucket(this.BUCKET_CANCIONES);
 
       if (error) {
-        console.error('❌ Error obteniendo info del bucket:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('❌ Error obteniendo info del bucket:', error);
       return null;
     }
   }

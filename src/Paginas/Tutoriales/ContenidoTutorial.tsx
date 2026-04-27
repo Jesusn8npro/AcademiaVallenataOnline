@@ -19,7 +19,6 @@ export default function ContenidoTutorial() {
   useEffect(() => {
     cargarTutorial()
 
-    // Forzar fondo claro y limpiar TODO rastro de temas oscuros o vistas premium
     const timer = setTimeout(() => {
       document.body.style.backgroundColor = '#f8fafc';
       document.body.classList.remove('tutorial-pantalla-completa');
@@ -42,7 +41,7 @@ export default function ContenidoTutorial() {
       if (errTodos) throw errTodos
 
       const safeGenerateSlug = (text: string) => {
-        try { return generarSlug(text || ''); } catch (e) { return ''; }
+        try { return generarSlug(text || ''); } catch { return ''; }
       };
 
       let tut = (todos || []).find((t: any) => safeGenerateSlug(t.titulo) === slug);

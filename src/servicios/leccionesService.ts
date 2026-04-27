@@ -119,7 +119,6 @@ class LeccionesService {
         criterios: nuevosCriterios
       };
     } catch (error) {
-      console.error('Error creando lección:', error);
       throw error;
     }
   }
@@ -176,7 +175,6 @@ class LeccionesService {
         estadisticas: leccion.estadisticas?.[0] || null
       }));
     } catch (error) {
-      console.error('Error obteniendo lecciones:', error);
       throw error;
     }
   }
@@ -204,7 +202,6 @@ class LeccionesService {
         estadisticas: data.estadisticas?.[0] || null
       };
     } catch (error) {
-      console.error('Error obteniendo lección:', error);
       return null;
     }
   }
@@ -236,7 +233,6 @@ class LeccionesService {
 
       return await this.obtenerLeccion(id) as Leccion;
     } catch (error) {
-      console.error('Error actualizando lección:', error);
       throw error;
     }
   }
@@ -253,7 +249,6 @@ class LeccionesService {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error eliminando lección:', error);
       throw error;
     }
   }
@@ -277,7 +272,6 @@ class LeccionesService {
 
       return await this.crearLeccion(nuevaLeccion, leccionOriginal.criterios!);
     } catch (error) {
-      console.error('Error duplicando lección:', error);
       throw error;
     }
   }
@@ -300,7 +294,6 @@ class LeccionesService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo lecciones recomendadas:', error);
       return [];
     }
   }
@@ -327,7 +320,6 @@ class LeccionesService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error obteniendo progreso:', error);
       return [];
     }
   }
@@ -346,7 +338,6 @@ class LeccionesService {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error iniciando sesión de lección:', error);
       throw error;
     }
   }
@@ -380,7 +371,6 @@ class LeccionesService {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error finalizando sesión de lección:', error);
       throw error;
     }
   }
@@ -399,7 +389,6 @@ class LeccionesService {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error obteniendo estadísticas:', error);
       return null;
     }
   }
@@ -536,9 +525,7 @@ class LeccionesService {
         const { criterios, ...leccion } = leccionData;
         await this.crearLeccion(leccion, criterios);
       }
-      console.log('✅ Lecciones de ejemplo creadas exitosamente');
     } catch (error) {
-      console.error('❌ Error creando lecciones de ejemplo:', error);
     }
   }
 }

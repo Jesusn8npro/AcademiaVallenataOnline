@@ -6,9 +6,8 @@ import ExperienciaPerfil from '../../componentes/Perfil/ExperienciaPerfil'
 import MonedasPerfil from '../../componentes/Perfil/MonedasPerfil'
 
 export default function MiPerfil() {
-  const { perfil, stats, cargando, actualizarPerfil } = usePerfilStore()
+  const { perfil, cargando, actualizarPerfil } = usePerfilStore()
 
-  // Si está cargando y NO hay perfil, mostramos spinner
   if (cargando && !perfil) {
     return (
       <div className="estado-carga" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', gap: '1.5rem' }}>
@@ -18,7 +17,6 @@ export default function MiPerfil() {
     )
   }
 
-  // Objeto perfil vacío por defecto si es null, para permitir edición
   const perfilVisualizar = perfil || {
     id: '',
     nombre: '',
@@ -41,8 +39,7 @@ export default function MiPerfil() {
           </div>
         </aside>
       </div>
-      
-      {/* Widget de Experiencia 100% Ancho debajo todo */}
+
       <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {perfil?.id && (
           <>

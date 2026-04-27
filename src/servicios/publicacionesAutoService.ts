@@ -46,11 +46,9 @@ export async function crearPublicacionAutomatica(data: PublicacionAutomatica) {
       .single();
 
     if (error) {
-      console.error('❌ Error creando publicación automática:', error);
       throw error;
     }
 
-    console.log('✅ Publicación automática creada:', {
       tipo: data.tipo,
       publicacion_id: publicacion.id,
       usuario: data.usuario_nombre
@@ -59,7 +57,6 @@ export async function crearPublicacionAutomatica(data: PublicacionAutomatica) {
     return publicacion;
 
   } catch (error) {
-    console.error('❌ Error en crearPublicacionAutomatica:', error);
     throw error;
   }
 }
@@ -83,14 +80,12 @@ export async function tienePublicacionReciente(usuario_id: string, tipo: 'foto_p
       .limit(1);
 
     if (error) {
-      console.error('❌ Error verificando publicaciones recientes:', error);
       return false;
     }
 
     return data && data.length > 0;
 
   } catch (error) {
-    console.error('❌ Error en tienePublicacionReciente:', error);
     return false;
   }
 }
@@ -104,7 +99,6 @@ export async function crearPublicacionAutomaticaSegura(data: PublicacionAutomati
     const tieneReciente = await tienePublicacionReciente(data.usuario_id, data.tipo, 5); // 5 minutos
     
     if (tieneReciente) {
-      console.log('⏱️ Usuario tiene publicación reciente del mismo tipo, omitiendo...');
       return null;
     }
 
@@ -112,7 +106,6 @@ export async function crearPublicacionAutomaticaSegura(data: PublicacionAutomati
     return await crearPublicacionAutomatica(data);
 
   } catch (error) {
-    console.error('❌ Error en crearPublicacionAutomaticaSegura:', error);
     throw error;
   }
 } 

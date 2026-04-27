@@ -233,7 +233,6 @@ export class GamificacionService {
         .single();
       
       if (error && error.code !== 'PGRST116') {
-        console.error('Error obteniendo experiencia:', error);
         return null;
       }
       
@@ -244,7 +243,6 @@ export class GamificacionService {
       
       return data;
     } catch (error) {
-      console.error('Error en obtenerExperienciaUsuario:', error);
       return null;
     }
   }
@@ -274,13 +272,11 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error inicializando experiencia:', error);
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error en inicializarExperienciaUsuario:', error);
       return null;
     }
   }
@@ -357,7 +353,6 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error actualizando XP:', error);
         return { success: false, nivelAnterior, nivelNuevo: nivelAnterior, subioNivel: false, experiencia: null };
       }
       
@@ -389,7 +384,6 @@ export class GamificacionService {
         experiencia: data
       };
     } catch (error) {
-      console.error('Error en agregarXP:', error);
       return { success: false, nivelAnterior: 1, nivelNuevo: 1, subioNivel: false, experiencia: null };
     }
   }
@@ -411,13 +405,11 @@ export class GamificacionService {
         .order('orden_mostrar');
       
       if (error) {
-        console.error('Error obteniendo logros del sistema:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerLogrosSystem:', error);
       return [];
     }
   }
@@ -437,13 +429,11 @@ export class GamificacionService {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error obteniendo logros del usuario:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerLogrosUsuario:', error);
       return [];
     }
   }
@@ -484,7 +474,6 @@ export class GamificacionService {
       
       return logrosConseguidos;
     } catch (error) {
-      console.error('Error en verificarLogros:', error);
       return [];
     }
   }
@@ -525,13 +514,11 @@ export class GamificacionService {
             if (estadisticas.likes_recibidos < valor) return false;
             break;
           default:
-            console.warn(`Condición no reconocida: ${clave}`);
         }
       }
       
       return true;
     } catch (error) {
-      console.error('Error verificando condiciones:', error);
       return false;
     }
   }
@@ -559,7 +546,6 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error otorgando logro:', error);
         return null;
       }
       
@@ -591,7 +577,6 @@ export class GamificacionService {
       
       return data;
     } catch (error) {
-      console.error('Error en otorgarLogro:', error);
       return null;
     }
   }
@@ -612,12 +597,10 @@ export class GamificacionService {
       });
       
       if (error) {
-        console.error('Error obteniendo ranking híbrido:', error);
         return [];
       }
       
       if (!data || data.length === 0) {
-        console.log('No hay datos de ranking híbrido, usando método tradicional...');
         return await this.obtenerRankingTradicional(tipo, limite);
       }
 
@@ -657,7 +640,6 @@ export class GamificacionService {
       }));
       
     } catch (error) {
-      console.error('Error en obtenerRanking:', error);
       return await this.obtenerRankingTradicional(tipo, limite);
     }
   }
@@ -667,7 +649,6 @@ export class GamificacionService {
    */
   static async obtenerRankingPaginado(tipo: string = 'general', limite: number = 20, offset: number = 0): Promise<RankingGlobal[]> {
     try {
-      console.log(`📊 Obteniendo ranking paginado: tipo=${tipo}, limite=${limite}, offset=${offset}`);
       
       // Usar la nueva función híbrida con paginación
       const { data, error } = await supabase.rpc('obtener_ranking_hibrido_paginado', {
@@ -677,13 +658,11 @@ export class GamificacionService {
       });
       
       if (error) {
-        console.error('Error obteniendo ranking paginado:', error);
         // Fallback a método tradicional con paginación
         return await this.obtenerRankingTradicionalPaginado(tipo, limite, offset);
       }
       
       if (!data || data.length === 0) {
-        console.log('No hay datos de ranking paginado, usando método tradicional...');
         return await this.obtenerRankingTradicionalPaginado(tipo, limite, offset);
       }
 
@@ -726,11 +705,9 @@ export class GamificacionService {
         }
       }));
       
-      console.log(`✅ Ranking paginado obtenido: ${resultado.length} usuarios`);
       return resultado;
       
     } catch (error) {
-      console.error('Error en obtenerRankingPaginado:', error);
       return await this.obtenerRankingTradicionalPaginado(tipo, limite, offset);
     }
   }
@@ -754,13 +731,11 @@ export class GamificacionService {
       const { data, error } = await query;
       
       if (error) {
-        console.error('Error obteniendo ranking tradicional:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerRankingTradicional:', error);
       return [];
     }
   }
@@ -770,7 +745,6 @@ export class GamificacionService {
    */
   static async obtenerRankingTradicionalPaginado(tipo: string = 'general', limite: number = 20, offset: number = 0): Promise<RankingGlobal[]> {
     try {
-      console.log(`📊 Fallback: ranking tradicional paginado - tipo=${tipo}, limite=${limite}, offset=${offset}`);
       
       const query = supabase
         .from('ranking_global')
@@ -786,14 +760,11 @@ export class GamificacionService {
       const { data, error } = await query;
       
       if (error) {
-        console.error('Error obteniendo ranking tradicional paginado:', error);
         return [];
       }
       
-      console.log(`✅ Fallback exitoso: ${data?.length || 0} usuarios obtenidos`);
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerRankingTradicionalPaginado:', error);
       return [];
     }
   }
@@ -812,13 +783,11 @@ export class GamificacionService {
         .single();
       
       if (error && error.code !== 'PGRST116') {
-        console.error('Error obteniendo posición:', error);
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error en obtenerPosicionUsuario:', error);
       return null;
     }
   }
@@ -840,13 +809,11 @@ export class GamificacionService {
         });
       
       if (error) {
-        console.error('Error actualizando ranking:', error);
         return false;
       }
       
       return true;
     } catch (error) {
-      console.error('Error en actualizarRanking:', error);
       return false;
     }
   }
@@ -867,7 +834,6 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error registrando sesión:', error);
         return null;
       }
       
@@ -876,7 +842,6 @@ export class GamificacionService {
       
       return data;
     } catch (error) {
-      console.error('Error en registrarSesionSimulador:', error);
       return null;
     }
   }
@@ -918,7 +883,6 @@ export class GamificacionService {
       await this.actualizarRankingSimulador(usuarioId);
       
     } catch (error) {
-      console.error('Error en procesarPostSesion:', error);
     }
   }
   
@@ -945,7 +909,6 @@ export class GamificacionService {
       
       await this.actualizarRanking(usuarioId, 'simulador', puntuacion, metricas);
     } catch (error) {
-      console.error('Error actualizando ranking simulador:', error);
     }
   }
   
@@ -965,7 +928,6 @@ export class GamificacionService {
         .single();
       
       if (error && error.code !== 'PGRST116') {
-        console.error('Error obteniendo estadísticas:', error);
         return null;
       }
       
@@ -976,7 +938,6 @@ export class GamificacionService {
       
       return data;
     } catch (error) {
-      console.error('Error en obtenerEstadisticasUsuario:', error);
       return null;
     }
   }
@@ -996,13 +957,11 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error inicializando estadísticas:', error);
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error en inicializarEstadisticasUsuario:', error);
       return null;
     }
   }
@@ -1032,13 +991,11 @@ export class GamificacionService {
         });
       
       if (error) {
-        console.error('Error actualizando estadísticas:', error);
         return false;
       }
       
       return true;
     } catch (error) {
-      console.error('Error en actualizarEstadisticasUsuario:', error);
       return false;
     }
   }
@@ -1100,13 +1057,11 @@ export class GamificacionService {
         .single();
       
       if (error) {
-        console.error('Error creando notificación:', error);
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error en crearNotificacionGaming:', error);
       return null;
     }
   }
@@ -1124,13 +1079,11 @@ export class GamificacionService {
         .limit(limite);
       
       if (error) {
-        console.error('Error obteniendo notificaciones:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerNotificacionesUsuario:', error);
       return [];
     }
   }
@@ -1151,13 +1104,11 @@ export class GamificacionService {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error obteniendo sesiones:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerSesionesUsuario:', error);
       return [];
     }
   }
@@ -1173,13 +1124,11 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
       
       if (error) {
-        console.error('Error obteniendo publicaciones:', error);
         return [];
       }
       
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerPublicacionesUsuario:', error);
       return [];
     }
   }
@@ -1202,7 +1151,6 @@ export class GamificacionService {
       await this.actualizarRankingCursos(usuarioId);
       
     } catch (error) {
-      console.error('Error procesando progreso de lección:', error);
     }
   }
   
@@ -1226,7 +1174,6 @@ export class GamificacionService {
       
       await this.actualizarRanking(usuarioId, 'cursos', puntuacion, metricas);
     } catch (error) {
-      console.error('Error actualizando ranking cursos:', error);
     }
   }
 
@@ -1243,7 +1190,6 @@ export class GamificacionService {
       const datosReales = await this.obtenerDatosReales(usuarioId);
       
       if (!datosReales) {
-        console.error('No se pudieron obtener datos reales del usuario');
         return;
       }
 
@@ -1263,7 +1209,6 @@ export class GamificacionService {
       await this.actualizarTodosLosRankings(usuarioId);
       
     } catch (error) {
-      console.error('Error sincronizando datos reales:', error);
     }
   }
 
@@ -1292,7 +1237,6 @@ export class GamificacionService {
         .eq('estado', 'activo');
 
       if (errorPublicaciones) {
-        console.error('Error obteniendo publicaciones:', errorPublicaciones);
         return null;
       }
 
@@ -1303,7 +1247,6 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
 
       if (errorComentarios) {
-        console.error('Error obteniendo comentarios:', errorComentarios);
         return null;
       }
 
@@ -1314,7 +1257,6 @@ export class GamificacionService {
         .in('publicacion_id', publicaciones?.map((p: any) => p.id) || []);
 
       if (errorLikes) {
-        console.error('Error obteniendo likes:', errorLikes);
         return null;
       }
 
@@ -1325,7 +1267,6 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
 
       if (errorInscripciones) {
-        console.error('Error obteniendo inscripciones:', errorInscripciones);
         return null;
       }
 
@@ -1336,7 +1277,6 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
 
       if (errorProgreso) {
-        console.error('Error obteniendo progreso lecciones:', errorProgreso);
         return null;
       }
 
@@ -1379,7 +1319,6 @@ export class GamificacionService {
       };
 
     } catch (error) {
-      console.error('Error en obtenerDatosReales:', error);
       return null;
     }
   }
@@ -1439,11 +1378,9 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
 
       if (error) {
-        console.error('Error actualizando experiencia:', error);
       }
 
     } catch (error) {
-      console.error('Error en actualizarExperienciaPorActividades:', error);
     }
   }
 
@@ -1478,11 +1415,9 @@ export class GamificacionService {
         .eq('usuario_id', usuarioId);
 
       if (error) {
-        console.error('Error actualizando estadísticas:', error);
       }
 
     } catch (error) {
-      console.error('Error en actualizarEstadisticasReales:', error);
     }
   }
 
@@ -1574,7 +1509,6 @@ export class GamificacionService {
       });
 
     } catch (error) {
-      console.error('Error actualizando rankings:', error);
     }
   }
 
@@ -1590,7 +1524,6 @@ export class GamificacionService {
       await this.crearNotificacionActividad(usuarioId, tipoActividad, datosActividad);
       
     } catch (error) {
-      console.error('Error procesando actividad:', error);
     }
   }
 
@@ -1678,7 +1611,6 @@ export class GamificacionService {
       await this.crearNotificacionGaming(usuarioId, notificacion);
 
     } catch (error) {
-      console.error('Error creando notificación de actividad:', error);
     }
   }
 
@@ -1696,13 +1628,11 @@ export class GamificacionService {
       });
 
       if (error) {
-        console.error('Error obteniendo actividades pendientes:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerActividadesPendientes:', error);
       return [];
     }
   }
@@ -1717,10 +1647,8 @@ export class GamificacionService {
       });
 
       if (error) {
-        console.error('Error marcando actividad como procesada:', error);
       }
     } catch (error) {
-      console.error('Error en marcarActividadProcesada:', error);
     }
   }
 
@@ -1735,7 +1663,6 @@ export class GamificacionService {
         return;
       }
 
-      console.log(`Procesando ${actividadesPendientes.length} actividades pendientes...`);
 
       // Procesar cada actividad
       for (const actividad of actividadesPendientes) {
@@ -1747,14 +1674,11 @@ export class GamificacionService {
           await this.marcarActividadProcesada(actividad.id);
 
         } catch (error) {
-          console.error(`Error procesando actividad ${actividad.id}:`, error);
         }
       }
 
-      console.log('Actividades pendientes procesadas exitosamente');
 
     } catch (error) {
-      console.error('Error en procesarActividadesPendientes:', error);
     }
   }
 
@@ -1770,7 +1694,6 @@ export class GamificacionService {
       await this.sincronizarDatosReales(usuarioId);
 
     } catch (error) {
-      console.error('Error inicializando procesamiento automático:', error);
     }
   }
 
@@ -1779,7 +1702,6 @@ export class GamificacionService {
    */
   static async forzarSincronizacionCompleta(usuarioId: string): Promise<void> {
     try {
-      console.log('Iniciando sincronización completa...');
 
       // 1. Procesar actividades pendientes
       await this.procesarActividadesPendientes(usuarioId);
@@ -1793,10 +1715,8 @@ export class GamificacionService {
       // 4. Verificar logros
       await this.verificarLogros(usuarioId);
 
-      console.log('Sincronización completa finalizada');
 
     } catch (error) {
-      console.error('Error en forzarSincronizacionCompleta:', error);
     }
   }
 
@@ -1813,7 +1733,6 @@ export class GamificacionService {
       const estadisticas = await this.obtenerEstadisticasUsuario(usuarioId);
       
       if (!datosReales || !estadisticas) {
-        console.error('No se pudieron obtener datos para verificar logros');
         return [];
       }
 
@@ -1838,7 +1757,6 @@ export class GamificacionService {
       return logrosObtenidos;
 
     } catch (error) {
-      console.error('Error verificando logros de progreso real:', error);
       return [];
     }
   }
@@ -1887,7 +1805,6 @@ export class GamificacionService {
       }
 
     } catch (error) {
-      console.error('Error verificando logros de cursos:', error);
     }
 
     return logrosObtenidos;
@@ -1937,7 +1854,6 @@ export class GamificacionService {
       }
 
     } catch (error) {
-      console.error('Error verificando logros de tutoriales:', error);
     }
 
     return logrosObtenidos;
@@ -1994,7 +1910,6 @@ export class GamificacionService {
       }
 
     } catch (error) {
-      console.error('Error verificando logros de comunidad:', error);
     }
 
     return logrosObtenidos;
@@ -2038,7 +1953,6 @@ export class GamificacionService {
       }
 
     } catch (error) {
-      console.error('Error verificando logros de constancia:', error);
     }
 
     return logrosObtenidos;
@@ -2059,7 +1973,6 @@ export class GamificacionService {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = No rows returned
-        console.error('Error verificando logro existente:', error);
         return null;
       }
 
@@ -2072,7 +1985,6 @@ export class GamificacionService {
       return await this.otorgarLogro(usuarioId, logroId);
 
     } catch (error) {
-      console.error('Error en otorgarLogroSiNoTiene:', error);
       return null;
     }
   }
@@ -2092,7 +2004,6 @@ export class GamificacionService {
       await this.crearNotificacionProgreso(usuarioId, tipoEvento, datos);
 
     } catch (error) {
-      console.error('Error procesando evento de progreso:', error);
     }
   }
 
@@ -2158,7 +2069,6 @@ export class GamificacionService {
       await this.crearNotificacionGaming(usuarioId, notificacion);
 
     } catch (error) {
-      console.error('Error creando notificación de progreso:', error);
     }
   }
 }

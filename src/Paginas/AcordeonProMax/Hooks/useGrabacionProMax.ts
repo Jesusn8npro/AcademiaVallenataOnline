@@ -213,7 +213,6 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
   const guardarGrabacionPendiente = useCallback(async (datos: any) => {
     let pendiente = grabacionPendienteRef.current;
     if (!pendiente && datos.secuencia) {
-      console.log('🔧 Creando pendiente temporal desde datos directos...');
       pendiente = {
         tipo: datos.tipo || 'practica_libre',
         secuencia: datos.secuencia,

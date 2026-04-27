@@ -34,7 +34,6 @@ export async function cargarUsuarios(mostrarEliminados = false): Promise<Usuario
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error cargando usuarios:', error);
     throw error;
   }
 
@@ -80,7 +79,6 @@ export async function eliminarUsuario(id: string): Promise<{ success: boolean; e
 
     return { success: true }
   } catch (e: any) {
-    console.error('Error eliminando usuario:', e)
     return { success: false, error: e.message }
   }
 }
@@ -103,7 +101,6 @@ export async function crearUsuario(datos: any): Promise<{ success: boolean; data
         errorAmostrar = error.message;
       }
 
-      console.error('Error detallado de Edge Function:', errorAmostrar, error);
       throw new Error(errorAmostrar);
     }
 
@@ -113,7 +110,6 @@ export async function crearUsuario(datos: any): Promise<{ success: boolean; data
 
     return { success: true, data }
   } catch (e: any) {
-    console.error('Error al crear usuario:', e)
     return { success: false, error: e.message }
   }
 }

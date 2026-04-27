@@ -31,7 +31,6 @@ export const servicioObjetivos = {
             .order('fecha_creacion', { ascending: false });
 
         if (error) {
-            console.error('Error al obtener objetivos:', error);
             throw error;
         }
 
@@ -49,7 +48,6 @@ export const servicioObjetivos = {
             .single();
 
         if (error) {
-            console.error('Error al crear objetivo:', error);
             throw error;
         }
 
@@ -68,7 +66,6 @@ export const servicioObjetivos = {
             .single();
 
         if (error) {
-            console.error('Error al actualizar objetivo:', error);
             throw error;
         }
 
@@ -85,7 +82,6 @@ export const servicioObjetivos = {
             .eq('id', id);
 
         if (error) {
-            console.error('Error al eliminar objetivo:', error);
             throw error;
         }
     }

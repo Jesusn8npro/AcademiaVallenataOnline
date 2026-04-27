@@ -79,6 +79,7 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
   const [canciones, setCanciones] = React.useState<CancionHero[]>([]);
   const [cargando, setCargando] = React.useState(true);
   const [filtroTipo, setFiltroTipo] = React.useState<'todos' | 'cancion' | 'ejercicio' | 'secuencia'>('todos');
+  const [confirmEliminar, setConfirmEliminar] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     cargarCanciones();
@@ -103,9 +104,7 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
 
       if (error) throw error;
       setCanciones(data || []);
-    } catch (error) {
-      console.error('Error cargando canciones:', error);
-    } finally {
+    } catch { } finally {
       setCargando(false);
     }
   };
@@ -120,13 +119,12 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
   const descripcionSalida = punchOutTick !== null ? formatearTiempoDesdeTicks(punchOutTick, bpmCancionEditando) : 'Manual';
 
   const eliminarCancion = async (id: string) => {
-    if (!confirm('¿Eliminar esta cancion Hero?')) return;
+    if (confirmEliminar !== id) { setConfirmEliminar(id); return; }
+    setConfirmEliminar(null);
     try {
       await supabase.from('canciones_hero' as any).delete().eq('id', id);
       setCanciones((previas) => previas.filter((c) => c.id !== id));
-    } catch (error) {
-      console.error('Error eliminando canción:', error);
-    }
+    } catch { }
   };
 
   const obtenerIconoTipo = (tipo: string) => {
@@ -149,7 +147,6 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
 
   return (
     <div className="panel-admin-libreria">
-      {/* Filtros */}
       <div className="panel-admin-libreria-filter">
         {(['todos', 'cancion', 'ejercicio', 'secuencia'] as const).map((tipo) => (
           <button
@@ -234,7 +231,6 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
         </div>
       )}
 
-      {/* Lista de canciones */}
       <div className="panel-admin-libreria-lista">
         {cargando ? (
           <div className="panel-admin-libreria-vacio">
@@ -250,7 +246,6 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
         ) : (
           cancionesFiltradas.map((cancion) => (
             <div key={cancion.id} className="panel-admin-libreria-item">
-              {/* Tipo e info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="panel-admin-libreria-item-meta">
                   <span>{obtenerIconoTipo(cancion.tipo)}</span>
@@ -266,32 +261,19 @@ const PanelAdminLibreria: React.FC<PanelAdminLibreriaProps> = ({
                 </div>
               </div>
 
-              {/* Botones */}
               <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  onClick={() => onReproducir(cancion)}
-                  className="panel-admin-libreria-btn panel-admin-libreria-btn-reproducir"
-                  title="Reproducir"
-                  disabled={esperandoPunchIn || grabandoEdicionSecuencia || guardandoEdicionSecuencia}
-                >
+                <button onClick={() => onReproducir(cancion)} className="panel-admin-libreria-btn panel-admin-libreria-btn-reproducir" title="Reproducir" disabled={esperandoPunchIn || grabandoEdicionSecuencia || guardandoEdicionSecuencia}>
                   <Play size={16} />
                 </button>
-                <button
-                  onClick={() => onEditarSecuencia?.(cancion)}
-                  className={`panel-admin-libreria-btn panel-admin-libreria-btn-editar ${cancionEditandoId === cancion.id ? 'activo' : ''}`}
-                  title="Editar secuencia"
-                  disabled={esperandoPunchIn || grabandoEdicionSecuencia || guardandoEdicionSecuencia}
-                >
+                <button onClick={() => onEditarSecuencia?.(cancion)} className={`panel-admin-libreria-btn panel-admin-libreria-btn-editar ${cancionEditandoId === cancion.id ? 'activo' : ''}`} title="Editar secuencia" disabled={esperandoPunchIn || grabandoEdicionSecuencia || guardandoEdicionSecuencia}>
                   <Pencil size={16} />
                 </button>
-                <button
-                  onClick={() => eliminarCancion(cancion.id)}
-                  className="panel-admin-libreria-btn panel-admin-libreria-btn-eliminar"
-                  title="Eliminar"
-                  disabled={cancionEditandoId === cancion.id || guardandoEdicionSecuencia}
-                >
-                  <Trash2 size={16} />
+                <button onClick={() => eliminarCancion(cancion.id)} className="panel-admin-libreria-btn panel-admin-libreria-btn-eliminar" title={confirmEliminar === cancion.id ? '¿Seguro?' : 'Eliminar'} disabled={cancionEditandoId === cancion.id || guardandoEdicionSecuencia}>
+                  {confirmEliminar === cancion.id ? '¿?' : <Trash2 size={16} />}
                 </button>
+                {confirmEliminar === cancion.id && (
+                  <button onClick={() => setConfirmEliminar(null)} className="panel-admin-libreria-btn" title="Cancelar"><X size={14} /></button>
+                )}
               </div>
             </div>
           ))

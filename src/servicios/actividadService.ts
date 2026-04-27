@@ -30,29 +30,24 @@ export const actividadService = {
      */
     async cargarActividadTiempoReal(): Promise<any[]> {
         try {
-            console.log('🔄 [ADMIN] Cargando actividad en tiempo real (RPC)...');
 
             // Usar RPC para obtener usuarios activos en los últimos 5 minutos
             const { data: usuariosActivos, error: errorRPC } = await supabase
                 .rpc('get_usuarios_activos', { minutos: 5 });
 
             if (errorRPC) {
-                console.error('❌ [ADMIN] Error RPC get_usuarios_activos:', errorRPC);
                 throw errorRPC;
             }
 
             if (!usuariosActivos || usuariosActivos.length === 0) {
-                console.log('ℹ️ [ADMIN] No hay usuarios activos');
                 return [];
             }
 
-            console.log('✅ [ADMIN] Usuarios activos cargados:', usuariosActivos.length);
 
             // Retornar directamente los datos de la RPC
             return usuariosActivos;
 
         } catch (error) {
-            console.error('❌ [ADMIN] Error fatal cargando actividad:', error);
             return [];
         }
     },
@@ -62,7 +57,6 @@ export const actividadService = {
      */
     async cargarAlumnosActivos() {
         try {
-            console.log('🔄 [ADMIN] Cargando alumnos recientes...');
             const ahora = new Date();
             const hace7Dias = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -178,7 +172,6 @@ export const actividadService = {
                 .slice(0, 12);
 
         } catch (error) {
-            console.error('❌ [ADMIN] Error cargando alumnos activos:', error);
             return [];
         }
     }

@@ -28,7 +28,6 @@ export async function cambiarPasswordUsuario(usuarioId: string, nuevaPassword: s
 
     return { success: true }
   } catch (e: any) {
-    console.error('Error changing password:', e)
     return { success: false, error: e.message }
   }
 }
