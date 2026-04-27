@@ -24,7 +24,7 @@ const PestanaGeolocalizacion = () => {
 
     const cargarEstadisticasGenerales = async () => {
         try {
-            // Conectamos con la tabla real de geolocalizaci髇
+            // Conectamos con la tabla real de geolocalizaci贸n
             const { data: registros, error } = await supabase
                 .from('geolocalizacion_usuarios')
                 .select('id, usuario_id, pais, created_at')
@@ -51,7 +51,7 @@ const PestanaGeolocalizacion = () => {
 
     const probarRastreoManual = async () => {
         setEjecutandoTest(true);
-        setResultadoTest('?? Probando rastreo de ubicaci髇 con ipapi.co...');
+        setResultadoTest('?? Probando rastreo de ubicaci贸n con ipapi.co...');
 
         try {
 
@@ -59,11 +59,11 @@ const PestanaGeolocalizacion = () => {
             const exito = await servicioGeolocalizacion.rastreoCompleto();
 
             if (exito) {
-                setResultadoTest('?? ∩XITO! Rastreo de ubicaci髇 completado con ipapi.co');
-                // Recargar estad韘ticas despu閟 del test exitoso
+                setResultadoTest('?? 隆脡XITO! Rastreo de ubicaci贸n completado con ipapi.co');
+                // Recargar estad铆sticas despu茅s del test exitoso
                 setTimeout(cargarEstadisticasGenerales, 1000);
             } else {
-                setResultadoTest('? Error en el rastreo. Revisa la consola (F12) para m醩 detalles.');
+                setResultadoTest('? Error en el rastreo. Revisa la consola (F12) para m谩s detalles.');
             }
         } catch (error: any) {
             setResultadoTest(`? Error: ${error.message || 'Error desconocido'}`);
@@ -77,11 +77,11 @@ const PestanaGeolocalizacion = () => {
             {/* ENCABEZADO PRINCIPAL */}
             <div className="geo-header-main">
                 <div className="geo-titulo-principal">
-                    <h2>?? Geolocalizaci髇 Avanzada</h2>
-                    <p>Ubicaciones y seguridad geogr醘ica - Powered by ipapi.co (30K requests/mes gratis)</p>
+                    <h2>?? Geolocalizaci贸n Avanzada</h2>
+                    <p>Ubicaciones y seguridad geogr谩fica - Powered by ipapi.co (30K requests/mes gratis)</p>
                 </div>
 
-                {/* ESTAD蚐TICAS R罰IDAS */}
+                {/* ESTAD脥STICAS R脕PIDAS */}
                 <div className="geo-stats-grid">
                     <div className="geo-stat-card">
                         <div className="geo-stat-valor">{estadisticasGenerales.totalRegistros}</div>
@@ -93,7 +93,7 @@ const PestanaGeolocalizacion = () => {
                     </div>
                     <div className="geo-stat-card">
                         <div className="geo-stat-valor">{estadisticasGenerales.paisesDetectados}</div>
-                        <div className="geo-stat-label">Pa韘es Detectados</div>
+                        <div className="geo-stat-label">Pa铆ses Detectados</div>
                     </div>
                     <div className={`geo-stat-card geo-ubicaciones-hoy ${estadisticasGenerales.ubicacionesHoy > 0 ? 'activo' : ''}`}>
                         <div className="geo-stat-valor">{estadisticasGenerales.ubicacionesHoy}</div>
@@ -102,7 +102,7 @@ const PestanaGeolocalizacion = () => {
                 </div>
             </div>
 
-            {/* NAVEGACI覰 DE PESTA袮S */}
+            {/* NAVEGACI脫N DE PESTA脩AS */}
             <div className="geo-tabs-navegacion">
                 <button
                     className={`geo-tab-btn ${vistaActiva === 'overview' ? 'activo' : ''}`}
@@ -125,7 +125,7 @@ const PestanaGeolocalizacion = () => {
                     onClick={() => setVistaActiva('analytics')}
                 >
                     <PieChart className="mr-2" size={20} />
-                    Analytics Geogr醘icos
+                    Analytics Geogr谩ficos
                 </button>
 
                 <button
@@ -133,11 +133,11 @@ const PestanaGeolocalizacion = () => {
                     onClick={() => setVistaActiva('usuarios')}
                 >
                     <Users className="mr-2" size={20} />
-                    Gesti髇 de Usuarios
+                    Gesti贸n de Usuarios
                 </button>
             </div>
 
-            {/* CONTENIDO DIN罬ICO */}
+            {/* CONTENIDO DIN脕MICO */}
             <div className="geo-content-area">
                 {vistaActiva === 'overview' && (
                     <div className="vista-overview">
@@ -151,7 +151,7 @@ const PestanaGeolocalizacion = () => {
                                 height: 'fit-content'
                             }}>
                                 <h3 style={{ color: '#1a202c', margin: '0 0 1rem 0', fontWeight: 800 }}>?? Centro de Pruebas</h3>
-                                <p style={{ color: '#4a5568', marginBottom: '2rem' }}>Herramientas para probar y verificar el sistema de geolocalizaci髇</p>
+                                <p style={{ color: '#4a5568', marginBottom: '2rem' }}>Herramientas para probar y verificar el sistema de geolocalizaci贸n</p>
 
                                 <div className="acciones-prueba" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     <button
@@ -192,7 +192,7 @@ const PestanaGeolocalizacion = () => {
                     <GeolocalizacionUsuarios />
                 )}
 
-                {/* Placeholder eliminado porque ya todas las secciones est醤 implementadas */}
+                {/* Placeholder eliminado porque ya todas las secciones est谩n implementadas */}
             </div>
         </div>
     );

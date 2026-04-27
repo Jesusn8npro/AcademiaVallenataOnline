@@ -84,7 +84,7 @@ const DashboardAdmin: React.FC = () => {
         }
     };
 
-    // Carga de datos pesada (Estadísticas completas)
+    // Carga de datos pesada (EstadÃ­sticas completas)
     const cargarDatosCompletos = async () => {
         try {
             setCargando(true);
@@ -146,7 +146,7 @@ const DashboardAdmin: React.FC = () => {
             const pagosReales = pagos || [];
             const ventasTotalesMes = pagosReales.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
 
-            // 5. Inscripciones recientes (30 días)
+            // 5. Inscripciones recientes (30 dÃ­as)
             const hace30Dias = new Date();
             hace30Dias.setDate(hace30Dias.getDate() - 30);
             const { count: countInscripciones } = await supabase
@@ -182,11 +182,11 @@ const DashboardAdmin: React.FC = () => {
                         <i className="fas fa-chart-line"></i>
                     </div>
                     <div className="detalles-panel">
-                        <h1>Panel Administración</h1>
-                        <p>Academia Vallenata Online • {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <h1>Panel AdministraciÃ³n</h1>
+                        <p>Academia Vallenata Online â€¢ {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         <p className="ultima-actualizacion">
                             <i className="fas fa-clock"></i>
-                            Última actualización: {ultimaActualizacion}
+                            Ãšltima actualizaciÃ³n: {ultimaActualizacion}
                         </p>
                     </div>
                 </div>
@@ -219,8 +219,8 @@ const DashboardAdmin: React.FC = () => {
             {cargando && !estadisticas ? (
                 <div className="cargando-datos">
                     <div className="spinner-grande"></div>
-                    <h3>Cargando estadísticas...</h3>
-                    <p>Obteniendo métricas de la academia</p>
+                    <h3>Cargando estadÃ­sticas...</h3>
+                    <p>Obteniendo mÃ©tricas de la academia</p>
                 </div>
             ) : (
                 <div className="contenido-panel">
