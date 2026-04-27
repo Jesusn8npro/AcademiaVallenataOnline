@@ -9,42 +9,11 @@ import {
   formatearTickComoTiempo,
 } from '../../PracticaLibre/Utilidades/SecuenciaLogic';
 import type { NotaHero } from '../../../../Core/hero/tipos_Hero';
-
-interface LibreriaAPI {
-  bpmHero: number;
-  setBpmHero: (v: number) => void;
-  pistaFile: File | null;
-  setPistaUrl: (url: string | null) => void;
-  bpmGrabacion: number;
-  bpmOriginalGrabacion: number;
-  setBpmOriginalGrabacion: (v: number) => void;
-  cancionActivaLibreria: any;
-  setCancionActivaLibreria: (c: any) => void;
-  setUltimaCancionLibreriaActualizada: (c: any) => void;
-  construirCancionHero: (c: any, s?: NotaHero[]) => any;
-  prepararCancionEnEscenario: (c: any) => void;
-  detenerReproduccionLocal: (tick?: number) => void;
-}
-
-interface Props {
-  bpm: number;
-  grabandoSesion: boolean;
-  logica: any;
-  metronomoActivo: boolean;
-  reproduciendo: boolean;
-  pausado: boolean;
-  tickActual: number;
-  loopAB: any;
-  secuencia: any[];
-  totalTicks: number;
-  onAlternarPausa: () => void;
-  onAlternarLoop: () => void;
-  onBuscarTick: (tick: number) => void;
-  onReproducirSecuencia: (cancion: any) => void;
-  onLimpiarLoop: () => void;
-  onCambiarBpm: (v: number | ((prev: number) => number)) => void;
-  libreria: LibreriaAPI;
-}
+import {
+  type LibreriaAPI,
+  type UseEditorSecuenciaAdminParams,
+  sincronizarNotasModalConLogica,
+} from '../Componentes/EditorSecuencia/tiposEditor';
 
 export const useEditorSecuenciaAdmin = ({
   bpm, grabandoSesion, logica, metronomoActivo,
@@ -53,7 +22,7 @@ export const useEditorSecuenciaAdmin = ({
   onAlternarPausa, onAlternarLoop, onBuscarTick,
   onReproducirSecuencia, onLimpiarLoop, onCambiarBpm,
   libreria,
-}: Props) => {
+}: UseEditorSecuenciaAdminParams) => {
   const {
     bpmHero, setBpmHero, pistaFile, setPistaUrl,
     bpmGrabacion, bpmOriginalGrabacion, setBpmOriginalGrabacion,
@@ -367,21 +336,7 @@ export const useEditorSecuenciaAdmin = ({
   }, [onBuscarTick, onAlternarPausa, reproduciendo, pausado]);
 
   const handleNotasActualesDelModal = useCallback((notas: NotaHero[]) => {
-    if (!logica) return;
-    if (notas.length > 0) {
-      const dirRequerida = (notas[0].fuelle === 'abriendo' || notas[0].fuelle === 'halar') ? 'halar' : 'empujar';
-      if (logica.direccion !== dirRequerida) logica.setDireccion(dirRequerida);
-    }
-    const idsNuevos = new Set(notas.map(n => {
-      const fuelle = n.fuelle === 'abriendo' ? 'halar' : 'empujar';
-      let baseId = n.botonId.replace('-halar', '').replace('-empujar', '');
-      if (baseId.includes('-bajo')) { baseId = baseId.replace('-bajo', ''); return `${baseId}-${fuelle}-bajo`; }
-      return `${baseId}-${fuelle}`;
-    }));
-    const notasAnteriores = notasCheadasModalRef.current;
-    notasAnteriores.forEach(id => { if (!idsNuevos.has(id)) logica.actualizarBotonActivo(id, 'remove', null, false, undefined); });
-    idsNuevos.forEach(id => { if (!notasAnteriores.has(id)) logica.actualizarBotonActivo(id, 'add', null, false, undefined, true); });
-    notasCheadasModalRef.current = idsNuevos;
+    sincronizarNotasModalConLogica(notas, logica, notasCheadasModalRef);
   }, [logica]);
 
   const secuenciaVisualActiva = cancionEnModalEditor

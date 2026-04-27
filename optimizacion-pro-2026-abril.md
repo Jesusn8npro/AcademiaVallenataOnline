@@ -100,18 +100,29 @@ const solicitarEliminar = (t: string) => {
 | Fase 10 — Grupos A/B/C/D | `src/componentes/` (completo) | ✅ Completo | 2026-04-25 |
 | Fase 11 — A/B/C/D | `src/servicios/`, `utilidades/`, `stores/`, `hooks/`, `Core/` | ✅ Completo | 2026-04-26 |
 | **Seguridad** | Rutas AcordeonProMax → solo rol admin | ✅ Completo | 2026-04-26 |
+| Fase 12 — Splits +300L | Servicios, hooks y componentes (Barrel Pattern) | ✅ Completo | 2026-04-27 |
 
 ---
 
-## ESTADO FINAL DEL PROYECTO — 2026-04-26
+## ESTADO FINAL DEL PROYECTO — 2026-04-27
 
 **`console.*` en código real: 0**
 **`alert()` / `confirm()` / `prompt()`: 0**
 **TypeScript (`npx tsc --noEmit`): sin errores**
+**Vite build: ✓ 4880 módulos**
 
 > **EXCEPCIÓN INTENCIONAL:** `src/hooks/useSeguridadConsola.ts` usa `console.*` de forma deliberada.
 > Es el sistema de seguridad anti-XSS que deshabilita la consola en producción y la restaura para admins.
 > **NUNCA tocar ese archivo.**
+
+### Excepciones de tamaño (aceptadas — demasiado acopladas para partir)
+
+| Archivo | Líneas | Razón |
+|---|---|---|
+| `Core/hooks/useLogicaAcordeon.ts` | 1338L | Máquina de estado del acordeón — 30+ refs/estados interdependientes |
+| `Paginas/AcordeonProMax/Hooks/useLogicaProMax.ts` | 929L | Coordinador general del juego — todo el estado es mutuamente dependiente |
+| `AcordeonProMax/Admin/Hooks/useEditorSecuenciaAdmin.ts` | 394L | Grabador punch-in — modos "libre" y "edición" comparten todo el estado |
+| `Paginas/Legales/Terminos.tsx` | 308L | Contenido legal estático (8L sobre el límite) |
 
 ---
 
@@ -229,6 +240,43 @@ Rutas ahora bajo `ProteccionAdmin` (solo `rol === 'admin'`):
 **Archivo eliminado:** `src/SeguridadApp/ProtegidoAcordeonProMax.tsx` (ya no se necesita).
 
 Cualquier usuario sin `rol === 'admin'` ve la pantalla de "ACCESO DENEGADO" y es redirigido al inicio en 2.5 segundos.
+
+---
+
+## Detalle Fase 12 — Splits de archivos +300L (2026-04-27)
+
+Patrón aplicado: **Barrel Pattern** — el archivo original se convierte en barrel de re-exportación o se reescribe importando desde sub-archivos. Los consumidores no cambian sus imports.
+
+### Servicios y módulos
+
+| Archivo original | Antes | Después | Sub-archivos creados |
+|---|---|---|---|
+| `servicios/busquedaService.ts` | ~400L | ~30L | `busqueda/consultas.ts`, `busqueda/_datosEjemplo.ts`, `tipos/busqueda.ts` |
+| `servicios/servicioGeolocalizacion.ts` | ~350L | ~30L | `geolocalizacion/_api.ts`, `geolocalizacion/guardar.ts`, `geolocalizacion/tipos.ts` |
+| `servicios/adminService.ts` | ~320L | 3L | `admin/_tipos.ts`, `admin/utilidades.ts`, `admin/estadisticas.ts` |
+| `servicios/AudioManager.ts` | ~280L | ~175L | `servicios/_tiposAudio.ts` |
+| `Core/audio/AudioEnginePro.ts` | ~290L | ~195L | `Core/audio/_tipos.ts`, `Core/audio/_cargador.ts` |
+| `Core/acordeon/notasAcordeonDiatonico.ts` | 341L | ~148L | `Core/acordeon/_definicionBase.ts` |
+
+### Hooks y componentes
+
+| Archivo original | Antes | Después | Sub-archivos creados |
+|---|---|---|---|
+| `useEstudioPracticaLibre.ts` | 500L | 229L | `_useAudioFondo.ts` (203L) — sub-hook con toda la lógica de `HTMLAudioElement` |
+| `useEditorSecuenciaAdmin.ts` | 439L | 394L | Interfaces + `sincronizarNotasModalConLogica` → `tiposEditor.ts` |
+| `useModalPago.ts` | ~350L | ~260L | `_utilidadesPago.ts` — interfaces, constantes, helpers puros |
+| `useReproductorReplay.ts` | 361L | ~260L | `_tiposReproductorReplay.ts` — interfaces + funciones puras extraídas de useMemo |
+| `useGrabacionProMax.ts` | ~320L | ~277L | `_tiposGrabacionProMax.ts` |
+| `useModalVisorImagenPerfil.ts` | ~350L | ~292L | `_tiposVisorImagenPerfil.ts` |
+| `usePestanaCursos.ts` | ~310L | ~235L | `_tiposPestanaCursos.ts` |
+
+### Técnicas usadas
+
+- **Extracción de tipos**: interfaces privadas → `_tipos*.ts` para evitar dependencias circulares
+- **Extracción de funciones puras**: cuerpos de `useMemo` complejos → funciones puras en archivo de tipos
+- **Sub-hook de audio**: `useAudioFondo` encapsula `HTMLAudioElement`, sincronización de capas, volumen y reproducción
+- **Estado singleton como módulo**: clase singleton con estado de instancia → variables de módulo (`const cache`, `let tiempoUltimaSolicitud`)
+- **Re-exportación**: archivos originales re-exportan todo para que los consumidores no cambien imports
 
 ---
 
