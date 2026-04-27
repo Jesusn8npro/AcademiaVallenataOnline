@@ -162,13 +162,6 @@ export class TiempoService {
             const tiempoEspecifico = totalLecciones + totalTutoriales + totalSimulador;
             const tiempoFinal = Math.max(tiempoEspecifico, totalSesiones);
 
-                lecciones: totalLecciones,
-                tutoriales: totalTutoriales,
-                simulador: totalSimulador,
-                sesiones: totalSesiones,
-                final: tiempoFinal
-            });
-
             return tiempoFinal;
 
         } catch (error) {

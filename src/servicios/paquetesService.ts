@@ -640,11 +640,6 @@ async function inscribirTutorialesDelPaquete(usuarioId: string, paqueteId: strin
         const tutorialesValidos = tutoriales.filter((item: any) => {
             const tieneId = item.tutoriales?.id;
             const tieneTitulo = item.tutoriales?.titulo;
-                item: item,
-                tieneId: tieneId,
-                tieneTitulo: tieneTitulo,
-                tutorial: item.tutoriales
-            });
             return tieneId;
         });
 
@@ -669,10 +664,6 @@ async function inscribirTutorialesDelPaquete(usuarioId: string, paqueteId: strin
         const tutorialesParaInscribir = tutorialesValidos.filter((item: any) => {
             const tutorialId = item.tutoriales?.id;
             const yaInscrito = tutorialesInscritos.includes(tutorialId);
-                id: tutorialId,
-                titulo: item.tutoriales?.titulo,
-                yaInscrito: yaInscrito
-            });
             return tutorialId && !yaInscrito;
         });
 

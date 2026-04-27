@@ -38,12 +38,6 @@ export interface ResultadoOperacion {
  */
 export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion> {
 	try {
-			usuario_id: datos.usuario_id,
-			nombre_producto: datos.nombre_producto,
-			valor: datos.valor,
-			ref_payco: datos.ref_payco
-		});
-
 		const registroPago = {
 			// Columnas básicas
 			usuario_id: datos.usuario_id,
