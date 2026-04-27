@@ -29,13 +29,6 @@ export const useSesionTracker = (usuarioId: string | null) => {
             }
           );
 
-        if (error) {
-        } else {
-            usuario_id: usuarioId,
-            pagina: location.pathname,
-            timestamp: ahora.toISOString(),
-          });
-        }
       } catch (err) {
       }
     };
