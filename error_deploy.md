@@ -1,7 +1,7 @@
-Commit: fix: corrige errores de codificación UTF-8 en DashboardAdmin y otros ajustes de administrador 
+Commit: fix: corrige error de sintaxis en useSesionTracker.ts y actualiza log de error 
 ##########################################
 ### Download Github Archive Started...
-### Mon, 27 Apr 2026 01:30:55 GMT
+### Mon, 27 Apr 2026 01:51:23 GMT
 ##########################################
 
 
@@ -28,609 +28,116 @@ Saved output to:
 #1 DONE 0.0s
 
 #2 [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1741046653
-#2 DONE 0.3s
+#2 DONE 0.1s
 
 #3 [internal] load .dockerignore
 #3 transferring context: 107B done
 #3 DONE 0.0s
 
 #4 [stage-0  1/15] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1741046653@sha256:ed406b77fb751927991b8655e76c33a4521c4957c2afeab293be7c63c2a373d2
-#4 resolve ghcr.io/railwayapp/nixpacks:ubuntu-1741046653@sha256:ed406b77fb751927991b8655e76c33a4521c4957c2afeab293be7c63c2a373d2 0.0s done
-#4 sha256:ed406b77fb751927991b8655e76c33a4521c4957c2afeab293be7c63c2a373d2 1.61kB / 1.61kB done
-#4 sha256:53a1550a769bb935ad1d80f12dfd0ae96a8ec35865d8e6b956cdb79f3ae49e5e 868B / 868B done
-#4 sha256:82afdcbbf1dd44bb728577e4e48f1c9ca00dde78318a60985b01018dc2803a46 4.37kB / 4.37kB done
-#4 DONE 0.1s
+#4 DONE 0.0s
 
 #5 [internal] load build context
-#5 ...
+#5 transferring context: 91.98MB 0.7s done
+#5 DONE 0.7s
 
-#6 [stage-0  2/15] WORKDIR /app/
-#6 DONE 0.2s
+#6 [stage-0  6/15] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+#6 CACHED
 
-#5 [internal] load build context
-#5 transferring context: 91.92MB 0.8s done
-#5 DONE 0.8s
+#7 [stage-0  2/15] WORKDIR /app/
+#7 CACHED
 
-#7 [stage-0  3/15] COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
-#7 DONE 0.1s
+#8 [stage-0  3/15] COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+#8 CACHED
 
-#8 [stage-0  4/15] RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
-#8 0.224 unpacking 'https://github.com/NixOS/nixpkgs/archive/ba913eda2df8eb72147259189d55932012df6301.tar.gz' into the Git cache...
-#8 37.70 installing 'ba913eda2df8eb72147259189d55932012df6301-env'
-#8 38.64 these 4 derivations will be built:
-#8 38.64   /nix/store/x9qrr2jb0d9d7gjg77imaric1nr9wl3s-libraries.drv
-#8 38.64   /nix/store/4vjgp6bh2gja20gkg167x66kgk10c24j-ba913eda2df8eb72147259189d55932012df6301-env.drv
-#8 38.64   /nix/store/hpybn12g5ny53hbyvrlvzdl3hpk392ql-builder.pl.drv
-#8 38.64   /nix/store/llvngay9gncvs8l6dw01c6wlbh35zzf0-ba913eda2df8eb72147259189d55932012df6301-env.drv
-#8 38.64 these 38 paths will be fetched (32.50 MiB download, 164.56 MiB unpacked):
-#8 38.64   /nix/store/mjgi65m3hgzqqvqcix848gskkw5zzwi9-acl-2.3.2
-#8 38.64   /nix/store/5nk2ga7i2f030am4qpcdsd8qlk6i3z83-attr-2.5.2
-#8 38.64   /nix/store/306znyj77fv49kwnkpxmb0j2znqpa8bj-bash-5.2p26
-#8 38.64   /nix/store/xwcf1rw3ackqp2vxms9myf9jq2ny6ynv-bzip2-1.0.8
-#8 38.64   /nix/store/mxcq77rlan82dzpv3cgj0fh6qvv8ncil-bzip2-1.0.8-bin
-#8 38.64   /nix/store/1iz89fy5fi998g43z1m4j7s5f095di68-caddy-2.8.4
-#8 38.64   /nix/store/php4qidg2bxzmm79vpri025bqi0fa889-coreutils-9.5
-#8 38.64   /nix/store/i34mknsjgrfyy71k2h79gda0bvagzc2j-diffutils-3.10
-#8 38.64   /nix/store/1sffjkg6c6ff16fz5yr0pnz3j7vja42h-ed-1.20.2
-#8 38.64   /nix/store/xx7x1dwybpssfhq8yikvzz38bh3yrq97-file-5.45
-#8 38.64   /nix/store/jjcsr5gs4qanf7ln5c6wgcq4sn75a978-findutils-4.9.0
-#8 38.64   /nix/store/8vvkbgmnin1x2jkp7wcb2zg1p0vc4ks9-gawk-5.2.2
-#8 38.64   /nix/store/xvzz97yk73hw03v5dhhz3j47ggwf1yq1-gcc-13.2.0-lib
-#8 38.64   /nix/store/0rxb3ixzk4zaqivc9s795m0a3679wbw2-gcc-13.2.0-libgcc
-#8 38.64   /nix/store/k7zgvzp2r31zkg9xqgjim7mbknryv6bs-glibc-2.39-52
-#8 38.64   /nix/store/7ivacs3m2fm19hyxdmrs05xisj82v6y5-gmp-with-cxx-6.3.0
-#8 38.64   /nix/store/4i0j14zymvlngyyhq2254f4g9m9my98y-gnu-config-2024-01-01
-#8 38.64   /nix/store/28gpmx3z6ss3znd7fhmrzmvk3x5lnfbk-gnugrep-3.11
-#8 38.64   /nix/store/cdzpn0rdq810aknww3w9fy3wmw9ixr66-gnumake-4.4.1
-#8 38.64   /nix/store/5zjms21vpxlkbc0qyl5pmj2sidfmzmd7-gnused-4.9
-#8 38.64   /nix/store/rik7p68cq7yzlj5pmfpf4yv6jnrpvlgf-gnutar-1.35
-#8 38.64   /nix/store/j5chw7v1x3vlmf3wmdpdb5gwh9hl0b80-gzip-1.13
-#8 38.64   /nix/store/dzsby2vk02jcn0s43fkna2qqqix6ccy1-iana-etc-20240318
-#8 38.64   /nix/store/ic63ay0py10fyryaw7345k4ps32da33w-libidn2-2.3.7
-#8 38.64   /nix/store/yfp7dr8m7zi7kxk49wd714gwvhb105hf-libunistring-1.1
-#8 38.64   /nix/store/5xynf9c9ml7d97q70kpq9rpqqmx13xl8-libxcrypt-4.4.36
-#8 38.64   /nix/store/zk9ybjjixdwyv3jmpg2i7s8p7iqi5vhh-mailcap-2.1.53
-#8 38.64   /nix/store/0lfxbmchigx9vs9qmrlbahcy6nxwfnj1-patch-2.7.6
-#8 38.64   /nix/store/nbad47q0m0m9c5xid7zh05hiknwircbp-patchelf-0.15.0
-#8 38.64   /nix/store/g3vi60zgyjsvij7xkk6dxky1hkwh0ynd-pcre2-10.43
-#8 38.64   /nix/store/1iscdpbd3x9x3s3s25jd5ppl7yra0b77-perl-5.38.2
-#8 38.64   /nix/store/rg6agzlb4gcl4w2126m16qm4mgr8jgi6-stdenv-linux
-#8 38.64   /nix/store/y6hmqbmbwq0rmx1fzix5c5jszla2pzmp-tzdata-2024a
-#8 38.64   /nix/store/bq6xbl9cq6hkcn65mz2fzc2k38xiv87h-update-autotools-gnu-config-scripts-hook
-#8 38.64   /nix/store/1q9vc0lq7qjlfjz47mfmlzdf86c543jy-xgcc-13.2.0-libgcc
-#8 38.64   /nix/store/lphbn1va4i43fj7f3m9xskf9y86khzf3-xz-5.4.6
-#8 38.64   /nix/store/6i4xxaa812vsbli9jkq4mksdddrk27lw-xz-5.4.6-bin
-#8 38.64   /nix/store/lv6nackqis28gg7l2ic43f6nk52hb39g-zlib-1.3.1
-#8 38.65 copying path '/nix/store/dzsby2vk02jcn0s43fkna2qqqix6ccy1-iana-etc-20240318' from 'https://cache.nixos.org'...
-#8 38.65 copying path '/nix/store/zk9ybjjixdwyv3jmpg2i7s8p7iqi5vhh-mailcap-2.1.53' from 'https://cache.nixos.org'...
-#8 38.66 copying path '/nix/store/y6hmqbmbwq0rmx1fzix5c5jszla2pzmp-tzdata-2024a' from 'https://cache.nixos.org'...
-#8 38.66 copying path '/nix/store/1q9vc0lq7qjlfjz47mfmlzdf86c543jy-xgcc-13.2.0-libgcc' from 'https://cache.nixos.org'...
-#8 38.66 copying path '/nix/store/4i0j14zymvlngyyhq2254f4g9m9my98y-gnu-config-2024-01-01' from 'https://cache.nixos.org'...
-#8 38.66 copying path '/nix/store/0rxb3ixzk4zaqivc9s795m0a3679wbw2-gcc-13.2.0-libgcc' from 'https://cache.nixos.org'...
-#8 38.66 copying path '/nix/store/yfp7dr8m7zi7kxk49wd714gwvhb105hf-libunistring-1.1' from 'https://cache.nixos.org'...
-#8 38.69 copying path '/nix/store/bq6xbl9cq6hkcn65mz2fzc2k38xiv87h-update-autotools-gnu-config-scripts-hook' from 'https://cache.nixos.org'...
-#8 38.76 copying path '/nix/store/ic63ay0py10fyryaw7345k4ps32da33w-libidn2-2.3.7' from 'https://cache.nixos.org'...
-#8 38.83 copying path '/nix/store/k7zgvzp2r31zkg9xqgjim7mbknryv6bs-glibc-2.39-52' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/5nk2ga7i2f030am4qpcdsd8qlk6i3z83-attr-2.5.2' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/306znyj77fv49kwnkpxmb0j2znqpa8bj-bash-5.2p26' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/xwcf1rw3ackqp2vxms9myf9jq2ny6ynv-bzip2-1.0.8' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/8vvkbgmnin1x2jkp7wcb2zg1p0vc4ks9-gawk-5.2.2' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/1iz89fy5fi998g43z1m4j7s5f095di68-caddy-2.8.4' from 'https://cache.nixos.org'...
-#8 39.34 copying path '/nix/store/1sffjkg6c6ff16fz5yr0pnz3j7vja42h-ed-1.20.2' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/xvzz97yk73hw03v5dhhz3j47ggwf1yq1-gcc-13.2.0-lib' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/g3vi60zgyjsvij7xkk6dxky1hkwh0ynd-pcre2-10.43' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/cdzpn0rdq810aknww3w9fy3wmw9ixr66-gnumake-4.4.1' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/5zjms21vpxlkbc0qyl5pmj2sidfmzmd7-gnused-4.9' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/5xynf9c9ml7d97q70kpq9rpqqmx13xl8-libxcrypt-4.4.36' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/lphbn1va4i43fj7f3m9xskf9y86khzf3-xz-5.4.6' from 'https://cache.nixos.org'...
-#8 39.35 copying path '/nix/store/lv6nackqis28gg7l2ic43f6nk52hb39g-zlib-1.3.1' from 'https://cache.nixos.org'...
-#8 39.45 copying path '/nix/store/mjgi65m3hgzqqvqcix848gskkw5zzwi9-acl-2.3.2' from 'https://cache.nixos.org'...
-#8 39.45 copying path '/nix/store/mxcq77rlan82dzpv3cgj0fh6qvv8ncil-bzip2-1.0.8-bin' from 'https://cache.nixos.org'...
-#8 39.45 copying path '/nix/store/0lfxbmchigx9vs9qmrlbahcy6nxwfnj1-patch-2.7.6' from 'https://cache.nixos.org'...
-#8 39.46 copying path '/nix/store/xx7x1dwybpssfhq8yikvzz38bh3yrq97-file-5.45' from 'https://cache.nixos.org'...
-#8 39.64 copying path '/nix/store/rik7p68cq7yzlj5pmfpf4yv6jnrpvlgf-gnutar-1.35' from 'https://cache.nixos.org'...
-#8 39.65 copying path '/nix/store/6i4xxaa812vsbli9jkq4mksdddrk27lw-xz-5.4.6-bin' from 'https://cache.nixos.org'...
-#8 39.68 copying path '/nix/store/j5chw7v1x3vlmf3wmdpdb5gwh9hl0b80-gzip-1.13' from 'https://cache.nixos.org'...
-#8 39.70 copying path '/nix/store/28gpmx3z6ss3znd7fhmrzmvk3x5lnfbk-gnugrep-3.11' from 'https://cache.nixos.org'...
-#8 40.01 copying path '/nix/store/7ivacs3m2fm19hyxdmrs05xisj82v6y5-gmp-with-cxx-6.3.0' from 'https://cache.nixos.org'...
-#8 40.01 copying path '/nix/store/nbad47q0m0m9c5xid7zh05hiknwircbp-patchelf-0.15.0' from 'https://cache.nixos.org'...
-#8 40.09 copying path '/nix/store/php4qidg2bxzmm79vpri025bqi0fa889-coreutils-9.5' from 'https://cache.nixos.org'...
-#8 40.17 copying path '/nix/store/jjcsr5gs4qanf7ln5c6wgcq4sn75a978-findutils-4.9.0' from 'https://cache.nixos.org'...
-#8 40.17 copying path '/nix/store/i34mknsjgrfyy71k2h79gda0bvagzc2j-diffutils-3.10' from 'https://cache.nixos.org'...
-#8 40.17 copying path '/nix/store/1iscdpbd3x9x3s3s25jd5ppl7yra0b77-perl-5.38.2' from 'https://cache.nixos.org'...
-#8 40.38 copying path '/nix/store/rg6agzlb4gcl4w2126m16qm4mgr8jgi6-stdenv-linux' from 'https://cache.nixos.org'...
-#8 40.54 building '/nix/store/hpybn12g5ny53hbyvrlvzdl3hpk392ql-builder.pl.drv'...
-#8 40.76 building '/nix/store/x9qrr2jb0d9d7gjg77imaric1nr9wl3s-libraries.drv'...
-#8 41.05 building '/nix/store/4vjgp6bh2gja20gkg167x66kgk10c24j-ba913eda2df8eb72147259189d55932012df6301-env.drv'...
-#8 41.50 building '/nix/store/llvngay9gncvs8l6dw01c6wlbh35zzf0-ba913eda2df8eb72147259189d55932012df6301-env.drv'...
-#8 41.58 created 4 symlinks in user environment
-#8 41.63 building '/nix/store/6zxkblvgw1ay1kb3a7ghxcqdgbyc7pk9-user-environment.drv'...
-#8 41.80 removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-#8 41.80 removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-#8 41.80 removing profile version 1
-#8 41.80 removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-#8 41.80 removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-#8 41.80 finding garbage collector roots...
-#8 41.81 removing stale link from '/nix/var/nix/gcroots/auto/lzjbmb2ry0z7lma2fvpqprb12921pnb5' to '/nix/var/nix/profiles/per-user/root/profile-1-link'
-#8 41.81 deleting garbage...
-#8 41.82 deleting '/nix/store/ir9fki7838bmk4hlj0zmwbw45q101j66-user-environment.drv'
-#8 41.82 deleting '/nix/store/b9rj4wk1cxh7g2ib89aqbcapzzar8p2s-user-environment'
-#8 41.82 deleting '/nix/store/xxyn8jfxcpr5ac9dvismfzx39ijh9kiv-env-manifest.nix'
-#8 41.84 deleting '/nix/store/rg6agzlb4gcl4w2126m16qm4mgr8jgi6-stdenv-linux'
-#8 41.84 deleting '/nix/store/nbad47q0m0m9c5xid7zh05hiknwircbp-patchelf-0.15.0'
-#8 41.84 deleting '/nix/store/jjcsr5gs4qanf7ln5c6wgcq4sn75a978-findutils-4.9.0'
-#8 41.85 deleting '/nix/store/i34mknsjgrfyy71k2h79gda0bvagzc2j-diffutils-3.10'
-#8 41.86 deleting '/nix/store/1iscdpbd3x9x3s3s25jd5ppl7yra0b77-perl-5.38.2'
-#8 41.98 deleting '/nix/store/php4qidg2bxzmm79vpri025bqi0fa889-coreutils-9.5'
-#8 41.99 deleting '/nix/store/7ivacs3m2fm19hyxdmrs05xisj82v6y5-gmp-with-cxx-6.3.0'
-#8 41.99 deleting '/nix/store/xvzz97yk73hw03v5dhhz3j47ggwf1yq1-gcc-13.2.0-lib'
-#8 42.00 deleting '/nix/store/0rxb3ixzk4zaqivc9s795m0a3679wbw2-gcc-13.2.0-libgcc'
-#8 42.00 deleting '/nix/store/4vkw8ifh2naxmxl323vzq0scm0l36c1v-builder.pl'
-#8 42.00 deleting '/nix/store/5zjms21vpxlkbc0qyl5pmj2sidfmzmd7-gnused-4.9'
-#8 42.01 deleting '/nix/store/0lfxbmchigx9vs9qmrlbahcy6nxwfnj1-patch-2.7.6'
-#8 42.01 deleting '/nix/store/1sffjkg6c6ff16fz5yr0pnz3j7vja42h-ed-1.20.2'
-#8 42.02 deleting '/nix/store/mxcq77rlan82dzpv3cgj0fh6qvv8ncil-bzip2-1.0.8-bin'
-#8 42.02 deleting '/nix/store/xwcf1rw3ackqp2vxms9myf9jq2ny6ynv-bzip2-1.0.8'
-#8 42.02 deleting '/nix/store/xx7x1dwybpssfhq8yikvzz38bh3yrq97-file-5.45'
-#8 42.02 deleting '/nix/store/rik7p68cq7yzlj5pmfpf4yv6jnrpvlgf-gnutar-1.35'
-#8 42.04 deleting '/nix/store/mjgi65m3hgzqqvqcix848gskkw5zzwi9-acl-2.3.2'
-#8 42.04 deleting '/nix/store/bq6xbl9cq6hkcn65mz2fzc2k38xiv87h-update-autotools-gnu-config-scripts-hook'
-#8 42.04 deleting '/nix/store/4i0j14zymvlngyyhq2254f4g9m9my98y-gnu-config-2024-01-01'
-#8 42.04 deleting '/nix/store/6i4xxaa812vsbli9jkq4mksdddrk27lw-xz-5.4.6-bin'
-#8 42.04 deleting '/nix/store/lphbn1va4i43fj7f3m9xskf9y86khzf3-xz-5.4.6'
-#8 42.05 deleting '/nix/store/5nk2ga7i2f030am4qpcdsd8qlk6i3z83-attr-2.5.2'
-#8 42.05 deleting '/nix/store/j5chw7v1x3vlmf3wmdpdb5gwh9hl0b80-gzip-1.13'
-#8 42.06 deleting '/nix/store/5xynf9c9ml7d97q70kpq9rpqqmx13xl8-libxcrypt-4.4.36'
-#8 42.06 deleting '/nix/store/cdzpn0rdq810aknww3w9fy3wmw9ixr66-gnumake-4.4.1'
-#8 42.07 deleting '/nix/store/8vvkbgmnin1x2jkp7wcb2zg1p0vc4ks9-gawk-5.2.2'
-#8 42.07 deleting '/nix/store/306znyj77fv49kwnkpxmb0j2znqpa8bj-bash-5.2p26'
-#8 42.08 deleting '/nix/store/28gpmx3z6ss3znd7fhmrzmvk3x5lnfbk-gnugrep-3.11'
-#8 42.09 deleting '/nix/store/lv6nackqis28gg7l2ic43f6nk52hb39g-zlib-1.3.1'
-#8 42.09 deleting '/nix/store/jdxlsyfxs63rxxhrzgc3mnhx0mz6s595-libraries'
-#8 42.09 deleting '/nix/store/g3vi60zgyjsvij7xkk6dxky1hkwh0ynd-pcre2-10.43'
-#8 42.09 deleting '/nix/store/p5l041qdj83dg93parxblr0q0al3hhsc-source'
-#8 45.64 deleting unused links...
-#8 45.64 note: currently hard linking saves -0.00 MiB
-#8 45.65 36 store paths deleted, 245.12 MiB freed
-#8 DONE 45.7s
+#9 [stage-0  4/15] RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+#9 CACHED
 
-#9 [stage-0  5/15] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
-#9 DONE 0.0s
-
-#10 [stage-0  6/15] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
-#10 0.117 unpacking 'https://github.com/NixOS/nixpkgs/archive/ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.tar.gz' into the Git cache...
-#10 38.79 unpacking 'https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz' into the Git cache...
-#10 39.35 installing 'ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env'
-#10 41.31 these 4 derivations will be built:
-#10 41.31   /nix/store/kmkgqwwal88b9lch9dl53iqa3wsm6vdb-libraries.drv
-#10 41.31   /nix/store/91aaayacr12psqb9fmp8arg1xafgg9v2-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv
-#10 41.31   /nix/store/9smjjb5pkmcbykz8p4786s3a4nq6m030-builder.pl.drv
-#10 41.31   /nix/store/4y056gjph1jq483nfvx2f8avkszvhv9f-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv
-#10 41.31 these 147 paths will be fetched (137.96 MiB download, 594.51 MiB unpacked):
-#10 41.31   /nix/store/cf7gkacyxmm66lwl5nj6j6yykbrg4q5c-acl-2.3.2
-#10 41.31   /nix/store/a9jgnlhkjkxav6qrc3rzg2q84pkl2wvr-attr-2.5.2
-#10 41.31   /nix/store/5mh7kaj2fyv8mk4sfq1brwxgc02884wi-bash-5.2p37
-#10 41.31   /nix/store/8zvalh0pmrmzypynv2gh8mw1vkkys19i-brotli-1.1.0-lib
-#10 41.31   /nix/store/ivl2v8rgg7qh1jkj5pwpqycax3rc2hnl-bzip2-1.0.8
-#10 41.31   /nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin
-#10 41.31   /nix/store/gabcx8gnanf8pnb8qld978nq35qa50bq-cairo-1.18.2
-#10 41.31   /nix/store/ja8cra4n6qprpq9pvzjm543anilw82nd-cfitsio-4.4.1
-#10 41.31   /nix/store/yglci1jp3f5520yd1vlfym7j6dw5k61m-cgif-0.3.2
-#10 41.31   /nix/store/4s9rah4cwaxflicsk5cndnknqlk9n4p3-coreutils-9.5
-#10 41.31   /nix/store/8yfak7dis3yqqls4mclzp5jb1ic2jzab-curl-8.11.0
-#10 41.31   /nix/store/yckhqngmx90bakzhcyrsk7dww1fm352s-curl-8.11.0-bin
-#10 41.31   /nix/store/ajdlln3w3z3my5q17q56g5m792mx066g-dejavu-fonts-minimal-2.37
-#10 41.31   /nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10
-#10 41.31   /nix/store/c85gb1jjys8jyrlf5s39vkvzwyrr5i49-djvulibre-3.5.28
-#10 41.31   /nix/store/mj7l6s0lbmiw8vrmbs4lam07jrpa5f3c-djvulibre-3.5.28-lib
-#10 41.31   /nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2
-#10 41.31   /nix/store/5ayb629gzbkc3amm6zd5jp1aciprb2zs-expat-2.6.4
-#10 41.31   /nix/store/5p0w7hi7sag5ixyy34hcam0wx07j08ym-fftw-double-3.3.10
-#10 41.31   /nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46
-#10 41.31   /nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0
-#10 41.31   /nix/store/di752hi5h827g1mgcmxsirvz9705njj6-fontconfig-2.15.0
-#10 41.31   /nix/store/rbv8d3qlvfij22qiarxbfy4z8b4j9dr6-fontconfig-2.15.0-lib
-#10 41.31   /nix/store/6h3h8437bqlcc54awn05jpswgps35j5r-freetype-2.13.3
-#10 41.31   /nix/store/7mj44s84k3d3wy2rc6bz10y1135f9ips-fribidi-1.0.16
-#10 41.31   /nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1
-#10 41.31   /nix/store/bpq1s72cw9qb2fs8mnmlw6hn2c7iy0ss-gcc-14-20241116-lib
-#10 41.31   /nix/store/17v0ywnr3akp85pvdi56gwl99ljv95kx-gcc-14-20241116-libgcc
-#10 41.31   /nix/store/2h8rk9xwa6xqy2pqk2lr2s57qbrx5p30-gdbm-1.24-lib
-#10 41.31   /nix/store/zfk34qfn5ps4skkzs1ijlbdfsg7cd4xm-gdk-pixbuf-2.42.12
-#10 41.31   /nix/store/d5pnhp3cic5dfla4p8vyylqsh6p0ylv0-giflib-5.2.2
-#10 41.31   /nix/store/rb870mk51kxlxq9crkldzs8n4vwr9sk4-glib-2.82.1
-#10 41.31   /nix/store/65h17wjrrlsj2rj540igylrx7fqcd6vq-glibc-2.40-36
-#10 41.31   /nix/store/a2byxfv4lc8f2g5xfzw8cz5q8k05wi29-gmp-with-cxx-6.3.0
-#10 41.31   /nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01
-#10 41.31   /nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11
-#10 41.31   /nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1
-#10 41.31   /nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9
-#10 41.31   /nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35
-#10 41.31   /nix/store/v0fa0y975c2n28g247sii9ckq9r3pig9-gperftools-2.15
-#10 41.31   /nix/store/gfg5gjsvri5zf4b7lx3vjnrmni9ahb0g-graphite2-1.3.14
-#10 41.31   /nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13
-#10 41.31   /nix/store/p3g167rbg9zysllq7g1r44y5pz8r4k5r-harfbuzz-10.1.0
-#10 41.31   /nix/store/9f6ipqw994kdwchbcfak0siywfil33p4-hdf5-cpp-1.14.5
-#10 41.31   /nix/store/wwipgdqb4p2fr46kmw9c5wlk799kbl68-icu4c-74.2
-#10 41.31   /nix/store/m8w3mf0i4862q22bxad0wspkgdy4jnkk-icu4c-74.2-dev
-#10 41.31   /nix/store/wj4gp2b1mks14ry6m25rfwkpbj0qwvc0-imagemagick-7.1.1-43
-#10 41.31   /nix/store/v91h9cwpi1f0b7jpdzbkbd10vwsspsh0-imath-3.1.12
-#10 41.31   /nix/store/2wh1gqyzf5xsvxpdz2k0bxiz583wwq29-keyutils-1.6.3-lib
-#10 41.31   /nix/store/zqkizm9zn19bf9n58xcfxl4ks7yfs8my-krb5-1.21.3-lib
-#10 41.31   /nix/store/yj3c4mibbzl59ifsdfnjxqb41kwliiy1-lcms2-2.16
-#10 41.31   /nix/store/1hpi9rlpw4n3790bs75d4dkb8kb2iv72-lerc-4.0.0
-#10 41.31   /nix/store/yvj2adfbgx75k7lpfy1wcpsqlyawcimx-libICE-1.1.1
-#10 41.31   /nix/store/7b7812zb655pjc9pn6836dg3894hkrli-libSM-1.2.4
-#10 41.31   /nix/store/nlqind4szw3amcmhgy4pd2n0894558gg-libX11-1.8.10
-#10 41.31   /nix/store/hjbxiwsc587b8dc6v6pisa34aj10hq23-libXau-1.0.11
-#10 41.31   /nix/store/c9gk656q2x8av467r06hcjag31drjfzh-libXdmcp-1.1.5
-#10 41.31   /nix/store/r87iqz07igmwfvb12mgr6rmpb6353ys4-libXext-1.3.6
-#10 41.31   /nix/store/yf0rrjirmz7kkcmw76af246y0m303dph-libXft-2.3.8
-#10 41.31   /nix/store/l995bym22hcz8j97758pl0rdpczd7r7c-libXrender-0.9.11
-#10 41.31   /nix/store/4mbhknl327gmv9sbprcifg76k7rfhxj3-libXt-1.3.1
-#10 41.31   /nix/store/cgw63wf51z3vlzaddcdkvqiflns1kbz8-libaom-3.11.0
-#10 41.31   /nix/store/3rii225g7j0gb8i57mwb9rqq8djssmd3-libarchive-3.7.7-lib
-#10 41.31   /nix/store/mw5p7vl6vnpws3nnfkk55xy0lwymi0p9-libdatrie-2019-12-20-lib
-#10 41.31   /nix/store/jd5a6l9saa7b4mxnfsgfiq2q50dfxwzy-libde265-1.0.15
-#10 41.31   /nix/store/03vb8v0mmr98b2rh11klsyd5xhmk0wd2-libdeflate-1.22
-#10 41.31   /nix/store/98kykq9gkjqxi0mg9mmn3ibq6bv2pkcs-libdicom-1.0.5
-#10 41.31   /nix/store/msfjbxffgibhwhy18p5z90244s4acr7d-libexif-0.6.24
-#10 41.31   /nix/store/r04wysx6yl7ys1rdv1b1lih6in1810r0-libffi-3.4.6
-#10 41.31   /nix/store/5mb70vg3kdzkyn0zqdgm4f87mdi0yi4i-libglvnd-1.7.0
-#10 41.31   /nix/store/ysrhnfcrnb08csf9yxzzf85q7c4lf74d-libheif-1.18.2
-#10 41.31   /nix/store/34z2792zyd4ayl5186vx0s98ckdaccz9-libidn2-2.3.7
-#10 41.31   /nix/store/gi3sydcin9p7lgs57yadn9zjpcpqa7sk-libimagequant-4.3.1
-#10 41.31   /nix/store/jiiih03zpspc2lgcihz79yq0gd28zqqv-libjpeg-turbo-3.0.4
-#10 41.31   /nix/store/84h1bf5arlsc37d1d3q79qbim98bbpj9-libjxl-0.11.1
-#10 41.31   /nix/store/x5ayh917dddbf2nc2bpy7gxh5b1m81ja-liblqr-1-0.4.2
-#10 41.31   /nix/store/ayk2mh02j7wrvgx17155xcwvpmgrzzka-libpng-apng-1.6.43
-#10 41.31   /nix/store/fkfhss4k4zqi3rqzwgisqa8gm8xjb0b2-libpsl-0.21.5
-#10 41.31   /nix/store/6izi710qb2k885933pc23yjjyf6m1igd-libraw-0.21.3-lib
-#10 41.31   /nix/store/jqqqz068sps7lvf8skn34l2j7ajcybjk-librsvg-2.58.3
-#10 41.31   /nix/store/aaj9rh2v78njlmi6pyhdfyy4mzl5b8ys-libselinux-3.7
-#10 41.31   /nix/store/ha0xbmzw56fl6pa1a7syhvjjn6ym8yjx-libspng-0.7.4
-#10 41.31   /nix/store/fp0l21s4j49wcp9l4w59nlb4biy0dr8f-libssh2-1.11.1
-#10 41.31   /nix/store/27nafn9ayjh8xm65zx6r8mykwlnrird4-libtasn1-4.19.0
-#10 41.31   /nix/store/a6g109mwjdxpri6iala0fc1xqqf2gz42-libthai-0.1.29
-#10 41.31   /nix/store/bq3k3dc1zmb4apnsz8l8z4lwlb8kh2lf-libtiff-4.7.0
-#10 41.31   /nix/store/xcqcgqazykf6s7fsn08k0blnh0wisdcl-libunistring-1.3
-#10 41.31   /nix/store/5v176q64kz5j0b83mffb32h47lgi4xc5-libunwind-1.8.1
-#10 41.31   /nix/store/r9ac2hwnmb0nxwsrvr6gi9wsqf2whfqj-libuv-1.49.2
-#10 41.31   /nix/store/ll14czvpxglf6nnwmmrmygplm830fvlv-libuv-1.49.2-dev
-#10 41.31   /nix/store/wvrxszldz4jcmpcxkl5rzvb3709kr0gk-libvmaf-3.0.0
-#10 41.31   /nix/store/mmah8dm69x4rj9zhpf0nawrlr6wwnmpp-libwebp-1.4.0
-#10 41.31   /nix/store/2j3c18398phz5c1376x2qvva8gx9g551-libxcb-1.17.0
-#10 41.31   /nix/store/6cr0spsvymmrp1hj5n0kbaxw55w1lqyp-libxcrypt-4.4.36
-#10 41.31   /nix/store/f1arw96zb04zn4zh0ycp0vpiz5ampgkz-libxml2-2.13.5
-#10 41.31   /nix/store/ky5k49f2byfjg49ci75ci89szy29hk4k-mailcap-2.1.54
-#10 41.31   /nix/store/haakhfkynkrvizwb34bkpwv9p4llslnl-matio-1.5.28
-#10 41.31   /nix/store/1aybnfshx1vxh7vi04bhfh1n69k15335-mpdecimal-4.0.0
-#10 41.31   /nix/store/wm1qn5jqrxpcjkc640gq8a90ns5gw3cn-ncurses-6.4.20221231
-#10 41.31   /nix/store/82lh8f5wi6ya5jkcwr036md8630j652d-nghttp2-1.64.0-lib
-#10 41.31   /nix/store/fkyp1bm5gll9adnfcj92snyym524mdrj-nodejs-22.11.0
-#10 41.31   /nix/store/717x9rbpgs37hds2zmc5h36r8q8d6p33-nspr-4.36
-#10 41.31   /nix/store/b8vhn4j5p5lkwn5nwi6jg92s1v3r0xgx-nss-3.101.2
-#10 41.31   /nix/store/m9f8ydylkx8rzj75mpsy616abkij21fx-numactl-2.0.18
-#10 41.31   /nix/store/2p39yh7jrbwmgk0q9yb6xvc2bchc3sgq-openexr-2.5.10
-#10 41.31   /nix/store/jl8nrfl62pizi98y4x95w30cxmvmc4gp-openexr-3.2.4
-#10 41.31   /nix/store/m1f0gvzhahvsrb0zjjb1p5km7dfi5fdh-openjpeg-2.5.2
-#10 41.31   /nix/store/96xlj95rp4rzjm6d1gylq55swjj6yblh-openslide-4.0.0
-#10 41.31   /nix/store/h1ydpxkw9qhjdxjpic1pdc2nirggyy6f-openssl-3.3.2
-#10 41.31   /nix/store/lygl27c44xv73kx1spskcgvzwq7z337c-openssl-3.3.2-bin
-#10 41.31   /nix/store/pp2zf8bdgyz60ds8vcshk2603gcjgp72-openssl-3.3.2-dev
-#10 41.31   /nix/store/c05chwpch9r5xbzbig9b80dlq21191jk-p11-kit-0.25.5
-#10 41.31   /nix/store/g09ks6j7h74m55nsr7v9i1m37j25r23b-pango-1.54.0
-#10 41.31   /nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6
-#10 41.31   /nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0
-#10 41.31   /nix/store/3j1p598fivxs69wx3a657ysv3rw8k06l-pcre2-10.44
-#10 41.31   /nix/store/1i003ijlh9i0mzp6alqby5hg3090pjdx-perl-5.40.0
-#10 41.31   /nix/store/5z7yxa99nghyvjrqspzlimgfsydc2an7-pixman-0.44.2
-#10 41.31   /nix/store/qymsiixx4v0q4qjmrhjbnrc4b4ghm7b8-pkg-config-0.29.2
-#10 41.31   /nix/store/kvng1xl2g7g77mim1y51y5mqr4hnrsx5-pkg-config-0.29.2-man
-#10 41.31   /nix/store/0d4m43yp69lrm8imxbqgl9zxjwwz52jw-pkg-config-wrapper-0.29.2
-#10 41.31   /nix/store/xjpdc7ryah1y4l9m8qd5n1hcywfapwdi-pkg-config-wrapper-0.29.2-man
-#10 41.31   /nix/store/wzqjgxq2nkpkhczvnmip3r64h20s4hfj-poppler-data-0.4.12
-#10 41.31   /nix/store/p5q72iq3fya2p1dwhc5sdv7bzgj94nbp-poppler-glib-24.02.0
-#10 41.31   /nix/store/43wkmc0d1g832zpyc3m5b5gw7zw2bcsh-potrace-1.16
-#10 41.31   /nix/store/0lj0851s55mkwmylmkcw4m71m7ggl772-publicsuffix-list-0-unstable-2024-12-06
-#10 41.31   /nix/store/c9m6yd8fg1flz2j5r4bif1ib5j20a0cy-python3-3.12.8
-#10 41.31   /nix/store/d2ajxvn166qyndpi27b2ahy83p6vg7m1-python3-3.12.8-env
-#10 41.31   /nix/store/hs05sb8z5ik7qkdnxdq3chzb02xy99di-python3.12-pycairo-1.27.0
-#10 41.31   /nix/store/9jzrcxf9wi9yp679il6j6zh6cq81p4s9-readline-8.2p13
-#10 41.31   /nix/store/dj96qp9vps02l3n8xgc2vallqa9rhafb-sqlite-3.47.0
-#10 41.31   /nix/store/yc39wvfz87i0bl8r6vnhq48n6clbx2pb-sqlite-3.47.0-bin
-#10 41.31   /nix/store/i47d0rzbbnihcxkcaj48jgii5pj58djc-sqlite-3.47.0-dev
-#10 41.31   /nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux
-#10 41.31   /nix/store/gfkyf4hw4riqwgf5scfk8r8g69crbn4x-tzdata-2024b
-#10 41.31   /nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook
-#10 41.31   /nix/store/2phvd8h14vwls0da1kmsxc73vzmhkm3b-util-linux-minimal-2.39.4-lib
-#10 41.31   /nix/store/v6ya79259s9wqm17v2gxhg1ch900g7ap-vips-8.16.0
-#10 41.31   /nix/store/x9a2r7rflh1bj36wvqhanrnnl8wz8f5r-vips-8.16.0-bin
-#10 41.31   /nix/store/sn01kyiir626zprvlka3b66qc1safi0h-vips-8.16.0-man
-#10 41.31   /nix/store/0dszincd4731qz91m72kxbyr40c1s5vz-x265-3.6
-#10 41.31   /nix/store/acfkqzj5qrqs88a4a6ixnybbjxja663d-xgcc-14-20241116-libgcc
-#10 41.31   /nix/store/c2njy6bv84kw1i4bjf5k5gn7gz8hn57n-xz-5.6.3
-#10 41.31   /nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin
-#10 41.31   /nix/store/cqlaa2xf6lslnizyj9xqa8j0ii1yqw0x-zlib-1.3.1
-#10 41.31   /nix/store/1lggwqzapn5mn49l9zy4h566ysv9kzdb-zlib-1.3.1-dev
-#10 41.31   /nix/store/s0zynhz13rhg0gg8cy0ga4c0lnv3yqdn-zstd-1.5.6
-#10 41.33 copying path '/nix/store/sn01kyiir626zprvlka3b66qc1safi0h-vips-8.16.0-man' from 'https://cache.nixos.org'...
-#10 41.33 copying path '/nix/store/ky5k49f2byfjg49ci75ci89szy29hk4k-mailcap-2.1.54' from 'https://cache.nixos.org'...
-#10 41.33 copying path '/nix/store/kvng1xl2g7g77mim1y51y5mqr4hnrsx5-pkg-config-0.29.2-man' from 'https://cache.nixos.org'...
-#10 41.33 copying path '/nix/store/gfkyf4hw4riqwgf5scfk8r8g69crbn4x-tzdata-2024b' from 'https://cache.nixos.org'...
-#10 41.34 copying path '/nix/store/17v0ywnr3akp85pvdi56gwl99ljv95kx-gcc-14-20241116-libgcc' from 'https://cache.nixos.org'...
-#10 41.34 copying path '/nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01' from 'https://cache.nixos.org'...
-#10 41.34 copying path '/nix/store/acfkqzj5qrqs88a4a6ixnybbjxja663d-xgcc-14-20241116-libgcc' from 'https://cache.nixos.org'...
-#10 41.34 copying path '/nix/store/ajdlln3w3z3my5q17q56g5m792mx066g-dejavu-fonts-minimal-2.37' from 'https://cache.nixos.org'...
-#10 41.34 copying path '/nix/store/xcqcgqazykf6s7fsn08k0blnh0wisdcl-libunistring-1.3' from 'https://cache.nixos.org'...
-#10 41.35 copying path '/nix/store/wzqjgxq2nkpkhczvnmip3r64h20s4hfj-poppler-data-0.4.12' from 'https://cache.nixos.org'...
-#10 41.35 copying path '/nix/store/c85gb1jjys8jyrlf5s39vkvzwyrr5i49-djvulibre-3.5.28' from 'https://cache.nixos.org'...
-#10 41.35 copying path '/nix/store/0lj0851s55mkwmylmkcw4m71m7ggl772-publicsuffix-list-0-unstable-2024-12-06' from 'https://cache.nixos.org'...
-#10 41.38 copying path '/nix/store/xjpdc7ryah1y4l9m8qd5n1hcywfapwdi-pkg-config-wrapper-0.29.2-man' from 'https://cache.nixos.org'...
-#10 41.39 copying path '/nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook' from 'https://cache.nixos.org'...
-#10 41.47 copying path '/nix/store/di752hi5h827g1mgcmxsirvz9705njj6-fontconfig-2.15.0' from 'https://cache.nixos.org'...
-#10 41.49 copying path '/nix/store/34z2792zyd4ayl5186vx0s98ckdaccz9-libidn2-2.3.7' from 'https://cache.nixos.org'...
-#10 41.57 copying path '/nix/store/65h17wjrrlsj2rj540igylrx7fqcd6vq-glibc-2.40-36' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/5mh7kaj2fyv8mk4sfq1brwxgc02884wi-bash-5.2p37' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/a9jgnlhkjkxav6qrc3rzg2q84pkl2wvr-attr-2.5.2' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/bpq1s72cw9qb2fs8mnmlw6hn2c7iy0ss-gcc-14-20241116-lib' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/2h8rk9xwa6xqy2pqk2lr2s57qbrx5p30-gdbm-1.24-lib' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/d5pnhp3cic5dfla4p8vyylqsh6p0ylv0-giflib-5.2.2' from 'https://cache.nixos.org'...
-#10 42.12 copying path '/nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/2wh1gqyzf5xsvxpdz2k0bxiz583wwq29-keyutils-1.6.3-lib' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/yj3c4mibbzl59ifsdfnjxqb41kwliiy1-lcms2-2.16' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/8zvalh0pmrmzypynv2gh8mw1vkkys19i-brotli-1.1.0-lib' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/yglci1jp3f5520yd1vlfym7j6dw5k61m-cgif-0.3.2' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/ivl2v8rgg7qh1jkj5pwpqycax3rc2hnl-bzip2-1.0.8' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/5ayb629gzbkc3amm6zd5jp1aciprb2zs-expat-2.6.4' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/7mj44s84k3d3wy2rc6bz10y1135f9ips-fribidi-1.0.16' from 'https://cache.nixos.org'...
-#10 42.13 copying path '/nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1' from 'https://cache.nixos.org'...
-#10 42.16 copying path '/nix/store/yvj2adfbgx75k7lpfy1wcpsqlyawcimx-libICE-1.1.1' from 'https://cache.nixos.org'...
-#10 42.16 copying path '/nix/store/hjbxiwsc587b8dc6v6pisa34aj10hq23-libXau-1.0.11' from 'https://cache.nixos.org'...
-#10 42.18 copying path '/nix/store/cf7gkacyxmm66lwl5nj6j6yykbrg4q5c-acl-2.3.2' from 'https://cache.nixos.org'...
-#10 42.18 copying path '/nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin' from 'https://cache.nixos.org'...
-#10 42.20 copying path '/nix/store/c9gk656q2x8av467r06hcjag31drjfzh-libXdmcp-1.1.5' from 'https://cache.nixos.org'...
-#10 42.20 copying path '/nix/store/mw5p7vl6vnpws3nnfkk55xy0lwymi0p9-libdatrie-2019-12-20-lib' from 'https://cache.nixos.org'...
-#10 42.23 copying path '/nix/store/03vb8v0mmr98b2rh11klsyd5xhmk0wd2-libdeflate-1.22' from 'https://cache.nixos.org'...
-#10 42.23 copying path '/nix/store/98kykq9gkjqxi0mg9mmn3ibq6bv2pkcs-libdicom-1.0.5' from 'https://cache.nixos.org'...
-#10 42.24 copying path '/nix/store/msfjbxffgibhwhy18p5z90244s4acr7d-libexif-0.6.24' from 'https://cache.nixos.org'...
-#10 42.24 copying path '/nix/store/r04wysx6yl7ys1rdv1b1lih6in1810r0-libffi-3.4.6' from 'https://cache.nixos.org'...
-#10 42.24 copying path '/nix/store/jiiih03zpspc2lgcihz79yq0gd28zqqv-libjpeg-turbo-3.0.4' from 'https://cache.nixos.org'...
-#10 42.24 copying path '/nix/store/fkfhss4k4zqi3rqzwgisqa8gm8xjb0b2-libpsl-0.21.5' from 'https://cache.nixos.org'...
-#10 42.24 copying path '/nix/store/27nafn9ayjh8xm65zx6r8mykwlnrird4-libtasn1-4.19.0' from 'https://cache.nixos.org'...
-#10 42.25 copying path '/nix/store/a6g109mwjdxpri6iala0fc1xqqf2gz42-libthai-0.1.29' from 'https://cache.nixos.org'...
-#10 42.25 copying path '/nix/store/r9ac2hwnmb0nxwsrvr6gi9wsqf2whfqj-libuv-1.49.2' from 'https://cache.nixos.org'...
-#10 42.26 copying path '/nix/store/2j3c18398phz5c1376x2qvva8gx9g551-libxcb-1.17.0' from 'https://cache.nixos.org'...
-#10 42.27 copying path '/nix/store/6cr0spsvymmrp1hj5n0kbaxw55w1lqyp-libxcrypt-4.4.36' from 'https://cache.nixos.org'...
-#10 42.27 copying path '/nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35' from 'https://cache.nixos.org'...
-#10 42.33 copying path '/nix/store/f1arw96zb04zn4zh0ycp0vpiz5ampgkz-libxml2-2.13.5' from 'https://cache.nixos.org'...
-#10 42.33 copying path '/nix/store/82lh8f5wi6ya5jkcwr036md8630j652d-nghttp2-1.64.0-lib' from 'https://cache.nixos.org'...
-#10 42.34 copying path '/nix/store/1aybnfshx1vxh7vi04bhfh1n69k15335-mpdecimal-4.0.0' from 'https://cache.nixos.org'...
-#10 42.34 copying path '/nix/store/wm1qn5jqrxpcjkc640gq8a90ns5gw3cn-ncurses-6.4.20221231' from 'https://cache.nixos.org'...
-#10 42.34 copying path '/nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13' from 'https://cache.nixos.org'...
-#10 42.35 copying path '/nix/store/ll14czvpxglf6nnwmmrmygplm830fvlv-libuv-1.49.2-dev' from 'https://cache.nixos.org'...
-#10 42.35 copying path '/nix/store/717x9rbpgs37hds2zmc5h36r8q8d6p33-nspr-4.36' from 'https://cache.nixos.org'...
-#10 42.36 copying path '/nix/store/h1ydpxkw9qhjdxjpic1pdc2nirggyy6f-openssl-3.3.2' from 'https://cache.nixos.org'...
-#10 42.41 copying path '/nix/store/c05chwpch9r5xbzbig9b80dlq21191jk-p11-kit-0.25.5' from 'https://cache.nixos.org'...
-#10 42.41 copying path '/nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6' from 'https://cache.nixos.org'...
-#10 42.44 copying path '/nix/store/3j1p598fivxs69wx3a657ysv3rw8k06l-pcre2-10.44' from 'https://cache.nixos.org'...
-#10 42.49 copying path '/nix/store/5z7yxa99nghyvjrqspzlimgfsydc2an7-pixman-0.44.2' from 'https://cache.nixos.org'...
-#10 42.51 copying path '/nix/store/qymsiixx4v0q4qjmrhjbnrc4b4ghm7b8-pkg-config-0.29.2' from 'https://cache.nixos.org'...
-#10 42.52 copying path '/nix/store/2phvd8h14vwls0da1kmsxc73vzmhkm3b-util-linux-minimal-2.39.4-lib' from 'https://cache.nixos.org'...
-#10 42.58 copying path '/nix/store/c2njy6bv84kw1i4bjf5k5gn7gz8hn57n-xz-5.6.3' from 'https://cache.nixos.org'...
-#10 42.59 copying path '/nix/store/cqlaa2xf6lslnizyj9xqa8j0ii1yqw0x-zlib-1.3.1' from 'https://cache.nixos.org'...
-#10 42.60 copying path '/nix/store/nlqind4szw3amcmhgy4pd2n0894558gg-libX11-1.8.10' from 'https://cache.nixos.org'...
-#10 42.64 copying path '/nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46' from 'https://cache.nixos.org'...
-#10 42.64 copying path '/nix/store/ayk2mh02j7wrvgx17155xcwvpmgrzzka-libpng-apng-1.6.43' from 'https://cache.nixos.org'...
-#10 42.64 copying path '/nix/store/ha0xbmzw56fl6pa1a7syhvjjn6ym8yjx-libspng-0.7.4' from 'https://cache.nixos.org'...
-#10 42.64 copying path '/nix/store/43wkmc0d1g832zpyc3m5b5gw7zw2bcsh-potrace-1.16' from 'https://cache.nixos.org'...
-#10 42.68 copying path '/nix/store/dj96qp9vps02l3n8xgc2vallqa9rhafb-sqlite-3.47.0' from 'https://cache.nixos.org'...
-#10 42.71 copying path '/nix/store/yc39wvfz87i0bl8r6vnhq48n6clbx2pb-sqlite-3.47.0-bin' from 'https://cache.nixos.org'...
-#10 42.75 copying path '/nix/store/0d4m43yp69lrm8imxbqgl9zxjwwz52jw-pkg-config-wrapper-0.29.2' from 'https://cache.nixos.org'...
-#10 42.75 copying path '/nix/store/1lggwqzapn5mn49l9zy4h566ysv9kzdb-zlib-1.3.1-dev' from 'https://cache.nixos.org'...
-#10 42.75 copying path '/nix/store/6h3h8437bqlcc54awn05jpswgps35j5r-freetype-2.13.3' from 'https://cache.nixos.org'...
-#10 42.80 copying path '/nix/store/mmah8dm69x4rj9zhpf0nawrlr6wwnmpp-libwebp-1.4.0' from 'https://cache.nixos.org'...
-#10 42.80 copying path '/nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin' from 'https://cache.nixos.org'...
-#10 42.82 copying path '/nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11' from 'https://cache.nixos.org'...
-#10 42.82 copying path '/nix/store/aaj9rh2v78njlmi6pyhdfyy4mzl5b8ys-libselinux-3.7' from 'https://cache.nixos.org'...
-#10 42.89 copying path '/nix/store/7b7812zb655pjc9pn6836dg3894hkrli-libSM-1.2.4' from 'https://cache.nixos.org'...
-#10 42.95 copying path '/nix/store/rb870mk51kxlxq9crkldzs8n4vwr9sk4-glib-2.82.1' from 'https://cache.nixos.org'...
-#10 42.98 copying path '/nix/store/rbv8d3qlvfij22qiarxbfy4z8b4j9dr6-fontconfig-2.15.0-lib' from 'https://cache.nixos.org'...
-#10 43.02 copying path '/nix/store/i47d0rzbbnihcxkcaj48jgii5pj58djc-sqlite-3.47.0-dev' from 'https://cache.nixos.org'...
-#10 43.13 copying path '/nix/store/r87iqz07igmwfvb12mgr6rmpb6353ys4-libXext-1.3.6' from 'https://cache.nixos.org'...
-#10 43.13 copying path '/nix/store/l995bym22hcz8j97758pl0rdpczd7r7c-libXrender-0.9.11' from 'https://cache.nixos.org'...
-#10 43.13 copying path '/nix/store/4mbhknl327gmv9sbprcifg76k7rfhxj3-libXt-1.3.1' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/mj7l6s0lbmiw8vrmbs4lam07jrpa5f3c-djvulibre-3.5.28-lib' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/wwipgdqb4p2fr46kmw9c5wlk799kbl68-icu4c-74.2' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/v91h9cwpi1f0b7jpdzbkbd10vwsspsh0-imath-3.1.12' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/5p0w7hi7sag5ixyy34hcam0wx07j08ym-fftw-double-3.3.10' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/a2byxfv4lc8f2g5xfzw8cz5q8k05wi29-gmp-with-cxx-6.3.0' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/gfg5gjsvri5zf4b7lx3vjnrmni9ahb0g-graphite2-1.3.14' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/9f6ipqw994kdwchbcfak0siywfil33p4-hdf5-cpp-1.14.5' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/1hpi9rlpw4n3790bs75d4dkb8kb2iv72-lerc-4.0.0' from 'https://cache.nixos.org'...
-#10 43.15 copying path '/nix/store/jd5a6l9saa7b4mxnfsgfiq2q50dfxwzy-libde265-1.0.15' from 'https://cache.nixos.org'...
-#10 43.17 copying path '/nix/store/gi3sydcin9p7lgs57yadn9zjpcpqa7sk-libimagequant-4.3.1' from 'https://cache.nixos.org'...
-#10 43.18 copying path '/nix/store/5mb70vg3kdzkyn0zqdgm4f87mdi0yi4i-libglvnd-1.7.0' from 'https://cache.nixos.org'...
-#10 43.19 copying path '/nix/store/yf0rrjirmz7kkcmw76af246y0m303dph-libXft-2.3.8' from 'https://cache.nixos.org'...
-#10 43.20 copying path '/nix/store/6izi710qb2k885933pc23yjjyf6m1igd-libraw-0.21.3-lib' from 'https://cache.nixos.org'...
-#10 43.25 copying path '/nix/store/5v176q64kz5j0b83mffb32h47lgi4xc5-libunwind-1.8.1' from 'https://cache.nixos.org'...
-#10 43.31 copying path '/nix/store/b8vhn4j5p5lkwn5nwi6jg92s1v3r0xgx-nss-3.101.2' from 'https://cache.nixos.org'...
-#10 43.31 copying path '/nix/store/wvrxszldz4jcmpcxkl5rzvb3709kr0gk-libvmaf-3.0.0' from 'https://cache.nixos.org'...
-#10 43.32 copying path '/nix/store/4s9rah4cwaxflicsk5cndnknqlk9n4p3-coreutils-9.5' from 'https://cache.nixos.org'...
-#10 43.38 copying path '/nix/store/m9f8ydylkx8rzj75mpsy616abkij21fx-numactl-2.0.18' from 'https://cache.nixos.org'...
-#10 43.41 copying path '/nix/store/2p39yh7jrbwmgk0q9yb6xvc2bchc3sgq-openexr-2.5.10' from 'https://cache.nixos.org'...
-#10 43.42 copying path '/nix/store/jl8nrfl62pizi98y4x95w30cxmvmc4gp-openexr-3.2.4' from 'https://cache.nixos.org'...
-#10 43.45 copying path '/nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0' from 'https://cache.nixos.org'...
-#10 43.46 copying path '/nix/store/zqkizm9zn19bf9n58xcfxl4ks7yfs8my-krb5-1.21.3-lib' from 'https://cache.nixos.org'...
-#10 43.48 copying path '/nix/store/fp0l21s4j49wcp9l4w59nlb4biy0dr8f-libssh2-1.11.1' from 'https://cache.nixos.org'...
-#10 43.51 copying path '/nix/store/s0zynhz13rhg0gg8cy0ga4c0lnv3yqdn-zstd-1.5.6' from 'https://cache.nixos.org'...
-#10 43.51 copying path '/nix/store/lygl27c44xv73kx1spskcgvzwq7z337c-openssl-3.3.2-bin' from 'https://cache.nixos.org'...
-#10 43.53 copying path '/nix/store/0dszincd4731qz91m72kxbyr40c1s5vz-x265-3.6' from 'https://cache.nixos.org'...
-#10 43.56 copying path '/nix/store/cgw63wf51z3vlzaddcdkvqiflns1kbz8-libaom-3.11.0' from 'https://cache.nixos.org'...
-#10 43.76 copying path '/nix/store/3rii225g7j0gb8i57mwb9rqq8djssmd3-libarchive-3.7.7-lib' from 'https://cache.nixos.org'...
-#10 43.76 copying path '/nix/store/bq3k3dc1zmb4apnsz8l8z4lwlb8kh2lf-libtiff-4.7.0' from 'https://cache.nixos.org'...
-#10 43.78 copying path '/nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10' from 'https://cache.nixos.org'...
-#10 43.81 copying path '/nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0' from 'https://cache.nixos.org'...
-#10 43.86 copying path '/nix/store/pp2zf8bdgyz60ds8vcshk2603gcjgp72-openssl-3.3.2-dev' from 'https://cache.nixos.org'...
-#10 43.93 copying path '/nix/store/1i003ijlh9i0mzp6alqby5hg3090pjdx-perl-5.40.0' from 'https://cache.nixos.org'...
-#10 44.03 copying path '/nix/store/m1f0gvzhahvsrb0zjjb1p5km7dfi5fdh-openjpeg-2.5.2' from 'https://cache.nixos.org'...
-#10 44.03 copying path '/nix/store/8yfak7dis3yqqls4mclzp5jb1ic2jzab-curl-8.11.0' from 'https://cache.nixos.org'...
-#10 44.13 copying path '/nix/store/haakhfkynkrvizwb34bkpwv9p4llslnl-matio-1.5.28' from 'https://cache.nixos.org'...
-#10 44.20 copying path '/nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux' from 'https://cache.nixos.org'...
-#10 44.48 building '/nix/store/9smjjb5pkmcbykz8p4786s3a4nq6m030-builder.pl.drv'...
-#10 44.49 copying path '/nix/store/gabcx8gnanf8pnb8qld978nq35qa50bq-cairo-1.18.2' from 'https://cache.nixos.org'...
-#10 44.49 copying path '/nix/store/zfk34qfn5ps4skkzs1ijlbdfsg7cd4xm-gdk-pixbuf-2.42.12' from 'https://cache.nixos.org'...
-#10 44.49 copying path '/nix/store/p3g167rbg9zysllq7g1r44y5pz8r4k5r-harfbuzz-10.1.0' from 'https://cache.nixos.org'...
-#10 44.49 copying path '/nix/store/x5ayh917dddbf2nc2bpy7gxh5b1m81ja-liblqr-1-0.4.2' from 'https://cache.nixos.org'...
-#10 44.50 copying path '/nix/store/ja8cra4n6qprpq9pvzjm543anilw82nd-cfitsio-4.4.1' from 'https://cache.nixos.org'...
-#10 44.50 copying path '/nix/store/yckhqngmx90bakzhcyrsk7dww1fm352s-curl-8.11.0-bin' from 'https://cache.nixos.org'...
-#10 44.55 copying path '/nix/store/9jzrcxf9wi9yp679il6j6zh6cq81p4s9-readline-8.2p13' from 'https://cache.nixos.org'...
-#10 44.70 copying path '/nix/store/c9m6yd8fg1flz2j5r4bif1ib5j20a0cy-python3-3.12.8' from 'https://cache.nixos.org'...
-#10 44.83 copying path '/nix/store/p5q72iq3fya2p1dwhc5sdv7bzgj94nbp-poppler-glib-24.02.0' from 'https://cache.nixos.org'...
-#10 44.91 copying path '/nix/store/g09ks6j7h74m55nsr7v9i1m37j25r23b-pango-1.54.0' from 'https://cache.nixos.org'...
-#10 44.97 copying path '/nix/store/ysrhnfcrnb08csf9yxzzf85q7c4lf74d-libheif-1.18.2' from 'https://cache.nixos.org'...
-#10 44.97 copying path '/nix/store/96xlj95rp4rzjm6d1gylq55swjj6yblh-openslide-4.0.0' from 'https://cache.nixos.org'...
-#10 45.38 building '/nix/store/kmkgqwwal88b9lch9dl53iqa3wsm6vdb-libraries.drv'...
-#10 45.38 copying path '/nix/store/jqqqz068sps7lvf8skn34l2j7ajcybjk-librsvg-2.58.3' from 'https://cache.nixos.org'...
-#10 46.07 building '/nix/store/91aaayacr12psqb9fmp8arg1xafgg9v2-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv'...
-#10 46.07 copying path '/nix/store/m8w3mf0i4862q22bxad0wspkgdy4jnkk-icu4c-74.2-dev' from 'https://cache.nixos.org'...
-#10 46.29 copying path '/nix/store/fkyp1bm5gll9adnfcj92snyym524mdrj-nodejs-22.11.0' from 'https://cache.nixos.org'...
-#10 47.05 copying path '/nix/store/v0fa0y975c2n28g247sii9ckq9r3pig9-gperftools-2.15' from 'https://cache.nixos.org'...
-#10 47.20 copying path '/nix/store/84h1bf5arlsc37d1d3q79qbim98bbpj9-libjxl-0.11.1' from 'https://cache.nixos.org'...
-#10 47.54 copying path '/nix/store/wj4gp2b1mks14ry6m25rfwkpbj0qwvc0-imagemagick-7.1.1-43' from 'https://cache.nixos.org'...
-#10 47.82 copying path '/nix/store/v6ya79259s9wqm17v2gxhg1ch900g7ap-vips-8.16.0' from 'https://cache.nixos.org'...
-#10 48.52 copying path '/nix/store/hs05sb8z5ik7qkdnxdq3chzb02xy99di-python3.12-pycairo-1.27.0' from 'https://cache.nixos.org'...
-#10 48.60 copying path '/nix/store/d2ajxvn166qyndpi27b2ahy83p6vg7m1-python3-3.12.8-env' from 'https://cache.nixos.org'...
-#10 48.66 copying path '/nix/store/x9a2r7rflh1bj36wvqhanrnnl8wz8f5r-vips-8.16.0-bin' from 'https://cache.nixos.org'...
-#10 48.80 building '/nix/store/4y056gjph1jq483nfvx2f8avkszvhv9f-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv'...
-#10 48.93 created 115 symlinks in user environment
-#10 49.02 building '/nix/store/8z2xx120v4qm9lf01myd3vcvaivy0nn0-user-environment.drv'...
-#10 49.28 removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-#10 49.28 removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-#10 49.28 removing profile version 2
-#10 49.28 removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-#10 49.28 removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-#10 49.28 finding garbage collector roots...
-#10 49.29 removing stale link from '/nix/var/nix/gcroots/auto/v73nmmh5d8van4ja5c8jn0gjlwhxbz3a' to '/nix/var/nix/profiles/per-user/root/profile-2-link'
-#10 49.29 deleting garbage...
-#10 49.42 deleting '/nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux'
-#10 49.42 deleting '/nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1'
-#10 49.43 deleting '/nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10'
-#10 49.44 deleting '/nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin'
-#10 49.44 deleting '/nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook'
-#10 49.44 deleting '/nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0'
-#10 49.44 deleting '/nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin'
-#10 49.44 deleting '/nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01'
-#10 49.44 deleting '/nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6'
-#10 49.44 deleting '/nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46'
-#10 49.45 deleting '/nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35'
-#10 49.45 deleting '/nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11'
-#10 49.46 deleting '/nix/store/1m82cbxhdbb85h3lykjpry4mnvyq5x0m-libraries'
-#10 49.46 deleting '/nix/store/lwi59jcfwk2lnrakmm1y5vw85hj3n1bi-source'
-#10 56.58 deleting '/nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13'
-#10 56.58 deleting '/nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1'
-#10 56.58 deleting '/nix/store/wf5zj2gbib3gjqllkabxaw4dh0gzcla3-builder.pl'
-#10 56.58 deleting '/nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9'
-#10 56.59 deleting '/nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0'
-#10 56.60 deleting '/nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2'
-#10 56.60 deleting '/nix/store/557l0iw27bp2xx0vvwvymw1wxyajqnyl-source'
-#10 56.60 deleting '/nix/store/ilf53zg10ajl832fgdc5lhdv8srbdq36-user-environment'
-#10 56.63 deleting '/nix/store/6zxkblvgw1ay1kb3a7ghxcqdgbyc7pk9-user-environment.drv'
-#10 56.64 deleting '/nix/store/mbgkmd06wd8dy5mz076h4pk7m1c9apgn-env-manifest.nix'
-#10 56.64 deleting unused links...
-#10 56.64 note: currently hard linking saves -0.00 MiB
-#10 56.65 24 store paths deleted, 189.73 MiB freed
-#10 DONE 56.7s
+#10 [stage-0  5/15] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+#10 CACHED
 
 #11 [stage-0  7/15] COPY .nixpacks/assets /assets/
-#11 DONE 0.0s
+#11 CACHED
 
 #12 [stage-0  8/15] COPY . /app/.
-#12 DONE 0.8s
+#12 DONE 0.4s
 
 #13 [stage-0  9/15] RUN  caddy fmt --overwrite /assets/Caddyfile
-#13 DONE 0.4s
+#13 DONE 0.2s
 
 #14 [stage-0 10/15] COPY . /app/.
 #14 DONE 0.6s
 
 #15 [stage-0 11/15] RUN --mount=type=cache,id=V13bXEaLGp4-/root/npm,target=/root/.npm npm install
-#15 368.6 
-#15 368.6 added 447 packages, and audited 448 packages in 6m
-#15 368.6 
-#15 368.6 85 packages are looking for funding
-#15 368.6   run `npm fund` for details
-#15 368.6 
-#15 368.6 2 vulnerabilities (1 moderate, 1 high)
-#15 368.6 
-#15 368.6 To address all issues, run:
-#15 368.6   npm audit fix
-#15 368.6 
-#15 368.6 Run `npm audit` for details.
-#15 368.6 npm notice
-#15 368.6 npm notice New major version of npm available! 10.9.0 -> 11.13.0
-#15 368.6 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
-#15 368.6 npm notice To update run: npm install -g npm@11.13.0
-#15 368.6 npm notice
-#15 DONE 368.8s
+#15 13.63 
+#15 13.63 added 447 packages, and audited 448 packages in 13s
+#15 13.63 
+#15 13.63 85 packages are looking for funding
+#15 13.63   run `npm fund` for details
+#15 13.65 
+#15 13.65 2 vulnerabilities (1 moderate, 1 high)
+#15 13.65 
+#15 13.65 To address all issues, run:
+#15 13.65   npm audit fix
+#15 13.65 
+#15 13.65 Run `npm audit` for details.
+#15 DONE 13.9s
 
 #16 [stage-0 12/15] COPY . /app/.
-#16 DONE 0.5s
+#16 DONE 1.0s
 
 #17 [stage-0 13/15] RUN --mount=type=cache,id=V13bXEaLGp4-node_modules/cache,target=/app/node_modules/.cache npm run build
-#17 0.710 
-#17 0.710 > mi-app@0.0.1 build
-#17 0.710 > node scripts/sync-samples.cjs && npx vite build
-#17 0.710 
-#17 0.756 ✅ Sincronización completa. 34 pitos y 20 bajos detectados.
-#17 0.757 📂 Lista guardada en: /app/public/muestrasLocales.json
-#17 2.094 vite v6.4.1 building for production...
-#17 2.389 transforming...
-#17 3.023 ✓ 20 modules transformed.
-#17 3.025 ✗ Build failed in 892ms
-#17 3.025 error during build:
-#17 3.025 [vite:esbuild] Transform failed with 1 error:
-#17 3.025 /app/src/hooks/useSesionTracker.ts:35:18: ERROR: Expected ";" but found ":"
-#17 3.025 file: /app/src/hooks/useSesionTracker.ts:35:18
-#17 3.025 
-#17 3.025 Expected ";" but found ":"
-#17 3.025 33 |          } else {
-#17 3.025 34 |              usuario_id: usuarioId,
-#17 3.025 35 |              pagina: location.pathname,
-#17 3.025    |                    ^
-#17 3.025 36 |              timestamp: ahora.toISOString(),
-#17 3.025 37 |            });
-#17 3.025 
-#17 3.025     at failureErrorWithLog (/app/node_modules/esbuild/lib/main.js:1467:15)
-#17 3.025     at /app/node_modules/esbuild/lib/main.js:736:50
-#17 3.025     at responseCallbacks.<computed> (/app/node_modules/esbuild/lib/main.js:603:9)
-#17 3.025     at handleIncomingPacket (/app/node_modules/esbuild/lib/main.js:658:12)
-#17 3.025     at Socket.readFromStdout (/app/node_modules/esbuild/lib/main.js:581:7)
-#17 3.025     at Socket.emit (node:events:518:28)
-#17 3.025     at addChunk (node:internal/streams/readable:561:12)
-#17 3.025     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-#17 3.025     at Readable.push (node:internal/streams/readable:392:5)
-#17 3.025     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
-#17 3.132 npm notice
-#17 3.132 npm notice New major version of npm available! 10.9.0 -> 11.13.0
-#17 3.132 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
-#17 3.132 npm notice To update run: npm install -g npm@11.13.0
-#17 3.132 npm notice
+#17 0.743 
+#17 0.743 > mi-app@0.0.1 build
+#17 0.743 > node scripts/sync-samples.cjs && npx vite build
+#17 0.743 
+#17 0.790 ✅ Sincronización completa. 34 pitos y 20 bajos detectados.
+#17 0.790 📂 Lista guardada en: /app/public/muestrasLocales.json
+#17 2.124 vite v6.4.1 building for production...
+#17 2.435 transforming...
+#17 4.904 ✓ 152 modules transformed.
+#17 4.906 ✗ Build failed in 2.74s
+#17 4.906 error during build:
+#17 4.906 [vite:esbuild] Transform failed with 1 error:
+#17 4.906 /app/src/servicios/paquetesService.ts:644:23: ERROR: Expected ";" but found ":"
+#17 4.906 file: /app/src/servicios/paquetesService.ts:644:23
+#17 4.906 
+#17 4.906 Expected ";" but found ":"
+#17 4.906 642|              const tieneTitulo = item.tutoriales?.titulo;
+#17 4.906 643|                  item: item,
+#17 4.906 644|                  tieneId: tieneId,
+#17 4.906    |                         ^
+#17 4.906 645|                  tieneTitulo: tieneTitulo,
+#17 4.906 646|                  tutorial: item.tutoriales
+#17 4.906 
+#17 4.906     at failureErrorWithLog (/app/node_modules/esbuild/lib/main.js:1467:15)
+#17 4.906     at /app/node_modules/esbuild/lib/main.js:736:50
+#17 4.906     at responseCallbacks.<computed> (/app/node_modules/esbuild/lib/main.js:603:9)
+#17 4.906     at handleIncomingPacket (/app/node_modules/esbuild/lib/main.js:658:12)
+#17 4.906     at Socket.readFromStdout (/app/node_modules/esbuild/lib/main.js:581:7)
+#17 4.906     at Socket.emit (node:events:518:28)
+#17 4.906     at addChunk (node:internal/streams/readable:561:12)
+#17 4.906     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+#17 4.906     at Readable.push (node:internal/streams/readable:392:5)
+#17 4.906     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+#17 5.033 npm notice
+#17 5.033 npm notice New major version of npm available! 10.9.0 -> 11.13.0
+#17 5.033 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
+#17 5.033 npm notice To update run: npm install -g npm@11.13.0
+#17 5.033 npm notice
 #17 ERROR: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
 ------
  > [stage-0 13/15] RUN --mount=type=cache,id=V13bXEaLGp4-node_modules/cache,target=/app/node_modules/.cache npm run build:
-3.025     at Socket.emit (node:events:518:28)
-3.025     at addChunk (node:internal/streams/readable:561:12)
-3.025     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-3.025     at Readable.push (node:internal/streams/readable:392:5)
-3.025     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
-3.132 npm notice
-3.132 npm notice New major version of npm available! 10.9.0 -> 11.13.0
-3.132 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
-3.132 npm notice To update run: npm install -g npm@11.13.0
-3.132 npm notice
+4.906     at Socket.emit (node:events:518:28)
+4.906     at addChunk (node:internal/streams/readable:561:12)
+4.906     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+4.906     at Readable.push (node:internal/streams/readable:392:5)
+4.906     at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+5.033 npm notice
+5.033 npm notice New major version of npm available! 10.9.0 -> 11.13.0
+5.033 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.13.0
+5.033 npm notice To update run: npm install -g npm@11.13.0
+5.033 npm notice
 ------
 
  7 warnings found (use docker --debug to expand):
@@ -652,7 +159,7 @@ Dockerfile:30
 ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
 ##########################################
 ### Error
-### Mon, 27 Apr 2026 01:39:01 GMT
+### Mon, 27 Apr 2026 01:51:53 GMT
 ##########################################
 
-Command failed with exit code 1: docker buildx build --network host -f /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/.nixpacks/Dockerfile -t easypanel/academiavallenataonline_app/academiavallenataonline_app_2026 --label 'keep=true' --build-arg 'VITE_SUPABASE_URL=https://tbijzvtyyewhtwgakgka.supabase.co' --build-arg 'VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiaWp6dnR5eWV3aHR3Z2FrZ2thIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTQyNjIsImV4cCI6MjA1ODUzMDI2Mn0.P09L8OpLpcrm5XzTLAN0oQllhl_bePk5bxbUUpoG-cQ' --build-arg 'VITE_EPAYCO_PUBLIC_KEY=a04d60e2e678d5bd89a58d26f3413fdb' --build-arg 'VITE_EPAYCO_PRIVATE_KEY=83ec651809bb7d11fcd114b16777bfa1' --build-arg 'VITE_EPAYCO_CUSTOMER_ID=37257' --build-arg 'VITE_EPAYCO_TEST_MODE=false' --build-arg 'VITE_GIPHY_API_KEY=Kj3vAtPH8E0gWaVO2amamR5xazoGL36q' --build-arg 'VITE_APP_URL=https://academiavallenataonline.com' --build-arg 'VITE_BASE_URL=https://academiavallenataonline.com' --build-arg 'NODE_ENV=production' --build-arg 'NODE_OPTIONS=--max-old-space-size=6144' --build-arg 'NIXPACKS_NO_CACHE=0' --build-arg 'GIT_SHA=ef5e84e1868bb7f9d816e2fe53050c87cd5f612d' /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/
+Command failed with exit code 1: docker buildx build --network host -f /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/.nixpacks/Dockerfile -t easypanel/academiavallenataonline_app/academiavallenataonline_app_2026 --label 'keep=true' --build-arg 'VITE_SUPABASE_URL=https://tbijzvtyyewhtwgakgka.supabase.co' --build-arg 'VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiaWp6dnR5eWV3aHR3Z2FrZ2thIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTQyNjIsImV4cCI6MjA1ODUzMDI2Mn0.P09L8OpLpcrm5XzTLAN0oQllhl_bePk5bxbUUpoG-cQ' --build-arg 'VITE_EPAYCO_PUBLIC_KEY=a04d60e2e678d5bd89a58d26f3413fdb' --build-arg 'VITE_EPAYCO_PRIVATE_KEY=83ec651809bb7d11fcd114b16777bfa1' --build-arg 'VITE_EPAYCO_CUSTOMER_ID=37257' --build-arg 'VITE_EPAYCO_TEST_MODE=false' --build-arg 'VITE_GIPHY_API_KEY=Kj3vAtPH8E0gWaVO2amamR5xazoGL36q' --build-arg 'VITE_APP_URL=https://academiavallenataonline.com' --build-arg 'VITE_BASE_URL=https://academiavallenataonline.com' --build-arg 'NODE_ENV=production' --build-arg 'NODE_OPTIONS=--max-old-space-size=6144' --build-arg 'NIXPACKS_NO_CACHE=0' --build-arg 'GIT_SHA=a8bed81ce34aec6baddad54824cf3a918483fe1d' /etc/easypanel/projects/academiavallenataonline_app/academiavallenataonline_app_2026/code/
