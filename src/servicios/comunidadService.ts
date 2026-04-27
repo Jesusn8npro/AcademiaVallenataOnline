@@ -72,7 +72,6 @@ export async function cargarPublicaciones(offset: number = 0, limite: number = 1
     .range(offset, offset + limite - 1);
 
   if (error) {
-    console.error('Error cargando publicaciones:', error);
     throw error;
   }
 
@@ -134,7 +133,6 @@ export async function cargarComentarios(publicacionId: string): Promise<Comentar
     .order('fecha_creacion', { ascending: true });
 
   if (error) {
-    console.error('Error cargando comentarios:', error);
     throw error;
   }
 
@@ -180,7 +178,6 @@ export async function crearPublicacion(nuevaPublicacion: NuevaPublicacion): Prom
     .single();
 
   if (error) {
-    console.error('Error creando publicación:', error);
     throw error;
   }
 
@@ -235,7 +232,6 @@ export async function crearComentario(nuevoComentario: NuevoComentario): Promise
     .single();
 
   if (error) {
-    console.error('Error creando comentario:', error);
     throw error;
   }
 
@@ -277,7 +273,6 @@ export async function toggleLike(publicacionId: string): Promise<{ esLike: boole
       .eq('id', likeExistente.id);
 
     if (error) {
-      console.error('Error quitando like:', error);
       throw error;
     }
 
@@ -292,7 +287,6 @@ export async function toggleLike(publicacionId: string): Promise<{ esLike: boole
       });
 
     if (error) {
-      console.error('Error dando like:', error);
       throw error;
     }
 
@@ -338,7 +332,6 @@ export async function eliminarPublicacion(publicacionId: string): Promise<void> 
     .eq('id', publicacionId);
 
   if (error) {
-    console.error('Error eliminando publicación:', error);
     throw error;
   }
 
@@ -354,7 +347,6 @@ export async function eliminarPublicacion(publicacionId: string): Promise<void> 
       .eq('usuario_id', currentUser.id);
 
     if (errorLimpiarGrabacion) {
-      console.error('Error limpiando vínculo de grabación Hero:', errorLimpiarGrabacion);
       throw errorLimpiarGrabacion;
     }
   }
@@ -385,7 +377,6 @@ export async function eliminarComentario(comentarioId: string): Promise<void> {
     .eq('id', comentarioId);
 
   if (error) {
-    console.error('Error eliminando comentario:', error);
     throw error;
   }
 }

@@ -34,7 +34,6 @@ export default function UltimosArticulosBlog() {
 
       setArticulos(articulosMapeados)
     } catch (err: any) {
-      console.error('Error cargando artículos:', err)
       setError(err.message)
     } finally {
       setCargando(false)

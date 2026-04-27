@@ -49,6 +49,8 @@ export interface ModalEditorSecuenciaProps {
   mensajeEdicionProp: string | null;
 }
 
+export type ModoEdicion = 'idle' | 'preroll' | 'grabando' | 'revisando';
+
 export function formatearTiempoDesdeTicks(ticks: number, bpm: number) {
   const seg = (ticks / 192) * (60 / Math.max(1, bpm));
   const m = Math.floor(seg / 60);

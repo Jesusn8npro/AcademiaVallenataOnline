@@ -40,7 +40,6 @@ const PanelListaAcordesAdmin: React.FC<PanelListaAcordesAdminProps> = ({
 
       if (!error && data) setAcordes(data);
     } catch (error) {
-      console.error('Error cargando acordes:', error);
     } finally {
       setCargando(false);
     }
@@ -73,7 +72,6 @@ const PanelListaAcordesAdmin: React.FC<PanelListaAcordesAdminProps> = ({
       const fuelle = acorde.fuelle || 'halar';
       onReproducirAcorde(botones, fuelle, acorde.id);
     } catch {
-      console.error('Error reproduciendo acorde:', acorde.id);
     }
   };
 

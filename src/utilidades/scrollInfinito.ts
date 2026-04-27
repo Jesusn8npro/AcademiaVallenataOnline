@@ -72,7 +72,6 @@ export function crearScrollInfinito(config: ScrollInfinitoConfig) {
       }
     } catch (err) {
       if (!isMounted) return;
-      console.error('Error cargando items:', err);
       error.set(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       if (isMounted) {

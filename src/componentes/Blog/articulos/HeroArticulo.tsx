@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface HeroArticuloProps {
   titulo?: string
@@ -11,6 +11,7 @@ interface HeroArticuloProps {
 }
 
 const HeroArticulo: React.FC<HeroArticuloProps> = ({ titulo = 'Título del artículo', autor = 'Jesús González', fecha = '', imagen_url = '', resumen = '', contenidoHtml = '', slug = '' }) => {
+  const [copiado, setCopiado] = useState(false)
   const calcularTiempoLectura = (contenido: string): number => { const palabras = contenido.replace(/<[^>]*>/g, '').split(/\s+/).length; return Math.ceil(palabras / 200) }
   const tiempoEstimadoLectura = calcularTiempoLectura(contenidoHtml)
   const fechaFormateada = fecha ? new Date(fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : ''
@@ -36,7 +37,7 @@ const HeroArticulo: React.FC<HeroArticuloProps> = ({ titulo = 'Título del artí
   const compartirEnTwitter = () => { const url = encodeURIComponent(window.location.href); const texto = encodeURIComponent(`${titulo} - Academia Vallenata Online`); window.open(`https://twitter.com/intent/tweet?url=${url}&text=${texto}`, '_blank') }
   const compartirEnFacebook = () => { const url = encodeURIComponent(window.location.href); window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank') }
   const compartirEnWhatsapp = () => { const url = encodeURIComponent(window.location.href); const texto = encodeURIComponent(`${titulo} - Academia Vallenata Online`); window.open(`https://wa.me/?text=${texto}%20${url}`, '_blank') }
-  const copiarEnlace = async () => { try { await navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!') } catch (err) { console.error('Error al copiar:', err) } }
+  const copiarEnlace = async () => { try { await navigator.clipboard.writeText(window.location.href); setCopiado(true); setTimeout(() => setCopiado(false), 2000) } catch { /* clipboard no disponible */ } }
 
   return (
     <>
@@ -50,7 +51,7 @@ const HeroArticulo: React.FC<HeroArticuloProps> = ({ titulo = 'Título del artí
             <button style={{...styles.botonSocial, ...styles.botonTwitter}} onClick={compartirEnTwitter} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(29,161,242,0.3)'}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>🐦 Twitter</button>
             <button style={{...styles.botonSocial, ...styles.botonFacebook}} onClick={compartirEnFacebook} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(66,103,178,0.3)'}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>📘 Facebook</button>
             <button style={{...styles.botonSocial, ...styles.botonWhatsapp}} onClick={compartirEnWhatsapp} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(37,211,102,0.3)'}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>📱 WhatsApp</button>
-            <button style={{...styles.botonSocial, ...styles.botonCopiar}} onClick={copiarEnlace} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(108,117,125,0.3)'}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>🔗 Copiar enlace</button>
+            <button style={{...styles.botonSocial, ...styles.botonCopiar}} onClick={copiarEnlace} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 4px 12px rgba(108,117,125,0.3)'}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='none'}}>🔗 {copiado ? '¡Copiado!' : 'Copiar enlace'}</button>
           </div>
         </div>
       </section>

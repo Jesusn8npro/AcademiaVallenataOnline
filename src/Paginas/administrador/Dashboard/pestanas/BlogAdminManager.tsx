@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import './BlogAdminManager.css';
 import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
@@ -22,7 +22,6 @@ const BlogAdminManager = () => {
             if (error) throw error;
             setArticulos(data || []);
         } catch (error) {
-            console.error('Error cargando art√≠culos:', error);
         } finally {
             setCargando(false);
         }
@@ -43,24 +42,24 @@ const BlogAdminManager = () => {
     return (
         <div className="gestor-blog">
             <header className="encabezado-gestor">
-                <h1>Administraci√≥n de Blog</h1>
+                <h1>AdministraciÛn de Blog</h1>
                 <button className="boton-primario" onClick={iniciarNuevoArticulo}>
                     <Plus size={20} />
-                    <span>Nuevo Art√≠culo</span>
+                    <span>Nuevo ArtÌculo</span>
                 </button>
             </header>
 
-            {/* Listado de Art√≠culos */}
+            {/* Listado de ArtÌculos */}
             <section className="grid-articulos">
                 {cargando ? (
                     <div className="estado-general">
                         <div className="spinner-blog"></div>
-                        <p>Cargando art√≠culos...</p>
+                        <p>Cargando artÌculos...</p>
                     </div>
                 ) : articulos.length === 0 ? (
                     <div className="estado-general">
-                        <h3>No hay art√≠culos todav√≠a</h3>
-                        <p>¬°Crea tu primer art√≠culo para empezar a compartir tu conocimiento!</p>
+                        <h3>No hay artÌculos todavÌa</h3>
+                        <p>°Crea tu primer artÌculo para empezar a compartir tu conocimiento!</p>
                     </div>
                 ) : (
                     articulos.map((articulo) => (
@@ -70,7 +69,7 @@ const BlogAdminManager = () => {
                                     <img src={articulo.portada_url} alt={articulo.titulo} />
                                 ) : (
                                     <div className="placeholder-imagen">
-                                        <span style={{ fontSize: '2rem' }}>üìù</span>
+                                        <span style={{ fontSize: '2rem' }}>??</span>
                                     </div>
                                 )}
                                 <span className={`badge-estado ${articulo.estado_publicacion}`}>
@@ -83,11 +82,11 @@ const BlogAdminManager = () => {
 
                                 <div className="meta-articulo">
                                     <div className="autor">
-                                        <span className="icono-autor">üë§</span>
+                                        <span className="icono-autor">??</span>
                                         <span>{articulo.autor}</span>
                                     </div>
                                     <div className="fecha">
-                                        <span className="icono-fecha">üìÖ</span>
+                                        <span className="icono-fecha">??</span>
                                         <span>{formatearFecha(articulo.fecha_publicacion)}</span>
                                     </div>
                                 </div>

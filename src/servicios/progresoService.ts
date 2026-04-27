@@ -13,12 +13,10 @@ export async function actualizarProgresoLeccion(leccionId: string, completada: b
   const { user } = get(estadoUsuarioActual);
   
   if (!user || !user.id) {
-    console.error('[PROGRESO LECCION] Usuario no autenticado');
     return { error: { message: 'Usuario no autenticado' } };
   }
   
   if (!leccionId) {
-    console.error('[PROGRESO LECCION] Falta leccion_id');
     return { error: { message: 'Falta leccion_id' } };
   }
   
@@ -33,7 +31,6 @@ export async function actualizarProgresoLeccion(leccionId: string, completada: b
 
     let resultado;
     if (errorBusqueda && errorBusqueda.code !== 'PGRST116') {
-      console.error('[PROGRESO LECCION] Error buscando progreso existente:', errorBusqueda);
       return { error: { message: 'Error buscando progreso existente', detail: errorBusqueda } };
     }
     
@@ -50,7 +47,6 @@ export async function actualizarProgresoLeccion(leccionId: string, completada: b
         .eq('id', progresoExistente.id);
         
       if (resultado.error) {
-        console.error('[PROGRESO LECCION] Error UPDATE:', resultado.error);
         return { error: { message: resultado.error.message, detail: resultado.error } };
       }
     } else {
@@ -73,13 +69,11 @@ export async function actualizarProgresoLeccion(leccionId: string, completada: b
         .insert([payload]);
         
       if (resultado.error) {
-        console.error('[PROGRESO LECCION] Error INSERT:', resultado.error);
         return { error: { message: resultado.error.message, detail: resultado.error, payload } };
       }
     }
     return { data: resultado?.data, error: resultado?.error };
   } catch (err) {
-    console.error('[PROGRESO LECCION] Error inesperado:', err);
     return { error: { message: 'Error inesperado al actualizar progreso de la lección', detail: err } };
   }
 }
@@ -106,7 +100,6 @@ export async function obtenerProgresoLeccion(leccionId: string) {
     
     return { data, error };
   } catch (err) {
-    console.error('Error al obtener progreso:', err);
     return { data: null, error: { message: 'Error al obtener progreso de la lección' } };
   }
 }
@@ -184,7 +177,6 @@ export async function obtenerProgresoCurso(cursoId: string) {
       error: null
     };
   } catch (err) {
-    console.error('Error al obtener progreso del curso:', err);
     return { data: null, error: { message: 'Error al obtener progreso del curso' } };
   }
 }
@@ -231,7 +223,6 @@ export async function guardarComentarioLeccion(leccionId: string, comentario: st
     
     return { data, error };
   } catch (err) {
-    console.error('Error al guardar comentario:', err);
     return { error: { message: 'Error al guardar comentario' } };
   }
 }
@@ -259,7 +250,6 @@ export async function obtenerComentariosLeccion(leccionId: string) {
     
     return { data, error };
   } catch (err) {
-    console.error('Error al obtener comentarios:', err);
     return { data: null, error: { message: 'Error al obtener comentarios' } };
   }
 } 

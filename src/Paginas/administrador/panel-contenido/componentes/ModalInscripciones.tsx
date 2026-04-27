@@ -32,6 +32,8 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
     const [cargando, setCargando] = useState(false);
     const [buscando, setBuscando] = useState(false);
     const [procesandoId, setProcesandoId] = useState<string | null>(null);
+    const [errorInscripcion, setErrorInscripcion] = useState('');
+    const [confirmandoQuitarId, setConfirmandoQuitarId] = useState<Inscripcion | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -73,8 +75,8 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
 
             if (error) throw error;
             setInscritos(data as any || []);
-        } catch (error) {
-            console.error('Error al cargar inscritos:', error);
+        } catch {
+            // error no fatal
         } finally {
             setCargando(false);
         }
@@ -98,13 +100,12 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
 
             if (error) throw error;
 
-            // Filtrar los que ya están inscritos
             const inscritosIds = inscritos.map(i => i.usuario_id);
             const filtrados = (data || []).filter(u => !inscritosIds.includes(u.id));
 
             setResultadosBusqueda(filtrados);
-        } catch (error) {
-            console.error('Error buscando usuarios:', error);
+        } catch {
+            // error no fatal
         } finally {
             setBuscando(false);
         }
@@ -132,30 +133,29 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
             setResultadosBusqueda([]);
             await cargarInscritos();
             if (onUpdate) onUpdate();
-        } catch (error) {
-            console.error('Error al inscribir:', error);
-            alert('No se pudo inscribir al usuario');
+        } catch {
+            setErrorInscripcion('No se pudo inscribir al usuario.');
         } finally {
             setProcesandoId(null);
         }
     };
 
-    const eliminarInscripcion = async (inscripcion: Inscripcion) => {
-        if (!window.confirm(`¿Quitar el acceso a ${inscripcion.perfiles.nombre_completo}?`)) return;
+    const eliminarInscripcion = (inscripcion: Inscripcion) => {
+        setConfirmandoQuitarId(inscripcion);
+    };
 
+    const confirmarEliminarInscripcion = async () => {
+        if (!confirmandoQuitarId) return;
+        const inscripcion = confirmandoQuitarId;
+        setConfirmandoQuitarId(null);
         try {
             setProcesandoId(inscripcion.id);
-            const { error } = await supabase
-                .from('inscripciones')
-                .delete()
-                .eq('id', inscripcion.id);
-
+            const { error } = await supabase.from('inscripciones').delete().eq('id', inscripcion.id);
             if (error) throw error;
-
             await cargarInscritos();
             if (onUpdate) onUpdate();
-        } catch (error) {
-            console.error('Error al eliminar:', error);
+        } catch {
+            setErrorInscripcion('Error al eliminar la inscripción.');
         } finally {
             setProcesandoId(null);
         }
@@ -174,8 +174,19 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
                     <button className="btn-close" onClick={onClose}>&times;</button>
                 </header>
 
+                {errorInscripcion && (
+                    <div style={{ background: '#fff5f5', color: '#c53030', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>{errorInscripcion}</div>
+                )}
+                {confirmandoQuitarId && (
+                    <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem' }}>
+                        <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>¿Quitar el acceso a {confirmandoQuitarId.perfiles.nombre_completo}?</p>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button onClick={confirmarEliminarInscripcion} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Confirmar</button>
+                            <button onClick={() => setConfirmandoQuitarId(null)} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
+                        </div>
+                    </div>
+                )}
                 <div className="modal-inscripciones-body">
-                    {/* Columna Izquierda: Lista de Inscritos */}
                     <div className="columna-inscritos">
                         <div className="columna-header">
                             <h3>Estudiantes Inscritos ({inscritos.length})</h3>

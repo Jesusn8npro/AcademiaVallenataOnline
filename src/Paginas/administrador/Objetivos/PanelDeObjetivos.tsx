@@ -13,6 +13,8 @@ const PanelDeObjetivos: React.FC = () => {
     const [cargando, setCargando] = useState(true);
     const [mostrarModal, setMostrarModal] = useState(false);
     const [objetivoEnEdicion, setObjetivoEnEdicion] = useState<ObjetivoAdmin | null>(null);
+    const [errorAccion, setErrorAccion] = useState('');
+    const [confirmarEliminarId, setConfirmarEliminarId] = useState<string | null>(null);
 
     useEffect(() => {
         cargarObjetivos();
@@ -23,8 +25,8 @@ const PanelDeObjetivos: React.FC = () => {
             setCargando(true);
             const data = await servicioObjetivos.obtenerObjetivos();
             setObjetivos(data);
-        } catch (error) {
-            console.error(error);
+        } catch {
+            // error no fatal — datos vacíos
         } finally {
             setCargando(false);
         }
@@ -43,21 +45,26 @@ const PanelDeObjetivos: React.FC = () => {
                 const guardado = await servicioObjetivos.crearObjetivo(objetivoConUsuario);
                 setObjetivos([guardado, ...objetivos]);
             }
-        } catch (error) {
-            console.error(error);
-            alert('Error al guardar');
+        } catch {
+            setErrorAccion('Error al guardar el objetivo.');
         }
         cerrarModal();
     };
 
-    const eliminarObjetivo = async (id: string) => {
-        if (!window.confirm('¿Estás seguro de eliminar este objetivo definitivamente?')) return;
+    const eliminarObjetivo = (id: string) => {
+        setConfirmarEliminarId(id);
+    };
+
+    const confirmarEliminar = async () => {
+        if (!confirmarEliminarId) return;
+        const id = confirmarEliminarId;
+        setConfirmarEliminarId(null);
         try {
             await servicioObjetivos.eliminarObjetivo(id);
             setObjetivos(objetivos.filter(o => o.id !== id));
             cerrarModal();
-        } catch (error) {
-            alert('Error al eliminar');
+        } catch {
+            setErrorAccion('Error al eliminar el objetivo.');
         }
     };
 
@@ -67,9 +74,9 @@ const PanelDeObjetivos: React.FC = () => {
 
         try {
             await servicioObjetivos.actualizarObjetivo(id, { estado: nuevoEstado });
-        } catch (error) {
+        } catch {
             setObjetivos(anteriores);
-            alert('Error al mover el objetivo');
+            setErrorAccion('Error al mover el objetivo.');
         }
     };
 
@@ -106,6 +113,21 @@ const PanelDeObjetivos: React.FC = () => {
 
     return (
         <div className="trello-contenedor">
+            {errorAccion && (
+                <div style={{ background: '#fed7d7', color: '#c53030', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                    {errorAccion}
+                    <button onClick={() => setErrorAccion('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                </div>
+            )}
+            {confirmarEliminarId && (
+                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                    <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>¿Eliminar este objetivo definitivamente?</p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={confirmarEliminar} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Eliminar</button>
+                        <button onClick={() => setConfirmarEliminarId(null)} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
+                    </div>
+                </div>
+            )}
             <header className="trello-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '16px' }}>

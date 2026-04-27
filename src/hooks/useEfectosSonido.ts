@@ -22,7 +22,6 @@ export const useEfectosSonido = () => {
             const esInteractivo = target.closest('button, a, input, select, textarea, [role="button"], .clickable');
 
             if (esInteractivo) {
-                console.log('Elemento interactivo clickeado. Intentando reproducir sonido...');
                 try {
                     if (audioClickRef.current) {
                         // Reiniciar el audio si ya se estaba reproduciendo para permitir clicks rápidos
@@ -33,16 +32,12 @@ export const useEfectosSonido = () => {
                         // Manejar promesa de play() que puede fallar si el usuario no ha interactuado aún
                         if (promesa !== undefined) {
                             promesa.then(() => {
-                                console.log('Sonido reproducido con éxito.');
                             }).catch(error => {
-                                console.error("Error al reproducir audio:", error);
                             });
                         }
                     } else {
-                        console.warn("Referencia de audio nula.");
                     }
                 } catch (err) {
-                    console.error("Error inesperado en audio:", err);
                 }
             }
         };

@@ -3,7 +3,6 @@ import { useLogicaAcordeon } from '../../../Core/hooks/useLogicaAcordeon';
 import { useReproductorHero } from '../../../Core/hooks/useReproductorHero';
 import { TONALIDADES } from '../../../Core/acordeon/notasAcordeonDiatonico';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
-import { supabase } from '../../../servicios/clienteSupabase';
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import type {
@@ -605,7 +604,7 @@ export function useLogicaProMax() {
         const iniciarTodo = () => {
           if (arrancado) return;
           arrancado = true;
-          audio.play().catch(() => console.warn('⚠️ Audio no pudo reproducirse aún'));
+          audio.play().catch(() => {});
           reproductor.reproducirSecuencia(cancion);
           audio.removeEventListener('canplay', iniciarTodo);
           audio.removeEventListener('loadeddata', iniciarTodo);
@@ -618,7 +617,6 @@ export function useLogicaProMax() {
         audio.addEventListener('load', iniciarTodo);
 
         const timeoutId = setTimeout(() => {
-          console.warn('⚠️ Audio no cargó a tiempo, iniciando de todas formas');
           iniciarTodo();
         }, 3000);
       } else {
@@ -928,43 +926,4 @@ export function useLogicaProMax() {
   };
 }
 
-/**
- * Carga la lista de canciones disponibles desde Supabase para Pro Max.
- */
-export function useCancionesProMax() {
-  const [canciones, setCanciones] = useState<CancionHeroConTonalidad[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const cargar = async () => {
-      setCargando(true);
-      setError(null);
-      try {
-        const { data, error: err } = await supabase
-          .from('canciones_hero')
-          .select('*')
-          .order('creado_en', { ascending: false });
-
-        if (err) throw err;
-
-        const procesadas: CancionHeroConTonalidad[] = (data || []).map((row: any) => {
-          let secuencia = row.secuencia || row.secuencia_json || [];
-          if (typeof secuencia === 'string') {
-            try { secuencia = JSON.parse(secuencia); } catch { secuencia = []; }
-          }
-          return { ...row, secuencia } as CancionHeroConTonalidad;
-        });
-
-        setCanciones(procesadas);
-      } catch (e: any) {
-        setError(e.message || 'Error al cargar canciones');
-      } finally {
-        setCargando(false);
-      }
-    };
-    cargar();
-  }, []);
-
-  return { canciones, cargando, error };
-}
+export { useCancionesProMax } from './useCancionesProMax';

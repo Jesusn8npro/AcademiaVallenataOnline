@@ -27,7 +27,7 @@ export default function ActividadUsuarioPage() {
       const todas = [...pubs, ...cursos].sort((a, b) => new Date(String(b.fecha)).getTime() - new Date(String(a.fecha)).getTime())
       setActividades(todas)
       setCargando(false)
-    } catch (e) { setError('Error inesperado al cargar la actividad'); setCargando(false) }
+    } catch { setError('Error inesperado al cargar la actividad'); setCargando(false) }
   }
 
   function formatearTiempoRelativo(fecha: string): string {

@@ -48,7 +48,6 @@ export async function verificarInscripcionPorSlug(
       cursoId: curso.id 
     };
   } catch (error: any) {
-    console.error('Error al verificar inscripción por slug:', error);
     return {
       inscrito: false,
       error: error.message || 'Error al verificar inscripción'
@@ -85,7 +84,6 @@ export async function inscribirACursoPorSlug(
     const { inscrito, error: checkError } = await verificarInscripcionPorSlug(userId, cursoSlug);
     
     if (checkError && !inscrito) {
-      console.error('Error al verificar inscripción:', checkError);
     }
     
     if (inscrito) {
@@ -108,7 +106,6 @@ export async function inscribirACursoPorSlug(
       });
       
     if (insertError) {
-      console.error('Error al inscribir al curso:', insertError);
       return { 
         success: false, 
         error: insertError.message || 'Error al inscribir al curso' 
@@ -117,7 +114,6 @@ export async function inscribirACursoPorSlug(
     
     return { success: true, error: null };
   } catch (error: any) {
-    console.error('Error general al inscribir por slug:', error);
     return {
       success: false,
       error: error.message || 'Error inesperado al inscribir al curso'

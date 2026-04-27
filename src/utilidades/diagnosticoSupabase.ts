@@ -2,7 +2,6 @@ import { supabase } from '$servicios/clienteSupabase';
 
 // 🔍 DIAGNÓSTICO COMPLETO DE CONFIGURACIÓN DE SUPABASE
 export async function diagnosticarConfiguracionSupabase() {
-  console.log('🔍 [DIAGNÓSTICO] Iniciando verificación de Supabase...');
   
   const diagnostico = {
     url: '',
@@ -23,22 +22,17 @@ export async function diagnosticarConfiguracionSupabase() {
       hostname: window.location.hostname
     };
 
-    console.log('🔍 [DIAGNÓSTICO] URL Supabase:', diagnostico.url);
-    console.log('🔍 [DIAGNÓSTICO] Origin:', window.location.origin);
 
     // 2️⃣ VERIFICAR CONECTIVIDAD CON SUPABASE
     try {
       const { data, error } = await supabase.auth.getSession();
       if (!error) {
         diagnostico.conectividad = true;
-        console.log('✅ [DIAGNÓSTICO] Conectividad con Supabase: OK');
       } else {
         diagnostico.errores.push(`Conectividad: ${error.message}`);
-        console.error('❌ [DIAGNÓSTICO] Error de conectividad:', error);
       }
     } catch (err) {
       diagnostico.errores.push(`Conectividad excepción: ${err}`);
-      console.error('❌ [DIAGNÓSTICO] Excepción de conectividad:', err);
     }
 
     // 3️⃣ VERIFICAR CONFIGURACIÓN DE AUTH (sin getConfig que no existe)
@@ -51,14 +45,12 @@ export async function diagnosticarConfiguracionSupabase() {
         urlActual: window.location.href,
         esLocalhost: window.location.hostname === 'localhost' ? 'Sí ⚠️' : 'No ✅'
       };
-      console.log('🔍 [DIAGNÓSTICO] Configuración Auth:', diagnostico.authConfig);
     } catch (err) {
       diagnostico.errores.push(`Configuración Auth: ${err}`);
     }
 
           // 4️⃣ VERIFICAR CONFIGURACIÓN DE EMAIL (DETECCIÓN ESPECÍFICA)
       try {
-        console.log('🔍 [DIAGNÓSTICO] Probando configuración de email...');
         
         // Intentar con un email de prueba para detectar el tipo de error
         const { error: emailError } = await supabase.auth.resetPasswordForEmail('test@nonexistent-domain-12345.com', {
@@ -66,7 +58,6 @@ export async function diagnosticarConfiguracionSupabase() {
         });
 
         if (emailError) {
-          console.log('🔍 [DIAGNÓSTICO] Error de email detectado:', emailError);
           
           if (emailError.message.includes('rate') || emailError.message.includes('limit')) {
             diagnostico.recomendaciones.push('✅ Servicio de email funcional (rate limit detectado - normal)');
@@ -166,18 +157,15 @@ export async function diagnosticarConfiguracionSupabase() {
 
   } catch (error) {
     diagnostico.errores.push(`Error general: ${error}`);
-    console.error('❌ [DIAGNÓSTICO] Error general:', error);
   }
 
   // 7️⃣ MOSTRAR RESUMEN
-  console.log('📊 [DIAGNÓSTICO] RESUMEN:', diagnostico);
   
   return diagnostico;
 }
 
 // 🛠️ FUNCIÓN PARA PROBAR RECUPERACIÓN DE CONTRASEÑA
 export async function probarRecuperacionContrasena(email: string) {
-  console.log('🧪 [PRUEBA] Probando recuperación para:', email);
   
   const isProduction = window.location.hostname === 'academiavallenataonline.com';
   const isLocalhost = window.location.hostname === 'localhost';
@@ -185,7 +173,6 @@ export async function probarRecuperacionContrasena(email: string) {
     ? 'https://academiavallenataonline.com/recuperar-contrasena'
     : window.location.origin + '/recuperar-contrasena';
 
-  console.log('🔗 [PRUEBA] Redirect URL configurada:', redirectURL);
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -193,7 +180,6 @@ export async function probarRecuperacionContrasena(email: string) {
     });
 
     if (error) {
-      console.error('❌ [PRUEBA] Error completo:', error);
       
       // Analizar tipo específico de error
       if (error.message?.includes('AuthRetryableFetchError') || error.name === 'AuthRetryableFetchError') {
@@ -241,7 +227,6 @@ export async function probarRecuperacionContrasena(email: string) {
         recomendacion: 'Verifica la configuración de Supabase Auth y conectividad'
       };
     } else {
-      console.log('✅ [PRUEBA] Email enviado exitosamente');
       return {
         exito: true,
         mensaje: 'Email de recuperación enviado correctamente',
@@ -250,7 +235,6 @@ export async function probarRecuperacionContrasena(email: string) {
       };
     }
   } catch (err) {
-    console.error('❌ [PRUEBA] Excepción completa:', err);
     
     // Capturar específicamente AuthRetryableFetchError
     const error = err as any; // Convertir para acceder a propiedades

@@ -44,7 +44,6 @@ class BusquedaService {
         const terminoLimpio = termino.trim().toLowerCase();
 
         try {
-            console.log('🔍 [BÚSQUEDA SERVICE] Buscando:', terminoLimpio);
 
             const [cursos, tutoriales, blog, eventos] = await Promise.all([
                 this.buscarCursos(terminoLimpio),
@@ -53,16 +52,11 @@ class BusquedaService {
                 this.buscarEventos(terminoLimpio)
             ]);
 
-            console.log('📚 [BÚSQUEDA] Cursos encontrados:', cursos.length, cursos);
-            console.log('🎵 [BÚSQUEDA] Tutoriales encontrados:', tutoriales.length, tutoriales);
-            console.log('📝 [BÚSQUEDA] Blog encontrados:', blog.length, blog);
-            console.log('🎪 [BÚSQUEDA] Eventos encontrados:', eventos.length, eventos);
 
             const total = cursos.length + tutoriales.length + blog.length + eventos.length;
 
             // Si no hay resultados, agregar datos de ejemplo para demostración
             if (total === 0) {
-                console.log('🚨 [BÚSQUEDA] Sin resultados, mostrando datos de ejemplo');
                 return this.obtenerDatosEjemplo(terminoLimpio);
             }
 
@@ -76,7 +70,6 @@ class BusquedaService {
                 total
             };
         } catch (error) {
-            console.error('❌ [BÚSQUEDA] Error en búsqueda universal:', error);
             return {
                 cursos: [],
                 tutoriales: [],
@@ -102,7 +95,6 @@ class BusquedaService {
                 .limit(6);
 
             if (error) {
-                console.error('❌ Error buscando cursos:', error);
                 return [];
             }
 
@@ -119,7 +111,6 @@ class BusquedaService {
                 precio: curso.precio_normal
             }));
         } catch (error) {
-            console.error('❌ Error en buscarCursos:', error);
             return [];
         }
     }
@@ -137,7 +128,6 @@ class BusquedaService {
                 .limit(8);
 
             if (error) {
-                console.error('❌ Error buscando tutoriales:', error);
                 return [];
             }
 
@@ -154,7 +144,6 @@ class BusquedaService {
                 nivel: tutorial.nivel
             }));
         } catch (error) {
-            console.error('❌ Error en buscarTutoriales:', error);
             return [];
         }
     }
@@ -173,7 +162,6 @@ class BusquedaService {
                 .limit(4);
 
             if (error) {
-                console.error('❌ Error buscando blog:', error);
                 return [];
             }
 
@@ -190,7 +178,6 @@ class BusquedaService {
                 fechaCreacion: articulo.creado_en
             }));
         } catch (error) {
-            console.error('❌ Error en buscarBlog:', error);
             return [];
         }
     }
@@ -210,7 +197,6 @@ class BusquedaService {
                 .limit(6);
 
             if (error) {
-                console.error('❌ Error buscando eventos:', error);
                 return [];
             }
 
@@ -230,7 +216,6 @@ class BusquedaService {
                 fechaCreacion: evento.fecha_inicio
             }));
         } catch (error) {
-            console.error('❌ Error en buscarEventos:', error);
             return [];
         }
     }
@@ -354,7 +339,6 @@ class BusquedaService {
 
         const totalEjemplos = cursosFiltrados.length + tutorialesFiltrados.length + blogFiltrado.length + eventosFiltrados.length;
 
-        console.log('📋 [DATOS EJEMPLO] Mostrando resultados de ejemplo:', totalEjemplos);
 
         return {
             cursos: cursosFiltrados,

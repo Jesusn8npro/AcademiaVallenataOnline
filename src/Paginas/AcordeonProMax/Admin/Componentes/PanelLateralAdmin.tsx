@@ -1,20 +1,13 @@
 import React from 'react';
-import {
-  Check,
-  ChevronRight,
-  Pause,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-  Square,
-  Upload,
-  Volume2,
-} from 'lucide-react';
-import { HILERAS_NATIVAS, TONALIDADES } from '../../../../Core/acordeon/notasAcordeonDiatonico';
+import { ChevronRight } from 'lucide-react';
+import { TONALIDADES } from '../../../../Core/acordeon/notasAcordeonDiatonico';
 import { MODELOS_VISUALES_ACORDEON } from '../../PracticaLibre/Datos/modelosVisualesAcordeon';
-import { formatearDuracion } from '../../PracticaLibre/Utilidades/SecuenciaLogic';
 import type { ModeloVisualAcordeon, SeccionPanelPracticaLibre } from '../../PracticaLibre/TiposPracticaLibre';
 import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminListaAcordes, PanelAdminLibreria, PanelAdminUSB } from '..';
+import SeccionAdminSonido from './SeccionAdminSonido';
+import SeccionAdminPistas from './SeccionAdminPistas';
+import SeccionAdminTeoria from './SeccionAdminTeoria';
+import SeccionAdminEfectos from './SeccionAdminEfectos';
 
 export interface HeroTransport {
   bpm: number;
@@ -56,13 +49,6 @@ interface PanelLateralAdminProps {
   setMetronomoActivo: (val: boolean) => void;
 }
 
-const CIRCULO_MAYOR = ['Do', 'Sol', 'Re', 'La', 'Mi', 'Si', 'Solb', 'Reb', 'Lab', 'Mib', 'Sib', 'Fa'];
-const CIRCULO_MENOR = ['La', 'Mi', 'Si', 'Solb', 'Reb', 'Lab', 'Mib', 'Sib', 'Fa', 'Do', 'Sol', 'Re'];
-
-function extraerNotasFila(fila: Array<{ nombre: string }>) {
-  return Array.from(new Set(fila.map((n) => n.nombre)));
-}
-
 const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
   sonido: 'Sonido y lectura', modelos: 'Modelos visuales', pistas: 'Pistas y capas',
   teoria: 'Teoria musical', efectos: 'Efectos y mezcla', rec: 'Grabacion pro',
@@ -81,8 +67,6 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
   const listaTonalidades: string[] = logica.listaTonalidades?.length
     ? logica.listaTonalidades
     : Object.keys(TONALIDADES);
-  const configuracionTonalidad = TONALIDADES[tonalidadSeleccionada as keyof typeof TONALIDADES] || TONALIDADES['ADG'];
-  const hileras = HILERAS_NATIVAS[tonalidadSeleccionada] || [];
 
   const detenerHero = () => {
     hero.buscarTick(0);
@@ -103,57 +87,7 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
       </div>
 
       {seccionActiva === 'sonido' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Tonalidades</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {listaTonalidades.map((t) => (
-                <button key={t}
-                  className={`estudio-practica-libre-chip-boton ${tonalidadSeleccionada === t ? 'activo' : ''}`}
-                  onClick={() => logica.setTonalidadSeleccionada(t)}>{t}</button>
-              ))}
-            </div>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Timbre de pitos</div>
-            <div className="estudio-practica-libre-grid-doble">
-              {(['Brillante', 'Armonizado'] as const).map((timbre) => (
-                <button key={timbre}
-                  className={`estudio-practica-libre-card-boton ${(logica.ajustes?.timbre || 'Brillante') === timbre ? 'activo' : ''}`}
-                  onClick={() => logica.setAjustes((p: any) => ({ ...p, timbre }))}>
-                  <strong>{timbre}</strong>
-                  <span>{timbre === 'Brillante' ? 'Ataque abierto y definido' : 'Color mas grueso y envolvente'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Instrumento</div>
-            <div className="estudio-practica-libre-lista-vertical">
-              {(logica.listaInstrumentos || []).map((inst: any) => (
-                <button key={inst.id}
-                  className={`estudio-practica-libre-item-lista ${logica.instrumentoId === inst.id ? 'activo' : ''}`}
-                  onClick={() => logica.setInstrumentoId(inst.id)}>
-                  <div><strong>{inst.nombre || 'Instrumento'}</strong><span>{inst.descripcion || ''}</span></div>
-                  {logica.instrumentoId === inst.id && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Modo de vista</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {modosVista.map(({ valor, label }) => (
-                <button key={valor}
-                  className={`estudio-practica-libre-chip-boton ${logica.modoVista === valor ? 'activo' : ''}`}
-                  onClick={() => logica.setModoVista(valor)}>{label}</button>
-              ))}
-            </div>
-          </div>
-          <button className="estudio-practica-libre-btn-linea" onClick={onAbrirEditorAvanzado}>
-            <SlidersHorizontal size={16} />Abrir editor avanzado
-          </button>
-        </div>
+        <SeccionAdminSonido logica={logica} tonalidadSeleccionada={tonalidadSeleccionada} listaTonalidades={listaTonalidades} modosVista={modosVista} onAbrirEditorAvanzado={onAbrirEditorAvanzado} />
       )}
 
       {seccionActiva === 'modelos' && (
@@ -173,144 +107,13 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
         </div>
       )}
 
-      {seccionActiva === 'pistas' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Pista activa</div>
-            <div className="estudio-practica-libre-pista-activa">
-              <div>
-                <strong>{estudio.pistaActiva?.nombre || 'Sin pista seleccionada'}</strong>
-                <span>{estudio.pistaActiva
-                  ? `${formatearDuracion(estudio.tiempoPistaActual * 1000)} / ${formatearDuracion(estudio.duracionPista * 1000)}`
-                  : 'Carga una pista local o elige una del catalogo.'}</span>
-              </div>
-              <div className="estudio-practica-libre-pista-botones">
-                <button className="estudio-practica-libre-icon-btn" onClick={estudio.alternarReproduccionPista} disabled={!estudio.pistaActiva}>
-                  {estudio.reproduciendoPista ? <Pause size={15} /> : <Play size={15} />}
-                </button>
-                <button className="estudio-practica-libre-icon-btn" onClick={() => estudio.reiniciarPista(estudio.reproduciendoPista)} disabled={!estudio.pistaActiva}><RotateCcw size={15} /></button>
-                <button className="estudio-practica-libre-icon-btn" onClick={estudio.limpiarPistaSeleccionada} disabled={!estudio.pistaActiva}><Square size={15} /></button>
-              </div>
-            </div>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <label className="estudio-practica-libre-carga-local">
-              <Upload size={16} />Cargar pista local
-              <input type="file" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) estudio.cargarArchivoLocal(f); e.target.value = ''; }} />
-            </label>
-          </div>
-          {estudio.pistaActiva?.capas?.length > 0 && (
-            <div className="estudio-practica-libre-bloque">
-              <div className="estudio-practica-libre-bloque-titulo">Capas sincronizadas</div>
-              <div className="estudio-practica-libre-grid-chips">
-                {estudio.pistaActiva.capas.map((capa: any) => (
-                  <button key={capa.id}
-                    className={`estudio-practica-libre-chip-boton ${estudio.preferencias.capasActivas.includes(capa.id) ? 'activo' : ''}`}
-                    onClick={() => estudio.alternarCapa(capa.id)}>{capa.nombre}</button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Catalogo</div>
-            <div className="estudio-practica-libre-lista-vertical pista-lista">
-              {estudio.cargandoPistas && <div className="estudio-practica-libre-vacio">Cargando...</div>}
-              {estudio.pistasDisponibles.map((pista: any) => (
-                <button key={pista.id}
-                  className={`estudio-practica-libre-item-lista ${estudio.pistaActiva?.id === pista.id ? 'activo' : ''}`}
-                  onClick={() => estudio.seleccionarPista(pista)}>
-                  <div><strong>{pista.nombre}</strong><span>{pista.artista || ''}</span></div>
-                  {estudio.pistaActiva?.id === pista.id && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {seccionActiva === 'pistas' && <SeccionAdminPistas estudio={estudio} />}
 
       {seccionActiva === 'teoria' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Hileras nativas</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {hileras.map((h: string) => (
-                <span key={h} className="estudio-practica-libre-chip-boton activo solo-visual">{h}</span>
-              ))}
-            </div>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Notas por hilera</div>
-            <div className="estudio-practica-libre-teoria-columnas">
-              <div><strong>Primera</strong><span>{extraerNotasFila(configuracionTonalidad.primeraFila).join(', ')}</span></div>
-              <div><strong>Segunda</strong><span>{extraerNotasFila(configuracionTonalidad.segundaFila).join(', ')}</span></div>
-              <div><strong>Tercera</strong><span>{extraerNotasFila(configuracionTonalidad.terceraFila).join(', ')}</span></div>
-            </div>
-          </div>
-          {estudio.preferencias?.mostrarTeoriaCircular && (
-            <>
-              <div className="estudio-practica-libre-bloque">
-                <div className="estudio-practica-libre-bloque-titulo">Circulo mayor</div>
-                <div className="estudio-practica-libre-grid-circulo">
-                  {CIRCULO_MAYOR.map((n) => (
-                    <span key={n} className={`estudio-practica-libre-chip-circulo ${hileras.includes(n.toUpperCase()) ? 'activo' : ''}`}>{n}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="estudio-practica-libre-bloque">
-                <div className="estudio-practica-libre-bloque-titulo">Circulo menor</div>
-                <div className="estudio-practica-libre-grid-circulo">
-                  {CIRCULO_MENOR.map((n) => <span key={n} className="estudio-practica-libre-chip-circulo">{n}m</span>)}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <SeccionAdminTeoria tonalidadSeleccionada={tonalidadSeleccionada} mostrarTeoriaCircular={!!estudio.preferencias?.mostrarTeoriaCircular} />
       )}
 
-      {seccionActiva === 'efectos' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Mezcla funcional</div>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Volumen acordeon</span><strong>{estudio.volumenAcordeon}%</strong>
-              <input type="range" min={0} max={100} value={estudio.volumenAcordeon}
-                onChange={(e) => estudio.ajustarVolumenAcordeon(Number(e.target.value))} />
-            </label>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Volumen pista</span><strong>{estudio.preferencias.efectos.volumenPista}%</strong>
-              <input type="range" min={0} max={100} value={estudio.preferencias.efectos.volumenPista}
-                onChange={(e) => estudio.actualizarEfectos({ volumenPista: Number(e.target.value) })} />
-            </label>
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Preset FX</div>
-            {(['reverb', 'bajos', 'medios', 'agudos'] as const).map((fx) => (
-              <label key={fx} className="estudio-practica-libre-slider-row">
-                <span>{fx.charAt(0).toUpperCase() + fx.slice(1)}</span>
-                <strong>{estudio.preferencias.efectos[fx]}{fx === 'reverb' ? '%' : ''}</strong>
-                <input type="range" min={fx === 'reverb' ? 0 : -12} max={fx === 'reverb' ? 100 : 12}
-                  value={estudio.preferencias.efectos[fx]}
-                  onChange={(e) => estudio.actualizarEfectos({ [fx]: Number(e.target.value) })} />
-              </label>
-            ))}
-          </div>
-          <div className="estudio-practica-libre-bloque">
-            <label className="estudio-practica-libre-switch-row">
-              <div>
-                <strong>Reiniciar pista al grabar</strong>
-                <span>Mantiene sincronizada la toma desde cero.</span>
-              </div>
-              <button
-                className={`estudio-practica-libre-switch ${estudio.preferencias.efectos.autoReiniciarPista ? 'activo' : ''}`}
-                onClick={() => estudio.actualizarEfectos({ autoReiniciarPista: !estudio.preferencias.efectos.autoReiniciarPista })}>
-                <span />
-              </button>
-            </label>
-            <div className="estudio-practica-libre-aviso-fx"><Volume2 size={15} />Valores guardados en preset de practica.</div>
-          </div>
-        </div>
-      )}
+      {seccionActiva === 'efectos' && <SeccionAdminEfectos estudio={estudio} />}
 
       {seccionActiva === 'rec' && (
         <PanelAdminRec

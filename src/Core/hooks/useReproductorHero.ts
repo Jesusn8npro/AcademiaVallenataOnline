@@ -257,7 +257,6 @@ export const useReproductorHero = (
         // 🎧 COMPENSADOR DE LATENCIA MÁGICO:
         // Si hay una pista cargada, la obligamos a sincronizarse a este momento cero real.
         (window as any).sincronizarRelojConPista = () => {
-             console.log('⏰ Sincronizando inicio maestro del reproductor a la pista...');
              sincronizarConPista();
         };
     }, [detenerReproduccion, loop, sincronizarConPista]);

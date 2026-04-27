@@ -47,7 +47,6 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
         setUsuarioId(user?.id || null)
         if (!user) { setChats([]); setCargando(false); return }
 
-        // Obtener los chat_ids en los que el usuario es miembro ACTIVO
         const { data: misMiembros, error: errM } = await supabase
           .from('miembros_chat')
           .select('chat_id')
@@ -70,7 +69,6 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
 
         if (error) { setChats([]); setCargando(false); return }
 
-        // Enriquecer y obtener último mensaje real cuando el FK no está poblado
         const baseEnriquecidos: Chat[] = (data || []).map((c: any) => {
           const miembroActual = (c.miembros_chat || []).find((m: any) => m.usuario_id === user.id)
           return {
@@ -100,7 +98,6 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
         }
         const enriquecidos = baseEnriquecidos
 
-        // Agrupar para mostrar solo un chat privado por usuario
         const mapa = new Map<string, Chat>()
         for (const c of enriquecidos) {
           const clave = c.es_grupal ? `grupo-${c.id}` : (() => {

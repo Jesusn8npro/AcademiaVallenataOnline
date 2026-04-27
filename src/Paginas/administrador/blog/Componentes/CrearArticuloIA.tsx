@@ -49,7 +49,6 @@ const CrearArticuloIA: React.FC<CrearArticuloIAProps> = () => {
                 if (data.paso) setPasoActual(data.paso);
                 if (data.articulo) setArticuloGenerado(data.articulo);
             } catch (e) {
-                console.error("Error cargando conversación", e);
             }
         }
     }, []);

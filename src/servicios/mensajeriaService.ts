@@ -138,7 +138,6 @@ class MensajeriaService {
 				.eq('estado_miembro', 'activo');
 
 			if (errorChatsUsuario) {
-				console.error('Error obteniendo chats del usuario:', errorChatsUsuario);
 				return { chats: [], error: errorChatsUsuario.message };
 			}
 
@@ -171,7 +170,6 @@ class MensajeriaService {
 				.order('ultimo_mensaje_fecha', { ascending: false, nullsFirst: false });
 
 			if (error) {
-				console.error('Error obteniendo chats:', error);
 				return { chats: [], error: error.message };
 			}
 
@@ -219,7 +217,6 @@ class MensajeriaService {
 
 			return { chats: chatsConInfo, error: null };
 		} catch (err) {
-			console.error('Error inesperado obteniendo chats:', err);
 			return { chats: [], error: 'Error inesperado' };
 		}
 	}
@@ -272,7 +269,6 @@ class MensajeriaService {
 				.single();
 
 			if (errorChat) {
-				console.error('Error creando chat:', errorChat);
 				return { chat: null, error: errorChat.message };
 			}
 
@@ -293,7 +289,6 @@ class MensajeriaService {
 				.insert(miembrosData);
 
 			if (errorMiembros) {
-				console.error('Error agregando miembros:', errorMiembros);
 				// Intentar limpiar el chat creado
 				await supabase.from('chats').delete().eq('id', chatCreado.id);
 				return { chat: null, error: 'Error agregando miembros al chat' };
@@ -317,7 +312,6 @@ class MensajeriaService {
 
 			return { chat: chatCreado, error: null };
 		} catch (err) {
-			console.error('Error inesperado creando chat:', err);
 			return { chat: null, error: 'Error inesperado' };
 		}
 	}
@@ -350,7 +344,6 @@ class MensajeriaService {
 
 			return null;
 		} catch (err) {
-			console.error('Error buscando chat privado existente:', err);
 			return null;
 		}
 	}
@@ -396,7 +389,6 @@ class MensajeriaService {
 			const { data, error } = await query;
 
 			if (error) {
-				console.error('Error obteniendo mensajes:', error);
 				return { mensajes: [], error: error.message };
 			}
 
@@ -411,7 +403,6 @@ class MensajeriaService {
 
 			return { mensajes: mensajesProcesados, error: null };
 		} catch (err) {
-			console.error('Error inesperado obteniendo mensajes:', err);
 			return { mensajes: [], error: 'Error inesperado obteniendo mensajes: ' + (err as Error).message };
 		}
 	}
@@ -468,7 +459,6 @@ class MensajeriaService {
 				.single();
 
 			if (error) {
-				console.error('Error enviando mensaje:', error);
 				return { mensaje: null, error: error.message };
 			}
 
@@ -477,7 +467,6 @@ class MensajeriaService {
 
 			return { mensaje: mensajeCreado, error: null };
 		} catch (err) {
-			console.error('Error inesperado enviando mensaje:', err);
 			return { mensaje: null, error: 'Error inesperado' };
 		}
 	}
@@ -494,7 +483,6 @@ class MensajeriaService {
 				tipo: 'sistema'
 			});
 		} catch (err) {
-			console.error('Error enviando mensaje de sistema:', err);
 		}
 	}
 
@@ -514,13 +502,11 @@ class MensajeriaService {
 			});
 
 			if (error) {
-				console.error('Error marcando mensajes como leídos:', error);
 				return { exito: false, error: error.message };
 			}
 
 			return { exito: true, error: null };
 		} catch (err) {
-			console.error('Error inesperado marcando mensajes como leídos:', err);
 			return { exito: false, error: 'Error inesperado' };
 		}
 	}
@@ -575,7 +561,6 @@ class MensajeriaService {
 
 			return { exito: true, error: null };
 		} catch (err) {
-			console.error('Error gestionando reacción:', err);
 			return { exito: false, error: 'Error inesperado' };
 		}
 	}
@@ -644,7 +629,6 @@ class MensajeriaService {
 				}
 			});
 		} catch (err) {
-			console.error('Error enviando notificaciones de mensaje:', err);
 		}
 	}
 
@@ -663,7 +647,6 @@ class MensajeriaService {
 		}
 	): Promise<void> {
 		try {
-			console.log(`🚀 [REALTIME-BI] Iniciando suscripción BIDIRECCIONAL al chat: ${chatId}`);
 
 			// 1. LIMPIAR suscripción anterior completamente
 			await this.limpiarSuscripcion(chatId);
@@ -671,17 +654,14 @@ class MensajeriaService {
 			// 2. OBTENER usuario actual para logs
 			const { data: { user } } = await supabase.auth.getUser();
 			const userId = user?.id || 'unknown';
-			console.log(`👤 [REALTIME-BI] Usuario conectándose: ${userId}`);
 
 			// 3. CREAR canal único con timestamp para evitar conflictos
 			const channelName = `bidirectional_chat_${chatId}_${userId}_${Date.now()}`;
-			console.log(`📡 [REALTIME-BI] Creando canal: ${channelName}`);
 
 			const channel = supabase
 				.channel(channelName)
 				// 4. VERIFICAR conexión del sistema
 				.on('system', { event: 'connected' }, () => {
-					console.log(`🔌 [REALTIME-BI] Canal conectado al sistema Supabase para usuario ${userId}`);
 				})
 				// 5. ESCUCHAR TODOS los mensajes del chat (sin filtrar por usuario)
 				.on(
@@ -693,14 +673,9 @@ class MensajeriaService {
 						filter: `chat_id=eq.${chatId}` // ✅ FILTRO CORRECTO - SOLO POR CHAT
 					},
 					(payload: any) => {
-						console.log(`🎉 [REALTIME-BI] ¡MENSAJE DETECTADO! Usuario: ${userId}`);
-						console.log(`📝 [REALTIME-BI] "${payload.new?.contenido}" por ${payload.new?.usuario_id}`);
-						console.log(`💬 [REALTIME-BI] Chat: ${payload.new?.chat_id}`);
-						console.log(`🔄 [REALTIME-BI] ¿Es mi mensaje?: ${payload.new?.usuario_id === userId}`);
 						
 						// Verificar que es del chat correcto
 						if (payload.new?.chat_id === chatId) {
-							console.log(`✅ [REALTIME-BI] Mensaje del chat correcto, enviando a callback`);
 							
 							// IMPORTANTE: Enviar TODOS los mensajes al callback
 							// El filtrado se hace en el componente ChatVista
@@ -708,28 +683,22 @@ class MensajeriaService {
 								callbacks.onNuevoMensaje(payload.new);
 							}
 						} else {
-							console.log(`⚠️ [REALTIME-BI] Mensaje de otro chat ignorado`);
 						}
 					}
 				)
 				// 6. MANEJAR estados de conexión
 				.subscribe((status: any) => {
-					console.log(`🔗 [REALTIME-BI] Estado para usuario ${userId}: ${status}`);
 					
 					switch (status) {
 						case 'SUBSCRIBED':
-							console.log(`✅ [REALTIME-BI] ¡${userId} CONECTADO Y ESCUCHANDO CHAT ${chatId}!`);
 							break;
 						case 'CHANNEL_ERROR':
-							console.error(`❌ [REALTIME-BI] Error en canal para usuario ${userId} en chat ${chatId}`);
 							break;
 						case 'TIMED_OUT':
-							console.warn(`⏱️ [REALTIME-BI] Timeout para ${userId} en chat ${chatId}, reintentando...`);
 							// Auto-reconectar en caso de timeout
 							setTimeout(() => this.suscribirseAChat(chatId, callbacks), 3000);
 							break;
 						case 'CLOSED':
-							console.log(`🔴 [REALTIME-BI] Canal cerrado para ${userId} en chat ${chatId}`);
 							break;
 					}
 					
@@ -740,10 +709,8 @@ class MensajeriaService {
 
 			// 7. GUARDAR referencia del canal
 			this.channels.set(chatId, channel);
-			console.log(`💾 [REALTIME-BI] Canal bidireccional guardado para usuario ${userId} en chat ${chatId}`);
 
 		} catch (error) {
-			console.error(`❌ [REALTIME-BI] Error crítico:`, error);
 			if (callbacks.onConexionCambiada) {
 				callbacks.onConexionCambiada('ERROR');
 			}
@@ -756,17 +723,13 @@ class MensajeriaService {
 	private async limpiarSuscripcion(chatId: string): Promise<void> {
 		if (this.channels.has(chatId)) {
 			const oldChannel = this.channels.get(chatId);
-			console.log(`🧹 [REALTIME-BI] Limpiando canal anterior para chat ${chatId}`);
 			
 			try {
 				await oldChannel?.unsubscribe();
 				this.channels.delete(chatId);
-				console.log(`✅ [REALTIME-BI] Canal anterior limpiado correctamente`);
 			} catch (error) {
-				console.error(`❌ [REALTIME-BI] Error limpiando canal:`, error);
 			}
 		} else {
-			console.log(`🔍 [REALTIME-BI] No hay canal previo para limpiar en chat ${chatId}`);
 		}
 	}
 
@@ -780,19 +743,14 @@ class MensajeriaService {
 			const { data: { user } } = await supabase.auth.getUser();
 			const userId = user?.id || 'unknown';
 			
-			console.log(`🔕 [REALTIME-BI] Usuario ${userId} desuscribiéndose del chat: ${chatId}`);
 			
 			const channel = this.channels.get(chatId);
 			if (channel) {
-				console.log(`📡 [REALTIME-BI] Canal encontrado, desconectando...`);
 				await channel.unsubscribe();
 				this.channels.delete(chatId);
-				console.log(`✅ [REALTIME-BI] Usuario ${userId} desconectado exitosamente del chat ${chatId}`);
 			} else {
-				console.log(`⚠️ [REALTIME-BI] No hay canal activo para chat ${chatId}`);
 			}
 		} catch (err) {
-			console.error(`❌ [REALTIME-BI] Error desuscribiendo del chat ${chatId}:`, err);
 		}
 	}
 
@@ -805,7 +763,6 @@ class MensajeriaService {
 				await this.desuscribirseDeChat(chatId);
 			}
 		} catch (err) {
-			console.error('Error desuscribiéndose de todos los chats:', err);
 		}
 	}
 
@@ -831,7 +788,6 @@ class MensajeriaService {
 
 			return { usuarios: data || [], error: null };
 		} catch (err) {
-			console.error('Error buscando usuarios:', err);
 			return { usuarios: [], error: 'Error inesperado' };
 		}
 	}
@@ -880,7 +836,6 @@ class MensajeriaService {
 				error: null
 			};
 		} catch (err) {
-			console.error('Error obteniendo estadísticas:', err);
 			return { estadisticas: null, error: 'Error inesperado' };
 		}
 	}
@@ -891,7 +846,6 @@ class MensajeriaService {
 
 	async eliminarChat(chatId: string): Promise<{ exito: boolean; error: string | null }> {
 		try {
-			console.log('🗑️ [MENSAJERIA] Eliminando chat:', chatId);
 
 			// Obtener usuario actual
 			const { data: { user } } = await supabase.auth.getUser();
@@ -906,7 +860,6 @@ class MensajeriaService {
 			});
 
 			if (error) {
-				console.error('❌ Error llamando función eliminar_chat_completo:', error);
 				return { exito: false, error: 'Error eliminando el chat: ' + error.message };
 			}
 
@@ -914,15 +867,12 @@ class MensajeriaService {
 			const resultado = data;
 			
 			if (resultado.exito) {
-				console.log('✅ Chat eliminado exitosamente:', resultado.mensaje);
 				return { exito: true, error: null };
 			} else {
-				console.error('❌ Error eliminando chat:', resultado.error);
 				return { exito: false, error: resultado.error };
 			}
 
 		} catch (err) {
-			console.error('❌ Error inesperado eliminando chat:', err);
 			return { exito: false, error: 'Error inesperado eliminando chat' };
 		}
 	}

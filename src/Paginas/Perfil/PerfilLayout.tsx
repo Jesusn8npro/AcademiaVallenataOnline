@@ -24,12 +24,10 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
 
   function onModalStateChange(abierto: boolean) { setModalAbierto(abierto) }
 
-  // Mostrar carga si no está inicializado O si está cargando y no hay perfil
   const mostrarCarga = !inicializado || (cargando && !perfil)
 
   return (
     <div className="layout-perfil-fijo" translate="no">
-      {/* Área del Encabezado - Contenedor estable */}
       <div className="perfil-layout-header-wrapper">
         {mostrarCarga ? (
           <SkeletonEncabezadoPerfil />
@@ -51,18 +49,15 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         )}
       </div>
 
-      {/* Área de Pestañas - Contenedor estable */}
       <div className="perfil-layout-tabs-wrapper" style={{ marginBottom: '1rem' }}>
         <PestanasPerfil modalAbierto={modalAbierto} />
       </div>
 
-      {/* Área de Contenido - Contenedor estable */}
       <div className="contenido-dinamico">
         {perfil || inicializado ? (
           <div className="perfil-content-actual">{children}</div>
         ) : (
           <div className="contenido-cargando" style={{ padding: '2rem', width: '100%' }}>
-            {/* Skeleton simple para el cuerpo */}
             <div className="skeleton-box" style={{ height: '40px', width: '300px', marginBottom: '2rem', borderRadius: '8px' }} />
             <div className="skeleton-box" style={{ height: '200px', width: '100%', borderRadius: '12px' }} />
           </div>

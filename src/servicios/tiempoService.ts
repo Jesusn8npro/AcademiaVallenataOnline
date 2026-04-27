@@ -12,7 +12,6 @@ export class TiempoService {
     static iniciarSesion(usuarioId: string) {
         if (typeof window === 'undefined') return;
 
-        console.log('⏱️ Iniciando tracking de tiempo para:', usuarioId);
 
         this.sesionIniciada = new Date();
         this.tiempoAcumulado = 0;
@@ -94,17 +93,14 @@ export class TiempoService {
                 });
 
             if (!error) {
-                console.log('💾 Tiempo guardado:', totalMinutos, 'minutos');
             }
         } catch (error) {
-            console.error('❌ Error guardando tiempo:', error);
         }
     }
 
     // 📄 Guardar tiempo por página
     static async guardarTiempoPagina(ruta: string, minutos: number) {
         // Implementar si necesitas tracking granular por página
-        console.log(`📄 Tiempo en ${ruta}: ${minutos} minutos`);
     }
 
     // 🔚 Finalizar sesión
@@ -166,7 +162,6 @@ export class TiempoService {
             const tiempoEspecifico = totalLecciones + totalTutoriales + totalSimulador;
             const tiempoFinal = Math.max(tiempoEspecifico, totalSesiones);
 
-            console.log('⏱️ Cálculo de tiempo semanal:', {
                 lecciones: totalLecciones,
                 tutoriales: totalTutoriales,
                 simulador: totalSimulador,
@@ -177,7 +172,6 @@ export class TiempoService {
             return tiempoFinal;
 
         } catch (error) {
-            console.error('❌ Error calculando tiempo semanal:', error);
             return 0;
         }
     }
@@ -210,7 +204,6 @@ export class TiempoService {
             return estadisticas;
 
         } catch (error) {
-            console.error('❌ Error obteniendo estadísticas:', error);
             return null;
         }
     }

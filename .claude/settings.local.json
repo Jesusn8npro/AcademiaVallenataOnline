@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/c/PROGRAMACION/Academia/**)",
+      "PowerShell(\\(Get-Content \"c:\\\\PROGRAMACION\\\\Academia\\\\src\\\\Paginas\\\\Legales\\\\Terminos.tsx\"\\).Count; Get-Content \"c:\\\\PROGRAMACION\\\\Academia\\\\src\\\\Paginas\\\\Legales\\\\Terminos.tsx\" | Select-Object -First 30)"
+    ]
+  }
+}

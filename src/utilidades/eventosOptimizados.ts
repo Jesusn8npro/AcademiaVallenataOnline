@@ -43,7 +43,6 @@ export class EventosOptimizados {
     // ✅ SOLUCIÓN: Optimizar eventos de click
     this.optimizarClick();
     
-    console.log('🔧 [EVENTOS] Sistema de optimización de eventos inicializado');
   }
 
   /**
@@ -68,7 +67,6 @@ export class EventosOptimizados {
           func(...args);
           this.debounceTimers.delete(debounceKey);
         } catch (error) {
-          console.warn(`⚠️ [EVENTOS] Error en función debounced ${debounceKey}:`, error);
         }
       }, delay);
       
@@ -95,7 +93,6 @@ export class EventosOptimizados {
           func(...args);
           this.throttleTimers.set(throttleKey, now);
         } catch (error) {
-          console.warn(`⚠️ [EVENTOS] Error en función throttled ${throttleKey}:`, error);
         }
       }
     };
@@ -123,9 +120,7 @@ export class EventosOptimizados {
       // ✅ SOLUCIÓN: Usar passive listener para mejor rendimiento
       window.addEventListener('scroll', handleScroll, { passive: true });
       
-      console.log('✅ [EVENTOS] Eventos de scroll optimizados');
     } catch (error) {
-      console.warn('⚠️ [EVENTOS] Error optimizando scroll:', error);
     }
   }
 
@@ -150,9 +145,7 @@ export class EventosOptimizados {
 
       window.addEventListener('resize', handleResize, { passive: true });
       
-      console.log('✅ [EVENTOS] Eventos de resize optimizados');
     } catch (error) {
-      console.warn('⚠️ [EVENTOS] Error optimizando resize:', error);
     }
   }
 
@@ -180,9 +173,7 @@ export class EventosOptimizados {
       // ✅ SOLUCIÓN: Delegación de eventos para inputs
       document.addEventListener('input', handleInput, { passive: true });
       
-      console.log('✅ [EVENTOS] Eventos de input optimizados');
     } catch (error) {
-      console.warn('⚠️ [EVENTOS] Error optimizando input:', error);
     }
   }
 
@@ -207,9 +198,7 @@ export class EventosOptimizados {
       // ✅ SOLUCIÓN: Delegación de eventos para clicks
       document.addEventListener('click', handleClick, { passive: true });
       
-      console.log('✅ [EVENTOS] Eventos de click optimizados');
     } catch (error) {
-      console.warn('⚠️ [EVENTOS] Error optimizando click:', error);
     }
   }
 
@@ -255,7 +244,6 @@ export class EventosOptimizados {
         document.removeEventListener(evento, handler as EventListener);
       });
       
-      console.log(`✅ [EVENTOS] Listener optimizado creado para ${evento}`);
       
       // ✅ SOLUCIÓN: Retornar función de limpieza
       return () => {
@@ -270,7 +258,6 @@ export class EventosOptimizados {
       };
       
     } catch (error) {
-      console.error(`❌ [EVENTOS] Error creando listener optimizado para ${evento}:`, error);
       return () => {};
     }
   }
@@ -308,7 +295,6 @@ export class EventosOptimizados {
         
         // ✅ SOLUCIÓN: Log si es muy lento
         if (duracion > 16) { // Más de 16ms (60fps)
-          console.warn(`⚠️ [EVENTOS] Evento ${nombre} lento: ${duracion.toFixed(2)}ms`);
         }
       }
     };
@@ -342,7 +328,6 @@ export class EventosOptimizados {
    */
   limpiarListeners(): void {
     try {
-      console.log('🧹 [EVENTOS] Limpiando todos los listeners...');
       
       // ✅ SOLUCIÓN: Limpiar listeners registrados
       this.eventListeners.forEach((listeners, evento) => {
@@ -356,9 +341,7 @@ export class EventosOptimizados {
       
       this.throttleTimers.clear();
       
-      console.log('✅ [EVENTOS] Todos los listeners limpiados');
     } catch (error) {
-      console.error('❌ [EVENTOS] Error limpiando listeners:', error);
     }
   }
 
@@ -495,7 +478,6 @@ export const limpiarListenersEventos = (): void => {
 export function logEventos(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [EVENTOS] ${mensaje}`, datos || '');
 }
 
 /**

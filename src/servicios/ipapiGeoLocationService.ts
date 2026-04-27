@@ -77,13 +77,11 @@ class IpapiGeoLocationService {
       const data = await response.json();
       
       if (data.ip) {
-        console.log('✅ [IPAPI] IP pública obtenida:', data.ip);
         return data.ip;
       }
       
       throw new Error('No se pudo obtener IP');
     } catch (error) {
-      console.error('❌ [IPAPI] Error obteniendo IP pública:', error);
       return null;
     }
   }
@@ -109,7 +107,6 @@ class IpapiGeoLocationService {
       // Verificar cache
       if (this.cache.has(ip)) {
         const cached = this.cache.get(ip)!;
-        console.log('💾 [IPAPI] Datos obtenidos del cache para:', ip);
         return cached;
       }
 
@@ -118,7 +115,6 @@ class IpapiGeoLocationService {
 
       // Hacer request a ipapi.co
       const url = `${this.API_BASE_URL}/${ip}/json/`;
-      console.log('🌍 [IPAPI] Consultando:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -172,11 +168,9 @@ class IpapiGeoLocationService {
       // Guardar en cache
       this.cache.set(ip, geoData);
 
-      console.log('✅ [IPAPI] Geolocalización exitosa:', geoData.ciudad, geoData.pais);
       return geoData;
 
     } catch (error) {
-      console.error('❌ [IPAPI] Error en geolocalización:', error);
       return {
         error: true,
         message: error instanceof Error ? error.message : 'Error desconocido',
@@ -190,7 +184,6 @@ class IpapiGeoLocationService {
    */
   async guardarGeolocalizacion(usuarioId: string, geoData: GeoLocationData): Promise<boolean> {
     try {
-      console.log('💾 [IPAPI] Guardando en Supabase:', geoData.ciudad, geoData.pais);
 
       const { data, error } = await supabase.rpc('upsert_geolocalizacion_usuario', {
         p_usuario_id: usuarioId,
@@ -199,15 +192,12 @@ class IpapiGeoLocationService {
       });
 
       if (error) {
-        console.error('❌ [IPAPI] Error guardando en Supabase:', error);
         return false;
       }
 
-      console.log('✅ [IPAPI] Datos guardados exitosamente:', data);
       return true;
 
     } catch (error) {
-      console.error('❌ [IPAPI] Error general guardando:', error);
       return false;
     }
   }
@@ -221,19 +211,16 @@ class IpapiGeoLocationService {
       if (!usuarioId) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          console.log('❌ [IPAPI] No hay usuario autenticado');
           return false;
         }
         usuarioId = user.id;
       }
 
-      console.log('🚀 [IPAPI] Iniciando tracking completo para usuario:', usuarioId);
 
       // Obtener geolocalización
       const resultado = await this.obtenerGeolocalizacion();
 
       if ('error' in resultado) {
-        console.error('❌ [IPAPI] Error en geolocalización:', resultado.message);
         return false;
       }
 
@@ -241,15 +228,12 @@ class IpapiGeoLocationService {
       const guardado = await this.guardarGeolocalizacion(usuarioId!, resultado);
 
       if (guardado) {
-        console.log('🎉 [IPAPI] Tracking completo exitoso!');
         return true;
       } else {
-        console.error('❌ [IPAPI] Error guardando datos');
         return false;
       }
 
     } catch (error) {
-      console.error('❌ [IPAPI] Error en tracking completo:', error);
       return false;
     }
   }
@@ -259,20 +243,17 @@ class IpapiGeoLocationService {
    */
   async obtenerEstadisticas(): Promise<any> {
     try {
-      console.log('📊 [IPAPI] Obteniendo estadísticas...');
 
       const { data, error } = await supabase
         .rpc('obtener_estadisticas_geograficas');
 
       if (error) {
-        console.error('❌ [IPAPI] Error en estadísticas:', error);
         return null;
       }
 
       return data;
 
     } catch (error) {
-      console.error('❌ [IPAPI] Error obteniendo estadísticas:', error);
       return null;
     }
   }
@@ -286,7 +267,6 @@ class IpapiGeoLocationService {
 
     if (tiempoTranscurrido < this.RATE_LIMIT_DELAY) {
       const esperar = this.RATE_LIMIT_DELAY - tiempoTranscurrido;
-      console.log(`⏱️ [IPAPI] Esperando ${esperar}ms para respetar rate limit`);
       await new Promise(resolve => setTimeout(resolve, esperar));
     }
 
@@ -298,7 +278,6 @@ class IpapiGeoLocationService {
    */
   limpiarCache(): void {
     this.cache.clear();
-    console.log('🧹 [IPAPI] Cache limpiado');
   }
 
   /**

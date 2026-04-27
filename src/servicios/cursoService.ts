@@ -22,7 +22,6 @@ export async function obtenerCursos(): Promise<{ cursos: CursoBase[], error: any
     
     return { cursos: cursosConSlug, error: null };
   } catch (error) {
-    console.error('Error al obtener cursos:', error);
     return { cursos: [], error };
   }
 }
@@ -32,7 +31,6 @@ export async function obtenerCursos(): Promise<{ cursos: CursoBase[], error: any
  */
 export async function obtenerCursoPorSlug(slug: string): Promise<{ curso: CursoBase | null, error: any }> {
   try {
-    console.log(`Buscando curso con slug: ${slug}`);
     
     // Obtenemos todos los cursos que podrían coincidir con el slug o parte de él
     const { data, error } = await supabase
@@ -82,7 +80,6 @@ export async function obtenerCursoPorSlug(slug: string): Promise<{ curso: CursoB
     
     return { curso: cursoConSlug, error: null };
   } catch (error) {
-    console.error('Error al obtener curso por slug:', error);
     return { curso: null, error };
   }
 }
@@ -95,7 +92,6 @@ export async function obtenerCursoCompletoPorSlug(slug: string): Promise<{ curso
     // Primero obtenemos el curso por su slug
     const { curso, error } = await obtenerCursoPorSlug(slug);
     if (error || !curso) {
-      console.error('Error al obtener curso por slug:', error);
       return { curso: null, error };
     }
     // Obtener los módulos del curso
@@ -106,7 +102,6 @@ export async function obtenerCursoCompletoPorSlug(slug: string): Promise<{ curso
       .order('orden');
     let modulosConSlug: ModuloBase[] = [];
     if (modulosError) {
-      console.error('Error al obtener módulos:', modulosError);
       modulosConSlug = [];
     } else {
       modulosConSlug = (modulos || []).map((modulo: ModuloBase) => ({
@@ -124,7 +119,6 @@ export async function obtenerCursoCompletoPorSlug(slug: string): Promise<{ curso
           .order('orden');
         let leccionesConSlug: LeccionBase[] = [];
         if (leccionesError) {
-          console.error('Error al obtener lecciones:', leccionesError);
           leccionesConSlug = [];
         } else {
           leccionesConSlug = (lecciones || []).map((leccion: LeccionBase) => ({
@@ -147,7 +141,6 @@ export async function obtenerCursoCompletoPorSlug(slug: string): Promise<{ curso
       .order('orden');
     let leccionesSueltasConSlug: any[] = [];
     if (leccionesSueltasError) {
-      console.error('Error al obtener lecciones sueltas:', leccionesSueltasError);
       leccionesSueltasConSlug = [];
     } else {
       leccionesSueltasConSlug = (leccionesSueltas || []).map((leccion: any) => ({
@@ -165,7 +158,6 @@ export async function obtenerCursoCompletoPorSlug(slug: string): Promise<{ curso
 
     return { curso: cursoCompleto, error: null };
   } catch (error) {
-    console.error('Error al obtener curso completo:', error);
     return { curso: null, error };
   }
 }
@@ -187,7 +179,6 @@ export async function obtenerModuloPorSlug(cursoSlug: string, moduloSlug: string
     
     return { modulo, error: null };
   } catch (error) {
-    console.error('Error al obtener módulo por slug:', error);
     return { modulo: null, error };
   }
 }
@@ -209,7 +200,6 @@ export async function obtenerLeccionPorSlug(cursoSlug: string, moduloSlug: strin
     
     return { leccion, error: null };
   } catch (error) {
-    console.error('Error al obtener lección por slug:', error);
     return { leccion: null, error };
   }
 } 

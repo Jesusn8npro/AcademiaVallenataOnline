@@ -368,7 +368,6 @@ export async function cargarTodasLasEstadisticas(): Promise<EstadisticasCompleta
       notificaciones
     };
   } catch (error) {
-    console.error('Error cargando estadísticas:', error);
     throw error;
   }
 } 

@@ -123,7 +123,6 @@ export class LogicaJuego {
     this.notasPendientes = [...this.notasJuego];
     this.estado.juegoIniciado = true;
     
-    console.log('🎮 Juego inicializado con', this.notasJuego.length, 'notas');
     this.notificarEstadoActualizado();
   }
   
@@ -168,7 +167,6 @@ export class LogicaJuego {
     // Remover de pendientes
     this.notasPendientes = this.notasPendientes.filter(n => n.id !== nota.id);
     
-    console.log('❌ Nota perdida:', nota.nombre, 'en tiempo', nota.tiempo_ms);
   }
   
   // Procesar entrada del usuario
@@ -229,7 +227,6 @@ export class LogicaJuego {
     // Notificar
     this.callbacks.onNotaProcesada?.(nota);
     
-    console.log('✅ Nota correcta:', nota.nombre, 'Puntuación:', puntuacion, 'Distancia:', distanciaTiempo + 'ms');
     
     return puntuacion;
   }
@@ -238,7 +235,6 @@ export class LogicaJuego {
     // Penalizar por nota incorrecta
     this.actualizarPuntuacion('Miss', CONFIG_JUEGO.VENTANA_MISS);
     
-    console.log('❌ Nota incorrecta en tiempo:', tiempoTocada);
     
     return 'Miss';
   }
@@ -351,7 +347,6 @@ export class LogicaJuego {
     this.estado.juegoTerminado = true;
     this.estado.juegoIniciado = false;
     
-    console.log('🎮 Juego terminado. Puntuación final:', this.estado.puntuacion);
     this.notificarEstadoActualizado();
   }
   

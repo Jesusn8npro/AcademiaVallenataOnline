@@ -7,20 +7,15 @@ import './CrearPaquete.css';
 const CrearPaquete: React.FC = () => {
   const navigate = useNavigate();
   const [mostrandoExito, setMostrandoExito] = useState(false);
+  const [errorCrear, setErrorCrear] = useState('');
 
-  const manejarGuardado = (paquete: PaqueteTutorial) => {
+  const manejarGuardado = (_paquete: PaqueteTutorial) => {
     setMostrandoExito(true);
-
-    // Mostrar mensaje de éxito por 2 segundos y luego redirigir
-    setTimeout(() => {
-      navigate('/administrador/paquetes');
-    }, 2000);
+    setTimeout(() => navigate('/administrador/paquetes'), 2000);
   };
 
   const manejarError = (error: string) => {
-    console.error('❌ Error creando paquete:', error);
-    // Aquí podrías mostrar un toast o modal de error
-    alert(`Error: ${error}`);
+    setErrorCrear(error);
   };
 
   if (mostrandoExito) {
@@ -68,6 +63,7 @@ const CrearPaquete: React.FC = () => {
       </div>
 
       <div className="crear-paquete-paquetes__contenido">
+        {errorCrear && <p style={{ color: '#e53e3e', marginBottom: '1rem' }}>{errorCrear}</p>}
         <FormularioPaquete
           onGuardado={manejarGuardado}
           onError={manejarError}

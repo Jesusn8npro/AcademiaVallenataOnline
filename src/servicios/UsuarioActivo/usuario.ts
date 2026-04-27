@@ -102,7 +102,6 @@ function calcularTiempoInactivo(ultimaActividad: string | undefined): number {
     const diferenciaMs = ahora.getTime() - ultima.getTime();
     return Math.floor(diferenciaMs / (1000 * 60)); // Minutos
   } catch (error) {
-    console.warn('⚠️ [USUARIO] Error calculando tiempo inactivo:', error);
     return 0;
   }
 }
@@ -112,7 +111,6 @@ export function setUsuario(nuevoUsuario: PerfilUsuario | null): void {
   try {
     // ✅ SOLUCIÓN: Validar estructura del usuario
     if (nuevoUsuario && !validarUsuario(nuevoUsuario)) {
-      console.warn('⚠️ [USUARIO] Usuario con estructura inválida:', nuevoUsuario);
       return;
     }
 
@@ -129,15 +127,11 @@ export function setUsuario(nuevoUsuario: PerfilUsuario | null): void {
     if (browser && nuevoUsuario) {
       try {
         localStorage.setItem('usuario_actual', JSON.stringify(nuevoUsuario));
-        console.log('✅ [USUARIO] Usuario persistido en localStorage');
       } catch (error) {
-        console.warn('⚠️ [USUARIO] Error persistiendo usuario:', error);
       }
     }
 
-    console.log('✅ [USUARIO] Usuario actualizado:', nuevoUsuario?.nombre || 'null');
   } catch (error) {
-    console.error('❌ [USUARIO] Error actualizando usuario:', error);
   }
 }
 
@@ -150,12 +144,9 @@ export function limpiarUsuario(): void {
     // ✅ SOLUCIÓN: Limpiar localStorage
     if (browser) {
       localStorage.removeItem('usuario_actual');
-      console.log('✅ [USUARIO] Usuario limpiado de localStorage');
     }
 
-    console.log('✅ [USUARIO] Usuario limpiado');
   } catch (error) {
-    console.error('❌ [USUARIO] Error limpiando usuario:', error);
   }
 }
 
@@ -181,10 +172,8 @@ export function actualizarActividadUsuario(): void {
       };
 
       setUsuario(usuarioActualizado);
-      console.log('✅ [USUARIO] Actividad actualizada para:', usuarioActual.nombre);
     }
   } catch (error) {
-    console.warn('⚠️ [USUARIO] Error actualizando actividad:', error);
   }
 }
 
@@ -204,10 +193,8 @@ export function actualizarPreferenciasUsuario(
       };
 
       setUsuario(usuarioActualizado);
-      console.log('✅ [USUARIO] Preferencias actualizadas:', preferencias);
     }
   } catch (error) {
-    console.warn('⚠️ [USUARIO] Error actualizando preferencias:', error);
   }
 }
 
@@ -217,7 +204,6 @@ export function usuarioTienePermiso(permiso: string): boolean {
     const permisos = get(estadoAutenticacion).permisos;
     return permisos.includes(permiso);
   } catch (error) {
-    console.warn('⚠️ [USUARIO] Error verificando permiso:', error);
     return false;
   }
 }
@@ -239,21 +225,17 @@ export function inicializarUsuarioDesdeStorage(): void {
 
           // ✅ SOLUCIÓN: Si han pasado más de 24 horas, limpiar usuario
           if (diferenciaHoras > 24) {
-            console.log('🕒 [USUARIO] Sesión expirada, limpiando usuario');
             limpiarUsuario();
             return;
           }
         }
 
         setUsuario(usuarioParseado);
-        console.log('✅ [USUARIO] Usuario restaurado desde localStorage:', usuarioParseado.nombre);
       } else {
-        console.warn('⚠️ [USUARIO] Usuario en localStorage inválido, limpiando');
         localStorage.removeItem('usuario_actual');
       }
     }
   } catch (error) {
-    console.warn('⚠️ [USUARIO] Error restaurando usuario desde localStorage:', error);
     localStorage.removeItem('usuario_actual');
   }
 }

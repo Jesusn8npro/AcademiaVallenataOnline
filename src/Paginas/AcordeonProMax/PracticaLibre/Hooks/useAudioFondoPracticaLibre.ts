@@ -82,7 +82,6 @@ export const useAudioFondoPracticaLibre = ({
 
     // 🎧 COMPENSADOR DE LATENCIA: Sincronizar el reloj del motor cuando el audio REALMENTE empieza a sonar
     const manejarSyncAlReproducir = () => {
-      console.log('🎵 Audio está sonando realmente, sincronizando motor...');
       if (typeof (window as any).sincronizarRelojConPista === 'function') {
         (window as any).sincronizarRelojConPista();
       }
@@ -101,7 +100,6 @@ export const useAudioFondoPracticaLibre = ({
       audio.addEventListener('playing', manejarSyncAlReproducir, { once: true });
 
       audio.play().catch(e => {
-        console.warn('⚠️ Audio no pudo reproducirse:', e);
         audio.removeEventListener('playing', manejarSyncAlReproducir);
       });
     } else if (!debeReproducir && estadoPrevioPlayRef.current) {
@@ -133,7 +131,6 @@ export const useAudioFondoPracticaLibre = ({
       checkpointTimeRef.current = tiempoSeek;
       checkpointTickRef.current = tickActual;
 
-      console.log('🔄 Seek detectado (Audio Sync):', { tickAnterior: tickAnteriorRef.current, tickActual, tiempoSeek });
     }
 
     tickAnteriorRef.current = tickActual;
@@ -162,7 +159,6 @@ export const useAudioFondoPracticaLibre = ({
 
       // Si hay mucha desincronización (> 0.15s), sincronizar pero con calma
       if (diferencia > 0.15 && (ahoraMs - lastSync > 2000)) {
-        console.log('🔧 Micro-sincronización:', { diferencia, tiempoEsperado, tiempoActual });
         audioRef.current.currentTime = tiempoEsperado;
         checkpointTimeRef.current = tiempoEsperado;
         checkpointTickRef.current = tickActual;
@@ -188,7 +184,6 @@ export const useAudioFondoPracticaLibre = ({
     audioRef.current.playbackRate = velocidad;
     (audioRef.current as any).preservesPitch = true;
 
-    console.log('⚡ BPM changed:', { bpm, bpmOriginal: bpmOriginalRef.current, velocidad });
   }, [bpm]);
 
   // 🎵 VOLUMEN

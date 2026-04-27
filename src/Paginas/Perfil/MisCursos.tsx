@@ -5,7 +5,6 @@ import BannerSlider from '../../componentes/Banners/BannerSlider'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { supabase } from '../../servicios/clienteSupabase'
 import SkeletonMisCursos from '../../componentes/Skeletons/SkeletonMisCursos'
-
 import { useUsuario } from '../../contextos/UsuarioContext'
 
 export default function MisCursos() {
@@ -21,14 +20,12 @@ export default function MisCursos() {
     try {
       setCargandoCursos(true); setErrorCursos(null)
 
-      // Promesa de carga con los datos
       const fetchPromise = async () => {
         const { data: insc, error } = await supabase.from('inscripciones').select('*').eq('usuario_id', usuario.id).order('fecha_inscripcion', { ascending: false })
         if (error) throw error
         return insc
       }
 
-      // Timeout de 5 segundos
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera agotado al cargar cursos')), 5000))
 
       const insc = await Promise.race([fetchPromise(), timeoutPromise]) as any[]
@@ -38,7 +35,6 @@ export default function MisCursos() {
       const insTuts = insc.filter((i: any) => i.tutorial_id)
       let cursosData: any[] = [], tutorialesData: any[] = []
 
-      // Parallel fetches for details (also could benefit from timeout but let's secure the main first)
       if (insCursos.length) { const ids = insCursos.map((i: any) => i.curso_id); const { data } = await supabase.from('cursos').select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, slug').in('id', ids); cursosData = data || [] }
       if (insTuts.length) { const ids = insTuts.map((i: any) => i.tutorial_id); const { data } = await supabase.from('tutoriales').select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, artista, acordeonista, tonalidad').in('id', ids); tutorialesData = data || [] }
 
@@ -49,7 +45,6 @@ export default function MisCursos() {
 
       setInscripciones(combinadas)
     } catch (e: any) {
-      console.error('Error cargando cursos:', e)
       setErrorCursos(e.message || 'Error desconocido al cargar los cursos')
     } finally {
       setCargandoCursos(false)
@@ -57,15 +52,10 @@ export default function MisCursos() {
   }
 
   useEffect(() => {
-    if (usuario) {
-      cargarInscripciones()
-    }
+    if (usuario) cargarInscripciones()
   }, [usuario])
 
-  // Mostrar skeleton mientras carga
-  if (cargandoCursos) {
-    return <SkeletonMisCursos />
-  }
+  if (cargandoCursos) return <SkeletonMisCursos />
 
   return (
     <div className="contenido-mis-cursos">

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ModalReplayGrabacionHero from '../../Paginas/Perfil/MisGrabaciones/Componentes/ModalReplayGrabacionHero';
 import { useFeedPublicacion } from './Hooks/useFeedPublicacion';
 import type { Usuario } from '../../Paginas/Comunidad/tipos';
 import './FeedPublicaciones.css';
+import ContenidoPublicacion from './ContenidoPublicacion';
 
 interface FeedPublicacionesProps {
   id: string;
@@ -50,10 +51,13 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
     mostrarComentarios, enfoqueAutomaticoComentario, nuevoComentario,
     cargandoComentario, mostrarMenu, eliminando, grabacionHero,
     cargandoGrabacionHero, mostrarReplayHero, yaDioMeGusta, esDuenioOAdmin,
+    pedirConfirmacionEliminar, errorEliminar,
     setMostrarMenu, setMostrarReplayHero, setEnfoqueAutomaticoComentario, setNuevoComentario,
-    alternarMeGusta, alternarComentarios, enviarComentario, manejarEliminar, formatearFecha,
+    alternarMeGusta, alternarComentarios, enviarComentario,
+    manejarEliminar, cancelarEliminar, ejecutarEliminar, formatearFecha,
   } = useFeedPublicacion({ id, me_gusta, total_comentarios, usuario_id, tipo, encuesta, usuario, onEliminar });
 
+  const [enlaceCopiado, setEnlaceCopiado] = useState(false);
   const enc = encuesta as Record<string, unknown> | undefined;
 
   return (
@@ -116,13 +120,14 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
                   )}
                   <button className="feed-publicaciones-opcion-menu" onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/comunidad#publicacion-${id}`);
-                    alert('Enlace copiado al portapapeles');
+                    setEnlaceCopiado(true);
+                    setTimeout(() => setEnlaceCopiado(false), 2000);
                     setMostrarMenu(false);
                   }}>
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                       <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                     </svg>
-                    Copiar enlace
+                    {enlaceCopiado ? '¡Copiado!' : 'Copiar enlace'}
                   </button>
                 </div>
               </>
@@ -131,101 +136,33 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
         </div>
       </header>
 
-      <div className="feed-publicaciones-contenido-principal">
-        {tipo === 'foto_perfil' ? (
-          <p className="feed-publicaciones-texto-publicacion-automatica">
-            <span className="feed-publicaciones-accion-automatica">Actualizó su foto de perfil</span>
-          </p>
-        ) : tipo === 'foto_portada' ? (
-          <p className="feed-publicaciones-texto-publicacion-automatica">
-            <span className="feed-publicaciones-accion-automatica">Actualizó su foto de portada</span>
-          </p>
-        ) : (
-          <>
-            {titulo && <h4 className="feed-publicaciones-titulo-publicacion">{titulo}</h4>}
-            {contenido && <p className="feed-publicaciones-texto-publicacion">{contenido}</p>}
-          </>
-        )}
-
-        {tipo === 'grabacion_hero' && (
-          <div className="feed-publicaciones-grabacion-hero">
-            <div className="feed-publicaciones-grabacion-meta">
-              <span className={`feed-publicaciones-grabacion-badge ${enc?.modo === 'competencia' ? 'competencia' : 'practica'}`}>
-                {enc?.modo === 'competencia' ? `${Math.round(Number(enc?.precision_porcentaje) || 0)}% · competencia` : 'practica libre'}
-              </span>
-              <span className="feed-publicaciones-grabacion-resumen">
-                {String(enc?.cancion_titulo || enc?.titulo_grabacion || 'Replay Hero')}
-                {enc?.puntuacion ? ` · ${Number(enc.puntuacion).toLocaleString('es-CO')} pts` : ''}
-              </span>
-            </div>
-            <div className="feed-publicaciones-grabacion-player">
-              <button
-                className="feed-publicaciones-grabacion-btn"
-                onClick={() => setMostrarReplayHero(true)}
-                disabled={!grabacionHero || cargandoGrabacionHero}
-              >
-                {cargandoGrabacionHero ? 'Cargando replay...' : 'Ver replay'}
-              </button>
-              <div className="feed-publicaciones-grabacion-barra">
-                <div className="feed-publicaciones-grabacion-barra-interna" />
-              </div>
-              <span className="feed-publicaciones-grabacion-tiempo">
-                {grabacionHero?.duracion_ms ? `${Math.floor(grabacionHero.duracion_ms / 60000)}:${Math.floor((grabacionHero.duracion_ms % 60000) / 1000).toString().padStart(2, '0')}` : 'Replay'}
-              </span>
-            </div>
+      {pedirConfirmacionEliminar && (
+        <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '0.5rem', padding: '0.75rem 1rem', margin: '0.5rem 0', fontSize: '0.875rem' }}>
+          <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>¿Eliminar esta publicación? Esta acción no se puede deshacer.</p>
+          {errorEliminar && <p style={{ margin: '0 0 0.5rem', color: '#e53e3e' }}>{errorEliminar}</p>}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={ejecutarEliminar} disabled={eliminando} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+              {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+            </button>
+            <button onClick={cancelarEliminar} disabled={eliminando} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+              Cancelar
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {url_imagen && (
-          <div className={`feed-publicaciones-contenedor-media ${tipo === 'foto_perfil' ? 'feed-publicaciones-media-perfil' : ''}`}>
-            <img
-              src={url_imagen}
-              alt="Imagen de la publicación"
-              className="feed-publicaciones-imagen-publicacion"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        {url_video && (
-          <div className="feed-publicaciones-contenedor-media">
-            <video
-              src={url_video}
-              controls
-              className="feed-publicaciones-video-publicacion"
-              preload="metadata"
-              aria-label="Video de la publicación"
-            >
-              <track kind="captions" src="" label="Sin subtítulos disponibles" default />
-              Su navegador no soporta la reproducción de video.
-            </video>
-          </div>
-        )}
-
-        {url_gif && (
-          <div className="feed-publicaciones-contenedor-media">
-            <img
-              src={url_gif}
-              alt="GIF de la publicación"
-              className="feed-publicaciones-gif-publicacion"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        {enc?.opciones && Array.isArray(enc.opciones) && enc.opciones.length > 0 && (
-          <div className="feed-publicaciones-encuesta">
-            <h4 className="feed-publicaciones-titulo-encuesta">{String(enc.pregunta)}</h4>
-            <div className="feed-publicaciones-opciones-encuesta">
-              {(enc.opciones as string[]).map((opcion, index) => (
-                <button key={index} className="feed-publicaciones-opcion-encuesta">
-                  {opcion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <ContenidoPublicacion
+        tipo={tipo}
+        titulo={titulo}
+        contenido={contenido}
+        url_imagen={url_imagen}
+        url_video={url_video}
+        url_gif={url_gif}
+        enc={enc}
+        grabacionHero={grabacionHero}
+        cargandoGrabacionHero={cargandoGrabacionHero}
+        setMostrarReplayHero={setMostrarReplayHero}
+      />
 
       <div className="feed-publicaciones-barra-estadisticas">
         <div className="feed-publicaciones-reacciones-info">

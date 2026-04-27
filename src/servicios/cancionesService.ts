@@ -241,13 +241,11 @@ export class CancionesService {
         .order('orden_mostrar', { ascending: true });
 
       if (error) {
-        console.error('❌ Error obteniendo canciones activas:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Error obteniendo canciones activas:', error);
       return [];
     }
   }
@@ -262,13 +260,11 @@ export class CancionesService {
         .select('*', { count: 'exact', head: true });
 
       if (error) {
-        console.error('❌ Error contando canciones:', error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('❌ Error contando canciones:', error);
       return 0;
     }
   }
@@ -328,13 +324,11 @@ export class CancionesService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error obteniendo canciones:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerCanciones:', error);
       throw error;
     }
   }
@@ -351,13 +345,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error obteniendo canción:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerCancionPorId:', error);
       return null;
     }
   }
@@ -374,14 +366,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error creando canción:', error);
         throw error;
       }
 
-      console.log('✅ Canción creada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en crearCancion:', error);
       throw error;
     }
   }
@@ -399,14 +388,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error actualizando canción:', error);
         throw error;
       }
 
-      console.log('✅ Canción actualizada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en actualizarCancion:', error);
       throw error;
     }
   }
@@ -422,14 +408,11 @@ export class CancionesService {
         .eq('id', id);
 
       if (error) {
-        console.error('Error eliminando canción:', error);
         throw error;
       }
 
-      console.log('✅ Canción eliminada exitosamente');
       return true;
     } catch (error) {
-      console.error('Error en eliminarCancion:', error);
       throw error;
     }
   }
@@ -451,13 +434,11 @@ export class CancionesService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error obteniendo secuencias:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerSecuenciasCancion:', error);
       throw error;
     }
   }
@@ -475,13 +456,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error obteniendo secuencia principal:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerSecuenciaPrincipal:', error);
       return null;
     }
   }
@@ -498,14 +477,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error creando secuencia:', error);
         throw error;
       }
 
-      console.log('✅ Secuencia creada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en crearSecuencia:', error);
       throw error;
     }
   }
@@ -523,14 +499,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error actualizando secuencia:', error);
         throw error;
       }
 
-      console.log('✅ Secuencia actualizada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en actualizarSecuencia:', error);
       throw error;
     }
   }
@@ -546,14 +519,11 @@ export class CancionesService {
         .eq('id', id);
 
       if (error) {
-        console.error('Error eliminando secuencia:', error);
         throw error;
       }
 
-      console.log('✅ Secuencia eliminada exitosamente');
       return true;
     } catch (error) {
-      console.error('Error en eliminarSecuencia:', error);
       throw error;
     }
   }
@@ -579,13 +549,11 @@ export class CancionesService {
         if (error.code === 'PGRST116') {
           return null;
         }
-        console.error('Error obteniendo progreso:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerProgresoCancion:', error);
       return null;
     }
   }
@@ -625,14 +593,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error inicializando progreso:', error);
         throw error;
       }
 
-      console.log('✅ Progreso inicializado exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en inicializarProgreso:', error);
       throw error;
     }
   }
@@ -654,14 +619,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error actualizando progreso:', error);
         throw error;
       }
 
-      console.log('✅ Progreso actualizado exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en actualizarProgreso:', error);
       throw error;
     }
   }
@@ -682,14 +644,11 @@ export class CancionesService {
         .single();
 
       if (error) {
-        console.error('Error registrando sesión:', error);
         throw error;
       }
 
-      console.log('✅ Sesión registrada exitosamente:', data);
       return data;
     } catch (error) {
-      console.error('Error en registrarSesionCancion:', error);
       throw error;
     }
   }
@@ -712,13 +671,11 @@ export class CancionesService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error obteniendo historial:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerHistorialSesiones:', error);
       throw error;
     }
   }
@@ -736,13 +693,11 @@ export class CancionesService {
         .rpc('calcular_estadisticas_cancion', { p_cancion_id: cancionId });
 
       if (error) {
-        console.error('Error obteniendo estadísticas:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerEstadisticasCancion:', error);
       return null;
     }
   }
@@ -759,13 +714,11 @@ export class CancionesService {
         });
 
       if (error) {
-        console.error('Error obteniendo recomendaciones:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerCancionesRecomendadas:', error);
       return [];
     }
   }
@@ -799,7 +752,6 @@ export class CancionesService {
 
       return await this.crearCancion(cancionCopia);
     } catch (error) {
-      console.error('Error en duplicarCancion:', error);
       throw error;
     }
   }

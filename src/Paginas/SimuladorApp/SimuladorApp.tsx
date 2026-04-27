@@ -1,30 +1,24 @@
-/**
- * 🎹 SIMULADOR DE ACORDEÓN PRO - V19.2 (Optimizado)
- */
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 
-// Hooks de Lógica
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
 import { motorAudioPro } from '../../Core/audio/AudioEnginePro';
 import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
 
-// Componentes UI
-import BarraHerramientas from './Componentes/BarraHerramientas';
+import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
 
-import MenuOpciones from './Componentes/MenuOpciones';
-import ModalContacto from './Componentes/ModalContacto';
-import ModalTonalidades from './Componentes/ModalTonalidades';
-import ModalVista from './Componentes/ModalVista';
-import ModalMetronomo from './Componentes/ModalMetronomo';
-import ModalInstrumentos from './Componentes/ModalInstrumentos';
+import MenuOpciones from './Componentes/BarraHerramientas/MenuOpciones';
+import ModalContacto from './Componentes/BarraHerramientas/ModalContacto';
+import ModalTonalidades from './Componentes/BarraHerramientas/ModalTonalidades';
+import ModalVista from './Componentes/BarraHerramientas/ModalVista';
+import ModalMetronomo from './Componentes/BarraHerramientas/ModalMetronomo';
+import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos';
 
 import './SimuladorApp.css';
 
 const SimuladorApp: React.FC = () => {
-    // 1. Estado de la Lógica Musical
     const logica = useLogicaAcordeon({
         onNotaPresionada: (data) => {
             const esBajo = data.idBoton.includes('-bajo');
@@ -38,7 +32,6 @@ const SimuladorApp: React.FC = () => {
         }
     });
 
-    // 2. Estados de UI y Configuración
     const [escala, setEscala] = useState(1.0);
     const [config, setConfig] = useState({
         modoVista: 'notas' as 'notas' | 'cifrado' | 'numeros' | 'teclas',
@@ -60,7 +53,6 @@ const SimuladorApp: React.FC = () => {
     const [grabando, setGrabando] = useState(false);
     const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
-    // 3. Refs y MotionValues
     const x = useMotionValue(0);
     const trenRef = useRef<HTMLDivElement>(null);
     const audioContextIniciadoRef = useRef(false);
@@ -75,14 +67,11 @@ const SimuladorApp: React.FC = () => {
     const secuenciaRef = useRef<any[]>([]);
     const tiempoInicioRef = useRef<number>(0);
 
-    // 4. Caché de elementos DOM para evitar querySelectorAll en cada toque
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
 
-    // ⚡ Utilidades optimizadas con useCallback
     const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
         let cached = elementosCache.current.get(pos);
 
-        // Primera búsqueda: cachear los elementos
         if (!cached) {
             const pito = document.querySelector(`.pito-boton[data-pos="${pos}"]`);
             const bajo = document.querySelector(`.boton-bajo-contenedor[data-pos="${pos}"]`);
@@ -90,7 +79,6 @@ const SimuladorApp: React.FC = () => {
             elementosCache.current.set(pos, cached);
         }
 
-        // Actualizar clases (muy rápido porque ya tenemos el ref)
         if (esBajo && cached.bajo) {
             activo ? cached.bajo.classList.add('activo') : cached.bajo.classList.remove('activo');
         } else if (!esBajo && cached.pito) {
@@ -102,16 +90,14 @@ const SimuladorApp: React.FC = () => {
         if (grabando) secuenciaRef.current.push({ t: Date.now() - tiempoInicioRef.current, tipo, ...data });
     }, [grabando]);
 
-    // 🌟 FUNCIÓN PARA FORMATEAR EL NOMBRE DE LA NOTA SEGÚN EL MODO
     const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
         if (!notaObj) return '';
 
-        let nombre = notaObj.nombre || ''; // "Do 4", "La# 5", etc.
+        let nombre = notaObj.nombre || '';
         const partes = nombre.split(' ');
         let notaBase = partes[0];
         const octava = partes[1] || '';
 
-        // 1. MODO CIFRADO (C, D, E...)
         if (modo === 'cifrado') {
             const MAPA_CIFRADO: Record<string, string> = {
                 'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
@@ -123,10 +109,8 @@ const SimuladorApp: React.FC = () => {
         return mostrarOctavas ? `${notaBase}${octava}` : notaBase;
     };
 
-    // ⚡ Memoizar si está desactivado audio (evitar recalcular en cada render)
     const desactivarAudio = useMemo(() => Object.values(modales).some(v => v), [modales]);
 
-    // 5. Hook de Entrada (PointerEvents Engine)
     const { manejarCambioFuelle, limpiarGeometria, actualizarGeometria } = usePointerAcordeon({
         x,
         logica,
@@ -136,7 +120,6 @@ const SimuladorApp: React.FC = () => {
         desactivarAudio
     });
 
-    // 6. Efectos
     useEffect(() => {
         const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
         window.addEventListener('resize', check);
@@ -147,13 +130,11 @@ const SimuladorApp: React.FC = () => {
         };
     }, []);
 
-    // Inicializar AudioContext en el primer toque del usuario (requisito iOS)
     useEffect(() => {
         const inicializarAudio = () => {
             if (audioContextIniciadoRef.current) return;
             audioContextIniciadoRef.current = true;
             motorAudioPro.activarContexto();
-            // Asegurar que la geometría esté lista para el primer toque en botones
             actualizarGeometria();
             setAudioListo(true);
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
@@ -164,7 +145,6 @@ const SimuladorApp: React.FC = () => {
         };
     }, [actualizarGeometria]);
 
-    // ⚡ Limpiar caché de elementos y geometría cuando cambia la tonalidad
     useEffect(() => {
         elementosCache.current.clear();
         limpiarGeometria();
@@ -177,7 +157,6 @@ const SimuladorApp: React.FC = () => {
         return () => clearTimeout(id);
     }, [escala, limpiarGeometria]);
 
-    // 7. Handlers
     const toggleModal = (nombre: keyof typeof modales) => {
         setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, [nombre]: !prev[nombre] }));
     };
@@ -212,7 +191,6 @@ const SimuladorApp: React.FC = () => {
 
     return (
         <div className={`simulador-app-root modo-${logica.direccion}`}>
-            {/* 🎹 CONTENEDOR DE BAJOS - Ahora maneja tanto el fondo, el botón de apertura como el panel interactivo */}
             <ContenedorBajos
                 visible={bajosVisible}
                 onOpen={() => setBajosVisible(true)}
@@ -221,10 +199,8 @@ const SimuladorApp: React.FC = () => {
                 escala={escala}
                 manejarCambioFuelle={manejarCambioFuelle}
                 desactivarAudio={desactivarAudio}
-                vistaDoble={config.vistaDoble} // 👈 CONECTADO
+                vistaDoble={config.vistaDoble}
             />
-
-
 
             <div className="contenedor-acordeon-completo">
                 <div className="simulador-canvas">
@@ -247,26 +223,25 @@ const SimuladorApp: React.FC = () => {
                 </div>
             </div>
 
-            {/* 🛸 MODALES - Fuera de todo para ganar el z-index 10000 */}
-            <MenuOpciones 
-                visible={modales.menu} 
-                onCerrar={() => toggleModal('menu')} 
+            <MenuOpciones
+                visible={modales.menu}
+                onCerrar={() => toggleModal('menu')}
                 botonRef={refsModales.menu as any}
                 onAbrirContacto={() => toggleModal('contacto')}
             />
 
             <ModalTonalidades visible={modales.tonalidades} onCerrar={() => toggleModal('tonalidades')} tonalidadSeleccionada={logica.tonalidadSeleccionada} onSeleccionarTonalidad={logica.setTonalidadSeleccionada} listaTonalidades={logica.listaTonalidades} botonRef={refsModales.tonalidades as any} />
 
-            <ModalVista 
-                visible={modales.vista} 
-                onCerrar={() => toggleModal('vista')} 
-                modoVista={config.modoVista} 
-                setModoVista={(v) => setConfig(c => ({ ...c, modoVista: v }))} 
-                mostrarOctavas={config.mostrarOctavas} 
-                setMostrarOctavas={(v) => setConfig(c => ({ ...c, mostrarOctavas: v }))} 
-                vistaDoble={config.vistaDoble} 
-                setVistaDoble={(v) => setConfig(c => ({ ...c, vistaDoble: v }))} 
-                botonRef={refsModales.vista as any} 
+            <ModalVista
+                visible={modales.vista}
+                onCerrar={() => toggleModal('vista')}
+                modoVista={config.modoVista}
+                setModoVista={(v) => setConfig(c => ({ ...c, modoVista: v }))}
+                mostrarOctavas={config.mostrarOctavas}
+                setMostrarOctavas={(v) => setConfig(c => ({ ...c, mostrarOctavas: v }))}
+                vistaDoble={config.vistaDoble}
+                setVistaDoble={(v) => setConfig(c => ({ ...c, vistaDoble: v }))}
+                botonRef={refsModales.vista as any}
             />
 
             <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} />

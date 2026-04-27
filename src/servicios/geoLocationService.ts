@@ -69,7 +69,6 @@ class GeoLocationService {
 
     for (const servicio of servicios) {
       try {
-        console.log(`🌐 [GEO] Intentando obtener IP desde: ${servicio}`);
         
         const response = await fetch(servicio, { 
           method: 'GET',
@@ -84,12 +83,10 @@ class GeoLocationService {
         const ip = data.ip || data.origin?.split(' ')[0] || data;
         
         if (ip && this.validarIP(ip)) {
-          console.log(`✅ [GEO] IP obtenida: ${ip}`);
           return ip;
         }
         
       } catch (error) {
-        console.warn(`⚠️ [GEO] Error con servicio ${servicio}:`, error);
         continue;
       }
     }
@@ -104,7 +101,6 @@ class GeoLocationService {
     try {
       // Verificar caché primero
       if (this.datosCache && (Date.now() - this.ultimaActualizacion) < this.CACHE_DURATION) {
-        console.log('📋 [GEO] Usando datos de caché');
         return this.datosCache;
       }
 
@@ -113,7 +109,6 @@ class GeoLocationService {
         ip = await this.obtenerIPPublica();
       }
 
-      console.log(`🌍 [GEO] Obteniendo geolocalización para IP: ${ip}`);
 
       // Usar ip-api.com (gratuito, 1000 requests/hora)
       const response = await fetch(
@@ -163,11 +158,9 @@ class GeoLocationService {
       this.datosCache = datosGeo;
       this.ultimaActualizacion = Date.now();
 
-      console.log('✅ [GEO] Datos de geolocalización obtenidos:', datosGeo);
       return datosGeo;
 
     } catch (error) {
-      console.error('❌ [GEO] Error obteniendo geolocalización:', error);
       
       // Devolver datos por defecto en caso de error
       return this.obtenerDatosPorDefecto(ip || 'Desconocido');
@@ -179,7 +172,6 @@ class GeoLocationService {
    */
   async almacenarDatosGeolocalizacion(usuarioId: string, datos: DatosGeolocalizacion): Promise<boolean> {
     try {
-      console.log(`💾 [GEO] Almacenando datos para usuario: ${usuarioId}`);
 
       // Verificar si ya existe un registro para este usuario e IP
       const { data: existente } = await supabase
@@ -200,7 +192,6 @@ class GeoLocationService {
           .eq('id', existente.id);
 
         if (error) throw error;
-        console.log('🔄 [GEO] Registro actualizado');
       } else {
         // Crear nuevo registro
         const { error } = await supabase
@@ -230,12 +221,10 @@ class GeoLocationService {
           });
 
         if (error) throw error;
-        console.log('➕ [GEO] Nuevo registro creado');
       }
 
       return true;
     } catch (error) {
-      console.error('❌ [GEO] Error almacenando datos:', error);
       return false;
     }
   }
@@ -274,7 +263,6 @@ class GeoLocationService {
         fecha_registro: registro.primera_visita
       }));
     } catch (error) {
-      console.error('❌ [GEO] Error obteniendo historial:', error);
       return [];
     }
   }
@@ -284,14 +272,12 @@ class GeoLocationService {
    */
   async obtenerEstadisticasGeograficas(): Promise<any> {
     try {
-      console.log('📊 [GEO] Obteniendo estadísticas con función SQL optimizada...');
       
       // ✅ USAR TU FUNCIÓN SQL PROFESIONAL
       const { data: statsSQL, error: errorStats } = await supabase
         .rpc('obtener_estadisticas_geograficas');
 
       if (errorStats) {
-        console.warn('⚠️ [GEO] Función SQL no disponible, usando método alternativo:', errorStats);
         // Fallback al método anterior si la función SQL no está disponible
         const { data, error } = await supabase
           .from('geolocalizacion_usuarios')
@@ -327,11 +313,9 @@ class GeoLocationService {
         totalVisitas: statsSQL?.reduce((sum: number, r: any) => sum + (r.total_visitas || 0), 0) || 0
       };
 
-      console.log('🎯 [GEO] Estadísticas optimizadas obtenidas:', estadisticas);
       return estadisticas;
 
     } catch (error) {
-      console.error('❌ [GEO] Error obteniendo estadísticas:', error);
       return null;
     }
   }
@@ -345,7 +329,6 @@ class GeoLocationService {
       await this.almacenarDatosGeolocalizacion(usuarioId, datos);
       return datos;
     } catch (error) {
-      console.error('❌ [GEO] Error procesando inicio de sesión:', error);
       return null;
     }
   }

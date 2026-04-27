@@ -49,8 +49,6 @@ export function generarReferenciaMemberesia(planId: string, usuarioId: string, e
  */
 export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<ResultadoPagoMembresia> {
 	try {
-		console.log('🎯 === CREANDO PAGO DE MEMBRESÍA ===');
-		console.log('📝 Datos recibidos:', datos);
 
 		// 1. Obtener información de la membresía
 		const { data: membresia, error: errorMembresia } = await supabaseAdmin
@@ -60,7 +58,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 			.single();
 
 		if (errorMembresia || !membresia) {
-			console.error('❌ Error obteniendo membresía:', errorMembresia);
 			return {
 				success: false,
 				error: 'Membresía no encontrada',
@@ -133,7 +130,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 		// 6. Crear registro en BD
 		const resultadoRegistro = await crearRegistroPago(datosRegistro);
 		if (!resultadoRegistro.success) {
-			console.error('❌ Error creando registro de pago:', resultadoRegistro.error);
 			return {
 				success: false,
 				error: resultadoRegistro.error,
@@ -152,7 +148,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 		);
 
 		if (resultadoSuscripcion.error) {
-			console.error('❌ Error creando suscripción pendiente:', resultadoSuscripcion.error);
 			return {
 				success: false,
 				error: resultadoSuscripcion.error.message,
@@ -160,7 +155,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 			};
 		}
 
-		console.log('✅ Suscripción pendiente creada exitosamente');
 
 		// 7. Preparar datos para ePayco
 		const epaycoData = {
@@ -200,8 +194,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 			p_customer_email: datos.email
 		};
 
-		console.log('✅ Pago de membresía preparado exitosamente');
-		console.log('🎯 === FIN CREACIÓN PAGO MEMBRESÍA ===');
 
 		return {
 			success: true,
@@ -211,7 +203,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
 		};
 
 	} catch (error: any) {
-		console.error('💥 Error en crearPagoMembresia:', error);
 		return {
 			success: false,
 			error: error.message,
@@ -225,9 +216,6 @@ export async function crearPagoMembresia(datos: DatosPagoMembresia): Promise<Res
  */
 export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion: any): Promise<ResultadoPagoMembresia> {
 	try {
-		console.log('✅ === CONFIRMANDO PAGO DE MEMBRESÍA ===');
-		console.log('📝 Referencia:', refPayco);
-		console.log('📝 Datos confirmación:', datosConfirmacion);
 
 		// 1. Obtener información del pago
 		const { data: pago, error: errorPago } = await supabaseAdmin
@@ -240,7 +228,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 			.single();
 
 		if (errorPago || !pago) {
-			console.error('❌ Pago no encontrado:', errorPago);
 			return {
 				success: false,
 				error: 'Pago no encontrado',
@@ -250,7 +237,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 
 		// 2. Verificar que el pago sea exitoso
 		if (datosConfirmacion.x_cod_response !== '1') {
-			console.log('❌ Pago no exitoso, código:', datosConfirmacion.x_cod_response);
 			
 			// Actualizar estado a fallido
 			await actualizarEstadoPago(refPayco, 'fallido', {
@@ -277,7 +263,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 		});
 
 		if (!resultadoActualizacion.success) {
-			console.error('❌ Error actualizando pago:', resultadoActualizacion.error);
 			return {
 				success: false,
 				error: 'Error actualizando pago',
@@ -291,7 +276,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 		const resultadoActivacion = await activarSuscripcion(refPayco, transactionId);
 
 		if (!resultadoActivacion.success) {
-			console.error('❌ Error activando suscripción:', resultadoActivacion.error);
 			return {
 				success: false,
 				error: 'Error activando membresía',
@@ -299,8 +283,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 			};
 		}
 
-		console.log('✅ Membresía activada exitosamente');
-		console.log('✅ === FIN CONFIRMACIÓN PAGO MEMBRESÍA ===');
 
 		return {
 			success: true,
@@ -312,7 +294,6 @@ export async function confirmarPagoMembresia(refPayco: string, datosConfirmacion
 		};
 
 	} catch (error: any) {
-		console.error('💥 Error en confirmarPagoMembresia:', error);
 		return {
 			success: false,
 			error: error.message,

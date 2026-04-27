@@ -9,7 +9,10 @@
       "Bash(sed -n '120,130p' c:/PROGRAMACION/Academia/src/App.tsx)",
       "Bash(find c:\\\\\\\\PROGRAMACION\\\\\\\\Academia/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.css\" \\\\\\))",
       "Bash(xargs wc *)",
-      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(grep -n \"^  }$\\\\|^  };$\" \"c:/PROGRAMACION/Academia/src/Paginas/Blog/ArticuloIndividual.tsx\")",
+      "Bash(awk '$1 > 300 {print $1, $2}')",
+      "Bash(powershell -Command ' *)"
     ]
   }
 }

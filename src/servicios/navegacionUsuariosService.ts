@@ -16,7 +16,6 @@ export function navegarADetallesUsuario(params: ParametrosNavegacionUsuario): vo
   const { usuarioId, pestana = 'actividad', abrirEnNuevaVentana = true } = params;
   
   if (!usuarioId) {
-    console.error('❌ [NAVEGACIÓN] ID de usuario requerido');
     throw new Error('ID de usuario requerido para navegación');
   }
   
@@ -28,14 +27,7 @@ export function navegarADetallesUsuario(params: ParametrosNavegacionUsuario): vo
   }
   
   const urlDestino = `/administrador/usuarios?${urlParams.toString()}`;
-  
-  console.log('🔗 [NAVEGACIÓN] Dirigiendo a:', {
-    usuarioId,
-    pestana,
-    url: urlDestino,
-    nuevaVentana: abrirEnNuevaVentana
-  });
-  
+
   if (abrirEnNuevaVentana) {
     // Abrir en nueva pestaña para mantener contexto
     window.open(urlDestino, '_blank');
@@ -72,27 +64,11 @@ export function generarUrlUsuario(usuarioId: string, pestana?: string): string {
  * Validar que el usuario existe antes de navegar
  */
 export async function validarYNavegar(
-  usuarioId: string, 
+  usuarioId: string,
   validarExistencia: (id: string) => Promise<boolean>,
   pestana?: string
 ): Promise<void> {
-  try {
-    const existe = await validarExistencia(usuarioId);
-    
-    if (!existe) {
-      console.warn('⚠️ [NAVEGACIÓN] Usuario no encontrado:', usuarioId);
-      alert('Usuario no encontrado en el sistema');
-      return;
-    }
-    
-    navegarADetallesUsuario({
-      usuarioId,
-      pestana: pestana as any,
-      abrirEnNuevaVentana: true
-    });
-    
-  } catch (error) {
-    console.error('❌ [NAVEGACIÓN] Error validando usuario:', error);
-    alert('Error al verificar el usuario');
-  }
+  const existe = await validarExistencia(usuarioId);
+  if (!existe) return;
+  navegarADetallesUsuario({ usuarioId, pestana: pestana as any, abrirEnNuevaVentana: true });
 } 

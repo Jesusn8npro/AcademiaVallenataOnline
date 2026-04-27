@@ -35,6 +35,8 @@ export function useFeedPublicacion({
   const [cargandoComentario, setCargandoComentario] = useState(false);
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [pedirConfirmacionEliminar, setPedirConfirmacionEliminar] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState('');
   const [grabacionHero, setGrabacionHero] = useState<GrabacionReplayHero | null>(null);
   const [cargandoGrabacionHero, setCargandoGrabacionHero] = useState(false);
   const [mostrarReplayHero, setMostrarReplayHero] = useState(false);
@@ -146,18 +148,27 @@ export function useFeedPublicacion({
     }
   };
 
-  const manejarEliminar = async () => {
+  const manejarEliminar = () => {
     if (!esDuenioOAdmin || eliminando) return;
-    if (!window.confirm('¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.')) return;
+    setPedirConfirmacionEliminar(true);
+  };
 
+  const cancelarEliminar = () => {
+    setPedirConfirmacionEliminar(false);
+    setErrorEliminar('');
+  };
+
+  const ejecutarEliminar = async () => {
     setEliminando(true);
+    setErrorEliminar('');
     try {
       await eliminarPublicacion(id);
       onEliminar?.(id);
     } catch {
-      alert('Error al eliminar la publicación');
+      setErrorEliminar('Error al eliminar la publicación');
     } finally {
       setEliminando(false);
+      setPedirConfirmacionEliminar(false);
       setMostrarMenu(false);
     }
   };
@@ -178,7 +189,9 @@ export function useFeedPublicacion({
     mostrarComentarios, enfoqueAutomaticoComentario, nuevoComentario,
     cargandoComentario, mostrarMenu, eliminando, grabacionHero,
     cargandoGrabacionHero, mostrarReplayHero, yaDioMeGusta, esDuenioOAdmin,
+    pedirConfirmacionEliminar, errorEliminar,
     setMostrarMenu, setMostrarReplayHero, setEnfoqueAutomaticoComentario, setNuevoComentario,
-    alternarMeGusta, alternarComentarios, enviarComentario, manejarEliminar, formatearFecha,
+    alternarMeGusta, alternarComentarios, enviarComentario,
+    manejarEliminar, cancelarEliminar, ejecutarEliminar, formatearFecha,
   };
 }

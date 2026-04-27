@@ -1,274 +1,16 @@
-﻿import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../../servicios/clienteSupabase';
-import {
-    Rocket,
-    Clock,
-    Save,
-    Database,
-    PieChart,
-    Download,
-    Upload,
-    Power,
-    Trash2
-} from 'lucide-react';
-import './PestanaConfiguracion.css';
-
-interface ConfiguracionSistema {
-    nombreAcademia: string;
-    emailContacto: string;
-    whatsappContacto: string;
-    mantenimientoActivo: boolean;
-    registroAbierto: boolean;
-    limiteUsuarios: number;
-    duracionSesion: number;
-    backupAutomatico: boolean;
-    notificacionesEmail: boolean;
-    modoDesarrollo: boolean;
-}
+import React from 'react'
+import { Rocket, Clock, Save, Database, PieChart, Download, Upload, Power, Trash2 } from 'lucide-react'
+import './PestanaConfiguracion.css'
+import { usePestanaConfiguracion } from './usePestanaConfiguracion'
 
 const PestanaConfiguracion: React.FC = () => {
-    const [configuracion, setConfiguracion] = useState<ConfiguracionSistema>({
-        nombreAcademia: 'Academia Vallenata Online',
-        emailContacto: 'contacto@academiavallenata.com',
-        whatsappContacto: '+57 300 123 4567',
-        mantenimientoActivo: false,
-        registroAbierto: true,
-        limiteUsuarios: 1000,
-        duracionSesion: 120, // minutos
-        backupAutomatico: true,
-        notificacionesEmail: true,
-        modoDesarrollo: false
-    });
-
-    const [estadisticasSistema, setEstadisticasSistema] = useState({
-        versionSistema: '2.1.0',
-        tiempoOperacion: '0 días',
-        ultimoBackup: 'Nunca',
-        espacioUsado: 0,
-        limiteBD: 1000
-    });
-
-    const [configuracionCambiada, setConfiguracionCambiada] = useState(false);
-    const [guardandoConfiguracion, setGuardandoConfiguracion] = useState(false);
-
-    useEffect(() => {
-        cargarConfiguracion();
-        cargarEstadisticasSistema();
-    }, []);
-
-    const cargarConfiguracion = async () => {
-        try {
-            // Check localStorage first
-            const storedConfig = localStorage.getItem('academia_config');
-            if (storedConfig) {
-                setConfiguracion(JSON.parse(storedConfig));
-            }
-        } catch (error) {
-            console.error('❌ [CONFIG] Error cargando configuración:', error);
-        }
-    };
-
-    const cargarEstadisticasSistema = async () => {
-        try {
-            const { count: totalUsuarios } = await supabase
-                .from('perfiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('eliminado', false);
-
-            // Assuming sesiones_usuario table exists
-            const { count: totalSesiones } = await supabase
-                .from('sesiones_usuario')
-                .select('*', { count: 'exact', head: true });
-
-            const porcentajeUso = configuracion.limiteUsuarios > 0
-                ? Math.round(((totalUsuarios || 0) / configuracion.limiteUsuarios) * 100)
-                : 0;
-
-            setEstadisticasSistema({
-                versionSistema: '2.1.0',
-                tiempoOperacion: '45 días', // Mocked as in Svelte
-                ultimoBackup: 'Hace 2 horas', // Mocked as in Svelte
-                espacioUsado: porcentajeUso,
-                limiteBD: totalSesiones || 0
-            });
-
-        } catch (error) {
-            console.error('❌ [ESTADÍSTICAS] Error:', error);
-        }
-    };
-
-    const marcarCambio = () => {
-        setConfiguracionCambiada(true);
-    };
-
-    const handleChange = (field: keyof ConfiguracionSistema, value: any) => {
-        setConfiguracion(prev => ({ ...prev, [field]: value }));
-        marcarCambio();
-    };
-
-    const guardarConfiguracion = async () => {
-        try {
-            setGuardandoConfiguracion(true);
-
-            // Validaciones importantes
-            if (configuracion.mantenimientoActivo) {
-                if (!window.confirm('⚠️ ATENCIÓN: Vas a activar el modo mantenimiento.\n\nEsto bloqueará el acceso a todos los usuarios.\n¿Estás seguro?')) {
-                    setConfiguracion(prev => ({ ...prev, mantenimientoActivo: false }));
-                    setGuardandoConfiguracion(false);
-                    return; // Important to return here
-                }
-            }
-
-            if (configuracion.limiteUsuarios < 10) {
-                alert('⚠️ El límite de usuarios debe ser al menos 10');
-                setGuardandoConfiguracion(false);
-                return;
-            }
-
-            // Simular guardado
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Guardar en localStorage
-            localStorage.setItem('academia_config', JSON.stringify(configuracion));
-
-            setConfiguracionCambiada(false);
-            setGuardandoConfiguracion(false); // Ensure this is set to false
-
-            // Aplicar cambios inmediatos
-            if (configuracion.mantenimientoActivo) {
-            }
-
-            alert('✅ Configuración guardada exitosamente\n\n' +
-                (configuracion.mantenimientoActivo ? '🔧 Modo mantenimiento ACTIVADO\n' : '') +
-                (configuracion.registroAbierto ? '✅ Registro abierto\n' : '❌ Registro cerrado\n') +
-                `👥 Límite usuarios: ${configuracion.limiteUsuarios}\n` +
-                `⏱️ Duración sesión: ${configuracion.duracionSesion} min`);
-
-        } catch (error: any) {
-            console.error('❌ [CONFIG] Error guardando:', error);
-            alert('❌ Error al guardar la configuración: ' + error.message);
-            setGuardandoConfiguracion(false);
-        }
-    };
-
-    const ejecutarBackupManual = async () => {
-        try {
-
-            // Simular proceso
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // Generar JSON
-            const backupData = {
-                fecha: new Date().toISOString(),
-                configuracion: configuracion,
-                estadisticas: estadisticasSistema,
-                version: '2.1.0',
-                metadata: {
-                    generado_por: 'Panel Administración',
-                    tipo: 'backup_manual'
-                }
-            };
-
-            const backupJson = JSON.stringify(backupData, null, 2);
-            const blob = new Blob([backupJson], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'academia_backup_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-            window.URL.revokeObjectURL(url);
-
-            setEstadisticasSistema(prev => ({ ...prev, ultimoBackup: 'Ahora mismo' }));
-            alert('✅ Backup descargado exitosamente como JSON');
-
-        } catch (error) {
-            console.error('❌ [BACKUP] Error:', error);
-            alert('❌ Error durante el backup');
-        }
-    };
-
-    const limpiarCacheSistema = async () => {
-        try {
-
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                const deletePromises = cacheNames.map(name => caches.delete(name));
-                await Promise.all(deletePromises);
-            }
-
-            if (window.confirm('¿También deseas limpiar datos locales del navegador?')) {
-                localStorage.clear();
-                sessionStorage.clear();
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            alert('✅ Caché del sistema limpiado exitosamente');
-
-        } catch (error: any) {
-            console.error('❌ [CACHÉ] Error:', error);
-            alert('❌ Error al limpiar caché: ' + error.message);
-        }
-    };
-
-    const exportarConfiguracion = () => {
-        const configJson = JSON.stringify(configuracion, null, 2);
-        const blob = new Blob([configJson], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'configuracion_academia_' + new Date().toISOString().split('T')[0] + '.json';
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-
-    const importarConfiguracion = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-
-        input.onchange = (e: any) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event: any) => {
-                    try {
-                        const nuevaConfig = JSON.parse(event.target.result);
-                        setConfiguracion(prev => ({ ...prev, ...nuevaConfig }));
-                        setConfiguracionCambiada(true);
-                        alert('Configuración importada exitosamente');
-                    } catch (error) {
-                        alert('Error al importar configuración: archivo inválido');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        };
-        input.click();
-    };
-
-    const reiniciarSistema = async () => {
-        if (!window.confirm('⚠️ ATENCIÓN: Vas a reiniciar el sistema.\n\nEsto puede interrumpir las sesiones activas de usuarios.\n¿Estás seguro?')) {
-            return;
-        }
-
-        try {
-            alert('🔄 Iniciando reinicio del sistema...\n\nEsto puede tomar unos momentos.');
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            sessionStorage.clear();
-
-            alert('✅ Sistema reiniciado exitosamente\n\nLa página se recargará automáticamente.');
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-
-        } catch (error) {
-            console.error('❌ [SISTEMA] Error en reinicio:', error);
-            alert('❌ Error durante el reinicio del sistema');
-        }
-    };
+    const {
+        configuracion, estadisticasSistema, configuracionCambiada, guardandoConfiguracion,
+        confirmacion, feedbackMsg, feedbackTipo,
+        handleChange, guardarConfiguracion, ejecutarBackupManual, limpiarCacheSistema,
+        exportarConfiguracion, importarConfiguracion, reiniciarSistema,
+        ejecutarConfirmacion, cancelarConfirmacion, clearFeedback
+    } = usePestanaConfiguracion()
 
     return (
         <div className="pcfg-container">
@@ -277,7 +19,25 @@ const PestanaConfiguracion: React.FC = () => {
                 <p>Parámetros generales y configuración de la academia</p>
             </div>
 
-            {/* ESTADO DEL SISTEMA */}
+            {feedbackMsg && (
+                <div style={{ padding: '0.75rem 1rem', borderRadius: 8, marginBottom: '1rem', background: feedbackTipo === 'error' ? '#fee2e2' : '#d1fae5', color: feedbackTipo === 'error' ? '#b91c1c' : '#065f46', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{feedbackMsg}</span>
+                    <button onClick={clearFeedback} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                </div>
+            )}
+
+            {confirmacion && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={cancelarConfirmacion}>
+                    <div style={{ background: '#1e293b', borderRadius: 12, padding: '1.5rem', maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,.5)', color: 'white' }} onClick={e => e.stopPropagation()}>
+                        <p style={{ marginBottom: '1rem' }}>⚠️ {confirmacion.texto}</p>
+                        <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end' }}>
+                            <button onClick={cancelarConfirmacion} style={{ padding: '.5rem 1rem', borderRadius: 8, border: '1px solid #475569', background: 'transparent', color: 'white', cursor: 'pointer' }}>Cancelar</button>
+                            <button onClick={ejecutarConfirmacion} style={{ padding: '.5rem 1rem', borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer' }}>Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="pcfg-status-grid">
                 <div className="pcfg-status-card">
                     <Rocket className="pcfg-status-icon" style={{ color: '#8b5cf6' }} />
@@ -310,24 +70,19 @@ const PestanaConfiguracion: React.FC = () => {
             </div>
 
             <div className="pcfg-content-grid">
-                {/* CONFIGURACIÓN GENERAL */}
                 <div className="pcfg-general-section">
                     <div className="pcfg-section-header">
                         <h3>🏫 Configuración General</h3>
                         <div className="pcfg-actions-group">
                             <button className="pcfg-btn-action" onClick={exportarConfiguracion}>
-                                <Download size={14} style={{ marginRight: '0.5rem' }} />
-                                Exportar
+                                <Download size={14} style={{ marginRight: '0.5rem' }} />Exportar
                             </button>
                             <button className="pcfg-btn-action" onClick={importarConfiguracion}>
-                                <Upload size={14} style={{ marginRight: '0.5rem' }} />
-                                Importar
+                                <Upload size={14} style={{ marginRight: '0.5rem' }} />Importar
                             </button>
-                            <button
-                                className={`pcfg-btn-save ${configuracionCambiada ? 'pcfg-changed' : ''}`}
+                            <button className={`pcfg-btn-save ${configuracionCambiada ? 'pcfg-changed' : ''}`}
                                 disabled={!configuracionCambiada || guardandoConfiguracion}
-                                onClick={guardarConfiguracion}
-                            >
+                                onClick={guardarConfiguracion}>
                                 <Save size={14} className={guardandoConfiguracion ? 'pcfg-spin' : ''} style={{ marginRight: '0.5rem' }} />
                                 {guardandoConfiguracion ? 'Guardando...' : 'Guardar Cambios'}
                             </button>
@@ -335,141 +90,91 @@ const PestanaConfiguracion: React.FC = () => {
                     </div>
 
                     <div className="pcfg-form">
-                        {/* INFORMACIÓN BÁSICA */}
                         <div className="pcfg-form-group">
                             <h4>📋 Información Básica</h4>
-
                             <div className="pcfg-input-group">
                                 <label htmlFor="nombreAcademia">Nombre de la Academia</label>
-                                <input
-                                    id="nombreAcademia"
-                                    type="text"
-                                    className="pcfg-input"
+                                <input id="nombreAcademia" type="text" className="pcfg-input"
                                     value={configuracion.nombreAcademia}
                                     onChange={(e) => handleChange('nombreAcademia', e.target.value)}
-                                    placeholder="Academia Vallenata Online"
-                                />
+                                    placeholder="Academia Vallenata Online" />
                             </div>
-
                             <div className="pcfg-input-group">
                                 <label htmlFor="emailContacto">Email de Contacto</label>
-                                <input
-                                    id="emailContacto"
-                                    type="email"
-                                    className="pcfg-input"
+                                <input id="emailContacto" type="email" className="pcfg-input"
                                     value={configuracion.emailContacto}
                                     onChange={(e) => handleChange('emailContacto', e.target.value)}
-                                    placeholder="contacto@academiavallenata.com"
-                                />
+                                    placeholder="contacto@academiavallenata.com" />
                             </div>
-
                             <div className="pcfg-input-group">
                                 <label htmlFor="whatsappContacto">WhatsApp de Contacto</label>
-                                <input
-                                    id="whatsappContacto"
-                                    type="text"
-                                    className="pcfg-input"
+                                <input id="whatsappContacto" type="text" className="pcfg-input"
                                     value={configuracion.whatsappContacto}
                                     onChange={(e) => handleChange('whatsappContacto', e.target.value)}
-                                    placeholder="+57 300 123 4567"
-                                />
+                                    placeholder="+57 300 123 4567" />
                             </div>
                         </div>
 
-                        {/* CONFIGURACIÓN DEL SISTEMA */}
                         <div className="pcfg-form-group">
                             <h4>⚙️ Sistema</h4>
-
                             <div className="pcfg-toggle">
                                 <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={configuracion.mantenimientoActivo}
-                                        onChange={(e) => handleChange('mantenimientoActivo', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={configuracion.mantenimientoActivo}
+                                        onChange={(e) => handleChange('mantenimientoActivo', e.target.checked)} />
                                     <span className="pcfg-toggle-slider"></span>
                                     <span>Modo Mantenimiento</span>
                                 </label>
                                 <p className="pcfg-toggle-desc">Bloquea el acceso temporal al sitio</p>
                             </div>
-
                             <div className="pcfg-toggle">
                                 <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={configuracion.registroAbierto}
-                                        onChange={(e) => handleChange('registroAbierto', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={configuracion.registroAbierto}
+                                        onChange={(e) => handleChange('registroAbierto', e.target.checked)} />
                                     <span className="pcfg-toggle-slider"></span>
                                     <span>Registro Abierto</span>
                                 </label>
                                 <p className="pcfg-toggle-desc">Permite nuevos registros de usuarios</p>
                             </div>
-
                             <div className="pcfg-input-group">
                                 <label htmlFor="limiteUsuarios">Límite de Usuarios</label>
-                                <input
-                                    id="limiteUsuarios"
-                                    type="number"
-                                    className="pcfg-input"
+                                <input id="limiteUsuarios" type="number" className="pcfg-input"
                                     value={configuracion.limiteUsuarios}
                                     onChange={(e) => handleChange('limiteUsuarios', parseInt(e.target.value))}
-                                    min={10}
-                                    max={10000}
-                                />
+                                    min={10} max={10000} />
                             </div>
-
                             <div className="pcfg-input-group">
                                 <label htmlFor="duracionSesion">Duración de Sesión (minutos)</label>
-                                <input
-                                    id="duracionSesion"
-                                    type="number"
-                                    className="pcfg-input"
+                                <input id="duracionSesion" type="number" className="pcfg-input"
                                     value={configuracion.duracionSesion}
                                     onChange={(e) => handleChange('duracionSesion', parseInt(e.target.value))}
-                                    min={30}
-                                    max={480}
-                                />
+                                    min={30} max={480} />
                             </div>
                         </div>
 
-                        {/* CONFIGURACIÓN AVANZADA */}
                         <div className="pcfg-form-group">
                             <h4>🔧 Configuración Avanzada</h4>
-
                             <div className="pcfg-toggle">
                                 <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={configuracion.backupAutomatico}
-                                        onChange={(e) => handleChange('backupAutomatico', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={configuracion.backupAutomatico}
+                                        onChange={(e) => handleChange('backupAutomatico', e.target.checked)} />
                                     <span className="pcfg-toggle-slider"></span>
                                     <span>Backup Automático</span>
                                 </label>
                                 <p className="pcfg-toggle-desc">Backup diario automático de datos</p>
                             </div>
-
                             <div className="pcfg-toggle">
                                 <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={configuracion.notificacionesEmail}
-                                        onChange={(e) => handleChange('notificacionesEmail', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={configuracion.notificacionesEmail}
+                                        onChange={(e) => handleChange('notificacionesEmail', e.target.checked)} />
                                     <span className="pcfg-toggle-slider"></span>
                                     <span>Notificaciones Email</span>
                                 </label>
                                 <p className="pcfg-toggle-desc">Envío automático de notificaciones</p>
                             </div>
-
                             <div className="pcfg-toggle">
                                 <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={configuracion.modoDesarrollo}
-                                        onChange={(e) => handleChange('modoDesarrollo', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={configuracion.modoDesarrollo}
+                                        onChange={(e) => handleChange('modoDesarrollo', e.target.checked)} />
                                     <span className="pcfg-toggle-slider"></span>
                                     <span>Modo Desarrollo</span>
                                 </label>
@@ -479,10 +184,8 @@ const PestanaConfiguracion: React.FC = () => {
                     </div>
                 </div>
 
-                {/* HERRAMIENTAS DEL SISTEMA */}
                 <div className="pcfg-tools-section">
                     <h3>🔧 Herramientas del Sistema</h3>
-
                     <div className="pcfg-tools-list">
                         <div className="pcfg-tool-item">
                             <div className="pcfg-tool-info">
@@ -490,48 +193,41 @@ const PestanaConfiguracion: React.FC = () => {
                                 <div className="pcfg-tool-desc">Crear respaldo de la base de datos</div>
                             </div>
                             <button className="pcfg-btn-tool" onClick={ejecutarBackupManual}>
-                                <Database size={14} style={{ marginRight: '0.5rem' }} />
-                                Ejecutar Backup
+                                <Database size={14} style={{ marginRight: '0.5rem' }} />Ejecutar Backup
                             </button>
                         </div>
-
                         <div className="pcfg-tool-item">
                             <div className="pcfg-tool-info">
                                 <div className="pcfg-tool-title">🗑️ Limpiar Caché</div>
                                 <div className="pcfg-tool-desc">Eliminar archivos temporales del sistema</div>
                             </div>
                             <button className="pcfg-btn-tool" onClick={limpiarCacheSistema}>
-                                <Trash2 size={14} style={{ marginRight: '0.5rem' }} />
-                                Limpiar Caché
+                                <Trash2 size={14} style={{ marginRight: '0.5rem' }} />Limpiar Caché
                             </button>
                         </div>
-
                         <div className="pcfg-tool-item">
                             <div className="pcfg-tool-info">
                                 <div className="pcfg-tool-title">📊 Estadísticas DB</div>
                                 <div className="pcfg-tool-desc">Ver uso detallado de la base de datos</div>
                             </div>
-                            <button className="pcfg-btn-tool" onClick={() => alert('Próximamente')}>
-                                <PieChart size={14} style={{ marginRight: '0.5rem' }} />
-                                Ver Estadísticas
+                            <button className="pcfg-btn-tool">
+                                <PieChart size={14} style={{ marginRight: '0.5rem' }} />Ver Estadísticas
                             </button>
                         </div>
-
                         <div className="pcfg-tool-item">
                             <div className="pcfg-tool-info">
                                 <div className="pcfg-tool-title">🔄 Reiniciar Sistema</div>
                                 <div className="pcfg-tool-desc">Reinicio suave del sistema</div>
                             </div>
                             <button className="pcfg-btn-tool restart" onClick={reiniciarSistema}>
-                                <Power size={14} style={{ marginRight: '0.5rem' }} />
-                                Reiniciar
+                                <Power size={14} style={{ marginRight: '0.5rem' }} />Reiniciar
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default PestanaConfiguracion;
+export default PestanaConfiguracion

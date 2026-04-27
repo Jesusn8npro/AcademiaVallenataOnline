@@ -229,11 +229,9 @@ class ServicioGeolocalizacionEspanol {
         this.cache.set(datosEspanol.ip, datosEspanol);
       }
 
-      console.log('✅ [SERVICIO-ES] Geolocalización REAL obtenida:', datosEspanol.ciudad, datosEspanol.pais);
       return datosEspanol;
 
     } catch (error: any) {
-      console.error('❌ [SERVICIO-ES] Error en geolocalización:', error.message);
       
       if (error.name === 'AbortError') {
         return {
@@ -245,7 +243,6 @@ class ServicioGeolocalizacionEspanol {
 
       // Intentar con fallback si hay error de red
       if (ip) {
-        console.log('🔄 [SERVICIO-ES] Intentando con API alternativa...');
         return await this.obtenerGeolocalizacionFallback(ip);
       }
 
@@ -262,7 +259,6 @@ class ServicioGeolocalizacionEspanol {
    */
   private async obtenerGeolocalizacionFallback(ip: string): Promise<DatosGeolocalizacion | ErrorGeolocalizacion> {
     try {
-      console.log('🔄 [SERVICIO-ES] Usando API fallback para IP:', ip);
 
       const respuesta = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,query`, {
         headers: {
@@ -301,11 +297,9 @@ class ServicioGeolocalizacionEspanol {
         datosCompletos: data
       };
 
-      console.log('✅ [SERVICIO-ES] Geolocalización obtenida desde fallback:', datosEspanol.ciudad, datosEspanol.pais);
       return datosEspanol;
 
     } catch (error: any) {
-      console.error('❌ [SERVICIO-ES] Error en API fallback:', error.message);
       return {
         error: true,
         mensaje: `Error en todas las APIs de geolocalización: ${error.message}`,
@@ -319,7 +313,6 @@ class ServicioGeolocalizacionEspanol {
    */
   async guardarGeolocalizacion(idUsuario: string, datosGeo: DatosGeolocalizacion): Promise<boolean> {
     try {
-      console.log('💾 [SERVICIO-ES] Guardando geolocalización en Supabase...');
 
       // CORREGIDO: Mapear campos exactos a la estructura de la tabla
       const datosParaSupabase = {
@@ -372,11 +365,9 @@ class ServicioGeolocalizacionEspanol {
           .eq('id', existente.id);
 
         if (errorUpdate) {
-          console.error('❌ [SERVICIO-ES] Error actualizando:', errorUpdate);
           return false;
         }
 
-        console.log('✅ [SERVICIO-ES] Registro actualizado exitosamente');
         return true;
 
       } else {
@@ -408,16 +399,13 @@ class ServicioGeolocalizacionEspanol {
           });
 
         if (errorInsert) {
-          console.error('❌ [SERVICIO-ES] Error insertando:', errorInsert);
           return false;
         }
 
-        console.log('✅ [SERVICIO-ES] Nuevo registro creado exitosamente');
         return true;
       }
 
     } catch (error: any) {
-      console.error('❌ [SERVICIO-ES] Error general guardando geolocalización:', error.message);
       return false;
     }
   }
@@ -427,14 +415,12 @@ class ServicioGeolocalizacionEspanol {
    */
   async rastreoCompleto(idUsuario?: string): Promise<boolean> {
     try {
-      console.log('🚀 [SERVICIO-ES] Iniciando rastreo completo de geolocalización...');
 
       // Obtener usuario actual si no se proporciona
       let usuarioActual = idUsuario;
       if (!usuarioActual) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          console.log('⚠️ [SERVICIO-ES] No hay usuario autenticado');
           return false;
         }
         usuarioActual = user.id;
@@ -443,29 +429,24 @@ class ServicioGeolocalizacionEspanol {
       // Obtener IP pública
       const ipPublica = await this.obtenerIpPublica();
       if (!ipPublica) {
-        console.error('❌ [SERVICIO-ES] No se pudo obtener IP pública');
         return false;
       }
 
       // Obtener geolocalización
       const resultadoGeo = await this.obtenerGeolocalizacion(ipPublica);
       if ('error' in resultadoGeo) {
-        console.error('❌ [SERVICIO-ES] Error en geolocalización:', resultadoGeo.mensaje);
         return false;
       }
 
              // Guardar en Supabase
        const guardadoExitoso = await this.guardarGeolocalizacion(usuarioActual!, resultadoGeo);
        if (!guardadoExitoso) {
-         console.error('❌ [SERVICIO-ES] Error guardando en Supabase');
          return false;
        }
 
-      console.log('🎉 [SERVICIO-ES] ¡Rastreo completo exitoso!');
       return true;
 
     } catch (error: any) {
-      console.error('❌ [SERVICIO-ES] Error en rastreo completo:', error.message);
       return false;
     }
   }
@@ -475,16 +456,13 @@ class ServicioGeolocalizacionEspanol {
    */
   async obtenerEstadisticas(): Promise<any> {
     try {
-      console.log('📊 [SERVICIO-ES] Obteniendo estadísticas geográficas...');
 
       const { data, error } = await supabase.rpc('obtener_estadisticas_geograficas_espanol');
 
       if (error) {
-        console.error('❌ [SERVICIO-ES] Error obteniendo estadísticas:', error);
         return { paises: [], totalUsuarios: 0, totalVisitas: 0 };
       }
 
-      console.log('✅ [SERVICIO-ES] Estadísticas obtenidas:', data?.length || 0, 'países');
       return {
         paises: data || [],
         totalUsuarios: data?.reduce((sum: number, item: any) => sum + parseInt(item.total_usuarios), 0) || 0,
@@ -492,7 +470,6 @@ class ServicioGeolocalizacionEspanol {
       };
 
     } catch (error: any) {
-      console.error('❌ [SERVICIO-ES] Error general obteniendo estadísticas:', error.message);
       return { paises: [], totalUsuarios: 0, totalVisitas: 0 };
     }
   }
@@ -506,7 +483,6 @@ class ServicioGeolocalizacionEspanol {
 
     if (tiempoTranscurrido < this.RETRASO_LIMITE_VELOCIDAD) {
       const tiempoEspera = this.RETRASO_LIMITE_VELOCIDAD - tiempoTranscurrido;
-      console.log(`⏱️ [SERVICIO-ES] Esperando ${tiempoEspera}ms para respetar límite de velocidad...`);
       await new Promise(resolve => setTimeout(resolve, tiempoEspera));
     }
 
@@ -518,7 +494,6 @@ class ServicioGeolocalizacionEspanol {
    */
   limpiarCache(): void {
     this.cache.clear();
-    console.log('🧹 [SERVICIO-ES] Cache de geolocalización limpiado');
   }
 
   /**

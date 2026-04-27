@@ -37,12 +37,12 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
   const refInputPortada = useRef<HTMLInputElement | null>(null)
   const refInputAvatar = useRef<HTMLInputElement | null>(null)
   const [enviandoMensaje, setEnviandoMensaje] = useState(false)
+  const [mostrarProximamente, setMostrarProximamente] = useState(false)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [imagenModalUrl, setImagenModalUrl] = useState('')
   const [imagenModalId, setImagenModalId] = useState<string | null>(null)
   const [tipoImagenModal, setTipoImagenModal] = useState<'avatar' | 'portada' | null>(null)
 
-  // Hooks para actualización de estado global y local
   const { actualizarUsuario, usuario } = useUsuario()
   const { cargarDatosPerfil } = usePerfilStore()
 
@@ -86,7 +86,6 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
     const { data: imagenData } = await supabase.from('usuario_imagenes').insert({ usuario_id: userId, url_imagen: nuevaUrl, tipo: modoEdicion, fecha_subida: new Date().toISOString(), es_actual: true }).select().single()
     if (imagenData) { await supabase.from('usuario_imagenes').update({ es_actual: false }).eq('usuario_id', userId).eq('tipo', modoEdicion).neq('id', imagenData.id) }
 
-    // Actualizar estado local (override temporal visual)
     if (modoEdicion === 'portada') {
       urlPortada = nuevaUrl;
       setVistaPortadaTemporal(null)
@@ -95,16 +94,10 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
       setVistaAvatarTemporal(null)
     }
 
-    // 🔄 ACTUALIZACIÓN DE ESTADO GLOBAL Y STORE (CRÍTICO)
-    // Si el perfil editado es el del usuario actual, actualizamos el contexto global (Navbar, etc.)
-    if (userId === usuario?.id) {
-      if (modoEdicion === 'avatar') {
-        actualizarUsuario({ url_foto_perfil: nuevaUrl })
-      }
-      // También podemos actualizar portada si el contexto la soportara
+    if (userId === usuario?.id && modoEdicion === 'avatar') {
+      actualizarUsuario({ url_foto_perfil: nuevaUrl })
     }
 
-    // Recargar datos en el store local de la página de perfil
     await cargarDatosPerfil(true)
 
     mostrarMensaje('¡Actualizado exitosamente!', modoEdicion)
@@ -182,7 +175,7 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
           src={vistaPortadaTemporal || urlPortada || '/images/perfil-portada/Imagen de portada.png'}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.onerror = null; // Prevenir bucle infinito
+            target.onerror = null;
             target.src = '/images/perfil-portada/Imagen de portada.png';
           }}
           alt="Portada de perfil"
@@ -218,7 +211,6 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
         <div className="ep-contenedor-avatar">
           <div className="ep-avatar-interactivo">
             {mostrarIniciales ? (
-              // Si no hay avatar, usamos la imagen por defecto en lugar de iniciales (según petición usuario)
               <img
                 src={'/images/perfil-portada/Imagen perfil 1.jpg'}
                 alt="Avatar Default"
@@ -286,7 +278,7 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
               <div className="ep-info-perfil-publico"><div className="ep-fecha-registro">{formatearFechaRegistro(fechaCreacion)}</div></div>
               <div className="ep-acciones-perfil-publico">
                 <button className="ep-boton-mensaje" onClick={iniciarChatPrivado} disabled={enviandoMensaje}>{enviandoMensaje ? <>Enviando...</> : <>✉️ Mensaje</>}</button>
-                <button className="ep-boton-seguir" onClick={() => alert('Función de seguir próximamente')}>➕ Seguir</button>
+                <button className="ep-boton-seguir" onClick={() => { setMostrarProximamente(true); setTimeout(() => setMostrarProximamente(false), 2000) }}>{mostrarProximamente ? 'Próximamente' : '➕ Seguir'}</button>
                 <button className="ep-boton-publicaciones" onClick={() => slugUsuario && (window.location.href = `/usuarios/${slugUsuario}/publicaciones`)}>📝 Publicaciones</button>
               </div>
             </>

@@ -44,7 +44,6 @@ export class SincronizadorEstados {
       this.sincronizarEstadosPendientes();
     });
 
-    console.log('🔧 [SINCRONIZACIÓN] Sistema de sincronización inicializado');
   }
 
   /**
@@ -90,7 +89,6 @@ export class SincronizadorEstados {
     // ✅ SOLUCIÓN: Marcar como sincronizado
     this.estadosPendientes.delete(nombre);
     
-    console.log(`✅ [SINCRONIZACIÓN] Estado ${nombre} registrado para sincronización`);
     
     return store;
   }
@@ -106,12 +104,10 @@ export class SincronizadorEstados {
       if (!estadoPendiente) return;
 
       this.sincronizacionEnProgreso = true;
-      console.log(`🔄 [SINCRONIZACIÓN] Sincronizando estado ${nombre}...`);
 
       // ✅ SOLUCIÓN: Validar estado antes de sincronizar
       if (estadoPendiente.opciones?.validar) {
         if (!estadoPendiente.opciones.validar(estadoPendiente.valor)) {
-          console.warn(`⚠️ [SINCRONIZACIÓN] Estado ${nombre} no válido, omitiendo sincronización`);
           this.estadosPendientes.delete(nombre);
           return;
         }
@@ -132,7 +128,6 @@ export class SincronizadorEstados {
             version: '1.0.0'
           }));
         } catch (error) {
-          console.warn(`⚠️ [SINCRONIZACIÓN] Error persistiendo estado ${nombre}:`, error);
         }
       }
 
@@ -142,9 +137,7 @@ export class SincronizadorEstados {
       // ✅ SOLUCIÓN: Marcar como sincronizado
       this.estadosPendientes.delete(nombre);
       
-      console.log(`✅ [SINCRONIZACIÓN] Estado ${nombre} sincronizado exitosamente`);
     } catch (error) {
-      console.error(`❌ [SINCRONIZACIÓN] Error sincronizando estado ${nombre}:`, error);
     } finally {
       this.sincronizacionEnProgreso = false;
     }
@@ -157,7 +150,6 @@ export class SincronizadorEstados {
     if (!browser || this.sincronizacionEnProgreso) return;
 
     try {
-      console.log('🔄 [SINCRONIZACIÓN] Sincronizando todos los estados pendientes...');
       
       const estadosPendientes = Array.from(this.estadosPendientes.keys());
       
@@ -167,9 +159,7 @@ export class SincronizadorEstados {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      console.log('✅ [SINCRONIZACIÓN] Todos los estados pendientes sincronizados');
     } catch (error) {
-      console.error('❌ [SINCRONIZACIÓN] Error sincronizando estados pendientes:', error);
     }
   }
 
@@ -205,7 +195,6 @@ export class SincronizadorEstados {
         try {
           callback();
         } catch (error) {
-          console.warn(`⚠️ [SINCRONIZACIÓN] Error en listener de ${nombre}:`, error);
         }
       });
     }
@@ -227,15 +216,12 @@ export class SincronizadorEstados {
         const maxEdad = 24 * 60 * 60 * 1000; // 24 horas
         
         if (ahora - estadoParseado.timestamp < maxEdad) {
-          console.log(`✅ [SINCRONIZACIÓN] Estado ${nombre} restaurado desde localStorage`);
           return estadoParseado.valor;
         } else {
-          console.log(`🕒 [SINCRONIZACIÓN] Estado ${nombre} muy antiguo, limpiando`);
           localStorage.removeItem(`estado_sincronizado_${nombre}`);
         }
       }
     } catch (error) {
-      console.warn(`⚠️ [SINCRONIZACIÓN] Error restaurando estado ${nombre}:`, error);
       localStorage.removeItem(`estado_sincronizado_${nombre}`);
     }
     
@@ -259,9 +245,7 @@ export class SincronizadorEstados {
         localStorage.removeItem(`estado_sincronizado_${nombre}`);
       }
       
-      console.log(`🧹 [SINCRONIZACIÓN] Estado ${nombre} limpiado completamente`);
     } catch (error) {
-      console.warn(`⚠️ [SINCRONIZACIÓN] Error limpiando estado ${nombre}:`, error);
     }
   }
 
@@ -270,7 +254,6 @@ export class SincronizadorEstados {
    */
   limpiarTodosLosEstados(): void {
     try {
-      console.log('🧹 [SINCRONIZACIÓN] Limpiando todos los estados...');
       
       // ✅ SOLUCIÓN: Limpiar todos los stores
       this.estadosSincronizados.clear();
@@ -287,9 +270,7 @@ export class SincronizadorEstados {
         });
       }
       
-      console.log('✅ [SINCRONIZACIÓN] Todos los estados limpiados');
     } catch (error) {
-      console.error('❌ [SINCRONIZACIÓN] Error limpiando todos los estados:', error);
     }
   }
 
@@ -403,7 +384,6 @@ export const verificarSaludSincronizacion = () => {
 export function logSincronizacion(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [SINCRONIZACIÓN] ${mensaje}`, datos || '');
 }
 
 /**

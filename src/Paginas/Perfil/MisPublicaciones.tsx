@@ -34,7 +34,6 @@ export default function MisPublicaciones() {
 
             if (error) throw error
 
-            // Mapear los datos agregando el slug y avatar
             const publicacionesMapeadas = (data || []).map((pub: any) => ({
                 ...pub,
                 usuario_slug: pub.perfiles?.nombre_usuario || '',
@@ -43,8 +42,8 @@ export default function MisPublicaciones() {
             }))
 
             setPublicaciones(publicacionesMapeadas)
-        } catch (error) {
-            console.error('Error cargando publicaciones:', error)
+        } catch {
+            // silent
         } finally {
             setCargando(false)
         }
@@ -65,7 +64,6 @@ export default function MisPublicaciones() {
                         <p>Todas tus contribuciones a la comunidad</p>
                     </div>
 
-                    {/* Timeline personal del usuario */}
                     {cargando ? (
                         <div className="estado-carga">
                             <div className="spinner"></div>
@@ -106,7 +104,6 @@ export default function MisPublicaciones() {
                 </div>
 
                 <div className="columna-timeline columna-derecha">
-                    {/* Slider de cursos arriba del porcentaje */}
                     <SliderCursos />
                     <PorcentajePerfil perfil={perfil} />
                     <BannerSlider />

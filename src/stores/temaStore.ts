@@ -18,7 +18,6 @@ export function inicializarTema() {
     aplicarTema(isDark);
     modoOscuro.set(isDark);
   } catch (error) {
-    console.warn('Error al inicializar tema:', error);
   }
 }
 
@@ -33,7 +32,6 @@ export function aplicarTema(dark: boolean) {
       document.documentElement.classList.remove('dark');
     }
   } catch (error) {
-    console.warn('Error al aplicar tema:', error);
   }
 }
 
@@ -48,7 +46,6 @@ export function toggleModoOscuro() {
     try {
       localStorage.setItem('modo-oscuro', newValue.toString());
     } catch (error) {
-      console.warn('Error al guardar tema:', error);
     }
 
     return newValue;

@@ -1,19 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { supabase } from '../../servicios/clienteSupabase';
+import React from 'react';
+import { useMenuPublico } from './useMenuPublico';
 import ModalBusqueda from '../Busqueda/ModalBusqueda';
 import ModalDeInicioDeSesion from './ModalDeInicioDeSesion';
 import MenuLateralResponsive from './MenuLateralResponsive';
 import './MenuPublico.css';
-
-interface ArticuloBlog {
-  id: number;
-  titulo: string;
-  resumen: string;
-  imagen_url: string;
-  creado_en: string;
-  slug: string;
-}
 
 interface MenuPublicoProps {
   usuario?: any;
@@ -22,170 +12,25 @@ interface MenuPublicoProps {
   onAbrirMenuLateral?: () => void;
 }
 
-const MenuPublico: React.FC<MenuPublicoProps> = ({
-  usuario,
-  onCerrarSesion,
-  onAbrirLogin = () => { },
-  onAbrirMenuLateral = () => { }
-}) => {
-  // Hook de traducción
-  const { t, i18n } = useTranslation();
-
-  // Estados
-  const [mostrarModalBusqueda, setMostrarModalBusqueda] = useState(false);
-  const [mostrarModalMenu, setMostrarModalMenu] = useState(false);
-  const [mostrarMenuLateralResponsive, setMostrarMenuLateralResponsive] = useState(false);
-  const [mostrarModalLogin, setMostrarModalLogin] = useState(false);
-  const [mostrarIdiomas, setMostrarIdiomas] = useState(false);
-  const [articulosBlog, setArticulosBlog] = useState<ArticuloBlog[]>([]);
-  const [cargandoArticulos, setCargandoArticulos] = useState(false);
-  const [esMovil, setEsMovil] = useState(false);
-  const [cerrandoSesion, setCerrandoSesion] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [isSticky, setIsSticky] = useState(false);
-
-  const selectorIdiomaRef = useRef<HTMLDivElement>(null);
-
-  // Función para cambiar idioma
-  const cambiarIdioma = (codigoIdioma: string) => {
-    i18n.changeLanguage(codigoIdioma);
-    setMostrarIdiomas(false);
-  };
-
-  // Obtener nombre del idioma actual
-  const obtenerNombreIdiomaActual = () => {
-    switch (i18n.language) {
-      case 'en': return 'Inglés';
-      case 'pt': return 'Portugués';
-      case 'fr': return 'Francés';
-      default: return 'Español';
-    }
-  };
-
-  // Función para cerrar sesión
-  const cerrarSesion = async () => {
-    if (cerrandoSesion || !onCerrarSesion) return;
-    setCerrandoSesion(true);
-    try {
-      await onCerrarSesion();
-      console.log('✅ Sesión cerrada correctamente');
-    } catch (error) {
-      console.error('❌ Error al cerrar sesión:', error);
-    } finally {
-      setCerrandoSesion(false);
-    }
-  };
-
-  // Función para cargar artículos del blog
-  const cargarArticulosBlog = async () => {
-    if (articulosBlog.length > 0) return;
-    setCargandoArticulos(true);
-    try {
-      const { data, error } = await supabase
-        .from('blog_articulos')
-        .select('id, titulo, resumen, imagen_url, creado_en, slug')
-        .eq('estado', 'publicado')
-        .order('creado_en', { ascending: false })
-        .limit(4);
-
-      if (error) {
-        console.error('Error al cargar artículos:', error);
-        setArticulosBlog([]);
-      } else {
-        setArticulosBlog(data || []);
-      }
-    } catch (err) {
-      console.error('Error de conexión:', err);
-      setArticulosBlog([]);
-    } finally {
-      setCargandoArticulos(false);
-    }
-  };
-
-  // Función para formatear fecha
-  const formatearFecha = (fechaISO: string): string => {
-    const fecha = new Date(fechaISO);
-    return fecha.toLocaleDateString(i18n.language === 'es' ? 'es-ES' : i18n.language, {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  // Funciones para manejar modales
-  const abrirModalBusqueda = () => {
-    setMostrarModalBusqueda(true);
-  };
-
-  const abrirModalMenu = () => {
-    if (esMovil) {
-      setMostrarMenuLateralResponsive(true);
-    } else {
-      setMostrarModalMenu(true);
-      cargarArticulosBlog();
-    }
-  };
-
-  const abrirModalLogin = () => {
-    setMostrarModalLogin(true);
-  };
-
-  const cerrarModalLogin = () => {
-    setMostrarModalLogin(false);
-  };
-
-  const cerrarModales = () => {
-    setMostrarModalBusqueda(false);
-    setMostrarModalMenu(false);
-    setMostrarMenuLateralResponsive(false);
-    setMostrarModalLogin(false);
-    // IMPORTANTE: Al dejar que los 모달 desactiven su propio 'overflow: hidden' 
-    // en su UseEffect return, evitamos choques y que el scroll se rompa.
-  };
-
-  // Función para manejar clicks fuera del selector de idiomas
-  const manejarClicFuera = (event: MouseEvent) => {
-    if (selectorIdiomaRef.current && !selectorIdiomaRef.current.contains(event.target as Node)) {
-      setMostrarIdiomas(false);
-    }
-  };
-
-  const manejarTeclaEscape = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      cerrarModales();
-    }
-  };
+const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) => {
+  const {
+    t, i18n,
+    mostrarModalBusqueda, mostrarModalMenu,
+    mostrarMenuLateralResponsive, setMostrarMenuLateralResponsive,
+    mostrarModalLogin,
+    mostrarIdiomas, setMostrarIdiomas,
+    articulosBlog, cargandoArticulos,
+    cerrandoSesion, isSticky,
+    selectorIdiomaRef,
+    cambiarIdioma, obtenerNombreIdiomaActual,
+    cerrarSesion, formatearFecha,
+    abrirModalBusqueda, abrirModalMenu,
+    abrirModalLogin, cerrarModalLogin, cerrarModales,
+  } = useMenuPublico({ onCerrarSesion });
 
   const manejarClicModal = (event: React.MouseEvent) => {
-    if (event.target === event.currentTarget) {
-      cerrarModales();
-    }
+    if (event.target === event.currentTarget) cerrarModales();
   };
-
-  const detectarMovil = () => {
-    setEsMovil(window.innerWidth <= 1000);
-  };
-
-  const manejarScroll = () => {
-    const currentScrollY = window.scrollY;
-    setScrollY(currentScrollY);
-    setIsSticky(currentScrollY > 80);
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', manejarClicFuera);
-    document.addEventListener('keydown', manejarTeclaEscape);
-    window.addEventListener('scroll', manejarScroll, { passive: true });
-    detectarMovil();
-    window.addEventListener('resize', detectarMovil);
-
-    return () => {
-      document.removeEventListener('mousedown', manejarClicFuera);
-      document.removeEventListener('keydown', manejarTeclaEscape);
-      window.removeEventListener('scroll', manejarScroll);
-      window.removeEventListener('resize', detectarMovil);
-    };
-  }, []);
 
   return (
     <>

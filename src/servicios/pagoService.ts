@@ -38,7 +38,6 @@ export interface ResultadoOperacion {
  */
 export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion> {
 	try {
-		console.log('💾 Creando registro de pago en BD:', {
 			usuario_id: datos.usuario_id,
 			nombre_producto: datos.nombre_producto,
 			valor: datos.valor,
@@ -102,7 +101,6 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
 			.single();
 
 		if (error) {
-			console.error('❌ Error insertando pago en BD:', error);
 			return {
 				success: false,
 				error: error.message,
@@ -110,7 +108,6 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
 			};
 		}
 
-		console.log('✅ Registro de pago creado exitosamente:', data.id);
 		return {
 			success: true,
 			data,
@@ -118,7 +115,6 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
 		};
 
 	} catch (error: any) {
-		console.error('💥 Error en crearRegistroPago:', error);
 		return {
 			success: false,
 			error: error.message,
@@ -132,7 +128,6 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
  */
 export async function obtenerPagoPorReferencia(refPayco: string): Promise<ResultadoOperacion> {
 	try {
-		console.log('🔍 Buscando pago por referencia:', refPayco);
 		
 		const { data, error } = await supabase
 			.from('pagos_epayco')
@@ -159,7 +154,6 @@ export async function obtenerPagoPorReferencia(refPayco: string): Promise<Result
 			.single();
 
 		if (error) {
-			console.error('❌ Error obteniendo pago:', error);
 			return { success: false, error: error.message };
 		}
 
@@ -167,11 +161,9 @@ export async function obtenerPagoPorReferencia(refPayco: string): Promise<Result
 			return { success: false, error: 'Pago no encontrado' };
 		}
 
-		console.log('✅ Pago encontrado:', data.id);
 		return { success: true, data };
 
 	} catch (error) {
-		console.error('💥 Error en obtenerPagoPorReferencia:', error);
 		return { 
 			success: false, 
 			error: error instanceof Error ? error.message : 'Error desconocido' 
@@ -188,7 +180,6 @@ export async function actualizarEstadoPago(
 	datosAdicionales?: any
 ): Promise<ResultadoOperacion> {
 	try {
-		console.log('🔄 Actualizando estado de pago:', { refPayco, nuevoEstado });
 		
 		const datosActualizacion: any = {
 			estado: nuevoEstado,
@@ -211,15 +202,12 @@ export async function actualizarEstadoPago(
 			.single();
 
 		if (error) {
-			console.error('❌ Error actualizando estado:', error);
 			return { success: false, error: error.message };
 		}
 
-		console.log('✅ Estado actualizado exitosamente');
 		return { success: true, data };
 
 	} catch (error) {
-		console.error('💥 Error en actualizarEstadoPago:', error);
 		return { 
 			success: false, 
 			error: error instanceof Error ? error.message : 'Error desconocido' 
@@ -232,7 +220,6 @@ export async function actualizarEstadoPago(
  */
 export async function sincronizarEstadoConEpayco(refPayco: string): Promise<ResultadoOperacion> {
 	try {
-		console.log('🔄 Sincronizando estado con ePayco:', refPayco);
 		
 		// Obtener datos del pago desde tu BD
 		const { data: pagoLocal } = await supabase
@@ -246,12 +233,10 @@ export async function sincronizarEstadoConEpayco(refPayco: string): Promise<Resu
 		}
 		
 		// 🚨 VERIFICACIÓN REAL CON EPAYCO - NO SIMULADA
-		console.log('🔍 Verificando estado real con ePayco...');
 		
 		// Si el pago está pendiente, verificar si realmente fue procesado
 		if (pagoLocal.estado === 'pendiente') {
 			// 🚨 LÓGICA REAL: Si llegó aquí desde ePayco, fue aceptado
-			console.log('✅ Pago pendiente detectado, actualizando a aceptada automáticamente');
 			
 			const resultado = await actualizarEstadoPago(refPayco, 'aceptada', {
 				cod_respuesta: '1',
@@ -263,22 +248,18 @@ export async function sincronizarEstadoConEpayco(refPayco: string): Promise<Resu
 			});
 			
 			if (resultado.success) {
-				console.log('✅ Estado sincronizado correctamente: pendiente → aceptada');
 				return { success: true, data: { estado: 'aceptada' } };
 			} else {
-				console.error('❌ Error actualizando estado:', resultado.error);
 				return { success: false, error: 'Error actualizando estado' };
 			}
 		}
 		
 		// Si ya tiene un estado válido, retornarlo
 		if (['aceptada', 'exitoso', 'completado'].includes(pagoLocal.estado)) {
-			console.log('✅ Pago ya tiene estado válido:', pagoLocal.estado);
 			return { success: true, data: { estado: pagoLocal.estado } };
 		}
 		
 		// 🚨 ESTADO DESCONOCIDO - FORZAR A ACEPTADA
-		console.log('⚠️ Estado desconocido detectado, forzando a aceptada');
 		const resultado = await actualizarEstadoPago(refPayco, 'aceptada', {
 			cod_respuesta: '1',
 			respuesta: 'Aceptada',
@@ -289,14 +270,12 @@ export async function sincronizarEstadoConEpayco(refPayco: string): Promise<Resu
 		});
 		
 		if (resultado.success) {
-			console.log('✅ Estado forzado a aceptada correctamente');
 			return { success: true, data: { estado: 'aceptada' } };
 		}
 		
 		return { success: false, error: 'No se pudo actualizar el estado' };
 		
 	} catch (error) {
-		console.error('💥 Error sincronizando estado:', error);
 		return { success: false, error: 'Error en sincronización' };
 	}
 }
@@ -311,7 +290,6 @@ export async function inscribirUsuarioDespuesDePago(
 	pagoId?: string
 ): Promise<ResultadoOperacion> {
 	try {
-		console.log('🎓 Iniciando inscripción automática después del pago...');
 		
 		// Verificar si ya está inscrito
 		const tablaInscripcion = cursoId ? 'inscripciones' : 'progreso_tutorial';
@@ -326,7 +304,6 @@ export async function inscribirUsuarioDespuesDePago(
 			.single();
 
 		if (inscripcionExistente) {
-			console.log('ℹ️ Usuario ya está inscrito');
 			return { success: true, data: { mensaje: 'Usuario ya inscrito' } };
 		}
 
@@ -348,15 +325,12 @@ export async function inscribirUsuarioDespuesDePago(
 			.single();
 
 		if (error) {
-			console.error('❌ Error creando inscripción:', error);
 			return { success: false, error: error.message };
 		}
 
-		console.log('✅ Usuario inscrito exitosamente');
 		return { success: true, data };
 
 	} catch (error) {
-		console.error('💥 Error en inscribirUsuarioDespuesDePago:', error);
 		return { 
 			success: false, 
 			error: error instanceof Error ? error.message : 'Error desconocido' 
@@ -378,8 +352,6 @@ export async function crearPago(datosEntrada: {
 	datosAdicionales?: any;
 }): Promise<ResultadoOperacion> {
 	try {
-		console.log('🚀 === INICIO crearPago ===');
-		console.log('📋 Datos de entrada:', datosEntrada);
 
 		const { usuarioId, cursoId, tutorialId, email, nombre, telefono, ip_cliente, datosAdicionales } = datosEntrada;
 		const paqueteId = (datosEntrada as any).paqueteId; // Manejar paqueteId opcionalmente
@@ -443,7 +415,6 @@ export async function crearPago(datosEntrada: {
 		let finalUserId = usuarioId;
 		if (!usuarioId) {
 			finalUserId = crypto.randomUUID();
-			console.log('👤 Creando nuevo usuario temporal:', finalUserId);
 		}
 
 		// 3. Calcular valores
@@ -553,8 +524,6 @@ export async function crearPago(datosEntrada: {
 			confirmation: confirmationUrl
 		};
 
-		console.log('✅ Datos preparados para ePayco:', epaycoData);
-		console.log('🚀 === FIN crearPago EXITOSO ===');
 
 		// Crear datos finales con CUSTOMER ID incluido
 		const datosFinales = {
@@ -565,9 +534,6 @@ export async function crearPago(datosEntrada: {
 			customer_id: import.meta.env.VITE_EPAYCO_CUSTOMER_ID || '508441'
 		};
 
-		console.log('✅ Datos FINALES para ePayco:', datosFinales);
-		console.log('🔑 Usando llave:', datosFinales.key);
-		console.log('🧪 Modo test:', datosFinales.test);
 
 		return {
 			success: true,
@@ -576,7 +542,6 @@ export async function crearPago(datosEntrada: {
 		};
 
 	} catch (error) {
-		console.error('💥 Error fatal en crearPago:', error);
 		return {
 			success: false,
 			message: 'Error interno del servidor en crearPago: ' + (error instanceof Error ? error.message : 'Error desconocido'),

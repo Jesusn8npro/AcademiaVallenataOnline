@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardContenido from '../../../componentes/CrearContenido/WizardContenido';
 import { supabase } from '../../../servicios/clienteSupabase';
@@ -15,8 +15,8 @@ const CrearContenido = () => {
 
 
   const tituloPrincipal = modoEdicion
-    ? `✏️ Editar ${tipoContenido === 'curso' ? 'Curso' : 'Tutorial'}${datosIniciales?.titulo || datosIniciales?.nombre ? `: ${datosIniciales?.titulo || datosIniciales?.nombre}` : ''}`
-    : `${tipoContenido === 'curso' ? '🎓 Crear Nuevo Curso' : '🎥 Crear Nuevo Tutorial'}`;
+    ? `?? Editar ${tipoContenido === 'curso' ? 'Curso' : 'Tutorial'}${datosIniciales?.titulo || datosIniciales?.nombre ? `: ${datosIniciales?.titulo || datosIniciales?.nombre}` : ''}`
+    : `${tipoContenido === 'curso' ? '?? Crear Nuevo Curso' : '?? Crear Nuevo Tutorial'}`;
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -139,7 +139,6 @@ const CrearContenido = () => {
         if (!errorPartes && partes) setEstructuraInicial(partes || []);
       }
     } catch (e) {
-      console.error('❌ [ESTRUCTURA] Error:', e);
     }
   };
 
@@ -158,16 +157,16 @@ const CrearContenido = () => {
         {cargandoDatos ? (
           <div className="crear-contenido-estado-carga">
             <div className="crear-contenido-contenedor-carga">
-              <div className="crear-contenido-spinner-futurista"><div className="crear-contenido-anillo crear-contenido-anillo-1"></div><div className="crear-contenido-anillo crear-contenido-anillo-2"></div><div className="crear-contenido-anillo crear-contenido-anillo-3"></div><div className="crear-contenido-icono-central">{tipoContenido === 'curso' ? '📚' : '🎥'}</div></div>
+              <div className="crear-contenido-spinner-futurista"><div className="crear-contenido-anillo crear-contenido-anillo-1"></div><div className="crear-contenido-anillo crear-contenido-anillo-2"></div><div className="crear-contenido-anillo crear-contenido-anillo-3"></div><div className="crear-contenido-icono-central">{tipoContenido === 'curso' ? '??' : '??'}</div></div>
               <h2 className="crear-contenido-titulo-carga">Cargando {tipoContenido}...</h2>
-              <p className="crear-contenido-descripcion-carga">Preparando el contenido para edición</p>
+              <p className="crear-contenido-descripcion-carga">Preparando el contenido para edici�n</p>
             </div>
           </div>
         ) : errorCarga ? (
           <div className="crear-contenido-estado-error">
             <div className="crear-contenido-contenedor-error">
               <div className="crear-contenido-icono-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg></div>
-              <h2 className="crear-contenido-titulo-error">¡Ups! Algo salió mal</h2>
+              <h2 className="crear-contenido-titulo-error">�Ups! Algo sali� mal</h2>
               <p className="crear-contenido-descripcion-error">{errorCarga}</p>
               <div className="crear-contenido-acciones-error">
                 <button className="crear-contenido-boton-reintentar" onClick={reintentar}>Reintentar</button>

@@ -153,13 +153,11 @@ export class AudioManager {
             });
 
             effectPlayer.on('loaderror', () => {
-                console.warn(`No se pudo cargar el efecto de sonido: ${name}`);
             });
 
             this.efectosCache.set(name, effectPlayer);
             effectPlayer.play();
         } catch (error) {
-            console.warn(`Error al reproducir efecto de sonido: ${name}`, error);
         }
     }
 
@@ -188,7 +186,6 @@ export class AudioManager {
         bgmUrlArr = bgmUrlArr.filter((e) => e !== songToExclude);
 
         this.stop();
-        console.log('Reproduciendo música de fondo:', bgmUrlArr);
         this.loadSong(bgmUrlArr[0], true);
     }
 
@@ -216,7 +213,6 @@ export class AudioManager {
 
             this.player.on('load', () => {
                 if (loadedCallback) loadedCallback();
-                console.log('Audio loaded');
             });
 
             this.player.on('end', () => {
@@ -226,11 +222,9 @@ export class AudioManager {
             });
 
             this.player.on('loaderror', () => {
-                console.warn('Error al cargar la canción:', songSrc);
                 if (errorCallback) errorCallback();
             });
         } catch (error) {
-            console.warn('Error al cargar la canción:', error);
             if (errorCallback) errorCallback();
         }
     }

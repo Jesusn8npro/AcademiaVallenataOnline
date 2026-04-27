@@ -28,8 +28,7 @@ export default function MisEventos() {
             setError('')
             const resultado = await eventosService.obtenerEventosUsuario(perfil.id)
             setEventos(resultado || [])
-        } catch (err) {
-            console.error('Error cargando eventos:', err)
+        } catch {
             setError('Error al cargar los eventos. Intenta de nuevo.')
             setEventos([])
         } finally {

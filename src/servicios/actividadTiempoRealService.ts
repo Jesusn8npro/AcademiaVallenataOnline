@@ -44,7 +44,6 @@ class ActividadTiempoRealService {
 
   // 🎯 INICIALIZAR TRACKING PARA UN USUARIO
   async inicializarTracking(usuarioId: string, paginaInicial: string = '/'): Promise<void> {
-    console.log('🚀 [ACTIVIDAD REAL] Inicializando tracking para usuario:', usuarioId);
     
     this.usuarioActualId = usuarioId;
     this.paginaActual = paginaInicial;
@@ -64,13 +63,11 @@ class ActividadTiempoRealService {
     // Configurar listeners de eventos del navegador
     this.configurarListeners();
 
-    console.log('✅ [ACTIVIDAD REAL] Tracking iniciado correctamente');
   }
 
   // 📝 REGISTRAR EVENTO DE ACTIVIDAD
   async registrarEvento(evento: EventoActividad): Promise<void> {
     try {
-      console.log('📝 [EVENTO ACTIVIDAD]', evento);
 
       // Llamar función de Supabase para actualizar actividad
       const { error } = await supabase.rpc('actualizar_actividad_usuario', {
@@ -81,12 +78,9 @@ class ActividadTiempoRealService {
       });
 
       if (error) {
-        console.error('❌ [EVENTO ACTIVIDAD] Error:', error);
       } else {
-        console.log('✅ [EVENTO ACTIVIDAD] Registrado correctamente');
       }
     } catch (error) {
-      console.error('❌ [EVENTO ACTIVIDAD] Error al registrar:', error);
     }
   }
 
@@ -109,7 +103,6 @@ class ActividadTiempoRealService {
       }
     }, 60000); // Cada minuto
 
-    console.log('⏱️ [TRACKING AUTO] Iniciado - cada 60 segundos');
   }
 
   // 👂 CONFIGURAR LISTENERS DE EVENTOS
@@ -172,7 +165,6 @@ class ActividadTiempoRealService {
       }
     });
 
-    console.log('👂 [LISTENERS] Configurados correctamente');
   }
 
   // ⏸️ PAUSAR TRACKING
@@ -183,7 +175,6 @@ class ActividadTiempoRealService {
       });
       
       if (!error) {
-        console.log('⏸️ [TRACKING] Usuario marcado como inactivo');
       }
     }
   }
@@ -197,7 +188,6 @@ class ActividadTiempoRealService {
         pagina: this.paginaActual,
         duracion_minutos: 1
       });
-      console.log('▶️ [TRACKING] Reanudado');
     }
   }
 
@@ -231,7 +221,6 @@ class ActividadTiempoRealService {
       this.canal = null;
     }
 
-    console.log('🛑 [TRACKING] Sesión finalizada');
   }
 
   // 📊 OBTENER USUARIOS ACTIVOS EN TIEMPO REAL
@@ -261,14 +250,11 @@ class ActividadTiempoRealService {
         .limit(20);
 
       if (error) {
-        console.error('❌ [USUARIOS ACTIVOS] Error:', error);
         return [];
       }
 
-      console.log('👥 [USUARIOS ACTIVOS] Encontrados:', data?.length || 0);
       return data || [];
     } catch (error) {
-      console.error('❌ [USUARIOS ACTIVOS] Error:', error);
       return [];
     }
   }
@@ -296,7 +282,6 @@ class ActividadTiempoRealService {
         .limit(limite);
 
       if (error) {
-        console.error('❌ [ALUMNOS ACTIVOS] Error:', error);
         return [];
       }
 
@@ -307,10 +292,8 @@ class ActividadTiempoRealService {
         fuente_datos: 'DATOS_REALES_sesiones_usuario'
       }));
 
-      console.log('🏆 [ALUMNOS ACTIVOS] Datos REALES encontrados:', sesionesReales.length);
       return sesionesReales;
     } catch (error) {
-      console.error('❌ [ALUMNOS ACTIVOS] Error:', error);
       return [];
     }
   }
@@ -330,7 +313,6 @@ class ActividadTiempoRealService {
             table: 'sesiones_usuario'
           },
                      async (payload: any) => {
-            console.log('🔔 [TIEMPO REAL] Cambio detectado:', payload);
             
             // Obtener datos actualizados
             const usuariosActivos = await this.obtenerUsuariosActivos();
@@ -344,7 +326,6 @@ class ActividadTiempoRealService {
         )
         .subscribe();
       
-      console.log('🔔 [TIEMPO REAL] Suscripción activada');
     }
   }
 
@@ -354,7 +335,6 @@ class ActividadTiempoRealService {
     if (this.canal) {
       supabase.removeChannel(this.canal);
       this.canal = null;
-      console.log('🔇 [TIEMPO REAL] Desuscrito');
     }
   }
 
@@ -396,13 +376,11 @@ export const actividadService = new ActividadTiempoRealService();
 
 // 🚀 FUNCIÓN PARA INICIALIZAR EN LA APP
 export async function inicializarActividadTiempoReal(usuarioId: string): Promise<void> {
-  console.log('🚀 [INIT] Inicializando sistema de actividad tiempo real');
   await actividadService.inicializarTracking(usuarioId, window.location.pathname);
 }
 
 // 🛑 FUNCIÓN PARA FINALIZAR AL SALIR
 export async function finalizarActividadTiempoReal(): Promise<void> {
-  console.log('🛑 [FINISH] Finalizando actividad tiempo real');
   await actividadService.finalizarSesion();
 }
 

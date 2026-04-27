@@ -31,7 +31,6 @@ export interface ResultadoOperacion {
  */
 export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<ResultadoOperacion> {
 	try {
-		console.log('👤 Creando usuario completo:', datos.email);
 
 		// 1. Crear usuario en Auth
 		const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -47,7 +46,6 @@ export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<Resulta
 		});
 
 		if (authError) {
-			console.error('❌ Error creando usuario en Auth:', authError);
 			return {
 				success: false,
 				error: authError.message,
@@ -94,7 +92,6 @@ export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<Resulta
 			.single();
 
 		if (perfilError) {
-			console.error('❌ Error creando perfil:', perfilError);
 			
 			// Si falla el perfil, intentar limpiar el usuario de auth
 			await supabase.auth.admin.deleteUser(authData.user.id);
@@ -106,7 +103,6 @@ export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<Resulta
 			};
 		}
 
-		console.log('✅ Usuario completo creado exitosamente:', authData.user.id);
 		
 		return {
 			success: true,
@@ -119,7 +115,6 @@ export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<Resulta
 		};
 
 	} catch (error: any) {
-		console.error('💥 Error en crearUsuarioCompleto:', error);
 		return {
 			success: false,
 			error: error.message,
@@ -133,7 +128,6 @@ export async function crearUsuarioCompleto(datos: DatosUsuario): Promise<Resulta
  */
 export async function actualizarPerfil(usuarioId: string, datos: Partial<DatosUsuario>): Promise<ResultadoOperacion> {
 	try {
-		console.log('📝 Actualizando perfil:', usuarioId);
 
 		const actualizacion: any = {};
 
@@ -171,7 +165,6 @@ export async function actualizarPerfil(usuarioId: string, datos: Partial<DatosUs
 			.single();
 
 		if (error) {
-			console.error('❌ Error actualizando perfil:', error);
 			return {
 				success: false,
 				error: error.message,
@@ -179,7 +172,6 @@ export async function actualizarPerfil(usuarioId: string, datos: Partial<DatosUs
 			};
 		}
 
-		console.log('✅ Perfil actualizado exitosamente');
 		return {
 			success: true,
 			data,
@@ -187,7 +179,6 @@ export async function actualizarPerfil(usuarioId: string, datos: Partial<DatosUs
 		};
 
 	} catch (error: any) {
-		console.error('💥 Error en actualizarPerfil:', error);
 		return {
 			success: false,
 			error: error.message,
@@ -269,7 +260,6 @@ export async function sincronizarDatosPagoConPerfil(
 	usuarioId?: string
 ): Promise<ResultadoOperacion> {
 	try {
-		console.log('🔄 Sincronizando datos de pago con perfil');
 
 		// Extraer datos del pago
 		const datosUsuario: DatosUsuario = {
@@ -306,7 +296,6 @@ export async function sincronizarDatosPagoConPerfil(
 		}
 
 	} catch (error: any) {
-		console.error('💥 Error en sincronizarDatosPagoConPerfil:', error);
 		return {
 			success: false,
 			error: error.message,

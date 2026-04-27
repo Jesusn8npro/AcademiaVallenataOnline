@@ -13,7 +13,6 @@ if (!EPAYCO_CONFIG.apiKey || !EPAYCO_CONFIG.customerId) {
 	throw new Error('❌ Variables de entorno de ePayco no configuradas. Revisa tu archivo .env');
 }
 
-console.log('🔧 ePayco configurado en modo:', EPAYCO_CONFIG.test ? 'SANDBOX' : 'PRODUCCIÓN');
 
 /**
  * Calcular IVA (19%)
@@ -43,7 +42,6 @@ export function generarReferencia(tipo: 'curso' | 'tutorial' | 'paquete', id: st
  */
 export async function verificarPago(refPayco: string) {
 	try {
-		console.log('🔍 Verificando pago:', refPayco);
 		// Aquí iría la lógica de verificación real con ePayco
 		// Por ahora retornamos un resultado básico
 		return {
@@ -52,7 +50,6 @@ export async function verificarPago(refPayco: string) {
 			ref_payco: refPayco
 		};
 	} catch (error) {
-		console.error('❌ Error verificando pago:', error);
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : 'Error desconocido'

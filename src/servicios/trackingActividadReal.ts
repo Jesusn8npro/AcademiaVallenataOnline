@@ -20,7 +20,6 @@ class TrackingActividadReal {
     this.usuarioActual = usuario;
     this.trackingActivo = true;
     
-    console.log('🔥 [TRACKING REAL] Iniciado para:', usuario.nombre);
     
     // Registrar sesión inicial
     await this.registrarSesion();
@@ -41,7 +40,6 @@ class TrackingActividadReal {
     // Guardar tiempo de página anterior
     if (this.tiempoInicioPagina && this.paginaActual) {
       const tiempoEnPagina = Math.round((Date.now() - this.tiempoInicioPagina.getTime()) / 60000); // minutos
-      console.log(`📊 [TRACKING] ${this.paginaActual}: ${tiempoEnPagina} min`);
     }
     
     // Actualizar página actual
@@ -87,9 +85,7 @@ class TrackingActividadReal {
           onConflict: 'usuario_id,fecha'
         });
         
-      console.log('✅ [TRACKING] Sesión registrada');
     } catch (error) {
-      console.warn('⚠️ [TRACKING] Error registrando sesión:', error);
     }
   }
 
@@ -147,7 +143,6 @@ class TrackingActividadReal {
         });
         
     } catch (error) {
-      console.warn('⚠️ [TRACKING] Error actualizando actividad:', error);
     }
   }
 
@@ -177,9 +172,7 @@ class TrackingActividadReal {
         .eq('usuario_id', this.usuarioActual.id)
         .eq('fecha', today);
         
-      console.log('🔚 [TRACKING] Sesión finalizada');
     } catch (error) {
-      console.warn('⚠️ [TRACKING] Error finalizando sesión:', error);
     }
   }
 

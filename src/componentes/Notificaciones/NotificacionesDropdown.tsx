@@ -42,8 +42,6 @@ const NotificacionesDropdown: React.FC<NotificacionesDropdownProps> = ({ onCerra
             setNotificaciones(data);
             const noLeidas = data.filter(n => !n.leida).length;
             setConteoNoLeidas(noLeidas);
-        } else {
-            console.error('Error cargando notificaciones:', error);
         }
         setCargando(false);
     };

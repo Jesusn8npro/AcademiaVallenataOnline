@@ -49,10 +49,8 @@ export class MotorAudioPro {
 
         if (this.esMovil) {
             this.MAX_VOCES = 20;
-            console.log("📱 Motor V5.0 Móvil: latencyHint=0, sin compresor, pool pre-conectado (20 voces)");
         } else {
             this.MAX_VOCES = 128;
-            console.log("💻 Motor V5.0 Escritorio: latencyHint=0, pool máximo (128 voces)");
         }
 
         this.contexto = new AudioContextClass(opcionesContexto);
@@ -197,7 +195,6 @@ export class MotorAudioPro {
             try {
                 await this.contexto.resume();
             } catch (e) {
-                console.error("❌ No se pudo reanimar el AudioContext:", e);
             }
         }
     }
@@ -227,7 +224,6 @@ export class MotorAudioPro {
                 } else {
                     const respuesta = await fetch(url);
                     if (!respuesta.ok) {
-                        console.error(`  ❌ HTTP ${respuesta.status} al descargar: ${url}`);
                         throw new Error(`HTTP ${respuesta.status}`);
                     }
 
@@ -238,7 +234,6 @@ export class MotorAudioPro {
             } catch (cacheError) {
                 const respuesta = await fetch(url);
                 if (!respuesta.ok) {
-                    console.error(`  ❌ HTTP ${respuesta.status} (fallback) al descargar: ${url}`);
                     throw new Error(`HTTP ${respuesta.status}`);
                 }
                 audioData = await respuesta.arrayBuffer();
@@ -252,7 +247,6 @@ export class MotorAudioPro {
             banco.muestras.set(idSonido, audioBuffer);
             banco.offsets.set(idSonido, offset);
         } catch (error) {
-            console.error(`❌ Error en motor de audio [${idSonido}]:`, error);
         }
     }
 

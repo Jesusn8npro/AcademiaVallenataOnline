@@ -71,7 +71,6 @@ export const useGrabadorHero = (bpmActual: number) => {
         setGrabando(true);
 
         (window as any).sincronizarRelojConPista = () => {
-             console.log('⏰ Audio Latency Compensado! Sincronizando inicio...');
              checkpointTimeRef.current = motorAudioPro.tiempoActual;
         };
     }, [actualizarSecuencia]);

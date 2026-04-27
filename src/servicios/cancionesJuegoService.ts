@@ -89,13 +89,11 @@ class CancionesJuegoService {
         .order('orden_mostrar', { ascending: true });
 
       if (error) {
-        console.error('Error obteniendo canciones:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerCancionesDisponibles:', error);
       throw error;
     }
   }
@@ -112,13 +110,11 @@ class CancionesJuegoService {
         .single();
 
       if (error) {
-        console.error('Error obteniendo canción:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerCancionPorId:', error);
       throw error;
     }
   }
@@ -136,13 +132,11 @@ class CancionesJuegoService {
         .order('es_secuencia_principal', { ascending: false });
 
       if (error) {
-        console.error('Error obteniendo secuencias:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error en obtenerSecuenciasCancion:', error);
       throw error;
     }
   }
@@ -162,7 +156,6 @@ class CancionesJuegoService {
         secuencias
       };
     } catch (error) {
-      console.error('Error en obtenerCancionCompleta:', error);
       throw error;
     }
   }
@@ -181,13 +174,11 @@ class CancionesJuegoService {
         .single();
 
       if (error) {
-        console.error('Error obteniendo secuencia principal:', error);
         throw error;
       }
 
       return data;
     } catch (error) {
-      console.error('Error en obtenerSecuenciaPrincipal:', error);
       throw error;
     }
   }
@@ -198,7 +189,6 @@ class CancionesJuegoService {
   parseNotasSecuencia(secuencia: SecuenciaCancion): NotaCancion[] {
     try {
       if (!secuencia.notas_secuencia || !Array.isArray(secuencia.notas_secuencia)) {
-        console.warn('Secuencia sin notas válidas:', secuencia.id);
         return [];
       }
 
@@ -215,7 +205,6 @@ class CancionesJuegoService {
         tipo_nota: nota.tipo_nota || 'melodia'
       }));
     } catch (error) {
-      console.error('Error parseando notas:', error);
       return [];
     }
   }

@@ -11,19 +11,17 @@ import './PaquetesAdmin.css';
 const PaquetesAdmin: React.FC = () => {
   const navigate = useNavigate();
 
-  // Estados
   const [paquetes, setPaquetes] = useState<PaqueteTutorial[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
+  const [confirmandoEliminarId, setConfirmandoEliminarId] = useState<{ id: string; titulo: string } | null>(null);
 
-  // Filtros
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [filtroCategoria, setFiltroCategoria] = useState('todas');
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [modoVista, setModoVista] = useState<'cuadricula' | 'lista'>('cuadricula');
 
-  // Datos computados
   const paquetesFiltrados = filtrarPaquetes(paquetes);
   const stats = calcularEstadisticas(paquetes);
 
@@ -74,17 +72,15 @@ const PaquetesAdmin: React.FC = () => {
 
     } catch (err: any) {
       setError('Error cargando datos: ' + err.message);
-      console.error('Error:', err);
     } finally {
       setCargando(false);
     }
   }
 
-  async function eliminarPaqueteConfirmado(id: string, titulo: string) {
-    if (!confirm(`¿Estás seguro de eliminar el paquete "${titulo}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
+  async function ejecutarEliminar() {
+    if (!confirmandoEliminarId) return;
+    const { id } = confirmandoEliminarId;
+    setConfirmandoEliminarId(null);
     try {
       const resultado = await eliminarPaquete(id);
       if (resultado.success) {
@@ -208,6 +204,16 @@ const PaquetesAdmin: React.FC = () => {
         </div>
       </div>
 
+      {confirmandoEliminarId && (
+        <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+          <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>¿Eliminar el paquete "{confirmandoEliminarId.titulo}"? Esta acción no se puede deshacer.</p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={ejecutarEliminar} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Eliminar</button>
+            <button onClick={() => setConfirmandoEliminarId(null)} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
       {/* Mensajes */}
       {error && (
         <div className="paquetes-admin__error">
@@ -275,7 +281,7 @@ const PaquetesAdmin: React.FC = () => {
                     ✏️ Editar
                   </button>
                   <button
-                    onClick={() => eliminarPaqueteConfirmado(paquete.id!, paquete.titulo)}
+                    onClick={() => setConfirmandoEliminarId({ id: paquete.id!, titulo: paquete.titulo })}
                     className="paquetes-admin__btn-eliminar"
                   >
                     🗑️ Eliminar

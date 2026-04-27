@@ -49,7 +49,6 @@ class TrackingGeolocalizacionReal {
 
     for (const servicio of servicios) {
       try {
-        console.log(`🌐 [TRACKING-GEO] Obteniendo IP desde: ${servicio}`);
         
         const response = await fetch(servicio, { 
           method: 'GET',
@@ -74,12 +73,10 @@ class TrackingGeolocalizacionReal {
         const ip = data.ip || data.origin?.split(' ')[0] || data;
         
         if (ip && this.validarIP(ip.toString())) {
-          console.log(`✅ [TRACKING-GEO] IP real obtenida: ${ip}`);
           return ip.toString();
         }
         
       } catch (error) {
-        console.warn(`⚠️ [TRACKING-GEO] Error con servicio ${servicio}:`, error);
         continue;
       }
     }
@@ -99,7 +96,6 @@ class TrackingGeolocalizacionReal {
 
     for (const servicio of serviciosGeo) {
       try {
-        console.log(`🗺️ [TRACKING-GEO] Consultando geolocalización: ${servicio}`);
         
         const response = await fetch(servicio, {
           method: 'GET',
@@ -113,7 +109,6 @@ class TrackingGeolocalizacionReal {
         
         // Verificar que la respuesta sea válida
         if (data.status === 'fail' || data.error) {
-          console.warn(`⚠️ [TRACKING-GEO] API error:`, data);
           continue;
         }
 
@@ -121,7 +116,6 @@ class TrackingGeolocalizacionReal {
         const datosNormalizados = this.normalizarDatosGeo(data, ip, servicio);
         
         if (datosNormalizados.country && datosNormalizados.city) {
-          console.log(`✅ [TRACKING-GEO] Geolocalización obtenida:`, {
             ip: datosNormalizados.query,
             pais: datosNormalizados.country,
             ciudad: datosNormalizados.city,
@@ -131,7 +125,6 @@ class TrackingGeolocalizacionReal {
         }
         
       } catch (error) {
-        console.warn(`⚠️ [TRACKING-GEO] Error consultando ${servicio}:`, error);
         continue;
       }
     }
@@ -147,7 +140,6 @@ class TrackingGeolocalizacionReal {
       // Verificar si el usuario está autenticado
       const storeData = get(perfilStore);
       if (!storeData?.perfil?.id) {
-        console.log('👤 [TRACKING-GEO] Usuario no autenticado, saltando tracking');
         return false;
       }
 
@@ -156,11 +148,9 @@ class TrackingGeolocalizacionReal {
       // Verificar throttling (no trackear tan seguido)
       const ahora = Date.now();
       if (ahora - this.ultimoTracking < this.INTERVALO_TRACKING) {
-        console.log('⏱️ [TRACKING-GEO] Tracking reciente, saltando');
         return false;
       }
 
-      console.log('🚀 [TRACKING-GEO] Iniciando tracking completo...');
 
       // 1. Obtener IP real
       const ipReal = await this.obtenerIPReal();
@@ -173,11 +163,9 @@ class TrackingGeolocalizacionReal {
       
       this.ultimoTracking = ahora;
       
-      console.log('✅ [TRACKING-GEO] Tracking completado exitosamente');
       return true;
 
     } catch (error) {
-      console.error('❌ [TRACKING-GEO] Error en tracking completo:', error);
       return false;
     }
   }
@@ -195,10 +183,8 @@ class TrackingGeolocalizacionReal {
 
       if (error) throw error;
 
-      console.log('💾 [TRACKING-GEO] Datos guardados en Supabase:', data);
 
     } catch (error) {
-      console.error('❌ [TRACKING-GEO] Error guardando en Supabase:', error);
       throw error;
     }
   }
@@ -326,7 +312,6 @@ class TrackingGeolocalizacionReal {
       try {
         await this.ejecutarTrackingCompleto();
       } catch (error) {
-        console.error('❌ [TRACKING-GEO] Error en tracking asíncrono:', error);
       }
     }, 100);
   }

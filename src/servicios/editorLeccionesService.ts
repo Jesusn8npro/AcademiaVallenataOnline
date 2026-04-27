@@ -36,7 +36,6 @@ class EditorLeccionesService {
    */
   async crearLeccion(leccion: LeccionEditor, criterios: CriteriosEditor): Promise<{ success: boolean; message: string; data?: any }> {
     try {
-      console.log('🔄 Iniciando creación de lección:', { leccion, criterios });
       
       // 1. Crear la lección principal
       const { data: nuevaLeccion, error: errorLeccion } = await supabase
@@ -57,7 +56,6 @@ class EditorLeccionesService {
         .single();
 
       if (errorLeccion) {
-        console.error('❌ Error creando lección:', errorLeccion);
         return {
           success: false,
           message: `Error al crear lección: ${errorLeccion.message}`,
@@ -65,7 +63,6 @@ class EditorLeccionesService {
         };
       }
 
-      console.log('✅ Lección creada exitosamente:', nuevaLeccion);
 
       // 2. Crear los criterios
       const { data: nuevosCriterios, error: errorCriterios } = await supabase
@@ -83,7 +80,6 @@ class EditorLeccionesService {
         .single();
 
       if (errorCriterios) {
-        console.error('❌ Error creando criterios:', errorCriterios);
         
         // Intentar limpiar la lección creada
         await supabase
@@ -98,7 +94,6 @@ class EditorLeccionesService {
         };
       }
 
-      console.log('✅ Criterios creados exitosamente:', nuevosCriterios);
 
       return {
         success: true,
@@ -110,7 +105,6 @@ class EditorLeccionesService {
       };
 
     } catch (error) {
-      console.error('💥 Error inesperado:', error);
       return {
         success: false,
         message: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`,
@@ -134,7 +128,6 @@ class EditorLeccionesService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error obteniendo lecciones:', error);
         return {
           success: false,
           message: `Error al obtener lecciones: ${error.message}`,
@@ -152,7 +145,6 @@ class EditorLeccionesService {
       };
 
     } catch (error) {
-      console.error('💥 Error inesperado:', error);
       return {
         success: false,
         message: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`,
@@ -219,7 +211,6 @@ class EditorLeccionesService {
         .eq('id', leccionId);
 
       if (error) {
-        console.error('❌ Error eliminando lección:', error);
         return {
           success: false,
           message: `Error al eliminar lección: ${error.message}`,
@@ -234,7 +225,6 @@ class EditorLeccionesService {
       };
 
     } catch (error) {
-      console.error('💥 Error inesperado:', error);
       return {
         success: false,
         message: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`,

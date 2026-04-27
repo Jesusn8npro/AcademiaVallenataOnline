@@ -167,12 +167,10 @@ export async function crearNotificacion(params: {
     const config = CONFIGURACION_NOTIFICACIONES[params.tipo];
 
     if (!config) {
-        console.error(`Tipo de notificación no configurado: ${params.tipo}`);
         return { exito: false, error: 'Tipo de notificación no válido' };
     }
 
     try {
-        console.log(`🔔 Generando notificación: ${params.tipo}`);
 
         // Determinar destinatarios
         let destinatarios: string[] = [];
@@ -191,7 +189,6 @@ export async function crearNotificacion(params: {
                 .eq('eliminado', false);
 
             if (errorUsuarios) {
-                console.error('Error al obtener usuarios:', errorUsuarios);
                 return { exito: false, error: errorUsuarios.message };
             }
 
@@ -210,7 +207,6 @@ export async function crearNotificacion(params: {
                 .map(u => u.id) || [];
         }
 
-        console.log(`📤 Enviando a ${destinatarios.length} usuarios`);
 
         // Calcular fecha de expiración
         const fechaExpiracion = new Date();
@@ -255,14 +251,12 @@ export async function crearNotificacion(params: {
                 .select('id, usuario_id');
 
             if (error) {
-                console.error(`Error en lote ${i / TAMANO_LOTE + 1}:`, error);
                 return { exito: false, error: error.message };
             }
 
             resultados.push(...(data || []));
         }
 
-        console.log(`✅ Notificaciones creadas: ${resultados.length}`);
 
         return {
             exito: true,
@@ -271,7 +265,6 @@ export async function crearNotificacion(params: {
         };
 
     } catch (error) {
-        console.error('Error al crear notificación:', error);
         return { exito: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
 }
@@ -337,7 +330,6 @@ export async function notificarNuevaLeccion(params: {
         .eq('estado', 'activa');
 
     if (error || !inscritos?.length) {
-        console.log('No hay usuarios inscritos para notificar');
         return { exito: true, notificaciones_creadas: 0 };
     }
 
@@ -590,15 +582,12 @@ export async function limpiarNotificacionesExpiradas() {
             .select('id');
 
         if (error) {
-            console.error('Error al limpiar notificaciones expiradas:', error);
             return { exito: false, error: error.message };
         }
 
-        console.log(`🧹 Notificaciones expiradas eliminadas: ${data?.length || 0}`);
         return { exito: true, eliminadas: data?.length || 0 };
 
     } catch (error) {
-        console.error('Error en limpieza de notificaciones:', error);
         return { exito: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
 }

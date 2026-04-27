@@ -77,6 +77,7 @@ export const useEditorSecuenciaAdmin = ({
   const [punchInTick, setPunchInTick] = useState<number | null>(null);
   const [punchOutTick, setPunchOutTick] = useState<number | null>(null);
   const [secuenciaVisualModal, setSecuenciaVisualModal] = useState<NotaHero[]>([]);
+  const [confirmacion, setConfirmacion] = useState<{ texto: string; onConfirmar: () => void } | null>(null);
 
   const usoMetronomoRef = useRef(false);
   const inicioGrabacionRecProRef = useRef<number | null>(null);
@@ -208,7 +209,7 @@ export const useEditorSecuenciaAdmin = ({
     inicioGrabacionRecProRef.current = null;
     setModoCapturaRec(null);
     if (!resultado.secuencia.length) {
-      alert('❌ No hay notas grabadas. Presiona algunos botones del acordeon antes de guardar.');
+      setMensajeEdicionSecuencia('No hay notas grabadas. Presiona algunos botones del acordeon antes de guardar.');
       return;
     }
     setTipoSugeridoGrabacion(usoMetronomoRef.current ? 'secuencia' : 'ejercicio');
@@ -254,17 +255,22 @@ export const useEditorSecuenciaAdmin = ({
     hayCambiosEdicionSecuencia, setCancionActivaLibreria, setUltimaCancionLibreriaActualizada]);
 
   const cancelarEdicionSecuencia = useCallback(() => {
-    if ((hayCambiosEdicionSecuencia || esperandoPunchIn || grabadorLocal.grabando)
-      && !window.confirm('Tienes una edicion activa con cambios sin guardar. ¿Deseas salir del editor?')) return;
-    if (grabadorLocal.grabando) grabadorLocal.detenerGrabacion();
-    setEsperandoPunchIn(false);
-    setModoCapturaRec(null);
-    setHayCambiosEdicionSecuencia(false);
-    setMensajeEdicionSecuencia(null);
-    setCancionEditandoSecuencia(null);
-    setSecuenciaEditada([]);
-    onLimpiarLoop();
-    detenerReproduccionLocal(0);
+    const ejecutar = () => {
+      if (grabadorLocal.grabando) grabadorLocal.detenerGrabacion();
+      setEsperandoPunchIn(false);
+      setModoCapturaRec(null);
+      setHayCambiosEdicionSecuencia(false);
+      setMensajeEdicionSecuencia(null);
+      setCancionEditandoSecuencia(null);
+      setSecuenciaEditada([]);
+      onLimpiarLoop();
+      detenerReproduccionLocal(0);
+    };
+    if (hayCambiosEdicionSecuencia || esperandoPunchIn || grabadorLocal.grabando) {
+      setConfirmacion({ texto: 'Tienes una edicion activa con cambios sin guardar. ¿Deseas salir del editor?', onConfirmar: ejecutar });
+      return;
+    }
+    ejecutar();
   }, [detenerReproduccionLocal, esperandoPunchIn, grabadorLocal, hayCambiosEdicionSecuencia, onLimpiarLoop]);
 
   const iniciarPunchInEdicion = useCallback(() => {
@@ -313,21 +319,25 @@ export const useEditorSecuenciaAdmin = ({
   }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia]);
 
   const handleEditarSecuenciaLibreria = useCallback((cancion: any) => {
+    const continuar = () => {
+      if (grabandoSesion || grabadorLocal.grabando || esperandoPunchIn) {
+        setMensajeEdicionSecuencia('Deten la grabacion o el pre-roll actual antes de abrir otra secuencia.');
+        return;
+      }
+      const cancionPreparada = { ...cancion, secuencia_hero: normalizarSecuenciaHero(cancion.secuencia_json || cancion.secuencia) };
+      prepararCancionEnEscenario(cancionPreparada);
+      setCancionEditandoSecuencia(cancionPreparada);
+      setSecuenciaEditada(cancionPreparada.secuencia_hero);
+      setHayCambiosEdicionSecuencia(false);
+      setMensajeEdicionSecuencia('Editor de secuencia listo. Marca entrada y salida para grabar por tramos.');
+      onLimpiarLoop();
+      detenerReproduccionLocal(0);
+    };
     if (cancionEditandoSecuencia && hayCambiosEdicionSecuencia && cancion.id !== cancionEditandoSecuencia.id) {
-      if (!window.confirm('Hay cambios sin guardar en la cancion actual. ¿Deseas abrir otra cancion y perder esos cambios?')) return;
-    }
-    if (grabandoSesion || grabadorLocal.grabando || esperandoPunchIn) {
-      setMensajeEdicionSecuencia('Deten la grabacion o el pre-roll actual antes de abrir otra secuencia.');
+      setConfirmacion({ texto: 'Hay cambios sin guardar en la cancion actual. ¿Deseas abrir otra cancion y perder esos cambios?', onConfirmar: continuar });
       return;
     }
-    const cancionPreparada = { ...cancion, secuencia_hero: normalizarSecuenciaHero(cancion.secuencia_json || cancion.secuencia) };
-    prepararCancionEnEscenario(cancionPreparada);
-    setCancionEditandoSecuencia(cancionPreparada);
-    setSecuenciaEditada(cancionPreparada.secuencia_hero);
-    setHayCambiosEdicionSecuencia(false);
-    setMensajeEdicionSecuencia('Editor de secuencia listo. Marca entrada y salida para grabar por tramos.');
-    onLimpiarLoop();
-    detenerReproduccionLocal(0);
+    continuar();
   }, [cancionEditandoSecuencia, detenerReproduccionLocal, esperandoPunchIn,
     grabadorLocal.grabando, grabandoSesion, hayCambiosEdicionSecuencia, onLimpiarLoop, prepararCancionEnEscenario]);
 
@@ -423,5 +433,7 @@ export const useEditorSecuenciaAdmin = ({
     handleAbrirModalEditor,
     handleDetenerTimeline,
     handleNotasActualesDelModal,
+    confirmacion, setConfirmacion,
+    setMensajeEdicionSecuencia,
   };
 };

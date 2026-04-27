@@ -1,183 +1,45 @@
 import React from 'react';
 import HeaderHero from '../Componentes/HeaderHero';
 import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
-import { useLogicaProMax } from '../Hooks/useLogicaProMax';
-import ModalMetronomo from '../../SimuladorApp/Componentes/ModalMetronomo';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../../../servicios/clienteSupabase';
-
-// Componentes de Modos Pro Max
+import ModalMetronomo from '../../SimuladorApp/Componentes/BarraHerramientas/ModalMetronomo';
 import ModoPracticaLibre from '../PracticaLibre/EstudioPracticaLibre';
 import ModoMaestroSolo from '../Modos/ModoMaestroSolo';
 import ModoJuego from '../Modos/ModoJuego';
 import ModoSynthesia from '../Modos/ModoSynthesia';
 import PantallaPreJuegoProMax from '../Componentes/PantallaPreJuegoProMax';
 import PantallaResultados from '../Componentes/PantallaResultados';
-
 import PantallaGameOverProMax from '../Componentes/PantallaGameOverProMax';
 import MenuPausaProMax from '../Componentes/MenuPausaProMax';
-
+import { useAcordeonProMaxSimulador } from '../Hooks/useAcordeonProMaxSimulador';
 import '../Modos/_BaseSimulador.css';
 import '../Componentes/PantallaPreJuegoProMax.css';
 import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
 
-/**
- * ACORDEÓN PRO MAX - SIMULADOR
- * ---------------------------------
- * Esta es la evolución del simulador original, integrada en el ecosistema Pro Max.
- * Soporta modo "Práctica Libre" y modo "Canción" mediante slugs de URL.
- */
-
 const IMG_ALUMNO = '/Acordeon PRO MAX.png';
 
 const AcordeonProMaxSimulador: React.FC = () => {
-  const { slug } = useParams<{ slug?: string }>();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const hero = useLogicaProMax();
-
-  // Estados locales para UI
-  const [metronomoVisible, setMetronomoVisible] = React.useState(false);
-  const [modoAjuste, setModoAjuste] = React.useState(false);
-  const [pestanaActiva, setPestanaActiva] = React.useState<'diseno' | 'sonido'>('diseno');
-  const [headerHeight, setHeaderHeight] = React.useState(0);
-  const botonMetronomoRef = React.useRef<HTMLDivElement>(null);
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
-
-  // ── Sincronización de Video (YouTube) con Pausa/Reanudar ─────────────────
-  React.useEffect(() => {
-    if (!iframeRef.current) return;
-    
-    // El video de fondo se pausa en pausa, pausado_synthesia, resultados o game over
-    const debePausar = hero.estadoJuego === 'pausado'
-      || hero.estadoJuego === 'pausado_synthesia'
-      || hero.estadoJuego === 'resultados'
-      || hero.estadoJuego === 'gameOver';
-    const comando = debePausar ? 'pauseVideo' : 'playVideo';
-    
-    try {
-      iframeRef.current.contentWindow?.postMessage(
-        JSON.stringify({ event: 'command', func: comando, args: [] }),
-        '*'
-      );
-    } catch (e) {
-      console.warn('Error al sincronizar video YouTube:', e);
-    }
-  }, [hero.estadoJuego]);
-
-  // ── Sincronización de Velocidad del Video con BPM ──────────────────
-  React.useEffect(() => {
-    if (!iframeRef.current || !hero.cancionSeleccionada?.bpm) return;
-
-    // Calculamos el ratio: BPM actual / BPM original
-    const bpmOriginal = hero.cancionSeleccionada.bpm;
-    const bpmActual = hero.bpm;
-    const playbackRate = Math.max(0.25, Math.min(2, bpmActual / bpmOriginal));
-
-    try {
-      iframeRef.current.contentWindow?.postMessage(
-        JSON.stringify({ event: 'command', func: 'setPlaybackRate', args: [playbackRate, true] }),
-        '*'
-      );
-    } catch (e) {
-      console.warn('Error al ajustar velocidad de video YouTube:', e);
-    }
-  }, [hero.bpm, hero.cancionSeleccionada?.bpm]);
-
-  // Efecto inicial: Si hay slug, cargar la canción. Si no, entrar en modo práctica.
-  React.useEffect(() => {
-    let montado = true;
-
-    const cargarCancion = async (identificador: string, esSlug: boolean) => {
-      try {
-        console.log(`[Simulador] Cargando canción: ${identificador} (esSlug: ${esSlug})`);
-        
-        let query = supabase.from('canciones_hero').select('*');
-        
-        if (esSlug) {
-          query = query.eq('slug', identificador);
-        } else {
-          query = query.eq('id', identificador);
-        }
-
-        const { data, error } = await query.single();
-
-        if (error) throw error;
-        if (data && montado) {
-          const cancionData = data as any;
-          let secuenciaStr = cancionData.secuencia || cancionData.secuencia_json;
-          let secuencia = [];
-
-          if (typeof secuenciaStr === 'string') {
-            try { secuencia = JSON.parse(secuenciaStr); } catch { secuencia = []; }
-          } else if (Array.isArray(secuenciaStr)) {
-            secuencia = secuenciaStr;
-          }
-          
-          hero.seleccionarCancion({ ...cancionData, secuencia });
-        }
-      } catch (err) {
-        console.error("Error cargando canción:", err);
-        if (montado) hero.iniciarPracticaLibre();
-      }
-    };
-
-    const searchId = searchParams.get('id');
-
-    if (searchId) {
-      cargarCancion(searchId, false);
-    } else if (slug) {
-      // Si el slug parece un UUID, intentamos cargarlo como ID primero por seguridad
-      const esProbableId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-      cargarCancion(slug, !esProbableId);
-    } else {
-      hero.iniciarPracticaLibre();
-    }
-
-    return () => { montado = false; };
-  }, [slug, searchParams]);
-
-  // Función para volver al menú principal
-  const volverAlMenu = () => {
-    hero.volverASeleccion();
-    navigate('/acordeon-pro-max/lista');
-  };
-
-  const irAModoLibre = () => {
-    hero.iniciarPracticaLibre();
-    navigate('/acordeon-pro-max/acordeon');
-  };
-
-  // ⏸️ ESCUCHA GLOBAL PARA PAUSAR (Rhythm+ Style)
-  React.useEffect(() => {
-    const handlePausaGlobal = (e: KeyboardEvent) => {
-      // Solo abrir menú de pausa con ESC
-      if (hero.estadoJuego === 'jugando' && e.key === 'Escape') {
-        e.preventDefault();
-        hero.pausarJuego();
-      }
-    };
-    window.addEventListener('keydown', handlePausaGlobal);
-    return () => window.removeEventListener('keydown', handlePausaGlobal);
-  }, [hero.estadoJuego, hero.pausarJuego]);
-
-  const mostrarSeleccion = hero.estadoJuego === 'seleccion';
-  const mostrarResultados = hero.estadoJuego === 'resultados' && Boolean(hero.cancionSeleccionada);
-  const mostrarGameOver = hero.estadoJuego === 'gameOver' && Boolean(hero.cancionSeleccionada);
-  const mostrarHeaderHero = !['seleccion', 'resultados', 'gameOver'].includes(hero.estadoJuego);
-  const mostrarEscenario = !mostrarSeleccion;
-  const mostrarVideoFondo = Boolean(
-    mostrarEscenario &&
-    hero.cancionSeleccionada?.youtube_id &&
-    hero.modoPractica !== 'maestro_solo'
-  );
+  const {
+    hero,
+    metronomoVisible, setMetronomoVisible,
+    modoAjuste, setModoAjuste,
+    pestanaActiva, setPestanaActiva,
+    headerHeight, setHeaderHeight,
+    botonMetronomoRef,
+    iframeRef,
+    volverAlMenu,
+    irAModoLibre,
+    mostrarSeleccion,
+    mostrarResultados,
+    mostrarGameOver,
+    mostrarHeaderHero,
+    mostrarEscenario,
+    mostrarVideoFondo,
+  } = useAcordeonProMaxSimulador();
 
   return (
     <div className="promax-simulador-container" style={{ ['--promax-header-height' as any]: `${headerHeight}px` }}>
-      {/* Fondo espacial de Rhythm+ */}
       <FondoEspacialProMax />
 
-      {/* ── Cuenta regresiva ── */}
       {hero.estadoJuego === 'contando' && hero.cuenta !== null && (
         <div className="hero-cuenta-overlay">
           <span key={hero.cuenta} className="hero-cuenta-numero">
@@ -202,7 +64,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
 
       {mostrarEscenario && (
         <main className="promax-simulador-content">
-          {/* ── Fondo de Video de YouTube (solo dentro del stage) ── */}
           {mostrarVideoFondo && (
             <div className="hero-youtube-fondo-wrap">
               <iframe
@@ -351,7 +212,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
         />
       )}
 
-      {/* ── Vignette lateral roja de daño (solo modo competitivo) */}
       {hero.modoPractica === 'ninguno' &&
         (hero.estadoJuego === 'jugando' || hero.estadoJuego === 'pausado') &&
         ((100 - hero.estadisticas.vida) / 100) * 0.88 > 0 && (
@@ -360,7 +220,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
             position: 'fixed',
             inset: 0,
             pointerEvents: 'none',
-            zIndex: 900, // Debajo de los diálogos pero arriba de todo lo demás
+            zIndex: 900,
             background: [
               'linear-gradient(to right,  rgba(200,0,0,1) 0%, transparent 22%)',
               'linear-gradient(to left,   rgba(200,0,0,1) 0%, transparent 22%)',
@@ -373,7 +233,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
         />
       )}
 
-      {/* ── Pantalla de Game Over ── */}
       {mostrarGameOver && hero.cancionSeleccionada && (
         <PantallaGameOverProMax
           estadisticas={hero.estadisticas}
@@ -383,7 +242,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
         />
       )}
 
-      {/* Metrónomo */}
       <ModalMetronomo
         visible={mostrarHeaderHero && metronomoVisible}
         onCerrar={() => setMetronomoVisible(false)}
@@ -393,7 +251,6 @@ const AcordeonProMaxSimulador: React.FC = () => {
         forzarDetencion={false}
       />
 
-      {/* ⏸️ MENÚ DE PAUSA PRO MAX — Solo visible con pausa manual del usuario */}
       <MenuPausaProMax
           visible={hero.estadoJuego === 'pausado'}
           onReanudar={hero.reanudarConConteo}

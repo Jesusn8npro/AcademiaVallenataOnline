@@ -1,16 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Disc3, Globe, Lock, Radio, RefreshCcw, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-    actualizarVisibilidadGrabacion,
-    obtenerGrabacionesPublicasUsuario,
-    obtenerGrabacionesUsuario,
-    publicarGrabacionEnComunidad,
-    type ModoGrabacionHero,
-} from '../../../servicios/grabacionesHeroService';
 import ModalReplayGrabacionHero, { type GrabacionReplayHero } from './Componentes/ModalReplayGrabacionHero';
-import { obtenerSubtituloGrabacion, obtenerMetaGrabacion, obtenerTituloInicialPublicacion, obtenerTextoBadge } from './utilsGrabaciones';
+import { obtenerSubtituloGrabacion, obtenerMetaGrabacion, obtenerTextoBadge } from './utilsGrabaciones';
+import { useVistaGrabaciones } from './useVistaGrabaciones';
 import './MisGrabaciones.css';
 
 interface VistaGrabacionesHeroProps {
@@ -19,165 +12,19 @@ interface VistaGrabacionesHeroProps {
     nombreUsuario?: string | null;
 }
 
-type FiltroGrabacion = 'todas' | ModoGrabacionHero;
-
 export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuario }: VistaGrabacionesHeroProps) {
-    const [filtro, setFiltro] = useState<FiltroGrabacion>('todas');
-    const [grabaciones, setGrabaciones] = useState<GrabacionReplayHero[]>([]);
-    const [cargando, setCargando] = useState(true);
-    const [error, setError] = useState('');
-    const [grabacionActiva, setGrabacionActiva] = useState<GrabacionReplayHero | null>(null);
-    const [grabacionParaPublicar, setGrabacionParaPublicar] = useState<GrabacionReplayHero | null>(null);
-    const [tituloPublicacion, setTituloPublicacion] = useState('');
-    const [descripcionPublicacion, setDescripcionPublicacion] = useState('');
-    const [publicandoGrabacion, setPublicandoGrabacion] = useState(false);
-    const [errorPublicacion, setErrorPublicacion] = useState('');
-    const [grabacionActualizandoVisibilidadId, setGrabacionActualizandoVisibilidadId] = useState<string | null>(null);
-
-    const tituloSeccion = useMemo(() => {
-        if (tipoVista === 'publica') {
-            return nombreUsuario ? `Grabaciones de ${nombreUsuario}` : 'Grabaciones publicas';
-        }
-
-        return 'Mis grabaciones';
-    }, [nombreUsuario, tipoVista]);
-
-    const subtituloSeccion = useMemo(() => {
-        if (tipoVista === 'publica') {
-            return 'Replays publicados desde Acordeon Hero Pro Max';
-        }
-
-        return 'Tu biblioteca privada de ejecuciones, replays y practicas destacadas';
-    }, [tipoVista]);
-
-    const resumenTarjetas = useMemo(() => {
-        const competencias = grabaciones.filter((grabacion) => grabacion.modo === 'competencia').length;
-        const practicas = grabaciones.filter((grabacion) => grabacion.modo === 'practica_libre').length;
-        const publicadas = grabaciones.filter((grabacion) => grabacion.es_publica).length;
-
-        return {
-            total: grabaciones.length,
-            competencias,
-            practicas,
-            publicadas,
-        };
-    }, [grabaciones]);
-
-    async function cargarGrabaciones() {
-        if (!usuarioId) return;
-
-        setCargando(true);
-        setError('');
-
-        try {
-            const modo = filtro === 'todas' ? undefined : filtro;
-            const data = tipoVista === 'publica'
-                ? await obtenerGrabacionesPublicasUsuario(usuarioId, modo)
-                : await obtenerGrabacionesUsuario(usuarioId, { modo });
-
-            setGrabaciones((Array.isArray(data) ? data : []) as GrabacionReplayHero[]);
-        } catch (error: any) {
-            setError(error?.message || 'No se pudieron cargar las grabaciones.');
-        } finally {
-            setCargando(false);
-        }
-    }
-
-    useEffect(() => {
-        cargarGrabaciones();
-    }, [usuarioId, filtro, tipoVista]);
-
-    useEffect(() => {
-        if (!grabacionParaPublicar) return;
-
-        const overflowAnterior = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        document.body.classList.add('mis-grabaciones-publicar-modal-abierto');
-
-        return () => {
-            document.body.style.overflow = overflowAnterior;
-            document.body.classList.remove('mis-grabaciones-publicar-modal-abierto');
-        };
-    }, [grabacionParaPublicar]);
-
-    const abrirModalPublicacion = (grabacion: GrabacionReplayHero) => {
-        setGrabacionParaPublicar(grabacion);
-        setTituloPublicacion(obtenerTituloInicialPublicacion(grabacion));
-        setDescripcionPublicacion(grabacion.descripcion || '');
-        setErrorPublicacion('');
-    };
-
-    const cerrarModalPublicacion = () => {
-        if (publicandoGrabacion) return;
-        setGrabacionParaPublicar(null);
-        setTituloPublicacion('');
-        setDescripcionPublicacion('');
-        setErrorPublicacion('');
-    };
-
-    const confirmarPublicacion = async () => {
-        if (!grabacionParaPublicar) return;
-
-        if (!tituloPublicacion.trim()) {
-            setErrorPublicacion('Debes escribir un titulo para publicar en comunidad.');
-            return;
-        }
-
-        setPublicandoGrabacion(true);
-        setErrorPublicacion('');
-
-        try {
-            const resultado = await publicarGrabacionEnComunidad(grabacionParaPublicar.id, {
-                tituloPublicacion,
-                descripcionPublicacion
-            });
-
-            setGrabaciones((previas) => previas.map((grabacion) => (
-                grabacion.id === grabacionParaPublicar.id
-                    ? {
-                        ...grabacion,
-                        es_publica: true,
-                        publicacion_id: resultado.publicacionId
-                    }
-                    : grabacion
-            )));
-
-            setGrabacionParaPublicar(null);
-        } catch (error: any) {
-            setErrorPublicacion(error?.message || 'No se pudo publicar esta grabacion.');
-        } finally {
-            setPublicandoGrabacion(false);
-        }
-    };
-
-    const cambiarVisibilidad = async (grabacion: GrabacionReplayHero, siguienteEsPublica: boolean) => {
-        if (grabacionActualizandoVisibilidadId) return;
-
-        if (!siguienteEsPublica && grabacion.publicacion_id) {
-            const confirmado = window.confirm('Esta accion quitara la grabacion de comunidad y la dejara privada.');
-            if (!confirmado) return;
-        }
-
-        setGrabacionActualizandoVisibilidadId(grabacion.id);
-
-        try {
-            const grabacionActualizada = await actualizarVisibilidadGrabacion(grabacion.id, siguienteEsPublica);
-
-            setGrabaciones((previas) => previas.map((item) => (
-                item.id === grabacion.id
-                    ? {
-                        ...item,
-                        ...grabacionActualizada,
-                        canciones_hero: item.canciones_hero
-                    }
-                    : item
-            )));
-        } catch (error: any) {
-            window.alert(error?.message || 'No se pudo actualizar la visibilidad de la grabacion.');
-        } finally {
-            setGrabacionActualizandoVisibilidadId(null);
-        }
-    };
+    const {
+        filtro, setFiltro, grabaciones, cargando, error,
+        grabacionActiva, setGrabacionActiva,
+        grabacionParaPublicar, tituloPublicacion, setTituloPublicacion,
+        descripcionPublicacion, setDescripcionPublicacion,
+        publicandoGrabacion, errorPublicacion,
+        grabacionActualizandoVisibilidadId, errorVisibilidad,
+        pendingCambioVisibilidad,
+        tituloSeccion, subtituloSeccion, resumenTarjetas,
+        cargarGrabaciones, abrirModalPublicacion, cerrarModalPublicacion,
+        confirmarPublicacion, cambiarVisibilidad, confirmarCambioVisibilidad, cancelarCambioVisibilidad
+    } = useVistaGrabaciones({ usuarioId, tipoVista, nombreUsuario });
 
     const estaVacia = !cargando && grabaciones.length === 0;
 
@@ -194,7 +41,7 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                     <div className="mis-grabaciones-hero-acciones">
                         <label className="mis-grabaciones-filtro">
                             <span>Filtrar</span>
-                            <select value={filtro} onChange={(event) => setFiltro(event.target.value as FiltroGrabacion)}>
+                            <select value={filtro} onChange={(event) => setFiltro(event.target.value as any)}>
                                 <option value="todas">Todas</option>
                                 <option value="competencia">Competencia</option>
                                 <option value="practica_libre">Practica libre</option>
@@ -221,10 +68,10 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                         <span>Practica libre</span>
                         <strong>{resumenTarjetas.practicas}</strong>
                     </article>
-                     <article className="mis-grabaciones-resumen-card acento-oscuro">
-                         <span>Publicas</span>
-                         <strong>{resumenTarjetas.publicadas}</strong>
-                     </article>
+                    <article className="mis-grabaciones-resumen-card acento-oscuro">
+                        <span>Publicas</span>
+                        <strong>{resumenTarjetas.publicadas}</strong>
+                    </article>
                 </div>
             </header>
 
@@ -249,7 +96,6 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                             ? 'Cuando este usuario publique sus mejores replays apareceran aqui.'
                             : 'Juega en Pro Max, guarda tus mejores ejecuciones y revisalas luego desde esta biblioteca.'}
                     </p>
-
                     {tipoVista === 'propia' && (
                         <Link to="/acordeon-pro-max/lista" className="mis-grabaciones-boton-principal">
                             Ir a practicar
@@ -258,13 +104,13 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                 </div>
             ) : (
                 <div className="mis-grabaciones-lista">
-                     {grabaciones.map((grabacion) => {
-                         const esCompetencia = grabacion.modo === 'competencia';
-                         const tienePublicacionActiva = Boolean(grabacion.publicacion_id);
-                         const visibilidadCargando = grabacionActualizandoVisibilidadId === grabacion.id;
+                    {grabaciones.map((grabacion) => {
+                        const esCompetencia = grabacion.modo === 'competencia';
+                        const tienePublicacionActiva = Boolean(grabacion.publicacion_id);
+                        const visibilidadCargando = grabacionActualizandoVisibilidadId === grabacion.id;
 
-                         return (
-                             <article key={grabacion.id} className="mis-grabaciones-card">
+                        return (
+                            <article key={grabacion.id} className="mis-grabaciones-card">
                                 <div className={`mis-grabaciones-card-marca ${esCompetencia ? 'competencia' : 'practica'}`}>
                                     <span>{esCompetencia ? 'compet.' : 'practica'}</span>
                                     <strong>{obtenerTextoBadge(grabacion)}</strong>
@@ -274,7 +120,7 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                                     <div className="mis-grabaciones-card-titulo-linea">
                                         <h3>{grabacion.titulo || grabacion.canciones_hero?.titulo || 'Grabacion sin titulo'}</h3>
 
-                                     <div className="mis-grabaciones-card-chips">
+                                        <div className="mis-grabaciones-card-chips">
                                             {grabacion.es_publica ? (
                                                 <span className="mis-grabaciones-chip publica">
                                                     <Globe size={12} /> Publica
@@ -295,40 +141,53 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                                     <p className="mis-grabaciones-card-meta">{obtenerMetaGrabacion(grabacion)}</p>
                                 </div>
 
-                                     <div className="mis-grabaciones-card-acciones">
-                                         <button className="mis-grabaciones-boton-secundario" onClick={() => setGrabacionActiva(grabacion)}>
-                                             Ver replay
-                                         </button>
+                                <div className="mis-grabaciones-card-acciones">
+                                    <button className="mis-grabaciones-boton-secundario" onClick={() => setGrabacionActiva(grabacion)}>
+                                        Ver replay
+                                    </button>
 
-                                        {tipoVista === 'propia' && !tienePublicacionActiva && (
-                                            <button className="mis-grabaciones-boton-principal" onClick={() => abrirModalPublicacion(grabacion)}>
-                                                <Share2 size={15} />
-                                                Compartir
-                                            </button>
-                                        )}
+                                    {tipoVista === 'propia' && !tienePublicacionActiva && (
+                                        <button className="mis-grabaciones-boton-principal" onClick={() => abrirModalPublicacion(grabacion)}>
+                                            <Share2 size={15} />
+                                            Compartir
+                                        </button>
+                                    )}
 
-                                        {tipoVista === 'propia' && tienePublicacionActiva && (
-                                            <a className="mis-grabaciones-boton-secundario" href={`/comunidad#publicacion-${grabacion.publicacion_id}`}>
-                                                Ver en comunidad
-                                            </a>
-                                        )}
+                                    {tipoVista === 'propia' && tienePublicacionActiva && (
+                                        <a className="mis-grabaciones-boton-secundario" href={`/comunidad#publicacion-${grabacion.publicacion_id}`}>
+                                            Ver en comunidad
+                                        </a>
+                                    )}
 
-                                        {tipoVista === 'propia' && (
-                                            <button
-                                                className="mis-grabaciones-boton-secundario"
-                                                onClick={() => cambiarVisibilidad(grabacion, !grabacion.es_publica)}
-                                                disabled={visibilidadCargando}
-                                            >
-                                                {visibilidadCargando
-                                                    ? 'Guardando...'
-                                                    : grabacion.es_publica
-                                                        ? 'Hacer privada'
-                                                        : 'Hacer publica'}
-                                            </button>
-                                        )}
-                                     </div>
-                                 </article>
-                             );
+                                    {tipoVista === 'propia' && (
+                                        <button
+                                            className="mis-grabaciones-boton-secundario"
+                                            onClick={() => cambiarVisibilidad(grabacion, !grabacion.es_publica)}
+                                            disabled={visibilidadCargando}
+                                        >
+                                            {visibilidadCargando
+                                                ? 'Guardando...'
+                                                : grabacion.es_publica
+                                                    ? 'Hacer privada'
+                                                    : 'Hacer publica'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {errorVisibilidad && grabacionActualizandoVisibilidadId === null && (
+                                    <p className="mis-grabaciones-error-publicacion">{errorVisibilidad}</p>
+                                )}
+                                {pendingCambioVisibilidad?.grabacion.id === grabacion.id && (
+                                    <div className="mis-grabaciones-confirm-visibilidad">
+                                        <p>Esta acción quitará la grabación de comunidad y la dejará privada.</p>
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                            <button className="mis-grabaciones-boton-primario" onClick={confirmarCambioVisibilidad}>Confirmar</button>
+                                            <button className="mis-grabaciones-boton-secundario" onClick={cancelarCambioVisibilidad}>Cancelar</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </article>
+                        );
                     })}
                 </div>
             )}

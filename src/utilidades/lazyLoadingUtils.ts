@@ -73,7 +73,6 @@ export class LazyLoadingInteligente {
     try {
       // ✅ SOLUCIÓN: Verificar si ya está cargado
       if (this.componentesCargados.has(nombre)) {
-        console.log(`📦 [LAZY] Componente ${nombre} ya cargado desde cache`);
         return this.componentesCargados.get(nombre);
       }
 
@@ -81,11 +80,9 @@ export class LazyLoadingInteligente {
       if (opciones?.cache && this.componentesEnCache.has(nombre)) {
         const componenteCacheado = this.componentesEnCache.get(nombre);
         this.componentesCargados.set(nombre, componenteCacheado);
-        console.log(`📦 [LAZY] Componente ${nombre} restaurado desde cache persistente`);
         return componenteCacheado;
       }
 
-      console.log(`🚀 [LAZY] Cargando componente ${nombre} con prioridad ${opciones?.prioridad || 'automática'}`);
 
       // ✅ SOLUCIÓN: Aplicar timeout si se especifica
       let importPromise = importFn();
@@ -107,14 +104,11 @@ export class LazyLoadingInteligente {
       
       if (opciones?.cache) {
         this.componentesEnCache.set(nombre, componente);
-        console.log(`💾 [LAZY] Componente ${nombre} cacheado persistentemente`);
       }
 
-      console.log(`✅ [LAZY] Componente ${nombre} cargado exitosamente`);
       return componente;
 
     } catch (error) {
-      console.error(`❌ [LAZY] Error cargando componente ${nombre}:`, error);
       
       // ✅ SOLUCIÓN: Fallback a componente de error
       return this.obtenerComponenteFallback(nombre);
@@ -128,7 +122,6 @@ export class LazyLoadingInteligente {
     if (!browser) return;
 
     try {
-      console.log('🚀 [LAZY] Iniciando preload de componentes críticos...');
       
       const componentesCriticos = [
         { nombre: 'MenuInferiorResponsivo', importFn: () => import('$lib/components/Navegacion/MenuInferiorResponsivo.svelte') },
@@ -144,15 +137,12 @@ export class LazyLoadingInteligente {
             cache: true 
           });
         } catch (error) {
-          console.warn(`⚠️ [LAZY] Error en preload de ${comp.nombre}:`, error);
         }
       });
 
       await Promise.allSettled(promesas);
-      console.log('✅ [LAZY] Preload de componentes críticos completado');
 
     } catch (error) {
-      console.error('❌ [LAZY] Error en preload de componentes críticos:', error);
     }
   }
 
@@ -172,13 +162,11 @@ export class LazyLoadingInteligente {
 
     try {
       const nombre = opciones?.nombre || 'Componente';
-      console.log(`👁️ [LAZY] Configurando lazy loading por viewport para ${nombre}`);
 
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              console.log(`👁️ [LAZY] ${nombre} entró en viewport, cargando...`);
               this.cargarComponente(nombre, importFn, { cache: true });
               observer.unobserve(entry.target);
             }
@@ -195,10 +183,8 @@ export class LazyLoadingInteligente {
       elementos.forEach(el => observer.observe(el));
 
       this.observadores.set(nombre, observer);
-      console.log(`✅ [LAZY] Lazy loading por viewport configurado para ${nombre}`);
 
     } catch (error) {
-      console.error(`❌ [LAZY] Error configurando lazy loading por viewport:`, error);
     }
   }
 
@@ -218,7 +204,6 @@ export class LazyLoadingInteligente {
     try {
       const nombre = opciones?.nombre || 'Componente';
       const delay = opciones?.delay || 200;
-      console.log(`🖱️ [LAZY] Configurando lazy loading por hover para ${nombre}`);
 
       let timeoutId: NodeJS.Timeout;
       let cargado = false;
@@ -229,7 +214,6 @@ export class LazyLoadingInteligente {
           if (cargado) return;
 
           timeoutId = setTimeout(async () => {
-            console.log(`🖱️ [LAZY] Hover detectado en ${nombre}, cargando...`);
             await this.cargarComponente(nombre, importFn, { cache: true });
             cargado = true;
           }, delay);
@@ -242,10 +226,8 @@ export class LazyLoadingInteligente {
         });
       });
 
-      console.log(`✅ [LAZY] Lazy loading por hover configurado para ${nombre}`);
 
     } catch (error) {
-      console.error(`❌ [LAZY] Error configurando lazy loading por hover:`, error);
     }
   }
 
@@ -266,7 +248,6 @@ export class LazyLoadingInteligente {
       const nombre = opciones?.nombre || 'Componente';
       const threshold = opciones?.threshold || 0.8;
       const distancia = opciones?.distancia || 100;
-      console.log(`📜 [LAZY] Configurando lazy loading por scroll para ${nombre}`);
 
       let cargado = false;
 
@@ -279,7 +260,6 @@ export class LazyLoadingInteligente {
 
         // ✅ SOLUCIÓN: Cargar cuando esté cerca del final
         if (scrollTop + windowHeight >= documentHeight - distancia) {
-          console.log(`📜 [LAZY] Scroll cerca del final, cargando ${nombre}...`);
           this.cargarComponente(nombre, importFn, { cache: true });
           cargado = true;
           window.removeEventListener('scroll', handleScroll);
@@ -287,10 +267,8 @@ export class LazyLoadingInteligente {
       };
 
       window.addEventListener('scroll', handleScroll, { passive: true });
-      console.log(`✅ [LAZY] Lazy loading por scroll configurado para ${nombre}`);
 
     } catch (error) {
-      console.error(`❌ [LAZY] Error configurando lazy loading por scroll:`, error);
     }
   }
 
@@ -303,7 +281,6 @@ export class LazyLoadingInteligente {
       render: () => `<div class="error-component">Error cargando ${nombre}</div>`
     };
 
-    console.warn(`⚠️ [LAZY] Usando componente de fallback para ${nombre}`);
     return ComponenteError;
   }
 
@@ -312,7 +289,6 @@ export class LazyLoadingInteligente {
    */
   limpiarCache(): void {
     try {
-      console.log('🧹 [LAZY] Limpiando cache de componentes...');
       
       this.componentesCargados.clear();
       this.componentesEnCache.clear();
@@ -321,9 +297,7 @@ export class LazyLoadingInteligente {
       this.observadores.forEach(observer => observer.disconnect());
       this.observadores.clear();
       
-      console.log('✅ [LAZY] Cache de componentes limpiado');
     } catch (error) {
-      console.error('❌ [LAZY] Error limpiando cache:', error);
     }
   }
 
@@ -471,7 +445,6 @@ export const limpiarCacheLazyLoading = (): void => {
 export function logLazyLoading(mensaje: string, datos?: any): void {
   if (!browser) return;
   
-  console.log(`🔧 [LAZY] ${mensaje}`, datos || '');
 }
 
 /**

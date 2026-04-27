@@ -1,18 +1,11 @@
 import React from 'react';
-import {
-  Check,
-  ChevronRight,
-  Pause,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-  Square,
-  Upload,
-  Volume2,
-} from 'lucide-react';
-import { HILERAS_NATIVAS, TONALIDADES } from '../../../../Core/acordeon/notasAcordeonDiatonico';
+import { ChevronRight } from 'lucide-react';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
+import SeccionAdminTeoria from '../../Admin/Componentes/SeccionAdminTeoria';
+import SeccionPLSonido from './SeccionPLSonido';
+import SeccionPLPistas from './SeccionPLPistas';
+import SeccionPLEfectos from './SeccionPLEfectos';
 
 interface PanelLateralEstudianteProps {
   visible: boolean;
@@ -49,172 +42,57 @@ interface PanelLateralEstudianteProps {
   onAjustarVolumenAcordeon: (valor: number) => void;
 }
 
-const CIRCULO_MAYOR = ['Do', 'Sol', 'Re', 'La', 'Mi', 'Si', 'Solb', 'Reb', 'Lab', 'Mib', 'Sib', 'Fa'];
-const CIRCULO_MENOR = ['La', 'Mi', 'Si', 'Solb', 'Reb', 'Lab', 'Mib', 'Sib', 'Fa', 'Do', 'Sol', 'Re'];
-
-function extraerNotasFila(configuracionFila: Array<{ nombre: string }>) {
-  return Array.from(new Set(configuracionFila.map((nota) => nota.nombre)));
-}
+const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
+  sonido: 'Sonido y lectura', modelos: 'Modelos visuales',
+  pistas: 'Pistas y capas', teoria: 'Teoria musical', efectos: 'Efectos y mezcla',
+};
 
 const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
-  visible,
-  seccionActiva,
-  tonalidadSeleccionada,
-  listaTonalidades,
-  timbreActivo,
-  onSeleccionarTonalidad,
-  onSeleccionarTimbre,
-  instrumentoId,
-  listaInstrumentos,
-  onSeleccionarInstrumento,
-  modoVista,
-  modosVista,
-  onSeleccionarVista,
-  onAbrirEditorAvanzado,
-  modeloActivo,
-  onSeleccionarModelo,
-  preferencias,
-  pistaActiva,
-  pistasDisponibles,
-  cargandoPistas,
-  reproduciendoPista,
-  tiempoPista,
-  duracionPista,
-  onSeleccionarPista,
-  onLimpiarPista,
-  onAlternarReproduccionPista,
-  onReiniciarPista,
-  onCargarArchivoLocal,
-  onAlternarCapa,
-  onActualizarEfectos,
-  volumenAcordeon,
-  onAjustarVolumenAcordeon,
+  visible, seccionActiva, tonalidadSeleccionada, listaTonalidades, timbreActivo,
+  onSeleccionarTonalidad, onSeleccionarTimbre, instrumentoId, listaInstrumentos,
+  onSeleccionarInstrumento, modoVista, modosVista, onSeleccionarVista, onAbrirEditorAvanzado,
+  modeloActivo, onSeleccionarModelo, preferencias, pistaActiva, pistasDisponibles,
+  cargandoPistas, reproduciendoPista, tiempoPista, duracionPista, onSeleccionarPista,
+  onLimpiarPista, onAlternarReproduccionPista, onReiniciarPista, onCargarArchivoLocal,
+  onAlternarCapa, onActualizarEfectos, volumenAcordeon, onAjustarVolumenAcordeon,
 }) => {
-  const configuracionTonalidad = TONALIDADES[tonalidadSeleccionada as keyof typeof TONALIDADES] || TONALIDADES['ADG'];
-  const hileras = HILERAS_NATIVAS[tonalidadSeleccionada] || [];
-  const notasPrimeraFila = extraerNotasFila(configuracionTonalidad.primeraFila);
-  const notasSegundaFila = extraerNotasFila(configuracionTonalidad.segundaFila);
-  const notasTerceraFila = extraerNotasFila(configuracionTonalidad.terceraFila);
-
-  const tituloSeccion = seccionActiva === 'sonido'
-    ? 'Sonido y lectura'
-    : seccionActiva === 'modelos'
-      ? 'Modelos visuales'
-      : seccionActiva === 'pistas'
-        ? 'Pistas y capas'
-        : seccionActiva === 'teoria'
-          ? 'Teoria musical'
-          : 'Efectos y mezcla';
-
   if (!visible || !seccionActiva) return null;
-
-  const esSeccionEstudiante = ['sonido', 'modelos', 'pistas', 'teoria', 'efectos'].includes(seccionActiva);
-  if (!esSeccionEstudiante) return null;
+  if (!['sonido', 'modelos', 'pistas', 'teoria', 'efectos'].includes(seccionActiva)) return null;
 
   return (
     <aside className="estudio-practica-libre-panel">
       <div className="estudio-practica-libre-panel-encabezado">
         <div>
           <span className="estudio-practica-libre-panel-kicker">Panel del estudio</span>
-          <h3>{tituloSeccion}</h3>
+          <h3>{TITULO_SECCION[seccionActiva] || seccionActiva}</h3>
         </div>
         <div className="estudio-practica-libre-chip-simple">
-          <ChevronRight size={14} />
-          {tonalidadSeleccionada}
+          <ChevronRight size={14} />{tonalidadSeleccionada}
         </div>
       </div>
 
       {seccionActiva === 'sonido' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Tonalidades</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {listaTonalidades.map((tonalidad) => (
-                <button
-                  key={tonalidad}
-                  className={`estudio-practica-libre-chip-boton ${tonalidadSeleccionada === tonalidad ? 'activo' : ''}`}
-                  onClick={() => onSeleccionarTonalidad(tonalidad)}
-                >
-                  {tonalidad}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Timbre de pitos</div>
-            <div className="estudio-practica-libre-grid-doble">
-              {(['Brillante', 'Armonizado'] as const).map((timbre) => (
-                <button
-                  key={timbre}
-                  className={`estudio-practica-libre-card-boton ${timbreActivo === timbre ? 'activo' : ''}`}
-                  onClick={() => onSeleccionarTimbre(timbre)}
-                >
-                  <strong>{timbre}</strong>
-                  <span>{timbre === 'Brillante' ? 'Ataque abierto y definido' : 'Color mas grueso y envolvente'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Instrumento del acordeon</div>
-            <div className="estudio-practica-libre-lista-vertical">
-              {listaInstrumentos.length === 0 && (
-                <div className="estudio-practica-libre-vacio">Cargando bancos del acordeon...</div>
-              )}
-              {listaInstrumentos.map((instrumento: any) => (
-                <button
-                  key={instrumento.id}
-                  className={`estudio-practica-libre-item-lista ${instrumentoId === instrumento.id ? 'activo' : ''}`}
-                  onClick={() => onSeleccionarInstrumento(instrumento.id)}
-                >
-                  <div>
-                    <strong>{instrumento.nombre || 'Instrumento'}</strong>
-                    <span>{instrumento.descripcion || 'Banco principal del acordeon.'}</span>
-                  </div>
-                  {instrumentoId === instrumento.id && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Modo de vista</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {modosVista.map(({ valor, label }) => (
-                <button
-                  key={valor}
-                  className={`estudio-practica-libre-chip-boton ${modoVista === valor ? 'activo' : ''}`}
-                  onClick={() => onSeleccionarVista(valor)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button className="estudio-practica-libre-btn-linea" onClick={onAbrirEditorAvanzado}>
-            <SlidersHorizontal size={16} />
-            Abrir editor avanzado del acordeon
-          </button>
-        </div>
+        <SeccionPLSonido
+          tonalidadSeleccionada={tonalidadSeleccionada} listaTonalidades={listaTonalidades}
+          timbreActivo={timbreActivo} onSeleccionarTonalidad={onSeleccionarTonalidad}
+          onSeleccionarTimbre={onSeleccionarTimbre} instrumentoId={instrumentoId}
+          listaInstrumentos={listaInstrumentos} onSeleccionarInstrumento={onSeleccionarInstrumento}
+          modoVista={modoVista} modosVista={modosVista} onSeleccionarVista={onSeleccionarVista}
+          onAbrirEditorAvanzado={onAbrirEditorAvanzado}
+        />
       )}
 
       {seccionActiva === 'modelos' && (
         <div className="estudio-practica-libre-seccion">
           <div className="estudio-practica-libre-grid-modelos">
             {MODELOS_VISUALES_ACORDEON.map((modelo) => (
-              <button
-                key={modelo.id}
+              <button key={modelo.id}
                 className={`estudio-practica-libre-modelo-card ${modeloActivo.id === modelo.id ? 'activo' : ''}`}
-                onClick={() => onSeleccionarModelo(modelo.id)}
-              >
+                onClick={() => onSeleccionarModelo(modelo.id)}>
                 <div className="estudio-practica-libre-modelo-imagen-wrap">
                   <img src={modelo.imagen} alt={modelo.nombre} className="estudio-practica-libre-modelo-imagen" />
                 </div>
-                <strong>{modelo.nombre}</strong>
-                <span>{modelo.descripcion}</span>
+                <strong>{modelo.nombre}</strong><span>{modelo.descripcion}</span>
               </button>
             ))}
           </div>
@@ -222,205 +100,26 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
       )}
 
       {seccionActiva === 'pistas' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Pista activa</div>
-            <div className="estudio-practica-libre-pista-activa">
-              <div>
-                <strong>{pistaActiva?.nombre || 'Sin pista seleccionada'}</strong>
-                <span>
-                  {pistaActiva
-                    ? `${tiempoPista} / ${duracionPista}${pistaActiva.bpm ? ` · ${pistaActiva.bpm} BPM` : ''}`
-                    : 'Carga una pista local o elige una del catalogo.'}
-                </span>
-              </div>
-              <div className="estudio-practica-libre-pista-botones">
-                <button className="estudio-practica-libre-icon-btn" onClick={onAlternarReproduccionPista} disabled={!pistaActiva}>
-                  {reproduciendoPista ? <Pause size={15} /> : <Play size={15} />}
-                </button>
-                <button className="estudio-practica-libre-icon-btn" onClick={onReiniciarPista} disabled={!pistaActiva}>
-                  <RotateCcw size={15} />
-                </button>
-                <button className="estudio-practica-libre-icon-btn" onClick={onLimpiarPista} disabled={!pistaActiva}>
-                  <Square size={15} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <label className="estudio-practica-libre-carga-local">
-              <Upload size={16} />
-              Cargar pista local
-              <input
-                type="file"
-                accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
-                onChange={(event) => {
-                  const archivo = event.target.files?.[0];
-                  if (archivo) onCargarArchivoLocal(archivo);
-                  event.target.value = '';
-                }}
-              />
-            </label>
-          </div>
-
-          {pistaActiva?.capas && pistaActiva.capas.length > 0 && (
-            <div className="estudio-practica-libre-bloque">
-              <div className="estudio-practica-libre-bloque-titulo">Capas sincronizadas</div>
-              <div className="estudio-practica-libre-grid-chips">
-                {pistaActiva.capas.map((capa) => (
-                  <button
-                    key={capa.id}
-                    className={`estudio-practica-libre-chip-boton ${preferencias.capasActivas.includes(capa.id) ? 'activo' : ''}`}
-                    onClick={() => onAlternarCapa(capa.id)}
-                  >
-                    {capa.nombre}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Catalogo disponible</div>
-            <div className="estudio-practica-libre-lista-vertical pista-lista">
-              {cargandoPistas && <div className="estudio-practica-libre-vacio">Cargando pistas disponibles...</div>}
-              {!cargandoPistas && pistasDisponibles.length === 0 && (
-                <div className="estudio-practica-libre-vacio">Todavia no hay pistas precargadas. Ya puedes probar con una pista local.</div>
-              )}
-              {pistasDisponibles.map((pista) => (
-                <button
-                  key={pista.id}
-                  className={`estudio-practica-libre-item-lista ${pistaActiva?.id === pista.id ? 'activo' : ''}`}
-                  onClick={() => onSeleccionarPista(pista)}
-                >
-                  <div>
-                    <strong>{pista.nombre}</strong>
-                    <span>
-                      {[pista.artista, pista.tonalidad, pista.bpm ? `${pista.bpm} BPM` : null].filter(Boolean).join(' · ') || 'Pista de practica'}
-                    </span>
-                  </div>
-                  {pistaActiva?.id === pista.id && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SeccionPLPistas
+          pistaActiva={pistaActiva} pistasDisponibles={pistasDisponibles}
+          cargandoPistas={cargandoPistas} reproduciendoPista={reproduciendoPista}
+          tiempoPista={tiempoPista} duracionPista={duracionPista}
+          onSeleccionarPista={onSeleccionarPista} onLimpiarPista={onLimpiarPista}
+          onAlternarReproduccionPista={onAlternarReproduccionPista} onReiniciarPista={onReiniciarPista}
+          onCargarArchivoLocal={onCargarArchivoLocal} onAlternarCapa={onAlternarCapa}
+          preferencias={preferencias}
+        />
       )}
 
       {seccionActiva === 'teoria' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Hileras nativas</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {hileras.map((hilera) => (
-                <span key={hilera} className="estudio-practica-libre-chip-boton activo solo-visual">{hilera}</span>
-              ))}
-            </div>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Notas por hilera</div>
-            <div className="estudio-practica-libre-teoria-columnas">
-              <div>
-                <strong>Primera</strong>
-                <span>{notasPrimeraFila.join(', ')}</span>
-              </div>
-              <div>
-                <strong>Segunda</strong>
-                <span>{notasSegundaFila.join(', ')}</span>
-              </div>
-              <div>
-                <strong>Tercera</strong>
-                <span>{notasTerceraFila.join(', ')}</span>
-              </div>
-            </div>
-          </div>
-
-          {preferencias.mostrarTeoriaCircular && (
-            <>
-              <div className="estudio-practica-libre-bloque">
-                <div className="estudio-practica-libre-bloque-titulo">Circulo mayor</div>
-                <div className="estudio-practica-libre-grid-circulo">
-                  {CIRCULO_MAYOR.map((nota) => (
-                    <span key={nota} className={`estudio-practica-libre-chip-circulo ${hileras.includes(nota.toUpperCase()) ? 'activo' : ''}`}>
-                      {nota}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="estudio-practica-libre-bloque">
-                <div className="estudio-practica-libre-bloque-titulo">Circulo menor</div>
-                <div className="estudio-practica-libre-grid-circulo">
-                  {CIRCULO_MENOR.map((nota) => (
-                    <span key={nota} className="estudio-practica-libre-chip-circulo">{nota}m</span>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <SeccionAdminTeoria tonalidadSeleccionada={tonalidadSeleccionada} mostrarTeoriaCircular={!!preferencias.mostrarTeoriaCircular} />
       )}
 
       {seccionActiva === 'efectos' && (
-        <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Mezcla funcional</div>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Volumen acordeon</span>
-              <strong>{volumenAcordeon}%</strong>
-              <input type="range" min={0} max={100} value={volumenAcordeon} onChange={(e) => onAjustarVolumenAcordeon(Number(e.target.value))} />
-            </label>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Volumen pista</span>
-              <strong>{preferencias.efectos.volumenPista}%</strong>
-              <input type="range" min={0} max={100} value={preferencias.efectos.volumenPista} onChange={(e) => onActualizarEfectos({ volumenPista: Number(e.target.value) })} />
-            </label>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Preset guardado de FX</div>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Reverb</span>
-              <strong>{preferencias.efectos.reverb}%</strong>
-              <input type="range" min={0} max={100} value={preferencias.efectos.reverb} onChange={(e) => onActualizarEfectos({ reverb: Number(e.target.value) })} />
-            </label>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Graves</span>
-              <strong>{preferencias.efectos.bajos}</strong>
-              <input type="range" min={-12} max={12} value={preferencias.efectos.bajos} onChange={(e) => onActualizarEfectos({ bajos: Number(e.target.value) })} />
-            </label>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Medios</span>
-              <strong>{preferencias.efectos.medios}</strong>
-              <input type="range" min={-12} max={12} value={preferencias.efectos.medios} onChange={(e) => onActualizarEfectos({ medios: Number(e.target.value) })} />
-            </label>
-            <label className="estudio-practica-libre-slider-row">
-              <span>Agudos</span>
-              <strong>{preferencias.efectos.agudos}</strong>
-              <input type="range" min={-12} max={12} value={preferencias.efectos.agudos} onChange={(e) => onActualizarEfectos({ agudos: Number(e.target.value) })} />
-            </label>
-          </div>
-
-          <div className="estudio-practica-libre-bloque">
-            <label className="estudio-practica-libre-switch-row">
-              <div>
-                <strong>Reiniciar pista al grabar</strong>
-                <span>Ideal para mantener sincronizada la toma desde cero.</span>
-              </div>
-              <button
-                className={`estudio-practica-libre-switch ${preferencias.efectos.autoReiniciarPista ? 'activo' : ''}`}
-                onClick={() => onActualizarEfectos({ autoReiniciarPista: !preferencias.efectos.autoReiniciarPista })}
-              >
-                <span />
-              </button>
-            </label>
-            <div className="estudio-practica-libre-aviso-fx">
-              <Volume2 size={15} />
-              Los valores de reverb y ecualizador ya quedan guardados en tu preset de practica.
-            </div>
-          </div>
-        </div>
+        <SeccionPLEfectos
+          preferencias={preferencias} volumenAcordeon={volumenAcordeon}
+          onAjustarVolumenAcordeon={onAjustarVolumenAcordeon} onActualizarEfectos={onActualizarEfectos}
+        />
       )}
     </aside>
   );

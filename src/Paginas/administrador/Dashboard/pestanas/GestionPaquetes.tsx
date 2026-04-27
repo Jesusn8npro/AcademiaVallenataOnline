@@ -31,7 +31,6 @@ const GestionPaquetes = () => {
                 .limit(4);
 
             if (error) {
-                console.error("Error cargando paquetes:", error);
                 return;
             }
 
@@ -40,7 +39,6 @@ const GestionPaquetes = () => {
             calcularEstadisticas(paquetesCargados);
 
         } catch (error) {
-            console.error(error);
         } finally {
             setCargandoPaquetes(false);
         }

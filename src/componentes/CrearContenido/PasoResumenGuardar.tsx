@@ -64,14 +64,12 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
   async function guardarEstructura(idContenido: any, estructura: any[]) {
     if (tipo === 'tutorial') {
       if (modoEdicion) {
-        console.log('🗑️ [GUARDAR] Eliminando partes antiguas del tutorial:', idContenido);
         const { error: errorDelete } = await supabase
           .from('partes_tutorial')
           .delete()
           .eq('tutorial_id', idContenido);
 
         if (errorDelete) {
-          console.error('❌ [GUARDAR] Error al eliminar partes antiguas:', errorDelete);
           throw new Error('No se pudieron actualizar las partes del tutorial. ' + errorDelete.message);
         }
       }
@@ -88,7 +86,6 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         visible: parte.visible !== false
       }))
 
-      console.log('📝 [GUARDAR] Insertando nuevas partes:', partesParaGuardar.length);
       const { error } = await supabase.from('partes_tutorial').insert(partesParaGuardar)
       if (error) throw error
     } else {

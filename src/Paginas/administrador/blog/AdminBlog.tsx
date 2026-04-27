@@ -23,7 +23,6 @@ const AdminBlog: React.FC = () => {
                 .order('creado_en', { ascending: false });
 
             if (error) {
-                console.error('Error al obtener los artículos:', error);
                 setError('No se pudieron cargar los artículos. Inténtalo de nuevo más tarde.');
             } else {
                 setArticulos(data || []);

@@ -46,7 +46,6 @@ export async function obtenerMembresias(): Promise<Membresia[]> {
 			.order('orden', { ascending: true });
 
 		if (error) {
-			console.error('❌ Error obteniendo membresías:', error);
 			throw error;
 		}
 
@@ -70,11 +69,9 @@ export async function obtenerMembresias(): Promise<Membresia[]> {
 			certificados_avanzados: m.certificados_avanzados || false
 		}));
 
-		console.log('✅ Membresías obtenidas:', membresias.length);
 		return membresias;
 
 	} catch (error) {
-		console.error('❌ Error en obtenerMembresias:', error);
 		return [];
 	}
 }
@@ -92,12 +89,10 @@ export async function obtenerMembresiaPorId(id: string): Promise<Membresia | nul
 			.single();
 
 		if (error) {
-			console.error('❌ Error obteniendo membresía:', error);
 			return null;
 		}
 
 		if (!data) {
-			console.warn('⚠️ Membresía no encontrada:', id);
 			return null;
 		}
 
@@ -121,7 +116,6 @@ export async function obtenerMembresiaPorId(id: string): Promise<Membresia | nul
 		};
 
 	} catch (error) {
-		console.error('❌ Error en obtenerMembresiaPorId:', error);
 		return null;
 	}
 }
@@ -141,7 +135,6 @@ export async function obtenerSuscripcionActiva(usuarioId: string): Promise<Suscr
 			.single();
 
 		if (error || !data) {
-			console.log('ℹ️ Usuario sin suscripción activa:', usuarioId);
 			return null;
 		}
 
@@ -161,7 +154,6 @@ export async function obtenerSuscripcionActiva(usuarioId: string): Promise<Suscr
 		};
 
 	} catch (error) {
-		console.error('❌ Error en obtenerSuscripcionActiva:', error);
 		return null;
 	}
 }
@@ -211,11 +203,9 @@ export async function crearSuscripcion(datos: {
 			.single();
 
 		if (error) {
-			console.error('❌ Error creando suscripción:', error);
 			throw error;
 		}
 
-		console.log('✅ Suscripción creada exitosamente:', data.id);
 		
 		return {
 			id: data.id,
@@ -233,7 +223,6 @@ export async function crearSuscripcion(datos: {
 		};
 
 	} catch (error) {
-		console.error('❌ Error en crearSuscripcion:', error);
 		throw error;
 	}
 }
@@ -252,9 +241,7 @@ async function cancelarSuscripcionesActivas(usuarioId: string): Promise<void> {
 			.eq('usuario_id', usuarioId)
 			.eq('estado', 'activa');
 
-		console.log('✅ Suscripciones previas canceladas para usuario:', usuarioId);
 	} catch (error) {
-		console.error('❌ Error cancelando suscripciones previas:', error);
 		// No lanzamos error para no bloquear la creación de la nueva
 	}
 }
@@ -293,7 +280,6 @@ export async function verificarAcceso(usuarioId: string, funcionalidad: string):
 		}
 
 	} catch (error) {
-		console.error('❌ Error verificando acceso:', error);
 		return false;
 	}
 }
@@ -314,7 +300,6 @@ export async function obtenerEstadisticasMembresias() {
 			`);
 
 		if (error) {
-			console.error('❌ Error obteniendo estadísticas:', error);
 			return null;
 		}
 
@@ -347,7 +332,6 @@ export async function obtenerEstadisticasMembresias() {
 		return stats;
 
 	} catch (error) {
-		console.error('❌ Error en obtenerEstadisticasMembresias:', error);
 		return null;
 	}
 }
