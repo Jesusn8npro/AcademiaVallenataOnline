@@ -9,56 +9,10 @@ import {
     cambiarFuelle
 } from '../acordeon/notasAcordeonDiatonico';
 import type { AjustesAcordeon, SonidoVirtual, ModoVista, AcordeonSimuladorProps } from '../acordeon/TiposAcordeon';
-
-const NOMBRES_INGLES: Record<string, string> = {
-    'do': 'C', 'do#': 'Db', 'reb': 'Db', 're': 'D', 're#': 'Eb', 'mib': 'Eb', 'mi': 'E',
-    'fa': 'F', 'fa#': 'Gb', 'solb': 'Gb', 'sol': 'G', 'sol#': 'Ab', 'lab': 'Ab', 'la': 'A', 'la#': 'Bb', 'sib': 'Bb', 'si': 'B'
-};
-
-// ✅ LISTAS HARDCODEADAS - Garantizan disponibilidad inmediata sin depender de fetch async
-const SAMPLES_BRILLANTE_DEFAULT: string[] = [
-    'A-4-cm.mp3', 'A-5-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3', 'Ab-6-cm.mp3',
-    'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'Bb-3-cm.mp3', 'Bb-4-cm.mp3',
-    'Bb-5-cm.mp3', 'Bb-6-cm.mp3', 'C-4-cm.mp3', 'C-5-cm.mp3', 'C-6-cm.mp3',
-    'C-7-cm.mp3', 'D-4-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3', 'Db-5-cm.mp3',
-    'Db-6-cm.mp3', 'E-4-cm.mp3', 'E-5-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3',
-    'Eb-6-cm.mp3', 'F-4-cm.mp3', 'F-5-cm.mp3', 'F-6-cm.mp3', 'G-4-cm.mp3',
-    'G-5-cm.mp3', 'G-6-cm.mp3', 'Gb-4-cm.mp3', 'Gb-5-cm.mp3'
-];
-
-const SAMPLES_ARMONIZADO_DEFAULT: string[] = [
-    'A-4-cm.mp3', 'A-5-cm.mp3', 'A-6-cm.mp3', 'Ab-4-cm.mp3', 'Ab-5-cm.mp3',
-    'Ab-6-cm.mp3', 'B-3-cm.mp3', 'B-4-cm.mp3', 'B-5-cm.mp3', 'B-6-cm.mp3',
-    'Bb-4-cm.mp3', 'Bb-5-cm.mp3', 'C-5-cm.mp3', 'D-5-cm.mp3', 'D-6-cm.mp3',
-    'Db-4-cm.mp3', 'Db-5-cm.mp3', 'Db-6-cm.mp3', 'Db-7-cm.mp3', 'E-4-cm.mp3',
-    'E-5-cm.mp3', 'E-6-cm.mp3', 'Eb-4-cm.mp3', 'Eb-5-cm.mp3', 'Eb-6-cm.mp3',
-    'F-4-cm.mp3', 'F-5-cm.mp3', 'G-4-cm.mp3', 'G-5-cm.mp3', 'Gb-4-cm.mp3',
-    'Gb-5-cm.mp3', 'Gb-6-cm.mp3'
-];
-
-const EXTRAER_NOTA_OCTAVA = (ruta: string) => {
-    const filename = ruta.split('/').pop() || '';
-    // Busca patrones como F-6 o Eb-4
-    const match = filename.match(/([a-zA-Z#]+)-(\d+)/);
-    if (match) {
-        return { nota: match[1], octava: parseInt(match[2]) };
-    }
-    // Caso especial para Bajos: BajoC-3-cm.mp3
-    if (filename.startsWith('Bajo')) {
-        const notaMatch = filename.replace('Bajo', '').match(/([a-zA-Z#]+)/);
-        const octMatch = filename.match(/-(\d+)-/);
-        if (notaMatch) {
-            return { nota: notaMatch[1], octava: octMatch ? parseInt(octMatch[1]) : 3 };
-        }
-    }
-    return null;
-};
-
-const VOL_PITOS = 0.55;
-const VOL_BAJOS = 0.70; // 🔊 Subimos el volumen de los bajos para que resalten más
-const FADE_OUT = 10; // ⚡ Velocidad ultra-extrema para trinos profesionales (10ms)
-
-
+import {
+    NOMBRES_INGLES, SAMPLES_BRILLANTE_DEFAULT, SAMPLES_ARMONIZADO_DEFAULT,
+    EXTRAER_NOTA_OCTAVA, VOL_PITOS, VOL_BAJOS, FADE_OUT
+} from './_utilidadesAcordeon';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
@@ -1119,56 +1073,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             setEsp32Conectado(false);
         }
     }, [actualizarBotonActivo, limpiarTodasLasNotas]);
-
-    // --- MIDI ENGINE (DESACTIVADO TEMPORALMENTE A PETICIÓN) ---
-    /*
-    useEffect(() => {
-        if (!navigator.requestMIDIAccess) return;
-
-        let midiAccess: any = null;
-
-        const onMIDIMessage = (msg: any) => {
-            const [status, note, velocity] = msg.data;
-            const command = status & 0xf0;
-            const channel = status & 0x0f;
-
-            let idBoton: string | null = null;
-
-            if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccion}`;
-            else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccion}`;
-            else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccion}`;
-
-            if (command === 144 && velocity > 0) {
-                if (idBoton) {
-                    reproducirTono(idBoton);
-                    actualizarBotonActivo(idBoton, 'add');
-                }
-            }
-            else if (command === 128 || (command === 144 && velocity === 0)) {
-                if (idBoton) {
-                    detenerTono(idBoton);
-                    actualizarBotonActivo(idBoton, 'remove');
-                }
-            }
-        };
-
-        navigator.requestMIDIAccess().then((access: any) => {
-            midiAccess = access;
-            setMidiActivado(true);
-            access.inputs.forEach((input: any) => {
-                input.onmidimessage = onMIDIMessage;
-            });
-        }).catch(() => setMidiActivado(false));
-
-        return () => {
-            if (midiAccess) {
-                midiAccess.inputs.forEach((input: any) => {
-                    input.onmidimessage = null;
-                });
-            }
-        };
-    }, [direccion, reproducirTono, detenerTono, actualizarBotonActivo]);
-    */
 
     // --- ACCIONES ---
     const guardarAjustes = async () => {

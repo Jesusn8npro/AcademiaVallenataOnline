@@ -1,44 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { MutableRefObject } from 'react';
 import { useGrabadorHero } from '../../../Core/hooks/useGrabadorHero';
 import { guardarGrabacion } from '../../../servicios/grabacionesHeroService';
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { obtenerSnapshotMetadataPracticaLibre } from '../PracticaLibre/Servicios/servicioPreferenciasPracticaLibre';
 import { calcularPrecision } from '../TiposProMax';
 import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
-import type { CancionHeroConTonalidad, EstadisticasPartida, ModoPractica, NotaHero } from '../TiposProMax';
-
-type TipoGrabacionPendiente = 'competencia' | 'practica_libre';
-
-interface GrabacionPendienteProMax {
-  tipo: TipoGrabacionPendiente;
-  tituloSugerido: string;
-  secuencia: NotaHero[];
-  tickFinal: number;
-  duracionMs: number;
-  cancionId: string | null;
-  bpm: number;
-  resolucion: number;
-  tonalidad: string | null;
-  precisionPorcentaje: number | null;
-  puntuacion: number | null;
-  notasTotales: number | null;
-  notasCorrectas: number | null;
-  metadata: Record<string, any>;
-}
-
-interface GrabacionGuardadaProMax {
-  id: string;
-  tipo: TipoGrabacionPendiente;
-  titulo: string;
-}
-
-interface UseGrabacionProMaxParams {
-  bpm: number;
-  cancionRef: MutableRefObject<CancionHeroConTonalidad | null>;
-  estadisticasRef: MutableRefObject<EstadisticasPartida>;
-  modoPracticaRef: MutableRefObject<ModoPractica>;
-}
+import type { TipoGrabacionPendiente, GrabacionPendienteProMax, GrabacionGuardadaProMax, UseGrabacionProMaxParams } from './_tiposGrabacionProMax';
 
 export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPracticaRef }: UseGrabacionProMaxParams) {
   const grabador = useGrabadorHero(bpm);

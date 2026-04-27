@@ -1,47 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import type { GrabacionReplayHero } from './tiposReplay';
-
-interface LogicaAcordeon {
-    disenoCargado: boolean;
-    cargando: boolean;
-    tonalidadSeleccionada: string;
-    instrumentoId: string;
-    ajustes: any;
-    setTonalidadSeleccionada: (t: string) => void;
-    setInstrumentoId: (id: string) => void;
-    setAjustes: (updater: any) => void;
-    setModoVista: (modo: any) => void;
-    obtenerRutasAudio: (botonId: string) => string[];
-}
-
-interface ReproductorHero {
-    tickActual: number;
-    totalTicks: number;
-    reproduciendo: boolean;
-    pausado: boolean;
-    reproducirSecuencia: (cancion: any) => void;
-    buscarTick: (tick: number) => void;
-    alternarPausa: () => void;
-    detenerReproduccion: () => void;
-}
-
-interface UseReproductorReplayParams {
-    abierta: boolean;
-    grabacion: GrabacionReplayHero | null;
-    logica: LogicaAcordeon;
-    reproductor: ReproductorHero;
-    bpm: number;
-    setBpm: (bpm: number) => void;
-}
-
-function convertirTicksASegundos(ticks: number, bpm: number, resolucion: number) {
-    return (ticks / Math.max(1, resolucion)) * (60 / Math.max(1, bpm));
-}
-
-function limitarPlaybackRate(valor: number) {
-    return Math.min(4, Math.max(0.1, valor));
-}
+import {
+    type UseReproductorReplayParams,
+    convertirTicksASegundos, limitarPlaybackRate,
+    construirCancionReplay, calcularBpmPistaOriginal,
+    invocarSincronizacionConPista, registrarSyncCuandoSuene
+} from './_tiposReproductorReplay';
+export type { LogicaAcordeon, ReproductorHero, UseReproductorReplayParams } from './_tiposReproductorReplay';
 
 export function useReproductorReplay({ abierta, grabacion, logica, reproductor, bpm, setBpm }: UseReproductorReplayParams) {
     const [preparandoReplay, setPreparandoReplay] = useState(false);
@@ -52,52 +18,31 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
 
     const resolucionActiva = grabacion?.resolucion || 192;
 
-    const cancionReplay = useMemo(() => {
-        if (!grabacion) return null;
-        return {
-            titulo: grabacion.titulo || grabacion.canciones_hero?.titulo || 'Replay Hero',
-            autor: grabacion.canciones_hero?.autor || (grabacion.modo === 'competencia' ? 'Modo competencia' : 'Practica libre'),
-            bpm: grabacion.bpm || 120,
-            resolucion: grabacion.resolucion || 192,
-            secuencia: grabacion.secuencia_grabada || [],
-            dificultad: 'basico' as const,
-            tipo: 'secuencia' as const,
-            tonalidad: grabacion.tonalidad || undefined,
-        };
-    }, [grabacion]);
+    const cancionReplay = useMemo(() => construirCancionReplay(grabacion), [grabacion]);
 
     const totalTicksCalculados = useMemo(() => {
         if (!grabacion?.secuencia_grabada?.length) return 0;
         return grabacion.secuencia_grabada.reduce((max, nota) => Math.max(max, nota.tick + (nota.duracion || 0)), 0);
     }, [grabacion]);
 
-    const botonesReplayUnicos = useMemo(() => {
-        return Array.from(new Set((grabacion?.secuencia_grabada || []).map((n) => n.botonId).filter(Boolean)));
-    }, [grabacion]);
+    const botonesReplayUnicos = useMemo(
+        () => Array.from(new Set((grabacion?.secuencia_grabada || []).map((n) => n.botonId).filter(Boolean))),
+        [grabacion]
+    );
 
-    const bpmPistaOriginal = useMemo(() => {
-        if (!grabacion) return bpm;
-        const bpmDesdeCancion = Number(grabacion.canciones_hero?.bpm);
-        const bpmDesdeMetadata = Number(
-            grabacion.metadata?.bpm_original
-            ?? grabacion.metadata?.cancion_bpm
-            ?? grabacion.metadata?.bpm_cancion
-            ?? grabacion.metadata?.bpm
-        );
-        if (Number.isFinite(bpmDesdeCancion) && bpmDesdeCancion > 0) return bpmDesdeCancion;
-        if (Number.isFinite(bpmDesdeMetadata) && bpmDesdeMetadata > 0) return bpmDesdeMetadata;
-        return grabacion.bpm || 120;
-    }, [bpm, grabacion]);
+    const bpmPistaOriginal = useMemo(() => calcularBpmPistaOriginal(grabacion, bpm), [bpm, grabacion]);
 
-    const playbackRateAudio = useMemo(() => {
-        return limitarPlaybackRate((grabacion?.bpm || bpm || 120) / Math.max(1, bpmPistaOriginal || 120));
-    }, [bpm, bpmPistaOriginal, grabacion?.bpm]);
+    const playbackRateAudio = useMemo(
+        () => limitarPlaybackRate((grabacion?.bpm || bpm || 120) / Math.max(1, bpmPistaOriginal || 120)),
+        [bpm, bpmPistaOriginal, grabacion?.bpm]
+    );
 
     const tonalidadReplayLista = !grabacion?.tonalidad || logica.tonalidadSeleccionada === grabacion.tonalidad;
 
-    const clavePrecargaReplay = useMemo(() => {
-        return [grabacion?.id || 'sin-grabacion', grabacion?.tonalidad || 'sin-tonalidad', logica.instrumentoId, botonesReplayUnicos.join('|')].join('::');
-    }, [botonesReplayUnicos, grabacion?.id, grabacion?.tonalidad, logica.instrumentoId]);
+    const clavePrecargaReplay = useMemo(
+        () => [grabacion?.id || 'sin-grabacion', grabacion?.tonalidad || 'sin-tonalidad', logica.instrumentoId, botonesReplayUnicos.join('|')].join('::'),
+        [botonesReplayUnicos, grabacion?.id, grabacion?.tonalidad, logica.instrumentoId]
+    );
 
     const urlAudioFondo = useMemo(() => {
         if (!grabacion) return null;
@@ -167,10 +112,7 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
             claveReplayPrecargadoRef.current = '';
             return;
         }
-        if (!logica.disenoCargado || logica.cargando || !tonalidadReplayLista) {
-            setPreparandoReplay(true);
-            return;
-        }
+        if (!logica.disenoCargado || logica.cargando || !tonalidadReplayLista) { setPreparandoReplay(true); return; }
         void precargarNotasReplay();
     }, [abierta, grabacion, logica.cargando, logica.disenoCargado, precargarNotasReplay, tonalidadReplayLista]);
 
@@ -189,15 +131,10 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         };
         window.addEventListener('keydown', bloquearTeclas, true);
         window.addEventListener('keyup', bloquearTeclas, true);
-        return () => {
-            window.removeEventListener('keydown', bloquearTeclas, true);
-            window.removeEventListener('keyup', bloquearTeclas, true);
-        };
+        return () => { window.removeEventListener('keydown', bloquearTeclas, true); window.removeEventListener('keyup', bloquearTeclas, true); };
     }, [abierta]);
 
-    useEffect(() => {
-        tickActualRef.current = reproductor.tickActual;
-    }, [reproductor.tickActual]);
+    useEffect(() => { tickActualRef.current = reproductor.tickActual; }, [reproductor.tickActual]);
 
     useEffect(() => {
         if (!abierta) return;
@@ -207,60 +144,28 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
     }, [abierta]);
 
     useEffect(() => {
-        if (audioFondoRef.current) {
-            audioFondoRef.current.pause();
-            audioFondoRef.current.src = '';
-            audioFondoRef.current = null;
-        }
+        if (audioFondoRef.current) { audioFondoRef.current.pause(); audioFondoRef.current.src = ''; audioFondoRef.current = null; }
         if (!abierta || !urlAudioFondo) return;
         const audio = new Audio(urlAudioFondo);
         audio.preload = 'auto';
         audio.volume = 1;
         audio.playbackRate = playbackRateAudio;
         audioFondoRef.current = audio;
-        return () => {
-            audio.pause();
-            audio.src = '';
-            if (audioFondoRef.current === audio) audioFondoRef.current = null;
-        };
+        return () => { audio.pause(); audio.src = ''; if (audioFondoRef.current === audio) audioFondoRef.current = null; };
     }, [abierta, urlAudioFondo]);
 
-    useEffect(() => {
-        if (!audioFondoRef.current) return;
-        audioFondoRef.current.playbackRate = playbackRateAudio;
-    }, [playbackRateAudio]);
+    useEffect(() => { if (!audioFondoRef.current) return; audioFondoRef.current.playbackRate = playbackRateAudio; }, [playbackRateAudio]);
 
     useEffect(() => {
         const audio = audioFondoRef.current;
         if (!audio) return;
-        if (!reproductor.reproduciendo) {
-            audio.pause();
-            audio.currentTime = 0;
-        }
+        if (!reproductor.reproduciendo) { audio.pause(); audio.currentTime = 0; }
     }, [reproductor.reproduciendo, reproductor.pausado]);
 
     useEffect(() => {
-        if (!abierta) {
-            reproductor.detenerReproduccion();
-            audioFondoRef.current?.pause();
-            return;
-        }
-        return () => {
-            reproductor.detenerReproduccion();
-            audioFondoRef.current?.pause();
-            motorAudioPro.detenerTodo();
-        };
+        if (!abierta) { reproductor.detenerReproduccion(); audioFondoRef.current?.pause(); return; }
+        return () => { reproductor.detenerReproduccion(); audioFondoRef.current?.pause(); motorAudioPro.detenerTodo(); };
     }, [abierta, reproductor.detenerReproduccion]);
-
-    const invocarSincronizacionConPista = () => {
-        if (typeof (window as any).sincronizarRelojConPista === 'function') {
-            (window as any).sincronizarRelojConPista();
-        }
-    };
-
-    const registrarSyncCuandoSuene = (audio: HTMLAudioElement) => {
-        audio.onplaying = () => { invocarSincronizacionConPista(); audio.onplaying = null; };
-    };
 
     const sincronizarAudioConTick = (tick: number) => {
         const audio = audioFondoRef.current;
@@ -318,18 +223,11 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         await precargarNotasReplay();
         const tickObjetivo = Math.max(0, Math.floor(tickActualRef.current));
         if (!reproductor.reproduciendo) { await reproducirAudioFondo(tickObjetivo, true); return; }
-        if (reproductor.pausado) {
-            const reanudacion = reproducirAudioFondo(tickObjetivo, false);
-            reproductor.alternarPausa();
-            await reanudacion;
-        }
+        if (reproductor.pausado) { const reanudacion = reproducirAudioFondo(tickObjetivo, false); reproductor.alternarPausa(); await reanudacion; }
     };
 
     const pausar = () => {
-        if (reproductor.reproduciendo && !reproductor.pausado) {
-            audioFondoRef.current?.pause();
-            reproductor.alternarPausa();
-        }
+        if (reproductor.reproduciendo && !reproductor.pausado) { audioFondoRef.current?.pause(); reproductor.alternarPausa(); }
     };
 
     const buscarTick = (tick: number) => {
@@ -348,14 +246,5 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         await reproducirAudioFondo(0, true);
     };
 
-    return {
-        preparandoReplay,
-        totalTicksCalculados,
-        tonalidadReplayLista,
-        urlAudioFondo,
-        reproducirOReanudar,
-        pausar,
-        buscarTick,
-        reiniciar,
-    };
+    return { preparandoReplay, totalTicksCalculados, tonalidadReplayLista, urlAudioFondo, reproducirOReanudar, pausar, buscarTick, reiniciar };
 }

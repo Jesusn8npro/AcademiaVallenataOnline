@@ -1,30 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
-
-export interface Comentario {
-  id: string
-  usuario_id: string
-  usuario_nombre: string
-  usuario_avatar: string
-  comentario: string
-  fecha_creacion: string
-  comentario_padre_id: string | null
-}
-
-interface Like {
-  id: string
-  usuario_id: string
-}
-
-interface Props {
-  abierto: boolean
-  imagenUrl: string
-  imagenId: string | null
-  tipoImagen: 'avatar' | 'portada' | null
-  usuarioPropietario: { id: string; nombre: string; avatar: string }
-  onCerrar: () => void
-}
+export type { Comentario } from './_tiposVisorImagenPerfil'
+import type { Comentario, Like, PropsVisorImagenPerfil as Props } from './_tiposVisorImagenPerfil'
 
 export function useModalVisorImagenPerfil({
   abierto,
