@@ -298,11 +298,3 @@ export const useEstadoVisualSidebar = () => useTienda(estadoVisualSidebar);
 export const useSidebarResponsive = () => useTienda(sidebarResponsive);
 export const useSidebarColapsado = () => useTienda(sidebarColapsado);
 
-/*
-Ejemplo de uso en componentes React:
-  const { colapsado } = useSidebarStore();
-  const { esMobile } = useSidebarResponsive();
-*/
-
-
-
