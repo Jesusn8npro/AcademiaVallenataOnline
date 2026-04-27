@@ -42,24 +42,24 @@ const BlogAdminManager = () => {
     return (
         <div className="gestor-blog">
             <header className="encabezado-gestor">
-                <h1>Administración de Blog</h1>
+                <h1>AdministraciÃ³n de Blog</h1>
                 <button className="boton-primario" onClick={iniciarNuevoArticulo}>
                     <Plus size={20} />
-                    <span>Nuevo Artículo</span>
+                    <span>Nuevo ArtÃ­culo</span>
                 </button>
             </header>
 
-            {/* Listado de Artículos */}
+            {/* Listado de ArtÃ­culos */}
             <section className="grid-articulos">
                 {cargando ? (
                     <div className="estado-general">
                         <div className="spinner-blog"></div>
-                        <p>Cargando artículos...</p>
+                        <p>Cargando artÃ­culos...</p>
                     </div>
                 ) : articulos.length === 0 ? (
                     <div className="estado-general">
-                        <h3>No hay artículos todavía</h3>
-                        <p>¡Crea tu primer artículo para empezar a compartir tu conocimiento!</p>
+                        <h3>No hay artÃ­culos todavÃ­a</h3>
+                        <p>Â¡Crea tu primer artÃ­culo para empezar a compartir tu conocimiento!</p>
                     </div>
                 ) : (
                     articulos.map((articulo) => (

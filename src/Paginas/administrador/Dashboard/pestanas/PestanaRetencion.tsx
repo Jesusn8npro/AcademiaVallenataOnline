@@ -68,10 +68,10 @@ const PestanaRetencion = () => {
 
                     if (diasInactivo > 30) {
                         riesgo = 'alto';
-                        razonPrincipal = 'M·s de 30 dÌas sin actividad';
+                        razonPrincipal = 'M√°s de 30 d√≠as sin actividad';
                     } else if (diasInactivo > 14) {
                         riesgo = 'medio';
-                        razonPrincipal = 'M·s de 2 semanas sin actividad';
+                        razonPrincipal = 'M√°s de 2 semanas sin actividad';
                     }
 
                     if (cursosInscritos === 0) {
@@ -140,13 +140,13 @@ const PestanaRetencion = () => {
 
         if (diffDias === 0) return 'Hoy';
         if (diffDias === 1) return 'Ayer';
-        if (diffDias < 7) return `Hace ${diffDias} dÌas`;
+        if (diffDias < 7) return `Hace ${diffDias} d√≠as`;
         if (diffDias < 30) return `Hace ${Math.floor(diffDias / 7)} semanas`;
         return `Hace ${Math.floor(diffDias / 30)} meses`;
     };
 
     const contactarUsuario = (usuario: UsuarioInactivo) => {
-        const mensaje = `Hola ${usuario.nombre}, hemos notado que no has estado activo en nuestra academia. øPodemos ayudarte con algo?`;
+        const mensaje = `Hola ${usuario.nombre}, hemos notado que no has estado activo en nuestra academia. ¬øPodemos ayudarte con algo?`;
         const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
         window.open(url, '_blank');
     };
@@ -158,11 +158,11 @@ const PestanaRetencion = () => {
     return (
         <div className="pr-container">
             <div className="pr-header">
-                <h2>?? Herramientas de RetenciÛn</h2>
-                <p>Detecta usuarios en riesgo y gestiona estrategias de retenciÛn</p>
+                <h2>?? Herramientas de Retenci√≥n</h2>
+                <p>Detecta usuarios en riesgo y gestiona estrategias de retenci√≥n</p>
             </div>
 
-            {/* ESTADÕSTICAS DE RETENCI”N */}
+            {/* ESTAD√çSTICAS DE RETENCI√ìN */}
             <div className="pr-stats-grid">
                 <div className="pr-stat-card activos">
                     <div className="stat-numero">{estadisticasRetencion.usuariosActivos}</div>
@@ -174,7 +174,7 @@ const PestanaRetencion = () => {
                 </div>
                 <div className="pr-stat-card retencion">
                     <div className="stat-numero">{estadisticasRetencion.tasaRetencion}%</div>
-                    <div className="stat-label">?? Tasa de RetenciÛn</div>
+                    <div className="stat-label">?? Tasa de Retenci√≥n</div>
                 </div>
                 <div className="pr-stat-card riesgo-alto">
                     <div className="stat-numero">{estadisticasRetencion.usuariosRiesgoAlto}</div>
@@ -183,7 +183,7 @@ const PestanaRetencion = () => {
             </div>
 
             <div className="pr-content">
-                {/* DETECTOR DE RETENCI”N ORIGINAL */}
+                {/* DETECTOR DE RETENCI√ìN ORIGINAL */}
                 <div className="seccion-detector">
                     <DetectorRetencion />
                 </div>
@@ -206,7 +206,7 @@ const PestanaRetencion = () => {
                     ) : usuariosInactivos.length === 0 ? (
                         <div className="pr-empty-state">
                             <CheckCircle size={48} color="#10b981" style={{ marginBottom: '1rem' }} />
-                            <div>?? °Excelente! No hay usuarios inactivos</div>
+                            <div>?? ¬°Excelente! No hay usuarios inactivos</div>
                         </div>
                     ) : (
                         <div className="pr-users-list">
@@ -235,7 +235,7 @@ const PestanaRetencion = () => {
                                         <div className="pr-user-stats">
                                             <div className="pr-stat-item">
                                                 <Clock size={14} className="pr-stat-icon" />
-                                                <span>Inactivo {usuario.dias_inactivo} dÌas</span>
+                                                <span>Inactivo {usuario.dias_inactivo} d√≠as</span>
                                             </div>
                                             <div className="pr-stat-item">
                                                 <BookOpen size={14} className="pr-stat-icon" />
@@ -248,11 +248,11 @@ const PestanaRetencion = () => {
                                         </div>
 
                                         <div className="pr-reason">
-                                            <strong>RazÛn:</strong> {usuario.razon_principal}
+                                            <strong>Raz√≥n:</strong> {usuario.razon_principal}
                                         </div>
 
                                         <div className="pr-last-activity">
-                                            <strong>⁄ltima actividad:</strong> {formatearFecha(usuario.ultima_actividad)}
+                                            <strong>√öltima actividad:</strong> {formatearFecha(usuario.ultima_actividad)}
                                         </div>
                                     </div>
 
