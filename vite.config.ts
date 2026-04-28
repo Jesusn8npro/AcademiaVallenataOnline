@@ -1,30 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import obfuscator from 'rollup-plugin-obfuscator';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    // 🛡️ PROTECCIÓN DE CÓDIGO: Solo se activa en producción para no ralentizar el desarrollo
-    // y evitar que el servidor de build se quede sin RAM.
-    process.env.NODE_ENV === 'production' ? obfuscator({
-      options: {
-        compact: true,
-        controlFlowFlattening: true,
-        controlFlowFlatteningThreshold: 0.1, // Reducido para mayor velocidad en build
-        numbersToExpressions: true,
-        simplify: true,
-        stringArray: true,
-        stringArrayThreshold: 0.5, // Reducido para no saturar memoria
-        stringArrayWrappersCount: 1,
-        splitStrings: true,
-        splitStringsChunkLength: 10,
-        unicodeEscapeSequence: false
-      }
-    }) : null
-  ].filter(Boolean),
+    react()
+  ],
   base: '/',
   resolve: {
     alias: {
