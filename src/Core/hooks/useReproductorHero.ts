@@ -2,17 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { NotaHero, CancionHero } from '../hero/tipos_Hero';
 import { motorAudioPro } from '../audio/AudioEnginePro';
 
-/**
- * HOOK: useReproductorHero (V2 - Sincronizado por Ticks)
- * Ahora permite cambios de BPM en tiempo real, pausa, rebobinado y bucles (loops).
- */
 export const useReproductorHero = (
     actualizarBoton: (id: string, accion: 'add' | 'remove', instancias?: any[] | null, silencioso?: boolean) => void,
     setDireccionSinSwap: (dir: 'halar' | 'empujar') => void,
     logica_reproduceTono: (id: string, tiempo?: number, duracion?: number) => { instances: any[] } | null,
-    bpmActual: number, // Nuevo parámetro: BPM que viene del simulador
-    onBpmCambiado?: (nuevoBpm: number) => void, // Callback cuando cambia el BPM
-    onBeat?: (beatIndex: number) => void, // Callback para cada beat (metrónomo)
+    bpmActual: number,
+    onBpmCambiado?: (nuevoBpm: number) => void,
+    onBeat?: (beatIndex: number) => void,
     onLoopJump?: (startTick: number) => void
 ) => {
     const [reproduciendo, setReproduciendo] = useState(false);
@@ -21,47 +17,75 @@ export const useReproductorHero = (
     const [tickActual, setTickActual] = useState(0);
     const [totalTicks, setTotalTicks] = useState(0);
 
-    // --- REFS PARA EL MOTOR DE PRECISIÓN ABSOLUTA (HARDWARE CLOCK) ---
     const tickRef = useRef(0);
-    const checkpointTimeRef = useRef(0); // Ahora en SEGUNDOS (AudioContext)
+    const checkpointTimeRef = useRef(0);
     const checkpointTickRef = useRef(0);
     const bpmRef = useRef(bpmActual);
-
     const bpmTargetRef = useRef(bpmActual);
 
-    // Almacenamos el BPM objetivo, pero NO saltamos el reloj aquí.
-    // El reloj se sincroniza atómicamente dentro del loop para evitar desincronizaciones de UI.
-    useEffect(() => {
-        bpmTargetRef.current = bpmActual;
-    }, [bpmActual]);
+    // El reloj se sincroniza atómicamente dentro del loop, no aquí, para no producir saltos visibles de UI.
+    useEffect(() => { bpmTargetRef.current = bpmActual; }, [bpmActual]);
 
     const pausadoRef = useRef(false);
     const animFrameRef = useRef(0);
     const loopABRef = useRef<{ start: number, end: number, activo: boolean }>({ start: 0, end: 0, activo: false });
+    const rangoSeccionRef = useRef<{ inicio: number; fin: number } | null>(null);
 
-    // Callbacks para Pro Max (metrónomo y cambios de BPM)
+    // Audio HTML opcional: cuando hay un mp3 de fondo, el reloj sigue audio.currentTime → cero drift.
+    const audioSyncRef = useRef<HTMLAudioElement | null>(null);
+    const bpmOriginalSyncRef = useRef<number>(120);
+    // Hasta que el audio dispare 'playing', el RAF no debe disparar notas (evita "secuencia antes que mp3").
+    const audioSyncSonandoRef = useRef<boolean>(false);
+    // Listeners registrados por setAudioSync. Se guardan para poder removerlos al re-cablear (cambio de canción/bpm)
+    // y evitar memory leak por listeners acumulados sobre el mismo HTMLAudio.
+    const audioSyncListenersRef = useRef<{ audio: HTMLAudioElement; onPlaying: () => void; onSeeked: () => void; onPause: () => void } | null>(null);
+
+    const setAudioSync = useCallback((audio: HTMLAudioElement | null, bpmOriginal?: number) => {
+        // Limpia listeners de cualquier audio previo antes de re-cablear.
+        const previo = audioSyncListenersRef.current;
+        if (previo) {
+            previo.audio.removeEventListener('playing', previo.onPlaying);
+            previo.audio.removeEventListener('seeked', previo.onSeeked);
+            previo.audio.removeEventListener('pause', previo.onPause);
+            audioSyncListenersRef.current = null;
+        }
+
+        audioSyncRef.current = audio;
+        // Si el audio ya está sonando al re-cablear, mantener el flag — evita un "congelado" innecesario del reloj.
+        const yaSonando = !!(audio && !audio.paused && audio.readyState >= 2);
+        audioSyncSonandoRef.current = yaSonando;
+        if (typeof bpmOriginal === 'number' && bpmOriginal > 0) {
+            bpmOriginalSyncRef.current = bpmOriginal;
+        }
+        if (audio) {
+            const onPlaying = () => { audioSyncSonandoRef.current = true; };
+            const onSeeked = () => { if (!audio.paused) audioSyncSonandoRef.current = true; };
+            const onPause = () => { audioSyncSonandoRef.current = false; };
+            audio.addEventListener('playing', onPlaying);
+            audio.addEventListener('seeked', onSeeked);
+            audio.addEventListener('pause', onPause);
+            audioSyncListenersRef.current = { audio, onPlaying, onSeeked, onPause };
+            // Fallback: si 'playing' no llega en 1500ms, soltar el RAF igual.
+            setTimeout(() => {
+                if (audioSyncRef.current === audio && !audioSyncSonandoRef.current) {
+                    audioSyncSonandoRef.current = true;
+                }
+            }, 1500);
+        }
+    }, []);
+
     const onBpmCambiadoRef = useRef(onBpmCambiado);
     const onBeatRef = useRef(onBeat);
     const onLoopJumpRef = useRef(onLoopJump);
     const lastBeatIndexRef = useRef(-1);
 
-    useEffect(() => {
-        onBpmCambiadoRef.current = onBpmCambiado;
-    }, [onBpmCambiado]);
+    useEffect(() => { onBpmCambiadoRef.current = onBpmCambiado; }, [onBpmCambiado]);
+    useEffect(() => { onBeatRef.current = onBeat; }, [onBeat]);
+    useEffect(() => { onLoopJumpRef.current = onLoopJump; }, [onLoopJump]);
 
-    useEffect(() => {
-        onBeatRef.current = onBeat;
-    }, [onBeat]);
-
-    useEffect(() => {
-        onLoopJumpRef.current = onLoopJump;
-    }, [onLoopJump]);
-
-    // Notas que están "listas" o "pasadas"
     const notasOriginalesRef = useRef<NotaHero[]>([]);
     const notasActivasRef = useRef<Map<string, { endTimeTick: number, instancias: any[], botonId: string }>>(new Map());
 
-    // --- LIMPIEZA TOTAL ---
     const detenerReproduccion = useCallback(() => {
         setReproduciendo(false);
         setPausado(false);
@@ -70,7 +94,6 @@ export const useReproductorHero = (
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = 0;
 
-        // Limpiar motor y UI
         if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
 
         notasActivasRef.current.forEach((val, info) => {
@@ -82,6 +105,8 @@ export const useReproductorHero = (
         checkpointTickRef.current = 0;
         checkpointTimeRef.current = 0;
         setTickActual(0);
+        rangoSeccionRef.current = null;
+        audioSyncRef.current = null;
     }, [actualizarBoton]);
 
     const alternarPausa = useCallback(() => {
@@ -91,7 +116,6 @@ export const useReproductorHero = (
         setPausado(nuevoEstado);
 
         if (nuevoEstado) {
-            // Pausado: Congelamos posición exacta
             const ahora = motorAudioPro.tiempoActual;
             const resolucion = 192;
             if (checkpointTimeRef.current > 0) {
@@ -101,12 +125,10 @@ export const useReproductorHero = (
             checkpointTimeRef.current = ahora;
             if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
         } else {
-            // Al reanudar, marcamos el "ahora" como nuevo checkpoint relativo
             checkpointTimeRef.current = motorAudioPro.tiempoActual;
         }
     }, [reproduciendo]);
 
-    // --- EL CORAZÓN DEL REPRODUCTOR (Loop de Ticks impulsado por Hardware) ---
     const loop = useCallback(() => {
         if ((pausadoRef as any).current) {
             animFrameRef.current = requestAnimationFrame(loop);
@@ -116,7 +138,7 @@ export const useReproductorHero = (
         const ahora = motorAudioPro.tiempoActual;
         const resolucion = 192;
 
-        // 🔄 ATOMIC BPM SYNC: Sincronización precisa en tiempo real
+        // BPM atómico: re-checkpoint antes de mover el bpmRef, así no se ve un salto en UI.
         if (bpmRef.current !== bpmTargetRef.current) {
             if (checkpointTimeRef.current > 0) {
                 const ticksAcumulados = (ahora - checkpointTimeRef.current) * (bpmRef.current / 60) * resolucion;
@@ -124,19 +146,33 @@ export const useReproductorHero = (
             }
             checkpointTimeRef.current = ahora;
             bpmRef.current = bpmTargetRef.current;
-            // 📢 Notificar cambio de BPM (para AcordeonProMax)
             onBpmCambiadoRef.current?.(bpmRef.current);
         }
 
-        // Transformación de tiempo a ticks
-        const ticksPorSegundo = (bpmRef.current / 60) * resolucion;
-        const ticksDesdeCheckpoint = (ahora - checkpointTimeRef.current) * ticksPorSegundo;
+        // Tick: (1) audio sonando → sigue audio.currentTime; (2) audio pendiente → reloj congelado; (3) sin audio → AudioContext.
+        const audioSync = audioSyncRef.current;
+        const tieneAudioSync = !!audioSync;
+        const audioActivo = audioSyncSonandoRef.current
+            && !!(audioSync && !audioSync.paused && audioSync.readyState >= 2);
 
-        const nuevoTickAbsoluto = checkpointTickRef.current + ticksDesdeCheckpoint;
+        let nuevoTickAbsoluto: number;
+        if (audioActivo) {
+            const bpmRef_orig = bpmOriginalSyncRef.current || bpmRef.current;
+            nuevoTickAbsoluto = audioSync!.currentTime * (bpmRef_orig / 60) * resolucion;
+            checkpointTickRef.current = nuevoTickAbsoluto;
+            checkpointTimeRef.current = ahora;
+        } else if (tieneAudioSync) {
+            nuevoTickAbsoluto = tickRef.current;
+            checkpointTickRef.current = nuevoTickAbsoluto;
+            checkpointTimeRef.current = ahora;
+        } else {
+            const ticksPorSegundo = (bpmRef.current / 60) * resolucion;
+            const ticksDesdeCheckpoint = (ahora - checkpointTimeRef.current) * ticksPorSegundo;
+            nuevoTickAbsoluto = checkpointTickRef.current + ticksDesdeCheckpoint;
+        }
         const deltaTicksFrame = nuevoTickAbsoluto - tickRef.current;
         tickRef.current = nuevoTickAbsoluto;
 
-        // 🎵 Disparar callback de beat cuando cruzamos una línea de beat
         if (onBeatRef.current) {
             const beatIndex = Math.floor(tickRef.current / resolucion);
             if (beatIndex > lastBeatIndexRef.current) {
@@ -145,7 +181,6 @@ export const useReproductorHero = (
             }
         }
 
-        // Manejo de Bucle A-B (Precisión al salto)
         if (loopABRef.current.activo && tickRef.current >= loopABRef.current.end) {
             tickRef.current = loopABRef.current.start;
             checkpointTickRef.current = loopABRef.current.start;
@@ -155,48 +190,34 @@ export const useReproductorHero = (
             notasActivasRef.current.forEach((val, llave) => actualizarBoton(val.botonId || llave, 'remove', null, true));
             notasActivasRef.current.clear();
             if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
-            // Retornamos de inmediato para limpiar este frame
             animFrameRef.current = requestAnimationFrame(loop);
             return;
         }
 
-        // 1. Apagar notas cuya duración terminó
         notasActivasRef.current.forEach((info, llaveUnica) => {
             if (tickRef.current >= info.endTimeTick) {
-                // 🛑 Detener el audio manualmente (Esto permite elasticidad si cambia el BPM)
+                // Detener el audio manualmente permite elasticidad si cambia el BPM mientras la nota suena.
                 if (info.instancias && info.instancias.length > 0) {
                     info.instancias.forEach((inst: any) => {
                         if ((window as any).motorAudioPro) {
-                            (window as any).motorAudioPro.detener(inst, 0.05); // Fade rápido
+                            (window as any).motorAudioPro.detener(inst, 0.05);
                         }
                     });
                 }
-
-                // Apagar luz UI
                 actualizarBoton(info.botonId, 'remove', null, false);
                 notasActivasRef.current.delete(llaveUnica);
             }
         });
 
-        // 2. Encender notas en TIEMPO REAL
         notasOriginalesRef.current.forEach(nota => {
-            // Nota cruzó el umbral en este frame
             if (nota.tick >= tickRef.current - deltaTicksFrame && nota.tick < tickRef.current) {
-                // Generar un ID único por nota (tick + botonId)
                 const llaveUnica = `${nota.botonId}_${nota.tick}`;
-
                 if (!notasActivasRef.current.has(llaveUnica)) {
                     setDireccionSinSwap(nota.fuelle === 'abriendo' ? 'halar' : 'empujar');
-
-                    // 🎶 Disparo Inmediato SIN duracion programada
-                    // Esto permite que la nota dure todo el tiempo que deba mientras el BPM fluye libremente.
-                    // Si el usuario frena el BPM casi a 0, la nota seguirá sonando hasta cruzar su tick de cierre.
+                    // Disparo sin duración programada: la nota dura mientras el BPM fluya, hasta su tick de cierre.
                     const result = logica_reproduceTono(nota.botonId);
                     const instancias = result?.instances || [];
-
                     actualizarBoton(nota.botonId, 'add', instancias, false);
-
-                    // Guardamos usando la llave única incluyendo botonId para poder apagarlo luego
                     notasActivasRef.current.set(llaveUnica, {
                         endTimeTick: nota.tick + nota.duracion,
                         instancias,
@@ -208,7 +229,12 @@ export const useReproductorHero = (
 
         setTickActual(Math.floor(tickRef.current));
 
-        // Finalización lógica
+        const rango = rangoSeccionRef.current;
+        if (rango && !loopABRef.current.activo && tickRef.current > rango.fin) {
+            detenerReproduccion();
+            return;
+        }
+
         const ultimoTickMusica = notasOriginalesRef.current[notasOriginalesRef.current.length - 1]?.tick || 0;
         if (!loopABRef.current.activo && tickRef.current > (ultimoTickMusica + 500)) {
             detenerReproduccion();
@@ -229,7 +255,17 @@ export const useReproductorHero = (
         setTickActual(Math.floor(tickBase));
     }, []);
 
-    const reproducirSecuencia = useCallback((cancion: CancionHero) => {
+    const reproducirSecuencia = useCallback((
+        cancion: CancionHero,
+        opciones?: {
+            rangoTicks?: { inicio: number; fin: number } | null;
+            // Tick exacto donde arrancar el reloj. Útil cuando el caller ya esperó
+            // el evento 'playing' del MP3 y quiere alinear el tick a la posición
+            // real del audio (audio.currentTime * factor). Si se pasa, sustituye
+            // a rango.inicio como punto de arranque, pero rango.fin sigue activo.
+            tickInicialOverride?: number | null;
+        }
+    ) => {
         detenerReproduccion();
 
         let secuencia = cancion.secuencia || (cancion as any).secuencia_json;
@@ -238,28 +274,57 @@ export const useReproductorHero = (
         }
         if (!Array.isArray(secuencia)) return;
 
-        const seqOrdenada = [...secuencia].sort((a, b) => a.tick - b.tick);
+        let seqOrdenada = [...secuencia].sort((a, b) => a.tick - b.tick);
+
+        // Con metrónomo: alinear primer ataque al beat más cercano (todas las notas se desplazan por el mismo offset, conserva feel).
+        if ((cancion as any).usoMetronomo && seqOrdenada.length > 0) {
+            const resolucion = (cancion as any).resolucion || 192;
+            const primerTick = seqOrdenada[0].tick;
+            const beatMasCercano = Math.round(primerTick / resolucion) * resolucion;
+            const offset = primerTick - beatMasCercano;
+            if (Math.abs(offset) > 2 && Math.abs(offset) < resolucion) {
+                seqOrdenada = seqOrdenada.map(n => ({ ...n, tick: n.tick - offset }));
+            }
+        }
         notasOriginalesRef.current = seqOrdenada;
 
         const ultimoTick = seqOrdenada.length > 0 ? seqOrdenada[seqOrdenada.length - 1].tick + seqOrdenada[seqOrdenada.length - 1].duracion : 0;
         setTotalTicks(ultimoTick);
+
+        // Rango de sección opcional: si presente, arranca en `inicio` y detiene al cruzar `fin`.
+        const rango = opciones?.rangoTicks ?? null;
+        rangoSeccionRef.current = rango && rango.fin > rango.inicio ? { inicio: rango.inicio, fin: rango.fin } : null;
+        const override = opciones?.tickInicialOverride;
+        const tickInicial = (typeof override === 'number' && !isNaN(override) && override >= 0)
+            ? override
+            : (rangoSeccionRef.current ? rangoSeccionRef.current.inicio : 0);
 
         setCancionActual(cancion);
         setReproduciendo(true);
         (pausadoRef as any).current = false;
         setPausado(false);
 
-        tickRef.current = 0;
-        checkpointTickRef.current = 0;
+        const bpmCancion = (cancion as any).bpm;
+        if (typeof bpmCancion === 'number' && bpmCancion > 0) { bpmRef.current = bpmCancion; bpmTargetRef.current = bpmCancion; }
+
+        tickRef.current = tickInicial;
+        checkpointTickRef.current = tickInicial;
         checkpointTimeRef.current = motorAudioPro.tiempoActual;
+        const resolucion = (cancion as any).resolucion || 192;
+        lastBeatIndexRef.current = tickInicial > 0 ? Math.floor(tickInicial / resolucion) - 1 : -1;
+        setTickActual(Math.floor(tickInicial));
         animFrameRef.current = requestAnimationFrame(loop);
 
-        // 🎧 COMPENSADOR DE LATENCIA MÁGICO:
-        // Si hay una pista cargada, la obligamos a sincronizarse a este momento cero real.
-        (window as any).sincronizarRelojConPista = () => {
-             sincronizarConPista();
+        // Compensador de latencia: cuando el MP3 dispara 'playing' tras un seek, alinea el reloj a la posición real.
+        (window as any).sincronizarRelojConPista = (tickEspecifico?: number) => {
+             const tickFinal = typeof tickEspecifico === 'number' && !isNaN(tickEspecifico)
+                 ? tickEspecifico
+                 : tickInicial;
+             sincronizarConPista(tickFinal);
+             notasActivasRef.current.forEach((val, llave) => actualizarBoton(val.botonId || llave, 'remove', null, true));
+             notasActivasRef.current.clear();
         };
-    }, [detenerReproduccion, loop, sincronizarConPista]);
+    }, [actualizarBoton, detenerReproduccion, loop, sincronizarConPista]);
 
     const buscarTick = useCallback((tick: number) => {
         if (typeof tick !== 'number' || isNaN(tick)) return;
@@ -289,6 +354,7 @@ export const useReproductorHero = (
         alternarPausa,
         buscarTick,
         setLoopPoints,
-        sincronizarConPista
+        sincronizarConPista,
+        setAudioSync,
     };
 };

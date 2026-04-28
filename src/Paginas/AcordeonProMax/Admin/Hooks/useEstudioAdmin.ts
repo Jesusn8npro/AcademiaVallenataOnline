@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMetronomoGlobal } from '../../../../Core/hooks/useMetronomoGlobal';
+import { useMetronomo } from '../../../SimuladorApp/Hooks/useMetronomo';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import { obtenerModeloVisualPorId, resolverImagenModeloAcordeon } from '../../PracticaLibre/Datos/modelosVisualesAcordeon';
 import { useEstudioPracticaLibre } from '../../PracticaLibre/Hooks/useEstudioPracticaLibre';
 import { useLogicaProMax } from '../../Hooks/useLogicaProMax';
@@ -19,7 +21,6 @@ export function useEstudioAdmin() {
 
   const [modoAjuste, setModoAjuste] = useState(false);
   const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
-  const [modalCreadorAcordesVisible, setModalCreadorAcordesVisible] = useState(false);
   const [modalListaAcordesVisible, setModalListaAcordesVisible] = useState(false);
   const [acordeAEditar, setAcordeAEditar] = useState<any>(null);
 
@@ -47,6 +48,71 @@ export function useEstudioAdmin() {
     reproduciendo: hero.reproduciendo,
   });
 
+  // Metrónomo profesional compartido (Simulador) — se usa en grabación REC Pro
+  // y se reactiva automáticamente al reproducir canciones grabadas con metrónomo.
+  // BPM independiente del transport: bajar el BPM en la BarraTimelineProMax NO
+  // afecta al metrónomo. El metrónomo conserva su propio tempo configurable.
+  const metronomoPro = useMetronomo(120);
+
+  // Metrónomo SINCRÓNICO durante reproducción: en vez de correr el scheduler
+  // independiente del useMetronomo (que se desfasa al cambiar BPM porque mantiene
+  // su propia línea de tiempo), engancho el callback al onBeat del reproductor.
+  // Cada beat del reproductor dispara un click — sincronización perfecta con las
+  // notas, sin importar cuánto cambie el BPM.
+  useEffect(() => {
+    const cancion: any = libreria.cancionActivaLibreria;
+    const debeUsar = !!cancion?.usoMetronomo || !!cancion?.metronomo_activado;
+    if (!debeUsar) {
+      hero.setOnBeatExterno(null);
+      return;
+    }
+    const compas = (cancion as any).compas ?? 4;
+    hero.setOnBeatExterno((beatIndex: number) => {
+      const beatEnCompas = beatIndex % compas;
+      motorAudioPro.reproducir(
+        beatEnCompas === 0 ? 'click_fuerte' : 'click_debil',
+        'metronomo',
+        beatEnCompas === 0 ? 0.7 : 0.45
+      );
+    });
+    return () => hero.setOnBeatExterno(null);
+  }, [libreria.cancionActivaLibreria, hero.setOnBeatExterno]);
+
+  // Apagar metronomoPro si quedó activo cuando arranca una reproducción con met
+  // sincrónico — evita doble click (paralelo desfasado vs sincrónico).
+  useEffect(() => {
+    const cancion: any = libreria.cancionActivaLibreria;
+    const debeUsar = !!cancion?.usoMetronomo || !!cancion?.metronomo_activado;
+    if (debeUsar && hero.reproduciendo && metronomoPro.activo) {
+      metronomoPro.detener();
+    }
+  }, [hero.reproduciendo, libreria.cancionActivaLibreria]);
+
+  // audioFondo se crea ANTES de useEditorSecuenciaAdmin porque éste necesita
+  // iniciarReproduccionSincronizada para arrancar el audio + reloj sincronizados
+  // (mismo patrón que dispararJuegoSincronizado en el simulador).
+  const audioFondo = useAudioFondoPracticaLibre({
+    reproduciendo: hero.reproduciendo,
+    pausado: hero.pausado,
+    bpm: hero.bpm,
+    tickActual: hero.tickActual,
+    cancionData: { bpm: libreria.bpmOriginalGrabacion, resolucion: 192, audio_fondo_url: libreria.pistaUrl },
+    audioUrl: libreria.pistaUrl,
+    volumen: 0.8,
+  });
+  const audioRef = audioFondo.audioRef;
+
+  // Conecta el HTMLAudio del MP3 al RAF de useReproductorHero: el RAF lee audio.currentTime cada frame
+  // y los dos relojes (AudioContext y HTMLMediaElement) dejan de driftar. Sin esto, el inicio queda alineado
+  // por iniciarReproduccionSincronizada pero los segundos siguientes acumulan desfase audible.
+  useEffect(() => {
+    if (libreria.pistaUrl && audioRef.current) {
+      hero.setAudioSync(audioRef.current, libreria.bpmOriginalGrabacion || 120);
+    } else {
+      hero.setAudioSync(null);
+    }
+  }, [libreria.pistaUrl, libreria.bpmOriginalGrabacion, audioRef, hero.setAudioSync]);
+
   const rec = useEditorSecuenciaAdmin({
     bpm: hero.bpm,
     grabandoSesion: hero.grabaciones.grabando,
@@ -64,27 +130,23 @@ export function useEstudioAdmin() {
     onReproducirSecuencia: hero.reproducirSecuencia,
     onLimpiarLoop: hero.limpiarLoopAB,
     onCambiarBpm: hero.cambiarBpm,
+    onIniciarReproduccionSincronizada: audioFondo.iniciarReproduccionSincronizada,
     libreria,
   });
+
+  const navegarACreadorAcordes = useCallback(
+    () => estudio.alternarPanel('gestor_acordes'),
+    [estudio.alternarPanel]
+  );
 
   const { idSonandoCiclo, acordeMaestroActivo, onReproducirAcorde, onDetener, onEditarAcorde, onNuevoAcordeEnCirculo, onReproducirCirculoCompleto } = useReproductorAcordesAdmin(
     logica,
     setModalListaAcordesVisible,
     setAcordeAEditar,
-    setModalCreadorAcordesVisible
+    navegarACreadorAcordes
   );
 
   const { refAlumno, obtenerPosicionAlumno } = usePosicionProMax();
-
-  const audioRef = useAudioFondoPracticaLibre({
-    reproduciendo: hero.reproduciendo,
-    pausado: hero.pausado,
-    bpm: hero.bpm,
-    tickActual: hero.tickActual,
-    cancionData: { bpm: libreria.bpmOriginalGrabacion, resolucion: 192, audio_fondo_url: libreria.pistaUrl },
-    audioUrl: libreria.pistaUrl,
-    volumen: 0.8,
-  });
 
   const modeloActivo = useMemo(
     () => obtenerModeloVisualPorId(estudio.preferencias.modeloVisualId),
@@ -165,7 +227,6 @@ export function useEstudioAdmin() {
     logica, rec, libreria, heroGrabaciones: hero.grabaciones, acordes,
     modoAjuste, setModoAjuste,
     pestanaActiva, setPestanaActiva,
-    modalCreadorAcordesVisible, setModalCreadorAcordesVisible,
     modalListaAcordesVisible, setModalListaAcordesVisible,
     acordeAEditar, setAcordeAEditar,
     onGuardarHero,
@@ -190,6 +251,7 @@ export function useEstudioAdmin() {
     imagenFondoAcordeon,
     metronomoActivo,
     setMetronomoActivo,
+    metronomoPro,
     modoAjuste,
     setModoAjuste,
     pestanaActiva,
