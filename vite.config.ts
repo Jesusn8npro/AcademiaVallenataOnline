@@ -35,12 +35,16 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
 
-          // Reglas EXCLUSIVAS por path exacto del paquete para evitar
-          // que substrings genéricas (ej: "react" matcheando "@react-three")
-          // crucen chunks y generen circular dependencies.
-          // Las reglas evalúan en orden — la primera que matchea gana,
-          // por eso los scoped packages (@react-three, @splinetool) van
-          // ANTES que el matcher genérico de react.
+          // Solo se separan en chunks dedicados los paquetes GRANDES y
+          // BIEN AISLADOS. Paquetes con deps tejidas con utilidades
+          // compartidas (recharts, framer-motion, react-player) se dejan
+          // en `vendor` para evitar circular chunks que rompen la
+          // inicialización en runtime ("Cannot set properties of
+          // undefined", "X is not a function").
+          //
+          // Las reglas evalúan en orden — los scoped packages
+          // (@react-three, @splinetool, @supabase) van ANTES que los
+          // matchers genéricos de react para evitar capturas indebidas.
 
           if (/[\\/]node_modules[\\/]@react-three[\\/]/.test(id)) return 'three-vendor';
           if (/[\\/]node_modules[\\/]@splinetool[\\/]/.test(id)) return 'three-vendor';
@@ -50,10 +54,8 @@ export default defineConfig({
             return 'react-vendor';
           }
 
-          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return 'animation-vendor';
           if (/[\\/]node_modules[\\/]@supabase[\\/]/.test(id)) return 'supabase-vendor';
-          if (/[\\/]node_modules[\\/](recharts|d3-[a-z]+)[\\/]/.test(id)) return 'charts-vendor';
-          if (/[\\/]node_modules[\\/](howler|react-player)[\\/]/.test(id)) return 'media-vendor';
+
           if (/[\\/]node_modules[\\/](i18next|react-i18next|i18next-browser-languagedetector)[\\/]/.test(id)) {
             return 'i18n-vendor';
           }
