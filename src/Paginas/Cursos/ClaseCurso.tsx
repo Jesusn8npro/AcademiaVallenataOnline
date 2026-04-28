@@ -257,7 +257,7 @@ export default function ClaseCurso() {
                     <ReproductorLecciones
                         leccionAnterior={prevLeccion}
                         leccionSiguiente={nextLeccion}
-                        videoUrl={leccion.video_url || ''}
+                        leccionId={leccion.id}
                         thumbnailUrl={''}
                         titulo={leccion.titulo}
                         tipo="leccion"

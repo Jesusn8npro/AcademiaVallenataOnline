@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { sanitizarHTML } from '../../../utilidades/sanitizar';
 import './HeroHome.css';
 import { heroStyles as styles } from './HeroHome.styles';
 
@@ -55,7 +56,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
 
             <div style={{ animation: 'flyInFromBottom 1s ease-out 0.2s both' }}>
               <p style={styles.heroDescription}>
-                <strong dangerouslySetInnerHTML={{ __html: t('hero.descripcion') }} />
+                <strong dangerouslySetInnerHTML={{ __html: sanitizarHTML(t('hero.descripcion')) }} />
               </p>
             </div>
 

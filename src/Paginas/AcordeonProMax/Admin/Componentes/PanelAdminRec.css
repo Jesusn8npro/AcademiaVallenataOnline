@@ -365,3 +365,45 @@
     font-size: 24px;
   }
 }
+
+/* === METRÓNOMO INLINE === */
+.panel-admin-rec-metronomo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  background: rgba(59, 130, 246, 0.08);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.panel-admin-rec-metronomo-header:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #fff;
+}
+
+.panel-admin-rec-metronomo-cuerpo {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Ajustes finos del PanelMetronomoInline cuando vive en el panel admin */
+.panel-admin-rec-metronomo-cuerpo .modal-metronomo-cuerpo-inline {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 10px;
+}
+
+.panel-admin-rec-metronomo-cuerpo .btn-control-principal {
+  width: 100%;
+}

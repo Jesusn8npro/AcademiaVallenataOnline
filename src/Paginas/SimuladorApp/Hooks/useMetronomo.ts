@@ -91,10 +91,13 @@ export const useMetronomo = (bpmInicial: number) => {
         }
     }, [playClick]);
 
-    const iniciar = () => {
+    const iniciar = async () => {
         if (!audioCtx.current) audioCtx.current = motorAudioPro.contextoAudio;
-        if (audioCtx.current.state === 'suspended') audioCtx.current.resume();
-        nextNoteTime.current = audioCtx.current.currentTime;
+        const ctx = audioCtx.current!;
+        if (ctx.state === 'suspended') {
+            try { await ctx.resume(); } catch { /* user gesture requerido */ }
+        }
+        nextNoteTime.current = ctx.currentTime;
         pulseCount.current = 0;
         setPulsoActual(0);
         timerID.current = window.setInterval(scheduler, 25);

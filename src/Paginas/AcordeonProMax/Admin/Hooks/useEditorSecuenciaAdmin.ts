@@ -21,6 +21,7 @@ export const useEditorSecuenciaAdmin = ({
   secuencia, totalTicks,
   onAlternarPausa, onAlternarLoop, onBuscarTick,
   onReproducirSecuencia, onLimpiarLoop, onCambiarBpm,
+  onIniciarReproduccionSincronizada,
   libreria,
 }: UseEditorSecuenciaAdminParams) => {
   const {
@@ -242,6 +243,19 @@ export const useEditorSecuenciaAdmin = ({
     ejecutar();
   }, [detenerReproduccionLocal, esperandoPunchIn, grabadorLocal, hayCambiosEdicionSecuencia, onLimpiarLoop]);
 
+  const forzarCerrarEditor = useCallback(() => {
+    if (grabadorLocal.grabando) grabadorLocal.detenerGrabacion();
+    setEsperandoPunchIn(false);
+    setModoCapturaRec(null);
+    setHayCambiosEdicionSecuencia(false);
+    setMensajeEdicionSecuencia(null);
+    setCancionEditandoSecuencia(null);
+    setCancionEnModalEditor(null);
+    setSecuenciaEditada([]);
+    onLimpiarLoop();
+    detenerReproduccionLocal(0);
+  }, [grabadorLocal, onLimpiarLoop, detenerReproduccionLocal]);
+
   const iniciarPunchInEdicion = useCallback(() => {
     if (!cancionEditandoSecuencia) { setMensajeEdicionSecuencia('Primero elige una cancion de la libreria para editar.'); return; }
     if (grabandoSesion || grabadorLocal.grabando) { setMensajeEdicionSecuencia('Deten la grabacion actual antes de iniciar un punch-in.'); return; }
@@ -258,7 +272,7 @@ export const useEditorSecuenciaAdmin = ({
   }, [bpm, cancionEditandoSecuencia, grabadorLocal, loopAB.activo, onAlternarLoop,
     preRollSegundos, punchInTick, onBuscarTick, onReproducirSecuencia, grabandoSesion]);
 
-  const reproducirCancionActivaDesdeTick = useCallback((tickInicio = 0, cancionForzada?: any) => {
+  const reproducirCancionActivaDesdeTick = useCallback(async (tickInicio = 0, cancionForzada?: any) => {
     const cancionBase = cancionForzada
       || (cancionEditandoSecuencia
         ? construirCancionHero(cancionEditandoSecuencia, secuenciaEditadaRef.current)
@@ -270,22 +284,70 @@ export const useEditorSecuenciaAdmin = ({
           : null);
     if (!cancionBase) return;
     prepararCancionEnEscenario(cancionBase);
-    window.setTimeout(() => {
-      onReproducirSecuencia(cancionBase);
-      window.setTimeout(() => onBuscarTick(Math.max(0, Math.floor(tickInicio))), 0);
-    }, 0);
-  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario]);
 
-  const handleReproducirLibreria = useCallback((cancion: any) => {
+    // Si el caller proporcionó iniciarReproduccionSincronizada, usamos el patrón
+    // "wait for 'playing'": espera que el MP3 esté listo, dispara play(), espera
+    // 'playing' y nos devuelve el tick real al que arrancó el audio. Después
+    // llamamos reproducirSecuencia con tickInicialOverride → RAF y MP3 salen
+    // del mismo punto, sin desfase. Mismo patrón de modo maestro.
+    if (onIniciarReproduccionSincronizada) {
+      const tickInicioNorm = Math.max(0, Math.floor(tickInicio));
+      // Pasar el bpm de la canción explícitamente para evitar el race con
+      // setBpmOriginalGrabacion (state update que no toma efecto sino hasta
+      // el próximo render — mientras tanto el ref interno del hook de audio
+      // está stale, y el offsetSegundos del seek queda incorrecto).
+      const bpmOriginalCancion = Number(cancionBase?.bpm) || 120;
+      try {
+        const { tickInicialReal } = await onIniciarReproduccionSincronizada(
+          tickInicioNorm,
+          { bpmOriginal: bpmOriginalCancion }
+        );
+        onReproducirSecuencia(cancionBase, { tickInicialOverride: tickInicialReal });
+      } catch (_) {
+        // Si algo falla en el wait, caer al flujo viejo para no dejar al
+        // usuario sin reproducción.
+        onReproducirSecuencia(cancionBase);
+        if (tickInicioNorm > 0) onBuscarTick(tickInicioNorm);
+      }
+      return;
+    }
+
+    // Fallback al flujo legacy cuando no hay audio sincronizado disponible
+    // (ej: tests, contextos sin useAudioFondoPracticaLibre).
+    onReproducirSecuencia(cancionBase);
+    if (tickInicio > 0) onBuscarTick(Math.max(0, Math.floor(tickInicio)));
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada]);
+
+  const handleReproducirLibreria = useCallback(async (cancion: any) => {
     const secuenciaActiva = cancionEditandoSecuencia?.id === cancion.id
       ? secuenciaEditadaRef.current : undefined;
     const cancionPreparada = {
       ...cancion,
       secuencia_hero: secuenciaActiva || normalizarSecuenciaHero(cancion.secuencia_json || cancion.secuencia),
     };
+    prepararCancionEnEscenario(cancionPreparada);
+
+    // Mismo patrón que reproducirCancionActivaDesdeTick: esperar a que el MP3
+    // esté bufferead + dispararle play() + esperar 'playing' antes de arrancar
+    // el reloj de ticks. Sin esto las notas vuelan ~150ms antes que el audio
+    // (la sincronización por sincronizarRelojConPista que tiene useAudioFondoPracticaLibre
+    // recalibra el reloj DESPUÉS de que ya fueron disparadas las primeras notas).
+    if (onIniciarReproduccionSincronizada) {
+      const bpmOriginalCancion = Number(cancionPreparada?.bpm) || 120;
+      try {
+        const { tickInicialReal } = await onIniciarReproduccionSincronizada(0, { bpmOriginal: bpmOriginalCancion });
+        onReproducirSecuencia(cancionPreparada, { tickInicialOverride: tickInicialReal });
+      } catch (_) {
+        // Fallback: flujo legacy
+        onBuscarTick(0);
+        onReproducirSecuencia(cancionPreparada);
+      }
+      return;
+    }
+
     onBuscarTick(0);
     onReproducirSecuencia(cancionPreparada);
-  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia]);
+  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada]);
 
   const handleEditarSecuenciaLibreria = useCallback((cancion: any) => {
     const continuar = () => {
@@ -381,6 +443,7 @@ export const useEditorSecuenciaAdmin = ({
     limpiarRangoEdicion,
     guardarEdicionSecuencia,
     cancelarEdicionSecuencia,
+    forzarCerrarEditor,
     iniciarPunchInEdicion,
     reproducirCancionActivaDesdeTick,
     handleReproducirLibreria,

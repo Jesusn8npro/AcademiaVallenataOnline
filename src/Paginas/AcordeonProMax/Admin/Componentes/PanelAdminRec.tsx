@@ -1,6 +1,10 @@
 import React from 'react';
-import { Circle, Play, Pause, RotateCcw, Upload, Music, Timer, Volume2 } from 'lucide-react';
+import { flushSync } from 'react-dom';
+import { Circle, Play, Pause, RotateCcw, Upload, Music, Timer, Volume2, ChevronDown, ChevronUp } from 'lucide-react';
 import BarraTransporte from '../../Modos/BarraTransporte';
+import { useMetronomo } from '../../../SimuladorApp/Hooks/useMetronomo';
+import PanelMetronomoInline from '../../../SimuladorApp/Componentes/BarraHerramientas/PanelMetronomoInline';
+import '../../../SimuladorApp/Componentes/BarraHerramientas/ModalMetronomo.css';
 import './PanelAdminRec.css';
 
 interface PanelAdminRecProps {
@@ -32,6 +36,8 @@ interface PanelAdminRecProps {
   esperandoPunchIn?: boolean;
   metronomoActivo?: boolean;
   setMetronomoActivo?: (val: boolean) => void;
+  metronomoPro?: ReturnType<typeof useMetronomo>;
+  usoMetronomoRef?: React.MutableRefObject<boolean>;
   bloqueadoPorSesion?: boolean;
 }
 
@@ -56,12 +62,40 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
   cuentaAtrasPreRoll,
   metronomoActivo,
   setMetronomoActivo,
+  metronomoPro,
+  usoMetronomoRef,
   bloqueadoPorSesion = false,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const [volumen, setVolumen] = React.useState(0.8);
   const estadoPrevioPlay = React.useRef(false);
+
+  // Metrónomo profesional — instancia compartida desde useEstudioAdmin.
+  // Si no llega por prop (consumidor antiguo), instancia local como fallback.
+  const metFallback = useMetronomo(bpm);
+  const met = metronomoPro || metFallback;
+  const [metronomoExpandido, setMetronomoExpandido] = React.useState(false);
+
+  // Iniciar/detener metrónomo profesional al iniciar/detener grabación cuando NO hay MP3.
+  // CRÍTICO: usar flushSync para que setBpm se propague SÍNCRONAMENTE al grabador
+  // antes de que arranque la captura. Sin esto, el grabador arrancaba con el bpmRef
+  // anterior (ej: 60 si el usuario bajó la barra antes) y los primeros ticks salían
+  // inconsistentes con el tempo final guardado → desfase en reproducción.
+  const handleIniciarGrabacion = () => {
+    if (!pistaActualUrl) {
+      flushSync(() => setBpm(met.bpm));
+      if (!met.activo) met.iniciar();
+    }
+    onIniciarGrabacion();
+    if (usoMetronomoRef) {
+      usoMetronomoRef.current = !pistaActualUrl;
+    }
+  };
+  const handleDetenerGrabacion = () => {
+    if (met.activo) met.detener();
+    onDetenerGrabacion();
+  };
 
   // --- Sincronización de Audio (Basado en GestorPistasHero.tsx) ---
   React.useEffect(() => {
@@ -140,23 +174,26 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
   return (
     <div className="panel-admin-rec">
 
-      {/* 🎯 CONTROLES BÁSICOS */}
-      <div className="panel-admin-rec-bloque">
-        <div className="panel-admin-rec-bloque-titulo">Grabación</div>
+      {/* 🎵 METRÓNOMO PROFESIONAL INLINE */}
+      <div className="panel-admin-rec-bloque panel-admin-rec-bloque-met">
+        <button
+          className="panel-admin-rec-metronomo-header"
+          onClick={() => setMetronomoExpandido(e => !e)}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+            <Music size={12} /> Metrónomo · {met.bpm} BPM · {met.compas}/4 · {met.activo ? 'ON' : 'OFF'}
+          </span>
+          {metronomoExpandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label className="panel-admin-rec-switch-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Timer size={14} /> <span>🎚️ Metrónomo (Tempo visual)</span>
-            </div>
-            <button
-              className={`panel-admin-rec-switch ${metronomoActivo ? 'activo' : ''}`}
-              onClick={() => setMetronomoActivo?.(!metronomoActivo)}
-            >
-              <span />
-            </button>
-          </label>
-        </div>
+        {metronomoExpandido && (
+          <div className="panel-admin-rec-metronomo-cuerpo">
+            <PanelMetronomoInline met={met} bpm={met.bpm} setBpm={(v: any) => {
+              if (typeof v === 'function') met.setBpm(v(met.bpm));
+              else met.setBpm(v);
+            }} />
+          </div>
+        )}
       </div>
 
       {/* 🎵 BACKING TRACK SELECTOR */}
@@ -245,7 +282,7 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <button
             className="panel-admin-rec-btn"
-            onClick={grabando ? onDetenerGrabacion : onIniciarGrabacion}
+            onClick={grabando ? handleDetenerGrabacion : handleIniciarGrabacion}
             disabled={bloqueadoPorSesion && !grabando}
             title={bloqueadoPorSesion && !grabando ? 'Termina la grabacion de sesion para usar REC Pro.' : undefined}
             style={{

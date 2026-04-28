@@ -4,7 +4,7 @@ export function useReproductorAcordesAdmin(
   logica: any,
   setModalListaAcordesVisible: (v: boolean) => void,
   setAcordeAEditar: (a: any) => void,
-  setModalCreadorAcordesVisible: (v: boolean) => void
+  onNavegar: () => void
 ) {
   const [acordeMaestroActivo, setAcordeMaestroActivo] = React.useState(false);
   const [idSonandoCiclo, setIdSonandoCiclo] = React.useState<string | null>(null);
@@ -47,8 +47,8 @@ export function useReproductorAcordesAdmin(
   const onEditarAcorde = React.useCallback((acorde: any) => {
     setModalListaAcordesVisible(false);
     setAcordeAEditar(acorde);
-    setModalCreadorAcordesVisible(true);
-  }, [setModalListaAcordesVisible, setAcordeAEditar, setModalCreadorAcordesVisible]);
+    onNavegar();
+  }, [setModalListaAcordesVisible, setAcordeAEditar, onNavegar]);
 
   const onNuevoAcordeEnCirculo = React.useCallback((tonalidad?: string, modalidad?: string) => {
     setModalListaAcordesVisible(false);
@@ -56,8 +56,8 @@ export function useReproductorAcordesAdmin(
       grado: tonalidad || '',
       modalidad_circulo: modalidad || 'Mayor',
     });
-    setModalCreadorAcordesVisible(true);
-  }, [setModalListaAcordesVisible, setAcordeAEditar, setModalCreadorAcordesVisible]);
+    onNavegar();
+  }, [setModalListaAcordesVisible, setAcordeAEditar, onNavegar]);
 
   const onReproducirCirculoCompleto = React.useCallback(async (acordes: any[]) => {
     if (cicloActivoRef.current) {

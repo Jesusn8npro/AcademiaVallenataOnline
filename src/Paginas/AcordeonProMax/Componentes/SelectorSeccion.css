@@ -1,0 +1,104 @@
+.selector-seccion-panel {
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.selector-seccion-titulo {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.selector-seccion-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+.selector-seccion-card {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.selector-seccion-card:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.selector-seccion-card.seleccionada {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.18);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.selector-seccion-card.bloqueada {
+    cursor: not-allowed;
+    opacity: 0.55;
+    filter: grayscale(0.4);
+}
+
+.selector-seccion-card.cancion-completa {
+    grid-column: 1 / -1;
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.35);
+}
+
+.selector-seccion-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.selector-seccion-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.7rem;
+}
+
+.seccion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.seccion-badge.bloqueada { background: rgba(100, 116, 139, 0.25); color: #cbd5e1; }
+.seccion-badge.disponible { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.seccion-badge.completada { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+
+.seccion-monedas-tag,
+.seccion-precision-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.seccion-monedas-tag.ganada { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+.seccion-monedas-tag.pendiente { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+.seccion-monedas-tag.agotada { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+.seccion-precision-tag { background: rgba(255, 255, 255, 0.06); color: #cbd5e1; }

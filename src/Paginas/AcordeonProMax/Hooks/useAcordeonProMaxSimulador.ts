@@ -44,6 +44,12 @@ export function useAcordeonProMaxSimulador() {
     } catch { }
   }, [hero.bpm, hero.cancionSeleccionada?.bpm]);
 
+  // El metrónomo síncrono del Simulador ya está manejado en useLogicaProMax (engancha
+  // 'click_fuerte'/'click_debil' al onBeat del reproductor cuando cancionSeleccionada
+  // tiene usoMetronomo). NO instanciar useMetronomo aquí en paralelo — causaría doble
+  // click desfasado. La sincronización con el slider de BPM es automática porque el
+  // onBeat se dispara en cada beat real del reproductor.
+
   useEffect(() => {
     let montado = true;
     const cargarCancion = async (identificador: string, esSlug: boolean) => {

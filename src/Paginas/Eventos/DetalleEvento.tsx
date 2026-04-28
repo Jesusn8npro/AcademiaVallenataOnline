@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDetalleEvento } from './useDetalleEvento';
 import HeroEvento from './Componentes/HeroEvento';
+import { sanitizarTextoConSaltos } from '../../utilidades/sanitizar';
 import './DetalleEvento.css';
 
 function formatearFecha(fecha: string) {
@@ -72,7 +73,7 @@ const DetalleEvento: React.FC = () => {
                 <h2 className="evt-det-section-title">Sobre este evento</h2>
                 <div className="evt-det-prose">
                   {evento.descripcion
-                    ? <div dangerouslySetInnerHTML={{ __html: evento.descripcion.replace(/\n/g, '<br>') }} />
+                    ? <div dangerouslySetInnerHTML={{ __html: sanitizarTextoConSaltos(evento.descripcion) }} />
                     : <p style={{ color: '#4b5563' }}>No hay descripción disponible para este evento.</p>}
                 </div>
                 {evento.tags && evento.tags.length > 0 && (
