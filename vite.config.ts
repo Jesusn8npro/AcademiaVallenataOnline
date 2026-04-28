@@ -33,30 +33,32 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            if (id.includes('three') || id.includes('@react-three') || id.includes('@splinetool')) {
-              return 'three-vendor';
-            }
-            if (id.includes('framer-motion')) {
-              return 'animation-vendor';
-            }
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            if (id.includes('recharts') || id.includes('d3-')) {
-              return 'charts-vendor';
-            }
-            if (id.includes('howler') || id.includes('react-player')) {
-              return 'media-vendor';
-            }
-            if (id.includes('i18next')) {
-              return 'i18n-vendor';
-            }
-            return 'vendor';
+          if (!id.includes('node_modules')) return;
+
+          // Reglas EXCLUSIVAS por path exacto del paquete para evitar
+          // que substrings genéricas (ej: "react" matcheando "@react-three")
+          // crucen chunks y generen circular dependencies.
+          // Las reglas evalúan en orden — la primera que matchea gana,
+          // por eso los scoped packages (@react-three, @splinetool) van
+          // ANTES que el matcher genérico de react.
+
+          if (/[\\/]node_modules[\\/]@react-three[\\/]/.test(id)) return 'three-vendor';
+          if (/[\\/]node_modules[\\/]@splinetool[\\/]/.test(id)) return 'three-vendor';
+          if (/[\\/]node_modules[\\/]three[\\/]/.test(id)) return 'three-vendor';
+
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) {
+            return 'react-vendor';
           }
+
+          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return 'animation-vendor';
+          if (/[\\/]node_modules[\\/]@supabase[\\/]/.test(id)) return 'supabase-vendor';
+          if (/[\\/]node_modules[\\/](recharts|d3-[a-z]+)[\\/]/.test(id)) return 'charts-vendor';
+          if (/[\\/]node_modules[\\/](howler|react-player)[\\/]/.test(id)) return 'media-vendor';
+          if (/[\\/]node_modules[\\/](i18next|react-i18next|i18next-browser-languagedetector)[\\/]/.test(id)) {
+            return 'i18n-vendor';
+          }
+
+          return 'vendor';
         },
       }
     }
