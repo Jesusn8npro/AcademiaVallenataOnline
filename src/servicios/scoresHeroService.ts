@@ -15,6 +15,8 @@ export interface DatosScore {
   duracion_ms: number;
   abandono: boolean;
   porcentaje_completado: number;
+  seccion_id?: string | null;
+  seccion_nombre?: string | null;
 }
 
 export interface ScoreRespuesta {
@@ -89,7 +91,9 @@ export const scoresHeroService = {
         es_mejor_personal,
         abandono: datos.abandono,
         porcentaje_completado: datos.porcentaje_completado,
-        xp_ganado: xpCalculado
+        xp_ganado: xpCalculado,
+        seccion_id: datos.seccion_id ?? null,
+        seccion_nombre: datos.seccion_nombre ?? null,
       };
 
       const { data: scoreGuardado, error: insertError } = await supabase

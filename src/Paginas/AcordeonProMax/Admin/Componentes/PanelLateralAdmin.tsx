@@ -3,7 +3,8 @@ import { ChevronRight } from 'lucide-react';
 import { TONALIDADES } from '../../../../Core/acordeon/notasAcordeonDiatonico';
 import { MODELOS_VISUALES_ACORDEON } from '../../PracticaLibre/Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, SeccionPanelPracticaLibre } from '../../PracticaLibre/TiposPracticaLibre';
-import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminListaAcordes, PanelAdminLibreria, PanelAdminUSB } from '..';
+import { PanelAdminRec, PanelAdminGestor, PanelAdminGestorAcordes, PanelAdminLibreria, PanelAdminUSB } from '..';
+import ModalListaAcordes from '../../../../Core/componentes/ModalListaAcordes';
 import SeccionAdminSonido from './SeccionAdminSonido';
 import SeccionAdminPistas from './SeccionAdminPistas';
 import SeccionAdminTeoria from './SeccionAdminTeoria';
@@ -43,10 +44,11 @@ interface PanelLateralAdminProps {
   modosVista: Array<{ valor: any; label: string }>;
   modeloActivo: ModeloVisualAcordeon;
   onAbrirEditorAvanzado: () => void;
-  onCrearAcorde: () => void;
   onVerAcordes: () => void;
+  acordeAEditar?: any;
   metronomoActivo: boolean;
   setMetronomoActivo: (val: boolean) => void;
+  metronomoPro?: any;
 }
 
 const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
@@ -59,7 +61,7 @@ const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
 const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
   visible, seccionActiva, logica, estudio, rec, libreria, hero,
   acordes, modosVista, modeloActivo, onAbrirEditorAvanzado,
-  onCrearAcorde, onVerAcordes, metronomoActivo, setMetronomoActivo,
+  onVerAcordes, acordeAEditar, metronomoActivo, setMetronomoActivo, metronomoPro,
 }) => {
   if (!visible || !seccionActiva) return null;
 
@@ -143,6 +145,8 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
           esperandoPunchIn={rec.esperandoPunchIn}
           metronomoActivo={metronomoActivo}
           setMetronomoActivo={setMetronomoActivo}
+          metronomoPro={metronomoPro}
+          usoMetronomoRef={rec.usoMetronomoRef}
           bloqueadoPorSesion={hero.grabaciones.grabando}
         />
       )}
@@ -183,18 +187,26 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
 
       {seccionActiva === 'gestor_acordes' && (
         <PanelAdminGestorAcordes
-          onCrearNuevo={onCrearAcorde}
+          botonesSeleccionados={Object.keys(logica.botonesActivos || {})}
+          fuelleActual={logica.direccion === 'halar' ? 'abriendo' : 'cerrando'}
+          tonalidadActual={logica.tonalidadSeleccionada}
+          acordeAEditar={acordeAEditar}
+          onExitoUpdate={onVerAcordes}
           onVerTodos={onVerAcordes}
-          totalAcordes={0}
         />
       )}
 
       {seccionActiva === 'lista_acordes' && (
-        <PanelAdminListaAcordes
+        <ModalListaAcordes
+          inline
+          visible
+          onCerrar={() => {}}
           onReproducirAcorde={acordes.onReproducirAcorde}
           onDetener={acordes.onDetener}
-          idSonando={acordes.idSonandoCiclo}
+          idSonando={acordes.idSonandoCiclo || (acordes.acordeMaestroActivo ? 'activo' : null)}
           onEditarAcorde={acordes.onEditarAcorde}
+          onNuevoAcordeEnCirculo={acordes.onNuevoAcordeEnCirculo}
+          onReproducirCirculoCompleto={acordes.onReproducirCirculoCompleto}
           tonalidadActual={logica.tonalidadSeleccionada}
         />
       )}
@@ -203,25 +215,7 @@ const PanelLateralAdmin: React.FC<PanelLateralAdminProps> = ({
         <PanelAdminLibreria
           onReproducir={rec.handleReproducirLibreria}
           onEditarSecuencia={rec.handleAbrirModalEditor}
-          onMarcarEntradaEdicion={rec.marcarEntradaEdicion}
-          onMarcarSalidaEdicion={rec.marcarSalidaEdicion}
-          onIniciarPunchIn={rec.iniciarPunchInEdicion}
-          onGuardarEdicionSecuencia={rec.guardarEdicionSecuencia}
-          onCancelarEdicionSecuencia={rec.cancelarEdicionSecuencia}
-          onLimpiarRangoEdicion={rec.limpiarRangoEdicion}
           cancionEditandoId={rec.cancionEditandoSecuencia?.id || null}
-          tituloCancionEditando={rec.cancionEditandoSecuencia?.titulo || null}
-          bpmCancionEditando={rec.cancionEditandoSecuencia?.bpm || hero.bpm}
-          tickActual={hero.tickActual}
-          punchInTick={rec.punchInTick ?? null}
-          punchOutTick={hero.loopAB?.hasEnd ? hero.loopAB.end : null}
-          preRollSegundos={rec.preRollSegundos || 4}
-          setPreRollSegundos={rec.setPreRollSegundos}
-          esperandoPunchIn={rec.esperandoPunchIn}
-          grabandoEdicionSecuencia={rec.estaGrabandoEdicionSecuencia}
-          guardandoEdicionSecuencia={rec.guardandoEdicionSecuencia}
-          hayCambiosEdicionSecuencia={rec.hayCambiosEdicionSecuencia}
-          mensajeEdicionSecuencia={rec.mensajeEdicionSecuencia}
           cancionActualizada={libreria.ultimaCancionLibreriaActualizada}
         />
       )}

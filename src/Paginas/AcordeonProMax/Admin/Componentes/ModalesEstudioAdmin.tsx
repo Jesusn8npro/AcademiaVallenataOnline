@@ -1,6 +1,5 @@
 import React from 'react';
 import PanelAjustes from '../../../../Core/componentes/PanelAjustes/PanelAjustes';
-import ModalCreadorAcordes from '../../../../Core/componentes/ModalCreadorAcordes';
 import ModalListaAcordes from '../../../../Core/componentes/ModalListaAcordes';
 import ModalGuardarHero from '../../../../Core/componentes/ModalGuardarHero';
 import ModalGuardarPracticaLibre from '../../PracticaLibre/Componentes/ModalGuardarPracticaLibre';
@@ -16,12 +15,8 @@ interface ModalesEstudioAdminProps {
   setModoAjuste: (v: boolean) => void;
   pestanaActiva: 'diseno' | 'sonido';
   setPestanaActiva: (v: 'diseno' | 'sonido') => void;
-  modalCreadorAcordesVisible: boolean;
-  setModalCreadorAcordesVisible: (v: boolean) => void;
   modalListaAcordesVisible: boolean;
   setModalListaAcordesVisible: (v: boolean) => void;
-  acordeAEditar: any;
-  setAcordeAEditar: (v: any) => void;
   onGuardarHero: (datos: any) => void;
 }
 
@@ -29,9 +24,7 @@ const ModalesEstudioAdmin: React.FC<ModalesEstudioAdminProps> = ({
   logica, rec, libreria, heroGrabaciones, acordes,
   modoAjuste, setModoAjuste,
   pestanaActiva, setPestanaActiva,
-  modalCreadorAcordesVisible, setModalCreadorAcordesVisible,
   modalListaAcordesVisible, setModalListaAcordesVisible,
-  acordeAEditar, setAcordeAEditar,
   onGuardarHero,
 }) => (
   <>
@@ -61,20 +54,6 @@ const ModalesEstudioAdmin: React.FC<ModalesEstudioAdminProps> = ({
       resumen={heroGrabaciones.resumenPendiente}
       onCancelar={heroGrabaciones.descartarPendiente}
       onGuardar={(titulo, descripcion) => heroGrabaciones.guardarPendiente({ titulo, descripcion })}
-    />
-
-    <ModalCreadorAcordes
-      visible={modalCreadorAcordesVisible}
-      onCerrar={() => {
-        setModalCreadorAcordesVisible(false);
-        if (acordeAEditar) setModalListaAcordesVisible(true);
-        setAcordeAEditar(null);
-      }}
-      botonesSeleccionados={Object.keys(logica.botonesActivos)}
-      fuelleActual={logica.direccion === 'halar' ? 'abriendo' : 'cerrando'}
-      tonalidadActual={logica.tonalidadSeleccionada}
-      acordeAEditar={acordeAEditar}
-      onExitoUpdate={() => setModalListaAcordesVisible(true)}
     />
 
     <ModalListaAcordes

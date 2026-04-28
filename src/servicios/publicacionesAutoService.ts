@@ -49,11 +49,6 @@ export async function crearPublicacionAutomatica(data: PublicacionAutomatica) {
       throw error;
     }
 
-      tipo: data.tipo,
-      publicacion_id: publicacion.id,
-      usuario: data.usuario_nombre
-    });
-
     return publicacion;
 
   } catch (error) {

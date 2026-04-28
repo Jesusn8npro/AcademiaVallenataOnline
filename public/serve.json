@@ -8,6 +8,35 @@
     ],
     "headers": [
         {
+            "source": "**/*",
+            "headers": [
+                {
+                    "key": "Strict-Transport-Security",
+                    "value": "max-age=63072000; includeSubDomains; preload"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "SAMEORIGIN"
+                },
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "Referrer-Policy",
+                    "value": "strict-origin-when-cross-origin"
+                },
+                {
+                    "key": "Permissions-Policy",
+                    "value": "camera=(), microphone=(self), geolocation=()"
+                },
+                {
+                    "key": "Content-Security-Policy",
+                    "value": "default-src 'self'; img-src 'self' https: data: blob:; media-src 'self' https://iframe.mediadelivery.net https://*.b-cdn.net https://*.youtube.com; frame-src https://iframe.mediadelivery.net https://*.youtube.com https://checkout.epayco.co; script-src 'self' 'unsafe-inline' https://checkout.epayco.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://tbijzvtyyewhtwgakgka.supabase.co wss://tbijzvtyyewhtwgakgka.supabase.co https://api.epayco.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.epayco.co"
+                }
+            ]
+        },
+        {
             "source": "**/*.@(jpg|jpeg|gif|png|webp|svg|woff|woff2|ttf|eot|mp3|zip)",
             "headers": [
                 {

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Music, Zap, BookOpen, Volume2, X } from 'lucide-react';
 import type { ModoPractica, ModoAudioSynthesia } from '../TiposProMax';
+import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import SelectorSeccion from './SelectorSeccion';
+import { useProgresoSecciones, seccionesConEstado } from '../Hooks/useProgresoSecciones';
 
 interface PantallaPreJuegoProMaxProps {
     cancion: any;
@@ -14,6 +17,9 @@ interface PantallaPreJuegoProMaxProps {
     setMaestroSuena: (v: boolean) => void;
     modoAudioSynthesia: ModoAudioSynthesia;
     setModoAudioSynthesia: (modo: ModoAudioSynthesia) => void;
+    seccionSeleccionada: Seccion | null;
+    onSeleccionarSeccion: (seccion: Seccion | null) => void;
+    progresoVersion?: number;
     onEmpezar: () => void;
     onVolver: () => void;
 }
@@ -34,11 +40,44 @@ const PantallaPreJuegoProMax: React.FC<PantallaPreJuegoProMaxProps> = ({
     setMaestroSuena,
     modoAudioSynthesia,
     setModoAudioSynthesia,
+    seccionSeleccionada,
+    onSeleccionarSeccion,
+    progresoVersion = 0,
     onEmpezar,
     onVolver
 }) => {
-    
+
     const porcentajeBpm = Math.round((bpm / bpmOriginal) * 100);
+
+    // Secciones de la canción (puede venir como JSON string o array)
+    const seccionesCancion: Seccion[] = useMemo(() => {
+        let secs = cancion?.secciones || [];
+        if (typeof secs === 'string') {
+            try { secs = JSON.parse(secs); } catch { secs = []; }
+        }
+        return Array.isArray(secs)
+            ? secs.filter((s: any) => s && typeof s.id === 'string' && s.id.length > 0)
+            : [];
+    }, [cancion?.secciones]);
+
+    const desbloqueoSecuencial = cancion?.desbloqueo_secuencial !== false;
+    const intentosParaMoneda = typeof cancion?.intentos_para_moneda === 'number' ? cancion.intentos_para_moneda : 3;
+
+    const { progreso } = useProgresoSecciones(cancion?.id || null, progresoVersion);
+    const seccionesEstado = useMemo(
+        () => seccionesConEstado(seccionesCancion, progreso, desbloqueoSecuencial, intentosParaMoneda),
+        [seccionesCancion, progreso, desbloqueoSecuencial, intentosParaMoneda],
+    );
+
+    const tieneSecciones = seccionesEstado.length > 0;
+    const seccionActualBloqueada = seccionSeleccionada
+        ? !seccionesEstado.find(s => s.id === seccionSeleccionada.id)?.disponible
+        : false;
+    const todasCompletadas = seccionesEstado.length > 0 && seccionesEstado.every(s => s.completada);
+    const cancionCompletaPermitida = !desbloqueoSecuencial || todasCompletadas;
+    const empezarBloqueado = tieneSecciones && (
+        seccionActualBloqueada || (seccionSeleccionada === null && !cancionCompletaPermitida)
+    );
 
     const MODOS = [
         { id: 'ninguno' as ModoPractica, icono: <Zap size={22} />, titulo: 'Competitivo', sub: 'Puntos, vida y combo' },
@@ -177,14 +216,37 @@ const PantallaPreJuegoProMax: React.FC<PantallaPreJuegoProMaxProps> = ({
                     )}
                 </div>
 
+                {tieneSecciones && (
+                    <div className="prejuego-seccion">
+                        <SelectorSeccion
+                            secciones={seccionesEstado}
+                            desbloqueoSecuencial={desbloqueoSecuencial}
+                            seccionSeleccionadaId={seccionSeleccionada?.id ?? null}
+                            onSeleccionar={(id) => {
+                                if (id === null) {
+                                    onSeleccionarSeccion(null);
+                                    return;
+                                }
+                                const s = seccionesCancion.find(x => x.id === id);
+                                onSeleccionarSeccion(s || null);
+                            }}
+                        />
+                    </div>
+                )}
+
                 {/* 🚀 ACCIONES */}
                 <div className="prejuego-acciones">
                     <button className="btn-volver-promax" onClick={onVolver}>
                         <X size={18} /> Volver
                     </button>
-                    <button className="btn-empezar-promax" onClick={onEmpezar}>
+                    <button
+                        className="btn-empezar-promax"
+                        onClick={onEmpezar}
+                        disabled={empezarBloqueado}
+                        title={empezarBloqueado ? 'Selecciona una sección disponible' : ''}
+                    >
                         <Play size={18} fill="currentColor" />
-                        ¡Empezar!
+                        {seccionSeleccionada ? `¡Empezar: ${seccionSeleccionada.nombre}!` : '¡Empezar!'}
                     </button>
                 </div>
 

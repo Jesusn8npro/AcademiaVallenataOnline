@@ -95,9 +95,6 @@ Deno.serve(async (request) => {
   try {
     const payload = await parsePayload(request);
 
-    // 🔍 LOGS DETALLADOS PARA DEBUGGING
-    console.log('🎯 WEBHOOK RECIBIDO:', JSON.stringify(payload, null, 2));
-
     const xRefPayco = normalizeValue(payload.x_ref_payco);
     const xCodResponse = normalizeValue(payload.x_cod_response);
     const xTransactionId = normalizeValue(payload.x_transaction_id);
@@ -105,11 +102,6 @@ Deno.serve(async (request) => {
     const xCurrencyCode = normalizeValue(payload.x_currency_code);
     const xSignature = normalizeValue(payload.x_signature).toLowerCase();
     const xResponseReasonText = normalizeValue(payload.x_response_reason_text);
-
-    console.log('📋 REF_PAYCO:', xRefPayco);
-    console.log('📋 COD_RESPONSE:', xCodResponse);
-    console.log('📋 TRANSACTION_ID:', xTransactionId);
-    console.log('📋 FIRMA RECIBIDA:', xSignature);
 
     if (
       !xRefPayco ||
@@ -143,13 +135,10 @@ Deno.serve(async (request) => {
     ].join("^");
 
     const expectedSignature = await sha256Hex(signatureSource);
-    console.log('📋 FIRMA ESPERADA:', expectedSignature.toLowerCase());
-    console.log('🔐 VALIDACIÓN DE FIRMA - TEMPORALMENTE DESHABILITADA PARA DEBUGGING');
 
-    // ⚠️ TEMPORALMENTE COMENTADA PARA DEBUGGING
-    // if (expectedSignature.toLowerCase() !== xSignature) {
-    //   return jsonResponse({ success: false, error: "Firma invalida" }, 401);
-    // }
+    if (expectedSignature.toLowerCase() !== xSignature) {
+      return jsonResponse({ success: false, error: "Firma invalida" }, 401);
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
@@ -157,9 +146,6 @@ Deno.serve(async (request) => {
         persistSession: false,
       },
     });
-
-    console.log('🚀 INTENTANDO ACTUALIZAR PAGO CON ref_payco:', xRefPayco);
-    console.log('📊 NUEVO ESTADO:', estado);
 
     const { data, error } = await supabase
       .from("pagos_epayco")
@@ -189,7 +175,6 @@ Deno.serve(async (request) => {
       );
     }
 
-    console.log('✅ PAGO ACTUALIZADO EXITOSAMENTE:', data);
     return jsonResponse({ success: true }, 200);
   } catch (error) {
     console.error("Error procesando webhook de ePayco:", error);

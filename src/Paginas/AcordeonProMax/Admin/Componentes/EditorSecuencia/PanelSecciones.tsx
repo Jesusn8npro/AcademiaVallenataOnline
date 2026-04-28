@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Save, Trash2, RefreshCw, Plus, Layout } from 'lucide-react';
+import { Play, Pause, Save, Trash2, RefreshCw, Plus, Layout, Coins, Pencil, X } from 'lucide-react';
 import { PALETA_SECCIONES, fmtSeg } from './tiposEditor';
 import type { Seccion } from './tiposEditor';
 
@@ -24,11 +24,25 @@ interface PanelSeccionesProps {
   setSeccionTickInicio: (v: number) => void;
   seccionTickFin: number;
   setSeccionTickFin: (v: number) => void;
+  seccionMonedas: number;
+  setSeccionMonedas: (v: number) => void;
+  actualizarMonedasSeccion: (index: number, monedas: number) => void;
   agregarSeccion: () => void;
   handleGuardarSecciones: () => void;
   guardandoSecciones: boolean;
+  desbloqueoSecuencial: boolean;
+  setDesbloqueoSecuencial: (v: boolean) => void;
+  umbralPrecisionSeccion: number;
+  setUmbralPrecisionSeccion: (v: number) => void;
+  intentosParaMoneda: number;
+  setIntentosParaMoneda: (v: number) => void;
+  guardandoConfigSecciones: boolean;
+  handleGuardarConfigSecciones: () => void;
   seccionesAbiertas: boolean;
   setSeccionesAbiertas: (v: (prev: boolean) => boolean) => void;
+  seccionEditandoIndex?: number | null;
+  iniciarEdicionSeccion?: (i: number) => void;
+  cancelarEdicionSeccion?: () => void;
 }
 
 const PanelSecciones: React.FC<PanelSeccionesProps> = ({
@@ -36,13 +50,23 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
   duracionAudio, duracionSegundosModal, seccionCursorSeg, setSeccionCursorSeg,
   audioCurrentTime, reproduciendoSeccion, togglePlaySeccion, stopSeccion, saltarSeccion,
   seccionNombre, setSeccionNombre, seccionTickInicio, setSeccionTickInicio,
-  seccionTickFin, setSeccionTickFin, agregarSeccion,
-  handleGuardarSecciones, guardandoSecciones, seccionesAbiertas, setSeccionesAbiertas,
+  seccionTickFin, setSeccionTickFin, seccionMonedas, setSeccionMonedas,
+  actualizarMonedasSeccion, agregarSeccion,
+  handleGuardarSecciones, guardandoSecciones,
+  desbloqueoSecuencial, setDesbloqueoSecuencial,
+  umbralPrecisionSeccion, setUmbralPrecisionSeccion,
+  intentosParaMoneda, setIntentosParaMoneda,
+  guardandoConfigSecciones, handleGuardarConfigSecciones,
+  seccionesAbiertas, setSeccionesAbiertas,
+  seccionEditandoIndex = null, iniciarEdicionSeccion, cancelarEdicionSeccion,
 }) => (
   <section className="editor-seccion">
-    <button
+    <div
       className={`secciones-cabecera-acordeon ${seccionesAbiertas ? 'abierto' : ''}`}
+      role="button"
+      tabIndex={0}
       onClick={() => setSeccionesAbiertas(v => !v)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSeccionesAbiertas(v => !v); } }}
     >
       <div className="editor-seccion-titulo" style={{ marginBottom: 0 }}>
         <Layout size={16} /> Estructura de Secciones
@@ -64,9 +88,54 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
         )}
         <span className="secciones-acordeon-icono">▼</span>
       </div>
-    </button>
+    </div>
 
     <div className={`secciones-cuerpo-acordeon ${seccionesAbiertas ? 'abierto' : ''}`}>
+      <div className="config-secciones-panel">
+        <div className="config-secciones-titulo">⚙️ Configuración del flujo de secciones</div>
+        <label className="config-secciones-toggle">
+          <input
+            type="checkbox"
+            checked={desbloqueoSecuencial}
+            onChange={e => setDesbloqueoSecuencial(e.target.checked)}
+          />
+          <span><strong>Desbloqueo secuencial</strong> — el alumno debe completar las secciones en orden</span>
+        </label>
+        <div className="config-secciones-grid">
+          <label className="config-secciones-input">
+            <span>Umbral % precisión para completar</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={umbralPrecisionSeccion}
+              onChange={e => setUmbralPrecisionSeccion(Number(e.target.value))}
+            />
+          </label>
+          <label className="config-secciones-input">
+            <span>Intentos para ganar monedas</span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              step={1}
+              value={intentosParaMoneda}
+              onChange={e => setIntentosParaMoneda(Number(e.target.value))}
+            />
+          </label>
+        </div>
+        <button
+          onClick={handleGuardarConfigSecciones}
+          disabled={guardandoConfigSecciones}
+          className="secciones-boton-guardar-mini"
+        >
+          {guardandoConfigSecciones
+            ? <><RefreshCw size={12} className="spin" /> Guardando…</>
+            : <><Save size={12} /> Guardar configuración</>}
+        </button>
+      </div>
+
       <div className="editor-lista-secciones">
         {secciones.length === 0 && (
           <div className="editor-vacio-notificacion">
@@ -76,7 +145,7 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
         {secciones.map((s, i) => {
           const color = PALETA_SECCIONES[i % PALETA_SECCIONES.length];
           return (
-            <div key={i} className="seccion-fila-pro" style={{ borderLeft: `3px solid ${color.borde}` }}>
+            <div key={s.id || i} className="seccion-fila-pro" style={{ borderLeft: `3px solid ${color.borde}` }}>
               <div className="seccion-punto-color" style={{ background: color.borde }} />
               <div className="seccion-info-texto">
                 <strong style={{ color: color.texto }}>{s.nombre}</strong>
@@ -85,6 +154,16 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
                   {fmtSeg((s.tickFin / resolucion) * (60 / bpmModal))}
                 </span>
               </div>
+              <label className="seccion-monedas-input" title="Monedas que gana el alumno al completar esta sección">
+                <Coins size={12} />
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={s.monedas ?? 1}
+                  onChange={e => actualizarMonedasSeccion(i, Number(e.target.value))}
+                />
+              </label>
               <button
                 onClick={() => handleSeek(s.tickInicio)}
                 className="seccion-boton-ir"
@@ -92,6 +171,16 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
               >
                 <Play size={12} fill="currentColor" />
               </button>
+              {iniciarEdicionSeccion && (
+                <button
+                  onClick={() => iniciarEdicionSeccion(i)}
+                  className={`seccion-boton-ir ${seccionEditandoIndex === i ? 'editando' : ''}`}
+                  title="Editar esta sección"
+                  style={{ background: seccionEditandoIndex === i ? 'rgba(59, 130, 246, 0.4)' : undefined }}
+                >
+                  <Pencil size={12} />
+                </button>
+              )}
               <button
                 onClick={() => eliminarSeccion(i)}
                 className="seccion-boton-eliminar"
@@ -104,8 +193,12 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
         })}
       </div>
 
-      <div className="formulario-nueva-seccion">
-        <div className="formulario-titulo"><Plus size={13} /> Nueva sección</div>
+      <div className={`formulario-nueva-seccion${seccionEditandoIndex !== null ? ' editando' : ''}`}>
+        <div className="formulario-titulo">
+          {seccionEditandoIndex !== null
+            ? <><Pencil size={13} /> Editando sección</>
+            : <><Plus size={13} /> Nueva sección</>}
+        </div>
 
         <div className="formulario-posicion-contenedor">
           <div className="formulario-posicion-cabecera">
@@ -153,6 +246,18 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
           className="formulario-input-nombre"
         />
 
+        <label className="formulario-monedas-nueva" title="Monedas que gana el alumno al completar esta sección">
+          <Coins size={14} />
+          <span>Monedas:</span>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={seccionMonedas}
+            onChange={e => setSeccionMonedas(Number(e.target.value))}
+          />
+        </label>
+
         <div className="formulario-botones-marcadores">
           <button
             onClick={() => setSeccionTickInicio(Math.round(seccionCursorSeg * (bpmModal / 60) * resolucion))}
@@ -174,13 +279,28 @@ const PanelSecciones: React.FC<PanelSeccionesProps> = ({
           </button>
         </div>
 
-        <button
-          onClick={agregarSeccion}
-          disabled={!seccionNombre.trim() || seccionTickFin <= seccionTickInicio}
-          className="formulario-boton-agregar"
-        >
-          <Plus size={16} /> Agregar Sección
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={agregarSeccion}
+            disabled={!seccionNombre.trim() || seccionTickFin <= seccionTickInicio}
+            className="formulario-boton-agregar"
+            style={{ flex: 1 }}
+          >
+            {seccionEditandoIndex !== null
+              ? <><Pencil size={16} /> Guardar cambios</>
+              : <><Plus size={16} /> Agregar Sección</>}
+          </button>
+          {seccionEditandoIndex !== null && cancelarEdicionSeccion && (
+            <button
+              onClick={cancelarEdicionSeccion}
+              className="formulario-boton-agregar"
+              style={{ background: 'rgba(100, 116, 139, 0.3)', flex: '0 0 auto' }}
+              title="Cancelar edición"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
 
         {seccionTickFin > 0 && seccionTickFin <= seccionTickInicio && (
           <div className="formulario-error-msj">

@@ -189,6 +189,9 @@ const AcordeonProMaxSimulador: React.FC = () => {
           setMaestroSuena={hero.setMaestroSuena}
           modoAudioSynthesia={hero.modoAudioSynthesia}
           setModoAudioSynthesia={hero.setModoAudioSynthesia}
+          seccionSeleccionada={hero.seccionSeleccionada}
+          onSeleccionarSeccion={hero.seleccionarSeccion}
+          progresoVersion={hero.progresoVersion}
           onEmpezar={hero.iniciarConteo}
           onVolver={volverAlMenu}
         />
@@ -209,6 +212,12 @@ const AcordeonProMaxSimulador: React.FC = () => {
           onDescartarGuardado={hero.grabaciones.descartarPendiente}
           onJugarDeNuevo={() => hero.iniciarJuego(hero.cancionSeleccionada!)}
           onVolverSeleccion={volverAlMenu}
+          seccionSeleccionada={hero.seccionSeleccionada}
+          onJugarSiguienteSeccion={(s) => {
+            hero.seleccionarSeccion(s);
+            // Pequeño delay para que el ref se actualice antes de que iniciarJuego lo lea
+            setTimeout(() => hero.iniciarJuego(hero.cancionSeleccionada!), 50);
+          }}
         />
       )}
 

@@ -8,6 +8,7 @@ interface PanelTimelineProps {
   secciones: Seccion[];
   totalTicksModal: number;
   bpmModal: number;
+  bpmOriginal: number;
   setBpmModal: (v: number) => void;
   onCambiarBpm: (v: number) => void;
   punchInTickLocal: number | null;
@@ -27,7 +28,7 @@ interface PanelTimelineProps {
 }
 
 const PanelTimeline: React.FC<PanelTimelineProps> = ({
-  secciones, totalTicksModal, bpmModal, setBpmModal, onCambiarBpm,
+  secciones, totalTicksModal, bpmModal, bpmOriginal, setBpmModal, onCambiarBpm,
   punchInTickLocal, secuenciaEditada, sliderRef, isSeekingRef,
   tickLocal, tiempoAudioActual, duracionAudio, reproduciendoLocal,
   handleSeek, handleReset, saltarSegundos, togglePlay,
@@ -139,17 +140,37 @@ const PanelTimeline: React.FC<PanelTimelineProps> = ({
           <button onClick={() => saltarSegundos(10)} className="editor-boton-icono" title="Adelante 10s">
             <SkipForward size={20} />
           </button>
-          <div className="editor-control-bpm-mini">
-            <Zap size={14} />
+          <div className="editor-bpm-box">
+            <div className="editor-bpm-row">
+              <button
+                className="editor-bpm-step"
+                onClick={() => { const v = Math.max(30, bpmModal - 5); setBpmModal(v); onCambiarBpm(v); }}
+              >−</button>
+              <div className="editor-bpm-info">
+                <span className="editor-bpm-valor">{bpmModal}</span>
+                <span className="editor-bpm-label">BPM</span>
+              </div>
+              <button
+                className="editor-bpm-step"
+                onClick={() => { const v = Math.min(300, bpmModal + 5); setBpmModal(v); onCambiarBpm(v); }}
+              >+</button>
+            </div>
             <input
-              type="number" value={bpmModal}
-              onChange={e => {
-                const v = Number(e.target.value);
-                setBpmModal(v);
-                onCambiarBpm(v);
-              }}
+              type="range" min={30} max={300} value={bpmModal}
+              className="editor-bpm-slider"
+              onChange={e => { const v = Number(e.target.value); setBpmModal(v); onCambiarBpm(v); }}
             />
-            <span>BPM</span>
+            {bpmOriginal > 0 && bpmModal !== bpmOriginal && (
+              <div className="editor-bpm-velocidad">
+                <Zap size={10} />
+                {((bpmModal / bpmOriginal) * 100).toFixed(0)}% velocidad
+                <button
+                  className="editor-bpm-reset"
+                  onClick={() => { setBpmModal(bpmOriginal); onCambiarBpm(bpmOriginal); }}
+                  title="Restaurar BPM original"
+                >↺</button>
+              </div>
+            )}
           </div>
         </div>
       </div>

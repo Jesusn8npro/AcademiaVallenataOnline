@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  Play, Pause, Save, Trash2, RefreshCw, Square,
-  Activity, Clock, Ear, Volume2, MapPin, Scissors,
+  Play, Save, Trash2, RefreshCw, Square,
+  Activity, Clock, Ear, MapPin, Scissors, ListMusic,
 } from 'lucide-react';
 import type { NotaHero } from '../../../TiposProMax';
-import { formatearTiempoDesdeTicks } from './tiposEditor';
-import type { ModoEdicion } from './tiposEditor';
+import { formatearTiempoDesdeTicks, PALETA_SECCIONES } from './tiposEditor';
+import type { ModoEdicion, Seccion } from './tiposEditor';
 
 interface PanelPunchInProps {
   modoEdicion: ModoEdicion;
@@ -13,6 +13,8 @@ interface PanelPunchInProps {
   notasGrabadas: NotaHero[];
   punchInTickLocal: number | null;
   setPunchInTickLocal: (t: number | null) => void;
+  punchOutTickLocal: number | null;
+  setPunchOutTickLocal: (t: number | null) => void;
   punchInTickSnapshotCurrent: number | null;
   mensajeLocal: string | null;
   bpmModal: number;
@@ -24,9 +26,6 @@ interface PanelPunchInProps {
   preRollSegsLocal: number;
   setPreRollSegsLocal: (v: number) => void;
   setPreRollSegundos: (v: number) => void;
-  metronomoLocal: boolean;
-  setMetronomoLocal: (v: boolean) => void;
-  setMetronomoActivo: (v: boolean) => void;
   iniciarEdicionPunch: () => void;
   detenerEdicionPunch: () => void;
   guardarToma: () => void;
@@ -37,16 +36,20 @@ interface PanelPunchInProps {
   edicionAbierta: boolean;
   setEdicionAbierta: (v: (prev: boolean) => boolean) => void;
   totalTicksModal: number;
+  /** Secciones guardadas — para auto-rellenar IN/OUT con un solo clic. */
+  secciones?: Seccion[];
 }
 
 const PanelPunchIn: React.FC<PanelPunchInProps> = ({
   modoEdicion, cuentaAtrasLocal, notasGrabadas, punchInTickLocal, setPunchInTickLocal,
+  punchOutTickLocal, setPunchOutTickLocal,
   punchInTickSnapshotCurrent, mensajeLocal, bpmModal, resolucion, secuenciaPreview,
   reproduciendoLocal, handleSeek, togglePlay, preRollSegsLocal, setPreRollSegsLocal,
-  setPreRollSegundos, metronomoLocal, setMetronomoLocal, setMetronomoActivo,
+  setPreRollSegundos,
   iniciarEdicionPunch, detenerEdicionPunch, guardarToma, guardandoToma,
   onRepetirToma, descartarToma, tickLocalRefCurrent,
   edicionAbierta, setEdicionAbierta, totalTicksModal,
+  secciones,
 }) => (
   <section className="editor-seccion seccion-edicion-quirurgica">
     <button
@@ -122,19 +125,18 @@ const PanelPunchIn: React.FC<PanelPunchInProps> = ({
             <div className="punch-acciones-fila">
               <button className="btn-iniciar-edicion-pro" onClick={guardarToma} disabled={guardandoToma}>
                 {guardandoToma
-                  ? <><RefreshCw size={16} className="spin" /> Guardando...</>
-                  : <><Save size={16} /> Guardar Toma</>}
+                  ? <><RefreshCw size={15} className="spin" /> Guardando...</>
+                  : <><Save size={15} /> Guardar</>}
               </button>
               <button className="btn-iniciar-edicion-pro detener" onClick={onRepetirToma}>
-                <RefreshCw size={16} /> Repetir toma
+                <RefreshCw size={15} /> Repetir
               </button>
               <button
-                className="btn-iniciar-edicion-pro detener"
+                className="punch-btn-descartar"
                 onClick={descartarToma}
-                style={{ flex: '0 0 auto', minWidth: 0 }}
-                title="Descartar y volver sin guardar"
+                title="Descartar toma y volver"
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} />
               </button>
             </div>
             {mensajeLocal && <div className="punch-mensaje-resultado">{mensajeLocal}</div>}
@@ -166,47 +168,69 @@ const PanelPunchIn: React.FC<PanelPunchInProps> = ({
 
         {modoEdicion === 'idle' && (
           <>
-            <div className="edicion-controles-punch">
-              <button
-                className={`btn-punch-config ${punchInTickLocal !== null ? 'activo' : ''}`}
-                onClick={() => setPunchInTickLocal(Math.round(tickLocalRefCurrent()))}
-                title="Marca el instante actual del timeline como inicio de grabación"
-              >
-                <MapPin size={14} />
-                <strong>Marcar Entrada (In)</strong>
-                <span>
-                  {punchInTickLocal !== null
-                    ? formatearTiempoDesdeTicks(punchInTickLocal, bpmModal)
-                    : 'Clic para marcar posición actual'}
-                </span>
-              </button>
-
-              <button
-                className={`btn-punch-config ${metronomoLocal ? 'activo' : ''}`}
-                onClick={() => { const v = !metronomoLocal; setMetronomoLocal(v); setMetronomoActivo(v); }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong>Metrónomo</strong>
-                  {metronomoLocal ? <Volume2 size={14} /> : <Ear size={14} />}
+            {secciones && secciones.length > 0 && (
+              <div className="punch-secciones-picker">
+                <div className="punch-secciones-header">
+                  <ListMusic size={12} />
+                  <span>Cargar región desde sección guardada</span>
                 </div>
-                <span>{metronomoLocal ? 'Activado' : 'Desactivado'}</span>
+                <div className="punch-secciones-lista">
+                  {secciones.map((s, i) => {
+                    const color = PALETA_SECCIONES[i % PALETA_SECCIONES.length];
+                    const activa = punchInTickLocal === s.tickInicio && punchOutTickLocal === s.tickFin;
+                    return (
+                      <button
+                        key={s.id}
+                        className={`punch-seccion-chip${activa ? ' activa' : ''}`}
+                        style={{ borderColor: color.borde, color: activa ? '#fff' : color.texto, background: activa ? color.bg : 'transparent' }}
+                        onClick={() => {
+                          setPunchInTickLocal(s.tickInicio);
+                          setPunchOutTickLocal(s.tickFin);
+                        }}
+                        title={`${s.nombre}: ${formatearTiempoDesdeTicks(s.tickInicio, bpmModal)} → ${formatearTiempoDesdeTicks(s.tickFin, bpmModal)}`}
+                      >
+                        <span className="punch-seccion-chip-dot" style={{ background: color.borde }} />
+                        <span className="punch-seccion-chip-nombre">{s.nombre}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="punch-markers-row">
+              <button
+                className={`punch-marker-btn ${punchInTickLocal !== null ? 'activo-in' : ''}`}
+                onClick={() => setPunchInTickLocal(Math.round(tickLocalRefCurrent()))}
+                title="Marca la posición actual como inicio de grabación"
+              >
+                <span className="punch-marker-label"><MapPin size={11} /> IN</span>
+                <span className="punch-marker-time">
+                  {punchInTickLocal !== null ? formatearTiempoDesdeTicks(punchInTickLocal, bpmModal) : '—'}
+                </span>
+                {punchInTickLocal !== null && (
+                  <span className="punch-marker-clear" onClick={e => { e.stopPropagation(); setPunchInTickLocal(null); }}>✕</span>
+                )}
               </button>
 
-              {punchInTickLocal !== null && (
-                <button
-                  className="btn-punch-config"
-                  style={{ width: '44px', justifyContent: 'center' }}
-                  onClick={() => setPunchInTickLocal(null)}
-                  title="Limpiar marca"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
+              <button
+                className={`punch-marker-btn ${punchOutTickLocal !== null ? 'activo-out' : ''}`}
+                onClick={() => setPunchOutTickLocal(Math.round(tickLocalRefCurrent()))}
+                title="Marca la posición actual como fin de grabación (opcional — detiene auto)"
+              >
+                <span className="punch-marker-label"><MapPin size={11} /> OUT</span>
+                <span className="punch-marker-time">
+                  {punchOutTickLocal !== null ? formatearTiempoDesdeTicks(punchOutTickLocal, bpmModal) : '—'}
+                </span>
+                {punchOutTickLocal !== null && (
+                  <span className="punch-marker-clear" onClick={e => { e.stopPropagation(); setPunchOutTickLocal(null); }}>✕</span>
+                )}
+              </button>
             </div>
 
             <div className="punch-metropoli">
               <div className="punch-metropoli-head">
-                <span>Preparación (Pre-roll)</span>
+                <span>Pre-roll</span>
                 <span>{preRollSegsLocal}s</span>
               </div>
               <input
@@ -225,7 +249,7 @@ const PanelPunchIn: React.FC<PanelPunchInProps> = ({
                   onClick={() => handleSeek(Math.max(0, punchInTickLocal - Math.round(preRollSegsLocal * (bpmModal / 60) * resolucion)))}
                   title="Ir al inicio del pre-roll para escuchar el contexto"
                 >
-                  <Play size={14} fill="currentColor" /> Previsualizar contexto (ir al pre-roll)
+                  <Play size={14} fill="currentColor" /> Previsualizar contexto
                 </button>
               </div>
             )}
@@ -235,7 +259,7 @@ const PanelPunchIn: React.FC<PanelPunchInProps> = ({
               onClick={iniciarEdicionPunch}
               disabled={punchInTickLocal === null}
             >
-              <Play size={18} fill="currentColor" /> Iniciar Edición Programada
+              <Play size={18} fill="currentColor" /> Iniciar Grabación
             </button>
 
             {mensajeLocal && (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabaseAnonimo } from '../../servicios/clienteSupabase';
 import HeroArticulo from '../../componentes/Blog/articulos/HeroArticulo';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
+import { sanitizarHTML } from '../../utilidades/sanitizar';
 import { articuloStyles as styles } from './ArticuloIndividual.styles';
 import './ArticuloIndividual.css';
 
@@ -117,7 +118,7 @@ const ArticuloIndividual: React.FC = () => {
                 />
                 <article className="contenido-articulo-blog" id="contenido-articulo"
                   style={styles.contenidoArticuloBlog}
-                  dangerouslySetInnerHTML={{ __html: contenidoProcesado }} />
+                  dangerouslySetInnerHTML={{ __html: sanitizarHTML(contenidoProcesado) }} />
                 <div style={styles.ctaFinalArticulo}>
                   <div style={styles.ctaContenido}>
                     <h3 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: 'white' }}>¿Te gustó este artículo? 🎵</h3>

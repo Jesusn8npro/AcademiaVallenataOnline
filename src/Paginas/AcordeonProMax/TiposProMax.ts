@@ -148,3 +148,42 @@ export function calcularPrecision(notasPerfecto: number, notasBien: number, nota
   if (totalNotas === 0) return 0;
   return Math.round(((notasPerfecto + notasBien) / totalNotas) * 100);
 }
+
+// ─── Secciones jugables ──────────────────────────────────────
+
+/**
+ * Estado persistido por sección de una canción para un usuario.
+ * Coincide con el shape almacenado en `monedas_cancion_usuario.secciones_progreso[seccion_id]`.
+ */
+export interface EstadoSeccionUsuario {
+  intentos: number;
+  mejor_precision: number;
+  completada: boolean;
+  monedas_ganadas: number;
+  primer_completado_en: string | null;
+  seccion_nombre?: string | null;
+}
+
+/** Estado de una sección con sus campos de UI calculados. */
+export interface SeccionConEstado {
+  id: string;
+  nombre: string;
+  tickInicio: number;
+  tickFin: number;
+  tipo: 'melodia' | 'acompanamiento';
+  monedas: number;
+  disponible: boolean;
+  completada: boolean;
+  intentos: number;
+  mejorPrecision: number;
+  monedasGanadas: number;
+  intentosRestantesParaMoneda: number;
+  primerCompletadoEn: string | null;
+}
+
+/** Configuración a nivel canción para el flujo de secciones. */
+export interface ConfigSeccionesCancion {
+  desbloqueoSecuencial: boolean;
+  umbralPrecisionSeccion: number;
+  intentosParaMoneda: number;
+}

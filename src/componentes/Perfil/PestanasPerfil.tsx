@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './pestanas-perfil.css'
 import { Link, useLocation } from 'react-router-dom'
+import { sanitizarHTML } from '../../utilidades/sanitizar'
 
 interface Props { modalAbierto?: boolean; modoPublico?: boolean; slugUsuario?: string | null }
 
@@ -111,7 +112,7 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
               }}
             >
               <div className="perfil-tabs-contenido">
-                {p.icon && <div className="perfil-tabs-icono" dangerouslySetInnerHTML={{ __html: p.icon }} />}
+                {p.icon && <div className="perfil-tabs-icono" dangerouslySetInnerHTML={{ __html: sanitizarHTML(p.icon) }} />}
                 <span className="perfil-tabs-etiqueta">{p.label}</span>
               </div>
             </Link>

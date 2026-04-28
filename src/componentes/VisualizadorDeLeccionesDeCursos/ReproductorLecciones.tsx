@@ -1,11 +1,14 @@
 import React from 'react';
 import { useReproductorLecciones } from './useReproductorLecciones';
+import { useVideoFirmado } from '../../hooks/useVideoFirmado';
 import './ReproductorLecciones.css';
 
 interface ReproductorLeccionesProps {
   leccionAnterior?: any;
   leccionSiguiente?: any;
   videoUrl?: string;
+  parteId?: string;
+  leccionId?: string;
   thumbnailUrl?: string;
   titulo?: string;
   tipo?: 'leccion' | 'clase';
@@ -20,22 +23,75 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   leccionAnterior = null,
   leccionSiguiente = null,
   videoUrl = '',
+  parteId,
+  leccionId,
   titulo = '',
   tipo = 'leccion',
   completada = false,
   cargandoCompletar = false,
   marcarComoCompletada = () => {},
 }) => {
+  const usarFirmado = !!(parteId || leccionId);
+  const firmado = useVideoFirmado(usarFirmado ? { parteId, leccionId } : {});
+  const sinAcceso = usarFirmado && firmado.error?.codigo === 'sin_acceso';
+  const cargandoFirmado = usarFirmado && firmado.loading && !firmado.url;
+  const errorFirmado = usarFirmado && !!firmado.error && firmado.error.codigo !== 'sin_acceso';
+  const esBunnyFirmado = usarFirmado && firmado.plataforma === 'bunny';
+
+  // Hook interno solo para navegación y flujo legacy (sin parteId/leccionId).
+  // Cuando hay URL firmada la usamos tal cual: si la pasáramos por procesarUrl()
+  // se perderían los query params del token de firma de Bunny.
   const {
     cargando, setCargando, tieneError, setTieneError,
     esYouTube, esBunny, videoId, libraryId, idYouTube,
     urlProcesada, elementoIframeRef, reintentar, navegarAnterior, navegarSiguiente
-  } = useReproductorLecciones({ videoUrl, leccionAnterior, leccionSiguiente, tipo });
+  } = useReproductorLecciones({
+    videoUrl: usarFirmado ? '' : videoUrl,
+    leccionAnterior,
+    leccionSiguiente,
+    tipo
+  });
+
+  const srcIframe = usarFirmado ? firmado.url : urlProcesada;
+  const referrerPolicyIframe = usarFirmado
+    ? (esBunnyFirmado ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin')
+    : (esBunny ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin');
+
+  if (sinAcceso) {
+    const mensaje = tipo === 'clase'
+      ? 'Necesitas estar inscrito en este tutorial o paquete para reproducir el video.'
+      : 'Necesitas estar inscrito en este curso para reproducir el video.';
+    const linkInscripcion = tipo === 'clase' ? '/tutoriales' : '/cursos';
+    return (
+      <div className="reproductor-container">
+        <div className="video-wrapper">
+          <div className="error-overlay">
+            <div className="error-content">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <h3>Contenido bloqueado</h3>
+              <p>{mensaje}</p>
+              <a href={linkInscripcion} className="btn-reintentar" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                Ver opciones de inscripción
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="reproductor-container">
       <div className="video-wrapper">
-        {tieneError || !urlProcesada ? (
+        {cargandoFirmado ? (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+            <p className="loading-text">Verificando acceso...</p>
+          </div>
+        ) : errorFirmado || tieneError || !srcIframe ? (
           <div className="error-overlay">
             <div className="error-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,29 +101,37 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
               </svg>
               <h3>Video no disponible</h3>
               <p>
-                {!videoUrl
-                  ? 'Esta clase aún no tiene un video asignado.'
-                  : 'Hubo un problema al cargar el video. Por favor, inténtalo más tarde.'}
+                {usarFirmado
+                  ? (firmado.error?.mensaje || 'Hubo un problema al cargar el video. Inténtalo más tarde.')
+                  : (!videoUrl
+                      ? 'Esta clase aún no tiene un video asignado.'
+                      : 'Hubo un problema al cargar el video. Por favor, inténtalo más tarde.')}
               </p>
-              {videoUrl && (
+              {usarFirmado ? (
+                <button className="btn-reintentar" onClick={() => firmado.refrescar()}>
+                  🔄 Reintentar
+                </button>
+              ) : videoUrl && (
                 <button className="btn-reintentar" onClick={reintentar}>
                   🔄 Reintentar carga
                 </button>
               )}
-              <div className="debug-info">
-                <details>
-                  <summary>Información de depuración</summary>
-                  <pre>
-                    URL original: {videoUrl || 'No proporcionada'}
-                    URL procesada: {urlProcesada || 'No procesada'}
-                    YouTube: {esYouTube}
-                    Bunny: {esBunny}
-                    Library ID: {libraryId || 'No detectado'}
-                    Video ID: {videoId || 'No detectado'}
-                    YouTube ID: {idYouTube || 'No detectado'}
-                  </pre>
-                </details>
-              </div>
+              {!usarFirmado && (
+                <div className="debug-info">
+                  <details>
+                    <summary>Información de depuración</summary>
+                    <pre>
+                      URL original: {videoUrl || 'No proporcionada'}
+                      URL procesada: {urlProcesada || 'No procesada'}
+                      YouTube: {esYouTube}
+                      Bunny: {esBunny}
+                      Library ID: {libraryId || 'No detectado'}
+                      Video ID: {videoId || 'No detectado'}
+                      YouTube ID: {idYouTube || 'No detectado'}
+                    </pre>
+                  </details>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -75,12 +139,12 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
             <iframe
               ref={elementoIframeRef}
               title={titulo}
-              src={urlProcesada}
+              src={srcIframe}
               className="video-frame"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowFullScreen
               frameBorder="0"
-              referrerPolicy={esBunny ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin'}
+              referrerPolicy={referrerPolicyIframe}
               loading="eager"
               onLoad={() => { setCargando(false); setTieneError(false); }}
               onError={() => { setTieneError(true); setCargando(false); }}
