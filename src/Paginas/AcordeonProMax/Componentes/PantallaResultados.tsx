@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../TiposProMax';
+import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
 import ModalHistorialHero from './ModalHistorialHero';
 import { usePantallaResultados } from './usePantallaResultados';
 import './PantallaResultados.css';
@@ -19,6 +20,8 @@ interface PropsPantallaResultados {
   onDescartarGuardado: () => void;
   onJugarDeNuevo: () => void;
   onVolverSeleccion: () => void;
+  seccionSeleccionada?: Seccion | null;
+  onJugarSiguienteSeccion?: (seccion: Seccion) => void;
 }
 
 const PantallaResultados: React.FC<PropsPantallaResultados> = ({
@@ -26,6 +29,7 @@ const PantallaResultados: React.FC<PropsPantallaResultados> = ({
   guardandoGrabacion, errorGuardado, tituloSugeridoGrabacion,
   tituloGrabacionGuardada, umbralGuardado = 60,
   onGuardarGrabacion, onDescartarGuardado, onJugarDeNuevo, onVolverSeleccion, modo,
+  seccionSeleccionada, onJugarSiguienteSeccion,
 }) => {
   const {
     usuario, puntos, notasPerfecto, notasBien, notasFalladas, notasPerdidas,
@@ -33,19 +37,57 @@ const PantallaResultados: React.FC<PropsPantallaResultados> = ({
     tituloGrabacion, setTituloGrabacion, descripcionGrabacion, setDescripcionGrabacion,
     errorLocal, modalGuardadoAbierto, setModalGuardadoAbierto,
     scoreRespuesta, modalHistorialAbierto, setModalHistorialAbierto,
-    animandoXP, mensajeMotivacion, manejarGuardar,
-  } = usePantallaResultados({ estadisticas, cancion, modo, mostrarGuardado, tituloSugeridoGrabacion, tituloGrabacionGuardada, onGuardarGrabacion });
+    animandoXP, mensajeMotivacion, manejarGuardar, estadoSeccion, siguienteSeccion,
+  } = usePantallaResultados({ estadisticas, cancion, modo, mostrarGuardado, tituloSugeridoGrabacion, tituloGrabacionGuardada, onGuardarGrabacion, seccionSeleccionada });
+
+  const umbralSeccion = typeof (cancion as any)?.umbral_precision_seccion === 'number' ? (cancion as any).umbral_precision_seccion : 80;
+  const intentosMaxSeccion = typeof (cancion as any)?.intentos_para_moneda === 'number' ? (cancion as any).intentos_para_moneda : 3;
 
   return (
     <div className="hero-resultados-overlay">
       <div className="hero-resultados-panel">
+        {seccionSeleccionada && estadoSeccion?.completada && (
+          <div className="hero-banner-seccion-completada">
+            <div className="hero-banner-seccion-icono">🎉</div>
+            <div className="hero-banner-seccion-titulo">¡SECCIÓN COMPLETADA!</div>
+            <div className="hero-banner-seccion-nombre">{seccionSeleccionada.nombre}</div>
+            {Number(estadoSeccion.monedas_ganadas) > 0 ? (
+              <div className="hero-banner-seccion-moneda">
+                🪙 +{estadoSeccion.monedas_ganadas} moneda{Number(estadoSeccion.monedas_ganadas) !== 1 ? 's' : ''} ganada{Number(estadoSeccion.monedas_ganadas) !== 1 ? 's' : ''}
+              </div>
+            ) : (
+              <div className="hero-banner-seccion-moneda sin-premio">
+                Sin premio · superaste los {intentosMaxSeccion} intentos
+              </div>
+            )}
+            {siguienteSeccion && (
+              <div className="hero-banner-siguiente-desbloqueada">
+                🔓 Desbloqueaste: <strong>{siguienteSeccion.nombre}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="hero-resultados-encabezado">
           <h2 className="hero-resultados-titulo">Resultado Final</h2>
-          <p className="hero-resultados-cancion">{cancion.titulo} — {cancion.autor}</p>
+          <p className="hero-resultados-cancion">
+            {cancion.titulo} — {cancion.autor}
+            {seccionSeleccionada && (
+              <span className="hero-resultados-seccion-tag"> · {seccionSeleccionada.nombre}</span>
+            )}
+          </p>
           {scoreRespuesta?.es_mejor_personal && !scoreRespuesta?.es_nuevo && (
             <div className="hero-record-badge">🏆 ¡Nuevo Récord Personal!</div>
           )}
         </div>
+
+        {seccionSeleccionada && estadoSeccion && !estadoSeccion.completada && (
+          <div className="hero-feedback-seccion">
+            <div className="hero-feedback-seccion-fila pendiente">
+              Intento {estadoSeccion.intentos} · necesitas ≥{umbralSeccion}% para completar (mejor: {estadoSeccion.mejor_precision}%)
+            </div>
+          </div>
+        )}
         <div className="hero-resultados-estrellas">
           {[1, 2, 3].map(i => <span key={i} className={`hero-estrella ${i <= estrellas ? 'ganada' : 'vacia'}`}>★</span>)}
         </div>
@@ -185,6 +227,14 @@ const PantallaResultados: React.FC<PropsPantallaResultados> = ({
           <button className="hero-btn-seleccion hero-btn-historial-inline" onClick={() => setModalHistorialAbierto(true)}>
             Ver mi historial en esta canción
           </button>
+          {siguienteSeccion && onJugarSiguienteSeccion && (
+            <button
+              className="hero-btn-siguiente-seccion"
+              onClick={() => onJugarSiguienteSeccion(siguienteSeccion)}
+            >
+              ▶ Continuar con: {siguienteSeccion.nombre}
+            </button>
+          )}
           <button className="hero-btn-jugar-nuevo" onClick={onJugarDeNuevo}>↺ Jugar de nuevo</button>
           <button className="hero-btn-seleccion" onClick={onVolverSeleccion}>← Elegir canción</button>
         </div>

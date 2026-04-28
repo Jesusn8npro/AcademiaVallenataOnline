@@ -12,10 +12,12 @@ export const PALETA_SECCIONES = [
 ];
 
 export interface Seccion {
+  id: string;
   nombre: string;
   tickInicio: number;
   tickFin: number;
   tipo: 'melodia' | 'acompanamiento';
+  monedas: number;
 }
 
 export interface ModalEditorSecuenciaProps {
@@ -33,7 +35,9 @@ export interface ModalEditorSecuenciaProps {
   tiempoGrabacionMs: number;
   cuentaAtrasPreRoll: number | null;
   onIniciarGrabacion: () => void;
-  onDetenerGrabacion: () => void;
+  // Retorna la secuencia final (incluye notas que estaban abiertas al detener) para construir
+  // el preview síncrono — el state de notasGrabadas no las contiene hasta el siguiente render.
+  onDetenerGrabacion: () => NotaHero[] | void;
   punchInTick: number | null;
   setPunchInTick: (tick: number | null) => void;
   punchOutTick: number | null;
@@ -47,6 +51,11 @@ export interface ModalEditorSecuenciaProps {
   metronomoActivo: boolean;
   setMetronomoActivo: (v: boolean) => void;
   mensajeEdicionProp: string | null;
+  /**
+   * 🆕 Reproduce el tono de una nota durante el modo "revisando" para que
+   * el usuario escuche lo que grabó. Si no se pasa, sólo se mostrará visualmente.
+   */
+  onReproducirNota?: (idBoton: string, tiempo?: number, duracion?: number) => any;
 }
 
 export type ModoEdicion = 'idle' | 'preroll' | 'grabando' | 'revisando';
@@ -98,9 +107,22 @@ export interface UseEditorSecuenciaAdminParams {
   onAlternarPausa: () => void;
   onAlternarLoop: () => void;
   onBuscarTick: (tick: number) => void;
-  onReproducirSecuencia: (cancion: any) => void;
+  onReproducirSecuencia: (cancion: any, opciones?: { rangoTicks?: { inicio: number; fin: number } | null; tickInicialOverride?: number | null }) => void;
   onLimpiarLoop: () => void;
   onCambiarBpm: (v: number | ((prev: number) => number)) => void;
+  /**
+   * Espera a que el MP3 esté bufferead, dispara play(), espera el evento
+   * 'playing' y devuelve el tick exacto donde el audio realmente empezó a
+   * sonar. El caller debe pasar ese tick como `tickInicialOverride` al
+   * llamar `onReproducirSecuencia` para arrancar audio + reloj sincronizados.
+   * (Mismo patrón que `dispararJuegoSincronizado` en el simulador.)
+   *
+   * `opciones.bpmOriginal` debe ser el BPM original de la canción que se va
+   * a reproducir — necesario para calcular el offsetSegundos correcto del
+   * seek. Sin esto, el ref interno puede estar stale (acabamos de cambiar
+   * de canción) y el seek apuntaría a una posición errónea.
+   */
+  onIniciarReproduccionSincronizada?: (tickInicio: number, opciones?: { bpmOriginal?: number }) => Promise<{ tickInicialReal: number }>;
   libreria: LibreriaAPI;
 }
 
@@ -122,6 +144,6 @@ export function sincronizarNotasModalConLogica(
   }));
   const notasAnteriores = notasCheadasRef.current;
   notasAnteriores.forEach(id => { if (!idsNuevos.has(id)) logica.actualizarBotonActivo(id, 'remove', null, false, undefined); });
-  idsNuevos.forEach(id => { if (!notasAnteriores.has(id)) logica.actualizarBotonActivo(id, 'add', null, false, undefined, true); });
+  idsNuevos.forEach(id => { if (!notasAnteriores.has(id)) logica.actualizarBotonActivo(id, 'add', null, false, undefined, false); });
   notasCheadasRef.current = idsNuevos;
 }

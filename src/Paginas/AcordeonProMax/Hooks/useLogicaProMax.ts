@@ -17,6 +17,7 @@ import type { ResultadoGolpe } from '../TiposProMax';
 import { useSynthesiaProMax } from './useSynthesiaProMax';
 import { useScoringProMax } from './useScoringProMax';
 import { useGrabacionProMax } from './useGrabacionProMax';
+import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
 
 export type MensajePrueba = {
   texto: string;
@@ -32,6 +33,12 @@ export function useLogicaProMax() {
   const { usuario } = useUsuario();
   const [estadoJuego, setEstadoJuego] = useState<EstadoJuego>('seleccion');
   const [cancionSeleccionada, setCancionSeleccionada] = useState<CancionHeroConTonalidad | null>(null);
+  const [seccionSeleccionada, setSeccionSeleccionada] = useState<Seccion | null>(null);
+  const seccionSeleccionadaRef = useRef<Seccion | null>(null);
+  useEffect(() => { seccionSeleccionadaRef.current = seccionSeleccionada; }, [seccionSeleccionada]);
+  // Counter para forzar recarga del progreso de secciones tras un intento o al volver a selección.
+  const [progresoVersion, setProgresoVersion] = useState(0);
+  const refrescarProgresoSecciones = useCallback(() => setProgresoVersion(v => v + 1), []);
   const [bpm, setBpm] = useState(120);
   const [cuenta, setCuenta] = useState<number | null>(null);
   const conteoIntervalRef = useRef<any>(null);
@@ -75,7 +82,7 @@ export function useLogicaProMax() {
   const bpmOriginalRef = useRef<number>(120);
   const _onBeatCallbackRef = useRef<((beatIndex: number) => void) | undefined>(undefined);
   const direccionAlumnoRef = useRef<'halar' | 'empujar'>('halar');
-  const _reproductoActionsRef = useRef({ alternarPausa: () => {}, buscarTick: (_t: number) => {} });
+  const _reproductoActionsRef = useRef({ alternarPausa: () => { }, buscarTick: (_t: number) => { } });
   const totalTicksRef = useRef(0);
   const [loopAB, setLoopAB] = useState<{ start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean }>(
     { start: 0, end: 0, activo: false, hasStart: false, hasEnd: false }
@@ -85,7 +92,6 @@ export function useLogicaProMax() {
   );
   const reproduccionFueIniciada = useRef(false);
 
-  // ── Sub-hooks ──────────────────────────────────────────
   const synthesia = useSynthesiaProMax();
   const scoring = useScoringProMax({ modoPracticaRef });
   const grabacion = useGrabacionProMax({
@@ -115,10 +121,9 @@ export function useLogicaProMax() {
     guardarGrabacionPendiente, descartarGrabacionPendiente,
   } = grabacion;
 
-  // ── Init effects ───────────────────────────────────────
   useEffect(() => {
-    motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_fuerte', '/audio/effects/du2.mp3').catch(() => {});
-    motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_debil', '/audio/effects/du.mp3').catch(() => {});
+    motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_fuerte', '/audio/effects/du2.mp3').catch(() => { });
+    motorAudioPro.cargarSonidoEnBanco('metronomo', 'click_debil', '/audio/effects/du.mp3').catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -136,8 +141,7 @@ export function useLogicaProMax() {
   useEffect(() => { estadoJuegoRef.current = estadoJuego; }, [estadoJuego]);
   useEffect(() => { cancionRef.current = cancionSeleccionada; }, [cancionSeleccionada]);
 
-  // ── Callbacks para useLogicaAcordeon ──────────────────
-  const _golpeHandlerRef = useRef<(idBoton: string) => void>(() => {});
+  const _golpeHandlerRef = useRef<(idBoton: string) => void>(() => { });
 
   const _onNotaPresionadaEstable = useCallback((data: { idBoton: string }) => {
     registrarPresionHero(data.idBoton, convertirDireccionAFuelle(direccionAlumnoRef.current));
@@ -155,13 +159,11 @@ export function useLogicaProMax() {
 
   useEffect(() => { direccionAlumnoRef.current = logica.direccion; }, [logica.direccion]);
 
-  // Sync grabacion refs from logica
   useEffect(() => { tonalidadGrabacionRef.current = logica.tonalidadSeleccionada; }, [logica.tonalidadSeleccionada, tonalidadGrabacionRef]);
   useEffect(() => { modoVistaGrabacionRef.current = logica.modoVista; }, [logica.modoVista, modoVistaGrabacionRef]);
   useEffect(() => { timbreGrabacionRef.current = (logica.ajustes as any).timbre || null; }, [logica.ajustes, timbreGrabacionRef]);
   useEffect(() => { instrumentoGrabacionRef.current = logica.instrumentoId || null; }, [logica.instrumentoId, instrumentoGrabacionRef]);
 
-  // ── Maestro audio ──────────────────────────────────────
   const actualizarBotonMaestro = useCallback((id: string, accion: 'add' | 'remove', instancias?: any[] | null) => {
     setBotonesActivosMaestro(prev => {
       const siguiente = { ...prev };
@@ -213,8 +215,15 @@ export function useLogicaProMax() {
     audioFondoRef.current.currentTime = tiempoSegundos;
   }, []);
 
+  // Callback externo para consumidores fuera del Simulador (ej: useEstudioAdmin) que no tienen cancionSeleccionada.
+  const _onBeatExternoRef = useRef<((beatIndex: number) => void) | null>(null);
+  const setOnBeatExterno = useCallback((cb: ((beatIndex: number) => void) | null) => {
+    _onBeatExternoRef.current = cb;
+  }, []);
+
   const _onBeatEstable = useCallback((beatIndex: number) => {
     _onBeatCallbackRef.current?.(beatIndex);
+    _onBeatExternoRef.current?.(beatIndex);
   }, []);
 
   useEffect(() => {
@@ -259,7 +268,6 @@ export function useLogicaProMax() {
     _reproductoActionsRef.current.buscarTick = reproductor.buscarTick;
   }, [reproductor.alternarPausa, reproductor.buscarTick]);
 
-  // ── Procesamiento de golpes ────────────────────────────
   const procesarGolpeAlumno = useCallback((botonId: string) => {
     const cancion = cancionRef.current;
     if (!cancion) return;
@@ -298,7 +306,7 @@ export function useLogicaProMax() {
             setEstadoJuego('jugando');
             estadoJuegoRef.current = 'jugando';
             _reproductoActionsRef.current.alternarPausa();
-            audioFondoRef.current?.play().catch(() => {});
+            audioFondoRef.current?.play().catch(() => { });
           }
         }
       } else { registrarResultado('fallada', posicionUltimoGolpeRef.current); }
@@ -308,9 +316,15 @@ export function useLogicaProMax() {
     const tickActual = tickActualRef.current;
     const resolucion = cancion.resolucion || 192;
     const ventanaTicks = msATicks(VENTANA_BIEN_MS, cancion.bpm, resolucion);
+    const seccionAct = seccionSeleccionadaRef.current;
+    const rMin = seccionAct ? seccionAct.tickInicio - ventanaTicks : -Infinity;
+    const rMax = seccionAct ? seccionAct.tickFin + ventanaTicks : Infinity;
     const candidatas = cancion.secuencia.filter(nota => {
       const clave = `${nota.tick}-${nota.botonId}`;
-      return nota.botonId === botonId && Math.abs(nota.tick - tickActual) <= ventanaTicks && !notasImpactadasRef.current.has(clave);
+      return nota.botonId === botonId
+        && nota.tick >= rMin && nota.tick <= rMax
+        && Math.abs(nota.tick - tickActual) <= ventanaTicks
+        && !notasImpactadasRef.current.has(clave);
     });
     if (candidatas.length === 0) { registrarResultado('fallada', null); return; }
     const objetivo = candidatas.reduce((mejor, actual) =>
@@ -336,7 +350,6 @@ export function useLogicaProMax() {
     };
   }, [procesarGolpeAlumno]);
 
-  // ── Monitoreo de ticks ────────────────────────────────
   useEffect(() => {
     const estaActivo = reproductor.reproduciendo || estadoJuego === 'pausado' || estadoJuego === 'pausado_synthesia';
     if (!estaActivo || !cancionSeleccionada) return;
@@ -345,7 +358,13 @@ export function useLogicaProMax() {
     const ventanaTicks = msATicks(VENTANA_BIEN_MS, cancionSeleccionada.bpm, resolucion);
     const modo = modoPracticaRef.current;
 
+    // Sin restringir al rango de la sección, las notas anteriores se marcan en masa como "perdidas" → vida cae a 0.
+    const seccionActiva = seccionSeleccionadaRef.current;
+    const rangoMin = seccionActiva ? seccionActiva.tickInicio - ventanaTicks : -Infinity;
+    const rangoMax = seccionActiva ? seccionActiva.tickFin + ventanaTicks : Infinity;
+
     for (const nota of cancionSeleccionada.secuencia) {
+      if (nota.tick < rangoMin || nota.tick > rangoMax) continue;
       const clave = `${nota.tick}-${nota.botonId}`;
       if (notasImpactadasRef.current.has(clave)) continue;
 
@@ -356,6 +375,7 @@ export function useLogicaProMax() {
         if (tickActual >= (nota.tick - UMBRAL_ANTICIPACION) && notasEsperandoRef.current.length === 0) {
           const grupoNotas = cancionSeleccionada.secuencia.filter(n =>
             Math.abs(n.tick - nota.tick) <= UMBRAL_ACORDE &&
+            n.tick >= rangoMin && n.tick <= rangoMax &&
             !notasImpactadasRef.current.has(`${n.tick}-${n.botonId}`)
           );
 
@@ -419,7 +439,6 @@ export function useLogicaProMax() {
     }
   }, [reproductor.tickActual, estadoJuego]);
 
-  // ── Abandono / visibilidad ─────────────────────────────
   const _setDireccionRef = useRef(logica.setDireccion);
   useEffect(() => { _setDireccionRef.current = logica.setDireccion; }, [logica.setDireccion]);
 
@@ -429,6 +448,7 @@ export function useLogicaProMax() {
         const cancion = cancionRef.current;
         const totalNotas = cancion.secuencia.length || 1;
         const notasTocadas = estadisticasRef.current.notasPerfecto + estadisticasRef.current.notasBien + estadisticasRef.current.notasFalladas + estadisticasRef.current.notasPerdidas;
+        const seccion = seccionSeleccionadaRef.current;
         scoresHeroService.guardarScoreGame({
           usuario_id: usuario.id,
           cancion_id: cancion.id!,
@@ -444,7 +464,9 @@ export function useLogicaProMax() {
           duracion_ms: 0,
           abandono: true,
           porcentaje_completado: Math.round((notasTocadas / totalNotas) * 100),
-        }).catch(() => {});
+          seccion_id: seccion?.id ?? null,
+          seccion_nombre: seccion?.nombre ?? null,
+        }).catch(() => { });
       }
     };
 
@@ -467,7 +489,6 @@ export function useLogicaProMax() {
     };
   }, [usuario, estadisticasRef]);
 
-  // ── Game over ─────────────────────────────────────────
   useEffect(() => {
     if (estadisticas.vida <= 0 && estadoJuego === 'jugando' && modoPractica === 'ninguno') {
       prepararGrabacionCompetencia();
@@ -485,7 +506,6 @@ export function useLogicaProMax() {
     }
   }, [estadisticas.vida, estadoJuego, modoPractica, prepararGrabacionCompetencia, reproductor.detenerReproduccion]);
 
-  // ── Fin de reproducción → resultados ─────────────────
   useEffect(() => {
     if (reproductor.reproduciendo) { reproduccionFueIniciada.current = true; }
   }, [reproductor.reproduciendo]);
@@ -503,12 +523,11 @@ export function useLogicaProMax() {
           if (p >= pasos) { clearInterval(int); audio.pause(); audioFondoRef.current = null; }
         }, 50);
       }
-      try { const sfx = new Audio('/audio/effects/success.mp3'); sfx.volume = 0.75; sfx.play().catch(() => {}); } catch (_) {}
+      try { const sfx = new Audio('/audio/effects/success.mp3'); sfx.volume = 0.75; sfx.play().catch(() => { }); } catch (_) { }
       setEstadoJuego('resultados');
     }
   }, [cancionSeleccionada, estadoJuego, prepararGrabacionCompetencia, reproductor.reproduciendo]);
 
-  // ── Limpieza al desmontar ─────────────────────────────
   useEffect(() => {
     return () => {
       cancelarCapturaActiva();
@@ -523,7 +542,6 @@ export function useLogicaProMax() {
     };
   }, [cancelarCapturaActiva, reproductor.detenerReproduccion]);
 
-  // ── Acciones de juego ─────────────────────────────────
   const registrarPosicionGolpe = useCallback((x: number, y: number) => {
     posicionUltimoGolpeRef.current = { x, y };
   }, []);
@@ -545,6 +563,8 @@ export function useLogicaProMax() {
     setCancionSeleccionada(cancion);
     cancionRef.current = cancion;
     cancionPreConfigRef.current = cancion;
+    setSeccionSeleccionada(null);
+    seccionSeleccionadaRef.current = null;
     setVelocidad(100);
     setEstadoJuego('seleccion');
     estadoJuegoRef.current = 'seleccion';
@@ -552,6 +572,11 @@ export function useLogicaProMax() {
       logica.setTonalidadSeleccionada(cancion.tonalidad);
     }
   }, [cancelarCapturaActiva, limpiarEstadoGrabaciones, logica.setTonalidadSeleccionada]);
+
+  const seleccionarSeccion = useCallback((seccion: Seccion | null) => {
+    setSeccionSeleccionada(seccion);
+    seccionSeleccionadaRef.current = seccion;
+  }, []);
 
   const cambiarBpm = useCallback((valor: number | ((prev: number) => number)) => {
     const prev = _bpmCache.current;
@@ -582,46 +607,125 @@ export function useLogicaProMax() {
     const vel = velocidadRef.current;
     const modoActual = modoPracticaForzado || modoPracticaRef.current;
 
-    const _arrancarReproduccion = () => {
-      if (audioFondoRef.current) { audioFondoRef.current.pause(); audioFondoRef.current.src = ""; audioFondoRef.current = null; }
-      if (modoActual === 'ninguno') { iniciarCaptura('competencia'); }
+    if (audioFondoRef.current) { audioFondoRef.current.pause(); audioFondoRef.current.src = ""; audioFondoRef.current = null; }
+
+    const seccion = seccionSeleccionadaRef.current;
+    const resolucion = (cancion as any).resolucion || 192;
+    const bpmOriginal = bpmOriginalRef.current || cancion.bpm || 120;
+    const rangoTicks = seccion ? { inicio: seccion.tickInicio, fin: seccion.tickFin } : null;
+    const offsetSegundos = seccion ? (seccion.tickInicio / resolucion) * (60 / bpmOriginal) : 0;
+
+    const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
+
+    // Pre-carga + seek durante el conteo de 3s: cuando termina el conteo, audio.play() arranca instantáneo y el reloj
+    // de ticks en el mismo frame → cero desfase entre MP3 y notas.
+    const audioPrecargado: HTMLAudioElement | null = urlFondo ? new Audio(urlFondo) : null;
+    if (audioPrecargado) {
+      // preload='auto': descarga completa apenas pueda. NO llamar .load() — resetea estado y causa re-fetch + stutter.
+      audioPrecargado.preload = 'auto';
+      audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
+      audioPrecargado.playbackRate = vel / 100;
+      (audioPrecargado as any).preservesPitch = true;
+      audioFondoRef.current = audioPrecargado;
+    }
+
+    // Resuelve cuando el audio está listo (sin stutter durante playback) y posicionado en offsetSegundos.
+    // Estrategia escalonada: canplaythrough → canplay@3s → arrancar igual @4.5s (siempre vía aplicarSeek para preservar offset de sección).
+    const audioListo = new Promise<void>((resolve) => {
+      if (!audioPrecargado) { resolve(); return; }
+
+      let resuelto = false;
+      const finalizar = () => {
+        if (resuelto) return;
+        resuelto = true;
+        resolve();
+      };
+
+      const aplicarSeek = () => {
+        if (offsetSegundos > 0) {
+          const onSeeked = () => {
+            audioPrecargado.removeEventListener('seeked', onSeeked);
+            finalizar();
+          };
+          audioPrecargado.addEventListener('seeked', onSeeked, { once: true });
+          try { audioPrecargado.currentTime = offsetSegundos; } catch (_) { finalizar(); }
+        } else {
+          finalizar();
+        }
+      };
+
+      const onCanPlayThrough = () => {
+        audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
+        aplicarSeek();
+      };
+
+      if (audioPrecargado.readyState >= 4) {
+        aplicarSeek();
+      } else {
+        audioPrecargado.addEventListener('canplaythrough', onCanPlayThrough);
+        // 3s: si canplaythrough no llegó pero hay canplay, seguir. Da margen para acumular más buffer en archivos grandes.
+        setTimeout(() => {
+          if (resuelto) return;
+          if (audioPrecargado.readyState >= 3) {
+            audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
+            aplicarSeek();
+          }
+        }, 3000);
+      }
+
+      // 4.5s: arrancar con lo que sea (red muy lenta). CRÍTICO pasar por aplicarSeek, no finalizar directo —
+      // si no, una sección con offset arrancaría desde tick 0.
+      setTimeout(() => {
+        if (resuelto) return;
+        audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
+        aplicarSeek();
+      }, 4500);
+    });
+
+    // Arranca audio + reloj de ticks alineados. audio.play() tarda 100-300ms en producir sonido real (latencia decoder),
+    // así que esperamos el evento 'playing' y arrancamos el RAF con tickInicialOverride = audio.currentTime real.
+    const dispararJuegoSincronizado = () => {
       setEstadoJuego('jugando');
       estadoJuegoRef.current = 'jugando';
 
-      const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
-      if (urlFondo) {
-        const audio = new Audio(urlFondo);
-        audio.volume = mp3Silenciado ? 0 : volumenMusica / 100;
-        audio.playbackRate = vel / 100;
-        audio.addEventListener('playing', () => {
-          if (typeof (window as any).sincronizarRelojConPista === 'function') {
-            (window as any).sincronizarRelojConPista();
-          }
-        }, { once: true });
-        audioFondoRef.current = audio;
-
-        let arrancado = false;
-        const iniciarTodo = () => {
-          if (arrancado) return;
-          arrancado = true;
-          audio.play().catch(() => {});
-          reproductor.reproducirSecuencia(cancion);
-          audio.removeEventListener('canplay', iniciarTodo);
-          audio.removeEventListener('loadeddata', iniciarTodo);
-          audio.removeEventListener('load', iniciarTodo);
-          clearTimeout(timeoutId);
-        };
-
-        audio.addEventListener('canplay', iniciarTodo);
-        audio.addEventListener('loadeddata', iniciarTodo);
-        audio.addEventListener('load', iniciarTodo);
-
-        const timeoutId = setTimeout(() => {
-          iniciarTodo();
-        }, 3000);
-      } else {
-        reproductor.reproducirSecuencia(cancion);
+      // Sin MP3 (modo libre / canción sin audio): arranca el reloj inmediato.
+      if (!audioPrecargado) {
+        if (modoActual === 'ninguno') iniciarCaptura('competencia');
+        reproductor.reproducirSecuencia(cancion, rangoTicks ? { rangoTicks } : undefined);
+        return;
       }
+
+      const factor = (bpmOriginal / 60) * resolucion;
+      let arrancado = false;
+      let fallbackId: number | undefined;
+
+      const arrancarTickClock = () => {
+        if (arrancado) return;
+        arrancado = true;
+        if (fallbackId !== undefined) window.clearTimeout(fallbackId);
+        audioPrecargado.removeEventListener('playing', arrancarTickClock);
+        // Si el usuario canceló/reinició antes de 'playing', audioFondoRef ya apunta a otro audio — no interferir.
+        if (audioFondoRef.current !== audioPrecargado) return;
+        // Captura de competencia en el MISMO instante que el reloj — sin esto el grabador empieza antes que el RAF y queda offset.
+        if (modoActual === 'ninguno') iniciarCaptura('competencia');
+        // Calibración: secciones usan audioTickPos exacto sin snap (snap dejaba audio adelantado → "secuencia corrida").
+        // Intro snapea a 0 si <64 ticks (~200ms a 100bpm) para no saltar un eventual downbeat en tick 0.
+        const targetTick = rangoTicks ? rangoTicks.inicio : 0;
+        const audioTickPos = Math.max(0, Math.floor(audioPrecargado.currentTime * factor));
+        const tickInicialReal = rangoTicks
+          ? audioTickPos
+          : (audioTickPos < 64 ? targetTick : audioTickPos);
+        reproductor.reproducirSecuencia(cancion, {
+          rangoTicks: rangoTicks ?? null,
+          tickInicialOverride: tickInicialReal,
+        });
+      };
+
+      audioPrecargado.addEventListener('playing', arrancarTickClock);
+      // Fallback 1500ms: si 'playing' no llega (audio dañado / browser raro), arrancar igual.
+      fallbackId = window.setTimeout(() => arrancarTickClock(), 1500);
+      // Si play() es rechazado (autoplay policy), arrancar para que el alumno pueda jugar las notas.
+      audioPrecargado.play().catch(() => arrancarTickClock());
     };
 
     if (modoActual === 'synthesia') {
@@ -629,7 +733,14 @@ export function useLogicaProMax() {
       maestroSuenaRef.current = maestroActivo;
       setMaestroSuena(maestroActivo);
     }
-    if (modoActual !== 'ninguno' || saltarConteo) { setCuenta(null); _arrancarReproduccion(); return; }
+
+    if (modoActual !== 'ninguno' || saltarConteo) {
+      setCuenta(null);
+      audioListo.then(() => dispararJuegoSincronizado());
+      return;
+    }
+
+    // Competencia con conteo de 3s: el audio se precarga y posiciona durante el conteo, al final arrancan juntos.
     if (conteoIntervalRef.current) clearInterval(conteoIntervalRef.current);
     setCuenta(3);
     setEstadoJuego('contando');
@@ -640,7 +751,7 @@ export function useLogicaProMax() {
           clearInterval(conteoIntervalRef.current);
           conteoIntervalRef.current = null;
           setCuenta(null);
-          _arrancarReproduccion();
+          audioListo.then(() => dispararJuegoSincronizado());
           return null;
         }
         return prev - 1;
@@ -717,13 +828,14 @@ export function useLogicaProMax() {
   }, [actualizarLoopAB, reproductor.setLoopPoints]);
 
   const alternarPausaReproduccion = useCallback(() => {
-    const estado = estadoJuegoRef.current;
-    if ((estado !== 'jugando' && estado !== 'practica_libre') || !reproductor.reproduciendo) return;
+    // Guard por `reproduciendo` (no por estadoJuego): EstudioAdmin queda en estadoJuego='seleccion' y un check
+    // previo por estado rompía el pause ahí. En EstudioAdmin el audio lo gestiona useAudioFondoPracticaLibre.
+    if (!reproductor.reproduciendo) return;
     const vaAPausar = !reproductor.pausado;
     reproductor.alternarPausa();
     if (audioFondoRef.current) {
       if (vaAPausar) audioFondoRef.current.pause();
-      else audioFondoRef.current.play().catch(() => {});
+      else audioFondoRef.current.play().catch(() => { });
     }
   }, [reproductor.alternarPausa, reproductor.pausado, reproductor.reproduciendo]);
 
@@ -744,7 +856,7 @@ export function useLogicaProMax() {
   const alternarPausa = useCallback(() => {
     const estaJugando = estadoJuegoRef.current === 'jugando';
     if (estaJugando) { audioFondoRef.current?.pause(); }
-    else { audioFondoRef.current?.play().catch(() => {}); }
+    else { audioFondoRef.current?.play().catch(() => { }); }
     reproductor.alternarPausa();
     setEstadoJuego(prev => prev === 'pausado' ? 'jugando' : 'pausado');
   }, [reproductor.alternarPausa]);
@@ -771,7 +883,7 @@ export function useLogicaProMax() {
           conteoIntervalRef.current = null;
           setCuenta(null);
           reproductor.alternarPausa();
-          audioFondoRef.current?.play().catch(() => {});
+          audioFondoRef.current?.play().catch(() => { });
           setEstadoJuego('jugando');
           estadoJuegoRef.current = 'jugando';
           return null;
@@ -789,6 +901,8 @@ export function useLogicaProMax() {
     audioFondoRef.current?.pause();
     audioFondoRef.current = null;
     setCancionSeleccionada(null);
+    setSeccionSeleccionada(null);
+    seccionSeleccionadaRef.current = null;
     setEstadoJuego('seleccion');
     estadoJuegoRef.current = 'seleccion';
     setEstadisticas({ ...ESTADISTICAS_INICIALES });
@@ -799,7 +913,9 @@ export function useLogicaProMax() {
     if (conteoIntervalRef.current) { clearInterval(conteoIntervalRef.current); conteoIntervalRef.current = null; }
     setCuenta(null);
     logica.setDireccion('halar');
-  }, [actualizarLoopAB, cancelarCapturaActiva, limpiarEstadoGrabaciones, limpiarSynthesia, reproductor.detenerReproduccion, reproductor.setLoopPoints, logica.setDireccion, setEstadisticas, setEfectosVisuales]);
+    // Recarga progreso de secciones: la sección recién completada debe aparecer desbloqueada al volver al pre-juego.
+    refrescarProgresoSecciones();
+  }, [actualizarLoopAB, cancelarCapturaActiva, limpiarEstadoGrabaciones, limpiarSynthesia, reproductor.detenerReproduccion, reproductor.setLoopPoints, logica.setDireccion, setEstadisticas, setEfectosVisuales, refrescarProgresoSecciones]);
 
   const reset = useCallback(() => {
     setEstadisticas({ ...ESTADISTICAS_INICIALES });
@@ -835,11 +951,15 @@ export function useLogicaProMax() {
     setTimeout(() => iniciarJuego(cancion), 50);
   }, [cancelarCapturaActiva, iniciarJuego, limpiarEstadoGrabaciones, setEstadisticas, setEfectosVisuales]);
 
-  // ── Return (interfaz pública sin cambios) ─────────────
   return {
     estadoJuego,
     setEstadoJuego,
     cancionSeleccionada,
+    seccionSeleccionada,
+    seleccionarSeccion,
+    progresoVersion,
+    refrescarProgresoSecciones,
+    setOnBeatExterno,
     bpm,
     cambiarBpm,
     estadisticas,
@@ -899,6 +1019,7 @@ export function useLogicaProMax() {
     },
     iniciarPracticaLibre,
     reproducirSecuencia: reproductor.reproducirSecuencia,
+    setAudioSync: reproductor.setAudioSync,
     grabaciones: {
       grabando: grabandoHero,
       tiempoGrabacionMs,

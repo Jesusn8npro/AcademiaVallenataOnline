@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save } from 'lucide-react';
 import type { NotaHero } from '../../TiposProMax';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import type { ModalEditorSecuenciaProps } from './EditorSecuencia/tiposEditor';
 import { usePunchInEditor } from './EditorSecuencia/usePunchInEditor';
 import { useSeccionesModal } from './EditorSecuencia/useSeccionesModal';
-import PanelTimeline from './EditorSecuencia/PanelTimeline';
 import PanelPunchIn from './EditorSecuencia/PanelPunchIn';
 import PanelSecciones from './EditorSecuencia/PanelSecciones';
 import PanelConfigMP3 from './EditorSecuencia/PanelConfigMP3';
+import BarraTimelineProMax from './BarraTimelineProMax';
 import './ModalEditorSecuencia.css';
 
 const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
@@ -16,6 +17,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   grabando: _grabando, onIniciarGrabacion, onDetenerGrabacion,
   notasGrabadas, onNotasActuales, onSecuenciaChange,
   preRollSegundos, setPreRollSegundos, metronomoActivo, setMetronomoActivo,
+  onReproducirNota,
 }) => {
   const resolucion = cancion?.resolucion || 192;
 
@@ -46,9 +48,10 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   });
 
   const [secuenciaEditada, setSecuenciaEditada] = useState<NotaHero[]>([]);
-  const [timelineAbierto, setTimelineAbierto] = useState(true);
   const [edicionAbierta, setEdicionAbierta] = useState(false);
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => { setPortalTarget(document.getElementById('barra-timeline-slot')); }, []);
 
   const sec = useSeccionesModal({
     cancion, audioRef, duracionAudio, reproduciendoLocal, setReproduciendoLocal,
@@ -58,10 +61,59 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   const secuenciaPreviewRef = useRef<NotaHero[]>([]);
   const modoEdicionRef = useRef(punch.modoEdicion);
   const onNotasActualesRef = useRef(onNotasActuales);
+  const onIniciarGrabacionRef = useRef(onIniciarGrabacion);
+  const onReproducirNotaRef = useRef(onReproducirNota);
+  const notasYaSonadasRef = useRef<Set<string>>(new Set());
+  const notasActivasReprodRef = useRef<Map<string, { instancias: any[]; endTick: number }>>(new Map());
+  // Hasta que el audio dispare 'playing', el RAF no debe disparar notas (evita "secuencia antes que mp3").
+  const audioRealmenteSonandoRef = useRef<boolean>(false);
   useEffect(() => { secuenciaEditadaRef.current = secuenciaEditada; }, [secuenciaEditada]);
   useEffect(() => { secuenciaPreviewRef.current = punch.secuenciaPreview; }, [punch.secuenciaPreview]);
   useEffect(() => { modoEdicionRef.current = punch.modoEdicion; }, [punch.modoEdicion]);
   useEffect(() => { onNotasActualesRef.current = onNotasActuales; }, [onNotasActuales]);
+  useEffect(() => { onIniciarGrabacionRef.current = onIniciarGrabacion; }, [onIniciarGrabacion]);
+  useEffect(() => { onReproducirNotaRef.current = onReproducirNota; }, [onReproducirNota]);
+  const apagarTodasLasNotasActivas = React.useCallback(() => {
+    notasActivasReprodRef.current.forEach(({ instancias }) => {
+      instancias.forEach((inst: any) => {
+        try { (motorAudioPro as any).detener?.(inst, 0.05); } catch (_) {}
+      });
+    });
+    notasActivasReprodRef.current.clear();
+    notasYaSonadasRef.current = new Set();
+  }, []);
+
+  useEffect(() => {
+    if (!reproduciendoLocal) {
+      apagarTodasLasNotasActivas();
+      audioRealmenteSonandoRef.current = false;
+    }
+  }, [reproduciendoLocal, apagarTodasLasNotasActivas]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onPlaying = () => { audioRealmenteSonandoRef.current = true; };
+    const onSeeked = () => { if (!audio.paused) audioRealmenteSonandoRef.current = true; };
+    const onPause = () => { audioRealmenteSonandoRef.current = false; };
+    audio.addEventListener('playing', onPlaying);
+    audio.addEventListener('seeked', onSeeked);
+    audio.addEventListener('pause', onPause);
+    return () => {
+      audio.removeEventListener('playing', onPlaying);
+      audio.removeEventListener('seeked', onSeeked);
+      audio.removeEventListener('pause', onPause);
+    };
+  }, [audioRef.current]);
+
+  useEffect(() => { apagarTodasLasNotasActivas(); }, [punch.modoEdicion, apagarTodasLasNotasActivas]);
+
+  useEffect(() => {
+    return () => {
+      apagarTodasLasNotasActivas();
+      try { (motorAudioPro as any).detenerTodo?.(); } catch (_) {}
+    };
+  }, [apagarTodasLasNotasActivas]);
 
   const ticksDeDuracion = Math.round(sec.duracionSegundosModal * (bpmModal / 60) * resolucion);
   const ultimoTickNotas = secuenciaEditada.length > 0 ? Math.max(...secuenciaEditada.map(n => n.tick + n.duracion)) : 0;
@@ -111,13 +163,63 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
       (audioRef.current as any).preservesPitch = true;
     }
     const loop = () => {
-      const ahora = motorAudioPro.tiempoActual;
+      const ahora = performance.now() / 1000;
       if (!inicioLocalRef.current) inicioLocalRef.current = { ts: ahora, tick: tickLocalRef.current };
-      const newTick = Math.min(totalTicksModal, inicioLocalRef.current.tick + (ahora - inicioLocalRef.current.ts) * (bpmModal / 60) * resolucion);
+
+      // Tick: (1) audio sonando → sigue audio.currentTime (cero drift); (2) audio pendiente → reloj congelado para no adelantar las notas; (3) sin audio → performance.now().
+      const audio = audioRef.current;
+      const hayAudio = !!(audio && audio.src);
+      const audioActivo = audioRealmenteSonandoRef.current
+        && !!(audio && !audio.paused && audio.readyState >= 2);
+
+      let newTick: number;
+      if (audioActivo) {
+        newTick = Math.min(totalTicksModal, audio!.currentTime * (bpmOrig / 60) * resolucion);
+        inicioLocalRef.current = { ts: ahora, tick: newTick };
+      } else if (hayAudio) {
+        newTick = tickLocalRef.current;
+        inicioLocalRef.current = { ts: ahora, tick: newTick };
+      } else {
+        newTick = Math.min(totalTicksModal, inicioLocalRef.current.tick + (ahora - inicioLocalRef.current.ts) * (bpmModal / 60) * resolucion);
+      }
       tickLocalRef.current = newTick;
       if (onNotasActualesRef.current && modoEdicionRef.current !== 'grabando') {
         const seq = modoEdicionRef.current === 'revisando' ? secuenciaPreviewRef.current : secuenciaEditadaRef.current;
         onNotasActualesRef.current(seq.filter(n => newTick >= n.tick && newTick < n.tick + n.duracion));
+
+        // Sonar tonos en idle/revisando (no durante grabación, para no superponer audio).
+        const modoSuena = modoEdicionRef.current === 'idle' || modoEdicionRef.current === 'revisando';
+        if (onReproducirNotaRef.current && modoSuena) {
+          const tickAnterior = tickAnteriorRef.current;
+
+          notasActivasReprodRef.current.forEach((info, llave) => {
+            if (newTick >= info.endTick) {
+              info.instancias.forEach((inst: any) => {
+                try { (motorAudioPro as any).detener?.(inst, 0.05); } catch (_) {}
+              });
+              notasActivasReprodRef.current.delete(llave);
+            }
+          });
+
+          for (const n of seq) {
+            if (n.tick >= tickAnterior && n.tick < newTick) {
+              const llave = `${n.tick}-${n.botonId}`;
+              if (!notasYaSonadasRef.current.has(llave)) {
+                notasYaSonadasRef.current.add(llave);
+                try {
+                  const result: any = onReproducirNotaRef.current(n.botonId);
+                  const instancias: any[] = result?.instances || [];
+                  if (instancias.length > 0) {
+                    notasActivasReprodRef.current.set(llave, {
+                      instancias,
+                      endTick: n.tick + n.duracion,
+                    });
+                  }
+                } catch (_) {}
+              }
+            }
+          }
+        }
       }
       if (!isSeekingRef.current) {
         if (sliderRef.current) sliderRef.current.value = String(newTick);
@@ -135,28 +237,57 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
           punch.punchTickTargetRef.current = null;
           punch.setCuentaAtrasLocal(null);
           punch.setModoEdicion('grabando');
-          onIniciarGrabacion();
+          onIniciarGrabacionRef.current();
         } else {
           punch.setCuentaAtrasLocal(Math.ceil(rem));
         }
+      }
+      if (modoEdicionRef.current === 'grabando' && punch.punchOutTickRef.current !== null && newTick >= punch.punchOutTickRef.current) {
+        punch.detenerEdicionPunch();
       }
       if (newTick < totalTicksModal) rAFLocalRef.current = requestAnimationFrame(loop);
       else setReproduciendoLocal(false);
     };
     rAFLocalRef.current = requestAnimationFrame(loop);
     return () => { cancelAnimationFrame(rAFLocalRef.current); inicioLocalRef.current = null; };
-  }, [reproduciendoLocal, bpmModal, resolucion, totalTicksModal, onIniciarGrabacion, sec.reproduciendoSeccion]);
+  }, [reproduciendoLocal, bpmModal, resolucion, totalTicksModal, sec.reproduciendoSeccion]);
 
   useEffect(() => {
     if (!audioRef.current || !reproduciendoLocal) return;
+    const audio = audioRef.current;
     const seg = tickLocalRef.current / ((bpmOriginalRef.current / 60) * resolucion);
-    audioRef.current.currentTime = seg;
+    audio.currentTime = seg;
     checkpointTickRef.current = tickLocalRef.current;
     checkpointTimeRef.current = seg;
     tickAnteriorRef.current = tickLocalRef.current;
+    audioRealmenteSonandoRef.current = false;
     motorAudioPro.activarContexto();
-    audioRef.current.play().catch(() => {});
-  }, [reproduciendoLocal]);
+    audio.play().catch(() => {});
+
+    const onPlayingSync = () => {
+      audioRealmenteSonandoRef.current = true;
+      const tiempoReal = audio.currentTime;
+      const tickReal = tiempoReal * (bpmOriginalRef.current / 60) * resolucion;
+      tickLocalRef.current = tickReal;
+      tickAnteriorRef.current = tickReal;
+      inicioLocalRef.current = null;
+      setTickLocal(tickReal);
+    };
+    audio.addEventListener('playing', onPlayingSync, { once: true });
+
+    // Fallback: si 'playing' no llega en 1500ms, soltar el RAF igualmente.
+    const fallbackId = setTimeout(() => {
+      if (!audioRealmenteSonandoRef.current) {
+        audioRealmenteSonandoRef.current = true;
+        inicioLocalRef.current = null;
+      }
+    }, 1500);
+
+    return () => {
+      audio.removeEventListener('playing', onPlayingSync);
+      clearTimeout(fallbackId);
+    };
+  }, [reproduciendoLocal, resolucion]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -173,12 +304,13 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   useEffect(() => {
     if (!reproduciendoLocal) return;
     const sync = () => {
-      if (!audioRef.current || audioRef.current.paused) return;
-      const esperado = checkpointTimeRef.current + (tickLocalRef.current - checkpointTickRef.current) / ((bpmOriginalRef.current / 60) * resolucion);
-      if (Math.abs(esperado - audioRef.current.currentTime) > 0.15) {
-        audioRef.current.currentTime = esperado;
-        checkpointTimeRef.current = esperado;
-        checkpointTickRef.current = tickLocalRef.current;
+      if (audioRef.current && !audioRef.current.paused) {
+        const esperado = checkpointTimeRef.current + (tickLocalRef.current - checkpointTickRef.current) / ((bpmOriginalRef.current / 60) * resolucion);
+        if (Math.abs(esperado - audioRef.current.currentTime) > 0.15) {
+          audioRef.current.currentTime = esperado;
+          checkpointTimeRef.current = esperado;
+          checkpointTickRef.current = tickLocalRef.current;
+        }
       }
       syncAudioRef.current = requestAnimationFrame(sync);
     };
@@ -195,7 +327,30 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
     const t = Math.max(0, Math.min(totalTicksModal, val));
     tickLocalRef.current = t; setTickLocal(t); inicioLocalRef.current = null;
     if (sliderRef.current) sliderRef.current.value = String(t);
-    if (audioRef.current) audioRef.current.currentTime = (t / resolucion) * (60 / Math.max(1, cancion?.bpm || 120));
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      audio.currentTime = (t / resolucion) * (60 / Math.max(1, cancion?.bpm || 120));
+      audioRealmenteSonandoRef.current = false;
+      // Listener 'seeked' one-shot: si seekeamos durante reproducción, no se dispara 'playing' otra vez,
+      // así que aquí reactivamos el flag manualmente y recalibramos el tick a la posición real.
+      const onSeekedReanudar = () => {
+        audio.removeEventListener('seeked', onSeekedReanudar);
+        if (!audio.paused) {
+          audioRealmenteSonandoRef.current = true;
+          const tickReal = audio.currentTime * (bpmOriginalRef.current / 60) * resolucion;
+          tickLocalRef.current = tickReal;
+          tickAnteriorRef.current = tickReal;
+        }
+      };
+      audio.addEventListener('seeked', onSeekedReanudar, { once: true });
+    }
+    notasYaSonadasRef.current = new Set();
+    notasActivasReprodRef.current.forEach(({ instancias }) => {
+      instancias.forEach((inst: any) => {
+        try { (motorAudioPro as any).detener?.(inst, 0.05); } catch (_) {}
+      });
+    });
+    notasActivasReprodRef.current.clear();
   }, [resolucion, totalTicksModal, cancion?.bpm]);
 
   const handleReset = useCallback(() => {
@@ -209,6 +364,7 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   }, [bpmModal, resolucion, totalTicksModal, handleSeek]);
 
   return (
+    <>
     <div className="editor-secuencia-modal">
       <div className="editor-cabecera">
         <div>
@@ -219,33 +375,25 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
       </div>
 
       <div className="editor-cuerpo">
-        <PanelTimeline
-          secciones={sec.secciones} totalTicksModal={totalTicksModal} bpmModal={bpmModal}
-          setBpmModal={setBpmModal} onCambiarBpm={onCambiarBpm} punchInTickLocal={punch.punchInTickLocal}
-          secuenciaEditada={secuenciaEditada} sliderRef={sliderRef} isSeekingRef={isSeekingRef}
-          tickLocal={tickLocal} tiempoAudioActual={tiempoAudioActual} duracionAudio={duracionAudio}
-          reproduciendoLocal={reproduciendoLocal} handleSeek={handleSeek} handleReset={handleReset}
-          saltarSegundos={saltarSegundos} togglePlay={togglePlay}
-          timelineAbierto={timelineAbierto} setTimelineAbierto={setTimelineAbierto}
-        />
-
         <PanelPunchIn
           modoEdicion={punch.modoEdicion} cuentaAtrasLocal={punch.cuentaAtrasLocal}
           notasGrabadas={notasGrabadas} punchInTickLocal={punch.punchInTickLocal}
           setPunchInTickLocal={t => { punch.setPunchInTickLocal(t); punch.setMensajeLocal(null); }}
+          punchOutTickLocal={punch.punchOutTickLocal}
+          setPunchOutTickLocal={punch.setPunchOutTickLocal}
           punchInTickSnapshotCurrent={punch.punchInTickSnapshot.current}
           mensajeLocal={punch.mensajeLocal} bpmModal={bpmModal} resolucion={resolucion}
           secuenciaPreview={punch.secuenciaPreview} reproduciendoLocal={reproduciendoLocal}
           handleSeek={handleSeek} togglePlay={togglePlay}
           preRollSegsLocal={punch.preRollSegsLocal} setPreRollSegsLocal={punch.setPreRollSegsLocal}
-          setPreRollSegundos={setPreRollSegundos} metronomoLocal={punch.metronomoLocal}
-          setMetronomoLocal={punch.setMetronomoLocal} setMetronomoActivo={setMetronomoActivo}
+          setPreRollSegundos={setPreRollSegundos}
           iniciarEdicionPunch={punch.iniciarEdicionPunch} detenerEdicionPunch={punch.detenerEdicionPunch}
           guardarToma={punch.guardarToma} guardandoToma={punch.guardandoToma}
           onRepetirToma={() => punch.onRepetirToma(reproduciendoLocal)}
           descartarToma={punch.descartarToma} tickLocalRefCurrent={() => tickLocalRef.current}
           edicionAbierta={edicionAbierta} setEdicionAbierta={setEdicionAbierta}
           totalTicksModal={totalTicksModal}
+          secciones={sec.secciones}
         />
 
         <PanelSecciones
@@ -259,9 +407,23 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
           seccionNombre={sec.seccionNombre} setSeccionNombre={sec.setSeccionNombre}
           seccionTickInicio={sec.seccionTickInicio} setSeccionTickInicio={sec.setSeccionTickInicio}
           seccionTickFin={sec.seccionTickFin} setSeccionTickFin={sec.setSeccionTickFin}
+          seccionMonedas={sec.seccionMonedas} setSeccionMonedas={sec.setSeccionMonedas}
+          actualizarMonedasSeccion={sec.actualizarMonedasSeccion}
           agregarSeccion={sec.agregarSeccion} handleGuardarSecciones={sec.handleGuardarSecciones}
-          guardandoSecciones={sec.guardandoSecciones} seccionesAbiertas={seccionesAbiertas}
+          guardandoSecciones={sec.guardandoSecciones}
+          desbloqueoSecuencial={sec.desbloqueoSecuencial}
+          setDesbloqueoSecuencial={sec.setDesbloqueoSecuencial}
+          umbralPrecisionSeccion={sec.umbralPrecisionSeccion}
+          setUmbralPrecisionSeccion={sec.setUmbralPrecisionSeccion}
+          intentosParaMoneda={sec.intentosParaMoneda}
+          setIntentosParaMoneda={sec.setIntentosParaMoneda}
+          guardandoConfigSecciones={sec.guardandoConfigSecciones}
+          handleGuardarConfigSecciones={sec.handleGuardarConfigSecciones}
+          seccionesAbiertas={seccionesAbiertas}
           setSeccionesAbiertas={setSeccionesAbiertas}
+          seccionEditandoIndex={sec.seccionEditandoIndex}
+          iniciarEdicionSeccion={sec.iniciarEdicionSeccion}
+          cancelarEdicionSeccion={sec.cancelarEdicionSeccion}
         />
 
         <PanelConfigMP3
@@ -284,6 +446,46 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
         </button>
       </div>
     </div>
+
+    {portalTarget && createPortal(
+      <BarraTimelineProMax
+        secciones={sec.secciones}
+        totalTicksModal={totalTicksModal}
+        bpmModal={bpmModal}
+        bpmOriginal={cancion?.bpm || 120}
+        setBpmModal={setBpmModal}
+        onCambiarBpm={onCambiarBpm}
+        punchInTickLocal={punch.punchInTickLocal}
+        punchOutTickLocal={punch.punchOutTickLocal}
+        secuenciaEditada={secuenciaEditada}
+        sliderRef={sliderRef}
+        isSeekingRef={isSeekingRef}
+        tickLocal={tickLocal}
+        tiempoAudioActual={tiempoAudioActual}
+        duracionAudio={duracionAudio}
+        reproduciendoLocal={reproduciendoLocal}
+        handleSeek={handleSeek}
+        handleReset={handleReset}
+        saltarSegundos={saltarSegundos}
+        togglePlay={togglePlay}
+        resolucion={resolucion}
+        seccionNombre={sec.seccionNombre}
+        setSeccionNombre={sec.setSeccionNombre}
+        seccionTickInicio={sec.seccionTickInicio}
+        setSeccionTickInicio={sec.setSeccionTickInicio}
+        seccionTickFin={sec.seccionTickFin}
+        setSeccionTickFin={sec.setSeccionTickFin}
+        seccionMonedas={sec.seccionMonedas}
+        setSeccionMonedas={sec.setSeccionMonedas}
+        agregarSeccion={sec.agregarSeccion}
+        eliminarSeccion={(i) => sec.setSecciones(prev => prev.filter((_, idx) => idx !== i))}
+        seccionEditandoIndex={sec.seccionEditandoIndex}
+        iniciarEdicionSeccion={sec.iniciarEdicionSeccion}
+        cancelarEdicionSeccion={sec.cancelarEdicionSeccion}
+      />,
+      portalTarget
+    )}
+    </>
   );
 };
 
