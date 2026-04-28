@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../servicios/clienteSupabase';
 
 type Plataforma = 'bunny' | 'youtube' | 'otro';
@@ -25,6 +25,12 @@ interface ParametrosHook {
   leccionId?: string;
 }
 
+interface EntradaCache {
+  url: string;
+  plataforma: Plataforma;
+  expiresAt: Date | null;
+}
+
 interface ResultadoHook {
   url: string;
   plataforma: Plataforma | null;
@@ -34,19 +40,80 @@ interface ResultadoHook {
   refrescar: () => Promise<void>;
 }
 
-const cacheMemoria = new Map<string, { url: string; plataforma: Plataforma; expiresAt: Date | null }>();
-const MARGEN_REFRESCO_MS = 5 * 60 * 1000;
-const MIN_DELAY_REFRESCO_MS = 60 * 1000;
-const VENTANA_ANTI_LOOP_MS = 30 * 1000;
-const MAX_FETCHES_EN_VENTANA = 3;
+// ============================================================
+// ESTADO COMPARTIDO A NIVEL DE MÓDULO
+// Sobrevive entre montajes/desmontajes, evita refetch al re-mount.
+// Dedupe global: si la misma clave está siendo pedida, todos los
+// componentes que la pidan reusan la misma promesa.
+// ============================================================
+const cacheUrls = new Map<string, EntradaCache>();
+const promesasEnVuelo = new Map<string, Promise<EntradaCache | ErrorVideoFirmado>>();
+const MARGEN_VALIDEZ_MS = 60 * 1000;
 
-function clavearCache(parteId?: string, tutorialId?: string, leccionId?: string): string {
-  return `parte:${parteId ?? ''}|tutorial:${tutorialId ?? ''}|leccion:${leccionId ?? ''}`;
+function clavear(parteId?: string, tutorialId?: string, leccionId?: string): string {
+  return `p:${parteId ?? ''}|t:${tutorialId ?? ''}|l:${leccionId ?? ''}`;
 }
 
-function tieneTiempoUtil(expiresAt: Date | null): boolean {
-  if (!expiresAt) return true;
-  return expiresAt.getTime() - Date.now() > MARGEN_REFRESCO_MS;
+function entradaValida(entrada: EntradaCache | undefined): entrada is EntradaCache {
+  if (!entrada) return false;
+  if (!entrada.expiresAt) return true;
+  return entrada.expiresAt.getTime() - Date.now() > MARGEN_VALIDEZ_MS;
+}
+
+function esError(x: EntradaCache | ErrorVideoFirmado): x is ErrorVideoFirmado {
+  return (x as ErrorVideoFirmado).codigo !== undefined;
+}
+
+async function pedirURL(
+  clave: string,
+  parteId?: string,
+  tutorialId?: string,
+  leccionId?: string
+): Promise<EntradaCache | ErrorVideoFirmado> {
+  // Dedupe: si ya hay una petición en vuelo para esta clave, reusarla.
+  const enVuelo = promesasEnVuelo.get(clave);
+  if (enVuelo) return enVuelo;
+
+  const promesa = (async (): Promise<EntradaCache | ErrorVideoFirmado> => {
+    try {
+      const body: Record<string, string> = {};
+      if (parteId) body.parte_id = parteId;
+      if (tutorialId) body.tutorial_id = tutorialId;
+      if (leccionId) body.leccion_id = leccionId;
+
+      const { data, error: errInvoke } = await supabase.functions.invoke<RespuestaEdge>(
+        'obtener-video-firmado',
+        { body }
+      );
+
+      if (errInvoke) {
+        const status = (errInvoke as { context?: { status?: number } }).context?.status;
+        if (status === 401) return { codigo: 'no_autenticado', mensaje: 'Sesión inválida o expirada' };
+        if (status === 403) return { codigo: 'sin_acceso', mensaje: 'No tienes acceso a este video' };
+        if (status === 404) return { codigo: 'no_encontrado', mensaje: 'Video no encontrado' };
+        return { codigo: 'desconocido', mensaje: errInvoke.message || 'Error invocando obtener-video-firmado' };
+      }
+
+      if (!data || !data.url) {
+        return { codigo: 'no_encontrado', mensaje: data?.error || 'Respuesta vacía' };
+      }
+
+      const entrada: EntradaCache = {
+        url: data.url,
+        plataforma: data.plataforma,
+        expiresAt: data.expires_at ? new Date(data.expires_at) : null
+      };
+      cacheUrls.set(clave, entrada);
+      return entrada;
+    } catch (e: any) {
+      return { codigo: 'desconocido', mensaje: e?.message || 'Error inesperado' };
+    } finally {
+      promesasEnVuelo.delete(clave);
+    }
+  })();
+
+  promesasEnVuelo.set(clave, promesa);
+  return promesa;
 }
 
 export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHook): ResultadoHook {
@@ -56,176 +123,75 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
   const [error, setError] = useState<ErrorVideoFirmado | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
-  // Refs para evitar que `cargar` se recree y re-dispare efectos.
-  const paramsRef = useRef({ parteId, tutorialId, leccionId });
-  paramsRef.current = { parteId, tutorialId, leccionId };
-
-  const peticionEnVuelo = useRef<Promise<void> | null>(null);
-  const timerRefresco = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const desmontadoRef = useRef(false);
 
-  // Anti-loop: timestamps de fetches reales (que llegaron a la red).
-  const fetchesRecientes = useRef<number[]>([]);
-
-  // `cargar` con deps vacías: referencia ESTABLE entre renders.
-  // Lee parámetros vía paramsRef.current para evitar dependencia.
-  const cargar = useCallback(async (forzar = false): Promise<void> => {
-    const { parteId, tutorialId, leccionId } = paramsRef.current;
-
-    if (!parteId && !tutorialId && !leccionId) {
-      if (!desmontadoRef.current) {
+  // Función de carga sin React refs: trabaja con valores capturados
+  // del scope del useEffect. Se invoca desde el efecto y desde refrescar().
+  const ejecutarCarga = useCallback(
+    async (forzar: boolean): Promise<void> => {
+      if (!parteId && !tutorialId && !leccionId) {
         setError({ codigo: 'no_encontrado', mensaje: 'Falta parteId, tutorialId o leccionId' });
-      }
-      return;
-    }
-
-    const clave = clavearCache(parteId, tutorialId, leccionId);
-
-    if (!forzar) {
-      const enCache = cacheMemoria.get(clave);
-      if (enCache && tieneTiempoUtil(enCache.expiresAt)) {
-        if (!desmontadoRef.current) {
-          setUrl(enCache.url);
-          setPlataforma(enCache.plataforma);
-          setExpiresAt(enCache.expiresAt);
-          setError(null);
-        }
         return;
       }
-    }
 
-    if (peticionEnVuelo.current) return peticionEnVuelo.current;
+      const clave = clavear(parteId, tutorialId, leccionId);
 
-    // Anti-loop: descartar fetches viejos fuera de la ventana
-    const ahora = Date.now();
-    fetchesRecientes.current = fetchesRecientes.current.filter(
-      ts => ahora - ts < VENTANA_ANTI_LOOP_MS
-    );
-    if (fetchesRecientes.current.length >= MAX_FETCHES_EN_VENTANA) {
-      if (!desmontadoRef.current) {
-        setError({
-          codigo: 'desconocido',
-          mensaje: 'Demasiados intentos de refresco; se detiene para evitar bucle. Intenta recargar la página.'
-        });
-        setLoading(false);
+      if (!forzar) {
+        const cached = cacheUrls.get(clave);
+        if (entradaValida(cached)) {
+          if (!desmontadoRef.current) {
+            setUrl(cached.url);
+            setPlataforma(cached.plataforma);
+            setExpiresAt(cached.expiresAt);
+            setError(null);
+            setLoading(false);
+          }
+          return;
+        }
+      } else {
+        cacheUrls.delete(clave);
       }
-      return;
-    }
-    fetchesRecientes.current.push(ahora);
 
-    if (!desmontadoRef.current) {
-      setLoading(true);
-      setError(null);
-    }
-
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    const promesa = (async () => {
-      try {
-        const body: Record<string, string> = {};
-        if (parteId) body.parte_id = parteId;
-        if (tutorialId) body.tutorial_id = tutorialId;
-        if (leccionId) body.leccion_id = leccionId;
-
-        const { data, error: errInvoke } = await supabase.functions.invoke<RespuestaEdge>(
-          'obtener-video-firmado',
-          { body }
-        );
-
-        if (ctrl.signal.aborted || desmontadoRef.current) return;
-
-        if (errInvoke) {
-          const status = (errInvoke as { context?: { status?: number } }).context?.status;
-          let codigo: ErrorVideoFirmado['codigo'] = 'desconocido';
-          let mensaje = errInvoke.message || 'Error invocando obtener-video-firmado';
-
-          if (status === 401) { codigo = 'no_autenticado'; mensaje = 'Sesión inválida o expirada'; }
-          else if (status === 403) { codigo = 'sin_acceso'; mensaje = 'No tienes acceso a este video'; }
-          else if (status === 404) { codigo = 'no_encontrado'; mensaje = 'Video no encontrado'; }
-
-          setError({ codigo, mensaje });
-          setUrl('');
-          setPlataforma(null);
-          setExpiresAt(null);
-          return;
-        }
-
-        if (!data || !data.url) {
-          setError({ codigo: 'no_encontrado', mensaje: data?.error || 'Respuesta vacía' });
-          setUrl('');
-          setPlataforma(null);
-          setExpiresAt(null);
-          return;
-        }
-
-        const exp = data.expires_at ? new Date(data.expires_at) : null;
-        cacheMemoria.set(clave, { url: data.url, plataforma: data.plataforma, expiresAt: exp });
-
-        setUrl(data.url);
-        setPlataforma(data.plataforma);
-        setExpiresAt(exp);
+      if (!desmontadoRef.current) {
+        setLoading(true);
         setError(null);
-      } catch (e: any) {
-        if (ctrl.signal.aborted || desmontadoRef.current) return;
-        setError({ codigo: 'desconocido', mensaje: e?.message || 'Error inesperado' });
+      }
+
+      const resultado = await pedirURL(clave, parteId, tutorialId, leccionId);
+
+      if (desmontadoRef.current) return;
+
+      if (esError(resultado)) {
+        setError(resultado);
         setUrl('');
         setPlataforma(null);
         setExpiresAt(null);
-      } finally {
-        if (!desmontadoRef.current) setLoading(false);
-        peticionEnVuelo.current = null;
+      } else {
+        setUrl(resultado.url);
+        setPlataforma(resultado.plataforma);
+        setExpiresAt(resultado.expiresAt);
+        setError(null);
       }
-    })();
+      setLoading(false);
+    },
+    [parteId, tutorialId, leccionId]
+  );
 
-    peticionEnVuelo.current = promesa;
-    return promesa;
-  }, []);
-
-  // Carga inicial / al cambiar IDs primitivos (NO al cambiar `cargar`).
+  // Cargar 1 vez al montar, y solo cuando los IDs primitivos cambien.
+  // SIN auto-refresh por timer: las URLs Bunny duran ~2h. Si el usuario
+  // permanece más tiempo, el iframe fallará y mostraremos botón Reintentar.
+  // Eliminamos el timer de auto-refresh anterior porque generaba bucles
+  // cuando expires_at era inválido o el reloj del cliente derivaba.
   useEffect(() => {
     desmontadoRef.current = false;
-    void cargar(false);
+    void ejecutarCarga(false);
     return () => {
       desmontadoRef.current = true;
-      abortRef.current?.abort();
-      if (timerRefresco.current) {
-        clearTimeout(timerRefresco.current);
-        timerRefresco.current = null;
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parteId, tutorialId, leccionId]);
 
-  // Programar refresco antes de que expire la URL.
-  // Si la URL ya viene vencida o muy próxima a vencer, NO refrescar
-  // inmediatamente — eso causaría loop. Posponer al menos MIN_DELAY_REFRESCO_MS.
-  useEffect(() => {
-    if (timerRefresco.current) {
-      clearTimeout(timerRefresco.current);
-      timerRefresco.current = null;
-    }
-    if (!expiresAt) return;
-
-    const ms = expiresAt.getTime() - Date.now() - MARGEN_REFRESCO_MS;
-    const delay = Math.max(ms, MIN_DELAY_REFRESCO_MS);
-
-    timerRefresco.current = setTimeout(() => {
-      void cargar(true);
-    }, delay);
-
-    return () => {
-      if (timerRefresco.current) {
-        clearTimeout(timerRefresco.current);
-        timerRefresco.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expiresAt]);
-
-  const refrescar = useCallback(() => cargar(true), [cargar]);
+  const refrescar = useCallback(() => ejecutarCarga(true), [ejecutarCarga]);
 
   return { url, plataforma, loading, error, expiresAt, refrescar };
 }
