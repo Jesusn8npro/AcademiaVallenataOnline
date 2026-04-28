@@ -13,10 +13,24 @@ interface RespuestaEdge {
   url: string;
   plataforma: Plataforma;
   video_guid?: string;
-  expires_at?: string;
+  // EF puede enviar Unix timestamp (number, en segundos como Bunny) o ISO string.
+  expires_at?: string | number;
   expires_in_seconds?: number;
   error?: string;
   detalle?: string;
+}
+
+// Bunny y la EF v7 envían expires_at como Unix timestamp en SEGUNDOS.
+// JavaScript new Date(number) interpreta el número como milisegundos.
+// Sin esta normalización, new Date(1777425393) devuelve año 1970 y el
+// cache se marca expirado al instante => bucle de refetch en cada re-render.
+function parsearExpiresAt(raw: string | number | undefined | null): Date | null {
+  if (raw == null) return null;
+  if (typeof raw === 'number') {
+    // Heurística: si parece estar en segundos (< año 2286), multiplicar por 1000.
+    return new Date(raw < 10_000_000_000 ? raw * 1000 : raw);
+  }
+  return new Date(raw);
 }
 
 interface ParametrosHook {
@@ -101,7 +115,7 @@ async function pedirURL(
       const entrada: EntradaCache = {
         url: data.url,
         plataforma: data.plataforma,
-        expiresAt: data.expires_at ? new Date(data.expires_at) : null
+        expiresAt: parsearExpiresAt(data.expires_at)
       };
       cacheUrls.set(clave, entrada);
       return entrada;
