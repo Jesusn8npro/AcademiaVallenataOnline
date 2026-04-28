@@ -36,6 +36,9 @@ interface ResultadoHook {
 
 const cacheMemoria = new Map<string, { url: string; plataforma: Plataforma; expiresAt: Date | null }>();
 const MARGEN_REFRESCO_MS = 5 * 60 * 1000;
+const MIN_DELAY_REFRESCO_MS = 60 * 1000;
+const VENTANA_ANTI_LOOP_MS = 30 * 1000;
+const MAX_FETCHES_EN_VENTANA = 3;
 
 function clavearCache(parteId?: string, tutorialId?: string, leccionId?: string): string {
   return `parte:${parteId ?? ''}|tutorial:${tutorialId ?? ''}|leccion:${leccionId ?? ''}`;
@@ -53,12 +56,27 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
   const [error, setError] = useState<ErrorVideoFirmado | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
+  // Refs para evitar que `cargar` se recree y re-dispare efectos.
+  const paramsRef = useRef({ parteId, tutorialId, leccionId });
+  paramsRef.current = { parteId, tutorialId, leccionId };
+
   const peticionEnVuelo = useRef<Promise<void> | null>(null);
   const timerRefresco = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const desmontadoRef = useRef(false);
 
+  // Anti-loop: timestamps de fetches reales (que llegaron a la red).
+  const fetchesRecientes = useRef<number[]>([]);
+
+  // `cargar` con deps vacías: referencia ESTABLE entre renders.
+  // Lee parámetros vía paramsRef.current para evitar dependencia.
   const cargar = useCallback(async (forzar = false): Promise<void> => {
+    const { parteId, tutorialId, leccionId } = paramsRef.current;
+
     if (!parteId && !tutorialId && !leccionId) {
-      setError({ codigo: 'no_encontrado', mensaje: 'Falta parteId, tutorialId o leccionId' });
+      if (!desmontadoRef.current) {
+        setError({ codigo: 'no_encontrado', mensaje: 'Falta parteId, tutorialId o leccionId' });
+      }
       return;
     }
 
@@ -67,18 +85,43 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
     if (!forzar) {
       const enCache = cacheMemoria.get(clave);
       if (enCache && tieneTiempoUtil(enCache.expiresAt)) {
-        setUrl(enCache.url);
-        setPlataforma(enCache.plataforma);
-        setExpiresAt(enCache.expiresAt);
-        setError(null);
+        if (!desmontadoRef.current) {
+          setUrl(enCache.url);
+          setPlataforma(enCache.plataforma);
+          setExpiresAt(enCache.expiresAt);
+          setError(null);
+        }
         return;
       }
     }
 
     if (peticionEnVuelo.current) return peticionEnVuelo.current;
 
-    setLoading(true);
-    setError(null);
+    // Anti-loop: descartar fetches viejos fuera de la ventana
+    const ahora = Date.now();
+    fetchesRecientes.current = fetchesRecientes.current.filter(
+      ts => ahora - ts < VENTANA_ANTI_LOOP_MS
+    );
+    if (fetchesRecientes.current.length >= MAX_FETCHES_EN_VENTANA) {
+      if (!desmontadoRef.current) {
+        setError({
+          codigo: 'desconocido',
+          mensaje: 'Demasiados intentos de refresco; se detiene para evitar bucle. Intenta recargar la página.'
+        });
+        setLoading(false);
+      }
+      return;
+    }
+    fetchesRecientes.current.push(ahora);
+
+    if (!desmontadoRef.current) {
+      setLoading(true);
+      setError(null);
+    }
+
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
 
     const promesa = (async () => {
       try {
@@ -91,6 +134,8 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
           'obtener-video-firmado',
           { body }
         );
+
+        if (ctrl.signal.aborted || desmontadoRef.current) return;
 
         if (errInvoke) {
           const status = (errInvoke as { context?: { status?: number } }).context?.status;
@@ -124,24 +169,39 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
         setExpiresAt(exp);
         setError(null);
       } catch (e: any) {
+        if (ctrl.signal.aborted || desmontadoRef.current) return;
         setError({ codigo: 'desconocido', mensaje: e?.message || 'Error inesperado' });
         setUrl('');
         setPlataforma(null);
         setExpiresAt(null);
       } finally {
-        setLoading(false);
+        if (!desmontadoRef.current) setLoading(false);
         peticionEnVuelo.current = null;
       }
     })();
 
     peticionEnVuelo.current = promesa;
     return promesa;
+  }, []);
+
+  // Carga inicial / al cambiar IDs primitivos (NO al cambiar `cargar`).
+  useEffect(() => {
+    desmontadoRef.current = false;
+    void cargar(false);
+    return () => {
+      desmontadoRef.current = true;
+      abortRef.current?.abort();
+      if (timerRefresco.current) {
+        clearTimeout(timerRefresco.current);
+        timerRefresco.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parteId, tutorialId, leccionId]);
 
-  useEffect(() => {
-    void cargar(false);
-  }, [cargar]);
-
+  // Programar refresco antes de que expire la URL.
+  // Si la URL ya viene vencida o muy próxima a vencer, NO refrescar
+  // inmediatamente — eso causaría loop. Posponer al menos MIN_DELAY_REFRESCO_MS.
   useEffect(() => {
     if (timerRefresco.current) {
       clearTimeout(timerRefresco.current);
@@ -149,19 +209,21 @@ export function useVideoFirmado({ parteId, tutorialId, leccionId }: ParametrosHo
     }
     if (!expiresAt) return;
 
-    const msHastaRefresco = expiresAt.getTime() - Date.now() - MARGEN_REFRESCO_MS;
-    if (msHastaRefresco <= 0) {
+    const ms = expiresAt.getTime() - Date.now() - MARGEN_REFRESCO_MS;
+    const delay = Math.max(ms, MIN_DELAY_REFRESCO_MS);
+
+    timerRefresco.current = setTimeout(() => {
       void cargar(true);
-      return;
-    }
-    timerRefresco.current = setTimeout(() => { void cargar(true); }, msHastaRefresco);
+    }, delay);
+
     return () => {
       if (timerRefresco.current) {
         clearTimeout(timerRefresco.current);
         timerRefresco.current = null;
       }
     };
-  }, [expiresAt, cargar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiresAt]);
 
   const refrescar = useCallback(() => cargar(true), [cargar]);
 
