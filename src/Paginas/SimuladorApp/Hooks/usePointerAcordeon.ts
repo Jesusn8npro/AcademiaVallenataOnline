@@ -159,8 +159,12 @@ export const usePointerAcordeon = ({
 
         const handleTouchMove = (e: TouchEvent) => {
             let huboAreaJuego = false;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
+            // Procesar TODOS los touches activos (no solo changedTouches): iOS Safari puede
+            // suprimir touchmove individuales con un solo dedo (bug WebKit conocido), pero el
+            // próximo evento que llegue traerá la posición actualizada de ambos dedos en e.touches.
+            // Esto recupera transiciones perdidas durante trinos rápidos.
+            for (let i = 0; i < e.touches.length; i++) {
+                const t = e.touches[i];
                 const target = t.target as HTMLElement;
                 if (enAreaJuego(target)) huboAreaJuego = true;
                 procesarPunto(t.identifier, t.clientX, t.clientY, e.timeStamp);
