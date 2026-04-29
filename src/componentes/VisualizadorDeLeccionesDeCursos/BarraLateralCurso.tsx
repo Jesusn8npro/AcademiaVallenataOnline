@@ -1,6 +1,7 @@
 import React from 'react'
 import './BarraLateralCurso.css'
 import { useBarraLateralCurso } from './useBarraLateralCurso'
+import { prefetchVideoFirmado } from '../../hooks/useVideoFirmado'
 
 interface BarraLateralCursoProps {
   curso: any
@@ -96,6 +97,15 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
                         className={`blc-lesson-item ${esLeccionActiva(leccion) ? 'blc-active' : ''} ${esLeccionCompletada(leccion.id) ? 'blc-completed' : ''}`}
                         onClick={() => irALeccion(modulo, leccion)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') irALeccion(modulo, leccion) }}
+                        onMouseEnter={() => {
+                          // Prefetch en background: pre-firma la URL antes
+                          // del click para que el video aparezca instantaneo.
+                          if (tipo === 'tutorial') {
+                            prefetchVideoFirmado({ parteId: leccion.id });
+                          } else {
+                            prefetchVideoFirmado({ leccionId: leccion.id });
+                          }
+                        }}
                         tabIndex={0}
                         role="button"
                         aria-label={`Ir a la lección ${leccion.titulo}`}
