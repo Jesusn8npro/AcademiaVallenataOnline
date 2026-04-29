@@ -11,13 +11,23 @@ interface PointerLogicProps {
     desactivarAudio?: boolean;
 }
 
+// Hit-test estilo app nativa:
+//  1) document.elementFromPoint() — el browser hace el hit-test real, sin matemática manual.
+//     Funciona aunque el tren esté con transform, drag, escala o cualquier transformación.
+//  2) Histéresis: una vez asignado a un pito, lo mantenemos mientras el dedo no salga
+//     claramente de él. Anula el jitter sub-pixel del touch sensor.
+//  3) Imán de proximidad: si el dedo cae en un gap entre pitos, lo asignamos al más cercano
+//     dentro de IMAN_ENTRAR. Solo activo cuando elementFromPoint no encontró pito directo.
+const IMAN_ENTRAR = 16;
+const IMAN_SALIR = 36;
+
 export const usePointerAcordeon = ({
     x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false
 }: PointerLogicProps) => {
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
+    // Coords ABSOLUTAS de cada pito (no relativas al tren). Se refrescan en cada pointerdown
+    // para que cualquier cambio de layout/drag/escala que haya pasado entre toques se vea reflejado.
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
-    const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
-    const geometriaListaRef = useRef(false);
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -25,75 +35,54 @@ export const usePointerAcordeon = ({
     const desactivarAudioRef = useRef(desactivarAudio);
     useEffect(() => { desactivarAudioRef.current = desactivarAudio; }, [desactivarAudio]);
 
-    // Recálculo completo de geometría — definido fuera del effect para ser estable y reutilizable.
-    // Sólo usa refs, así que no necesita estar en el array de deps del effect.
     const actualizarGeometria = useCallback(() => {
         const tren = trenRef.current;
         if (!tren) return;
         const elPitos = tren.querySelectorAll('.pito-boton');
-        const currentX = x.get();
-        const trenBase = tren.getBoundingClientRect();
-        lastTrenRect.current = { left: trenBase.left - currentX, top: trenBase.top };
         rectsCache.current.clear();
         elPitos.forEach(el => {
             const pos = (el as HTMLElement).dataset.pos;
+            if (!pos) return;
             const r = el.getBoundingClientRect();
-            if (pos) rectsCache.current.set(pos, {
-                left: r.left - trenBase.left, right: r.right - trenBase.left,
-                top: r.top - trenBase.top, bottom: r.bottom - trenBase.top
-            });
+            rectsCache.current.set(pos, { left: r.left, right: r.right, top: r.top, bottom: r.bottom });
         });
-        geometriaListaRef.current = true;
-    }, [trenRef, x]);
+    }, [trenRef]);
 
     useEffect(() => {
         const tren = trenRef.current;
         if (!tren) return;
 
-        const forzarRecalculo = () => {
-            geometriaListaRef.current = false;
-            actualizarGeometria();
-        };
+        const forzarRecalculo = () => actualizarGeometria();
 
         window.addEventListener('resize', forzarRecalculo);
-        // Primer cálculo en el siguiente frame después de montar
+        window.addEventListener('orientationchange', forzarRecalculo);
         requestAnimationFrame(actualizarGeometria);
 
-        // Histéresis para evitar entrecorte por jitter del touch sensor:
-        //  - IMAN_ENTRAR (14): cuando el dedo busca un pito nuevo, el hitbox es modesto.
-        //  - IMAN_SALIR (28): una vez asignado a un pito, el dedo debe alejarse el doble
-        //    para "soltar" ese pito. Sin esto, jitter de 1-2px cerca del borde dispara
-        //    remove+add repetidos sobre la misma nota → audio entrecortado.
-        const IMAN_ENTRAR = 14;
-        const IMAN_SALIR = 28;
-        const dentroDe = (relX: number, relY: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
-            relX >= r.left - iman && relX <= r.right + iman && relY >= r.top - iman && relY <= r.bottom + iman;
+        const dentroDe = (cx: number, cy: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
+            cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
+        // Hit-test combinado: nativo + histéresis + imán.
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
-            if (!lastTrenRect.current) return null;
-            const currentX = x.get();
-            const relX = clientX - (lastTrenRect.current.left + currentX);
-            const relY = clientY - lastTrenRect.current.top;
+            // 1) Hit-test nativo. Ignora pointer capture, ignora transforms, siempre exacto.
+            //    En iOS/Safari y Android Chrome es ~0.05-0.2ms — más barato que iterar rects.
+            const target = document.elementFromPoint(clientX, clientY);
+            if (target) {
+                const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
+                if (pito?.dataset.pos) return pito.dataset.pos;
+            }
 
-            // Stickiness: si ya estábamos sobre un pito, lo mantenemos mientras estemos
-            // dentro de su rect expandido. Solo cambiamos cuando el dedo claramente salió.
+            // 2) Histéresis: si veníamos de un pito, mantenerlo mientras el dedo no salga
+            //    del rect expandido. Anula el "rebote" por jitter del sensor.
             if (posActual) {
                 const rActual = rectsCache.current.get(posActual);
-                if (rActual && dentroDe(relX, relY, rActual, IMAN_SALIR)) return posActual;
+                if (rActual && dentroDe(clientX, clientY, rActual, IMAN_SALIR)) return posActual;
             }
 
+            // 3) Imán: el dedo cayó en un gap. Buscar el pito más cercano dentro de IMAN_ENTRAR.
             for (const [pos, r] of rectsCache.current.entries()) {
-                if (dentroDe(relX, relY, r, IMAN_ENTRAR)) return pos;
+                if (dentroDe(clientX, clientY, r, IMAN_ENTRAR)) return pos;
             }
             return null;
-        };
-
-        // Refresca solo el offset del tren (1 medición barata) sin re-leer todos los pitos.
-        // Importante para que glissandos/scroll/orientation no desincronicen los hitboxes.
-        const refrescarOffsetTren = () => {
-            if (!tren) return;
-            const r = tren.getBoundingClientRect();
-            lastTrenRect.current = { left: r.left - x.get(), top: r.top };
         };
 
         const handlePointerDown = (e: PointerEvent) => {
@@ -101,26 +90,21 @@ export const usePointerAcordeon = ({
 
             const target = e.target as HTMLElement;
             const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-
-            // 🚀 BLINDAJE SELECTIVO: Solo prevenir default si estamos en el área de toque del acordeón
-            // Esto permite que los botones del menú, modales y barra superior funcionen normalmente.
             if (esAreaJuego && e.cancelable) e.preventDefault();
 
-            // 🔊 PERSISTENCIA DE AUDIO
             motorAudioPro.activarContexto();
 
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
-            try { target.setPointerCapture(e.pointerId); } catch (_) { }
-            // Geometría siempre fresca: recálculo completo si no está lista, o solo offset del tren si lo está.
-            // Evita hitboxes obsoletos por scroll/orientation/layout sin pagar el costo de medir 33 pitos cada vez.
-            if (!geometriaListaRef.current) actualizarGeometria();
-            else refrescarOffsetTren();
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
 
+            // Refresco de rects al inicio de cada toque: 33 mediciones (~1-2ms en móvil).
+            // Esto garantiza que el imán esté siempre alineado con la posición actual del tren,
+            // sin importar cuántos drags/escalas/cambios hubo entre toques.
+            actualizarGeometria();
+
+            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
 
             if (pos) {
-                // Fuelle Virtual: despierta el AudioContext (fix iOS/Android + silenciador iPhone)
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(e.pointerId, { pos, musicalId: mId, ts: e.timeStamp });
@@ -128,18 +112,13 @@ export const usePointerAcordeon = ({
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
             } else if (esToqueFuelle) {
-                // Registrar el pointer del fuelle (pos vacío) para que el guard de manejarCambioFuelle
-                // sepa que el fuelle está activo y no revierta a halar prematuramente
                 pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
             } else if (esAreaJuego) {
-                // Cualquier toque en el área de juego (marco, hilera, gap) registra el pointer
-                // para soportar glissando: el dedo entró en una zona muerta pero puede deslizarse a un pito.
                 pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
             }
         };
 
-        // ⚡ Procesamiento directo (sin RAF) para latencia mínima en glissandos.
-        // El RAF anterior agregaba ~16ms de retardo perceptible al deslizar.
+        // Procesamiento directo (sin RAF throttle) — latencia mínima en glissandos.
         const handlePointerMove = (e: PointerEvent) => {
             const data = pointersMap.current.get(e.pointerId);
             if (!data) return;
@@ -147,10 +126,6 @@ export const usePointerAcordeon = ({
             const target = e.target as HTMLElement;
             const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
             if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            // La dirección se controla EXCLUSIVAMENTE desde ContenedorBajos via manejarCambioFuelle.
-            // Nunca llamar setDireccion aquí — cambia el estado sin actualizar los sonidos
-            // y genera condiciones de carrera con manejarCambioFuelle.
 
             const pos = encontrarPosEnPunto(e.clientX, e.clientY, data.pos || null);
             if (pos !== data.pos) {
@@ -169,7 +144,6 @@ export const usePointerAcordeon = ({
                     pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
                 }
             } else {
-                // Mantener el timestamp vivo para el watchdog de zombis aunque no cambie de pos.
                 data.ts = e.timeStamp;
             }
         };
@@ -177,7 +151,6 @@ export const usePointerAcordeon = ({
         const handlePointerUp = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
             const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-
             if (esAreaJuego && e.cancelable) e.preventDefault();
 
             const data = pointersMap.current.get(e.pointerId);
@@ -188,14 +161,12 @@ export const usePointerAcordeon = ({
             }
             pointersMap.current.delete(e.pointerId);
 
-            // Fuelle Virtual: desactivar cuando no quedan dedos en pantalla
             if (pointersMap.current.size === 0) {
                 logicaRef.current.setFuelleVirtual?.(false);
             }
         };
 
-        // 🧹 Watchdog: limpia pointers zombi (pointercancel perdidos por gestos del sistema en iOS/Android).
-        // Sin esto el pool de voces se llena de notas fantasma y el simulador se "traba" tras un rato.
+        // Watchdog: pointers zombi por pointercancel perdidos (gestos del SO en iOS/Android).
         const ZOMBIE_TTL_MS = 4000;
         const watchdogId = window.setInterval(() => {
             if (pointersMap.current.size === 0) return;
@@ -215,8 +186,6 @@ export const usePointerAcordeon = ({
             if (pointersMap.current.size === 0) logicaRef.current.setFuelleVirtual?.(false);
         }, 1500);
 
-        // 🛑 Si la pestaña se oculta o pierde foco, limpiamos todo: el SO suele matar
-        // pointercancel/up en background y deja notas sonando para siempre.
         const limpiarTodo = () => {
             if (pointersMap.current.size === 0) return;
             pointersMap.current.forEach((data) => {
@@ -240,6 +209,7 @@ export const usePointerAcordeon = ({
 
         return () => {
             window.removeEventListener('resize', forzarRecalculo);
+            window.removeEventListener('orientationchange', forzarRecalculo);
             window.clearInterval(watchdogId);
             document.removeEventListener('visibilitychange', onVisibility);
             window.removeEventListener('blur', limpiarTodo);
@@ -250,9 +220,7 @@ export const usePointerAcordeon = ({
         };
     }, [x, actualizarVisualBoton, registrarEvento, trenRef, actualizarGeometria]);
 
-    // Llamar desde SimuladorApp cuando cambia la tonalidad o la escala
     const limpiarGeometria = useCallback(() => {
-        geometriaListaRef.current = false;
         rectsCache.current.clear();
         requestAnimationFrame(actualizarGeometria);
     }, [actualizarGeometria]);
@@ -260,11 +228,7 @@ export const usePointerAcordeon = ({
     return { pointersMap, limpiarGeometria, actualizarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         motorAudioPro.activarContexto();
-        if (!geometriaListaRef.current) actualizarGeometria();
-        // ejecutarSwapDireccion para+arranca cada nota con un crossfade muy corto (~5ms) sin gap audible.
         logicaRef.current.ejecutarSwapDireccion(nuevaDireccion);
-        // Sincronizar pointersMap con los nuevos musicalIds para que handlePointerUp
-        // pueda remover las notas correctamente al soltar los dedos
         const ahora = performance.now();
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
