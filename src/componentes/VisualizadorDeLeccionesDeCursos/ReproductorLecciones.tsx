@@ -3,6 +3,42 @@ import { useReproductorLecciones } from './useReproductorLecciones';
 import { useVideoFirmado } from '../../hooks/useVideoFirmado';
 import './ReproductorLecciones.css';
 
+// YouTube bloquea con X-Frame-Options:sameorigin cuando la URL es /watch?v=.
+// Solo permite iframes con /embed/. Esta funcion convierte cualquier formato
+// de URL de YouTube al formato embebible.
+function transformarYouTubeAEmbed(url: string): string | null {
+  if (!url) return null;
+  if (!url.includes('youtube.com') && !url.includes('youtu.be')) return null;
+  // Si ya es /embed/, dejarla tal cual (puede tener params utiles)
+  if (url.includes('/embed/')) return url;
+
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtu\.be\/([^?]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      const videoId = match[1];
+      const params = new URLSearchParams({
+        autoplay: '0',
+        rel: '0',
+        modestbranding: '1',
+        iv_load_policy: '3',
+        controls: '1',
+      });
+      // Conservar parametro `list` si esta en la URL original (playlists)
+      try {
+        const u = new URL(url);
+        const list = u.searchParams.get('list');
+        if (list) params.set('list', list);
+      } catch { /* URL invalida, ignorar params extra */ }
+      return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+    }
+  }
+  return null;
+}
+
 interface ReproductorLeccionesProps {
   leccionAnterior?: any;
   leccionSiguiente?: any;
@@ -52,15 +88,22 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     tipo
   });
 
-  // Para URLs firmadas de Bunny, agregar params que evitan precarga agresiva
-  // (preload=false reduce ~10MB de descarga inicial hasta que el usuario presiona play).
-  // No afecta la firma porque Bunny solo valida token+expires, params extra son libres.
+  // Para URLs firmadas de Bunny: agrega params que evitan precarga agresiva
+  // (preload=false reduce ~10MB hasta que el usuario presione play).
+  // Para YouTube: transforma /watch?v= a /embed/ porque YouTube bloquea
+  // iframes con X-Frame-Options:sameorigin si no es formato embed.
+  // Para otras URLs externas: pasarlas tal cual.
   const srcIframe = (() => {
     if (!usarFirmado) return urlProcesada;
     if (!firmado.url) return '';
-    if (firmado.plataforma !== 'bunny') return firmado.url;
-    const sep = firmado.url.includes('?') ? '&' : '?';
-    return `${firmado.url}${sep}autoplay=false&preload=false&responsive=true`;
+    if (firmado.plataforma === 'bunny') {
+      const sep = firmado.url.includes('?') ? '&' : '?';
+      return `${firmado.url}${sep}autoplay=false&preload=false&responsive=true`;
+    }
+    // YouTube necesita /embed/ — la EF devuelve plataforma='externa' para no-Bunny.
+    const youtubeEmbed = transformarYouTubeAEmbed(firmado.url);
+    if (youtubeEmbed) return youtubeEmbed;
+    return firmado.url;
   })();
   const referrerPolicyIframe = usarFirmado
     ? (esBunnyFirmado ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin')
