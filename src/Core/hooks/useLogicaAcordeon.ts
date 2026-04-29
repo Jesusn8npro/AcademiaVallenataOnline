@@ -485,8 +485,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         if (deshabilitarRef.current) return;
 
         if (accion === 'add') {
-            // Permitir solapamiento solo cuando viene del secuenciador (instanciasExternas !== null) — evita audio entrecortado en pasajes rápidos.
-            if (instanciasExternas === null && botonesActivosRef.current[id]) return;
+            // Re-trigger limpio: si ya hay nota activa con el mismo id (caso de trino rápido
+            // donde el remove anterior no completó el ciclo de React aún), detener la anterior
+            // y reemplazar por la nueva en lugar de ignorar el add. Sin esto, en trinos a alta
+            // velocidad las notas se pierden silenciosamente.
+            const existente = botonesActivosRef.current[id];
+            if (instanciasExternas === null && existente?.instances) {
+                existente.instances.forEach((inst: any) => motorAudioPro.detener(inst, 0.005));
+            }
 
             let instances: any[] = [];
             if (instanciasExternas !== null) {
