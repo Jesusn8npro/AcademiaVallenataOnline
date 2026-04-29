@@ -11,22 +11,18 @@ interface PointerLogicProps {
     desactivarAudio?: boolean;
 }
 
-// Hit-test estilo app nativa:
-//  1) document.elementFromPoint() — el browser hace el hit-test real, sin matemática manual.
-//     Funciona aunque el tren esté con transform, drag, escala o cualquier transformación.
-//  2) Histéresis: una vez asignado a un pito, lo mantenemos mientras el dedo no salga
-//     claramente de él. Anula el jitter sub-pixel del touch sensor.
-//  3) Imán de proximidad: si el dedo cae en un gap entre pitos, lo asignamos al más cercano
-//     dentro de IMAN_ENTRAR. Solo activo cuando elementFromPoint no encontró pito directo.
+// Hit-test estilo app nativa, robusto contra iOS Safari implicit pointer capture bug
+// (WebKit #199803): cuando el dedo se mueve fuera del elemento donde empezó el toque,
+// los pointermove se entregan a baja frecuencia o se pierden. Para evitarlo usamos
+// Touch Events directamente en dispositivos táctiles (mejor soporte iOS) y Pointer
+// Events solo para mouse en desktop.
 const IMAN_ENTRAR = 16;
-const IMAN_SALIR = 36;
+const IMAN_SALIR = 22;
 
 export const usePointerAcordeon = ({
     x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false
 }: PointerLogicProps) => {
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
-    // Coords ABSOLUTAS de cada pito (no relativas al tren). Se refrescan en cada pointerdown
-    // para que cualquier cambio de layout/drag/escala que haya pasado entre toques se vea reflejado.
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
 
     const logicaRef = useRef(logica);
@@ -53,7 +49,6 @@ export const usePointerAcordeon = ({
         if (!tren) return;
 
         const forzarRecalculo = () => actualizarGeometria();
-
         window.addEventListener('resize', forzarRecalculo);
         window.addEventListener('orientationchange', forzarRecalculo);
         requestAnimationFrame(actualizarGeometria);
@@ -61,65 +56,29 @@ export const usePointerAcordeon = ({
         const dentroDe = (cx: number, cy: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
-        // Hit-test combinado: nativo + histéresis + imán.
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
-            // 1) Hit-test nativo. Ignora pointer capture, ignora transforms, siempre exacto.
-            //    En iOS/Safari y Android Chrome es ~0.05-0.2ms — más barato que iterar rects.
+            // 1) Hit nativo (siempre exacto, ignora pointer capture).
             const target = document.elementFromPoint(clientX, clientY);
             if (target) {
                 const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
                 if (pito?.dataset.pos) return pito.dataset.pos;
             }
-
-            // 2) Histéresis: si veníamos de un pito, mantenerlo mientras el dedo no salga
-            //    del rect expandido. Anula el "rebote" por jitter del sensor.
+            // 2) Histéresis suave si veníamos de un pito y aún estamos dentro de su rect expandido.
             if (posActual) {
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, IMAN_SALIR)) return posActual;
             }
-
-            // 3) Imán: el dedo cayó en un gap. Buscar el pito más cercano dentro de IMAN_ENTRAR.
+            // 3) Imán al pito más cercano si caímos en gap.
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (dentroDe(clientX, clientY, r, IMAN_ENTRAR)) return pos;
             }
             return null;
         };
 
-        const handlePointerDown = (e: PointerEvent) => {
-            if (desactivarAudioRef.current) return;
-
-            const target = e.target as HTMLElement;
-            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            motorAudioPro.activarContexto();
-
-            if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
-
-            // Refresco de rects al inicio de cada toque: 33 mediciones (~1-2ms en móvil).
-            // Esto garantiza que el imán esté siempre alineado con la posición actual del tren,
-            // sin importar cuántos drags/escalas/cambios hubo entre toques.
-            actualizarGeometria();
-
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
-            const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
-
-            if (pos) {
-                logicaRef.current.setFuelleVirtual?.(true);
-                const mId = `${pos}-${logicaRef.current.direccion}`;
-                pointersMap.current.set(e.pointerId, { pos, musicalId: mId, ts: e.timeStamp });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
-                actualizarVisualBoton(pos, true, false);
-                registrarEvento('nota_on', { id: mId, pos });
-            } else if (esToqueFuelle) {
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
-            } else if (esAreaJuego) {
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
-            }
-        };
-
-        // Procesa una posición individual (extraído para reutilizar con getCoalescedEvents).
-        const procesarPunto = (data: { pos: string; musicalId: string; ts: number }, clientX: number, clientY: number, ts: number) => {
+        // Procesa una posición individual del dedo (extraído para reusar entre touch/move/coalesced).
+        const procesarPunto = (id: number, clientX: number, clientY: number, ts: number) => {
+            const data = pointersMap.current.get(id);
+            if (!data) return;
             const pos = encontrarPosEnPunto(clientX, clientY, data.pos || null);
             if (pos !== data.pos) {
                 if (data.pos) {
@@ -145,49 +104,117 @@ export const usePointerAcordeon = ({
             }
         };
 
-        const handlePointerMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
+        const registrarInicio = (id: number, target: HTMLElement, clientX: number, clientY: number, ts: number) => {
+            if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
+            actualizarGeometria();
+            const pos = encontrarPosEnPunto(clientX, clientY);
+            const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
+            const esAreaJuego = !!(target.closest('.pito-boton') || esToqueFuelle || target.closest('.diapason-marco'));
 
-            const target = e.target as HTMLElement;
-            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            // 🎯 FIX TRINOS CON UN SOLO DEDO:
-            // iOS Safari (y Android Chrome) coalesce pointermove agresivamente cuando hay 1 sola
-            // touch para ahorrar batería. En un trino A-B-A-B rápido, el browser puede entregar
-            // solo el último evento y perdemos transiciones intermedias = notas que no suenan.
-            // Con 2+ dedos el coalescing se desactiva (multi-touch deliberado), por eso "con
-            // dedo en fuelle funciona y sin él se daña".
-            // getCoalescedEvents() recupera TODOS los eventos que el browser fusionó en este
-            // pointermove. Procesarlos en orden recupera la trayectoria real del dedo.
-            const coalesced = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() as PointerEvent[] : [];
-            if (coalesced.length > 0) {
-                for (const ev of coalesced) procesarPunto(data, ev.clientX, ev.clientY, ev.timeStamp);
-            } else {
-                procesarPunto(data, e.clientX, e.clientY, e.timeStamp);
+            if (pos) {
+                logicaRef.current.setFuelleVirtual?.(true);
+                const mId = `${pos}-${logicaRef.current.direccion}`;
+                pointersMap.current.set(id, { pos, musicalId: mId, ts });
+                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
+                actualizarVisualBoton(pos, true, false);
+                registrarEvento('nota_on', { id: mId, pos });
+            } else if (esAreaJuego) {
+                pointersMap.current.set(id, { pos: '', musicalId: '', ts });
             }
         };
 
-        const handlePointerUp = (e: PointerEvent) => {
-            const target = e.target as HTMLElement;
-            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            const data = pointersMap.current.get(e.pointerId);
+        const registrarFin = (id: number) => {
+            const data = pointersMap.current.get(id);
             if (data?.pos) {
                 logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
                 actualizarVisualBoton(data.pos, false, false);
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
-            pointersMap.current.delete(e.pointerId);
-
+            pointersMap.current.delete(id);
             if (pointersMap.current.size === 0) {
                 logicaRef.current.setFuelleVirtual?.(false);
             }
         };
 
-        // Watchdog: pointers zombi por pointercancel perdidos (gestos del SO en iOS/Android).
+        const enAreaJuego = (target: HTMLElement) =>
+            !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+
+        // ============== TOUCH EVENTS (móvil) ==============
+        // Touch events son MÁS confiables en iOS Safari para drag continuo:
+        // - No tienen el bug de implicit capture.
+        // - clientX/Y se entregan correctamente aunque el dedo se mueva fuera del target inicial.
+        // - getCoalescedEvents-equivalente: e.changedTouches contiene cada touch individual.
+        const handleTouchStart = (e: TouchEvent) => {
+            if (desactivarAudioRef.current) return;
+            motorAudioPro.activarContexto();
+            let huboAreaJuego = false;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                const target = t.target as HTMLElement;
+                if (enAreaJuego(target)) huboAreaJuego = true;
+                registrarInicio(t.identifier, target, t.clientX, t.clientY, e.timeStamp);
+            }
+            if (huboAreaJuego && e.cancelable) e.preventDefault();
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            let huboAreaJuego = false;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                const target = t.target as HTMLElement;
+                if (enAreaJuego(target)) huboAreaJuego = true;
+                procesarPunto(t.identifier, t.clientX, t.clientY, e.timeStamp);
+            }
+            if (huboAreaJuego && e.cancelable) e.preventDefault();
+        };
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                registrarFin(e.changedTouches[i].identifier);
+            }
+        };
+
+        // ============== POINTER EVENTS (mouse desktop) ==============
+        const handlePointerDown = (e: PointerEvent) => {
+            if (e.pointerType === 'touch') return; // En táctil usamos touch events.
+            if (desactivarAudioRef.current) return;
+            const target = e.target as HTMLElement;
+            if (enAreaJuego(target) && e.cancelable) e.preventDefault();
+            motorAudioPro.activarContexto();
+            registrarInicio(e.pointerId, target, e.clientX, e.clientY, e.timeStamp);
+        };
+
+        const handlePointerMove = (e: PointerEvent) => {
+            if (e.pointerType === 'touch') return;
+            const data = pointersMap.current.get(e.pointerId);
+            if (!data) return;
+            const target = e.target as HTMLElement;
+            if (enAreaJuego(target) && e.cancelable) e.preventDefault();
+            procesarPunto(e.pointerId, e.clientX, e.clientY, e.timeStamp);
+        };
+
+        const handlePointerUp = (e: PointerEvent) => {
+            if (e.pointerType === 'touch') return;
+            const target = e.target as HTMLElement;
+            if (enAreaJuego(target) && e.cancelable) e.preventDefault();
+            registrarFin(e.pointerId);
+        };
+
+        const esTouchDevice = 'ontouchstart' in window || (navigator as any).maxTouchPoints > 0;
+
+        if (esTouchDevice) {
+            document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+            document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+            document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+            document.addEventListener('touchcancel', handleTouchEnd, { passive: false, capture: true });
+        } else {
+            document.addEventListener('pointerdown', handlePointerDown, { capture: true });
+            document.addEventListener('pointermove', handlePointerMove, { capture: true });
+            document.addEventListener('pointerup', handlePointerUp, { capture: true });
+            document.addEventListener('pointercancel', handlePointerUp, { capture: true });
+        }
+
+        // Watchdog: pointers zombi por touchcancel/pointercancel perdidos.
         const ZOMBIE_TTL_MS = 4000;
         const watchdogId = window.setInterval(() => {
             if (pointersMap.current.size === 0) return;
@@ -223,21 +250,24 @@ export const usePointerAcordeon = ({
         document.addEventListener('visibilitychange', onVisibility);
         window.addEventListener('blur', limpiarTodo);
 
-        document.addEventListener('pointerdown', handlePointerDown, { capture: true });
-        document.addEventListener('pointermove', handlePointerMove, { capture: true });
-        document.addEventListener('pointerup', handlePointerUp, { capture: true });
-        document.addEventListener('pointercancel', handlePointerUp, { capture: true });
-
         return () => {
             window.removeEventListener('resize', forzarRecalculo);
             window.removeEventListener('orientationchange', forzarRecalculo);
             window.clearInterval(watchdogId);
             document.removeEventListener('visibilitychange', onVisibility);
             window.removeEventListener('blur', limpiarTodo);
-            document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
-            document.removeEventListener('pointermove', handlePointerMove, { capture: true });
-            document.removeEventListener('pointerup', handlePointerUp, { capture: true });
-            document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
+
+            if (esTouchDevice) {
+                document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+                document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+                document.removeEventListener('touchend', handleTouchEnd, { capture: true });
+                document.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
+            } else {
+                document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
+                document.removeEventListener('pointermove', handlePointerMove, { capture: true });
+                document.removeEventListener('pointerup', handlePointerUp, { capture: true });
+                document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
+            }
         };
     }, [x, actualizarVisualBoton, registrarEvento, trenRef, actualizarGeometria]);
 
