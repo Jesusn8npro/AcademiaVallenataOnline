@@ -206,11 +206,17 @@ export const usePointerAcordeon = ({
 
         const esTouchDevice = 'ontouchstart' in window || (navigator as any).maxTouchPoints > 0;
 
+        // 🎯 iOS Safari fix: attachar los listeners al elemento del simulador, NO a document.
+        // En iOS, los eventos táctiles a nivel document son más propensos al throttling
+        // single-touch y al "tap delay" del double-tap detection. A nivel elemento
+        // específico (con touch-action: none) se entregan con mayor frecuencia.
+        const rootSimulador = (document.querySelector('.simulador-app-root') as HTMLElement | null) || document;
+
         if (esTouchDevice) {
-            document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-            document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-            document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
-            document.addEventListener('touchcancel', handleTouchEnd, { passive: false, capture: true });
+            rootSimulador.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false, capture: true });
+            rootSimulador.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false, capture: true });
+            rootSimulador.addEventListener('touchend', handleTouchEnd as EventListener, { passive: false, capture: true });
+            rootSimulador.addEventListener('touchcancel', handleTouchEnd as EventListener, { passive: false, capture: true });
         } else {
             document.addEventListener('pointerdown', handlePointerDown, { capture: true });
             document.addEventListener('pointermove', handlePointerMove, { capture: true });
@@ -262,10 +268,10 @@ export const usePointerAcordeon = ({
             window.removeEventListener('blur', limpiarTodo);
 
             if (esTouchDevice) {
-                document.removeEventListener('touchstart', handleTouchStart, { capture: true });
-                document.removeEventListener('touchmove', handleTouchMove, { capture: true });
-                document.removeEventListener('touchend', handleTouchEnd, { capture: true });
-                document.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
+                rootSimulador.removeEventListener('touchstart', handleTouchStart as EventListener, { capture: true });
+                rootSimulador.removeEventListener('touchmove', handleTouchMove as EventListener, { capture: true });
+                rootSimulador.removeEventListener('touchend', handleTouchEnd as EventListener, { capture: true });
+                rootSimulador.removeEventListener('touchcancel', handleTouchEnd as EventListener, { capture: true });
             } else {
                 document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
                 document.removeEventListener('pointermove', handlePointerMove, { capture: true });
