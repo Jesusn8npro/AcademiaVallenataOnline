@@ -14,14 +14,10 @@ interface PointerLogicProps {
 export const usePointerAcordeon = ({
     x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false
 }: PointerLogicProps) => {
-    const pointersMap = useRef<Map<number, { pos: string; musicalId: string }>>(new Map());
+    const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
     const lastTrenRect = useRef<{ left: number; top: number } | null>(null);
     const geometriaListaRef = useRef(false);
-
-    // 🚀 THROTTLING: RAF para pointermove (reduce de 120 eventos/seg a 1 por frame)
-    const rafPendingRef = useRef<number | null>(null);
-    const pendingMoveRef = useRef<Map<number, PointerEvent>>(new Map());
 
     const logicaRef = useRef(logica);
     useEffect(() => { logicaRef.current = logica; }, [logica]);
@@ -68,15 +64,23 @@ export const usePointerAcordeon = ({
             const currentX = x.get();
             const relX = clientX - (lastTrenRect.current.left + currentX);
             const relY = clientY - lastTrenRect.current.top;
-            const IMAN = 8;
+            const IMAN = 14;
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (relX >= r.left - IMAN && relX <= r.right + IMAN && relY >= r.top - IMAN && relY <= r.bottom + IMAN) return pos;
             }
             return null;
         };
 
+        // Refresca solo el offset del tren (1 medición barata) sin re-leer todos los pitos.
+        // Importante para que glissandos/scroll/orientation no desincronicen los hitboxes.
+        const refrescarOffsetTren = () => {
+            if (!tren) return;
+            const r = tren.getBoundingClientRect();
+            lastTrenRect.current = { left: r.left - x.get(), top: r.top };
+        };
+
         const handlePointerDown = (e: PointerEvent) => {
-            if (desactivarAudioRef.current) return; 
+            if (desactivarAudioRef.current) return;
 
             const target = e.target as HTMLElement;
             const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
@@ -84,42 +88,48 @@ export const usePointerAcordeon = ({
             // 🚀 BLINDAJE SELECTIVO: Solo prevenir default si estamos en el área de toque del acordeón
             // Esto permite que los botones del menú, modales y barra superior funcionen normalmente.
             if (esAreaJuego && e.cancelable) e.preventDefault();
-            
+
             // 🔊 PERSISTENCIA DE AUDIO
             motorAudioPro.activarContexto();
 
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
             try { target.setPointerCapture(e.pointerId); } catch (_) { }
-            // Recálculo síncrono si la geometría aún no está lista (primer toque muy rápido tras montar)
+            // Geometría siempre fresca: recálculo completo si no está lista, o solo offset del tren si lo está.
+            // Evita hitboxes obsoletos por scroll/orientation/layout sin pagar el costo de medir 33 pitos cada vez.
             if (!geometriaListaRef.current) actualizarGeometria();
+            else refrescarOffsetTren();
             const pos = encontrarPosEnPunto(e.clientX, e.clientY);
 
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
-            const esMarco = !!target.closest('.diapason-marco');
 
             if (pos) {
                 // Fuelle Virtual: despierta el AudioContext (fix iOS/Android + silenciador iPhone)
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
-                pointersMap.current.set(e.pointerId, { pos, musicalId: mId });
+                pointersMap.current.set(e.pointerId, { pos, musicalId: mId, ts: e.timeStamp });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
             } else if (esToqueFuelle) {
                 // Registrar el pointer del fuelle (pos vacío) para que el guard de manejarCambioFuelle
                 // sepa que el fuelle está activo y no revierta a halar prematuramente
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
-            } else if (esMarco) {
-                // 🎯 SOPORTE PARA GLISSANDO: Capturar toques en los "gaps" o marco para permitir
-                // deslizarse hacia un botón y que este reaccione de inmediato.
-                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '' });
+                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
+            } else if (esAreaJuego) {
+                // Cualquier toque en el área de juego (marco, hilera, gap) registra el pointer
+                // para soportar glissando: el dedo entró en una zona muerta pero puede deslizarse a un pito.
+                pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
             }
         };
 
-        // 🎯 Función central que procesa un evento de movimiento
-        const procesarMove = (e: PointerEvent, pointerId: number) => {
-            const data = pointersMap.current.get(pointerId);
+        // ⚡ Procesamiento directo (sin RAF) para latencia mínima en glissandos.
+        // El RAF anterior agregaba ~16ms de retardo perceptible al deslizar.
+        const handlePointerMove = (e: PointerEvent) => {
+            const data = pointersMap.current.get(e.pointerId);
             if (!data) return;
+
+            const target = e.target as HTMLElement;
+            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+            if (esAreaJuego && e.cancelable) e.preventDefault();
 
             // La dirección se controla EXCLUSIVAMENTE desde ContenedorBajos via manejarCambioFuelle.
             // Nunca llamar setDireccion aquí — cambia el estado sin actualizar los sonidos
@@ -134,36 +144,23 @@ export const usePointerAcordeon = ({
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
-                    pointersMap.current.set(pointerId, { pos, musicalId: newMId });
+                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId, ts: e.timeStamp });
                     logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
                     actualizarVisualBoton(pos, true, false);
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
-                    pointersMap.current.set(pointerId, { pos: '', musicalId: '' });
+                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
                 }
+            } else {
+                // Mantener el timestamp vivo para el watchdog de zombis aunque no cambie de pos.
+                data.ts = e.timeStamp;
             }
-        };
-
-        // ⚡ RAF-throttled pointermove: acumula eventos y procesa en batch
-        const handlePointerMove = (e: PointerEvent) => {
-            const target = e.target as HTMLElement;
-            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            
-            if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            pendingMoveRef.current.set(e.pointerId, e);
-            if (rafPendingRef.current !== null) return; // Ya hay un frame pendiente
-            rafPendingRef.current = requestAnimationFrame(() => {
-                rafPendingRef.current = null;
-                pendingMoveRef.current.forEach((ev, pId) => procesarMove(ev, pId));
-                pendingMoveRef.current.clear();
-            });
         };
 
         const handlePointerUp = (e: PointerEvent) => {
             const target = e.target as HTMLElement;
             const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            
+
             if (esAreaJuego && e.cancelable) e.preventDefault();
 
             const data = pointersMap.current.get(e.pointerId);
@@ -178,26 +175,46 @@ export const usePointerAcordeon = ({
             if (pointersMap.current.size === 0) {
                 logicaRef.current.setFuelleVirtual?.(false);
             }
-
-            // Auto-revert a HALAR: solo si el pointer que se levantó era de un BOTÓN (pos !== ''),
-            // no de un fuelle (pos === ''). El fuelle gestiona su propio revert via ContenedorBajos.
-            // También verifica que no quede ningún otro pointer activo (ni botón ni fuelle).
-            const eraPointerFuelle = data !== undefined && data.pos === '';
-            
-            // 🚀 OPTIMIZACIÓN: Solo revertimos si realmente estamos solos y en modo empujar.
-            // Si el usuario está tocando MUY rápido, este check evita saltos innecesarios
-            // si el siguiente pointerdown ocurre en el mismo tick de React.
-            if (!eraPointerFuelle && pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
-                // ⏱️ TIEMPO DE GRACIA (Vallenato Pro): Aumentamos a 60ms para que en ejecuciones 
-                // rápidas (trinos) el fuelle no "salte" entre notas si el usuario levanta el dedo
-                // por una fracción de segundo.
-                setTimeout(() => {
-                    if (pointersMap.current.size === 0 && logicaRef.current.direccion === 'empujar') {
-                        logicaRef.current.ejecutarSwapDireccion('halar');
-                    }
-                }, 60);
-            }
         };
+
+        // 🧹 Watchdog: limpia pointers zombi (pointercancel perdidos por gestos del sistema en iOS/Android).
+        // Sin esto el pool de voces se llena de notas fantasma y el simulador se "traba" tras un rato.
+        const ZOMBIE_TTL_MS = 4000;
+        const watchdogId = window.setInterval(() => {
+            if (pointersMap.current.size === 0) return;
+            const ahora = performance.now();
+            const muertos: number[] = [];
+            pointersMap.current.forEach((data, pId) => {
+                if (ahora - data.ts > ZOMBIE_TTL_MS) muertos.push(pId);
+            });
+            muertos.forEach(pId => {
+                const data = pointersMap.current.get(pId);
+                if (data?.pos) {
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    actualizarVisualBoton(data.pos, false, false);
+                }
+                pointersMap.current.delete(pId);
+            });
+            if (pointersMap.current.size === 0) logicaRef.current.setFuelleVirtual?.(false);
+        }, 1500);
+
+        // 🛑 Si la pestaña se oculta o pierde foco, limpiamos todo: el SO suele matar
+        // pointercancel/up en background y deja notas sonando para siempre.
+        const limpiarTodo = () => {
+            if (pointersMap.current.size === 0) return;
+            pointersMap.current.forEach((data) => {
+                if (data.pos) {
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    actualizarVisualBoton(data.pos, false, false);
+                }
+            });
+            pointersMap.current.clear();
+            logicaRef.current.setFuelleVirtual?.(false);
+            logicaRef.current.limpiarTodasLasNotas?.();
+        };
+        const onVisibility = () => { if (document.visibilityState === 'hidden') limpiarTodo(); };
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('blur', limpiarTodo);
 
         document.addEventListener('pointerdown', handlePointerDown, { capture: true });
         document.addEventListener('pointermove', handlePointerMove, { capture: true });
@@ -206,14 +223,13 @@ export const usePointerAcordeon = ({
 
         return () => {
             window.removeEventListener('resize', forzarRecalculo);
+            window.clearInterval(watchdogId);
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.removeEventListener('blur', limpiarTodo);
             document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
             document.removeEventListener('pointermove', handlePointerMove, { capture: true });
             document.removeEventListener('pointerup', handlePointerUp, { capture: true });
             document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
-            if (rafPendingRef.current !== null) {
-                cancelAnimationFrame(rafPendingRef.current);
-                rafPendingRef.current = null;
-            }
         };
     }, [x, actualizarVisualBoton, registrarEvento, trenRef, actualizarGeometria]);
 
@@ -227,17 +243,15 @@ export const usePointerAcordeon = ({
     return { pointersMap, limpiarGeometria, actualizarGeometria, manejarCambioFuelle: (nuevaDireccion: 'halar' | 'empujar', motorAudioPro: any) => {
         if (nuevaDireccion === logicaRef.current.direccion) return;
         motorAudioPro.activarContexto();
-        // Si la geometría no estaba lista (primer toque en fuelle antes del RAF de mount),
-        // calcularla ahora para que los botones respondan correctamente después.
         if (!geometriaListaRef.current) actualizarGeometria();
-        // ejecutarSwapDireccion hace crossfade por nota (para+arranca en 15ms por canal)
-        // sin gap audible. También llama setDireccion internamente.
+        // ejecutarSwapDireccion para+arranca cada nota con un crossfade muy corto (~5ms) sin gap audible.
         logicaRef.current.ejecutarSwapDireccion(nuevaDireccion);
         // Sincronizar pointersMap con los nuevos musicalIds para que handlePointerUp
         // pueda remover las notas correctamente al soltar los dedos
+        const ahora = performance.now();
         pointersMap.current.forEach((data, pId) => {
             if (data.pos) {
-                pointersMap.current.set(pId, { ...data, musicalId: `${data.pos}-${nuevaDireccion}` });
+                pointersMap.current.set(pId, { pos: data.pos, musicalId: `${data.pos}-${nuevaDireccion}`, ts: ahora });
             }
         });
     }};

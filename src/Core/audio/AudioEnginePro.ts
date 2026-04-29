@@ -20,7 +20,7 @@ export class MotorAudioPro {
     constructor() {
         this.esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-        this.MAX_VOCES = this.esMovil ? 20 : 128;
+        this.MAX_VOCES = this.esMovil ? 40 : 128;
         this.contexto = new AudioContextClass({ latencyHint: 0 });
         this.bancos = new Map();
 
