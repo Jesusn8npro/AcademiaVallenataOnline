@@ -52,7 +52,16 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     tipo
   });
 
-  const srcIframe = usarFirmado ? firmado.url : urlProcesada;
+  // Para URLs firmadas de Bunny, agregar params que evitan precarga agresiva
+  // (preload=false reduce ~10MB de descarga inicial hasta que el usuario presiona play).
+  // No afecta la firma porque Bunny solo valida token+expires, params extra son libres.
+  const srcIframe = (() => {
+    if (!usarFirmado) return urlProcesada;
+    if (!firmado.url) return '';
+    if (firmado.plataforma !== 'bunny') return firmado.url;
+    const sep = firmado.url.includes('?') ? '&' : '?';
+    return `${firmado.url}${sep}autoplay=false&preload=false&responsive=true`;
+  })();
   const referrerPolicyIframe = usarFirmado
     ? (esBunnyFirmado ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin')
     : (esBunny ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin');

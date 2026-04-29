@@ -59,10 +59,24 @@ interface ResultadoHook {
 // Sobrevive entre montajes/desmontajes, evita refetch al re-mount.
 // Dedupe global: si la misma clave está siendo pedida, todos los
 // componentes que la pidan reusan la misma promesa.
+// MAX_CACHE_ENTRIES limita el crecimiento si el usuario navega por
+// muchas clases distintas en una sola sesión.
 // ============================================================
 const cacheUrls = new Map<string, EntradaCache>();
 const promesasEnVuelo = new Map<string, Promise<EntradaCache | ErrorVideoFirmado>>();
 const MARGEN_VALIDEZ_MS = 60 * 1000;
+const MAX_CACHE_ENTRIES = 50;
+
+function podarCache() {
+  if (cacheUrls.size <= MAX_CACHE_ENTRIES) return;
+  // Eliminar las entradas más viejas (Map mantiene orden de inserción).
+  const sobrante = cacheUrls.size - MAX_CACHE_ENTRIES;
+  const iter = cacheUrls.keys();
+  for (let i = 0; i < sobrante; i++) {
+    const k = iter.next().value;
+    if (k !== undefined) cacheUrls.delete(k);
+  }
+}
 
 function clavear(parteId?: string, tutorialId?: string, leccionId?: string): string {
   return `p:${parteId ?? ''}|t:${tutorialId ?? ''}|l:${leccionId ?? ''}`;
@@ -118,6 +132,7 @@ async function pedirURL(
         expiresAt: parsearExpiresAt(data.expires_at)
       };
       cacheUrls.set(clave, entrada);
+      podarCache();
       return entrada;
     } catch (e: any) {
       return { codigo: 'desconocido', mensaje: e?.message || 'Error inesperado' };
