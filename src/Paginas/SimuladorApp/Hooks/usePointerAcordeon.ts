@@ -59,14 +59,31 @@ export const usePointerAcordeon = ({
         // Primer cálculo en el siguiente frame después de montar
         requestAnimationFrame(actualizarGeometria);
 
-        const encontrarPosEnPunto = (clientX: number, clientY: number): string | null => {
+        // Histéresis para evitar entrecorte por jitter del touch sensor:
+        //  - IMAN_ENTRAR (14): cuando el dedo busca un pito nuevo, el hitbox es modesto.
+        //  - IMAN_SALIR (28): una vez asignado a un pito, el dedo debe alejarse el doble
+        //    para "soltar" ese pito. Sin esto, jitter de 1-2px cerca del borde dispara
+        //    remove+add repetidos sobre la misma nota → audio entrecortado.
+        const IMAN_ENTRAR = 14;
+        const IMAN_SALIR = 28;
+        const dentroDe = (relX: number, relY: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
+            relX >= r.left - iman && relX <= r.right + iman && relY >= r.top - iman && relY <= r.bottom + iman;
+
+        const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
             if (!lastTrenRect.current) return null;
             const currentX = x.get();
             const relX = clientX - (lastTrenRect.current.left + currentX);
             const relY = clientY - lastTrenRect.current.top;
-            const IMAN = 14;
+
+            // Stickiness: si ya estábamos sobre un pito, lo mantenemos mientras estemos
+            // dentro de su rect expandido. Solo cambiamos cuando el dedo claramente salió.
+            if (posActual) {
+                const rActual = rectsCache.current.get(posActual);
+                if (rActual && dentroDe(relX, relY, rActual, IMAN_SALIR)) return posActual;
+            }
+
             for (const [pos, r] of rectsCache.current.entries()) {
-                if (relX >= r.left - IMAN && relX <= r.right + IMAN && relY >= r.top - IMAN && relY <= r.bottom + IMAN) return pos;
+                if (dentroDe(relX, relY, r, IMAN_ENTRAR)) return pos;
             }
             return null;
         };
@@ -135,7 +152,7 @@ export const usePointerAcordeon = ({
             // Nunca llamar setDireccion aquí — cambia el estado sin actualizar los sonidos
             // y genera condiciones de carrera con manejarCambioFuelle.
 
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY);
+            const pos = encontrarPosEnPunto(e.clientX, e.clientY, data.pos || null);
             if (pos !== data.pos) {
                 if (data.pos) {
                     logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
