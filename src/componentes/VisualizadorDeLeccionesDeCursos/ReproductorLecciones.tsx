@@ -5,16 +5,18 @@ import './ReproductorLecciones.css';
 
 // YouTube bloquea con X-Frame-Options:sameorigin cuando la URL es /watch?v=.
 // Solo permite iframes con /embed/. Esta funcion convierte cualquier formato
-// de URL de YouTube al formato embebible.
+// de URL de YouTube al formato embebible y limpia parametros que YouTube
+// rechaza en embed (start_radio, listas tipo RD*/UL*/MX*).
 function transformarYouTubeAEmbed(url: string): string | null {
   if (!url) return null;
   if (!url.includes('youtube.com') && !url.includes('youtu.be')) return null;
-  // Si ya es /embed/, dejarla tal cual (puede tener params utiles)
+  // Si ya es /embed/, dejarla tal cual
   if (url.includes('/embed/')) return url;
 
   const patterns = [
     /youtube\.com\/watch\?v=([^&]+)/,
     /youtu\.be\/([^?]+)/,
+    /youtube\.com\/shorts\/([^?]+)/,
   ];
   for (const pattern of patterns) {
     const match = url.match(pattern);
@@ -27,12 +29,23 @@ function transformarYouTubeAEmbed(url: string): string | null {
         iv_load_policy: '3',
         controls: '1',
       });
-      // Conservar parametro `list` si esta en la URL original (playlists)
+      // Solo conservar `list` si es una playlist normal (PL, OL, FL).
+      // Las que empiezan con RD (Radio Dinamica), UL (User Library),
+      // MX (Mix) o LL (Liked List) NO se pueden embeber: YouTube responde
+      // "Este video no esta disponible" dentro del iframe.
       try {
         const u = new URL(url);
         const list = u.searchParams.get('list');
-        if (list) params.set('list', list);
-      } catch { /* URL invalida, ignorar params extra */ }
+        if (list && /^(PL|OL|FL)/.test(list)) {
+          params.set('list', list);
+        }
+        // Conservar tiempo de inicio si esta presente
+        const t = u.searchParams.get('t') || u.searchParams.get('start');
+        if (t) {
+          const seconds = /^\d+$/.test(t) ? t : t.replace(/[^\d]/g, '');
+          if (seconds) params.set('start', seconds);
+        }
+      } catch { /* URL invalida, usar params minimos */ }
       return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
     }
   }
