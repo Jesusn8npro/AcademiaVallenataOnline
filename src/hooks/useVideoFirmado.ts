@@ -92,6 +92,22 @@ function esError(x: EntradaCache | ErrorVideoFirmado): x is ErrorVideoFirmado {
   return (x as ErrorVideoFirmado).codigo !== undefined;
 }
 
+/**
+ * Prefetch en background. Pre-puebla el cache module-level para que
+ * cuando el componente se monte con la misma clave, el render sea
+ * instantaneo (cache hit). Llamar desde onMouseEnter en items del
+ * menu lateral o desde efectos de prefetch de adyacentes.
+ */
+export function prefetchVideoFirmado(params: ParametrosHook): void {
+  const { parteId, tutorialId, leccionId } = params;
+  if (!parteId && !tutorialId && !leccionId) return;
+  const clave = clavear(parteId, tutorialId, leccionId);
+  // Si ya hay cache valido o peticion en vuelo, no duplicar.
+  if (entradaValida(cacheUrls.get(clave))) return;
+  if (promesasEnVuelo.has(clave)) return;
+  void pedirURL(clave, parteId, tutorialId, leccionId);
+}
+
 async function pedirURL(
   clave: string,
   parteId?: string,
