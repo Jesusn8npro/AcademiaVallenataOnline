@@ -118,16 +118,9 @@ export const usePointerAcordeon = ({
             }
         };
 
-        // Procesamiento directo (sin RAF throttle) — latencia mínima en glissandos.
-        const handlePointerMove = (e: PointerEvent) => {
-            const data = pointersMap.current.get(e.pointerId);
-            if (!data) return;
-
-            const target = e.target as HTMLElement;
-            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
-            if (esAreaJuego && e.cancelable) e.preventDefault();
-
-            const pos = encontrarPosEnPunto(e.clientX, e.clientY, data.pos || null);
+        // Procesa una posición individual (extraído para reutilizar con getCoalescedEvents).
+        const procesarPunto = (data: { pos: string; musicalId: string; ts: number }, clientX: number, clientY: number, ts: number) => {
+            const pos = encontrarPosEnPunto(clientX, clientY, data.pos || null);
             if (pos !== data.pos) {
                 if (data.pos) {
                     logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
@@ -136,15 +129,43 @@ export const usePointerAcordeon = ({
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
-                    pointersMap.current.set(e.pointerId, { pos, musicalId: newMId, ts: e.timeStamp });
+                    data.pos = pos;
+                    data.musicalId = newMId;
+                    data.ts = ts;
                     logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
                     actualizarVisualBoton(pos, true, false);
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
-                    pointersMap.current.set(e.pointerId, { pos: '', musicalId: '', ts: e.timeStamp });
+                    data.pos = '';
+                    data.musicalId = '';
+                    data.ts = ts;
                 }
             } else {
-                data.ts = e.timeStamp;
+                data.ts = ts;
+            }
+        };
+
+        const handlePointerMove = (e: PointerEvent) => {
+            const data = pointersMap.current.get(e.pointerId);
+            if (!data) return;
+
+            const target = e.target as HTMLElement;
+            const esAreaJuego = !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
+            if (esAreaJuego && e.cancelable) e.preventDefault();
+
+            // 🎯 FIX TRINOS CON UN SOLO DEDO:
+            // iOS Safari (y Android Chrome) coalesce pointermove agresivamente cuando hay 1 sola
+            // touch para ahorrar batería. En un trino A-B-A-B rápido, el browser puede entregar
+            // solo el último evento y perdemos transiciones intermedias = notas que no suenan.
+            // Con 2+ dedos el coalescing se desactiva (multi-touch deliberado), por eso "con
+            // dedo en fuelle funciona y sin él se daña".
+            // getCoalescedEvents() recupera TODOS los eventos que el browser fusionó en este
+            // pointermove. Procesarlos en orden recupera la trayectoria real del dedo.
+            const coalesced = (e as any).getCoalescedEvents ? (e as any).getCoalescedEvents() as PointerEvent[] : [];
+            if (coalesced.length > 0) {
+                for (const ev of coalesced) procesarPunto(data, ev.clientX, ev.clientY, ev.timeStamp);
+            } else {
+                procesarPunto(data, e.clientX, e.clientY, e.timeStamp);
             }
         };
 
