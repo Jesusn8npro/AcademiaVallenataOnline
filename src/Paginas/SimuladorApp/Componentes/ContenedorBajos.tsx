@@ -30,8 +30,6 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
     const draggingRef = useRef(false);
     const startXRef = useRef(0);
     const currentXRef = useRef(0);
-    // Ref para cancelar el revert-a-halar cuando el fuelle se vuelve a presionar antes del timeout
-    const fuelleRevertRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 🚀 LÓGICA DE DRAG
     useEffect(() => {
@@ -136,22 +134,16 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
         if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
             if (e.cancelable) e.preventDefault();
             e.stopPropagation();
-            // Cancelar revert pendiente
-            if (fuelleRevertRef.current !== null) {
-                clearTimeout(fuelleRevertRef.current);
-                fuelleRevertRef.current = null;
-            }
             manejarCambioFuelle('empujar', motorAudioPro);
         }
     };
 
     const handlePointerUpFuelle = (e: React.PointerEvent) => {
         const target = e.target as HTMLElement;
+        // Revert inmediato a 'halar' al soltar el fuelle. Sin tiempo de gracia: la sensación
+        // de cambio instantáneo entre direcciones es lo que el usuario quiere.
         if (!visible || !target.closest('.contenedor-bajos-wrapper, .boton-bajos-superior')) {
-            fuelleRevertRef.current = setTimeout(() => {
-                fuelleRevertRef.current = null;
-                manejarCambioFuelle('halar', motorAudioPro);
-            }, 60);
+            manejarCambioFuelle('halar', motorAudioPro);
         }
     };
 

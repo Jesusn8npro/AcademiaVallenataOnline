@@ -554,7 +554,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 huboCambio = true;
                 const bOld = prev[oldId];
                 if (bOld.instances) {
-                    bOld.instances.forEach((inst: any) => motorAudioPro.detener(inst, 0.015));
+                    bOld.instances.forEach((inst: any) => motorAudioPro.detener(inst, 0.005));
                 }
                 onNotaLiberada?.({ idBoton: oldId, nombre: oldId });
 

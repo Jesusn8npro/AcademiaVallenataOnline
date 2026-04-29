@@ -148,7 +148,7 @@ const SimuladorApp: React.FC = () => {
     useEffect(() => {
         elementosCache.current.clear();
         limpiarGeometria();
-    }, [logica.tonalidadSeleccionada]);
+    }, [logica.tonalidadSeleccionada, config.modoVista, config.vistaDoble, config.mostrarOctavas]);
 
     useEffect(() => {
         document.documentElement.style.setProperty('--escala-acordeon', escala.toString());
