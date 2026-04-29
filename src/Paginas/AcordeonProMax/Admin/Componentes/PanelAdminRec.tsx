@@ -25,7 +25,6 @@ interface PanelAdminRecProps {
   onAlternarPausaHero?: () => void;
   onDetenerHero?: () => void;
   onBuscarTick?: (tick: number) => void;
-  bpmGrabacion?: number;
   // PUNCH-IN / PRE-ROLL
   punchInTick?: number | null;
   setPunchInTick?: (tick: number | null) => void;
@@ -58,7 +57,6 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
   onAlternarPausaHero,
   onDetenerHero,
   onBuscarTick,
-  bpmGrabacion,
   cuentaAtrasPreRoll,
   metronomoActivo,
   setMetronomoActivo,
@@ -104,7 +102,7 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
     const debeReproducir = reproduciendoHero || grabando;
     
     if (debeReproducir && !estadoPrevioPlay.current) {
-      const bps = (grabando ? (bpmGrabacion || bpm) : bpm) / 60;
+      const bps = (grabando ? (cancionActual?.bpm || bpm) : bpm) / 60;
       const ticksPorSegundo = bps * 192;
       const segundosAbsolutos = tickActual / ticksPorSegundo;
       
@@ -138,16 +136,16 @@ const PanelAdminRec: React.FC<PanelAdminRecProps> = ({
   // Sincronización de Velocidad
   React.useEffect(() => {
     if (!audioRef.current) return;
-    
-    let bpmBase = bpmGrabacion || 120;
-    let bpmActual = grabando ? (bpmGrabacion || bpm) : bpm;
-    
+
+    const bpmBase = cancionActual?.bpm || 120;
+    const bpmActual = grabando ? (cancionActual?.bpm || bpm) : bpm;
+
     const ratio = bpmActual / bpmBase;
     const velocidadAjustada = Math.min(Math.max(ratio, 0.1), 3.0);
-    
+
     audioRef.current.playbackRate = velocidadAjustada;
     (audioRef.current as any).preservesPitch = true;
-  }, [bpm, bpmGrabacion, grabando]);
+  }, [bpm, cancionActual?.bpm, grabando]);
 
   // Volumen
   React.useEffect(() => {

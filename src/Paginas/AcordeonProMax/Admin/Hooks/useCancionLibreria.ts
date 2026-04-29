@@ -20,8 +20,6 @@ export const useCancionLibreria = ({
   const [bpmHero, setBpmHero] = useState(120);
   const [pistaUrl, setPistaUrl] = useState<string | null>(null);
   const [pistaFile, setPistaFile] = useState<File | null>(null);
-  const [bpmGrabacion, setBpmGrabacion] = useState(120);
-  const [bpmOriginalGrabacion, setBpmOriginalGrabacion] = useState(120);
   const [cancionActivaLibreria, setCancionActivaLibreria] = useState<any | null>(null);
   const [ultimaCancionLibreriaActualizada, setUltimaCancionLibreriaActualizada] = useState<any | null>(null);
 
@@ -46,8 +44,6 @@ export const useCancionLibreria = ({
     const bpmCancion = cancionPreparada?.bpm || 120;
     onCambiarBpm(bpmCancion);
     setBpmHero(bpmCancion);
-    setBpmGrabacion(bpmCancion);
-    setBpmOriginalGrabacion(bpmCancion);
     setPistaUrl(cancionPreparada?.audio_fondo_url || null);
     setPistaFile(null);
     setCancionActivaLibreria(cancionPreparada);
@@ -70,8 +66,6 @@ export const useCancionLibreria = ({
     bpmHero, setBpmHero,
     pistaUrl, setPistaUrl,
     pistaFile, setPistaFile,
-    bpmGrabacion, setBpmGrabacion,
-    bpmOriginalGrabacion, setBpmOriginalGrabacion,
     cancionActivaLibreria, setCancionActivaLibreria,
     ultimaCancionLibreriaActualizada, setUltimaCancionLibreriaActualizada,
     construirCancionHero,

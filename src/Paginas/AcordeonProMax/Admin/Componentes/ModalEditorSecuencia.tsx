@@ -39,15 +39,22 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
   const syncAudioRef = useRef<number>(0);
 
   const secuenciaEditadaRef = useRef<NotaHero[]>([]);
+  const [secuenciaEditada, setSecuenciaEditada] = useState<NotaHero[]>([]);
+  // Wrap de onSecuenciaChange: cuando guardarToma del punch entrega el merged, también lo aplicamos al
+  // estado LOCAL del modal. Sin esto, al salir de modoEdicion='revisando' el RAF lee secuenciaEditadaRef
+  // (stale, sin la toma recién guardada) y la reproducción suena como si la sección no se hubiese grabado.
+  const handleSecuenciaChange = useCallback((merged: NotaHero[]) => {
+    setSecuenciaEditada(merged);
+    onSecuenciaChange?.(merged);
+  }, [onSecuenciaChange]);
+
   const punch = usePunchInEditor({
     cancionId: cancion?.id, cancionBpm: cancion?.bpm || 120, bpmModal, resolucion,
     secuenciaEditadaRef, notasGrabadas, grabandoProp: _grabando,
     preRollSegundos, setPreRollSegundos, metronomoActivo, setMetronomoActivo,
-    onIniciarGrabacion, onDetenerGrabacion, onSecuenciaChange,
+    onIniciarGrabacion, onDetenerGrabacion, onSecuenciaChange: handleSecuenciaChange,
     audioRef, tickLocalRef, inicioLocalRef, setReproduciendoLocal,
   });
-
-  const [secuenciaEditada, setSecuenciaEditada] = useState<NotaHero[]>([]);
   const [edicionAbierta, setEdicionAbierta] = useState(false);
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
@@ -237,7 +244,17 @@ const ModalEditorSecuencia: React.FC<ModalEditorSecuenciaProps> = ({
           punch.punchTickTargetRef.current = null;
           punch.setCuentaAtrasLocal(null);
           punch.setModoEdicion('grabando');
-          onIniciarGrabacionRef.current();
+          // Anclar el grabador al MISMO audio que reproduce el modal: las notas quedarán timestampeadas
+          // contra audio.currentTime → reproducción posterior (BarraTimeline / competencia) usa la misma
+          // línea de tiempo. startTick se toma del audio real (no del newTick interpolado por RAF) para
+          // que el primer tick de la grabación coincida exactamente con la posición sonora actual.
+          // bpmOriginalRef.current es el bpm de la canción (NO el transport bpmModal): asegura que los
+          // ticks grabados estén en la misma escala que la reproducción a velocidad normal.
+          const audio = audioRef.current;
+          const startTickAudio = audio
+            ? Math.floor(audio.currentTime * (bpmOriginalRef.current / 60) * resolucion)
+            : Math.floor(newTick);
+          onIniciarGrabacionRef.current(audio, startTickAudio, bpmOriginalRef.current);
         } else {
           punch.setCuentaAtrasLocal(Math.ceil(rem));
         }

@@ -31,16 +31,22 @@ export const useReproductorHero = (
     const loopABRef = useRef<{ start: number, end: number, activo: boolean }>({ start: 0, end: 0, activo: false });
     const rangoSeccionRef = useRef<{ inicio: number; fin: number } | null>(null);
 
-    // Audio HTML opcional: cuando hay un mp3 de fondo, el reloj sigue audio.currentTime → cero drift.
-    const audioSyncRef = useRef<HTMLAudioElement | null>(null);
+    // Fuente de audio externa (HTMLAudioElement o ReproductorMP3 — ambos tienen la misma API mínima:
+    // currentTime, paused, readyState, playbackRate, addEventListener/removeEventListener para 'playing'/'pause'/'seeked').
+    // Cuando hay audio enganchado, el RAF lo usa como reloj → cero drift entre notas y MP3.
+    const audioSyncRef = useRef<any | null>(null);
     const bpmOriginalSyncRef = useRef<number>(120);
     // Hasta que el audio dispare 'playing', el RAF no debe disparar notas (evita "secuencia antes que mp3").
     const audioSyncSonandoRef = useRef<boolean>(false);
-    // Listeners registrados por setAudioSync. Se guardan para poder removerlos al re-cablear (cambio de canción/bpm)
-    // y evitar memory leak por listeners acumulados sobre el mismo HTMLAudio.
-    const audioSyncListenersRef = useRef<{ audio: HTMLAudioElement; onPlaying: () => void; onSeeked: () => void; onPause: () => void } | null>(null);
+    // Checkpoint capturado al 'playing': posición del audio + AudioContext.currentTime de ese momento.
+    // El RAF calcula la posición virtual lineal desde estos checkpoints. Si el audio es ReproductorMP3,
+    // su .currentTime YA es continuo (calculado desde AudioContext) — leer directo es equivalente.
+    const audioStartContextRef = useRef<number>(0);
+    const audioStartPositionRef = useRef<number>(0);
+    // Listeners registrados por setAudioSync.
+    const audioSyncListenersRef = useRef<{ audio: any; onPlaying: () => void; onSeeked: () => void; onPause: () => void } | null>(null);
 
-    const setAudioSync = useCallback((audio: HTMLAudioElement | null, bpmOriginal?: number) => {
+    const setAudioSync = useCallback((audio: any | null, bpmOriginal?: number) => {
         // Limpia listeners de cualquier audio previo antes de re-cablear.
         const previo = audioSyncListenersRef.current;
         if (previo) {
@@ -51,15 +57,24 @@ export const useReproductorHero = (
         }
 
         audioSyncRef.current = audio;
-        // Si el audio ya está sonando al re-cablear, mantener el flag — evita un "congelado" innecesario del reloj.
+        // Si el audio ya está sonando al re-cablear, capturar el checkpoint INMEDIATO.
         const yaSonando = !!(audio && !audio.paused && audio.readyState >= 2);
         audioSyncSonandoRef.current = yaSonando;
+        if (yaSonando && audio) {
+            audioStartContextRef.current = motorAudioPro.tiempoActual;
+            audioStartPositionRef.current = audio.currentTime;
+        }
         if (typeof bpmOriginal === 'number' && bpmOriginal > 0) {
             bpmOriginalSyncRef.current = bpmOriginal;
         }
         if (audio) {
-            const onPlaying = () => { audioSyncSonandoRef.current = true; };
-            const onSeeked = () => { if (!audio.paused) audioSyncSonandoRef.current = true; };
+            const capturarCheckpoint = () => {
+                audioStartContextRef.current = motorAudioPro.tiempoActual;
+                audioStartPositionRef.current = audio.currentTime;
+                audioSyncSonandoRef.current = true;
+            };
+            const onPlaying = capturarCheckpoint;
+            const onSeeked = () => { if (!audio.paused) capturarCheckpoint(); };
             const onPause = () => { audioSyncSonandoRef.current = false; };
             audio.addEventListener('playing', onPlaying);
             audio.addEventListener('seeked', onSeeked);
@@ -69,6 +84,8 @@ export const useReproductorHero = (
             setTimeout(() => {
                 if (audioSyncRef.current === audio && !audioSyncSonandoRef.current) {
                     audioSyncSonandoRef.current = true;
+                    audioStartContextRef.current = motorAudioPro.tiempoActual;
+                    audioStartPositionRef.current = audio.currentTime;
                 }
             }, 1500);
         }
@@ -93,6 +110,18 @@ export const useReproductorHero = (
 
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
         animFrameRef.current = 0;
+
+        // Detener cada instancia explícitamente ANTES de detenerTodo: sin esto, notas que se acaban de disparar
+        // (race con detenerTodo) quedan sonando porque su tono nunca recibe un release individual.
+        notasActivasRef.current.forEach((val) => {
+            if (val.instancias && val.instancias.length > 0) {
+                val.instancias.forEach((inst: any) => {
+                    if ((window as any).motorAudioPro) {
+                        try { (window as any).motorAudioPro.detener(inst, 0.05); } catch (_) {}
+                    }
+                });
+            }
+        });
 
         if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
 
@@ -149,7 +178,8 @@ export const useReproductorHero = (
             onBpmCambiadoRef.current?.(bpmRef.current);
         }
 
-        // Tick: (1) audio sonando → sigue audio.currentTime; (2) audio pendiente → reloj congelado; (3) sin audio → AudioContext.
+        // Tick: (1) audio sonando → posición virtual del audio (continua, sin jitter);
+        // (2) audio pendiente → reloj congelado; (3) sin audio → AudioContext directo.
         const audioSync = audioSyncRef.current;
         const tieneAudioSync = !!audioSync;
         const audioActivo = audioSyncSonandoRef.current
@@ -157,6 +187,9 @@ export const useReproductorHero = (
 
         let nuevoTickAbsoluto: number;
         if (audioActivo) {
+            // ReproductorMP3.currentTime es continuo y sample-accurate (calculado internamente desde
+            // AudioContext.currentTime). Para HTMLAudioElement el valor tiene jitter pero el RAF re-lee
+            // cada frame y converge igual. Lectura directa es lo que el modal del editor usa y funciona.
             const bpmRef_orig = bpmOriginalSyncRef.current || bpmRef.current;
             nuevoTickAbsoluto = audioSync!.currentTime * (bpmRef_orig / 60) * resolucion;
             checkpointTickRef.current = nuevoTickAbsoluto;
@@ -210,6 +243,13 @@ export const useReproductorHero = (
         });
 
         notasOriginalesRef.current.forEach(nota => {
+            // Gate por rango de sección: si hay una sección activa, NO disparamos audio del maestro para
+            // notas anteriores a su tickInicio. Esto permite que la reproducción arranque durante el lead-in
+            // (tick avanzando, PuenteNotas mostrando notas que se acercan) SIN que suenen las notas de
+            // secciones previas que el alumno no quiere escuchar.
+            const rangoSeccion = rangoSeccionRef.current;
+            if (rangoSeccion && nota.tick < rangoSeccion.inicio) return;
+
             if (nota.tick >= tickRef.current - deltaTicksFrame && nota.tick < tickRef.current) {
                 const llaveUnica = `${nota.botonId}_${nota.tick}`;
                 if (!notasActivasRef.current.has(llaveUnica)) {
@@ -276,8 +316,13 @@ export const useReproductorHero = (
 
         let seqOrdenada = [...secuencia].sort((a, b) => a.tick - b.tick);
 
-        // Con metrónomo: alinear primer ataque al beat más cercano (todas las notas se desplazan por el mismo offset, conserva feel).
-        if ((cancion as any).usoMetronomo && seqOrdenada.length > 0) {
+        // Snap-to-beat: SOLO cuando la canción NO tiene MP3 de fondo. Con audio, los ticks ya están anclados
+        // a audio.currentTime (saved durante grabación con grabador anclado al audio), así que CUALQUIER shift
+        // aquí desincroniza secuencia vs MP3 → notas adelantadas/atrasadas vs el audio que escucha el alumno.
+        // Es el bug que se manifestaba al refrescar la página o al desplazar la BarraTimeline: el modal preview
+        // no llamaba a este reproductor, pero la BarraTimeline / Competencia sí → shift aplicado → desincrono.
+        const tieneAudioFondo = !!((cancion as any).audio_fondo_url || (cancion as any).audioFondoUrl);
+        if ((cancion as any).usoMetronomo && !tieneAudioFondo && seqOrdenada.length > 0) {
             const resolucion = (cancion as any).resolucion || 192;
             const primerTick = seqOrdenada[0].tick;
             const beatMasCercano = Math.round(primerTick / resolucion) * resolucion;
@@ -304,8 +349,12 @@ export const useReproductorHero = (
         (pausadoRef as any).current = false;
         setPausado(false);
 
-        const bpmCancion = (cancion as any).bpm;
-        if (typeof bpmCancion === 'number' && bpmCancion > 0) { bpmRef.current = bpmCancion; bpmTargetRef.current = bpmCancion; }
+        // CRÍTICO: NO sobreescribir bpmRef con cancion.bpm. El transport (bpmActual=hero.bpm) puede ser distinto
+        // de cancion.bpm (slow practice). Si forzamos bpmRef = cancion.bpm, el RAF avanza al tempo original
+        // mientras el audio.playbackRate avanza a transport/original → DRIFT permanente ("va corrida").
+        // bpmTargetRef sigue bpmActual via useEffect; lo usamos como fuente de verdad y dejamos que el RAF
+        // converja a ese valor en el próximo frame. Para el primer frame, alineamos bpmRef explícitamente.
+        bpmRef.current = bpmTargetRef.current;
 
         tickRef.current = tickInicial;
         checkpointTickRef.current = tickInicial;
@@ -333,6 +382,27 @@ export const useReproductorHero = (
         checkpointTickRef.current = tick;
         checkpointTimeRef.current = motorAudioPro.tiempoActual;
         setTickActual(Math.floor(tick));
+
+        // Si hay audio enganchado, seek SÍNCRONO aquí. Sin esto el RAF lee audio.currentTime (vieja)
+        // en el siguiente frame y "snap back" al tick anterior — el scrub no toma efecto hasta que
+        // el useEffect de useAudioFondoPracticaLibre seekea el audio (1+ frames después).
+        const audioSync = audioSyncRef.current;
+        if (audioSync) {
+            const bpmOrig = bpmOriginalSyncRef.current || 120;
+            const segundosObjetivo = (tick / 192) * (60 / bpmOrig);
+            try { audioSync.currentTime = Math.max(0, segundosObjetivo); } catch (_) {}
+        }
+
+        // Mismo patrón que detenerReproduccion: detener instancias explícitamente antes del detenerTodo.
+        notasActivasRef.current.forEach((val) => {
+            if (val.instancias && val.instancias.length > 0) {
+                val.instancias.forEach((inst: any) => {
+                    if ((window as any).motorAudioPro) {
+                        try { (window as any).motorAudioPro.detener(inst, 0.05); } catch (_) {}
+                    }
+                });
+            }
+        });
 
         if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
         notasActivasRef.current.forEach((val, llave) => actualizarBoton(val.botonId || llave, 'remove', null, true));

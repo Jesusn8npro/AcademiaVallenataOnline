@@ -96,22 +96,17 @@ export function useEstudioAdmin() {
     pausado: hero.pausado,
     bpm: hero.bpm,
     tickActual: hero.tickActual,
-    cancionData: { bpm: libreria.bpmOriginalGrabacion, resolucion: 192, audio_fondo_url: libreria.pistaUrl },
+    cancionData: { bpm: libreria.cancionActivaLibreria?.bpm },
     audioUrl: libreria.pistaUrl,
     volumen: 0.8,
   });
   const audioRef = audioFondo.audioRef;
 
-  // Conecta el HTMLAudio del MP3 al RAF de useReproductorHero: el RAF lee audio.currentTime cada frame
-  // y los dos relojes (AudioContext y HTMLMediaElement) dejan de driftar. Sin esto, el inicio queda alineado
-  // por iniciarReproduccionSincronizada pero los segundos siguientes acumulan desfase audible.
+  // El cableado activo (audio + BPM) lo hace el editor antes de cada play, con el BPM real de la canción.
+  // Aquí solo desconectamos cuando se quita la pista para que el RAF deje de seguir el audio.
   useEffect(() => {
-    if (libreria.pistaUrl && audioRef.current) {
-      hero.setAudioSync(audioRef.current, libreria.bpmOriginalGrabacion || 120);
-    } else {
-      hero.setAudioSync(null);
-    }
-  }, [libreria.pistaUrl, libreria.bpmOriginalGrabacion, audioRef, hero.setAudioSync]);
+    if (!libreria.pistaUrl) hero.setAudioSync(null);
+  }, [libreria.pistaUrl, hero.setAudioSync]);
 
   const rec = useEditorSecuenciaAdmin({
     bpm: hero.bpm,
@@ -128,9 +123,14 @@ export function useEstudioAdmin() {
     onAlternarLoop: hero.alternarLoopAB,
     onBuscarTick: hero.buscarTick,
     onReproducirSecuencia: hero.reproducirSecuencia,
+    onDetenerReproduccion: hero.detenerReproduccion,
     onLimpiarLoop: hero.limpiarLoopAB,
     onCambiarBpm: hero.cambiarBpm,
     onIniciarReproduccionSincronizada: audioFondo.iniciarReproduccionSincronizada,
+    onCargarPista: audioFondo.cargarPista,
+    onSetAudioSync: useCallback((bpmOriginal: number) => {
+      hero.setAudioSync(audioRef.current, bpmOriginal);
+    }, [audioRef, hero.setAudioSync]),
     libreria,
   });
 

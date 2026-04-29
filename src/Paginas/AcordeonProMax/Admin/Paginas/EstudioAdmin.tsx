@@ -110,11 +110,26 @@ const EstudioAdmin: React.FC = () => {
                 // Cuando hero.pausado=true, el reproductor sigue en sesión
                 // (reproduciendo=true) pero está pausado — debe mostrar Play.
                 reproduciendoLocal={(hero.reproduciendo && !hero.pausado) || rec.hayGrabacionActiva}
-                handleSeek={hero.buscarTick}
+                handleSeek={(tick) => {
+                  // Si está reproduciendo, re-arrancar el flujo completo (pausa audio → seek → canplay → play → 'playing'
+                  // → reproducirSecuencia con tickInicialOverride). Sin esto, buscarTick directo solo mueve el reloj
+                  // pero el audio queda donde estaba o bufferea sin sincronización → notas adelantadas/atrasadas vs MP3.
+                  // Si está pausado o detenido, basta con buscarTick (mueve cursor sin arrancar play).
+                  if (hero.reproduciendo && !hero.pausado && libreria.cancionActivaLibreria && !hero.grabaciones.grabando && !rec.grabandoRecPro) {
+                    rec.reproducirCancionActivaDesdeTick(tick);
+                  } else {
+                    hero.buscarTick(tick);
+                  }
+                }}
                 handleReset={() => hero.buscarTick(0)}
-                saltarSegundos={(seg) => hero.buscarTick(
-                  Math.max(0, Math.min(rec.totalTicksTransporte, (hero.tickActual || 0) + Math.round(seg * (hero.bpm / 60) * 192)))
-                )}
+                saltarSegundos={(seg) => {
+                  const nuevoTick = Math.max(0, Math.min(rec.totalTicksTransporte, (hero.tickActual || 0) + Math.round(seg * (hero.bpm / 60) * 192)));
+                  if (hero.reproduciendo && !hero.pausado && libreria.cancionActivaLibreria && !hero.grabaciones.grabando && !rec.grabandoRecPro) {
+                    rec.reproducirCancionActivaDesdeTick(nuevoTick);
+                  } else {
+                    hero.buscarTick(nuevoTick);
+                  }
+                }}
                 togglePlay={() => {
                   if (hero.grabaciones.grabando) hero.grabaciones.detenerGrabacionPracticaLibre();
                   else if (rec.grabandoRecPro) rec.detenerGrabacionRecPro();
@@ -184,7 +199,12 @@ const EstudioAdmin: React.FC = () => {
             grabando={rec.grabadorLocal.grabando}
             tiempoGrabacionMs={rec.tiempoGrabacionRecProMs}
             cuentaAtrasPreRoll={rec.esperandoPunchIn ? rec.preRollSegundos : null}
-            onIniciarGrabacion={() => rec.grabadorLocal.iniciarGrabacion()}
+            onIniciarGrabacion={(audio?: any, startTick?: number, bpmOriginal?: number) => {
+              // Pasar el audio + startTick absoluto + bpmOriginal al grabador: las notas se
+              // timestampearán contra audio.currentTime con la escala bpm correcta → cero drift entre
+              // la secuencia grabada y el MP3 en reproducciones limpias, incluso con slow practice.
+              rec.grabadorLocal.iniciarGrabacion([], startTick ?? 0, audio, bpmOriginal);
+            }}
             onDetenerGrabacion={() => {
               const resultado = rec.grabadorLocal.detenerGrabacion();
               logica.limpiarTodasLasNotas?.();

@@ -23,6 +23,8 @@ interface ModoJuegoProps {
   imagenFondo: string;
   actualizarBotonActivo: (id: string, accion: 'add' | 'remove', inst?: any[] | null) => void;
   registrarPosicionGolpe: (x: number, y: number) => void;
+  // Rango de la sección activa: PuenteNotas filtra notas fuera de él para no mostrar "fantasmas" durante el lead-in.
+  rangoSeccion?: { inicio: number; fin: number } | null;
 }
 
 const ModoJuego: React.FC<ModoJuegoProps> = ({
@@ -39,6 +41,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   imagenFondo,
   actualizarBotonActivo,
   registrarPosicionGolpe,
+  rangoSeccion,
 }) => {
   const { refMaestro, refAlumno, obtenerPosicionMaestro, obtenerPosicionAlumno } = usePosicionProMax();
   const ajustesDuelo = useMemo(() => ({
@@ -276,6 +279,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
         modoVista={logica.modoVista}
         configTonalidad={configTonalidad}
         notasImpactadas={notasImpactadas}
+        rangoSeccion={rangoSeccion}
       />
 
       <JuicioOverlay estadisticas={estadisticas} efectosVisuales={efectosVisuales} />

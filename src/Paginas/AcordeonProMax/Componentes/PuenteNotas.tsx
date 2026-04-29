@@ -13,6 +13,9 @@ interface PropsPuenteNotas {
   modoVista: ModoVista;
   configTonalidad: any;
   notasImpactadas: Set<string>;
+  // Si hay sección activa, solo muestra notas dentro del rango. Sin esto, durante el lead-in se ven
+  // notas de secciones previas pasando sin pisarse — confunde visualmente al alumno.
+  rangoSeccion?: { inicio: number; fin: number } | null;
 }
 
 interface DatosNota {
@@ -30,13 +33,16 @@ interface DatosNota {
   impactada: boolean;
 }
 
-const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerPosicionMaestro, obtenerPosicionAlumno, modoVista, configTonalidad, notasImpactadas }) => {
+const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerPosicionMaestro, obtenerPosicionAlumno, modoVista, configTonalidad, notasImpactadas, rangoSeccion }) => {
   const notasEnVuelo = useMemo<DatosNota[]>(() => {
     if (!cancion || !cancion.secuencia || !Array.isArray(cancion.secuencia)) return [];
     const resultado: DatosNota[] = [];
     const windowStart = tickActual - 60;
     const windowEnd = tickActual + TICKS_VIAJE + 40;
     for (const nota of cancion.secuencia) {
+      // Filtro de sección: solo notas dentro del rango activo. Durante el lead-in evita que se vean
+      // notas de secciones previas pasando "fantasma" (no se pisan) y confundiendo al alumno.
+      if (rangoSeccion && (nota.tick < rangoSeccion.inicio || nota.tick > rangoSeccion.fin)) continue;
       if (nota.tick < windowStart || (nota.tick - TICKS_VIAJE) > windowEnd) continue;
       const posMaestro = obtenerPosicionMaestro(nota.botonId);
       const posAlumno = obtenerPosicionAlumno(nota.botonId);
@@ -59,7 +65,7 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
       });
     }
     return resultado;
-  }, [tickActual, cancion, obtenerPosicionMaestro, obtenerPosicionAlumno, modoVista, configTonalidad, notasImpactadas]);
+  }, [tickActual, cancion, obtenerPosicionMaestro, obtenerPosicionAlumno, modoVista, configTonalidad, notasImpactadas, rangoSeccion]);
 
   return (
     <svg style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 15, overflow: 'visible' }}>

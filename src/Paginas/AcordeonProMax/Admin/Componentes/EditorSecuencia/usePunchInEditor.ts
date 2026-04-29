@@ -15,7 +15,7 @@ interface UsePunchInEditorArgs {
   setPreRollSegundos: (s: number) => void;
   metronomoActivo: boolean;
   setMetronomoActivo: (v: boolean) => void;
-  onIniciarGrabacion: () => void;
+  onIniciarGrabacion: (audio?: any, startTick?: number, bpmOriginal?: number) => void;
   onDetenerGrabacion: () => NotaHero[] | void;
   onSecuenciaChange: (seq: NotaHero[]) => void;
   audioRef: MutableRefObject<HTMLAudioElement | null>;
@@ -52,12 +52,14 @@ export function usePunchInEditor({
   // Construye el preview a partir de la secuencia grabada. Se llama tanto desde detenerEdicionPunch (síncrono,
   // recibe la secuencia FINAL del grabador con notas pendientes incluidas) como desde el useEffect de respaldo
   // (asíncrono, lee notasGrabadas del prop — que llega 1 render tarde).
+  // Las notas YA traen ticks absolutos: el grabador arrancó con startTick = audio.currentTime*factor,
+  // así que cada press se timestampó contra audio.currentTime. Solo merge + sort, NO re-offset.
   const construirPreview = useCallback((notas: NotaHero[]) => {
     if (punchInTickSnapshot.current === null) return;
     const punchTick = punchInTickSnapshot.current;
     const preview = [
       ...notasAntesDelPunch.current,
-      ...notas.map(n => ({ ...n, tick: n.tick + punchTick })),
+      ...notas,
       ...notasDespuesDelPunch.current,
     ].sort((a, b) => a.tick - b.tick);
     setSecuenciaPreview(preview);
@@ -129,7 +131,8 @@ export function usePunchInEditor({
         ? secuenciaPreview
         : [
             ...notasAntesDelPunch.current,
-            ...notasGrabadas.map(n => ({ ...n, tick: n.tick + (punchInTickSnapshot.current ?? 0) })),
+            // notasGrabadas YA traen ticks absolutos (grabador anclado a audio.currentTime).
+            ...notasGrabadas,
             ...notasDespuesDelPunch.current,
           ].sort((a, b) => a.tick - b.tick);
       onSecuenciaChange(merged);

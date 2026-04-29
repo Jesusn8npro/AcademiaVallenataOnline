@@ -615,6 +615,15 @@ export function useLogicaProMax() {
     const rangoTicks = seccion ? { inicio: seccion.tickInicio, fin: seccion.tickFin } : null;
     const offsetSegundos = seccion ? (seccion.tickInicio / resolucion) * (60 / bpmOriginal) : 0;
 
+    // Lead-in para secciones NO-intro: el MP3 arranca unos segundos antes del tickInicio para que el alumno
+    // escuche un poquito de la melodía y acomode los dedos. La SECUENCIA de notas NO arranca durante el
+    // lead-in — esperamos a que audio.currentTime cruce offsetSegundos y ahí soltamos las notas + el reloj.
+    const LEADIN_SEGUNDOS_SECCION = 3;
+    const tieneLeadIn = !!(seccion && offsetSegundos > 0);
+    const offsetSegundosAudio = tieneLeadIn
+      ? Math.max(0, offsetSegundos - LEADIN_SEGUNDOS_SECCION)
+      : offsetSegundos;
+
     const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
 
     // Pre-carga + seek durante el conteo de 3s: cuando termina el conteo, audio.play() arranca instantáneo y el reloj
@@ -623,10 +632,14 @@ export function useLogicaProMax() {
     if (audioPrecargado) {
       // preload='auto': descarga completa apenas pueda. NO llamar .load() — resetea estado y causa re-fetch + stutter.
       audioPrecargado.preload = 'auto';
+      audioPrecargado.crossOrigin = 'anonymous';
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
       (audioPrecargado as any).preservesPitch = true;
       audioFondoRef.current = audioPrecargado;
+      // CANONICAL FIX: rutear el MP3 por el AudioContext de motorAudioPro. Sin esto, MP3 (HTMLAudio decoder)
+      // y notas (Web Audio) tienen latencias DIFERENTES → desincronización. Con esto comparten pipeline → mismas latencias.
+      try { motorAudioPro.conectarMediaElement(audioPrecargado); } catch (_) {}
     }
 
     // Resuelve cuando el audio está listo (sin stutter durante playback) y posicionado en offsetSegundos.
@@ -642,13 +655,31 @@ export function useLogicaProMax() {
       };
 
       const aplicarSeek = () => {
-        if (offsetSegundos > 0) {
+        // Seek a offsetSegundosAudio (con lead-in restado si es sección no-intro).
+        if (offsetSegundosAudio > 0) {
           const onSeeked = () => {
             audioPrecargado.removeEventListener('seeked', onSeeked);
-            finalizar();
+            // Después del seek, esperar canplay en la nueva posición. Un seek a offset puede mover
+            // el audio a una región SIN buffer (download progresivo), readyState cae a 2 →
+            // play() entra en buffering → 'playing' tarda → fallback 1500ms dispara mientras audio
+            // aún paused → reproducirSecuencia arranca, RAF avanza, audio sigue mudo → notas
+            // adelantadas. La intro (offset=0) no tiene este bug porque siempre hay buffer en 0.
+            if (audioPrecargado.readyState >= 3) {
+              finalizar();
+            } else {
+              const onCanPlayPostSeek = () => {
+                audioPrecargado.removeEventListener('canplay', onCanPlayPostSeek);
+                finalizar();
+              };
+              audioPrecargado.addEventListener('canplay', onCanPlayPostSeek);
+              setTimeout(() => {
+                audioPrecargado.removeEventListener('canplay', onCanPlayPostSeek);
+                finalizar();
+              }, 2000);
+            }
           };
           audioPrecargado.addEventListener('seeked', onSeeked, { once: true });
-          try { audioPrecargado.currentTime = offsetSegundos; } catch (_) { finalizar(); }
+          try { audioPrecargado.currentTime = offsetSegundosAudio; } catch (_) { finalizar(); }
         } else {
           finalizar();
         }
@@ -699,17 +730,12 @@ export function useLogicaProMax() {
       let arrancado = false;
       let fallbackId: number | undefined;
 
-      const arrancarTickClock = () => {
-        if (arrancado) return;
-        arrancado = true;
-        if (fallbackId !== undefined) window.clearTimeout(fallbackId);
-        audioPrecargado.removeEventListener('playing', arrancarTickClock);
-        // Si el usuario canceló/reinició antes de 'playing', audioFondoRef ya apunta a otro audio — no interferir.
+      // Soltar la secuencia: arrancar reproductor + setAudioSync. Se llama directamente cuando NO hay
+      // lead-in (intro / sin sección), o tras esperar que audio.currentTime cruce offsetSegundos cuando
+      // SÍ hay lead-in (sección no-intro).
+      const soltarSecuencia = () => {
         if (audioFondoRef.current !== audioPrecargado) return;
-        // Captura de competencia en el MISMO instante que el reloj — sin esto el grabador empieza antes que el RAF y queda offset.
         if (modoActual === 'ninguno') iniciarCaptura('competencia');
-        // Calibración: secciones usan audioTickPos exacto sin snap (snap dejaba audio adelantado → "secuencia corrida").
-        // Intro snapea a 0 si <64 ticks (~200ms a 100bpm) para no saltar un eventual downbeat en tick 0.
         const targetTick = rangoTicks ? rangoTicks.inicio : 0;
         const audioTickPos = Math.max(0, Math.floor(audioPrecargado.currentTime * factor));
         const tickInicialReal = rangoTicks
@@ -719,6 +745,23 @@ export function useLogicaProMax() {
           rangoTicks: rangoTicks ?? null,
           tickInicialOverride: tickInicialReal,
         });
+        reproductor.setAudioSync(audioPrecargado, bpmOriginal);
+      };
+
+      const arrancarTickClock = () => {
+        if (arrancado) return;
+        arrancado = true;
+        if (fallbackId !== undefined) window.clearTimeout(fallbackId);
+        audioPrecargado.removeEventListener('playing', arrancarTickClock);
+        // Si el usuario canceló/reinició antes de 'playing', audioFondoRef ya apunta a otro audio — no interferir.
+        if (audioFondoRef.current !== audioPrecargado) return;
+
+        // Suelta el reproductor INMEDIATAMENTE — incluso durante el lead-in. tickActual empieza a avanzar
+        // desde la posición del audio (= offsetSegundos - leadIn), así PuenteNotas ve las notas próximas
+        // de la sección ya en vuelo, acercándose al alumno antes de que tengan que pisarse. El maestro NO
+        // dispara los tonos durante el lead-in (gate en useReproductorHero por rangoSeccion.inicio): solo
+        // se ven las notas acercándose, sin escucharlas — el alumno tiene 3s de "preview visual" puro.
+        soltarSecuencia();
       };
 
       audioPrecargado.addEventListener('playing', arrancarTickClock);

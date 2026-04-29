@@ -129,24 +129,26 @@ export function useSeccionesModal({
     const monedasFinales = Number.isFinite(seccionMonedas) && seccionMonedas >= 0 ? seccionMonedas : 1;
 
     if (seccionEditandoIndex !== null) {
-      // Modo edición: actualizar la sección existente
+      // Snap intro: si la sección que estás editando es la PRIMERA (index 0), su tickInicio se fuerza a 0.
+      // Resuelve "se me corre" cuando el cursor del audio no estaba exactamente en 0 al pulsar Marcar Inicio.
       setSecciones(prev => prev.map((s, i) =>
         i === seccionEditandoIndex
           ? {
               ...s,
               nombre: nombreFinal,
-              tickInicio: seccionTickInicio,
+              tickInicio: i === 0 ? 0 : seccionTickInicio,
               tickFin: seccionTickFin,
               monedas: monedasFinales,
             }
           : s
       ));
     } else {
-      // Modo creación: agregar una nueva
+      // Snap intro: la PRIMERA sección de la canción siempre arranca en tick 0 (inicio del MP3).
+      const tickInicioFinal = secciones.length === 0 ? 0 : seccionTickInicio;
       setSecciones(prev => [...prev, {
         id: generarIdSeccion(nombreFinal),
         nombre: nombreFinal,
-        tickInicio: seccionTickInicio,
+        tickInicio: tickInicioFinal,
         tickFin: seccionTickFin,
         tipo: 'melodia',
         monedas: monedasFinales,
