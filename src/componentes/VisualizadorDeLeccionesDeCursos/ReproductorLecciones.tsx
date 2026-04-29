@@ -91,7 +91,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
             <div className="spinner"></div>
             <p className="loading-text">Verificando acceso...</p>
           </div>
-        ) : errorFirmado || tieneError || !srcIframe ? (
+        ) : errorFirmado || (!usarFirmado && tieneError) || !srcIframe ? (
           <div className="error-overlay">
             <div className="error-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
