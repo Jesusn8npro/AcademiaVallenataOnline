@@ -20,13 +20,14 @@ export const useEditorSecuenciaAdmin = ({
   reproduciendo, pausado, tickActual, loopAB,
   secuencia, totalTicks,
   onAlternarPausa, onAlternarLoop, onBuscarTick,
-  onReproducirSecuencia, onLimpiarLoop, onCambiarBpm,
+  onReproducirSecuencia, onDetenerReproduccion, onLimpiarLoop, onCambiarBpm,
   onIniciarReproduccionSincronizada,
+  onCargarPista,
+  onSetAudioSync,
   libreria,
 }: UseEditorSecuenciaAdminParams) => {
   const {
     bpmHero, setBpmHero, pistaFile, setPistaUrl,
-    bpmGrabacion, bpmOriginalGrabacion, setBpmOriginalGrabacion,
     cancionActivaLibreria, setCancionActivaLibreria,
     setUltimaCancionLibreriaActualizada,
     construirCancionHero, prepararCancionEnEscenario, detenerReproduccionLocal,
@@ -285,38 +286,33 @@ export const useEditorSecuenciaAdmin = ({
     if (!cancionBase) return;
     prepararCancionEnEscenario(cancionBase);
 
-    // Si el caller proporcionó iniciarReproduccionSincronizada, usamos el patrón
-    // "wait for 'playing'": espera que el MP3 esté listo, dispara play(), espera
-    // 'playing' y nos devuelve el tick real al que arrancó el audio. Después
-    // llamamos reproducirSecuencia con tickInicialOverride → RAF y MP3 salen
-    // del mismo punto, sin desfase. Mismo patrón de modo maestro.
     if (onIniciarReproduccionSincronizada) {
       const tickInicioNorm = Math.max(0, Math.floor(tickInicio));
-      // Pasar el bpm de la canción explícitamente para evitar el race con
-      // setBpmOriginalGrabacion (state update que no toma efecto sino hasta
-      // el próximo render — mientras tanto el ref interno del hook de audio
-      // está stale, y el offsetSegundos del seek queda incorrecto).
       const bpmOriginalCancion = Number(cancionBase?.bpm) || 120;
+      const urlPista = cancionBase?.audio_fondo_url || null;
       try {
+        // Patrón del MODAL del editor (que SÍ funciona perfecto): el RAF debe leer audio.currentTime
+        // como fuente de verdad del reloj — NO motorAudioPro.tiempoActual (que tiene drift respecto al
+        // HTMLAudio decoder). setAudioSync engancha el audio al reproductor para que el loop lea
+        // audio.currentTime cada frame. Lo cableamos DESPUÉS de reproducirSecuencia porque su detenerReproduccion
+        // interno wipea audioSyncRef. Re-cableado aquí garantiza que el primer frame del RAF ya tiene el audio.
+        if (onCargarPista) await onCargarPista(urlPista);
         const { tickInicialReal } = await onIniciarReproduccionSincronizada(
           tickInicioNorm,
-          { bpmOriginal: bpmOriginalCancion }
+          { bpmOriginal: bpmOriginalCancion, urlEsperada: urlPista }
         );
         onReproducirSecuencia(cancionBase, { tickInicialOverride: tickInicialReal });
+        if (onSetAudioSync) onSetAudioSync(bpmOriginalCancion);
       } catch (_) {
-        // Si algo falla en el wait, caer al flujo viejo para no dejar al
-        // usuario sin reproducción.
         onReproducirSecuencia(cancionBase);
         if (tickInicioNorm > 0) onBuscarTick(tickInicioNorm);
       }
       return;
     }
 
-    // Fallback al flujo legacy cuando no hay audio sincronizado disponible
-    // (ej: tests, contextos sin useAudioFondoPracticaLibre).
     onReproducirSecuencia(cancionBase);
     if (tickInicio > 0) onBuscarTick(Math.max(0, Math.floor(tickInicio)));
-  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada]);
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync]);
 
   const handleReproducirLibreria = useCallback(async (cancion: any) => {
     const secuenciaActiva = cancionEditandoSecuencia?.id === cancion.id
@@ -327,18 +323,17 @@ export const useEditorSecuenciaAdmin = ({
     };
     prepararCancionEnEscenario(cancionPreparada);
 
-    // Mismo patrón que reproducirCancionActivaDesdeTick: esperar a que el MP3
-    // esté bufferead + dispararle play() + esperar 'playing' antes de arrancar
-    // el reloj de ticks. Sin esto las notas vuelan ~150ms antes que el audio
-    // (la sincronización por sincronizarRelojConPista que tiene useAudioFondoPracticaLibre
-    // recalibra el reloj DESPUÉS de que ya fueron disparadas las primeras notas).
     if (onIniciarReproduccionSincronizada) {
       const bpmOriginalCancion = Number(cancionPreparada?.bpm) || 120;
+      const urlPista = cancionPreparada?.audio_fondo_url || null;
       try {
-        const { tickInicialReal } = await onIniciarReproduccionSincronizada(0, { bpmOriginal: bpmOriginalCancion });
+        // setAudioSync POST-reproducirSecuencia (ver comentario en reproducirCancionActivaDesdeTick):
+        // engancha audio al reproductor para que el RAF use audio.currentTime como reloj — patrón del modal del editor.
+        if (onCargarPista) await onCargarPista(urlPista);
+        const { tickInicialReal } = await onIniciarReproduccionSincronizada(0, { bpmOriginal: bpmOriginalCancion, urlEsperada: urlPista });
         onReproducirSecuencia(cancionPreparada, { tickInicialOverride: tickInicialReal });
+        if (onSetAudioSync) onSetAudioSync(bpmOriginalCancion);
       } catch (_) {
-        // Fallback: flujo legacy
         onBuscarTick(0);
         onReproducirSecuencia(cancionPreparada);
       }
@@ -347,7 +342,7 @@ export const useEditorSecuenciaAdmin = ({
 
     onBuscarTick(0);
     onReproducirSecuencia(cancionPreparada);
-  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada]);
+  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync]);
 
   const handleEditarSecuenciaLibreria = useCallback((cancion: any) => {
     const continuar = () => {
@@ -377,7 +372,13 @@ export const useEditorSecuenciaAdmin = ({
       setMensajeEdicionSecuencia('Detén la grabación o el pre-roll actual antes de abrir el editor.');
       return;
     }
-    if (reproduciendo && !pausado) onAlternarPausa();
+    // Detener (NO solo pausar) el reproductor del Hero al abrir el modal: el modal tiene su propio
+    // RAF + audio independiente, y mantener hero.reproduciendo=true causa que el acordeón muestre
+    // botonesActivosMaestro (stale) en lugar de logica.botonesActivos (que el RAF del modal actualiza).
+    if (reproduciendo) {
+      if (onDetenerReproduccion) onDetenerReproduccion();
+      else if (!pausado) onAlternarPausa();
+    }
     onBuscarTick(0);
     if (cancion.audio_fondo_url) setPistaUrl(cancion.audio_fondo_url);
     const cancionPreparada = { ...cancion, secuencia_hero: normalizarSecuenciaHero(cancion.secuencia_json || cancion.secuencia) };
@@ -385,12 +386,11 @@ export const useEditorSecuenciaAdmin = ({
     setCancionEnModalEditor(cancion);
     setCancionEditandoSecuencia(cancion);
     setSecuenciaEditada(cancionPreparada.secuencia_hero);
-    setBpmOriginalGrabacion(cancion.bpm || 120);
     onCambiarBpm(cancion.bpm || 120);
     setHayCambiosEdicionSecuencia(false);
     setMensajeEdicionSecuencia('Editor de secuencia listo. Marca entrada y salida para grabar por tramos.');
-  }, [grabandoSesion, grabadorLocal.grabando, esperandoPunchIn, onBuscarTick, onAlternarPausa,
-    reproduciendo, pausado, onCambiarBpm, prepararCancionEnEscenario, setPistaUrl, setBpmOriginalGrabacion]);
+  }, [grabandoSesion, grabadorLocal.grabando, esperandoPunchIn, onBuscarTick, onAlternarPausa, onDetenerReproduccion,
+    reproduciendo, pausado, onCambiarBpm, prepararCancionEnEscenario, setPistaUrl]);
 
   const handleDetenerTimeline = useCallback(() => {
     onBuscarTick(0);

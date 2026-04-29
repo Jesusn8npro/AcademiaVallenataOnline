@@ -151,6 +151,9 @@ const AcordeonProMaxSimulador: React.FC = () => {
               imagenFondo={IMG_ALUMNO}
               actualizarBotonActivo={hero.logica.actualizarBotonActivo}
               registrarPosicionGolpe={hero.registrarPosicionGolpe}
+              rangoSeccion={hero.seccionSeleccionada
+                ? { inicio: hero.seccionSeleccionada.tickInicio, fin: hero.seccionSeleccionada.tickFin }
+                : null}
             />
           )}
 

@@ -34,7 +34,11 @@ export interface ModalEditorSecuenciaProps {
   grabando: boolean;
   tiempoGrabacionMs: number;
   cuentaAtrasPreRoll: number | null;
-  onIniciarGrabacion: () => void;
+  // El modal pasa su HTMLAudio al iniciar la grabación: el grabador lo usa como reloj
+  // para que las notas queden alineadas EXACTAMENTE con audio.currentTime (cero drift).
+  // bpmOriginal es el BPM de la canción (NO el transport): asegura que los ticks queden en la
+  // misma escala que la reproducción posterior, sin importar slow practice.
+  onIniciarGrabacion: (audio?: any, startTick?: number, bpmOriginal?: number) => void;
   // Retorna la secuencia final (incluye notas que estaban abiertas al detener) para construir
   // el preview síncrono — el state de notasGrabadas no las contiene hasta el siguiente render.
   onDetenerGrabacion: () => NotaHero[] | void;
@@ -82,9 +86,6 @@ export interface LibreriaAPI {
   setBpmHero: (v: number) => void;
   pistaFile: File | null;
   setPistaUrl: (url: string | null) => void;
-  bpmGrabacion: number;
-  bpmOriginalGrabacion: number;
-  setBpmOriginalGrabacion: (v: number) => void;
   cancionActivaLibreria: any;
   setCancionActivaLibreria: (c: any) => void;
   setUltimaCancionLibreriaActualizada: (c: any) => void;
@@ -108,6 +109,10 @@ export interface UseEditorSecuenciaAdminParams {
   onAlternarLoop: () => void;
   onBuscarTick: (tick: number) => void;
   onReproducirSecuencia: (cancion: any, opciones?: { rangoTicks?: { inicio: number; fin: number } | null; tickInicialOverride?: number | null }) => void;
+  // Detiene el reproductor del Hero (no solo pausa). Necesario al abrir el editor modal: si solo se pausa,
+  // hero.reproduciendo sigue true y el `botonesActivosAcordeon` cae al stale hero.botonesActivosMaestro
+  // en lugar de logica.botonesActivos (que sí actualiza el RAF del modal) → no se ven las notas.
+  onDetenerReproduccion?: () => void;
   onLimpiarLoop: () => void;
   onCambiarBpm: (v: number | ((prev: number) => number)) => void;
   /**
@@ -122,7 +127,11 @@ export interface UseEditorSecuenciaAdminParams {
    * seek. Sin esto, el ref interno puede estar stale (acabamos de cambiar
    * de canción) y el seek apuntaría a una posición errónea.
    */
-  onIniciarReproduccionSincronizada?: (tickInicio: number, opciones?: { bpmOriginal?: number }) => Promise<{ tickInicialReal: number }>;
+  onIniciarReproduccionSincronizada?: (tickInicio: number, opciones?: { bpmOriginal?: number; urlEsperada?: string | null }) => Promise<{ tickInicialReal: number }>;
+  // Carga síncrona del MP3 antes de iniciar la sincronización: evita el race del setState→useEffect.
+  onCargarPista?: (url: string | null) => Promise<void>;
+  // Cablea el HTMLAudio + BPM al RAF del reproductor con el BPM real de la canción (no desde state).
+  onSetAudioSync?: (bpmOriginal: number) => void;
   libreria: LibreriaAPI;
 }
 

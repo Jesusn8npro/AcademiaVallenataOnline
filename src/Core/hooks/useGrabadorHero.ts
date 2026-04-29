@@ -24,6 +24,18 @@ export const useGrabadorHero = (bpmActual: number) => {
     const bpmRef = useRef(bpmActual);
     const pausadoRef = useRef(false);
 
+    // Reloj externo opcional: cuando hay un audio (HTMLAudio o ReproductorMP3) en curso, anclamos el
+    // tickeo de notas a su currentTime — así las notas grabadas comparten EXACTAMENTE la misma línea
+    // de tiempo que el MP3 que escucha el usuario. Sin esto, el motor usa motorAudioPro.tiempoActual
+    // que tiene drift respecto al decoder de HTMLAudio (~50-300ms en seeks con offset → secciones
+    // no-intro quedan corridas en reproducciones limpias).
+    const audioElementRef = useRef<any>(null);
+    const audioStartTimeRef = useRef<number>(0);
+    // BPM original de la canción que está sonando: lo usamos para escalar los ticks audio-anclados.
+    // CRÍTICO: NO usar bpmRef.current (= bpm transport) cuando hay slow practice — los ticks deben
+    // quedar en unidades del bpm ORIGINAL para que la reproducción a velocidad normal los interprete bien.
+    const audioBpmOriginalRef = useRef<number>(120);
+
     const notasAbiertasRef = useRef<Map<string, { tick: number; fuelle: DireccionFuelle }>>(new Map());
 
     // Sincronizar BPM y congelar estado anterior para evitar drift
@@ -46,17 +58,27 @@ export const useGrabadorHero = (bpmActual: number) => {
     }, []);
 
     const obtenerTickActual = useCallback(() => {
+        const resolucion = 192;
+        const audio = audioElementRef.current;
+        // Si hay audio anclado, el tick es función pura de su currentTime: cero drift contra el MP3
+        // que escucha el usuario (idéntico patrón al que usa el RAF del modal preview, que SÍ funciona).
+        // Usamos audioBpmOriginalRef (no bpmRef) para que slow practice NO escale los ticks: el saved
+        // sequence queda en unidades del bpm original y se reproduce 1:1 contra el audio a velocidad normal.
+        if (audio) {
+            const deltaSeg = audio.currentTime - audioStartTimeRef.current;
+            const ticksAdicionales = deltaSeg * (audioBpmOriginalRef.current / 60) * resolucion;
+            return checkpointTicksRef.current + ticksAdicionales;
+        }
         if (checkpointTimeRef.current === 0) return 0;
 
         const ahora = motorAudioPro.tiempoActual;
         const deltaSeg = ahora - checkpointTimeRef.current;
-        const resolucion = 192;
         const ticksAdicionales = deltaSeg * (bpmRef.current / 60) * resolucion;
 
         return checkpointTicksRef.current + ticksAdicionales;
     }, []);
 
-    const iniciarGrabacion = useCallback((existingSequence: NotaHero[] = [], startTick: number = 0) => {
+    const iniciarGrabacion = useCallback((existingSequence: NotaHero[] = [], startTick: number = 0, audioElement?: any, bpmOriginal?: number) => {
         // Si estamos haciendo Punch-In, conservamos las notas anteriores al punto de entrada
         const sequenceBase = startTick > 0
             ? existingSequence.filter(n => n.tick < startTick)
@@ -65,6 +87,13 @@ export const useGrabadorHero = (bpmActual: number) => {
         actualizarSecuencia(sequenceBase);
         let ahora = motorAudioPro.tiempoActual;
 
+        // Anclar al audio si se pasa: las notas se timestamparán contra audio.currentTime en vez del
+        // AudioContext. Esto elimina drift por buffering del decoder en seeks con offset (secciones no-intro).
+        audioElementRef.current = audioElement || null;
+        audioStartTimeRef.current = audioElement ? audioElement.currentTime : 0;
+        // BPM original (no el transport): asegura que los ticks queden en la misma escala que la reproducción.
+        audioBpmOriginalRef.current = (typeof bpmOriginal === 'number' && bpmOriginal > 0) ? bpmOriginal : bpmRef.current;
+
         checkpointTimeRef.current = ahora;
         checkpointTicksRef.current = startTick;
         notasAbiertasRef.current.clear();
@@ -72,6 +101,7 @@ export const useGrabadorHero = (bpmActual: number) => {
 
         (window as any).sincronizarRelojConPista = () => {
              checkpointTimeRef.current = motorAudioPro.tiempoActual;
+             if (audioElementRef.current) audioStartTimeRef.current = audioElementRef.current.currentTime;
         };
     }, [actualizarSecuencia]);
 
@@ -104,6 +134,8 @@ export const useGrabadorHero = (bpmActual: number) => {
 
         setGrabando(false);
         checkpointTimeRef.current = 0;
+        audioElementRef.current = null;
+        audioStartTimeRef.current = 0;
         notasAbiertasRef.current.clear();
 
         return {

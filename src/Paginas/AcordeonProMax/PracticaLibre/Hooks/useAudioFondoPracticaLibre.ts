@@ -1,4 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
+import { ReproductorMP3 } from '../../../../Core/audio/ReproductorMP3';
 
 interface UseAudioFondoProps {
   reproduciendo: boolean;
@@ -10,8 +12,18 @@ interface UseAudioFondoProps {
   volumen?: number;
 }
 
-// Sincroniza HTMLAudio con el reproductor Hero por CHECKPOINT (tick + tiempo). El BPM ajusta playbackRate;
-// no se recalcula posición continuamente (causaría saltos), solo en seeks del usuario.
+/**
+ * REWORK: ahora usa ReproductorMP3 (AudioBufferSourceNode) en lugar de HTMLAudioElement.
+ * - Sin latencia variable de decoder.
+ * - currentTime calculado desde AudioContext.currentTime → continuo, sin jitter.
+ * - source.start(when, offset) inicia sample-accurate.
+ * - Mismo AudioContext que las notas → cero drift.
+ *
+ * La API exterior se mantiene compatible: cargarPista, iniciarReproduccionSincronizada,
+ * y audioRef.current ahora apunta a un ReproductorMP3 (compatible con HTMLAudio en
+ * los métodos que setAudioSync del reproductor usa: currentTime, paused, readyState,
+ * playbackRate, addEventListener para 'playing'/'pause'/'seeked').
+ */
 export const useAudioFondoPracticaLibre = ({
   reproduciendo,
   pausado,
@@ -21,58 +33,65 @@ export const useAudioFondoPracticaLibre = ({
   audioUrl,
   volumen = 1
 }: UseAudioFondoProps) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // ReproductorMP3 implementa la interfaz mínima de HTMLAudioElement que el reproductor del juego usa.
+  // Tipo `any` para mantener compatibilidad con código que esperaba HTMLAudioElement (es un drop-in replacement).
+  const audioRef = useRef<any>(null);
   const bpmOriginalRef = useRef(120);
 
-  const checkpointTickRef = useRef(0);
-  const checkpointTimeRef = useRef(0);
   const tickAnteriorRef = useRef(0);
-
   const estadoPrevioPlayRef = useRef(false);
-  const syncFrameRef = useRef<number>(0);
+
+  // Cuando el caller arranca manualmente (iniciarReproduccionSincronizada), este flag evita un play() automático
+  // del useEffect que duplicaría el arranque. Se libera al pausar/stop o al cambiar de canción.
+  const manualPlaybackActiveRef = useRef(false);
 
   useEffect(() => {
     if (!audioRef.current) {
-      const audio = new Audio();
-      audio.crossOrigin = 'anonymous';
-      audioRef.current = audio;
+      // Crear el reproductor de buffer en el AudioContext compartido del motor.
+      audioRef.current = new ReproductorMP3(motorAudioPro.contextoAudio);
     }
   }, []);
 
+  // Cargar la pista cuando cambia audioUrl (paralelo, no bloquea render).
   useEffect(() => {
     if (!audioRef.current) return;
-    if (audioUrl && audioUrl !== audioRef.current.src) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.load();
-    }
+    if (!audioUrl) return;
+    if (audioRef.current.src === audioUrl) return;
+    manualPlaybackActiveRef.current = false;
+    estadoPrevioPlayRef.current = false;
+    audioRef.current.cargar(audioUrl).catch(() => {});
   }, [audioUrl]);
 
   useEffect(() => {
     if (cancionData?.bpm) bpmOriginalRef.current = cancionData.bpm;
   }, [cancionData?.bpm]);
 
-  // Usa BPM original (no el actual): playbackRate ya maneja la velocidad del usuario.
+  // Carga + decodificación. Resuelve cuando el AudioBuffer está listo. Cache automático en ReproductorMP3.
+  const cargarPista = useCallback(async (url: string | null): Promise<void> => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (!url) {
+      manualPlaybackActiveRef.current = false;
+      estadoPrevioPlayRef.current = false;
+      return;
+    }
+    manualPlaybackActiveRef.current = false;
+    estadoPrevioPlayRef.current = false;
+    await audio.cargar(url);
+  }, []);
+
+  // Conversión tick→segundos usando BPM ORIGINAL (no el actual): playbackRate ya maneja la velocidad del usuario.
   const calcularSegundosDesdeCheckpoint = useCallback((tick: number, bpmOriginal: number): number => {
-    const bps = bpmOriginal / 60;
-    const ticksPorSegundo = bps * 192;
+    const ticksPorSegundo = (bpmOriginal / 60) * 192;
     return tick / ticksPorSegundo;
   }, []);
 
-  // Cuando el caller arranca manualmente (iniciarReproduccionSincronizada), este flag evita un audio.play() automático
-  // que duplicaría el arranque. Se libera al pausar/stop.
-  const manualPlaybackActiveRef = useRef(false);
-
+  // Auto-play cuando reproduciendo cambia a true. Si el caller usó iniciarReproduccionSincronizada,
+  // manualPlaybackActiveRef ya está en true y este effect no interfiere.
   useEffect(() => {
     if (!audioRef.current || !audioUrl) return;
-
     const audio = audioRef.current;
     const debeReproducir = reproduciendo && !pausado;
-
-    const manejarSyncAlReproducir = () => {
-      if (typeof (window as any).sincronizarRelojConPista === 'function') {
-        (window as any).sincronizarRelojConPista();
-      }
-    };
 
     if (debeReproducir && !estadoPrevioPlayRef.current) {
       if (manualPlaybackActiveRef.current) {
@@ -81,38 +100,53 @@ export const useAudioFondoPracticaLibre = ({
       }
       const tiempoInicio = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
       audio.currentTime = tiempoInicio;
-      checkpointTimeRef.current = tiempoInicio;
-      checkpointTickRef.current = tickActual;
-      audio.addEventListener('playing', manejarSyncAlReproducir, { once: true });
-      audio.play().catch(e => {
-        audio.removeEventListener('playing', manejarSyncAlReproducir);
-      });
+      audio.play().catch(() => {});
     } else if (!debeReproducir && estadoPrevioPlayRef.current) {
       audio.pause();
-      audio.removeEventListener('playing', manejarSyncAlReproducir);
       manualPlaybackActiveRef.current = false;
     }
 
     estadoPrevioPlayRef.current = debeReproducir;
-
-    return () => { audio.removeEventListener('playing', manejarSyncAlReproducir); };
   }, [reproduciendo, pausado, audioUrl, calcularSegundosDesdeCheckpoint]);
 
-  // Patrón "wait for 'playing'" (igual a useLogicaProMax.dispararJuegoSincronizado): bufferear → seek → play → leer
-  // tick real para devolverlo como override del reproductor. Sin esto, RAF y MP3 arrancan desfasados.
+  /**
+   * Inicia reproducción sincronizada desde tickInicio. Con AudioBufferSourceNode el flujo es trivial:
+   * 1. Asegurar buffer cargado.
+   * 2. Setear currentTime = offset (instantáneo, sin seek async).
+   * 3. play() — start sample-accurate.
+   * 4. Devolver tickInicio EXACTO (no necesita calibrarse leyendo audio.currentTime: el inicio ES el offset pedido).
+   */
   const iniciarReproduccionSincronizada = useCallback(async (
     tickInicio: number,
-    opciones?: { bpmOriginal?: number }
+    opciones?: { bpmOriginal?: number; urlEsperada?: string | null }
   ): Promise<{ tickInicialReal: number }> => {
     const audio = audioRef.current;
-    if (!audio || !audioUrl) {
+    if (!audio) {
+      return { tickInicialReal: Math.max(0, Math.floor(tickInicio)) };
+    }
+
+    // Asegurar buffer cargado (puede que el caller llamó cargarPista pero queremos defensa extra).
+    const urlEsperada = opciones?.urlEsperada;
+    if (urlEsperada && audio.src !== urlEsperada) {
+      await audio.cargar(urlEsperada);
+    } else if (!audio.cargado) {
+      // Si aún se está cargando, esperar a canplaythrough con timeout.
+      await new Promise<void>((resolve) => {
+        if (audio.cargado) { resolve(); return; }
+        let done = false;
+        const finish = () => { if (done) return; done = true; resolve(); };
+        const handler = () => { audio.removeEventListener('canplaythrough', handler); finish(); };
+        audio.addEventListener('canplaythrough', handler);
+        setTimeout(finish, 5000);
+      });
+    }
+
+    if (!audio.cargado) {
       return { tickInicialReal: Math.max(0, Math.floor(tickInicio)) };
     }
 
     manualPlaybackActiveRef.current = true;
 
-    // bpmOriginal explícito porque el ref puede estar STALE cuando el caller acaba de cambiar la canción —
-    // un bpm incorrecto produce un offset de seek erróneo en tickInicio > 0.
     const bpmOriginal = (opciones?.bpmOriginal && opciones.bpmOriginal > 0)
       ? opciones.bpmOriginal
       : (bpmOriginalRef.current || 120);
@@ -120,153 +154,48 @@ export const useAudioFondoPracticaLibre = ({
     const factor = (bpmOriginal / 60) * 192;
     const offsetSegundos = (tickInicio / 192) * (60 / bpmOriginal);
 
-    // Step 1: bufferear (canplaythrough, fallback canplay@3s, arrancar igual @4.5s).
-    await new Promise<void>((resolve) => {
-      if (audio.readyState >= 4) { resolve(); return; }
-      let resolved = false;
-      const finish = () => { if (resolved) return; resolved = true; resolve(); };
-      const onCanPlayThrough = () => {
-        audio.removeEventListener('canplaythrough', onCanPlayThrough);
-        finish();
-      };
-      audio.addEventListener('canplaythrough', onCanPlayThrough);
-      setTimeout(() => {
-        if (resolved) return;
-        if (audio.readyState >= 3) {
-          audio.removeEventListener('canplaythrough', onCanPlayThrough);
-          finish();
-        }
-      }, 3000);
-      setTimeout(() => {
-        audio.removeEventListener('canplaythrough', onCanPlayThrough);
-        finish();
-      }, 4500);
-    });
+    // Pausar (no-op si ya paused) y posicionar en offset. Esto NO tiene seek async — es instantáneo.
+    audio.pause();
+    audio.currentTime = offsetSegundos;
 
-    // Step 2: seek.
-    if (Math.abs(audio.currentTime - offsetSegundos) > 0.01) {
-      await new Promise<void>((resolve) => {
-        let resolved = false;
-        const finish = () => { if (resolved) return; resolved = true; resolve(); };
-        const onSeeked = () => {
-          audio.removeEventListener('seeked', onSeeked);
-          finish();
-        };
-        audio.addEventListener('seeked', onSeeked, { once: true });
-        try { audio.currentTime = offsetSegundos; } catch (_) { finish(); }
-        setTimeout(finish, 1500);
-      });
-    }
-
-    // Step 3: play + esperar 'playing'.
+    // play() inicia el AudioBufferSourceNode en motorAudioPro.tiempoActual con offset preciso.
+    // El evento 'playing' fires en el siguiente microtask (queueMicrotask en ReproductorMP3).
     await new Promise<void>((resolve) => {
-      let resolved = false;
-      const finish = () => { if (resolved) return; resolved = true; resolve(); };
-      audio.addEventListener('playing', finish, { once: true });
-      setTimeout(finish, 1500);
+      let done = false;
+      const finish = () => { if (done) return; done = true; resolve(); };
+      audio.addEventListener('playing', finish);
+      setTimeout(finish, 200);
       audio.play().catch(() => finish());
     });
 
-    // Step 4: calibrar tick. Sección (>0) usa audioTickPos directo (snap dejaba audio adelantado → notas atrasadas).
-    // Intro (=0) snapea a 0 si <64 ticks (~200ms a 100bpm) para no saltar un downbeat en tick 0.
-    const audioTickPos = Math.max(0, Math.floor(audio.currentTime * factor));
-    const tickInicialReal = tickInicio > 0
-      ? audioTickPos
-      : (audioTickPos < 64 ? 0 : audioTickPos);
+    // Tick inicial = el offset pedido (no necesita leer audio.currentTime: el start fue sample-accurate).
+    const tickInicialReal = Math.max(0, Math.floor(offsetSegundos * factor));
 
-    checkpointTimeRef.current = audio.currentTime;
-    checkpointTickRef.current = tickInicialReal;
     tickAnteriorRef.current = tickInicialReal;
     estadoPrevioPlayRef.current = true;
 
     return { tickInicialReal };
-  }, [audioUrl]);
+  }, []);
 
-  // Detecta scrub del usuario (>50 ticks) y reposiciona el audio. Después del 'seeked' recalibra el reloj global
-  // (sincronizarRelojConPista) para que el RAF no quede adelantado mientras el audio termina de bufferear.
+  // Scrub: cuando tickActual diverge significativamente del último valor visto, mover el audio.
   useEffect(() => {
     if (!audioRef.current || !audioUrl) return;
-
-    const diferenciaTickActual = Math.abs(tickActual - tickAnteriorRef.current);
-
-    if (diferenciaTickActual > 50) {
-      const audio = audioRef.current;
+    const diff = Math.abs(tickActual - tickAnteriorRef.current);
+    if (diff > 50) {
       const tiempoSeek = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
-      audio.currentTime = tiempoSeek;
-      checkpointTimeRef.current = tiempoSeek;
-      checkpointTickRef.current = tickActual;
-
-      const onSeekedScrub = () => {
-        audio.removeEventListener('seeked', onSeekedScrub);
-        if (typeof (window as any).sincronizarRelojConPista === 'function') {
-          (window as any).sincronizarRelojConPista(tickActual);
-        }
-      };
-      audio.addEventListener('seeked', onSeekedScrub, { once: true });
+      audioRef.current.currentTime = tiempoSeek;
     }
-
     tickAnteriorRef.current = tickActual;
   }, [tickActual, reproduciendo, audioUrl, calcularSegundosDesdeCheckpoint]);
 
-  // Solo corrige drift catastrófico (>1s, ej: tab dormido). El loop antiguo modulaba ±8% playbackRate sobre 0.04s
-  // y producía wobble audible — innecesario porque iniciarReproduccionSincronizada deja audio+reloj alineados.
+  // playbackRate sigue al BPM transport. CRÍTICO incluir cancionData?.bpm como dependencia
+  // (sin esto, al cargar canción con bpmOriginal distinto, playbackRate quedaba stale → drift).
   useEffect(() => {
-    if (!audioRef.current || !audioUrl || pausado || !reproduciendo) return;
-
-    const syncLoop = () => {
-      if (!audioRef.current || !reproduciendo || pausado) {
-        if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current);
-        return;
-      }
-
-      const audio = audioRef.current;
-
-      // Si el audio está seekeando, no corregir drift: currentTime es transitorio y un seek encima glitchea el audio.
-      if (audio.seeking) {
-        syncFrameRef.current = requestAnimationFrame(syncLoop);
-        return;
-      }
-
-      const tiempoDesdeCheckpoint = (tickActual - checkpointTickRef.current) / ((bpmOriginalRef.current / 60) * 192);
-      const tiempoEsperado = checkpointTimeRef.current + tiempoDesdeCheckpoint;
-      const tiempoActual = audio.currentTime;
-      const diferencia = tiempoEsperado - tiempoActual;
-
-      const velocidadBase = Math.min(4, Math.max(0.1, bpm / bpmOriginalRef.current));
-      const ahoraMs = Date.now();
-      const lastSync = (window as any)._lastSyncAudio || 0;
-
-      if (Math.abs(diferencia) > 1.0 && ahoraMs - lastSync > 3000) {
-        audio.currentTime = tiempoEsperado;
-        audio.playbackRate = velocidadBase;
-        checkpointTimeRef.current = tiempoEsperado;
-        checkpointTickRef.current = tickActual;
-        (window as any)._lastSyncAudio = ahoraMs;
-      } else if (Math.abs(audio.playbackRate - velocidadBase) > 0.001) {
-        audio.playbackRate = velocidadBase;
-      }
-
-      syncFrameRef.current = requestAnimationFrame(syncLoop);
-    };
-
-    syncFrameRef.current = requestAnimationFrame(syncLoop);
-
-    return () => { if (syncFrameRef.current) cancelAnimationFrame(syncFrameRef.current); };
-  }, [reproduciendo, pausado, audioUrl, tickActual, bpm]);
-
-  // Re-checkpoint al cambiar BPM evita drift acumulado en slow-practice prolongado.
-  useEffect(() => {
-    if (!audioRef.current || !bpmOriginalRef.current) return;
-
-    const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOriginalRef.current));
+    if (!audioRef.current) return;
+    const bpmOrig = (cancionData?.bpm && cancionData.bpm > 0) ? cancionData.bpm : (bpmOriginalRef.current || 120);
+    const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOrig));
     audioRef.current.playbackRate = velocidad;
-    (audioRef.current as any).preservesPitch = true;
-
-    if (reproduciendo && !pausado) {
-      checkpointTimeRef.current = audioRef.current.currentTime;
-      checkpointTickRef.current = tickActual;
-    }
-  }, [bpm]);
+  }, [bpm, cancionData?.bpm]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = Math.max(0, Math.min(1, volumen));
@@ -275,5 +204,6 @@ export const useAudioFondoPracticaLibre = ({
   return {
     audioRef,
     iniciarReproduccionSincronizada,
+    cargarPista,
   };
 };
