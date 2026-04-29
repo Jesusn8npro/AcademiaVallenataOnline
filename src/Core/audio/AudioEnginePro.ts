@@ -16,12 +16,18 @@ export class MotorAudioPro {
     private filtroAltos!: BiquadFilterNode;
     private reverbNode!: ConvolverNode;
     private reverbGanancia!: GainNode;
+    // Cache de elementos HTMLAudio ruteados por Web Audio (createMediaElementSource solo se puede llamar una vez por elemento).
+    private mediaElementSources: WeakMap<HTMLAudioElement, { source: MediaElementAudioSourceNode; gain: GainNode }> = new WeakMap();
 
     constructor() {
         this.esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
         this.MAX_VOCES = this.esMovil ? 40 : 128;
-        this.contexto = new AudioContextClass({ latencyHint: 0 });
+        // 'interactive' (string) en lugar de 0 (número): la spec de WebAudio acepta ambos
+        // pero algunos browsers (especialmente Chrome Android) malinterpretan el número
+        // y caen en modo NORMAL (callback ~40ms = latencia ~80-160ms). El string fuerza
+        // AAUDIO_PERFORMANCE_MODE_LOW_LATENCY cuando es posible.
+        this.contexto = new AudioContextClass({ latencyHint: 'interactive' });
         this.bancos = new Map();
 
         this.nodoGananciaPrincipal = this.contexto.createGain();
@@ -58,9 +64,30 @@ export class MotorAudioPro {
         this.reverbGanancia.connect(this.nodoGananciaPrincipal);
 
         this._inicializarPool();
+        this._iniciarKeepAlive();
 
         document.addEventListener('visibilitychange', () => this.activarContexto());
         window.addEventListener('focus', () => this.activarContexto());
+    }
+
+    // Mantiene el AudioContext "caliente" con un buffer silencioso en loop.
+    // Sin esto, el contexto entra en modo de bajo poder entre toques y, al volver
+    // a usarse, hay un wake-up cost de 30-100ms. Especialmente notorio en Android
+    // Chrome donde AAudio cae a modo NORMAL si detecta inactividad.
+    // El gain está en 0 absoluto: completamente inaudible, pero mantiene el pipeline
+    // de audio en LOW_LATENCY.
+    private _iniciarKeepAlive() {
+        try {
+            const buffer = this.contexto.createBuffer(1, this.contexto.sampleRate, this.contexto.sampleRate);
+            const source = this.contexto.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const gain = this.contexto.createGain();
+            gain.gain.value = 0;
+            source.connect(gain);
+            gain.connect(this.contexto.destination);
+            source.start(0);
+        } catch (_) { }
     }
 
     private _inicializarPool() {
@@ -218,6 +245,29 @@ export class MotorAudioPro {
 
     get tiempoActual() { return this.contexto.currentTime; }
     get contextoAudio() { return this.contexto; }
+
+    /**
+     * Rutea un HTMLAudioElement (MP3 de fondo) a través del MISMO AudioContext que las notas.
+     * Sin esto, el MP3 sale por un pipeline distinto del browser (HTMLAudio decoder) y las notas por Web Audio
+     * → latencias diferentes → desincronización. Conectándolo aquí, ambos pasan por la misma cadena → mismas
+     * latencias → notas y MP3 alineados deterministamente. Patrón canónico (Chris Wilson "A Tale of Two Clocks").
+     *
+     * Devuelve el GainNode que controla el volumen del MP3 (NO usar audio.volume después de conectar — hacerlo
+     * por aquí para control sample-accurate). createMediaElementSource solo se puede llamar UNA vez por elemento;
+     * el WeakMap evita errores en re-conexiones.
+     */
+    conectarMediaElement(audio: HTMLAudioElement): GainNode {
+        const existente = this.mediaElementSources.get(audio);
+        if (existente) return existente.gain;
+        const source = this.contexto.createMediaElementSource(audio);
+        const gain = this.contexto.createGain();
+        gain.gain.value = 1;
+        source.connect(gain);
+        // Directo al destination, no por los filtros EQ del acordeón (el MP3 no debe filtrarse).
+        gain.connect(this.contexto.destination);
+        this.mediaElementSources.set(audio, { source, gain });
+        return gain;
+    }
 }
 
 export const motorAudioPro = new MotorAudioPro();
