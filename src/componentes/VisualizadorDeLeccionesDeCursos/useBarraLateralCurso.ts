@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function generarSlug(texto: string = ''): string {
   return texto
@@ -24,6 +25,7 @@ interface UseBarraLateralCursoProps {
 export function useBarraLateralCurso({
   curso, leccionActiva, progreso = {}, tipo = 'curso',
 }: UseBarraLateralCursoProps) {
+  const navigate = useNavigate();
   const [modulosExpandidos, setModulosExpandidos] = useState<Record<string, boolean>>({});
   const [cursoAdaptado, setCursoAdaptado] = useState<any>(curso);
 
@@ -103,9 +105,9 @@ export function useBarraLateralCurso({
     const moduloSlug = modulo?.slug || (modulo?.titulo ? generarSlug(modulo.titulo) : '');
     const leccionSlug = leccion?.slug || (leccion?.titulo ? generarSlug(leccion.titulo) : '');
     if (tipo === 'curso' && cursoSlug && moduloSlug && leccionSlug) {
-      window.location.href = `/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`;
+      navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`);
     } else if (tipo === 'tutorial' && cursoSlug && leccionSlug) {
-      window.location.href = `/tutoriales/${cursoSlug}/clase/${leccionSlug}`;
+      navigate(`/tutoriales/${cursoSlug}/clase/${leccionSlug}`);
     }
   }
 

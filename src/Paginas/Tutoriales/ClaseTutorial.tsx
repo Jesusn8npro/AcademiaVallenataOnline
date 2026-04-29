@@ -13,7 +13,6 @@ export default function ClaseTutorial() {
   const { slug = '', claseSlug = '' } = useParams()
   const [tutorial, setTutorial] = useState<any>(null)
   const [clases, setClases] = useState<any[]>([])
-  const [clase, setClase] = useState<any>(null)
   const [completada, setCompletada] = useState(false)
   const [cargandoCompletar, setCargandoCompletar] = useState(false)
   const [errorCompletar, setErrorCompletar] = useState('')
@@ -25,7 +24,6 @@ export default function ClaseTutorial() {
     }
     return true
   })
-  const [estadisticasProgreso, setEstadisticasProgreso] = useState({ completadas: 0, total: 0, porcentaje: 0 })
 
   const [progresoMap, setProgresoMap] = useState<Record<string, boolean>>({})
 
@@ -33,10 +31,10 @@ export default function ClaseTutorial() {
     document.body.classList.add('tutorial-pantalla-completa')
     return () => { document.body.classList.remove('tutorial-pantalla-completa') }
   }, [])
-  useEffect(() => { cargar() }, [slug, claseSlug])
+  useEffect(() => { cargarTutorial() }, [slug])
 
-  async function cargar() {
-    if (!slug || !claseSlug) return
+  async function cargarTutorial() {
+    if (!slug) return
     setCargando(true); setError(null)
     try {
       const { data: tuts, error: errT } = await supabase.from('tutoriales').select('*')
@@ -65,30 +63,8 @@ export default function ClaseTutorial() {
       const lista = partes || []
       setClases(lista)
 
-      const safeGenerateSlug = (text: string) => {
-        try { return generarSlug(text || ''); } catch { return ''; }
-      };
-
-      const actual = lista.find((p: any) =>
-        p.slug === claseSlug ||
-        safeGenerateSlug(p.titulo) === claseSlug ||
-        p.id === claseSlug
-      ) || lista[0]
-
-      if (actual) {
-        setClase(actual)
-      }
-
       const { data: { user } } = await supabase.auth.getUser()
-      if (user && actual) {
-        const { data: prog } = await supabase
-          .from('progreso_tutorial')
-          .select('completado')
-          .eq('usuario_id', user.id)
-          .eq('parte_tutorial_id', actual.id)
-          .maybeSingle()
-        setCompletada(!!prog?.completado)
-
+      if (user) {
         const { data: progAll } = await supabase
           .from('progreso_tutorial')
           .select('parte_tutorial_id, completado')
@@ -96,22 +72,16 @@ export default function ClaseTutorial() {
           .eq('tutorial_id', tut.id)
 
         const map: Record<string, boolean> = {}
-        let completadasCount = 0
         if (progAll) {
           progAll.forEach((p: any) => {
             if (p.completado) {
               map[p.parte_tutorial_id] = true
-              completadasCount++
             }
           })
         }
         setProgresoMap(map)
-
-        const total = lista.length
-        const porcentaje = total ? Math.round((completadasCount / total) * 100) : 0
-        setEstadisticasProgreso({ completadas: completadasCount, total, porcentaje })
       } else {
-        setEstadisticasProgreso({ completadas: 0, total: lista.length, porcentaje: 0 })
+        setProgresoMap({})
       }
     } catch (e: any) {
       setError(e.message || 'Error cargando clase')
@@ -119,6 +89,29 @@ export default function ClaseTutorial() {
       setCargando(false)
     }
   }
+
+  const clase = useMemo(() => {
+    if (!clases.length) return null
+    const safeGenerateSlug = (text: string) => {
+      try { return generarSlug(text || ''); } catch { return ''; }
+    };
+    return clases.find((p: any) =>
+      p.slug === claseSlug ||
+      safeGenerateSlug(p.titulo) === claseSlug ||
+      p.id === claseSlug
+    ) || clases[0]
+  }, [clases, claseSlug])
+
+  useEffect(() => {
+    if (clase) setCompletada(!!progresoMap[clase.id])
+  }, [clase, progresoMap])
+
+  const estadisticasProgreso = useMemo(() => {
+    const total = clases.length
+    const completadas = Object.values(progresoMap).filter(Boolean).length
+    const porcentaje = total ? Math.round((completadas / total) * 100) : 0
+    return { completadas, total, porcentaje }
+  }, [clases, progresoMap])
 
   const indice = useMemo(() => clases.findIndex((p: any) => p.id === clase?.id), [clases, clase])
   const claseAnterior = indice > 0 ? clases[indice - 1] : null

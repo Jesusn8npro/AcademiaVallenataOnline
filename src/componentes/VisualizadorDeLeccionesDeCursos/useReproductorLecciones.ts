@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ReproductorLeccionesProps {
   leccionAnterior?: any;
@@ -13,6 +14,7 @@ export function useReproductorLecciones({
   leccionSiguiente = null,
   tipo = 'leccion'
 }: ReproductorLeccionesProps) {
+  const navigate = useNavigate();
   const [cargando, setCargando] = useState(true);
   const [tieneError, setTieneError] = useState(false);
   const [esYouTube, setEsYouTube] = useState(false);
@@ -204,9 +206,9 @@ export function useReproductorLecciones({
       const leccionSlug = leccionAnterior.slug || leccionAnterior.id;
       if (tipo === 'leccion') {
         const moduloSlug = leccionAnterior.moduloSlug;
-        if (moduloSlug) window.location.href = `/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`;
+        if (moduloSlug) navigate(`/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`);
       } else {
-        window.location.href = `/tutoriales/${parentSlug}/clase/${leccionSlug}`;
+        navigate(`/tutoriales/${parentSlug}/clase/${leccionSlug}`);
       }
     }
   };
@@ -217,9 +219,9 @@ export function useReproductorLecciones({
       const leccionSlug = leccionSiguiente.slug || leccionSiguiente.id;
       if (tipo === 'leccion') {
         const moduloSlug = leccionSiguiente.moduloSlug;
-        if (moduloSlug) window.location.href = `/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`;
+        if (moduloSlug) navigate(`/cursos/${parentSlug}/${moduloSlug}/${leccionSlug}`);
       } else {
-        window.location.href = `/tutoriales/${parentSlug}/clase/${leccionSlug}`;
+        navigate(`/tutoriales/${parentSlug}/clase/${leccionSlug}`);
       }
     }
   };
