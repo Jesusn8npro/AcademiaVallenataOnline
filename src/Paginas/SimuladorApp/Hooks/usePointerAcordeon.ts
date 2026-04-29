@@ -147,29 +147,25 @@ export const usePointerAcordeon = ({
         const handleTouchStart = (e: TouchEvent) => {
             if (desactivarAudioRef.current) return;
             motorAudioPro.activarContexto();
-            let huboAreaJuego = false;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
-                const target = t.target as HTMLElement;
-                if (enAreaJuego(target)) huboAreaJuego = true;
-                registrarInicio(t.identifier, target, t.clientX, t.clientY, e.timeStamp);
+                registrarInicio(t.identifier, t.target as HTMLElement, t.clientX, t.clientY, e.timeStamp);
             }
-            if (huboAreaJuego && e.cancelable) e.preventDefault();
+            // preventDefault SIEMPRE en el root (no solo en area de juego): impide que iOS
+            // active el "system gesture detection" que dispara el throttling de touchmove con un solo dedo.
+            if (e.cancelable) e.preventDefault();
         };
 
         const handleTouchMove = (e: TouchEvent) => {
-            let huboAreaJuego = false;
             // Procesar TODOS los touches activos (no solo changedTouches): iOS Safari puede
             // suprimir touchmove individuales con un solo dedo (bug WebKit conocido), pero el
             // próximo evento que llegue traerá la posición actualizada de ambos dedos en e.touches.
             // Esto recupera transiciones perdidas durante trinos rápidos.
             for (let i = 0; i < e.touches.length; i++) {
                 const t = e.touches[i];
-                const target = t.target as HTMLElement;
-                if (enAreaJuego(target)) huboAreaJuego = true;
                 procesarPunto(t.identifier, t.clientX, t.clientY, e.timeStamp);
             }
-            if (huboAreaJuego && e.cancelable) e.preventDefault();
+            if (e.cancelable) e.preventDefault();
         };
 
         const handleTouchEnd = (e: TouchEvent) => {
@@ -212,7 +208,23 @@ export const usePointerAcordeon = ({
         // específico (con touch-action: none) se entregan con mayor frecuencia.
         const rootSimulador = (document.querySelector('.simulador-app-root') as HTMLElement | null) || document;
 
+        // 🎯 iOS throttling fix (single-touch): supresor global de touchstart en zonas no
+        // interactivas. Sin esto, iOS asume que un toque "cualquiera" puede ser inicio de un
+        // gesto del sistema (swipe-back, edge-pan, double-tap-zoom) y throttlea touchmove a
+        // 10-15Hz mientras "decide". Hacer preventDefault desactiva esa detección y los
+        // touchmove llegan a 60Hz. La whitelist excluye inputs y modales para no romper
+        // interacciones nativas (selección de texto, scroll de listas, teclado virtual).
+        const handleWindowTouchStart = (e: TouchEvent) => {
+            const target = e.target as HTMLElement;
+            if (!target || !target.closest) return;
+            if (target.closest('input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor')) {
+                return;
+            }
+            if (e.cancelable) e.preventDefault();
+        };
+
         if (esTouchDevice) {
+            window.addEventListener('touchstart', handleWindowTouchStart, { passive: false, capture: true });
             rootSimulador.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false, capture: true });
             rootSimulador.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false, capture: true });
             rootSimulador.addEventListener('touchend', handleTouchEnd as EventListener, { passive: false, capture: true });
@@ -268,6 +280,7 @@ export const usePointerAcordeon = ({
             window.removeEventListener('blur', limpiarTodo);
 
             if (esTouchDevice) {
+                window.removeEventListener('touchstart', handleWindowTouchStart, { capture: true });
                 rootSimulador.removeEventListener('touchstart', handleTouchStart as EventListener, { capture: true });
                 rootSimulador.removeEventListener('touchmove', handleTouchMove as EventListener, { capture: true });
                 rootSimulador.removeEventListener('touchend', handleTouchEnd as EventListener, { capture: true });

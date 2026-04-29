@@ -8,6 +8,7 @@ import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
 
 import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
+import BotonInstalarPWA from './Componentes/BotonInstalarPWA';
 
 import MenuOpciones from './Componentes/BarraHerramientas/MenuOpciones';
 import ModalContacto from './Componentes/BarraHerramientas/ModalContacto';
@@ -137,6 +138,15 @@ const SimuladorApp: React.FC = () => {
             motorAudioPro.activarContexto();
             actualizarGeometria();
             setAudioListo(true);
+
+            // Solicitar fullscreen en Android no-PWA: oculta la barra del navegador.
+            // Silencioso si el browser lo rechaza (algunos lo bloquean fuera de gesto, otros no soportan).
+            const esAndroid = /android/i.test(navigator.userAgent);
+            const noEsPWA = !window.matchMedia('(display-mode: standalone)').matches;
+            if (esAndroid && noEsPWA) {
+                document.documentElement.requestFullscreen?.().catch(() => { /* fallback silencioso */ });
+            }
+
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
         document.addEventListener('pointerdown', inicializarAudio, { capture: true });
@@ -257,6 +267,8 @@ const SimuladorApp: React.FC = () => {
                     Toca para comenzar
                 </div>
             )}
+
+            <BotonInstalarPWA />
         </div>
     );
 };
