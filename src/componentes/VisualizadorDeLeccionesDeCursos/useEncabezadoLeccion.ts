@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 
 type TipoContenido = 'leccion' | 'clase';
@@ -27,6 +28,7 @@ interface UseEncabezadoLeccionProps {
 export function useEncabezadoLeccion({
   cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo,
 }: UseEncabezadoLeccionProps) {
+  const navigate = useNavigate();
   const [esPantallaCompleta, setEsPantallaCompleta] = useState(false);
   const [desplazado, setDesplazado] = useState(false);
   const [esDesktop, setEsDesktop] = useState(true);
@@ -149,19 +151,19 @@ export function useEncabezadoLeccion({
   }
 
   function navegarA(ruta: string) {
-    window.location.href = ruta;
+    navigate(ruta);
   }
 
   function navegarLeccion(destino: any) {
     if (!destino) return;
     if (tipo === 'clase') {
       const claseSlug = destino.slug || generarSlugBase(destino.titulo);
-      window.location.href = `/tutoriales/${cursoSlug}/clase/${claseSlug}`;
+      navigate(`/tutoriales/${cursoSlug}/clase/${claseSlug}`);
     } else {
       const moduloSlug = destino.modulo?.slug || generarSlugBase(destino.modulo?.titulo || '');
       const leccionSlug = destino.slug || generarSlugBase(destino.titulo);
       if (cursoSlug && moduloSlug && leccionSlug) {
-        window.location.href = `/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`;
+        navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`);
       }
     }
   }

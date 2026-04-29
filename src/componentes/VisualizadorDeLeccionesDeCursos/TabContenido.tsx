@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './TabContenido.css'
 
 interface TabContenidoProps {
@@ -58,6 +59,7 @@ const TabContenido: React.FC<TabContenidoProps> = ({
     modoSPA = false,
     onCambiarLeccion
 }) => {
+    const navigate = useNavigate()
     const contenedorScrollRef = useRef<HTMLDivElement>(null)
     const [moduloActualIndex, setModuloActualIndex] = useState(0)
     const [modulosData, setModulosData] = useState<any[]>([])
@@ -117,12 +119,12 @@ const TabContenido: React.FC<TabContenidoProps> = ({
         if (moduloActual?.esDeModulo) {
             const moduloSlug = moduloActual.slug || (moduloActual.titulo ? generarSlug(moduloActual.titulo) : '')
             if (cursoSlug && moduloSlug && leccionSlug) {
-                window.location.href = `/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`
+                navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`)
                 return
             }
         } else {
             if (cursoSlug && leccionSlug) {
-                window.location.href = `/tutoriales/${cursoSlug}/clase/${leccionSlug}`
+                navigate(`/tutoriales/${cursoSlug}/clase/${leccionSlug}`)
                 return
             }
         }
