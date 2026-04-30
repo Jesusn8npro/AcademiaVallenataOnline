@@ -22,7 +22,11 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
-    touch-action: none !important;
+    /* touch-action: manipulation - iOS NO soporta el valor "none" (solo manipulation/auto).
+       Con "none" iOS lo ignora y aplica heuristicas de double-tap-zoom que throttlean
+       touchmove con un solo dedo. Con "manipulation" iOS desactiva el double-tap detection
+       y entrega touchmove a frecuencia nativa. preventDefault del JS sigue cubriendo lo demas. */
+    touch-action: manipulation !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     -webkit-touch-callout: none !important;
@@ -138,7 +142,7 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    touch-action: none;
+    touch-action: manipulation;
     outline: none;
     border: 3px solid #1a1a1a;
 }

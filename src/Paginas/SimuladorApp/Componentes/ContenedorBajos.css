@@ -61,7 +61,7 @@
     z-index: 1500;
     gap: 12px;
     pointer-events: none;
-    touch-action: none;
+    touch-action: manipulation;
     will-change: transform;
 }
 

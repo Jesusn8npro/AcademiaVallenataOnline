@@ -91,7 +91,7 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                 }}
                 onPointerLeave={() => logica.actualizarBotonActivo(idUnico, 'remove', null, true)}
                 onPointerCancel={() => logica.actualizarBotonActivo(idUnico, 'remove', null, true)}
-                style={{ touchAction: 'none' }}
+                style={{ touchAction: 'manipulation' }}
                 title={bajo.nombre}
             >
                 {!vistaDoble ? (
@@ -155,7 +155,7 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                 onPointerDown={handlePointerDownFuelle}
                 onPointerUp={handlePointerUpFuelle}
                 onPointerCancel={handlePointerUpFuelle}
-                style={{ touchAction: 'none' }}
+                style={{ touchAction: 'manipulation' }}
             >
                 {!visible && (
                     <button className="boton-bajos-superior" onClick={onOpen}>
