@@ -57,7 +57,16 @@ export const usePointerAcordeon = ({
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
-            // 1) Hit nativo (siempre exacto, ignora pointer capture).
+            // 🎯 Latency optimization (Android low-end): elementFromPoint cuesta 5-10ms por
+            // llamada en devices low-end. Si el dedo sigue claramente dentro del rect del pito
+            // actual, retornar inmediatamente sin hit-test nativo. Esto cubre la mayoría de los
+            // touchmoves (movimientos pequeños dentro del mismo pito) y reduce el bloqueo del
+            // main thread, lo que se traduce en menor latencia perceptible al disparar notas.
+            if (posActual) {
+                const rActual = rectsCache.current.get(posActual);
+                if (rActual && dentroDe(clientX, clientY, rActual, 0)) return posActual;
+            }
+            // 1) Hit nativo (siempre exacto aunque el tren se haya deslizado horizontalmente).
             const target = document.elementFromPoint(clientX, clientY);
             if (target) {
                 const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
