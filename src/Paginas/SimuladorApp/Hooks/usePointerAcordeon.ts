@@ -208,23 +208,35 @@ export const usePointerAcordeon = ({
         // específico (con touch-action: none) se entregan con mayor frecuencia.
         const rootSimulador = (document.querySelector('.simulador-app-root') as HTMLElement | null) || document;
 
-        // 🎯 iOS throttling fix (single-touch): supresor global de touchstart en zonas no
-        // interactivas. Sin esto, iOS asume que un toque "cualquiera" puede ser inicio de un
-        // gesto del sistema (swipe-back, edge-pan, double-tap-zoom) y throttlea touchmove a
-        // 10-15Hz mientras "decide". Hacer preventDefault desactiva esa detección y los
-        // touchmove llegan a 60Hz. La whitelist excluye inputs y modales para no romper
-        // interacciones nativas (selección de texto, scroll de listas, teclado virtual).
+        // 🎯 iOS throttling fix (single-touch): supresores globales de touchstart Y touchmove
+        // en zonas no interactivas. El throttling adaptativo de iOS se aplica al touchmove
+        // (no solo al touchstart) cuando el browser detecta que el evento PUEDE ser interpretado
+        // como gesto del sistema (swipe-back, edge-pan, scroll). Si UN listener pasivo de
+        // touchmove existe en el path, iOS reduce a 10-15Hz "por las dudas". Marcar el listener
+        // como no-pasivo Y llamar preventDefault le dice a iOS "nadie va a scrollear/zoomear,
+        // entrega los eventos a frecuencia nativa (60Hz)". La whitelist excluye inputs, selects
+        // y todos los overlays de modales para no romper scroll, selección, ni teclado virtual.
+        const SELECTORES_INTERACTIVOS = 'input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor';
+
+        const esZonaInteractiva = (target: EventTarget | null): boolean => {
+            const el = target as HTMLElement | null;
+            if (!el || !el.closest) return false;
+            return !!el.closest(SELECTORES_INTERACTIVOS);
+        };
+
         const handleWindowTouchStart = (e: TouchEvent) => {
-            const target = e.target as HTMLElement;
-            if (!target || !target.closest) return;
-            if (target.closest('input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor')) {
-                return;
-            }
+            if (esZonaInteractiva(e.target)) return;
+            if (e.cancelable) e.preventDefault();
+        };
+
+        const handleWindowTouchMove = (e: TouchEvent) => {
+            if (esZonaInteractiva(e.target)) return;
             if (e.cancelable) e.preventDefault();
         };
 
         if (esTouchDevice) {
             window.addEventListener('touchstart', handleWindowTouchStart, { passive: false, capture: true });
+            window.addEventListener('touchmove', handleWindowTouchMove, { passive: false, capture: true });
             rootSimulador.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false, capture: true });
             rootSimulador.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false, capture: true });
             rootSimulador.addEventListener('touchend', handleTouchEnd as EventListener, { passive: false, capture: true });
@@ -281,6 +293,7 @@ export const usePointerAcordeon = ({
 
             if (esTouchDevice) {
                 window.removeEventListener('touchstart', handleWindowTouchStart, { capture: true });
+                window.removeEventListener('touchmove', handleWindowTouchMove, { capture: true });
                 rootSimulador.removeEventListener('touchstart', handleTouchStart as EventListener, { capture: true });
                 rootSimulador.removeEventListener('touchmove', handleTouchMove as EventListener, { capture: true });
                 rootSimulador.removeEventListener('touchend', handleTouchEnd as EventListener, { capture: true });
