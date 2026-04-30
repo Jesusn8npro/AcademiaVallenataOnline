@@ -11,11 +11,15 @@ export class MotorAudioPro {
     private esMovil = false;
     private poolVoces: VozPooled[] = [];
     private mixBus: GainNode;
+    private directBus!: GainNode;
     private filtroBajos!: BiquadFilterNode;
     private filtroMedios!: BiquadFilterNode;
     private filtroAltos!: BiquadFilterNode;
     private reverbNode!: ConvolverNode;
     private reverbGanancia!: GainNode;
+    private rutaConFiltros = false;
+    private targetEQ = { bajos: 0, medios: 0, altos: 0 };
+    private targetReverb = 0;
     // Cache de elementos HTMLAudio ruteados por Web Audio (createMediaElementSource solo se puede llamar una vez por elemento).
     private mediaElementSources: WeakMap<HTMLAudioElement, { source: MediaElementAudioSourceNode; gain: GainNode }> = new WeakMap();
 
@@ -63,6 +67,13 @@ export class MotorAudioPro {
         this.reverbNode.connect(this.reverbGanancia);
         this.reverbGanancia.connect(this.nodoGananciaPrincipal);
 
+        // 🎯 Android latency optimization: bus directo (sin EQ ni reverb) que se usa
+        // cuando ningun efecto está activo. Ahorra 3 BiquadFilters + ConvolverNode en
+        // el path de cada voz, reduciendo latencia y carga de CPU en devices low-end.
+        // Cuando se activa EQ o reverb (PracticaLibre, Replays), se conmuta a mixBus.
+        this.directBus = this.contexto.createGain();
+        this.directBus.connect(this.nodoGananciaPrincipal);
+
         this._inicializarPool();
         this._iniciarKeepAlive();
 
@@ -94,9 +105,27 @@ export class MotorAudioPro {
         for (let i = 0; i < this.MAX_VOCES; i++) {
             const ganancia = this.contexto.createGain();
             ganancia.gain.setValueAtTime(0, this.contexto.currentTime);
-            ganancia.connect(this.mixBus);
+            ganancia.connect(this.directBus);
             this.poolVoces.push({ ganancia, fuente: null, ocupada: false, tiempo: 0 });
         }
+    }
+
+    // Conmuta el routing del pool entre directBus (sin EQ/reverb) y mixBus (con efectos).
+    // Hacerlo a nivel de pool en vez de por voz evita reconectar nodos durante reproducción.
+    private _conmutarRuta(usarFiltros: boolean) {
+        if (usarFiltros === this.rutaConFiltros) return;
+        const desde = this.rutaConFiltros ? this.mixBus : this.directBus;
+        const hasta = usarFiltros ? this.mixBus : this.directBus;
+        this.poolVoces.forEach(voz => {
+            try { voz.ganancia.disconnect(desde); } catch (_) { }
+            try { voz.ganancia.connect(hasta); } catch (_) { }
+        });
+        this.rutaConFiltros = usarFiltros;
+    }
+
+    private _evaluarRuta() {
+        const necesitaFiltros = this.targetEQ.bajos !== 0 || this.targetEQ.medios !== 0 || this.targetEQ.altos !== 0 || this.targetReverb > 0;
+        this._conmutarRuta(necesitaFiltros);
     }
 
     private _crearImpulsoSintetico() {
@@ -118,10 +147,14 @@ export class MotorAudioPro {
         this.filtroBajos.gain.setTargetAtTime(bajos, cTime, 0.05);
         this.filtroMedios.gain.setTargetAtTime(medios, cTime, 0.05);
         this.filtroAltos.gain.setTargetAtTime(altos, cTime, 0.05);
+        this.targetEQ = { bajos, medios, altos };
+        this._evaluarRuta();
     }
 
     actualizarReverb(cantidad: number) {
         this.reverbGanancia.gain.setTargetAtTime(cantidad * 0.5, this.contexto.currentTime, 0.05);
+        this.targetReverb = cantidad;
+        this._evaluarRuta();
     }
 
     private _obtenerVozLibre(): VozPooled {
