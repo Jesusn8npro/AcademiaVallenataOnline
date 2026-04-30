@@ -57,6 +57,7 @@ const SimuladorApp: React.FC = () => {
     const trenRef = useRef<HTMLDivElement>(null);
     const audioContextIniciadoRef = useRef(false);
     const [audioListo, setAudioListo] = useState(false);
+    const [statsLatencia, setStatsLatencia] = useState('');
     const refsModales = {
         menu: useRef(null),
         tonalidades: useRef(null),
@@ -137,6 +138,18 @@ const SimuladorApp: React.FC = () => {
             motorAudioPro.activarContexto();
             actualizarGeometria();
             setAudioListo(true);
+
+            // Diagnostico: muestra stats de latencia en overlay para reportar desde mobile.
+            setTimeout(() => {
+                try {
+                    const ctx: any = motorAudioPro.contextoAudio;
+                    const baseMs = ((ctx.baseLatency || 0) * 1000).toFixed(1);
+                    const outputMs = ((ctx.outputLatency || 0) * 1000).toFixed(1);
+                    const ua = navigator.userAgent.match(/Android|iPhone|iPad/i)?.[0] || 'Other';
+                    setStatsLatencia(`${ua} | SR:${ctx.sampleRate} | base:${baseMs}ms | out:${outputMs}ms | ${ctx.state}`);
+                } catch (_) { setStatsLatencia('latencia: no disponible'); }
+            }, 200);
+
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
         document.addEventListener('pointerdown', inicializarAudio, { capture: true });
@@ -283,6 +296,32 @@ const SimuladorApp: React.FC = () => {
             {!audioListo && (
                 <div className="overlay-audio-inicio" aria-hidden="true">
                     Toca para comenzar
+                </div>
+            )}
+
+            {statsLatencia && (
+                <div
+                    onClick={() => setStatsLatencia('')}
+                    style={{
+                        position: 'fixed',
+                        top: 4,
+                        left: 4,
+                        zIndex: 99999,
+                        background: 'rgba(0, 0, 0, 0.85)',
+                        color: '#0f0',
+                        padding: '5px 9px',
+                        fontSize: '10px',
+                        fontFamily: 'ui-monospace, Menlo, monospace',
+                        fontWeight: 700,
+                        borderRadius: 4,
+                        border: '1px solid #0f0',
+                        letterSpacing: '0.3px',
+                        maxWidth: '70vw',
+                        wordBreak: 'break-all',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {statsLatencia} <span style={{ opacity: 0.6 }}>· tap para cerrar</span>
                 </div>
             )}
         </div>
