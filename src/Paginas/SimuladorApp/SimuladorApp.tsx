@@ -8,7 +8,6 @@ import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
 
 import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
-import BotonInstalarPWA from './Componentes/BotonInstalarPWA';
 
 import MenuOpciones from './Componentes/BarraHerramientas/MenuOpciones';
 import ModalContacto from './Componentes/BarraHerramientas/ModalContacto';
@@ -138,15 +137,6 @@ const SimuladorApp: React.FC = () => {
             motorAudioPro.activarContexto();
             actualizarGeometria();
             setAudioListo(true);
-
-            // Solicitar fullscreen en Android no-PWA: oculta la barra del navegador.
-            // Silencioso si el browser lo rechaza (algunos lo bloquean fuera de gesto, otros no soportan).
-            const esAndroid = /android/i.test(navigator.userAgent);
-            const noEsPWA = !window.matchMedia('(display-mode: standalone)').matches;
-            if (esAndroid && noEsPWA) {
-                document.documentElement.requestFullscreen?.().catch(() => { /* fallback silencioso */ });
-            }
-
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
         document.addEventListener('pointerdown', inicializarAudio, { capture: true });
@@ -154,6 +144,34 @@ const SimuladorApp: React.FC = () => {
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
     }, [actualizarGeometria]);
+
+    // Fullscreen en Android: requestFullscreen requiere user activation valida.
+    // Lo disparamos en touchend/mouseup (no en pointerdown) porque el preventDefault
+    // que aplicamos en touchstart consume la activation y Chrome Android rechaza
+    // requestFullscreen llamado desde pointerdown. touchend no tiene preventDefault
+    // y el browser aun considera el gesto valido.
+    useEffect(() => {
+        const esMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (!esMobile) return;
+
+        const intentarFullscreen = () => {
+            const noEsPWA = !window.matchMedia('(display-mode: standalone)').matches;
+            const yaEnFullscreen = !!document.fullscreenElement;
+            const esAndroid = /android/i.test(navigator.userAgent);
+            if (esAndroid && noEsPWA && !yaEnFullscreen) {
+                document.documentElement.requestFullscreen?.().catch(() => { /* fallback silencioso */ });
+            }
+            document.removeEventListener('touchend', intentarFullscreen);
+            document.removeEventListener('mouseup', intentarFullscreen);
+        };
+
+        document.addEventListener('touchend', intentarFullscreen);
+        document.addEventListener('mouseup', intentarFullscreen);
+        return () => {
+            document.removeEventListener('touchend', intentarFullscreen);
+            document.removeEventListener('mouseup', intentarFullscreen);
+        };
+    }, []);
 
     useEffect(() => {
         elementosCache.current.clear();
@@ -267,8 +285,6 @@ const SimuladorApp: React.FC = () => {
                     Toca para comenzar
                 </div>
             )}
-
-            <BotonInstalarPWA />
         </div>
     );
 };
