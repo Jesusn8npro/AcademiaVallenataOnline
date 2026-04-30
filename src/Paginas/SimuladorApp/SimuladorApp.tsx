@@ -241,8 +241,8 @@ const SimuladorApp: React.FC = () => {
                         onToggleVista={() => toggleModal('vista')} refs={refsModales as any}
                     />
 
-                    <div className="diapason-marco" style={{ touchAction: 'none' }}>
-                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'none' }}>
+                    <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
+                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'manipulation' }}>
                             <div className="hilera-pitos hilera-adentro">{renderHilera(logica.configTonalidad?.terceraFila)}</div>
                             <div className="hilera-pitos hilera-medio">{renderHilera(logica.configTonalidad?.segundaFila)}</div>
                             <div className="hilera-pitos hilera-afuera">{renderHilera(logica.configTonalidad?.primeraFila)}</div>
