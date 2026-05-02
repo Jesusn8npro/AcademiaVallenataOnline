@@ -1,0 +1,284 @@
+/* ──────────────────────────────────────────────────────────
+   CONFIG DE CANCION — Modal compacto con dropdowns
+   Mobile-first, optimo en landscape
+   ────────────────────────────────────────────────────────── */
+
+.config-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(5, 8, 24, 0.78);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    font-family: 'Raleway', 'Nunito', system-ui, sans-serif;
+}
+
+.config-panel {
+    width: 100%;
+    max-width: 460px;
+    background: linear-gradient(160deg, #1a1d2e 0%, #0d0f1c 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 22px 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+    color: #fff;
+}
+
+/* ─── HEADER (miniatura + info) ────────────────────────── */
+
+.config-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.config-miniatura {
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #0a0c18;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+.config-miniatura img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.config-header-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.config-titulo {
+    font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-autor {
+    margin: 0;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-tono {
+    margin-top: 2px;
+    align-self: flex-start;
+    padding: 3px 10px;
+    background: rgba(96, 165, 250, 0.14);
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #93c5fd;
+    letter-spacing: 0.7px;
+}
+
+/* ─── BODY ────────────────────────────────────────────── */
+
+.config-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.config-field-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Select nativo estilizado */
+.config-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 11px 38px 11px 14px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%2393c5fd' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    transition: border-color 0.18s, background-color 0.18s;
+}
+.config-select:hover { background-color: rgba(255, 255, 255, 0.08); }
+.config-select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+}
+.config-select option {
+    background: #1a1d2e;
+    color: #fff;
+}
+
+/* Toggle simple */
+.config-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 11px 14px;
+    cursor: pointer;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.18s;
+}
+.config-toggle:hover { background: rgba(255, 255, 255, 0.08); }
+.config-toggle > svg { color: #93c5fd; flex-shrink: 0; }
+.config-toggle > span:first-of-type { flex: 1; text-align: left; }
+.config-toggle.on > svg { color: #22c55e; }
+
+.config-toggle-switch {
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    position: relative;
+    transition: background 0.22s;
+    flex-shrink: 0;
+}
+.config-toggle.on .config-toggle-switch { background: #22c55e; }
+.config-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.22s;
+}
+.config-toggle.on .config-toggle-knob { transform: translateX(16px); }
+
+/* ─── FOOTER ──────────────────────────────────────────── */
+
+.config-footer {
+    display: flex;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.config-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.18s, background 0.18s;
+}
+.config-btn:active { transform: translateY(1px); }
+
+.config-btn-volver {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    flex: 0 0 auto;
+}
+.config-btn-volver:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.config-btn-empezar {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    flex: 1;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    letter-spacing: 1px;
+}
+.config-btn-empezar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(99, 102, 241, 0.5);
+}
+
+/* ─── MOBILE LANDSCAPE (acordeon en mobile horizontal) ──── */
+
+@media (orientation: landscape) and (max-height: 480px) {
+    .config-overlay { padding: 8px; }
+    .config-panel {
+        max-width: 580px;
+        padding: 14px 18px;
+        gap: 12px;
+    }
+
+    .config-header { padding-bottom: 10px; gap: 12px; }
+    .config-miniatura { width: 60px; height: 60px; border-radius: 12px; }
+    .config-titulo { font-size: 1rem; }
+    .config-autor { font-size: 0.75rem; }
+    .config-tono { font-size: 0.65rem; padding: 2px 8px; }
+
+    .config-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+    }
+    .config-field { gap: 4px; }
+    .config-field-label { font-size: 0.65rem; }
+    .config-select { padding: 9px 32px 9px 12px; font-size: 0.85rem; }
+    .config-toggle {
+        grid-column: 1 / -1;
+        padding: 9px 12px;
+        font-size: 0.82rem;
+    }
+
+    .config-btn { padding: 10px 16px; font-size: 0.85rem; }
+}
+
+@media (max-width: 380px) {
+    .config-panel { padding: 18px 16px 14px; gap: 14px; }
+    .config-miniatura { width: 64px; height: 64px; }
+    .config-titulo { font-size: 1rem; }
+}

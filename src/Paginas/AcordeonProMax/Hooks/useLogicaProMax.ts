@@ -1063,6 +1063,7 @@ export function useLogicaProMax() {
     iniciarPracticaLibre,
     reproducirSecuencia: reproductor.reproducirSecuencia,
     setAudioSync: reproductor.setAudioSync,
+    arrancarReproduccionAnclada: reproductor.arrancarReproduccionAnclada,
     grabaciones: {
       grabando: grabandoHero,
       tiempoGrabacionMs,

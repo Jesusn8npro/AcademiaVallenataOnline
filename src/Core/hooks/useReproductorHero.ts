@@ -30,6 +30,14 @@ export const useReproductorHero = (
     const animFrameRef = useRef(0);
     const loopABRef = useRef<{ start: number, end: number, activo: boolean }>({ start: 0, end: 0, activo: false });
     const rangoSeccionRef = useRef<{ inicio: number; fin: number } | null>(null);
+    // Resync periódico contra audio.currentTime para combatir drift acumulativo entre AudioContext
+    // y sample-clock del HTMLAudio. Conservador: cada 2s, sólo si el drift es notorio (>25 ticks
+    // ≈125ms) y siempre que el audio esté establemente sonando (no en mitad de un seek).
+    const ultimoResyncTimeRef = useRef<number>(0);
+    // Timestamp del último seek (buscarTick). Se usa como guard: durante 300ms post-seek el resync
+    // se inhibe para que el audio termine de estabilizarse antes de comparar. Sin esto, el resync
+    // podía leer audio.currentTime stale tras un backward seek y "corregir" hacia un valor erróneo.
+    const ultimoBuscarTickTimeRef = useRef<number>(-Infinity);
 
     // Fuente de audio externa (HTMLAudioElement o ReproductorMP3 — ambos tienen la misma API mínima:
     // currentTime, paused, readyState, playbackRate, addEventListener/removeEventListener para 'playing'/'pause'/'seeked').
@@ -45,6 +53,16 @@ export const useReproductorHero = (
     const audioStartPositionRef = useRef<number>(0);
     // Listeners registrados por setAudioSync.
     const audioSyncListenersRef = useRef<{ audio: any; onPlaying: () => void; onSeeked: () => void; onPause: () => void } | null>(null);
+
+    // [SYNC DEBUG] Refs temporales para diagnóstico de desync MP3↔notas. Quitar tras encontrar la causa.
+    const expectedAnchorRef = useRef<{ tickInicialReal: number; bpmOriginal: number; contextStartTime: number; offsetSeg: number } | null>(null);
+    const logPrimerFrameRef = useRef(false);
+    const playingLoggedRef = useRef(false);
+
+    // (Refs del ancla eliminados — el RAF ahora lee audio.currentTime directo, sin precomputo
+    // de instante futuro. Patrón ModoMaestro/Competencia: simple, sample-accurate por audio,
+    // sin race conditions. arrancarReproduccionAnclada se mantiene como API pero internamente
+    // solo cablea setAudioSync.)
 
     const setAudioSync = useCallback((audio: any | null, bpmOriginal?: number) => {
         // Limpia listeners de cualquier audio previo antes de re-cablear.
@@ -68,24 +86,60 @@ export const useReproductorHero = (
             bpmOriginalSyncRef.current = bpmOriginal;
         }
         if (audio) {
-            const capturarCheckpoint = () => {
+            // 'playing' / 'seeked' resincronizan el checkpoint a la posición REAL del audio.
+            // Compensa la latencia de arranque (30-150ms entre play() y el primer sample sonado)
+            // y el race del seek (audio.currentTime stale durante el seek/buffering).
+            // NO escuchamos 'pause': muchos browsers disparan 'pause' interno durante backward seeks,
+            // lo que apagaba audioSyncSonandoRef y mataba el resync periódico para siempre. En su
+            // lugar, el resync lee audio.paused directamente cada vuelta (tiempo real, sin estado stale).
+            const capturarCheckpoint = (origenEvento?: string) => {
                 audioStartContextRef.current = motorAudioPro.tiempoActual;
                 audioStartPositionRef.current = audio.currentTime;
                 audioSyncSonandoRef.current = true;
+                const ct = audio.currentTime;
+                if (isFinite(ct) && ct >= 0) {
+                    const bpmOrig = bpmOriginalSyncRef.current || 120;
+                    const tickFromAudio = ct * (bpmOrig / 60) * 192;
+                    if (isFinite(tickFromAudio) && tickFromAudio >= 0) {
+                        // [SYNC DEBUG]
+                        const expected = expectedAnchorRef.current;
+                        if (origenEvento === 'playing' && !playingLoggedRef.current && expected) {
+                            playingLoggedRef.current = true;
+                            const ctxNow = motorAudioPro.tiempoActual;
+                            console.log('[SYNC] capturarCheckpoint(playing)', {
+                                audioCurrentTime: ct,
+                                offsetSegEsperado: expected.offsetSeg,
+                                deltaSeg: ct - expected.offsetSeg,
+                                tickFromAudio,
+                                tickEsperado: expected.tickInicialReal,
+                                deltaTicks: tickFromAudio - expected.tickInicialReal,
+                                tickRefAntes: tickRef.current,
+                                msDesdeArranque: (ctxNow - expected.contextStartTime) * 1000,
+                            });
+                        } else if (origenEvento) {
+                            console.log(`[SYNC] capturarCheckpoint(${origenEvento})`, {
+                                audioCurrentTime: ct,
+                                tickFromAudio,
+                                tickRefAntes: tickRef.current,
+                                deltaTicks: tickFromAudio - tickRef.current,
+                            });
+                        }
+                        tickRef.current = tickFromAudio;
+                        checkpointTickRef.current = tickFromAudio;
+                        checkpointTimeRef.current = motorAudioPro.tiempoActual;
+                    }
+                }
             };
-            const onPlaying = capturarCheckpoint;
-            const onSeeked = () => { if (!audio.paused) capturarCheckpoint(); };
-            const onPause = () => { audioSyncSonandoRef.current = false; };
+            const onPlaying = () => capturarCheckpoint('playing');
+            const onSeeked = () => { if (!audio.paused) capturarCheckpoint('seeked'); };
+            const onPause = () => { /* no-op intencional: ver comentario arriba */ };
             audio.addEventListener('playing', onPlaying);
             audio.addEventListener('seeked', onSeeked);
             audio.addEventListener('pause', onPause);
             audioSyncListenersRef.current = { audio, onPlaying, onSeeked, onPause };
-            // Fallback: si 'playing' no llega en 1500ms, soltar el RAF igual.
             setTimeout(() => {
                 if (audioSyncRef.current === audio && !audioSyncSonandoRef.current) {
                     audioSyncSonandoRef.current = true;
-                    audioStartContextRef.current = motorAudioPro.tiempoActual;
-                    audioStartPositionRef.current = audio.currentTime;
                 }
             }, 1500);
         }
@@ -144,9 +198,10 @@ export const useReproductorHero = (
         (pausadoRef as any).current = nuevoEstado;
         setPausado(nuevoEstado);
 
+        const ahora = motorAudioPro.tiempoActual;
+        const resolucion = 192;
+
         if (nuevoEstado) {
-            const ahora = motorAudioPro.tiempoActual;
-            const resolucion = 192;
             if (checkpointTimeRef.current > 0) {
                 const ticksDesdeUltimoCheckpoint = (ahora - checkpointTimeRef.current) * (bpmRef.current / 60) * resolucion;
                 checkpointTickRef.current += ticksDesdeUltimoCheckpoint;
@@ -154,7 +209,7 @@ export const useReproductorHero = (
             checkpointTimeRef.current = ahora;
             if ((window as any).motorAudioPro) (window as any).motorAudioPro.detenerTodo();
         } else {
-            checkpointTimeRef.current = motorAudioPro.tiempoActual;
+            checkpointTimeRef.current = ahora;
         }
     }, [reproduciendo]);
 
@@ -178,33 +233,80 @@ export const useReproductorHero = (
             onBpmCambiadoRef.current?.(bpmRef.current);
         }
 
-        // Tick: (1) audio sonando → posición virtual del audio (continua, sin jitter);
-        // (2) audio pendiente → reloj congelado; (3) sin audio → AudioContext directo.
+        // PATRÓN: AudioContext math (igual que ModoMaestroSolo). Los eventos 'playing'/'seeked'
+        // del HTMLAudio resincronizan el checkpoint en momentos discretos. Entre eventos, el tick
+        // avanza determinísticamente. Mientras audio.seeking === true (puede durar segundos si el
+        // seek requiere bufferear nuevo audio — típico en seek atrás lejos), CONGELAMOS el tick:
+        // sin esto el RAF avanza linealmente y al despertar onSeeked tira tickRef hacia atrás a la
+        // posición real → playhead salta y se disparan notas equivocadas.
+        const ticksPorSegundo = (bpmRef.current / 60) * resolucion;
         const audioSync = audioSyncRef.current;
-        const tieneAudioSync = !!audioSync;
-        const audioActivo = audioSyncSonandoRef.current
-            && !!(audioSync && !audioSync.paused && audioSync.readyState >= 2);
+        const audioSeeking = !!(audioSync && audioSync.seeking);
 
         let nuevoTickAbsoluto: number;
-        if (audioActivo) {
-            // ReproductorMP3.currentTime es continuo y sample-accurate (calculado internamente desde
-            // AudioContext.currentTime). Para HTMLAudioElement el valor tiene jitter pero el RAF re-lee
-            // cada frame y converge igual. Lectura directa es lo que el modal del editor usa y funciona.
-            const bpmRef_orig = bpmOriginalSyncRef.current || bpmRef.current;
-            nuevoTickAbsoluto = audioSync!.currentTime * (bpmRef_orig / 60) * resolucion;
-            checkpointTickRef.current = nuevoTickAbsoluto;
-            checkpointTimeRef.current = ahora;
-        } else if (tieneAudioSync) {
-            nuevoTickAbsoluto = tickRef.current;
-            checkpointTickRef.current = nuevoTickAbsoluto;
+        if (audioSeeking) {
+            // Tick congelado. checkpointTime avanza para que al despertar el delta sea ~0 y no
+            // se acumule "tiempo perdido" mientras el HTMLAudio buscaba/buffereaba.
+            nuevoTickAbsoluto = checkpointTickRef.current;
             checkpointTimeRef.current = ahora;
         } else {
-            const ticksPorSegundo = (bpmRef.current / 60) * resolucion;
+            // Resync periódico anti-drift. Conservador para evitar saltos visibles del playhead:
+            //   - Cada 2s (no 1s — menor frecuencia, menos saltos cosméticos).
+            //   - 300ms desde el último buscarTick (que audio.currentTime se estabilice tras el seek).
+            //   - Drift > 25 ticks (~125ms — solo cuando es realmente perceptible).
+            //   - Drift < 80 ticks (sobre eso podría ser bug, no drift residual).
+            //   - Solo corregir hacia adelante (audio adelante del RAF). Saltar atrás re-dispara notas.
+            //   - Lee audio.paused EN VIVO en vez de audioSyncSonandoRef (que algunos backward seeks
+            //     dejaban apagado para siempre por 'pause' interno del browser).
+            if (
+                audioSync &&
+                audioSync.readyState >= 2 &&
+                !audioSync.paused &&
+                audioSync.currentTime > 0.05 &&
+                isFinite(audioSync.currentTime) &&
+                (ahora - ultimoResyncTimeRef.current) > 2.0 &&
+                (ahora - ultimoBuscarTickTimeRef.current) > 0.3
+            ) {
+                const bpmOrig = bpmOriginalSyncRef.current || bpmRef.current;
+                const tickFromAudio = audioSync.currentTime * (bpmOrig / 60) * resolucion;
+                if (isFinite(tickFromAudio) && tickFromAudio >= 0) {
+                    const driftAbs = Math.abs(tickFromAudio - tickRef.current);
+                    if (driftAbs > 25 && driftAbs < 80 && tickFromAudio > tickRef.current) {
+                        checkpointTickRef.current = tickFromAudio;
+                        checkpointTimeRef.current = ahora;
+                        tickRef.current = tickFromAudio;
+                    }
+                }
+                ultimoResyncTimeRef.current = ahora;
+            }
+
             const ticksDesdeCheckpoint = (ahora - checkpointTimeRef.current) * ticksPorSegundo;
             nuevoTickAbsoluto = checkpointTickRef.current + ticksDesdeCheckpoint;
         }
         const deltaTicksFrame = nuevoTickAbsoluto - tickRef.current;
         tickRef.current = nuevoTickAbsoluto;
+
+        // [SYNC DEBUG] primer frame post-arranque del camino anclado
+        if (logPrimerFrameRef.current) {
+            logPrimerFrameRef.current = false;
+            const audioForLog = audioSyncRef.current;
+            const ct = audioForLog?.currentTime ?? null;
+            const bpmOrigForLog = bpmOriginalSyncRef.current || 120;
+            const tickFromAudioPorRAF = ct != null ? ct * (bpmOrigForLog / 60) * resolucion : null;
+            console.log('[SYNC] primerFrameRAF', {
+                audioCurrentTime: ct,
+                tickFromAudio: tickFromAudioPorRAF,
+                tickFromContext: nuevoTickAbsoluto,
+                tickRef: tickRef.current,
+                checkpointTick: checkpointTickRef.current,
+                checkpointTime: checkpointTimeRef.current,
+                contextNow: ahora,
+                msDesdeCheckpoint: (ahora - checkpointTimeRef.current) * 1000,
+                audioPaused: audioForLog?.paused,
+                audioReadyState: audioForLog?.readyState,
+                audioSeeking: audioForLog?.seeking,
+            });
+        }
 
         if (onBeatRef.current) {
             const beatIndex = Math.floor(tickRef.current / resolucion);
@@ -378,9 +480,11 @@ export const useReproductorHero = (
     const buscarTick = useCallback((tick: number) => {
         if (typeof tick !== 'number' || isNaN(tick)) return;
 
+        const ahora = motorAudioPro.tiempoActual;
         tickRef.current = tick;
         checkpointTickRef.current = tick;
-        checkpointTimeRef.current = motorAudioPro.tiempoActual;
+        checkpointTimeRef.current = ahora;
+        ultimoBuscarTickTimeRef.current = ahora;
         setTickActual(Math.floor(tick));
 
         // Si hay audio enganchado, seek SÍNCRONO aquí. Sin esto el RAF lee audio.currentTime (vieja)
@@ -413,6 +517,80 @@ export const useReproductorHero = (
         loopABRef.current = { start, end, activo };
     }, []);
 
+    /**
+     * NUEVO camino sample-accurate (admin/practica). Recibe la canción a tocar + un "anchor" producido por
+     * useAudioFondoPracticaLibre.iniciarReproduccionAnclada — el caller programó el audio para arrancar
+     * EN anchor.contextStartTime con offset anchor.offsetSeg. Aquí simplemente armamos el RAF para que
+     * compute el tick desde la misma referencia temporal: cero race con eventos asíncronos del audio.
+     *
+     * Diferencia clave vs reproducirSecuencia + setAudioSync: no leemos audio.currentTime ni esperamos
+     * 'playing'. La fórmula del tick es pura aritmética sobre AudioContext.currentTime, que es la misma
+     * referencia con la que el AudioBufferSourceNode fue programado → sample-accurate determinístico.
+     */
+    const arrancarReproduccionAnclada = useCallback((
+        cancion: CancionHero,
+        anchor: { contextStartTime: number; tickInicialReal: number; bpmOriginal: number; audio: any },
+    ) => {
+        detenerReproduccion();
+
+        // [SYNC DEBUG] preparar refs antes de cablear setAudioSync para que onPlaying tenga contexto
+        const offsetSegEsperado = (anchor.tickInicialReal / 192) * (60 / (anchor.bpmOriginal || 120));
+        expectedAnchorRef.current = {
+            tickInicialReal: anchor.tickInicialReal,
+            bpmOriginal: anchor.bpmOriginal,
+            contextStartTime: anchor.contextStartTime,
+            offsetSeg: offsetSegEsperado,
+        };
+        logPrimerFrameRef.current = true;
+        playingLoggedRef.current = false;
+        console.log('[SYNC] arrancarReproduccionAnclada', {
+            tickInicialReal: anchor.tickInicialReal,
+            bpmOriginal: anchor.bpmOriginal,
+            offsetSegEsperado,
+            contextStartTime: anchor.contextStartTime,
+            contextNow: motorAudioPro.tiempoActual,
+            msHastaContextStart: (anchor.contextStartTime - motorAudioPro.tiempoActual) * 1000,
+            audioCurrentTime: anchor.audio?.currentTime,
+            audioPaused: anchor.audio?.paused,
+            audioReadyState: anchor.audio?.readyState,
+        });
+
+        let secuencia: any = (cancion as any).secuencia || (cancion as any).secuencia_json;
+        if (typeof secuencia === 'string') {
+            try { secuencia = JSON.parse(secuencia); } catch (_) {}
+        }
+        if (!Array.isArray(secuencia)) return;
+
+        const seqOrdenada = [...secuencia].sort((a, b) => a.tick - b.tick);
+        notasOriginalesRef.current = seqOrdenada;
+        const ultimoTick = seqOrdenada.length > 0
+            ? seqOrdenada[seqOrdenada.length - 1].tick + seqOrdenada[seqOrdenada.length - 1].duracion
+            : 0;
+        setTotalTicks(ultimoTick);
+        rangoSeccionRef.current = null;
+
+        // Cablear el audio al RAF — única fuente de verdad para el tick (lee audio.currentTime cada
+        // frame). Anchor.contextStartTime ya no se usa: el RAF deriva el tick directamente del audio,
+        // sin precomputo. Esto es el patrón ModoMaestro/Competencia: simple, sin race, sin ancla.
+        setAudioSync(anchor.audio, anchor.bpmOriginal);
+
+        bpmRef.current = bpmTargetRef.current;
+        tickRef.current = anchor.tickInicialReal;
+        checkpointTickRef.current = anchor.tickInicialReal;
+        checkpointTimeRef.current = motorAudioPro.tiempoActual;
+        const resolucion = (cancion as any).resolucion || 192;
+        lastBeatIndexRef.current = anchor.tickInicialReal > 0
+            ? Math.floor(anchor.tickInicialReal / resolucion) - 1
+            : -1;
+        setTickActual(Math.floor(anchor.tickInicialReal));
+        setCancionActual(cancion);
+        setReproduciendo(true);
+        (pausadoRef as any).current = false;
+        setPausado(false);
+
+        animFrameRef.current = requestAnimationFrame(loop);
+    }, [detenerReproduccion, loop, setAudioSync]);
+
     return {
         reproduciendo,
         pausado,
@@ -426,5 +604,6 @@ export const useReproductorHero = (
         setLoopPoints,
         sincronizarConPista,
         setAudioSync,
+        arrancarReproduccionAnclada,
     };
 };

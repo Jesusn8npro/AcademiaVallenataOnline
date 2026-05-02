@@ -15,10 +15,32 @@ import ModalTonalidades from './Componentes/BarraHerramientas/ModalTonalidades';
 import ModalVista from './Componentes/BarraHerramientas/ModalVista';
 import ModalMetronomo from './Componentes/BarraHerramientas/ModalMetronomo';
 import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos';
+import PantallaAprende from './Aprende/PantallaAprende';
+import type { ConfigCancion } from './Aprende/useConfigCancion';
+import JuegoSimuladorApp from './Juego/JuegoSimuladorApp';
 
 import './SimuladorApp.css';
 
 const SimuladorApp: React.FC = () => {
+    const [juegoActivo, setJuegoActivo] = useState<ConfigCancion | null>(null);
+
+    if (juegoActivo) {
+        return (
+            <JuegoSimuladorApp
+                config={juegoActivo}
+                onSalir={() => setJuegoActivo(null)}
+            />
+        );
+    }
+
+    return <SimuladorAppNormal onIniciarJuego={setJuegoActivo} />;
+};
+
+interface SimuladorAppNormalProps {
+    onIniciarJuego: (config: ConfigCancion) => void;
+}
+
+const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego }) => {
     const logica = useLogicaAcordeon({
         onNotaPresionada: (data) => {
             const esBajo = data.idBoton.includes('-bajo');
@@ -45,7 +67,8 @@ const SimuladorApp: React.FC = () => {
         vista: false,
         metronomo: false,
         instrumentos: false,
-        contacto: false
+        contacto: false,
+        aprende: false
     });
 
     const [bajosVisible, setBajosVisible] = useState(false);
@@ -57,13 +80,13 @@ const SimuladorApp: React.FC = () => {
     const trenRef = useRef<HTMLDivElement>(null);
     const audioContextIniciadoRef = useRef(false);
     const [audioListo, setAudioListo] = useState(false);
-    const [statsLatencia, setStatsLatencia] = useState('');
     const refsModales = {
         menu: useRef(null),
         tonalidades: useRef(null),
         metronomo: useRef(null),
         instrumentos: useRef(null),
-        vista: useRef(null)
+        vista: useRef(null),
+        aprende: useRef(null)
     };
     const secuenciaRef = useRef<any[]>([]);
     const tiempoInicioRef = useRef<number>(0);
@@ -139,17 +162,6 @@ const SimuladorApp: React.FC = () => {
             actualizarGeometria();
             setAudioListo(true);
 
-            // Diagnostico: muestra stats de latencia en overlay para reportar desde mobile.
-            setTimeout(() => {
-                try {
-                    const ctx: any = motorAudioPro.contextoAudio;
-                    const baseMs = ((ctx.baseLatency || 0) * 1000).toFixed(1);
-                    const outputMs = ((ctx.outputLatency || 0) * 1000).toFixed(1);
-                    const ua = navigator.userAgent.match(/Android|iPhone|iPad/i)?.[0] || 'Other';
-                    setStatsLatencia(`${ua} | SR:${ctx.sampleRate} | base:${baseMs}ms | out:${outputMs}ms | ${ctx.state}`);
-                } catch (_) { setStatsLatencia('latencia: no disponible'); }
-            }, 200);
-
             document.removeEventListener('pointerdown', inicializarAudio, { capture: true });
         };
         document.addEventListener('pointerdown', inicializarAudio, { capture: true });
@@ -199,7 +211,7 @@ const SimuladorApp: React.FC = () => {
     }, [escala, limpiarGeometria]);
 
     const toggleModal = (nombre: keyof typeof modales) => {
-        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, [nombre]: !prev[nombre] }));
+        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, [nombre]: !prev[nombre] }));
     };
 
     const handleToggleGrabacion = () => {
@@ -251,7 +263,8 @@ const SimuladorApp: React.FC = () => {
                         bpmMetronomo={bpmMetronomo} modalesVisibles={modales}
                         onToggleMenu={() => toggleModal('menu')} onToggleTonalidades={() => toggleModal('tonalidades')}
                         onToggleMetronomo={() => toggleModal('metronomo')} onToggleInstrumentos={() => toggleModal('instrumentos')}
-                        onToggleVista={() => toggleModal('vista')} refs={refsModales as any}
+                        onToggleVista={() => toggleModal('vista')} onToggleAprende={() => toggleModal('aprende')}
+                        refs={refsModales as any}
                     />
 
                     <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
@@ -291,37 +304,20 @@ const SimuladorApp: React.FC = () => {
 
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
 
+            <PantallaAprende
+                visible={modales.aprende}
+                onCerrar={() => toggleModal('aprende')}
+                tonalidadActual={logica.tonalidadSeleccionada}
+                onEmpezarCancion={(config: ConfigCancion) => {
+                    onIniciarJuego(config);
+                }}
+            />
+
             {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
 
             {!audioListo && (
                 <div className="overlay-audio-inicio" aria-hidden="true">
                     Toca para comenzar
-                </div>
-            )}
-
-            {statsLatencia && (
-                <div
-                    onClick={() => setStatsLatencia('')}
-                    style={{
-                        position: 'fixed',
-                        top: 4,
-                        left: 4,
-                        zIndex: 99999,
-                        background: 'rgba(0, 0, 0, 0.85)',
-                        color: '#0f0',
-                        padding: '5px 9px',
-                        fontSize: '10px',
-                        fontFamily: 'ui-monospace, Menlo, monospace',
-                        fontWeight: 700,
-                        borderRadius: 4,
-                        border: '1px solid #0f0',
-                        letterSpacing: '0.3px',
-                        maxWidth: '70vw',
-                        wordBreak: 'break-all',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {statsLatencia} <span style={{ opacity: 0.6 }}>· tap para cerrar</span>
                 </div>
             )}
         </div>

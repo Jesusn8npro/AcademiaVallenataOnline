@@ -131,6 +131,8 @@ export function useEstudioAdmin() {
     onSetAudioSync: useCallback((bpmOriginal: number) => {
       hero.setAudioSync(audioRef.current, bpmOriginal);
     }, [audioRef, hero.setAudioSync]),
+    onIniciarReproduccionAnclada: audioFondo.iniciarReproduccionAnclada,
+    onArrancarReproduccionAnclada: hero.arrancarReproduccionAnclada,
     libreria,
   });
 

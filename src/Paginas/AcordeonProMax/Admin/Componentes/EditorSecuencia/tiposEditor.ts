@@ -132,6 +132,13 @@ export interface UseEditorSecuenciaAdminParams {
   onCargarPista?: (url: string | null) => Promise<void>;
   // Cablea el HTMLAudio + BPM al RAF del reproductor con el BPM real de la canción (no desde state).
   onSetAudioSync?: (bpmOriginal: number) => void;
+  /**
+   * NUEVO camino sample-accurate: programa el audio para arrancar EN un instante futuro del AudioContext y
+   * devuelve ese instante como anchor. Pareja con onArrancarReproduccionAnclada que ancla el RAF al mismo
+   * instante. Cuando ambos están presentes, se prefiere este camino (cero race vs el viejo basado en eventos).
+   */
+  onIniciarReproduccionAnclada?: (tickInicio: number, opciones?: { bpmOriginal?: number; urlEsperada?: string | null }) => Promise<{ contextStartTime: number; offsetSeg: number; bpmOriginal: number; tickInicialReal: number; audio: any } | null>;
+  onArrancarReproduccionAnclada?: (cancion: any, anchor: { contextStartTime: number; tickInicialReal: number; bpmOriginal: number; audio: any }) => void;
   libreria: LibreriaAPI;
 }
 

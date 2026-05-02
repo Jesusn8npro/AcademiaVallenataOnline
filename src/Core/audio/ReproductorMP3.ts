@@ -155,6 +155,44 @@ export class ReproductorMP3 {
     this._startSource();
   }
 
+  /**
+   * Programa el inicio del buffer EN UN INSTANTE FUTURO del AudioContext, comenzando desde `offsetSeg`.
+   * Web Audio garantiza arranque sample-accurate en `contextStartTime` (siempre que `contextStartTime`
+   * esté en el futuro y el buffer esté decodificado). Devuelve true si se programó, false si no había
+   * buffer o el contexto estaba detenido.
+   *
+   * Esta es la API correcta para sincronización con un reloj externo: el caller programa el audio en un
+   * tiempo X y luego ancla su RAF/scheduler al mismo X. Cero race condition entre seek + play + 'playing'.
+   */
+  programarReproduccion(offsetSeg: number, contextStartTime: number, playbackRate?: number): boolean {
+    if (!this.buffer) return false;
+    if (this.contexto.state !== 'running') {
+      try { this.contexto.resume(); } catch (_) {}
+    }
+    if (!this._paused) this._stopSource();
+    const objetivo = Math.max(0, Math.min(this.duration, offsetSeg));
+    const rate = typeof playbackRate === 'number' ? Math.max(0.1, Math.min(4, playbackRate)) : this._playbackRate;
+    this._playbackRate = rate;
+    this.startOffset = objetivo;
+    this.startContextTime = contextStartTime;
+    this.source = this.contexto.createBufferSource();
+    this.source.buffer = this.buffer;
+    this.source.playbackRate.value = rate;
+    this.source.connect(this.gainNode);
+    try {
+      this.source.start(contextStartTime, objetivo);
+    } catch (_) {
+      // start() lanza si contextStartTime es < currentTime — fallback: arranca ya.
+      try { this.source.start(0, objetivo); } catch (__) {}
+      this.startContextTime = this.contexto.currentTime;
+    }
+    this._paused = false;
+    this.source.onended = () => { this._paused = true; };
+    // Emite 'playing' para listeners legacy (no es necesario para el camino anclado).
+    queueMicrotask(() => { if (!this._paused) this._emit('playing'); });
+    return true;
+  }
+
   pause(): void {
     if (this._paused) return;
     // Capturar posición actual antes de stop.

@@ -24,6 +24,8 @@ export const useEditorSecuenciaAdmin = ({
   onIniciarReproduccionSincronizada,
   onCargarPista,
   onSetAudioSync,
+  onIniciarReproduccionAnclada,
+  onArrancarReproduccionAnclada,
   libreria,
 }: UseEditorSecuenciaAdminParams) => {
   const {
@@ -284,18 +286,40 @@ export const useEditorSecuenciaAdmin = ({
           )
           : null);
     if (!cancionBase) return;
-    prepararCancionEnEscenario(cancionBase);
 
-    if (onIniciarReproduccionSincronizada) {
-      const tickInicioNorm = Math.max(0, Math.floor(tickInicio));
-      const bpmOriginalCancion = Number(cancionBase?.bpm) || 120;
-      const urlPista = cancionBase?.audio_fondo_url || null;
+    // CRÍTICO: NO re-preparar la canción en cada click si ya es la canción activa. prepararCancionEnEscenario
+    // resetea el BPM transport al original de la canción (rompe slow practice), cambia la URL del audio
+    // (re-dispara pre-carga + useEffects), y desestabiliza el ancla del RAF (bpmRef vs bpmTargetRef diverge).
+    // Solo re-preparar cuando se cambia DE CANCIÓN — los seeks/secciones siguen siempre dentro de la misma.
+    const yaPreparada = cancionActivaLibreria?.id === cancionBase.id;
+    if (!yaPreparada) {
+      prepararCancionEnEscenario(cancionBase);
+    }
+
+    const tickInicioNorm = Math.max(0, Math.floor(tickInicio));
+    const bpmOriginalCancion = Number(cancionBase?.bpm) || 120;
+    const urlPista = cancionBase?.audio_fondo_url || null;
+
+    // CAMINO PRIMARIO: anclado sample-accurate. Programa el AudioBufferSourceNode para arrancar EN un
+    // instante futuro del AudioContext y arma el RAF al mismo instante. Cero race condition entre seek/play
+    // y el avance del tick — la fórmula tick = tickInicial + (AudioContext.now - anchorTime) * (bpm/60) * 192
+    // se computa desde el MISMO reloj con el que el audio fue programado.
+    if (urlPista && onIniciarReproduccionAnclada && onArrancarReproduccionAnclada) {
       try {
-        // Patrón del MODAL del editor (que SÍ funciona perfecto): el RAF debe leer audio.currentTime
-        // como fuente de verdad del reloj — NO motorAudioPro.tiempoActual (que tiene drift respecto al
-        // HTMLAudio decoder). setAudioSync engancha el audio al reproductor para que el loop lea
-        // audio.currentTime cada frame. Lo cableamos DESPUÉS de reproducirSecuencia porque su detenerReproduccion
-        // interno wipea audioSyncRef. Re-cableado aquí garantiza que el primer frame del RAF ya tiene el audio.
+        const anchor = await onIniciarReproduccionAnclada(tickInicioNorm, {
+          bpmOriginal: bpmOriginalCancion,
+          urlEsperada: urlPista,
+        });
+        if (anchor) {
+          onArrancarReproduccionAnclada(cancionBase, anchor);
+          return;
+        }
+      } catch (_) { /* fallthrough al camino legacy */ }
+    }
+
+    // FALLBACK LEGACY (sin URL de audio o si el camino anclado falla).
+    if (onIniciarReproduccionSincronizada) {
+      try {
         if (onCargarPista) await onCargarPista(urlPista);
         const { tickInicialReal } = await onIniciarReproduccionSincronizada(
           tickInicioNorm,
@@ -312,7 +336,7 @@ export const useEditorSecuenciaAdmin = ({
 
     onReproducirSecuencia(cancionBase);
     if (tickInicio > 0) onBuscarTick(Math.max(0, Math.floor(tickInicio)));
-  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync]);
+  }, [cancionActivaLibreria, cancionEditandoSecuencia, construirCancionHero, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync, onIniciarReproduccionAnclada, onArrancarReproduccionAnclada]);
 
   const handleReproducirLibreria = useCallback(async (cancion: any) => {
     const secuenciaActiva = cancionEditandoSecuencia?.id === cancion.id
@@ -323,12 +347,25 @@ export const useEditorSecuenciaAdmin = ({
     };
     prepararCancionEnEscenario(cancionPreparada);
 
-    if (onIniciarReproduccionSincronizada) {
-      const bpmOriginalCancion = Number(cancionPreparada?.bpm) || 120;
-      const urlPista = cancionPreparada?.audio_fondo_url || null;
+    const bpmOriginalCancion = Number(cancionPreparada?.bpm) || 120;
+    const urlPista = cancionPreparada?.audio_fondo_url || null;
+
+    // Camino anclado primero (mismo razonamiento que reproducirCancionActivaDesdeTick).
+    if (urlPista && onIniciarReproduccionAnclada && onArrancarReproduccionAnclada) {
       try {
-        // setAudioSync POST-reproducirSecuencia (ver comentario en reproducirCancionActivaDesdeTick):
-        // engancha audio al reproductor para que el RAF use audio.currentTime como reloj — patrón del modal del editor.
+        const anchor = await onIniciarReproduccionAnclada(0, {
+          bpmOriginal: bpmOriginalCancion,
+          urlEsperada: urlPista,
+        });
+        if (anchor) {
+          onArrancarReproduccionAnclada(cancionPreparada, anchor);
+          return;
+        }
+      } catch (_) { /* fallthrough */ }
+    }
+
+    if (onIniciarReproduccionSincronizada) {
+      try {
         if (onCargarPista) await onCargarPista(urlPista);
         const { tickInicialReal } = await onIniciarReproduccionSincronizada(0, { bpmOriginal: bpmOriginalCancion, urlEsperada: urlPista });
         onReproducirSecuencia(cancionPreparada, { tickInicialOverride: tickInicialReal });
@@ -342,7 +379,7 @@ export const useEditorSecuenciaAdmin = ({
 
     onBuscarTick(0);
     onReproducirSecuencia(cancionPreparada);
-  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync]);
+  }, [cancionEditandoSecuencia?.id, onBuscarTick, onReproducirSecuencia, prepararCancionEnEscenario, onIniciarReproduccionSincronizada, onCargarPista, onSetAudioSync, onIniciarReproduccionAnclada, onArrancarReproduccionAnclada]);
 
   const handleEditarSecuenciaLibreria = useCallback((cancion: any) => {
     const continuar = () => {
