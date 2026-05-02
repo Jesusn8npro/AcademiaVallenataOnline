@@ -1,0 +1,68 @@
+/* ──────────────────────────────────────────────────────────
+   JUEGO SIMULADOR APP — Wrapper para reusar modos de ProMax
+   ────────────────────────────────────────────────────────── */
+
+.juego-sim-root {
+    position: fixed;
+    inset: 0;
+    z-index: 700;
+    background: radial-gradient(ellipse at top, #0a0a18 0%, #050510 60%, #000 100%);
+    overflow: hidden;
+    font-family: 'Raleway', system-ui, sans-serif;
+}
+
+.juego-sim-main {
+    position: absolute;
+    inset: 48px 0 0 0;
+    overflow: hidden;
+}
+
+@media (max-width: 480px) {
+    .juego-sim-main { top: 44px; }
+}
+
+/* ─── CUENTA REGRESIVA ──────────────────────────────────── */
+
+.juego-sim-cuenta-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+}
+
+.juego-sim-cuenta-numero {
+    font-size: clamp(6rem, 22vw, 16rem);
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow:
+        0 0 30px rgba(251, 191, 36, 0.7),
+        0 0 60px rgba(245, 158, 11, 0.4);
+    animation: juego-sim-cuenta-pop 0.9s ease-out;
+    font-family: 'Montserrat', system-ui, sans-serif;
+}
+
+@keyframes juego-sim-cuenta-pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    25% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── OVERLAY DE DAÑO (modo competitivo, vida baja) ────── */
+
+.juego-sim-dano-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 900;
+    background:
+        linear-gradient(to right,  rgba(200, 0, 0, 1) 0%, transparent 22%),
+        linear-gradient(to left,   rgba(200, 0, 0, 1) 0%, transparent 22%),
+        linear-gradient(to bottom, rgba(180, 0, 0, 0.5) 0%, transparent 18%),
+        linear-gradient(to top,    rgba(180, 0, 0, 0.5) 0%, transparent 18%);
+    transition: opacity 0.4s ease;
+}

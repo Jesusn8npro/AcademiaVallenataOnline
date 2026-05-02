@@ -7,7 +7,8 @@ import {
     MoreVertical,
     Star,
     Eye,
-    Timer
+    Timer,
+    BookOpen
 } from 'lucide-react';
 import { motion, MotionValue } from 'framer-motion';
 import './BarraHerramientas.css';
@@ -25,12 +26,14 @@ interface BarraHerramientasProps {
     onToggleMetronomo: () => void;
     onToggleInstrumentos: () => void;
     onToggleVista: () => void;
+    onToggleAprende: () => void;
     refs?: {
         menu?: React.RefObject<HTMLDivElement>;
         tonalidades?: React.RefObject<HTMLDivElement>;
         metronomo?: React.RefObject<HTMLDivElement>;
         instrumentos?: React.RefObject<HTMLDivElement>;
         vista?: React.RefObject<HTMLDivElement>;
+        aprende?: React.RefObject<HTMLDivElement>;
     };
     modalesVisibles: {
         menu?: boolean;
@@ -38,6 +41,7 @@ interface BarraHerramientasProps {
         metronomo?: boolean;
         instrumentos?: boolean;
         vista?: boolean;
+        aprende?: boolean;
     };
     bpmMetronomo: number;
 }
@@ -46,7 +50,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     logica,
     x, escala, setEscala,
     grabando, toggleGrabacion,
-    onToggleMenu, onToggleTonalidades, onToggleMetronomo, onToggleInstrumentos, onToggleVista,
+    onToggleMenu, onToggleTonalidades, onToggleMetronomo, onToggleInstrumentos, onToggleVista, onToggleAprende,
     modalesVisibles,
     bpmMetronomo,
     refs
@@ -90,6 +94,15 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
         <div className="barra-herramientas-contenedor">
 
             <div className="seccion-barra seccion-izquierda">
+                <div
+                    ref={refs?.aprende}
+                    className={`boton-herramienta boton-aprende ${modalesVisibles.aprende ? 'activo' : ''}`}
+                    onClick={onToggleAprende}
+                >
+                    <BookOpen size={20} />
+                    <span>APRENDE</span>
+                </div>
+
                 <div
                     ref={refs?.instrumentos}
                     className={`boton-herramienta ${modalesVisibles.instrumentos ? 'activo' : ''}`}

@@ -1,6 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
-import { ReproductorMP3 } from '../../../../Core/audio/ReproductorMP3';
 
 interface UseAudioFondoProps {
   reproduciendo: boolean;
@@ -12,17 +11,33 @@ interface UseAudioFondoProps {
   volumen?: number;
 }
 
+export interface AnchorReproduccion {
+  contextStartTime: number;
+  offsetSeg: number;
+  bpmOriginal: number;
+  tickInicialReal: number;
+  audio: HTMLAudioElement;
+}
+
+// Margen forward al programar el ancla. Pequeño porque HTMLAudio.currentTime es prácticamente instantáneo
+// para buffers cacheados — el audio empieza a sonar dentro de 1-2 frames de un .play(). 20ms (~1 frame
+// a 60fps) es el mínimo seguro: la RAF tiene tiempo de inicializarse antes de que el reloj cuente.
+const MARGEN_PROGRAMACION_SEG = 0.02;
+
 /**
- * REWORK: ahora usa ReproductorMP3 (AudioBufferSourceNode) en lugar de HTMLAudioElement.
- * - Sin latencia variable de decoder.
- * - currentTime calculado desde AudioContext.currentTime → continuo, sin jitter.
- * - source.start(when, offset) inicia sample-accurate.
- * - Mismo AudioContext que las notas → cero drift.
+ * Audio de fondo basado en UN HTMLAudioElement PERSISTENTE por canción. Cargado una sola vez al cambiar
+ * de URL, reutilizado en TODOS los seeks/secciones/clicks de la barra. Cada click solo hace dos cosas:
+ *   1. audio.currentTime = nuevoOffset    (instantáneo para buffer cacheado)
+ *   2. audio.play() si está pausado       (fire-and-forget)
+ * Cero recreación de sources, cero await de eventos, cero canplay/canplaythrough en runtime de seek.
  *
- * La API exterior se mantiene compatible: cargarPista, iniciarReproduccionSincronizada,
- * y audioRef.current ahora apunta a un ReproductorMP3 (compatible con HTMLAudio en
- * los métodos que setAudioSync del reproductor usa: currentTime, paused, readyState,
- * playbackRate, addEventListener para 'playing'/'pause'/'seeked').
+ * Sincronización con el reloj de notas: NO leemos audio.currentTime cada frame (tiene jitter). En su lugar
+ * devolvemos un "anchor" con el instante AudioContext.currentTime al que el caller debe anclar su RAF. La
+ * fórmula del tick queda: tickInicial + (AudioContext.now - anchorContextTime) * (bpm/60) * 192 — pura
+ * aritmética sobre el reloj sample-accurate del AudioContext, sin depender de audio.currentTime.
+ *
+ * Carga: useEffect dispara cargarPista cuando audioUrl cambia. Una vez cargado, todos los seeks son
+ * inmediatos. El browser cachea el MP3, así que reabrir la misma canción tampoco reb-fetcha.
  */
 export const useAudioFondoPracticaLibre = ({
   reproduciendo,
@@ -33,168 +48,197 @@ export const useAudioFondoPracticaLibre = ({
   audioUrl,
   volumen = 1
 }: UseAudioFondoProps) => {
-  // ReproductorMP3 implementa la interfaz mínima de HTMLAudioElement que el reproductor del juego usa.
-  // Tipo `any` para mantener compatibilidad con código que esperaba HTMLAudioElement (es un drop-in replacement).
-  const audioRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlActualRef = useRef<string | null>(null);
+  const cargandoRef = useRef<Promise<void> | null>(null);
   const bpmOriginalRef = useRef(120);
-
   const tickAnteriorRef = useRef(0);
-  const estadoPrevioPlayRef = useRef(false);
-
-  // Cuando el caller arranca manualmente (iniciarReproduccionSincronizada), este flag evita un play() automático
-  // del useEffect que duplicaría el arranque. Se libera al pausar/stop o al cambiar de canción.
   const manualPlaybackActiveRef = useRef(false);
-
-  useEffect(() => {
-    if (!audioRef.current) {
-      // Crear el reproductor de buffer en el AudioContext compartido del motor.
-      audioRef.current = new ReproductorMP3(motorAudioPro.contextoAudio);
-    }
-  }, []);
-
-  // Cargar la pista cuando cambia audioUrl (paralelo, no bloquea render).
-  useEffect(() => {
-    if (!audioRef.current) return;
-    if (!audioUrl) return;
-    if (audioRef.current.src === audioUrl) return;
-    manualPlaybackActiveRef.current = false;
-    estadoPrevioPlayRef.current = false;
-    audioRef.current.cargar(audioUrl).catch(() => {});
-  }, [audioUrl]);
 
   useEffect(() => {
     if (cancionData?.bpm) bpmOriginalRef.current = cancionData.bpm;
   }, [cancionData?.bpm]);
 
-  // Carga + decodificación. Resuelve cuando el AudioBuffer está listo. Cache automático en ReproductorMP3.
-  const cargarPista = useCallback(async (url: string | null): Promise<void> => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (!url) {
-      manualPlaybackActiveRef.current = false;
-      estadoPrevioPlayRef.current = false;
-      return;
+  // Crea/reemplaza el HTMLAudio cuando cambia la URL. Una sola vez por canción.
+  const asegurarAudioCargado = useCallback(async (url: string): Promise<HTMLAudioElement | null> => {
+    if (audioRef.current && urlActualRef.current === url && audioRef.current.readyState >= 3) {
+      return audioRef.current;
     }
-    manualPlaybackActiveRef.current = false;
-    estadoPrevioPlayRef.current = false;
-    await audio.cargar(url);
-  }, []);
+    if (cargandoRef.current && urlActualRef.current === url) {
+      await cargandoRef.current;
+      return audioRef.current;
+    }
 
-  // Conversión tick→segundos usando BPM ORIGINAL (no el actual): playbackRate ya maneja la velocidad del usuario.
-  const calcularSegundosDesdeCheckpoint = useCallback((tick: number, bpmOriginal: number): number => {
+    if (audioRef.current && urlActualRef.current !== url) {
+      try { audioRef.current.pause(); } catch (_) {}
+      try { audioRef.current.src = ''; } catch (_) {}
+      audioRef.current = null;
+    }
+
+    const audio = new Audio(url);
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
+    audio.volume = volumen;
+    (audio as any).preservesPitch = true;
+    audioRef.current = audio;
+    urlActualRef.current = url;
+    try { motorAudioPro.conectarMediaElement(audio); } catch (_) {}
+
+    const promesaCarga = new Promise<void>((resolve) => {
+      if (audio.readyState >= 3) { resolve(); return; }
+      let resuelto = false;
+      const finish = () => { if (resuelto) return; resuelto = true; resolve(); };
+      const onCanPlay = () => { audio.removeEventListener('canplaythrough', onCanPlay); audio.removeEventListener('canplay', onCanPlay); finish(); };
+      audio.addEventListener('canplaythrough', onCanPlay);
+      audio.addEventListener('canplay', onCanPlay);
+      // Failsafe: si no llegan los eventos en 6s, sigue adelante (el seek puede causar buffering pero al menos no bloqueamos).
+      setTimeout(finish, 6000);
+    });
+    cargandoRef.current = promesaCarga;
+    try {
+      await promesaCarga;
+    } finally {
+      if (cargandoRef.current === promesaCarga) cargandoRef.current = null;
+    }
+    return audio;
+  }, [volumen]);
+
+  // Pre-cargar el audio en cuanto cambia la URL — para que el primer click ya tenga el buffer listo.
+  useEffect(() => {
+    if (!audioUrl) return;
+    asegurarAudioCargado(audioUrl).catch(() => {});
+  }, [audioUrl, asegurarAudioCargado]);
+
+  const cargarPista = useCallback(async (url: string | null): Promise<void> => {
+    if (!url) return;
+    await asegurarAudioCargado(url);
+  }, [asegurarAudioCargado]);
+
+  const calcularSegundosDesdeTick = useCallback((tick: number, bpmOriginal: number): number => {
     const ticksPorSegundo = (bpmOriginal / 60) * 192;
     return tick / ticksPorSegundo;
   }, []);
 
-  // Auto-play cuando reproduciendo cambia a true. Si el caller usó iniciarReproduccionSincronizada,
-  // manualPlaybackActiveRef ya está en true y este effect no interfiere.
-  useEffect(() => {
-    if (!audioRef.current || !audioUrl) return;
-    const audio = audioRef.current;
-    const debeReproducir = reproduciendo && !pausado;
-
-    if (debeReproducir && !estadoPrevioPlayRef.current) {
-      if (manualPlaybackActiveRef.current) {
-        estadoPrevioPlayRef.current = true;
-        return;
-      }
-      const tiempoInicio = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
-      audio.currentTime = tiempoInicio;
-      audio.play().catch(() => {});
-    } else if (!debeReproducir && estadoPrevioPlayRef.current) {
-      audio.pause();
-      manualPlaybackActiveRef.current = false;
-    }
-
-    estadoPrevioPlayRef.current = debeReproducir;
-  }, [reproduciendo, pausado, audioUrl, calcularSegundosDesdeCheckpoint]);
-
   /**
-   * Inicia reproducción sincronizada desde tickInicio. Con AudioBufferSourceNode el flujo es trivial:
-   * 1. Asegurar buffer cargado.
-   * 2. Setear currentTime = offset (instantáneo, sin seek async).
-   * 3. play() — start sample-accurate.
-   * 4. Devolver tickInicio EXACTO (no necesita calibrarse leyendo audio.currentTime: el inicio ES el offset pedido).
+   * Punto de entrada PRINCIPAL: hace seek + play en el HTMLAudio persistente y devuelve el anchor para
+   * sincronización del RAF. Pensado para ser llamado en CADA click de la barra: NO destruye el audio,
+   * NO crea sources nuevos, NO espera eventos asíncronos del audio (más allá del primer canplay si no
+   * se había cargado todavía). En el caso normal (audio ya cacheado) este método retorna en <2ms.
    */
-  const iniciarReproduccionSincronizada = useCallback(async (
+  const iniciarReproduccionAnclada = useCallback(async (
     tickInicio: number,
     opciones?: { bpmOriginal?: number; urlEsperada?: string | null }
-  ): Promise<{ tickInicialReal: number }> => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return { tickInicialReal: Math.max(0, Math.floor(tickInicio)) };
-    }
-
-    // Asegurar buffer cargado (puede que el caller llamó cargarPista pero queremos defensa extra).
-    const urlEsperada = opciones?.urlEsperada;
-    if (urlEsperada && audio.src !== urlEsperada) {
-      await audio.cargar(urlEsperada);
-    } else if (!audio.cargado) {
-      // Si aún se está cargando, esperar a canplaythrough con timeout.
-      await new Promise<void>((resolve) => {
-        if (audio.cargado) { resolve(); return; }
-        let done = false;
-        const finish = () => { if (done) return; done = true; resolve(); };
-        const handler = () => { audio.removeEventListener('canplaythrough', handler); finish(); };
-        audio.addEventListener('canplaythrough', handler);
-        setTimeout(finish, 5000);
-      });
-    }
-
-    if (!audio.cargado) {
-      return { tickInicialReal: Math.max(0, Math.floor(tickInicio)) };
-    }
-
-    manualPlaybackActiveRef.current = true;
+  ): Promise<AnchorReproduccion | null> => {
+    const url = opciones?.urlEsperada || audioUrl;
+    if (!url) return null;
 
     const bpmOriginal = (opciones?.bpmOriginal && opciones.bpmOriginal > 0)
       ? opciones.bpmOriginal
       : (bpmOriginalRef.current || 120);
     bpmOriginalRef.current = bpmOriginal;
-    const factor = (bpmOriginal / 60) * 192;
-    const offsetSegundos = (tickInicio / 192) * (60 / bpmOriginal);
 
-    // Pausar (no-op si ya paused) y posicionar en offset. Esto NO tiene seek async — es instantáneo.
-    audio.pause();
-    audio.currentTime = offsetSegundos;
+    const audio = await asegurarAudioCargado(url);
+    if (!audio) return null;
 
-    // play() inicia el AudioBufferSourceNode en motorAudioPro.tiempoActual con offset preciso.
-    // El evento 'playing' fires en el siguiente microtask (queueMicrotask en ReproductorMP3).
-    await new Promise<void>((resolve) => {
-      let done = false;
-      const finish = () => { if (done) return; done = true; resolve(); };
-      audio.addEventListener('playing', finish);
-      setTimeout(finish, 200);
-      audio.play().catch(() => finish());
-    });
+    const offsetSeg = (tickInicio / 192) * (60 / bpmOriginal);
+    const playbackRate = Math.max(0.1, Math.min(4, bpm / bpmOriginal));
 
-    // Tick inicial = el offset pedido (no necesita leer audio.currentTime: el start fue sample-accurate).
-    const tickInicialReal = Math.max(0, Math.floor(offsetSegundos * factor));
-
-    tickAnteriorRef.current = tickInicialReal;
-    estadoPrevioPlayRef.current = true;
-
-    return { tickInicialReal };
-  }, []);
-
-  // Scrub: cuando tickActual diverge significativamente del último valor visto, mover el audio.
-  useEffect(() => {
-    if (!audioRef.current || !audioUrl) return;
-    const diff = Math.abs(tickActual - tickAnteriorRef.current);
-    if (diff > 50) {
-      const tiempoSeek = calcularSegundosDesdeCheckpoint(tickActual, bpmOriginalRef.current);
-      audioRef.current.currentTime = tiempoSeek;
+    // Asegurar que el AudioContext esté running (mobile autoplay policy).
+    const ctx = motorAudioPro.contextoAudio;
+    if (ctx.state !== 'running') {
+      try { await ctx.resume(); } catch (_) {}
     }
-    tickAnteriorRef.current = tickActual;
-  }, [tickActual, reproduciendo, audioUrl, calcularSegundosDesdeCheckpoint]);
 
-  // playbackRate sigue al BPM transport. CRÍTICO incluir cancionData?.bpm como dependencia
-  // (sin esto, al cargar canción con bpmOriginal distinto, playbackRate quedaba stale → drift).
+    // Aplicar playbackRate ANTES del seek para que el primer instante de audio salga al tempo correcto.
+    audio.playbackRate = playbackRate;
+    (audio as any).preservesPitch = true;
+
+    // Seek instantáneo: HTMLAudio.currentTime = X completa en microsegundos para buffers cacheados.
+    try { audio.currentTime = offsetSeg; } catch (_) {}
+
+    // [SYNC DEBUG] medir si el seek se aplicó en sincrónico (HTMLAudio cacheado debería) y si el
+    // evento 'seeked' coincide con offsetSeg pedido (decoder honra la posición exacta?).
+    console.log('[SYNC] post-seek immediate', {
+      pedido: offsetSeg,
+      real: audio.currentTime,
+      deltaSeg: audio.currentTime - offsetSeg,
+      paused: audio.paused,
+      readyState: audio.readyState,
+      seeking: audio.seeking,
+    });
+    const onSeekedDebug = () => {
+      audio.removeEventListener('seeked', onSeekedDebug);
+      console.log('[SYNC] seeked event', {
+        pedido: offsetSeg,
+        real: audio.currentTime,
+        deltaSeg: audio.currentTime - offsetSeg,
+        paused: audio.paused,
+      });
+    };
+    audio.addEventListener('seeked', onSeekedDebug);
+
+    // Play fire-and-forget: ya estaba sonando? .play() es no-op si no estaba paused. Si estaba paused
+    // o el seek causó pause interno, retomamos. NUNCA awaiteamos el evento 'playing' — eso introduce
+    // jitter de 5-50ms variable según browser.
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    }
+
+    manualPlaybackActiveRef.current = true;
+
+    // Anchor: el caller anclará su RAF a contextStartTime. El audio empezará a sonar dentro de los
+    // próximos 1-2 frames; durante esos frames el tick queda congelado en tickInicialReal y luego
+    // empieza a contar al ritmo del bpm. Margen 20ms ≈ 1 frame.
+    const contextStartTime = motorAudioPro.tiempoActual + MARGEN_PROGRAMACION_SEG;
+    const tickInicialReal = Math.max(0, Math.floor(tickInicio));
+    tickAnteriorRef.current = tickInicialReal;
+
+    return {
+      contextStartTime,
+      offsetSeg,
+      bpmOriginal,
+      tickInicialReal,
+      audio,
+    };
+  }, [audioUrl, bpm, asegurarAudioCargado]);
+
+  // Compatibilidad legacy: equivalente al anterior, implementado sobre la nueva API anclada.
+  const iniciarReproduccionSincronizada = useCallback(async (
+    tickInicio: number,
+    opciones?: { bpmOriginal?: number; urlEsperada?: string | null }
+  ): Promise<{ tickInicialReal: number }> => {
+    const anchor = await iniciarReproduccionAnclada(tickInicio, opciones);
+    if (!anchor) return { tickInicialReal: Math.max(0, Math.floor(tickInicio)) };
+    return { tickInicialReal: anchor.tickInicialReal };
+  }, [iniciarReproduccionAnclada]);
+
+  // Pause/resume del audio cuando hero.pausado cambia. El PLAY inicial pasa por iniciarReproduccionAnclada.
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (!manualPlaybackActiveRef.current) return;
+    const debeReproducir = reproduciendo && !pausado;
+    if (debeReproducir && audio.paused) {
+      audio.play().catch(() => {});
+    } else if (!debeReproducir && !audio.paused) {
+      try { audio.pause(); } catch (_) {}
+    }
+  }, [reproduciendo, pausado]);
+
+  // (Eliminado el useEffect "scrub externo" que hacía seek redundante en cada cambio de tickActual con
+  // diff > 50. Causaba loops con el resync periódico del RAF: cada resync brincaba tickActual ~60 ticks,
+  // este efecto disparaba audio.currentTime = X, audio entraba en 'seeking', onSeeked re-disparaba
+  // capturarCheckpoint, setTickActual → loop. Múltiples seeks pendientes en la queue del HTMLAudio
+  // eventualmente trababan el reproductor. buscarTick ya hace audio.currentTime síncronamente, no se
+  // necesita red de seguridad aquí.)
+
+  // playbackRate sigue al BPM transport en vivo.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
     const bpmOrig = (cancionData?.bpm && cancionData.bpm > 0) ? cancionData.bpm : (bpmOriginalRef.current || 120);
-    const velocidad = Math.min(4, Math.max(0.1, bpm / bpmOrig));
-    audioRef.current.playbackRate = velocidad;
+    audio.playbackRate = Math.max(0.1, Math.min(4, bpm / bpmOrig));
+    (audio as any).preservesPitch = true;
   }, [bpm, cancionData?.bpm]);
 
   useEffect(() => {
@@ -203,6 +247,7 @@ export const useAudioFondoPracticaLibre = ({
 
   return {
     audioRef,
+    iniciarReproduccionAnclada,
     iniciarReproduccionSincronizada,
     cargarPista,
   };

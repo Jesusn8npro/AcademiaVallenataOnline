@@ -141,15 +141,28 @@ const BarraTimelineProMax: React.FC<BarraTimelineProMaxProps> = ({
             type="range"
             min={0}
             max={safeMax}
-            defaultValue={0}
+            // Modo admin (sin sliderRef externo): CONTROLADO con value={tickLocal} — igual que BarraTransporte
+            // de ModoMaestro/Competencia. React mantiene sincronizado el slider con el state.
+            // Modo modal (con sliderRef externo de ModalEditorSecuencia): UN-CONTROLLED con defaultValue —
+            // el modal actualiza el value imperativamente vía ref dentro de su propio RAF.
+            {...(sliderRef ? { defaultValue: 0 } : { value: tickLocal })}
             step={1}
             className="btpm-seek"
             onPointerDown={() => { efectivoIsSeekingRef.current = true; }}
             onPointerUp={e => {
               efectivoIsSeekingRef.current = false;
-              handleSeek(Number((e.target as HTMLInputElement).value));
+              // En modal mode (sin onSeleccionarSeccion) replicar el patrón del botón "Escuchar desde el
+              // punto de entrada": al soltar el slider, si el audio está pausado, arrancar play. El modal
+              // necesita esto porque su slider un-controlled solo dispara handleSeek (que mueve cursor) y
+              // sin togglePlay no arrancaría el play.
+              if (!onSeleccionarSeccion && !reproduciendoLocal) togglePlay();
+              void e;
             }}
             onPointerCancel={() => { efectivoIsSeekingRef.current = false; }}
+            // En cada onChange dispara handleSeek directo (igual que BarraTransporte de ModoMaestro).
+            // Funciona porque handleSeek en admin llama hero.buscarTick que es LIGHT — solo seekea
+            // audio.currentTime + actualiza tickRef, sin reprogramar audio. Múltiples llamadas en un
+            // drag son inocuas. En modal el handleSeek también es light (mueve cursor + RAF local).
             onChange={e => handleSeek(Number(e.target.value))}
           />
         </div>

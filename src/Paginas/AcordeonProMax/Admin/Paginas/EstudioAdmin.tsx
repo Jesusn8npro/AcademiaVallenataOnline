@@ -1,12 +1,13 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import CuerpoAcordeonBase from '../../../../Core/componentes/CuerpoAcordeon';
 import BarraSuperiorAdmin from '../Componentes/BarraSuperiorAdmin';
-import BarraTimelineProMax from '../Componentes/BarraTimelineProMax';
+import BarraTransporte from '../../Modos/BarraTransporte';
 import PanelLateralAdmin from '../Componentes/PanelLateralAdmin';
 import ModalEditorSecuencia from '../Componentes/ModalEditorSecuencia';
 import ModalesEstudioAdmin from '../Componentes/ModalesEstudioAdmin';
 import FondoEspacialProMax from '../../Componentes/FondoEspacialProMax';
 import { useEstudioAdmin } from '../Hooks/useEstudioAdmin';
+import { useReproductorAdmin } from '../Hooks/useReproductorAdmin';
 import { formatearDuracion } from '../../PracticaLibre/Utilidades/SecuenciaLogic';
 import '../../PracticaLibre/EstudioPracticaLibre.css';
 import './EstudioAdmin.css';
@@ -25,12 +26,20 @@ const EstudioAdmin: React.FC = () => {
     manejarGrabacionSesion, modalesProps,
   } = useEstudioAdmin();
 
-  const seccionesHero = useMemo(() => {
-    const raw = libreria.cancionActivaLibreria?.secciones;
-    if (!raw) return [];
-    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
-    return Array.isArray(raw) ? raw : [];
+  // Reproductor independiente solo para EstudioAdmin (transport de la canción de librería).
+  // No comparte código con useReproductorHero — usa audio.currentTime como única fuente de verdad.
+  // Hero sigue manejando grabaciones; este hook solo maneja play/pause/seek de la pista.
+  const cancionParaReproductor = useMemo(() => {
+    if (!libreria.cancionActivaLibreria) return null;
+    return libreria.cancionActivaLibreria;
   }, [libreria.cancionActivaLibreria]);
+
+  const reproductor = useReproductorAdmin({
+    audio: audioRef.current,
+    cancion: cancionParaReproductor,
+    bpmTransport: hero.bpm,
+    logica,
+  });
 
   return (
     <section className="estudio-practica-libre estudio-admin">
@@ -94,56 +103,42 @@ const EstudioAdmin: React.FC = () => {
             <div id="barra-timeline-slot" className="estudio-practica-libre-transport-fixed" />
           )}
 
-          {/* Transport hero: solo cuando no hay modal editor abierto */}
-          {!rec.cancionEnModalEditor && (hero.reproduciendo || rec.hayGrabacionActiva || Boolean(libreria.pistaUrl)) && (
+          {/* Transport: usa el reproductor INDEPENDIENTE de Admin. No pasa por useReproductorHero. */}
+          {!rec.cancionEnModalEditor && (reproductor.reproduciendo || rec.hayGrabacionActiva || Boolean(libreria.pistaUrl)) && (
             <div className="estudio-practica-libre-transport-fixed">
-              <BarraTimelineProMax
-                secciones={seccionesHero}
-                totalTicksModal={rec.totalTicksTransporte || 1}
-                bpmModal={rec.grabandoRecPro ? libreria.bpmHero : hero.bpm}
-                bpmOriginal={libreria.cancionActivaLibreria?.bpm || 0}
-                setBpmModal={rec.grabandoRecPro ? libreria.setBpmHero : hero.cambiarBpm}
-                onCambiarBpm={rec.grabandoRecPro ? libreria.setBpmHero : hero.cambiarBpm}
-                secuenciaEditada={rec.secuenciaVisualActiva || []}
-                tickLocal={hero.tickActual || 0}
-                // reproduciendoLocal controla el ícono del botón (Pause vs Play).
-                // Cuando hero.pausado=true, el reproductor sigue en sesión
-                // (reproduciendo=true) pero está pausado — debe mostrar Play.
-                reproduciendoLocal={(hero.reproduciendo && !hero.pausado) || rec.hayGrabacionActiva}
-                handleSeek={(tick) => {
-                  // Si está reproduciendo, re-arrancar el flujo completo (pausa audio → seek → canplay → play → 'playing'
-                  // → reproducirSecuencia con tickInicialOverride). Sin esto, buscarTick directo solo mueve el reloj
-                  // pero el audio queda donde estaba o bufferea sin sincronización → notas adelantadas/atrasadas vs MP3.
-                  // Si está pausado o detenido, basta con buscarTick (mueve cursor sin arrancar play).
-                  if (hero.reproduciendo && !hero.pausado && libreria.cancionActivaLibreria && !hero.grabaciones.grabando && !rec.grabandoRecPro) {
-                    rec.reproducirCancionActivaDesdeTick(tick);
-                  } else {
-                    hero.buscarTick(tick);
+              <BarraTransporte
+                reproduciendo={reproductor.reproduciendo}
+                pausado={reproductor.pausado}
+                onAlternarPausa={() => {
+                  if (hero.grabaciones.grabando) { hero.grabaciones.detenerGrabacionPracticaLibre(); return; }
+                  if (rec.grabandoRecPro) { rec.detenerGrabacionRecPro(); return; }
+                  // Si no hay reproducción activa todavía, arrancar desde tick 0 (o el actual).
+                  if (!reproductor.reproduciendo && libreria.cancionActivaLibreria) {
+                    void reproductor.play(reproductor.tickActual || 0);
+                    return;
                   }
+                  reproductor.alternarPausa();
                 }}
-                handleReset={() => hero.buscarTick(0)}
-                saltarSegundos={(seg) => {
-                  const nuevoTick = Math.max(0, Math.min(rec.totalTicksTransporte, (hero.tickActual || 0) + Math.round(seg * (hero.bpm / 60) * 192)));
-                  if (hero.reproduciendo && !hero.pausado && libreria.cancionActivaLibreria && !hero.grabaciones.grabando && !rec.grabandoRecPro) {
-                    rec.reproducirCancionActivaDesdeTick(nuevoTick);
-                  } else {
-                    hero.buscarTick(nuevoTick);
-                  }
-                }}
-                togglePlay={() => {
+                onDetener={() => {
                   if (hero.grabaciones.grabando) hero.grabaciones.detenerGrabacionPracticaLibre();
-                  else if (rec.grabandoRecPro) rec.detenerGrabacionRecPro();
-                  else if (!hero.reproduciendo && libreria.cancionActivaLibreria) rec.reproducirCancionActivaDesdeTick(hero.tickActual || 0);
-                  else hero.alternarPausaReproduccion();
+                  if (rec.grabandoRecPro) rec.detenerGrabacionRecPro();
+                  reproductor.detener();
                 }}
-                onSeleccionarSeccion={(tickInicio) => {
-                  // Atómico: pasa el tickInicio explícito → reproducirCancionActivaDesdeTick lo lleva a iniciarReproduccionSincronizada
-                  // como offset real del seek, sin depender de hero.tickActual (state stale).
+                tickActual={reproductor.tickActual}
+                totalTicks={Math.max(reproductor.totalTicks, rec.totalTicksTransporte || 1)}
+                onBuscarTick={(tick) => {
                   if (hero.grabaciones.grabando || rec.grabandoRecPro) return;
-                  rec.reproducirCancionActivaDesdeTick(tickInicio);
+                  reproductor.buscarTick(tick);
                 }}
-                metronomoActivo={metronomoPro.activo}
-                onToggleMetronomo={() => metronomoPro.activo ? metronomoPro.detener() : metronomoPro.iniciar()}
+                bpm={hero.bpm}
+                loopAB={hero.loopAB}
+                onMarcarLoopInicio={hero.marcarLoopInicio}
+                onMarcarLoopFin={hero.marcarLoopFin}
+                onActualizarLoopInicio={hero.actualizarLoopInicioTick}
+                onActualizarLoopFin={hero.actualizarLoopFinTick}
+                onAlternarLoop={hero.alternarLoopAB}
+                onLimpiarLoop={hero.limpiarLoopAB}
+                onCambiarBpm={hero.cambiarBpm}
               />
             </div>
           )}

@@ -1,0 +1,141 @@
+/* ──────────────────────────────────────────────────────────
+   HEADER JUEGO SIMULADOR — Mobile-first compacto
+   ────────────────────────────────────────────────────────── */
+
+.header-juego-sim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 14px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 100%);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+    height: 48px;
+    box-sizing: border-box;
+}
+
+.hjs-izq, .hjs-der {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.hjs-centro {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.hjs-titulo {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+
+.hjs-autor {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.55);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 1px;
+}
+
+/* Botones */
+.hjs-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.hjs-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.hjs-btn:active { transform: scale(0.93); }
+
+/* Vida */
+.hjs-vida {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fca5a5;
+}
+
+/* Racha + multiplicador */
+.hjs-racha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: #fbbf24;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+.hjs-racha-combo {
+    font-size: 0.55rem;
+    color: rgba(251, 191, 36, 0.75);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+}
+
+/* Puntos */
+.hjs-puntos {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+}
+.hjs-puntos-valor {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+.hjs-puntos-label {
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1.5px;
+    margin-top: 1px;
+}
+
+/* Mobile chico — oculta autor + combo */
+@media (max-width: 480px) {
+    .header-juego-sim { padding: 6px 10px; gap: 6px; height: 44px; }
+    .hjs-titulo { font-size: 0.82rem; }
+    .hjs-autor { display: none; }
+    .hjs-racha-combo { display: none; }
+    .hjs-vida { padding: 4px 8px; font-size: 0.7rem; }
+    .hjs-racha { padding: 4px 8px; font-size: 0.78rem; }
+    .hjs-puntos-valor { font-size: 0.92rem; }
+    .hjs-btn { width: 30px; height: 30px; }
+}
