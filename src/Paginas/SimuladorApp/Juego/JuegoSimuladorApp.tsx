@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
-import ContenedorBajos from '../Componentes/ContenedorBajos';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
 import PantallaResultados from '../../AcordeonProMax/Componentes/PantallaResultados';
 import PantallaGameOverProMax from '../../AcordeonProMax/Componentes/PantallaGameOverProMax';
@@ -45,7 +44,6 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     const x = useMotionValue(0);
     const trenRef = useRef<HTMLDivElement>(null);
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
-    const [bajosVisible, setBajosVisible] = useState(false);
 
     // ─── Inicializar el juego (una vez) ─────────────────────
     useEffect(() => {
@@ -81,7 +79,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     const logica = hero?.logica;
 
     // Conecta los pointer events de los pitos a hero.logica (mismo motor que ProMax)
-    const { manejarCambioFuelle, limpiarGeometria } = usePointerAcordeon({
+    const { limpiarGeometria } = usePointerAcordeon({
         x,
         logica: logica || ({} as any),
         actualizarVisualBoton,
@@ -171,17 +169,6 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
     return (
         <div className={`juego-sim-root simulador-app-root modo-${logica?.direccion || 'halar'}`}>
-            <ContenedorBajos
-                visible={bajosVisible}
-                onOpen={() => setBajosVisible(true)}
-                onClose={() => setBajosVisible(false)}
-                logica={logica}
-                escala={1}
-                manejarCambioFuelle={manejarCambioFuelle}
-                desactivarAudio={hero?.estadoJuego === 'pausado'}
-                vistaDoble={false}
-            />
-
             <HeaderJuegoSimulador
                 titulo={cancion?.titulo || 'Cargando...'}
                 autor={cancion?.autor}
