@@ -52,6 +52,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
+
 .config-miniatura img {
     width: 100%;
     height: 100%;
@@ -141,12 +142,17 @@
     background-position: right 14px center;
     transition: border-color 0.18s, background-color 0.18s;
 }
-.config-select:hover { background-color: rgba(255, 255, 255, 0.08); }
+
+.config-select:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
 .config-select:focus {
     outline: none;
     border-color: #60a5fa;
     box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
 }
+
 .config-select option {
     background: #1a1d2e;
     color: #fff;
@@ -168,10 +174,24 @@
     font-weight: 600;
     transition: background 0.18s;
 }
-.config-toggle:hover { background: rgba(255, 255, 255, 0.08); }
-.config-toggle > svg { color: #93c5fd; flex-shrink: 0; }
-.config-toggle > span:first-of-type { flex: 1; text-align: left; }
-.config-toggle.on > svg { color: #22c55e; }
+
+.config-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.config-toggle>svg {
+    color: #93c5fd;
+    flex-shrink: 0;
+}
+
+.config-toggle>span:first-of-type {
+    flex: 1;
+    text-align: left;
+}
+
+.config-toggle.on>svg {
+    color: #22c55e;
+}
 
 .config-toggle-switch {
     width: 38px;
@@ -182,7 +202,11 @@
     transition: background 0.22s;
     flex-shrink: 0;
 }
-.config-toggle.on .config-toggle-switch { background: #22c55e; }
+
+.config-toggle.on .config-toggle-switch {
+    background: #22c55e;
+}
+
 .config-toggle-knob {
     position: absolute;
     top: 2px;
@@ -194,7 +218,10 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: transform 0.22s;
 }
-.config-toggle.on .config-toggle-knob { transform: translateX(16px); }
+
+.config-toggle.on .config-toggle-knob {
+    transform: translateX(16px);
+}
 
 /* ─── FOOTER ──────────────────────────────────────────── */
 
@@ -219,7 +246,10 @@
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.18s, background 0.18s;
 }
-.config-btn:active { transform: translateY(1px); }
+
+.config-btn:active {
+    transform: translateY(1px);
+}
 
 .config-btn-volver {
     background: rgba(255, 255, 255, 0.06);
@@ -227,6 +257,7 @@
     color: rgba(255, 255, 255, 0.85);
     flex: 0 0 auto;
 }
+
 .config-btn-volver:hover {
     background: rgba(255, 255, 255, 0.12);
     color: #fff;
@@ -239,46 +270,8 @@
     box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
     letter-spacing: 1px;
 }
+
 .config-btn-empezar:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 22px rgba(99, 102, 241, 0.5);
-}
-
-/* ─── MOBILE LANDSCAPE (acordeon en mobile horizontal) ──── */
-
-@media (orientation: landscape) and (max-height: 480px) {
-    .config-overlay { padding: 8px; }
-    .config-panel {
-        max-width: 580px;
-        padding: 14px 18px;
-        gap: 12px;
-    }
-
-    .config-header { padding-bottom: 10px; gap: 12px; }
-    .config-miniatura { width: 60px; height: 60px; border-radius: 12px; }
-    .config-titulo { font-size: 1rem; }
-    .config-autor { font-size: 0.75rem; }
-    .config-tono { font-size: 0.65rem; padding: 2px 8px; }
-
-    .config-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 14px;
-    }
-    .config-field { gap: 4px; }
-    .config-field-label { font-size: 0.65rem; }
-    .config-select { padding: 9px 32px 9px 12px; font-size: 0.85rem; }
-    .config-toggle {
-        grid-column: 1 / -1;
-        padding: 9px 12px;
-        font-size: 0.82rem;
-    }
-
-    .config-btn { padding: 10px 16px; font-size: 0.85rem; }
-}
-
-@media (max-width: 380px) {
-    .config-panel { padding: 18px 16px 14px; gap: 14px; }
-    .config-miniatura { width: 64px; height: 64px; }
-    .config-titulo { font-size: 1rem; }
 }
