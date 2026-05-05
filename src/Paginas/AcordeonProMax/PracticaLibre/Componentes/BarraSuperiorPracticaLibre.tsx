@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  BookOpen,
   Image,
   Mic2,
   Music2,
   PauseCircle,
   SlidersHorizontal,
-  Sparkles,
   Volume2,
   Circle,
   Layers,
@@ -14,7 +12,6 @@ import {
   Usb,
   Music,
   Home,
-  LogOut,
   Settings,
 } from 'lucide-react';
 import type { SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
@@ -36,11 +33,13 @@ interface BarraSuperiorPracticaLibreProps {
   esp32Conectado?: boolean;
 }
 
+// "Libreria" se quitó del estudiante: las clases de canciones se ven directamente en
+// /acordeon-pro-max (módulo principal). "Teoria" tampoco — la pestaña no estaba
+// funcionando y se eliminó hasta que esté lista. Acá solo controles del estudio.
 const ACCIONES_PANEL: Array<{ clave: SeccionPanelPracticaLibre; label: string; icono: React.ReactNode }> = [
   { clave: 'sonido', label: 'Sonido', icono: <Volume2 size={15} /> },
   { clave: 'modelos', label: 'Modelos', icono: <Image size={15} /> },
-  { clave: 'pistas', label: 'Pistas', icono: <Music2 size={15} /> },
-  { clave: 'teoria', label: 'Teoria', icono: <BookOpen size={15} /> },
+  { clave: 'pistas', label: 'Pistas y Estudio', icono: <Music2 size={15} /> },
   { clave: 'efectos', label: 'FX', icono: <SlidersHorizontal size={15} /> },
 ];
 
@@ -126,20 +125,11 @@ const BarraSuperiorPracticaLibre: React.FC<BarraSuperiorPracticaLibreProps> = ({
           className={`estudio-practica-libre-btn-grabar ${grabandoSesion ? 'grabando' : ''}`}
           onClick={onAlternarGrabacion}
           disabled={grabandoRecPro}
-          title={grabandoRecPro ? 'El REC Pro esta activo en la pestana REC.' : 'Grabar una sesion personal'}
+          title={grabandoRecPro ? 'El REC Pro esta activo en la pestana REC.' : 'Acceso rápido — el modo se elige en la pestaña Pistas y Estudio'}
         >
           {grabandoSesion ? <PauseCircle size={16} /> : <Mic2 size={16} />}
-          {grabandoSesion ? `Detener ${tiempoGrabacionSesion}` : 'Grabar sesion'}
+          {grabandoSesion ? `${tiempoGrabacionSesion}` : 'REC'}
         </button>
-
-        <div className={`estudio-practica-libre-pill ${grabandoSesion ? 'grabando' : ''}`}>
-          <Sparkles size={14} />
-          {grabandoSesion
-            ? `Grabando sesion ${tiempoGrabacionSesion}`
-            : grabandoRecPro
-              ? 'REC Pro activo'
-              : 'Studio listo'}
-        </div>
       </div>
     </div>
   );

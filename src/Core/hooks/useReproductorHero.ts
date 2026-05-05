@@ -54,11 +54,6 @@ export const useReproductorHero = (
     // Listeners registrados por setAudioSync.
     const audioSyncListenersRef = useRef<{ audio: any; onPlaying: () => void; onSeeked: () => void; onPause: () => void } | null>(null);
 
-    // [SYNC DEBUG] Refs temporales para diagnóstico de desync MP3↔notas. Quitar tras encontrar la causa.
-    const expectedAnchorRef = useRef<{ tickInicialReal: number; bpmOriginal: number; contextStartTime: number; offsetSeg: number } | null>(null);
-    const logPrimerFrameRef = useRef(false);
-    const playingLoggedRef = useRef(false);
-
     // (Refs del ancla eliminados — el RAF ahora lee audio.currentTime directo, sin precomputo
     // de instante futuro. Patrón ModoMaestro/Competencia: simple, sample-accurate por audio,
     // sin race conditions. arrancarReproduccionAnclada se mantiene como API pero internamente
@@ -92,7 +87,7 @@ export const useReproductorHero = (
             // NO escuchamos 'pause': muchos browsers disparan 'pause' interno durante backward seeks,
             // lo que apagaba audioSyncSonandoRef y mataba el resync periódico para siempre. En su
             // lugar, el resync lee audio.paused directamente cada vuelta (tiempo real, sin estado stale).
-            const capturarCheckpoint = (origenEvento?: string) => {
+            const capturarCheckpoint = () => {
                 audioStartContextRef.current = motorAudioPro.tiempoActual;
                 audioStartPositionRef.current = audio.currentTime;
                 audioSyncSonandoRef.current = true;
@@ -101,37 +96,14 @@ export const useReproductorHero = (
                     const bpmOrig = bpmOriginalSyncRef.current || 120;
                     const tickFromAudio = ct * (bpmOrig / 60) * 192;
                     if (isFinite(tickFromAudio) && tickFromAudio >= 0) {
-                        // [SYNC DEBUG]
-                        const expected = expectedAnchorRef.current;
-                        if (origenEvento === 'playing' && !playingLoggedRef.current && expected) {
-                            playingLoggedRef.current = true;
-                            const ctxNow = motorAudioPro.tiempoActual;
-                            console.log('[SYNC] capturarCheckpoint(playing)', {
-                                audioCurrentTime: ct,
-                                offsetSegEsperado: expected.offsetSeg,
-                                deltaSeg: ct - expected.offsetSeg,
-                                tickFromAudio,
-                                tickEsperado: expected.tickInicialReal,
-                                deltaTicks: tickFromAudio - expected.tickInicialReal,
-                                tickRefAntes: tickRef.current,
-                                msDesdeArranque: (ctxNow - expected.contextStartTime) * 1000,
-                            });
-                        } else if (origenEvento) {
-                            console.log(`[SYNC] capturarCheckpoint(${origenEvento})`, {
-                                audioCurrentTime: ct,
-                                tickFromAudio,
-                                tickRefAntes: tickRef.current,
-                                deltaTicks: tickFromAudio - tickRef.current,
-                            });
-                        }
                         tickRef.current = tickFromAudio;
                         checkpointTickRef.current = tickFromAudio;
                         checkpointTimeRef.current = motorAudioPro.tiempoActual;
                     }
                 }
             };
-            const onPlaying = () => capturarCheckpoint('playing');
-            const onSeeked = () => { if (!audio.paused) capturarCheckpoint('seeked'); };
+            const onPlaying = capturarCheckpoint;
+            const onSeeked = () => { if (!audio.paused) capturarCheckpoint(); };
             const onPause = () => { /* no-op intencional: ver comentario arriba */ };
             audio.addEventListener('playing', onPlaying);
             audio.addEventListener('seeked', onSeeked);
@@ -285,28 +257,6 @@ export const useReproductorHero = (
         }
         const deltaTicksFrame = nuevoTickAbsoluto - tickRef.current;
         tickRef.current = nuevoTickAbsoluto;
-
-        // [SYNC DEBUG] primer frame post-arranque del camino anclado
-        if (logPrimerFrameRef.current) {
-            logPrimerFrameRef.current = false;
-            const audioForLog = audioSyncRef.current;
-            const ct = audioForLog?.currentTime ?? null;
-            const bpmOrigForLog = bpmOriginalSyncRef.current || 120;
-            const tickFromAudioPorRAF = ct != null ? ct * (bpmOrigForLog / 60) * resolucion : null;
-            console.log('[SYNC] primerFrameRAF', {
-                audioCurrentTime: ct,
-                tickFromAudio: tickFromAudioPorRAF,
-                tickFromContext: nuevoTickAbsoluto,
-                tickRef: tickRef.current,
-                checkpointTick: checkpointTickRef.current,
-                checkpointTime: checkpointTimeRef.current,
-                contextNow: ahora,
-                msDesdeCheckpoint: (ahora - checkpointTimeRef.current) * 1000,
-                audioPaused: audioForLog?.paused,
-                audioReadyState: audioForLog?.readyState,
-                audioSeeking: audioForLog?.seeking,
-            });
-        }
 
         if (onBeatRef.current) {
             const beatIndex = Math.floor(tickRef.current / resolucion);
@@ -532,28 +482,6 @@ export const useReproductorHero = (
         anchor: { contextStartTime: number; tickInicialReal: number; bpmOriginal: number; audio: any },
     ) => {
         detenerReproduccion();
-
-        // [SYNC DEBUG] preparar refs antes de cablear setAudioSync para que onPlaying tenga contexto
-        const offsetSegEsperado = (anchor.tickInicialReal / 192) * (60 / (anchor.bpmOriginal || 120));
-        expectedAnchorRef.current = {
-            tickInicialReal: anchor.tickInicialReal,
-            bpmOriginal: anchor.bpmOriginal,
-            contextStartTime: anchor.contextStartTime,
-            offsetSeg: offsetSegEsperado,
-        };
-        logPrimerFrameRef.current = true;
-        playingLoggedRef.current = false;
-        console.log('[SYNC] arrancarReproduccionAnclada', {
-            tickInicialReal: anchor.tickInicialReal,
-            bpmOriginal: anchor.bpmOriginal,
-            offsetSegEsperado,
-            contextStartTime: anchor.contextStartTime,
-            contextNow: motorAudioPro.tiempoActual,
-            msHastaContextStart: (anchor.contextStartTime - motorAudioPro.tiempoActual) * 1000,
-            audioCurrentTime: anchor.audio?.currentTime,
-            audioPaused: anchor.audio?.paused,
-            audioReadyState: anchor.audio?.readyState,
-        });
 
         let secuencia: any = (cancion as any).secuencia || (cancion as any).secuencia_json;
         if (typeof secuencia === 'string') {

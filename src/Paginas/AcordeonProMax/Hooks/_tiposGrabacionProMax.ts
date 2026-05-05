@@ -1,5 +1,6 @@
 import type { MutableRefObject } from 'react';
 import type { CancionHeroConTonalidad, EstadisticasPartida, ModoPractica, NotaHero } from '../TiposProMax';
+import type { Seccion } from '../tiposSecciones';
 
 export type TipoGrabacionPendiente = 'competencia' | 'practica_libre';
 
@@ -31,4 +32,7 @@ export interface UseGrabacionProMaxParams {
     cancionRef: MutableRefObject<CancionHeroConTonalidad | null>;
     estadisticasRef: MutableRefObject<EstadisticasPartida>;
     modoPracticaRef: MutableRefObject<ModoPractica>;
+    /** Sección actualmente seleccionada — incluida en metadata para que el replay arranque
+     *  desde el mismo offset que el alumno jugó. */
+    seccionRef?: MutableRefObject<Seccion | null>;
 }

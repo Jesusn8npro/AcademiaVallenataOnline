@@ -36,30 +36,34 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
 
             {seccionActiva === 'personal' && (
               <div className="ipp-contenido-seccion">
-                <div className="ipp-grid-form ipp-grid-3-columnas">
-                  <div className="ipp-campo">
-                    <label htmlFor="nombre">Nombre</label>
-                    <input id="nombre" type="text" value={form.nombre || ''} onChange={e => cambiar('nombre', e.target.value)} placeholder="Tu nombre" className="ipp-input-principal" />
+                <div className="ipp-stack-secciones">
+                  <div className="ipp-fila-grid ipp-fila-3">
+                    <div className="ipp-campo">
+                      <label htmlFor="nombre">Nombre</label>
+                      <input id="nombre" type="text" value={form.nombre || ''} onChange={e => cambiar('nombre', e.target.value)} placeholder="Tu nombre" className="ipp-input-principal" />
+                    </div>
+                    <div className="ipp-campo">
+                      <label htmlFor="apellido">Apellido</label>
+                      <input id="apellido" type="text" value={form.apellido || ''} onChange={e => cambiar('apellido', e.target.value)} placeholder="Tu apellido" className="ipp-input-principal" />
+                    </div>
+                    <div className="ipp-campo">
+                      <label htmlFor="nombre_usuario">Usuario</label>
+                      <input id="nombre_usuario" type="text" value={form.nombre_usuario || ''} onChange={e => cambiar('nombre_usuario', e.target.value)} placeholder="@usuario" className="ipp-input-principal" />
+                    </div>
+                  </div>
+                  <div className="ipp-fila-grid ipp-fila-2">
+                    <div className="ipp-campo">
+                      <label htmlFor="fecha_nacimiento">Fecha de Nacimiento</label>
+                      <input id="fecha_nacimiento" type="date" value={form.fecha_nacimiento || ''} onChange={e => cambiar('fecha_nacimiento', e.target.value)} className="ipp-input-principal" />
+                    </div>
+                    <div className="ipp-campo">
+                      <label htmlFor="profesion">Profesión</label>
+                      <input id="profesion" type="text" value={form.profesion || ''} onChange={e => cambiar('profesion', e.target.value)} placeholder="Tu profesión" className="ipp-input-principal" />
+                    </div>
                   </div>
                   <div className="ipp-campo">
-                    <label htmlFor="apellido">Apellido</label>
-                    <input id="apellido" type="text" value={form.apellido || ''} onChange={e => cambiar('apellido', e.target.value)} placeholder="Tu apellido" className="ipp-input-principal" />
-                  </div>
-                  <div className="ipp-campo">
-                    <label htmlFor="nombre_usuario">Usuario</label>
-                    <input id="nombre_usuario" type="text" value={form.nombre_usuario || ''} onChange={e => cambiar('nombre_usuario', e.target.value)} placeholder="@usuario" className="ipp-input-principal" />
-                  </div>
-                  <div className="ipp-campo ipp-campo-completo">
                     <label htmlFor="biografia">Biografía</label>
                     <textarea id="biografia" value={form.biografia || ''} onChange={e => cambiar('biografia', e.target.value)} placeholder="Cuéntanos sobre ti..." className="ipp-textarea-principal" rows={3}></textarea>
-                  </div>
-                  <div className="ipp-campo">
-                    <label htmlFor="fecha_nacimiento">Fecha de Nacimiento</label>
-                    <input id="fecha_nacimiento" type="date" value={form.fecha_nacimiento || ''} onChange={e => cambiar('fecha_nacimiento', e.target.value)} className="ipp-input-principal" />
-                  </div>
-                  <div className="ipp-campo">
-                    <label htmlFor="profesion">Profesión</label>
-                    <input id="profesion" type="text" value={form.profesion || ''} onChange={e => cambiar('profesion', e.target.value)} placeholder="Tu profesión" className="ipp-input-principal" />
                   </div>
                 </div>
               </div>
@@ -80,29 +84,31 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
 
             {seccionActiva === 'ubicacion' && (
               <div className="ipp-contenido-seccion">
-                <div className="ipp-grid-form ipp-grid-3-columnas">
-                  <div className="ipp-campo">
-                    <label htmlFor="pais">País</label>
-                    <input id="pais" type="text" value={form.pais || ''} onChange={e => cambiar('pais', e.target.value)} placeholder="Tu país" className="ipp-input-principal" />
-                  </div>
-                  <div className="ipp-campo">
-                    <label htmlFor="ciudad">Ciudad</label>
-                    <input id="ciudad" type="text" value={form.ciudad || ''} onChange={e => cambiar('ciudad', e.target.value)} placeholder="Tu ciudad" className="ipp-input-principal" />
+                <div className="ipp-stack-secciones">
+                  <div className="ipp-fila-grid ipp-fila-2">
+                    <div className="ipp-campo">
+                      <label htmlFor="pais">País</label>
+                      <input id="pais" type="text" value={form.pais || ''} onChange={e => cambiar('pais', e.target.value)} placeholder="Tu país" className="ipp-input-principal" />
+                    </div>
+                    <div className="ipp-campo">
+                      <label htmlFor="ciudad">Ciudad</label>
+                      <input id="ciudad" type="text" value={form.ciudad || ''} onChange={e => cambiar('ciudad', e.target.value)} placeholder="Tu ciudad" className="ipp-input-principal" />
+                    </div>
                   </div>
                   <div className="ipp-campo">
                     <label htmlFor="direccion">Dirección</label>
                     <input id="direccion" type="text" value={form.direccion_completa || ''} onChange={e => cambiar('direccion_completa', e.target.value)} placeholder="Dirección completa" className="ipp-input-principal" />
                   </div>
-                </div>
-                <div className="ipp-seccion-whatsapp">
-                  <label className="ipp-whatsapp-label"><span className="ipp-icono-whatsapp">📱</span> WhatsApp</label>
-                  <div className="ipp-whatsapp-container">
-                    <select value={indicativoSeleccionado} onChange={e => setIndicativoSeleccionado(e.target.value)} className="ipp-select-indicativo">
-                      {paisesComunes.map(pais => (
-                        <option key={pais.codigo} value={pais.codigo}>{pais.bandera} {pais.codigo}</option>
-                      ))}
-                    </select>
-                    <input type="tel" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Número de WhatsApp" className="ipp-input-whatsapp" />
+                  <div className="ipp-campo">
+                    <label className="ipp-whatsapp-label"><span className="ipp-icono-whatsapp">📱</span> WhatsApp</label>
+                    <div className="ipp-whatsapp-container">
+                      <select value={indicativoSeleccionado} onChange={e => setIndicativoSeleccionado(e.target.value)} className="ipp-select-indicativo">
+                        {paisesComunes.map(pais => (
+                          <option key={pais.codigo} value={pais.codigo}>{pais.bandera} {pais.codigo}</option>
+                        ))}
+                      </select>
+                      <input type="tel" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Número de WhatsApp" className="ipp-input-whatsapp" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -147,7 +153,7 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
                     </select>
                   </div>
                   <div className="ipp-campo">
-                    <label htmlFor="ano_experiencia">Años Exp.</label>
+                    <label htmlFor="ano_experiencia">Años de Experiencia</label>
                     <input id="ano_experiencia" type="number" min="0" max="100" value={form.ano_experiencia || ''} onChange={e => cambiar('ano_experiencia', e.target.value)} placeholder="0" className="ipp-input-principal" />
                   </div>
                   <div className="ipp-campo">
@@ -198,7 +204,7 @@ export default function InfoPestanaPerfil({ perfil, onActualizar }: Props) {
                   <div className="ipp-campo">
                     <label htmlFor="como_nos_conocio">¿Cómo nos conociste?</label>
                     <select id="como_nos_conocio" value={form.como_nos_conocio || ''} onChange={e => cambiar('como_nos_conocio', e.target.value)} className="ipp-input-principal">
-                      <option value="">Selecciona una opción...</option>
+                      <option value="">Selecciona...</option>
                       <option value="redes_sociales">Redes Sociales</option>
                       <option value="youtube">YouTube</option>
                       <option value="google">Google</option>

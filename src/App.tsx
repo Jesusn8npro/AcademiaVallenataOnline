@@ -75,7 +75,8 @@ import HomeProMax from './Paginas/AcordeonProMax/Pantallas/HomeProMax';
 import ListaCancionesProMax from './Paginas/AcordeonProMax/Pantallas/ListaCancionesProMax';
 import ConfiguracionProMax from './Paginas/AcordeonProMax/Pantallas/ConfiguracionProMax';
 import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxSimulador';
-import EstudioAdmin from './Paginas/AcordeonProMax/Admin/Paginas/EstudioAdmin';
+import AcordeonProMaxPrueba from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxPrueba';
+import PaginaGrabadorV2 from './Paginas/AcordeonProMax/GrabadorV2/PaginaGrabadorV2';
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
@@ -218,7 +219,8 @@ const AppContent = () => {
           <Route path="/acordeon-pro-max/lista" element={<ListaCancionesProMax />} />
           <Route path="/acordeon-pro-max/acordeon" element={<AcordeonProMaxSimulador />} />
           <Route path="/acordeon-pro-max/acordeon/:slug" element={<AcordeonProMaxSimulador />} />
-          <Route path="/acordeon-pro-max/admin/practica" element={<EstudioAdmin />} />
+          <Route path="/acordeon-pro-max/admin" element={<PaginaGrabadorV2 />} />
+          <Route path="/acordeon-pro-max/prueba" element={<AcordeonProMaxPrueba />} />
           <Route path="/acordeon-pro-max/configuracion" element={<ConfiguracionProMax />} />
           <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />

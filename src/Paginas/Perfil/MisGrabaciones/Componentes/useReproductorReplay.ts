@@ -1,24 +1,72 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
+import { ReproductorMP3 } from '../../../../Core/audio/ReproductorMP3';
+import { useMetronomoEstudiante } from '../../../AcordeonProMax/PracticaLibre/Hooks/useMetronomoEstudiante';
 import type { GrabacionReplayHero } from './tiposReplay';
 import {
     type UseReproductorReplayParams,
     convertirTicksASegundos, limitarPlaybackRate,
     construirCancionReplay, calcularBpmPistaOriginal,
-    invocarSincronizacionConPista, registrarSyncCuandoSuene
 } from './_tiposReproductorReplay';
 export type { LogicaAcordeon, ReproductorHero, UseReproductorReplayParams } from './_tiposReproductorReplay';
 
 export function useReproductorReplay({ abierta, grabacion, logica, reproductor, bpm, setBpm }: UseReproductorReplayParams) {
     const [preparandoReplay, setPreparandoReplay] = useState(false);
-    const audioFondoRef = useRef<HTMLAudioElement | null>(null);
+    // Migrado de HTMLAudioElement → ReproductorMP3 (AudioBufferSourceNode).
+    // Sample-accurate, mismo clock que el RAF de notas (vía setAudioSync) → cero drift.
+    const audioFondoRef = useRef<ReproductorMP3 | null>(null);
     const tickActualRef = useRef(0);
     const precargaReplayRef = useRef<Promise<void> | null>(null);
     const claveReplayPrecargadoRef = useRef('');
+    // Promise de la carga del MP3 (download + decode). La awaitamos antes de cualquier seek
+    // porque `ReproductorMP3.set currentTime` clampa a `duration` (que es 0 sin buffer)
+    // → si seteás currentTime=98s antes de que termine la carga, queda en 0 → audio arranca en 0.
+    const cargaAudioPromiseRef = useRef<Promise<void> | null>(null);
 
     const resolucionActiva = grabacion?.resolucion || 192;
 
     const cancionReplay = useMemo(() => construirCancionReplay(grabacion), [grabacion]);
+
+    const bpmPistaOriginal = useMemo(() => calcularBpmPistaOriginal(grabacion, bpm), [bpm, grabacion]);
+
+    // Tick inicial del replay. La secuencia ya está normalizada por `construirCancionReplay` para
+    // que sus ticks sean audio musical ticks puros (sin offset de lead-in).
+    //
+    // Cuando la grabación es de una sección no-intro, retrocedemos `LEADIN_PREVIEW_SEGUNDOS` ticks
+    // antes del primer tick grabado: audio + RAF arrancan ahí, así suena ~3s de pista sola antes
+    // de que la primera nota dispare — mismo feel que el lead-in de competencia, evita que las
+    // notas se escuchen "de golpe" al apretar play.
+    //
+    // Para intros (sin sección) o practica_libre, arrancamos exactamente en el primer tick: ahí no
+    // hay lead-in en la grabación original y un preview del segundo 0 sería ruido innecesario.
+    const LEADIN_PREVIEW_SEGUNDOS = 3;
+    const tickInicialReplay = useMemo(() => {
+        const seq = cancionReplay?.secuencia;
+        if (!Array.isArray(seq) || seq.length === 0) return 0;
+        const primerTick = Math.min(...seq.map((n: any) => Number(n.tick) || 0));
+
+        const secInicio = Number((grabacion?.metadata as any)?.seccion_tick_inicio) || 0;
+        const tieneSeccion = grabacion?.modo === 'competencia' && secInicio > 0;
+        if (!tieneSeccion) return Math.max(0, Math.floor(primerTick));
+
+        const reso = grabacion?.resolucion || 192;
+        const bpmOrig = bpmPistaOriginal || grabacion?.bpm || 120;
+        const previewTicks = Math.floor(LEADIN_PREVIEW_SEGUNDOS * (bpmOrig / 60) * reso);
+        return Math.max(0, Math.floor(primerTick - previewTicks));
+    }, [cancionReplay, grabacion, bpmPistaOriginal]);
+
+    // Diagnóstico: logueo lo que leí para que el usuario pueda inspeccionar en devtools.
+    useEffect(() => {
+        if (!grabacion) return;
+        // eslint-disable-next-line no-console
+        console.log('[ReplayHero] grabación abierta:', {
+            id: grabacion.id,
+            titulo: grabacion.titulo,
+            tickInicialReplay,
+            seccionTickInicio: (grabacion.metadata as any)?.seccion_tick_inicio,
+            primerTickSecuencia: grabacion.secuencia_grabada?.[0]?.tick,
+        });
+    }, [grabacion, tickInicialReplay]);
 
     const totalTicksCalculados = useMemo(() => {
         if (!grabacion?.secuencia_grabada?.length) return 0;
@@ -29,8 +77,6 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         () => Array.from(new Set((grabacion?.secuencia_grabada || []).map((n) => n.botonId).filter(Boolean))),
         [grabacion]
     );
-
-    const bpmPistaOriginal = useMemo(() => calcularBpmPistaOriginal(grabacion, bpm), [bpm, grabacion]);
 
     const playbackRateAudio = useMemo(
         () => limitarPlaybackRate((grabacion?.bpm || bpm || 120) / Math.max(1, bpmPistaOriginal || 120)),
@@ -61,6 +107,42 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
             motorAudioPro.actualizarReverb(0);
         }
     }, [grabacion]);
+
+    // Metrónomo del replay: si la grabación se hizo en modo metrónomo, reconstruimos los clicks
+    // con la misma config (bpm/compás/sonido/volumen) que tenía el alumno cuando grabó.
+    // No queda mezclado dentro del audio, suena como guía paralela mientras el RAF avanza.
+    const metronomoReplay = useMetronomoEstudiante();
+    const metronomoMetadata = useMemo(() => {
+        const m = grabacion?.metadata?.metronomo;
+        return m && typeof m === 'object' && m.activo ? m : null;
+    }, [grabacion]);
+
+    useEffect(() => {
+        if (!metronomoMetadata) return;
+        if (typeof metronomoMetadata.bpm === 'number') metronomoReplay.setBpm(metronomoMetadata.bpm);
+        if (typeof metronomoMetadata.compas === 'number') metronomoReplay.setCompas(metronomoMetadata.compas);
+        if (typeof metronomoMetadata.subdivision === 'number') metronomoReplay.setSubdivision(metronomoMetadata.subdivision);
+        if (typeof metronomoMetadata.volumen === 'number') metronomoReplay.setVolumen(metronomoMetadata.volumen);
+        if (typeof metronomoMetadata.sonido === 'string') metronomoReplay.setSonido(metronomoMetadata.sonido);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [metronomoMetadata]);
+
+    // Activar/desactivar el metrónomo siguiendo el estado del reproductor.
+    useEffect(() => {
+        if (!metronomoMetadata) {
+            if (metronomoReplay.activo) metronomoReplay.setActivo(false);
+            return;
+        }
+        const debeSonar = reproductor.reproduciendo && !reproductor.pausado;
+        if (debeSonar !== metronomoReplay.activo) metronomoReplay.setActivo(debeSonar);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [metronomoMetadata, reproductor.reproduciendo, reproductor.pausado]);
+
+    // Cleanup al cerrar el modal.
+    useEffect(() => {
+        if (!abierta && metronomoReplay.activo) metronomoReplay.setActivo(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [abierta]);
 
     const precargarNotasReplay = useCallback(async () => {
         if (!abierta || !grabacion || !logica.disenoCargado || logica.cargando || !tonalidadReplayLista) return;
@@ -144,14 +226,28 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
     }, [abierta]);
 
     useEffect(() => {
-        if (audioFondoRef.current) { audioFondoRef.current.pause(); audioFondoRef.current.src = ''; audioFondoRef.current = null; }
+        if (audioFondoRef.current) {
+            try { audioFondoRef.current.pause(); } catch (_) {}
+            try { audioFondoRef.current.destruir(); } catch (_) {}
+            audioFondoRef.current = null;
+        }
         if (!abierta || !urlAudioFondo) return;
-        const audio = new Audio(urlAudioFondo);
-        audio.preload = 'auto';
+        const audio = new ReproductorMP3(motorAudioPro.contextoAudio);
         audio.volume = 1;
         audio.playbackRate = playbackRateAudio;
         audioFondoRef.current = audio;
-        return () => { audio.pause(); audio.src = ''; if (audioFondoRef.current === audio) audioFondoRef.current = null; };
+        // Carga upfront — descarga + decodifica todo el MP3 una vez.
+        // Trackeamos la promise para que `iniciarReplaySincronizado` la pueda awaitear:
+        // `ReproductorMP3.cargar` retorna inmediatamente si ya hay una carga en vuelo
+        // (no awaitéa la concurrente) → un segundo `await audio.cargar(url)` resuelve con
+        // buffer todavía nulo → `currentTime = X` clampa a 0 (duration=0) → audio arranca en 0.
+        cargaAudioPromiseRef.current = audio.cargar(urlAudioFondo).catch(() => {});
+        return () => {
+            try { audio.pause(); } catch (_) {}
+            try { audio.destruir(); } catch (_) {}
+            if (audioFondoRef.current === audio) audioFondoRef.current = null;
+            cargaAudioPromiseRef.current = null;
+        };
     }, [abierta, urlAudioFondo]);
 
     useEffect(() => { if (!audioFondoRef.current) return; audioFondoRef.current.playbackRate = playbackRateAudio; }, [playbackRateAudio]);
@@ -159,81 +255,115 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
     useEffect(() => {
         const audio = audioFondoRef.current;
         if (!audio) return;
-        if (!reproductor.reproduciendo) { audio.pause(); audio.currentTime = 0; }
+        if (!reproductor.reproduciendo) {
+            try { audio.pause(); } catch (_) {}
+            try { audio.currentTime = 0; } catch (_) {}
+        }
     }, [reproductor.reproduciendo, reproductor.pausado]);
 
     useEffect(() => {
-        if (!abierta) { reproductor.detenerReproduccion(); audioFondoRef.current?.pause(); return; }
-        return () => { reproductor.detenerReproduccion(); audioFondoRef.current?.pause(); motorAudioPro.detenerTodo(); };
+        if (!abierta) {
+            reproductor.detenerReproduccion();
+            try { audioFondoRef.current?.pause(); } catch (_) {}
+            return;
+        }
+        return () => {
+            reproductor.detenerReproduccion();
+            try { audioFondoRef.current?.pause(); } catch (_) {}
+            motorAudioPro.detenerTodo();
+        };
     }, [abierta, reproductor.detenerReproduccion]);
 
     const sincronizarAudioConTick = (tick: number) => {
         const audio = audioFondoRef.current;
         if (!audio) return;
-        audio.currentTime = convertirTicksASegundos(tick, bpmPistaOriginal, resolucionActiva);
+        try {
+            audio.currentTime = convertirTicksASegundos(tick, bpmPistaOriginal, resolucionActiva);
+        } catch (_) {}
     };
 
-    const iniciarSecuenciaDesdeTick = (tick: number) => {
+    /** Arranca la secuencia + audio + setAudioSync en el mismo instante para sample-accurate. */
+    const iniciarReplaySincronizado = async (tickInicial: number) => {
         if (!cancionReplay) return;
-        const tickNormalizado = Math.max(0, Math.floor(tick));
-        reproductor.reproducirSecuencia(cancionReplay as any);
-        if (tickNormalizado > 0) reproductor.buscarTick(tickNormalizado);
-    };
-
-    const reproducirAudioFondo = async (tick: number, alIniciarReplay = false) => {
         const audio = audioFondoRef.current;
-        const tickObjetivo = Math.max(0, Math.floor(tick));
-        await precargarNotasReplay();
+        const tickObjetivo = Math.max(0, Math.floor(tickInicial));
+
+        // Sin audio: simple, solo dispara la secuencia.
         if (!audio) {
-            if (alIniciarReplay && !reproductor.reproduciendo && cancionReplay) iniciarSecuenciaDesdeTick(tickObjetivo);
-            return tickObjetivo;
+            reproductor.reproducirSecuencia(cancionReplay as any, {
+                tickInicialOverride: tickObjetivo,
+            } as any);
+            return;
         }
-        sincronizarAudioConTick(tickObjetivo);
+
+        // 1) Asegurar buffer decodificado antes de cualquier seek (currentTime= clampa a duration=0
+        //    sin buffer → audio arranca en 0).
+        try {
+            if (cargaAudioPromiseRef.current) await cargaAudioPromiseRef.current;
+            if (!audio.cargado) await audio.cargar(urlAudioFondo!);
+        } catch (_) {}
+
+        // 2) Configurar playbackRate antes del seek y posicionar (audio sigue paused).
         audio.playbackRate = playbackRateAudio;
-        if (alIniciarReplay && !reproductor.reproduciendo && cancionReplay) {
-            return await new Promise<number>((resolve) => {
-                let arrancado = false;
-                const iniciarTodo = () => {
-                    if (arrancado) return;
-                    arrancado = true;
-                    audio.removeEventListener('canplay', iniciarTodo);
-                    audio.removeEventListener('loadeddata', iniciarTodo);
-                    audio.removeEventListener('load', iniciarTodo);
-                    window.clearTimeout(timeoutId);
-                    registrarSyncCuandoSuene(audio);
-                    iniciarSecuenciaDesdeTick(tickObjetivo);
-                    audio.play().catch(() => {});
-                    resolve(tickObjetivo);
-                };
-                const timeoutId = window.setTimeout(iniciarTodo, 3000);
-                if (audio.readyState >= 2) { iniciarTodo(); return; }
-                audio.addEventListener('canplay', iniciarTodo);
-                audio.addEventListener('loadeddata', iniciarTodo);
-                audio.addEventListener('load', iniciarTodo);
-            });
-        }
-        registrarSyncCuandoSuene(audio);
-        try { await audio.play(); } catch {}
-        return tickObjetivo;
+        sincronizarAudioConTick(tickObjetivo);
+
+        // 3) CRÍTICO: esperar el evento 'playing' ANTES de arrancar el RAF.
+        //    Sin este await, había desfase: `reproducirSecuencia` setea checkpointTime=ahora,
+        //    luego `await audio.play()` introduce un gap de microtask + sync time hasta que el
+        //    AudioBufferSourceNode realmente empieza (startContextTime). Resultado: la secuencia
+        //    corre mientras el audio aún está silencioso → notas "tarde" vs el MP3.
+        //    Esperando 'playing' alineamos el checkpoint con el startContextTime real del audio.
+        //    Patrón validado en `useAudioFondoPracticaLibre.iniciarReproduccionAnclada`.
+        await new Promise<void>((resolve) => {
+            let resuelto = false;
+            const finalizar = () => { if (resuelto) return; resuelto = true; resolve(); };
+            const onPlaying = () => { audio.removeEventListener('playing', onPlaying); finalizar(); };
+            audio.addEventListener('playing', onPlaying);
+            audio.play().catch(() => finalizar());
+            setTimeout(() => { audio.removeEventListener('playing', onPlaying); finalizar(); }, 1500);
+        });
+
+        // 4) Audio ya sonando → arrancar RAF: checkpointTime queda dentro del mismo microtask
+        //    que el startContextTime del audio (sub-ms drift inicial).
+        reproductor.reproducirSecuencia(cancionReplay as any, {
+            tickInicialOverride: tickObjetivo,
+        } as any);
+
+        // 5) Cablear audio→RAF para drift correction continuo (los listeners 'seeked'/'playing'
+        //    futuros recapturarán el checkpoint contra audio.currentTime real).
+        (reproductor as any).setAudioSync?.(audio, bpmPistaOriginal);
     };
 
     const reproducirOReanudar = async () => {
         if (!cancionReplay) return;
         await motorAudioPro.activarContexto();
         await precargarNotasReplay();
-        const tickObjetivo = Math.max(0, Math.floor(tickActualRef.current));
-        if (!reproductor.reproduciendo) { await reproducirAudioFondo(tickObjetivo, true); return; }
-        if (reproductor.pausado) { const reanudacion = reproducirAudioFondo(tickObjetivo, false); reproductor.alternarPausa(); await reanudacion; }
+        // Si nunca se inició → arranca desde tick inicial (sección o 0); sino retoma desde tickActual.
+        const tickObjetivo = !reproductor.reproduciendo
+            ? (tickActualRef.current > 0 ? tickActualRef.current : tickInicialReplay)
+            : tickActualRef.current;
+        if (!reproductor.reproduciendo) {
+            await iniciarReplaySincronizado(tickObjetivo);
+            return;
+        }
+        if (reproductor.pausado) {
+            const audio = audioFondoRef.current;
+            if (audio) { sincronizarAudioConTick(tickObjetivo); try { await audio.play(); } catch (_) {} }
+            reproductor.alternarPausa();
+        }
     };
 
     const pausar = () => {
-        if (reproductor.reproduciendo && !reproductor.pausado) { audioFondoRef.current?.pause(); reproductor.alternarPausa(); }
+        if (reproductor.reproduciendo && !reproductor.pausado) {
+            try { audioFondoRef.current?.pause(); } catch (_) {}
+            reproductor.alternarPausa();
+        }
     };
 
     const buscarTick = (tick: number) => {
         const tickNormalizado = Math.max(0, Math.floor(tick));
         reproductor.buscarTick(tickNormalizado);
-        if (audioFondoRef.current) sincronizarAudioConTick(tickNormalizado);
+        sincronizarAudioConTick(tickNormalizado);
     };
 
     const reiniciar = async () => {
@@ -241,9 +371,10 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         await precargarNotasReplay();
         reproductor.detenerReproduccion();
         const audio = audioFondoRef.current;
-        if (audio) { audio.pause(); audio.currentTime = 0; }
+        if (audio) { try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
         await motorAudioPro.activarContexto();
-        await reproducirAudioFondo(0, true);
+        // Reset al tick inicial guardado (sección si existe, sino 0).
+        await iniciarReplaySincronizado(tickInicialReplay);
     };
 
     return { preparandoReplay, totalTicksCalculados, tonalidadReplayLista, urlAudioFondo, reproducirOReanudar, pausar, buscarTick, reiniciar };

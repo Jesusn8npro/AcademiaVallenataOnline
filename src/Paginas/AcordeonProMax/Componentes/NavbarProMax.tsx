@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import './NavbarProMax.css';
 import { Howl } from 'howler';
-import { 
-  Home, 
-  Search, 
-  Trophy, 
-  Settings, 
+import {
+  Home,
+  Search,
+  Trophy,
+  Settings,
   ExternalLink,
   Volume2,
   VolumeX,
   Maximize2,
   Minimize2,
-  UserCircle
+  UserCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUsuario } from '../../../contextos/UsuarioContext';
@@ -72,6 +73,8 @@ const NavbarProMax: React.FC<PropsNavbarProMax> = ({ onToggleMute }) => {
   };
 
   const nombreUsuario = perfil?.nombre_completo || usuario?.email?.split('@')[0] || 'Usuario';
+  // Solo muestra el item de Admin si el rol confirma admin (mismo gate que ProteccionAdmin).
+  const esAdmin = usuario?.rol === 'admin';
 
   return (
     <nav className="navbar-promax">
@@ -93,8 +96,18 @@ const NavbarProMax: React.FC<PropsNavbarProMax> = ({ onToggleMute }) => {
           <Settings size={22} />
           <span className="nav-promax-texto">Configuraciones</span>
         </div>
-        <div className="nav-promax-item" 
-          onMouseEnter={reproducirHover} 
+        {esAdmin && (
+          <div
+            className="nav-promax-item nav-promax-item-admin"
+            onMouseEnter={reproducirHover}
+            onClick={() => handleNav('/acordeon-pro-max/admin')}
+          >
+            <ShieldCheck size={22} />
+            <span className="nav-promax-texto">Studio Admin</span>
+          </div>
+        )}
+        <div className="nav-promax-item"
+          onMouseEnter={reproducirHover}
           onClick={() => { reproducirClick(); window.open('https://academiavallenata.online', '_blank'); }}
         >
           <ExternalLink size={22} />

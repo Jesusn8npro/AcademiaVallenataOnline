@@ -3,7 +3,7 @@ import type { EstadisticasPartida, CancionHeroConTonalidad, EstadoSeccionUsuario
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { scoresHeroService, type ScoreRespuesta } from '../../../servicios/scoresHeroService';
 import { cargarProgresoSecciones } from '../../../servicios/seccionesProgresoService';
-import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import type { Seccion } from '../tiposSecciones';
 
 function parsearSecciones(raw: any): Seccion[] {
   let secs = raw;
@@ -159,7 +159,10 @@ export function usePantallaResultados({
       return;
     }
     setErrorLocal('');
-    await onGuardarGrabacion(tituloLimpio, descripcionGrabacion);
+    // `guardarGrabacionPendiente` espera un objeto `datos` con .titulo y .descripcion
+    // (lee `datos.titulo?.trim()`). Antes llamábamos con dos strings sueltos → datos.titulo
+    // era undefined → error "Debes escribir un titulo." aunque el campo estuviera lleno.
+    await onGuardarGrabacion({ titulo: tituloLimpio, descripcion: descripcionGrabacion } as any);
   };
 
   return {

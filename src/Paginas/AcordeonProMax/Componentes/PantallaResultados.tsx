@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../TiposProMax';
-import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import type { Seccion } from '../tiposSecciones';
 import ModalHistorialHero from './ModalHistorialHero';
 import { usePantallaResultados } from './usePantallaResultados';
 import './PantallaResultados.css';

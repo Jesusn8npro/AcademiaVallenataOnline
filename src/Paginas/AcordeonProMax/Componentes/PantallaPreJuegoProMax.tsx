@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Music, Zap, BookOpen, Volume2, X } from 'lucide-react';
 import type { ModoPractica, ModoAudioSynthesia } from '../TiposProMax';
-import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import type { Seccion } from '../tiposSecciones';
 import SelectorSeccion from './SelectorSeccion';
 import { useProgresoSecciones, seccionesConEstado } from '../Hooks/useProgresoSecciones';
 

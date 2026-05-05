@@ -237,11 +237,10 @@ export const scoresHeroService = {
           youtube_id: datos.youtube_id,
           tipo: datos.tipo,
           dificultad: datos.dificultad,
-          secuencia: JSON.stringify(datos.secuencia),
+          secuencia_json: datos.secuencia,
           bpm: datos.bpm,
           tonalidad: datos.tonalidad,
-          audio_fondo_url: datos.audio_fondo_url,
-          estado: 'activo'
+          audio_fondo_url: datos.audio_fondo_url
         })
         .select('*')
         .single();

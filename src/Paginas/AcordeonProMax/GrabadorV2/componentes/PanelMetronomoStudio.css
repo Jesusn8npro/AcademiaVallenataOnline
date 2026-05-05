@@ -1,0 +1,236 @@
+/* Panel metrónomo — estilo idéntico al admin (azul, prominente). Inline (no modal). */
+
+.metstudio-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  background: rgba(18, 18, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  color: white;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.05);
+}
+
+/* Botón INICIAR / DETENER (grande, prominente) */
+.metstudio-btn-principal {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 4px;
+}
+.metstudio-btn-principal.iniciar {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+.metstudio-btn-principal.iniciar:hover {
+  background: #2563eb;
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.55);
+}
+.metstudio-btn-principal.detener {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+.metstudio-btn-principal.detener:hover {
+  background: #dc2626;
+}
+
+/* Indicador de pulsos */
+.metstudio-pulsos {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.metstudio-pulso {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.1s ease-out;
+}
+.metstudio-pulso.activo {
+  background: #fff;
+  transform: scale(1.3);
+  box-shadow: 0 0 15px #fff;
+}
+.metstudio-pulso.activo.acento {
+  background: #3b82f6;
+  box-shadow: 0 0 15px #3b82f6;
+}
+
+/* Filas de ajuste */
+.metstudio-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+  color: white;
+  width: 100%;
+  text-align: left;
+}
+.metstudio-fila.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.metstudio-fila.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.metstudio-fila.clickable:hover { opacity: 0.85; }
+.metstudio-fila.clickable:active { opacity: 0.6; }
+
+.metstudio-info { display: flex; flex-direction: column; }
+.metstudio-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #eee;
+}
+.metstudio-sublabel {
+  display: block;
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.metstudio-control-inc-dec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+.metstudio-control-inc-dec button {
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+.metstudio-control-inc-dec button:hover { color: #60a5fa; }
+.metstudio-valor {
+  font-size: 17px;
+  font-weight: 800;
+  min-width: 32px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.metstudio-valor-flecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #999;
+  font-size: 13px;
+}
+
+/* Slider volumen */
+.metstudio-volumen {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.metstudio-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+}
+.metstudio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+.metstudio-icono-vol { color: #555; }
+
+/* Cabecera vista sonidos */
+.metstudio-cabecera {
+  padding: 4px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.metstudio-titulo {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+.metstudio-back {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: #aaa;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.metstudio-back:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+.metstudio-lista-sonidos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.metstudio-item-sonido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+.metstudio-item-sonido:hover { background: rgba(255, 255, 255, 0.04); }
+.metstudio-item-sonido.activo {
+  background: rgba(59, 130, 246, 0.12);
+}
+.metstudio-item-sonido.activo span:not(.metstudio-check) {
+  color: #3b82f6;
+  font-weight: 700;
+}
+.metstudio-nombre-icono {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+.metstudio-check {
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 15px;
+}
