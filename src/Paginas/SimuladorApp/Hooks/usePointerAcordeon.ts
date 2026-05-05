@@ -226,10 +226,11 @@ export const usePointerAcordeon = ({
         // como no-pasivo Y llamar preventDefault le dice a iOS "nadie va a scrollear/zoomear,
         // entrega los eventos a frecuencia nativa (60Hz)". La whitelist excluye inputs, selects
         // y todos los overlays de modales para no romper scroll, selección, ni teclado virtual.
-        // UI del modo juego (header con pausa/salir/score, menu pausa, pantallas de
+        // UI del simulador normal (barra de herramientas con tonalidades/vista/metronomo/etc,
+        // boton de bajos) Y del modo juego (header pausa/salir, menu pausa, pantallas de
         // resultados/game over) NO debe ser bloqueada por el preventDefault global —
         // si no, los botones tactiles no responden en mobile (parece "muteado").
-        const SELECTORES_INTERACTIVOS = 'input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor, .header-juego-sim, .juego-sim-cuenta-overlay, .menu-pausa-global-container, .hero-resultados-overlay, .hero-gameover-overlay, [data-touch-allow]';
+        const SELECTORES_INTERACTIVOS = 'input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor, .barra-herramientas-contenedor, .boton-bajos-superior, .header-juego-sim, .juego-sim-cuenta-overlay, .menu-pausa-global-container, .hero-resultados-overlay, .hero-gameover-overlay, [data-touch-allow]';
 
         const esZonaInteractiva = (target: EventTarget | null): boolean => {
             const el = target as HTMLElement | null;
