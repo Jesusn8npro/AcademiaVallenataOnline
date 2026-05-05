@@ -169,31 +169,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             : null
     ), [hero.seccionSeleccionada]);
 
-    // DEBUG: contador supervisible para diagnostico
-    const totalSecuenciaDebug = Array.isArray(cancion?.secuencia) ? cancion.secuencia.length : 0;
-
     return (
         <div className={`juego-sim-root simulador-app-root modo-${logica?.direccion || 'halar'}`}>
-            {/* DEBUG: contador supervisible */}
-            <div
-                style={{
-                    position: 'fixed',
-                    top: 4,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'lime',
-                    color: 'black',
-                    padding: '4px 12px',
-                    fontSize: 12,
-                    fontWeight: 900,
-                    zIndex: 10000,
-                    fontFamily: 'monospace',
-                    borderRadius: 4,
-                }}
-            >
-                DBG: {totalSecuenciaDebug}n · tick={Math.round(hero?.tickActual ?? 0)} · estado={hero?.estadoJuego}
-            </div>
-
             <ContenedorBajos
                 visible={bajosVisible}
                 onOpen={() => setBajosVisible(true)}

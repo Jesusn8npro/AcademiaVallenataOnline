@@ -42,8 +42,8 @@ const PROBLEMAS = [
 
 const TITULOS_HERO = [
   'Deja de ser EL QUE OBSERVA y conviértete en EL QUE TODOS APLAUDEN',
-  'Toca tu PRIMERA CANCIÓN en 7 DÍAS, aunque NUNCA hayas tocado',
-  'El método que transformó a +5,000 principiantes en ACORDEONISTAS REALES',
+  'Aprende a combinar pitos y bajos en 7 DÍAS, aunque NUNCA hayas tocado',
+  'El método que transformó a +500 principiantes en ACORDEONISTAS REALES',
   'Deja de SOÑAR con tocar acordeón. Empieza a TOCARLO DE VERDAD HOY',
 ]
 
@@ -186,7 +186,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
 
                 <div className="cadc-social-proof">
                   <div className="cadc-social-item">
-                    <span className="cadc-social-numero">+5,000</span>
+                    <span className="cadc-social-numero">+500</span>
                     <span className="cadc-social-label">estudiantes felices</span>
                   </div>
                   <div className="cadc-social-item">

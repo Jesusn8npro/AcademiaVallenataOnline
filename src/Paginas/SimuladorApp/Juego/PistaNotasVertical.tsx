@@ -41,8 +41,6 @@ function extraerEtiqueta(nota: any): string {
 const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
     cancion, tickActual, notasImpactadas, rangoSeccion
 }) => {
-    const totalSecuencia = Array.isArray(cancion?.secuencia) ? cancion.secuencia.length : 0;
-
     const notasEnVuelo = useMemo<NotaEnVuelo[]>(() => {
         if (!cancion?.secuencia || !Array.isArray(cancion.secuencia)) return [];
         const result: NotaEnVuelo[] = [];
@@ -80,49 +78,8 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
         return result;
     }, [cancion, tickActual, notasImpactadas, rangoSeccion]);
 
-    // DEBUG: log al primer render con datos de la cancion
-    React.useEffect(() => {
-        console.log('[PistaNotasVertical] DEBUG', {
-            cancionExiste: !!cancion,
-            tieneSecuencia: !!cancion?.secuencia,
-            esArray: Array.isArray(cancion?.secuencia),
-            totalNotas: totalSecuencia,
-            primeraNota: cancion?.secuencia?.[0],
-            ultimaNota: cancion?.secuencia?.[totalSecuencia - 1],
-        });
-    }, [cancion?.id, totalSecuencia]);
-
     return (
         <div className="pista-notas-vertical" aria-hidden="true">
-            {/* TEST: circulo hardcoded — si lo ves, la pista se monta bien */}
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '20%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 50,
-                    height: 50,
-                    borderRadius: '50%',
-                    background: 'magenta',
-                    border: '3px solid yellow',
-                    zIndex: 200,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 900,
-                    fontSize: 11,
-                }}
-            >
-                TEST
-            </div>
-
-            {/* Debug overlay — muestra cuantas notas estan visibles */}
-            <div className="pista-debug">
-                {notasEnVuelo.length} / {totalSecuencia} notas · tick {Math.round(tickActual)}
-            </div>
-
             {notasEnVuelo.map((n) => {
                 const xPct = ((n.columna - 0.5) / 10) * 100;
                 // top:0% = arriba de la pista (debajo del header)
