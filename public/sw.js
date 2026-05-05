@@ -1,5 +1,8 @@
 // 🚀 Service Worker - Academia Vallenata Online PWA
-const CACHE_NAME = 'academia-vallenata-v1';
+// Bump de versión: cuando se cambia el sufijo, en `activate` se borran TODAS las caches
+// con otro nombre → se obliga a usuarios a refetchear assets nuevos. Subir versión
+// cada vez que un fix crítico necesita llegar urgente al usuario (p.ej. fix de pagos).
+const CACHE_NAME = 'academia-vallenata-v2-fix-pagos-uuid';
 const OFFLINE_PAGE = '/offline.html';
 
 // URLs a cachear durante la instalación
