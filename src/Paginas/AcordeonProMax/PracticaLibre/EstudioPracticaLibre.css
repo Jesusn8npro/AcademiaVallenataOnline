@@ -304,7 +304,14 @@
 }
 
 .estudio-practica-libre-panel {
+  /* Tamaño fijo para que TODAS las pestañas (sonido / modelos / pistas / fx / grabación)
+     se vean con la misma medida. Antes la sección crecía/se encogía con el contenido y
+     dejaba el layout saltando entre tabs. Ahora el contenido scrolla internamente. */
+  flex: 0 0 480px;
+  width: 480px;
+  align-self: stretch;
   min-height: 0;
+  max-height: 100%;
   overflow: auto;
   padding: 14px;
   border-radius: 24px;
@@ -419,6 +426,87 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.estudio-practica-libre-modelos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.estudio-practica-libre-modelo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.estudio-practica-libre-modelo-row:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.estudio-practica-libre-modelo-row.activo {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.7);
+}
+
+.estudio-practica-libre-modelo-row-img {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.estudio-practica-libre-modelo-row-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.estudio-practica-libre-modelo-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.estudio-practica-libre-modelo-row-info strong {
+  font-size: 0.92rem;
+  color: rgba(241, 245, 249, 0.95);
+}
+
+.estudio-practica-libre-modelo-row-info span {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.85);
+  line-height: 1.3;
+}
+
+.estudio-practica-libre-modelo-row-check {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.85);
+  color: #051227;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
 }
 
 .estudio-practica-libre-modelo-card {

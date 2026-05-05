@@ -18,7 +18,9 @@ export function useCancionesProMax() {
           .order('creado_en', { ascending: false });
         if (err) throw err;
         const procesadas: CancionHeroConTonalidad[] = (data || []).map((row: any) => {
-          let secuencia = row.secuencia || row.secuencia_json || [];
+          // secuencia_json es el campo donde se persisten las ediciones por punch-in.
+          // Si leemos `secuencia` (legacy) primero, podemos servir ticks viejos desfasados del MP3.
+          let secuencia = row.secuencia_json || row.secuencia || [];
           if (typeof secuencia === 'string') {
             try { secuencia = JSON.parse(secuencia); } catch { secuencia = []; }
           }

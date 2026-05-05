@@ -23,10 +23,10 @@
     box-sizing: border-box !important;
 }
 
+/* Wrappers de layout: full-width, sin estilo propio para evitar "doble card". */
 .layout-info-perfil,
 .layout-mis-cursos,
-.ipp-info-perfil,
-.ipp-formulario-perfil {
+.ipp-info-perfil {
     width: 100% !important;
     max-width: 100% !important;
     padding: 0 !important;
@@ -35,6 +35,15 @@
     border-radius: 0 !important;
     box-shadow: none !important;
     border: none !important;
+}
+
+/* `.ipp-formulario-perfil` SÍ es card visual del formulario — solo le forzamos width/max-width
+   para que ocupe la columna, pero dejamos que `InfoPestanaPerfil.css` maneje padding,
+   background, sombra y borde. Antes este selector estaba en la regla de arriba con `!important`
+   y le pisaba TODO el estilo de card. */
+.ipp-formulario-perfil {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .encabezado,

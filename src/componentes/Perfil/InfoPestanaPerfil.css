@@ -1,11 +1,25 @@
-/* InfoPestanaPerfil.css */
-/* Variables locales para InfoPestañaPerfil (ipp-*) */
+/* InfoPestanaPerfil.css — Rediseño profesional, totalmente responsivo
+   Patrón: campos con label flotante visual, focus animado, secciones acordeón con
+   acento al estar activas, grid auto-balanceado por sección. */
+
 :root {
     --ipp-color-primario: #4f46e5;
     --ipp-color-secundario: #6d28d9;
-    --ipp-bg-gradiente-start: #ffffff;
-    --ipp-bg-gradiente-end: #f8fafc;
+    --ipp-color-acento: #8b5cf6;
+    --ipp-bg-card: #ffffff;
+    --ipp-bg-input: #f8fafc;
+    --ipp-bg-input-focus: #ffffff;
     --ipp-borde: #e2e8f0;
+    --ipp-borde-fuerte: #cbd5e1;
+    --ipp-borde-focus: #818cf8;
+    --ipp-texto: #0f172a;
+    --ipp-texto-secundario: #475569;
+    --ipp-texto-debil: #94a3b8;
+    --ipp-sombra-input-focus: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    --ipp-sombra-card: 0 4px 24px rgba(15, 23, 42, 0.05);
+    --ipp-radio-input: 12px;
+    --ipp-radio-card: 18px;
+    --ipp-transicion: 0.2s ease;
 }
 
 .ipp-info-perfil {
@@ -15,106 +29,106 @@
 
 .ipp-formulario-perfil {
     width: 100%;
-    max-width: 100%;
-    margin: 0;
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-    border: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+    background: var(--ipp-bg-card);
+    border-radius: var(--ipp-radio-card);
+    padding: 1.75rem;
+    box-shadow: var(--ipp-sombra-card);
+    border: 1px solid var(--ipp-borde);
     box-sizing: border-box;
 }
+
+/* ============== Acordeón ============== */
 
 .ipp-seccion-acordeon {
     width: 100%;
     box-sizing: border-box;
-    border: none;
     border-bottom: 1px solid var(--ipp-borde);
-    border-radius: 0;
-    transition: all 0.3s ease;
-    background-color: transparent;
+    transition: background-color var(--ipp-transicion);
+}
+
+.ipp-seccion-acordeon:last-of-type {
+    border-bottom: none;
 }
 
 .ipp-header-seccion {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
     width: 100%;
     background: transparent;
     border: none;
-    padding: 1.5rem 0;
-    /* Removing horizontal padding */
+    padding: 1.25rem 0;
     cursor: pointer;
     text-align: left;
+    transition: opacity var(--ipp-transicion);
+}
+
+.ipp-header-seccion:hover {
+    opacity: 0.85;
 }
 
 .ipp-titulo-wrapper {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.875rem;
+    min-width: 0;
 }
 
 .ipp-icono-seccion {
-    font-size: 1.5rem;
-    width: 2.75rem;
-    height: 2.75rem;
-    background: linear-gradient(135deg, #f0f2ff 0%, #e6e9ff 100%);
+    font-size: 1.35rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
     color: var(--ipp-color-primario);
-    border-radius: 50%;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: transform var(--ipp-transicion);
 }
 
 .ipp-header-seccion:hover .ipp-icono-seccion {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 .ipp-titulo-seccion {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ipp-texto);
     margin: 0;
+    letter-spacing: -0.01em;
 }
 
 .ipp-icono-cheveron {
-    color: #64748b;
-    transition: transform 0.3s ease;
+    color: var(--ipp-texto-debil);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
 }
 
 .ipp-icono-cheveron.ipp-rotado {
     transform: rotate(180deg);
+    color: var(--ipp-color-primario);
 }
 
 .ipp-contenido-seccion {
-    padding: 0 0 1.5rem 0;
-    /* Removing horizontal padding */
-    border-top: 1px solid var(--ipp-borde);
-    overflow: hidden;
-    /* Animación suave al abrir */
-    animation: ipp-slideDown 0.3s ease-out forwards;
+    padding: 0.5rem 0 1.5rem 0;
+    animation: ipp-slideDown 0.25s ease-out forwards;
 }
 
 @keyframes ipp-slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============== Grid de campos ============== */
+
+/* Grid auto-balanceado: filas con N fields se reparten en N cols, sin huecos.
+   minmax(min(260px, 100%)) hace responsive automático sin media queries extra. */
 .ipp-grid-form {
     display: grid;
-    gap: 1.5rem;
-    padding-top: 1.25rem;
+    gap: 1.1rem 1rem;
     width: 100%;
     box-sizing: border-box;
 }
@@ -123,9 +137,48 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.ipp-grid-2-columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ipp-fila-grid {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ipp-fila-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ipp-fila-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.ipp-stack-secciones {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
 .ipp-campo {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Cuando el campo es un hijo directo del stack (típicamente Biografía o filas que ocupan
+   un row entero), forzamos full-width para que el textarea/input no se quede en
+   `auto`/min-content por algún ancestor que no esté pasando bien la regla de stretch. */
+.ipp-stack-secciones > .ipp-campo,
+.ipp-stack-secciones > .ipp-fila-grid {
+    width: 100% !important;
+    align-self: stretch;
+    flex: 1 1 auto;
+}
+
+.ipp-stack-secciones > .ipp-campo > .ipp-textarea-principal,
+.ipp-stack-secciones > .ipp-campo > .ipp-input-principal {
+    width: 100% !important;
+    display: block;
 }
 
 .ipp-campo-completo {
@@ -134,25 +187,48 @@
 }
 
 .ipp-campo label {
-    font-weight: 500;
-    color: #475569;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ipp-texto-secundario);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
+
+/* ============== Inputs ============== */
 
 .ipp-input-principal,
 .ipp-textarea-principal,
 .ipp-select-indicativo,
 .ipp-input-whatsapp {
-    padding: 0.75rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    background: white;
+    padding: 0.75rem 0.95rem;
+    border: 1.5px solid var(--ipp-borde);
+    border-radius: var(--ipp-radio-input);
+    font-size: 0.93rem;
+    color: var(--ipp-texto);
+    background: var(--ipp-bg-input);
     width: 100%;
     box-sizing: border-box;
-    /* Asegurar ancho completo en su contenedor */
+    transition: border-color var(--ipp-transicion),
+                box-shadow var(--ipp-transicion),
+                background-color var(--ipp-transicion);
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.ipp-input-principal::placeholder,
+.ipp-textarea-principal::placeholder,
+.ipp-input-whatsapp::placeholder {
+    color: var(--ipp-texto-debil);
+    font-weight: 400;
+}
+
+.ipp-input-principal:hover:not(:focus),
+.ipp-textarea-principal:hover:not(:focus),
+.ipp-select-indicativo:hover:not(:focus),
+.ipp-input-whatsapp:hover:not(:focus) {
+    border-color: var(--ipp-borde-fuerte);
+    background: var(--ipp-bg-input-focus);
 }
 
 .ipp-input-principal:focus,
@@ -160,32 +236,73 @@
 .ipp-select-indicativo:focus,
 .ipp-input-whatsapp:focus {
     outline: none;
-    border-color: var(--ipp-color-primario);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    border-color: var(--ipp-borde-focus);
+    background: var(--ipp-bg-input-focus);
+    box-shadow: var(--ipp-sombra-input-focus);
 }
 
 .ipp-textarea-principal {
-    resize: vertical;
-    min-height: 120px;
-    width: 100%;
+    resize: none;
+    height: 96px !important;
+    min-height: 96px;
+    max-height: 96px;
+    width: 100% !important;
+    line-height: 1.5;
 }
 
+/* Selects custom — flecha SVG embedida, sin la del browser */
+select.ipp-input-principal,
+.ipp-select-indicativo {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 14px;
+    padding-right: 2.4rem;
+}
+
+select.ipp-input-principal:focus,
+.ipp-select-indicativo:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* Date input — color del icono + cursor pointer */
+input[type="date"].ipp-input-principal {
+    cursor: pointer;
+    color-scheme: light;
+}
+
+input[type="date"].ipp-input-principal::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity var(--ipp-transicion);
+}
+
+input[type="date"].ipp-input-principal:hover::-webkit-calendar-picker-indicator {
+    opacity: 1;
+}
+
+/* ============== WhatsApp ============== */
+
 .ipp-seccion-whatsapp {
-    margin-top: 1rem;
+    margin-top: 1.1rem;
 }
 
 .ipp-whatsapp-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 500;
-    color: #475569;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ipp-texto-secundario);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .ipp-icono-whatsapp {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
 .ipp-whatsapp-container {
@@ -195,14 +312,20 @@
 
 .ipp-select-indicativo {
     flex: 0 0 130px;
+    min-width: 130px;
 }
 
 .ipp-input-whatsapp {
     flex: 1;
+    min-width: 0;
 }
 
+/* ============== Botón guardar ============== */
+
 .ipp-acciones-form {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ipp-borde);
     display: flex;
     justify-content: center;
 }
@@ -211,68 +334,110 @@
     background: linear-gradient(135deg, var(--ipp-color-primario) 0%, var(--ipp-color-secundario) 100%);
     color: white;
     border: none;
-    padding: 1rem 2.5rem;
-    border-radius: 50px;
+    padding: 0.95rem 2.5rem;
+    border-radius: 999px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform var(--ipp-transicion), box-shadow var(--ipp-transicion), opacity var(--ipp-transicion);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+    gap: 0.65rem;
+    box-shadow: 0 8px 22px rgba(79, 70, 229, 0.28);
     min-width: 200px;
     justify-content: center;
 }
 
 .ipp-btn-guardar:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(79, 70, 229, 0.36);
+}
+
+.ipp-btn-guardar:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .ipp-btn-guardar:disabled {
-    opacity: 0.7;
+    opacity: 0.65;
     cursor: not-allowed;
+    transform: none;
 }
 
 .ipp-icono-guardar {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
 .ipp-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: white;
     border-radius: 50%;
-    animation: ipp-spin 1s linear infinite;
+    animation: ipp-spin 0.75s linear infinite;
 }
 
 @keyframes ipp-spin {
-    0% {
-        transform: rotate(0deg);
-    }
+    to { transform: rotate(360deg); }
+}
 
-    100% {
-        transform: rotate(360deg);
+/* ============== Responsive ============== */
+
+/* Tablet: pasa a 2 cols (auto a 1 con el media de mobile abajo) */
+@media (max-width: 1024px) {
+    .ipp-grid-3-columnas,
+    .ipp-fila-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ipp-formulario-perfil {
+        padding: 1.5rem;
     }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Mobile: 1 col absoluta */
+@media (max-width: 640px) {
     .ipp-formulario-perfil {
-        padding: 1.5rem;
+        padding: 1.1rem;
+        border-radius: 14px;
     }
 
     .ipp-header-seccion {
         padding: 1rem 0;
     }
 
-    .ipp-contenido-seccion {
-        padding: 0 0 1rem 0;
+    .ipp-icono-seccion {
+        width: 2.2rem;
+        height: 2.2rem;
+        font-size: 1.15rem;
     }
 
-    .ipp-grid-3-columnas {
+    .ipp-titulo-seccion {
+        font-size: 1rem;
+    }
+
+    .ipp-grid-form,
+    .ipp-grid-3-columnas,
+    .ipp-grid-2-columnas,
+    .ipp-fila-3,
+    .ipp-fila-2 {
         grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .ipp-whatsapp-container {
+        flex-direction: column;
+    }
+
+    .ipp-select-indicativo {
+        flex: 1 1 auto;
+    }
+
+    .ipp-btn-guardar {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ipp-acciones-form {
+        margin-top: 1.2rem;
+        padding-top: 1.2rem;
     }
 }

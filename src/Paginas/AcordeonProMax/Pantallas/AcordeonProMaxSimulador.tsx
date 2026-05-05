@@ -103,6 +103,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
               onVolver={volverAlMenu}
               esp32Conectado={hero.logica.esp32Conectado}
               conectarESP32={hero.logica.conectarESP32}
+              hero={hero}
             />
           )}
 

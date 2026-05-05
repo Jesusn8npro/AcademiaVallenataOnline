@@ -64,7 +64,8 @@ export function useAcordeonProMaxSimulador() {
         if (error) throw error;
         if (data && montado) {
           const cancionData = data as any;
-          let secuenciaStr = cancionData.secuencia || cancionData.secuencia_json;
+          // Preferir secuencia_json (donde se persisten ediciones por punch-in) sobre secuencia legacy.
+          let secuenciaStr = cancionData.secuencia_json || cancionData.secuencia;
           let secuencia: any[] = [];
           if (typeof secuenciaStr === 'string') {
             try { secuencia = JSON.parse(secuenciaStr); } catch { secuencia = []; }

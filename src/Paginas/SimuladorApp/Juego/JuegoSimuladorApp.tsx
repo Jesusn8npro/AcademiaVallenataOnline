@@ -1,22 +1,21 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
-import ModoJuego from '../../AcordeonProMax/Modos/ModoJuego';
-import ModoSynthesia from '../../AcordeonProMax/Modos/ModoSynthesia';
-import ModoMaestroSolo from '../../AcordeonProMax/Modos/ModoMaestroSolo';
+import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
+import ContenedorBajos from '../Componentes/ContenedorBajos';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
 import PantallaResultados from '../../AcordeonProMax/Componentes/PantallaResultados';
 import PantallaGameOverProMax from '../../AcordeonProMax/Componentes/PantallaGameOverProMax';
 import HeaderJuegoSimulador from './HeaderJuegoSimulador';
+import PistaNotasVertical from './PistaNotasVertical';
 import type { ConfigCancion, ModoJuego as ModoConfig } from '../Aprende/useConfigCancion';
-import '../../AcordeonProMax/Modos/_BaseSimulador.css';
+import '../SimuladorApp.css';
 import './JuegoSimuladorApp.css';
 
 interface JuegoSimuladorAppProps {
     config: ConfigCancion;
     onSalir: () => void;
 }
-
-const IMG_ALUMNO = '/Acordeon PRO MAX.png';
 
 const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro_solo'> = {
     competitivo: 'ninguno',
@@ -25,27 +24,130 @@ const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro
     maestro_solo: 'maestro_solo',
 };
 
+const MAPA_CIFRADO: Record<string, string> = {
+    'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb',
+    'Mi': 'E', 'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#',
+    'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
+};
+
+const formatearNombreNota = (notaObj: any, modo: string): string => {
+    if (!notaObj) return '';
+    const partes = String(notaObj.nombre || '').split(' ');
+    const notaBase = partes[0];
+    if (modo === 'cifrado') return MAPA_CIFRADO[notaBase] || notaBase;
+    return notaBase;
+};
+
 const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }) => {
     const hero: any = useLogicaProMax();
     const inicializadoRef = useRef(false);
 
-    // Inicializa el juego con la config recibida (una sola vez al montar)
+    const x = useMotionValue(0);
+    const trenRef = useRef<HTMLDivElement>(null);
+    const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
+    const [bajosVisible, setBajosVisible] = useState(false);
+
+    // ─── Inicializar el juego (una vez) ─────────────────────
     useEffect(() => {
         if (inicializadoRef.current) return;
-        if (!hero || !hero.iniciarJuego) return;
+        if (!hero || typeof hero.iniciarJuego !== 'function') return;
 
         inicializadoRef.current = true;
-        hero.setModoPractica(MAPA_MODO[config.modo]);
+        const modoPM = MAPA_MODO[config.modo];
+        hero.setModoPractica(modoPM);
         hero.setMaestroSuena(config.guiaAudio);
-        hero.iniciarJuego(config.cancion);
+
+        Promise.resolve(hero.iniciarJuego(config.cancion, false, modoPM)).catch((err: any) => {
+            console.error('[JuegoSimuladorApp] iniciarJuego fallo:', err);
+        });
     }, [hero, config]);
 
-    // Si la lógica vuelve a 'seleccion' (cancelación interna), salimos al simulador.
-    useEffect(() => {
-        if (inicializadoRef.current && hero?.estadoJuego === 'seleccion') {
-            onSalir();
+    // ─── Visualizacion de pitos (mismo patron que SimuladorApp) ─
+    const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
+        let cached = elementosCache.current.get(pos);
+        if (!cached) {
+            const pito = document.querySelector(`.pito-boton[data-pos="${pos}"]`);
+            const bajo = document.querySelector(`.boton-bajo-contenedor[data-pos="${pos}"]`);
+            cached = { pito, bajo };
+            elementosCache.current.set(pos, cached);
         }
-    }, [hero?.estadoJuego, onSalir]);
+        if (esBajo && cached.bajo) {
+            activo ? cached.bajo.classList.add('activo') : cached.bajo.classList.remove('activo');
+        } else if (!esBajo && cached.pito) {
+            activo ? cached.pito.classList.add('nota-activa') : cached.pito.classList.remove('nota-activa');
+        }
+    }, []);
+
+    const logica = hero?.logica;
+
+    // Conecta los pointer events de los pitos a hero.logica (mismo motor que ProMax)
+    const { manejarCambioFuelle, limpiarGeometria } = usePointerAcordeon({
+        x,
+        logica: logica || ({} as any),
+        actualizarVisualBoton,
+        registrarEvento: () => {},
+        trenRef,
+        desactivarAudio: hero?.estadoJuego === 'pausado',
+    });
+
+    // ─── Resaltado de pitos objetivo (cuando nota cae cerca) ──
+    // Calculamos las posiciones objetivo (formato "A-1") via React props,
+    // no via document.querySelector — mas confiable y reactivo.
+    const botonesActivos = hero?.botonesActivosMaestro || {};
+    const direccionMaestro: 'halar' | 'empujar' = hero?.direccionMaestro || 'halar';
+
+    const posicionesObjetivo = useMemo<Set<string>>(() => {
+        const set = new Set<string>();
+        Object.keys(botonesActivos).forEach((botonId) => {
+            // Soporta "A1-halar", "A-1-halar", "1-3-halar".
+            // El data-pos del pito siempre es "A-1" (con guion).
+            const m = botonId.match(/^([A-Z])-?(\d+)/);
+            if (m) {
+                set.add(`${m[1]}-${m[2]}`);
+            } else {
+                const m2 = botonId.match(/^(\d+)-(\d+)/);
+                if (m2) set.add(`${m2[1]}-${m2[2]}`);
+            }
+        });
+        return set;
+    }, [botonesActivos]);
+
+    // ─── Recalibrar geometria al cambiar tonalidad ──────────
+    useEffect(() => {
+        elementosCache.current.clear();
+        limpiarGeometria();
+    }, [logica?.tonalidadSeleccionada, limpiarGeometria]);
+
+    // ─── Render hilera de pitos (mismo formato que SimuladorApp) ─
+    const renderHilera = (fila: any[]) => {
+        const p: Record<string, { halar: any; empujar: any }> = {};
+        fila?.forEach((n: any) => {
+            const pos = n.id.split('-').slice(0, 2).join('-');
+            if (!p[pos]) p[pos] = { halar: null, empujar: null };
+            n.id.includes('halar') ? p[pos].halar = n : p[pos].empujar = n;
+        });
+
+        const direccionUsuario = logica?.direccion || 'halar';
+
+        return Object.entries(p)
+            .sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1]))
+            .map(([pos, n]) => {
+                const labelHalar = formatearNombreNota(n.halar, logica?.modoVista || 'notas');
+                const labelEmpujar = formatearNombreNota(n.empujar, logica?.modoVista || 'notas');
+                const esHalar = direccionUsuario === 'halar';
+                const esObjetivo = posicionesObjetivo.has(pos);
+                const claseObjetivo = esObjetivo
+                    ? (direccionMaestro === 'halar' ? 'objetivo-halar' : 'objetivo-empujar')
+                    : '';
+                return (
+                    <div key={pos} className={`pito-boton ${claseObjetivo}`} data-pos={pos}>
+                        {esHalar
+                            ? <span className="nota-etiqueta label-halar">{labelHalar}</span>
+                            : <span className="nota-etiqueta label-empujar">{labelEmpujar}</span>}
+                    </div>
+                );
+            });
+    };
 
     if (!hero) return null;
 
@@ -58,13 +160,51 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
         : 0;
 
     const reiniciar = () => {
-        if (hero.cancionSeleccionada) {
-            hero.reiniciarDesdeGameOver(hero.cancionSeleccionada);
-        }
+        if (hero.cancionSeleccionada) hero.reiniciarDesdeGameOver(hero.cancionSeleccionada);
     };
 
+    const rangoSeccion = useMemo(() => (
+        hero.seccionSeleccionada
+            ? { inicio: hero.seccionSeleccionada.tickInicio, fin: hero.seccionSeleccionada.tickFin }
+            : null
+    ), [hero.seccionSeleccionada]);
+
+    // DEBUG: contador supervisible para diagnostico
+    const totalSecuenciaDebug = Array.isArray(cancion?.secuencia) ? cancion.secuencia.length : 0;
+
     return (
-        <div className="juego-sim-root">
+        <div className={`juego-sim-root simulador-app-root modo-${logica?.direccion || 'halar'}`}>
+            {/* DEBUG: contador supervisible */}
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 4,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'lime',
+                    color: 'black',
+                    padding: '4px 12px',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    zIndex: 10000,
+                    fontFamily: 'monospace',
+                    borderRadius: 4,
+                }}
+            >
+                DBG: {totalSecuenciaDebug}n · tick={Math.round(hero?.tickActual ?? 0)} · estado={hero?.estadoJuego}
+            </div>
+
+            <ContenedorBajos
+                visible={bajosVisible}
+                onOpen={() => setBajosVisible(true)}
+                onClose={() => setBajosVisible(false)}
+                logica={logica}
+                escala={1}
+                manejarCambioFuelle={manejarCambioFuelle}
+                desactivarAudio={hero?.estadoJuego === 'pausado'}
+                vistaDoble={false}
+            />
+
             <HeaderJuegoSimulador
                 titulo={cancion?.titulo || 'Cargando...'}
                 autor={cancion?.autor}
@@ -85,85 +225,62 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 </div>
             )}
 
-            <main className="juego-sim-main">
-                {enJuego && modoActual === 'maestro_solo' && (
-                    <ModoMaestroSolo
-                        estadoJuego={hero.estadoJuego}
-                        tickActual={hero.tickActual}
-                        totalTicks={hero.totalTicks}
-                        reproduciendo={hero.reproduciendo}
-                        pausado={hero.pausado}
-                        botonesActivosMaestro={hero.botonesActivosMaestro}
-                        direccionMaestro={hero.direccionMaestro}
-                        logica={hero.logica}
-                        buscarTick={hero.buscarTick}
-                        alternarPausa={hero.alternarPausaReproduccion}
-                        maestroSuena={hero.maestroSuena}
-                        setMaestroSuena={hero.setMaestroSuena}
-                        mp3Silenciado={hero.mp3Silenciado}
-                        setMp3Silenciado={hero.setMp3Silenciado}
-                        modoGuiado={hero.modoGuiado}
-                        setModoGuiado={hero.setModoGuiado}
-                        bpm={hero.bpm}
-                        cambiarBpm={hero.cambiarBpm}
-                        loopAB={hero.loopAB}
-                        marcarLoopInicio={hero.marcarLoopInicio}
-                        marcarLoopFin={hero.marcarLoopFin}
-                        actualizarLoopInicioTick={hero.actualizarLoopInicioTick}
-                        actualizarLoopFinTick={hero.actualizarLoopFinTick}
-                        alternarLoopAB={hero.alternarLoopAB}
-                        limpiarLoopAB={hero.limpiarLoopAB}
-                    />
-                )}
+            {hero.estadoJuego === 'seleccion' && (
+                <div className="juego-sim-loader">
+                    <div className="juego-sim-spinner" />
+                    <p>Preparando canción...</p>
+                </div>
+            )}
 
-                {enJuego && (modoActual === 'ninguno' || modoActual === 'libre') && (
-                    <ModoJuego
-                        conPenalizacion={modoActual === 'ninguno'}
-                        cancion={cancion}
-                        tickActual={hero.tickActual}
-                        botonesActivosMaestro={hero.botonesActivosMaestro}
-                        direccionMaestro={hero.direccionMaestro}
-                        logica={hero.logica}
-                        configTonalidad={hero.logica.configTonalidad}
-                        estadisticas={hero.estadisticas}
-                        efectosVisuales={hero.efectosVisuales}
-                        notasImpactadas={hero.notasImpactadas}
-                        imagenFondo={IMG_ALUMNO}
-                        actualizarBotonActivo={hero.logica.actualizarBotonActivo}
-                        registrarPosicionGolpe={hero.registrarPosicionGolpe}
-                        rangoSeccion={hero.seccionSeleccionada
-                            ? { inicio: hero.seccionSeleccionada.tickInicio, fin: hero.seccionSeleccionada.tickFin }
-                            : null}
-                    />
-                )}
+            {/* Acordeon (pitos del SimuladorApp) - tamano natural, sin overrides */}
+            {logica?.configTonalidad && (
+                <div className="contenedor-acordeon-completo">
+                    <div className="simulador-canvas">
+                        <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
+                            <motion.div
+                                ref={trenRef}
+                                className="tren-botones-deslizable"
+                                style={{ x, touchAction: 'manipulation' }}
+                            >
+                                <div className="hilera-pitos hilera-adentro">
+                                    {renderHilera(logica.configTonalidad?.terceraFila)}
+                                </div>
+                                <div className="hilera-pitos hilera-medio">
+                                    {renderHilera(logica.configTonalidad?.segundaFila)}
+                                </div>
+                                <div className="hilera-pitos hilera-afuera">
+                                    {renderHilera(logica.configTonalidad?.primeraFila)}
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                {enJuego && modoActual === 'synthesia' && (
-                    <ModoSynthesia
-                        cancion={cancion}
-                        tickActual={hero.tickActual}
-                        botonesActivosMaestro={hero.botonesActivosMaestro}
-                        direccionMaestro={hero.direccionMaestro}
-                        logica={hero.logica}
-                        configTonalidad={hero.logica.configTonalidad}
-                        estadisticas={hero.estadisticas}
-                        efectosVisuales={hero.efectosVisuales}
-                        notasEsperando={hero.notasEsperando}
-                        botonesGuiaAlumno={hero.botonesGuiaAlumno}
-                        notasImpactadas={hero.notasImpactadas}
-                        imagenFondo={IMG_ALUMNO}
-                        actualizarBotonActivo={hero.logica.actualizarBotonActivo}
-                        registrarPosicionGolpe={hero.registrarPosicionGolpe}
-                        mensajeMotivacional={hero.mensajeMotivacional}
-                        feedbackFuelle={hero.feedbackFuelle}
+            {/* Carriles verticales guia (overlay fixed encima del acordeon) */}
+            <div className="juego-sim-carriles" aria-hidden="true">
+                {[...Array(10)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="juego-sim-carril"
+                        style={{ left: `${((i + 0.5) / 10) * 100}%` }}
                     />
-                )}
-            </main>
+                ))}
+            </div>
+
+            {/* Pista de notas cayendo (fixed encima de TODO, debajo del header) */}
+            <PistaNotasVertical
+                cancion={cancion}
+                tickActual={hero.tickActual}
+                notasImpactadas={hero.notasImpactadas || new Set()}
+                rangoSeccion={rangoSeccion}
+            />
+
+            {/* Linea de impacto pulsante */}
+            <div className="juego-sim-linea-impacto" aria-hidden="true" />
 
             {opacidadDano > 0 && (
-                <div
-                    className="juego-sim-dano-overlay"
-                    style={{ opacity: opacidadDano }}
-                />
+                <div className="juego-sim-dano-overlay" style={{ opacity: opacidadDano }} />
             )}
 
             {hero.estadoJuego === 'resultados' && cancion && (

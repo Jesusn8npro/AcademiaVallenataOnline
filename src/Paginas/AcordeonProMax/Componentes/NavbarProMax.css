@@ -199,3 +199,32 @@
     display: none; /* Ocultar texto de perfil en móvil para ahorrar espacio */
   }
 }
+
+/* Studio Admin — solo visible cuando usuario.rol === 'admin'. Acento amber para distinguirlo
+   de los items normales sin gritar. */
+.nav-promax-item-admin {
+  position: relative;
+  color: #fbbf24;
+}
+.nav-promax-item-admin::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 60%;
+  background: linear-gradient(180deg, transparent, #fbbf24, transparent);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+.nav-promax-item-admin svg {
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.4));
+}
+.nav-promax-item-admin:hover {
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.08);
+}
+.nav-promax-item-admin:hover svg {
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.7));
+}

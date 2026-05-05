@@ -2,10 +2,12 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
-import SeccionAdminTeoria from '../../Admin/Componentes/SeccionAdminTeoria';
 import SeccionPLSonido from './SeccionPLSonido';
-import SeccionPLPistas from './SeccionPLPistas';
+import SeccionPLPistas, { type ModoGrabacionPL } from './SeccionPLPistas';
 import SeccionPLEfectos from './SeccionPLEfectos';
+import SeccionPLLibreria from './SeccionPLLibreria';
+import type { CancionHeroConTonalidad } from '../../TiposProMax';
+import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
 
 interface PanelLateralEstudianteProps {
   visible: boolean;
@@ -40,11 +42,20 @@ interface PanelLateralEstudianteProps {
   onActualizarEfectos: (cambios: Partial<PreferenciasPracticaLibre['efectos']>) => void;
   volumenAcordeon: number;
   onAjustarVolumenAcordeon: (valor: number) => void;
+  onSeleccionarCancionHero?: (cancion: CancionHeroConTonalidad) => void;
+  onSeleccionarSeccionHero?: (cancion: CancionHeroConTonalidad, seccion: any) => void;
+  modoGrabacion: ModoGrabacionPL;
+  onCambiarModoGrabacion: (modo: ModoGrabacionPL) => void;
+  metronomo: MetronomoComun;
+  grabando: boolean;
+  tiempoGrabacionTexto: string;
+  onAlternarGrabacion: () => void;
 }
 
 const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
   sonido: 'Sonido y lectura', modelos: 'Modelos visuales',
-  pistas: 'Pistas y capas', teoria: 'Teoria musical', efectos: 'Efectos y mezcla',
+  pistas: 'Pistas y Estudio', teoria: 'Teoria musical', efectos: 'Efectos y mezcla',
+  libreria: 'Librería de canciones',
 };
 
 const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
@@ -55,9 +66,12 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
   cargandoPistas, reproduciendoPista, tiempoPista, duracionPista, onSeleccionarPista,
   onLimpiarPista, onAlternarReproduccionPista, onReiniciarPista, onCargarArchivoLocal,
   onAlternarCapa, onActualizarEfectos, volumenAcordeon, onAjustarVolumenAcordeon,
+  onSeleccionarCancionHero, onSeleccionarSeccionHero,
+  modoGrabacion, onCambiarModoGrabacion, metronomo,
+  grabando, tiempoGrabacionTexto, onAlternarGrabacion,
 }) => {
   if (!visible || !seccionActiva) return null;
-  if (!['sonido', 'modelos', 'pistas', 'teoria', 'efectos'].includes(seccionActiva)) return null;
+  if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria'].includes(seccionActiva)) return null;
 
   return (
     <aside className="estudio-practica-libre-panel">
@@ -84,17 +98,28 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
 
       {seccionActiva === 'modelos' && (
         <div className="estudio-practica-libre-seccion">
-          <div className="estudio-practica-libre-grid-modelos">
-            {MODELOS_VISUALES_ACORDEON.map((modelo) => (
-              <button key={modelo.id}
-                className={`estudio-practica-libre-modelo-card ${modeloActivo.id === modelo.id ? 'activo' : ''}`}
-                onClick={() => onSeleccionarModelo(modelo.id)}>
-                <div className="estudio-practica-libre-modelo-imagen-wrap">
-                  <img src={modelo.imagen} alt={modelo.nombre} className="estudio-practica-libre-modelo-imagen" />
-                </div>
-                <strong>{modelo.nombre}</strong><span>{modelo.descripcion}</span>
-              </button>
-            ))}
+          <div className="estudio-practica-libre-bloque">
+            <div className="estudio-practica-libre-bloque-titulo">Elegí tu acordeón</div>
+            <div className="estudio-practica-libre-modelos-lista">
+              {MODELOS_VISUALES_ACORDEON.map((modelo) => (
+                <button
+                  key={modelo.id}
+                  className={`estudio-practica-libre-modelo-row ${modeloActivo.id === modelo.id ? 'activo' : ''}`}
+                  onClick={() => onSeleccionarModelo(modelo.id)}
+                >
+                  <div className="estudio-practica-libre-modelo-row-img">
+                    <img src={modelo.imagen} alt={modelo.nombre} />
+                  </div>
+                  <div className="estudio-practica-libre-modelo-row-info">
+                    <strong>{modelo.nombre}</strong>
+                    <span>{modelo.descripcion}</span>
+                  </div>
+                  {modeloActivo.id === modelo.id && (
+                    <div className="estudio-practica-libre-modelo-row-check">✓</div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -108,17 +133,26 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
           onAlternarReproduccionPista={onAlternarReproduccionPista} onReiniciarPista={onReiniciarPista}
           onCargarArchivoLocal={onCargarArchivoLocal} onAlternarCapa={onAlternarCapa}
           preferencias={preferencias}
+          modoGrabacion={modoGrabacion}
+          onCambiarModoGrabacion={onCambiarModoGrabacion}
+          metronomo={metronomo}
+          grabando={grabando}
+          tiempoGrabacionTexto={tiempoGrabacionTexto}
+          onAlternarGrabacion={onAlternarGrabacion}
         />
-      )}
-
-      {seccionActiva === 'teoria' && (
-        <SeccionAdminTeoria tonalidadSeleccionada={tonalidadSeleccionada} mostrarTeoriaCircular={!!preferencias.mostrarTeoriaCircular} />
       )}
 
       {seccionActiva === 'efectos' && (
         <SeccionPLEfectos
           preferencias={preferencias} volumenAcordeon={volumenAcordeon}
           onAjustarVolumenAcordeon={onAjustarVolumenAcordeon} onActualizarEfectos={onActualizarEfectos}
+        />
+      )}
+
+      {seccionActiva === 'libreria' && onSeleccionarCancionHero && (
+        <SeccionPLLibreria
+          onSeleccionarCancion={onSeleccionarCancionHero}
+          onSeleccionarSeccion={onSeleccionarSeccionHero}
         />
       )}
     </aside>

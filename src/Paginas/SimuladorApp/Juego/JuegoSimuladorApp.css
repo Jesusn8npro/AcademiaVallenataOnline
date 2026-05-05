@@ -17,8 +17,77 @@
     overflow: hidden;
 }
 
+/* En modo juego ocultamos la barra de herramientas del simulador normal */
+.juego-sim-root .barra-herramientas-contenedor { display: none; }
+
+/* PISTA DE NOTAS — fixed encima de TODO el area de juego (debajo del header).
+   Las notas caen desde top:0 (debajo del header) hasta top: ~75% (centro de pitos).
+   pointer-events: none deja pasar los toques al acordeon abajo. */
+.juego-sim-root .pista-notas-vertical {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 600;
+    overflow: hidden;
+}
+
+/* Carriles verticales — guías visuales de las 10 columnas */
+.juego-sim-carriles {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 599;
+}
+.juego-sim-carril {
+    position: absolute;
+    top: 0;
+    bottom: 25%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 255, 255, 0.06) 40%,
+        rgba(255, 255, 255, 0.18) 100%
+    );
+}
+
+/* Línea de impacto — pulsante, justo donde las notas tocan los pitos */
+.juego-sim-linea-impacto {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 3px;
+    /* Posicionada al ~75% de la pantalla, donde estan los pitos */
+    bottom: 25%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(251, 191, 36, 0.25) 5%,
+        rgba(251, 191, 36, 0.85) 50%,
+        rgba(251, 191, 36, 0.25) 95%,
+        transparent 100%
+    );
+    box-shadow: 0 0 18px rgba(251, 191, 36, 0.7);
+    z-index: 601;
+    animation: juego-sim-impacto-pulse 1.4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes juego-sim-impacto-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
 @media (max-width: 480px) {
-    .juego-sim-main { top: 44px; }
+    .juego-sim-root .pista-notas-vertical { top: 44px; }
+    .juego-sim-carriles { top: 44px; }
 }
 
 /* ─── CUENTA REGRESIVA ──────────────────────────────────── */
@@ -50,6 +119,38 @@
     0% { transform: scale(0.4); opacity: 0; }
     25% { transform: scale(1.2); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── LOADER ───────────────────────────────────────────── */
+
+.juego-sim-loader {
+    position: absolute;
+    inset: 48px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.juego-sim-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #fbbf24;
+    border-radius: 50%;
+    animation: juego-sim-spin 0.9s linear infinite;
+}
+
+@keyframes juego-sim-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .juego-sim-loader { top: 44px; }
 }
 
 /* ─── OVERLAY DE DAÑO (modo competitivo, vida baja) ────── */

@@ -4,7 +4,11 @@ import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'
 
 const CursoAcordeonDesdeCero: React.FC = () => {
   const [mostrarModalPago, setMostrarModalPago] = useState(false)
-  const cursoAcordeion = { id: 'curso-acordeon-desde-cero', titulo: 'Curso de Acordeón desde Cero', precio_normal: 379000, precio_rebajado: 289000, descripcion: 'Aprende a tocar acordeón vallenato desde cero absoluto hasta tocar como un profesional' }
+  // UUID real del curso en Supabase (`cursos.id`). Antes acá había un slug literal
+  // (`curso-acordeon-desde-cero`) que se enviaba a `pagos_epayco.curso_id`, columna UUID
+  // → la DB rechazaba el insert con "invalid input syntax for type uuid" y el alumno
+  // veía error al apretar Pagar. Reemplazado por el UUID real.
+  const cursoAcordeion = { id: 'd30e46d9-7598-45f9-aa82-7ddb70b7e4a6', titulo: 'Curso de Acordeón desde Cero', precio_normal: 379000, precio_rebajado: 289000, descripcion: 'Aprende a tocar acordeón vallenato desde cero absoluto hasta tocar como un profesional' }
 
   useEffect(() => {
     const ocultar = () => {

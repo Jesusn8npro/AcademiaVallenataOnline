@@ -6,9 +6,11 @@ const CuerpoAcordeon = React.memo(CuerpoAcordeonBase);
 import { TONALIDADES } from '../../../Core/acordeon/notasAcordeonDiatonico';
 import { obtenerModeloVisualPorId, resolverImagenModeloAcordeon } from './Datos/modelosVisualesAcordeon';
 import { useEstudioPracticaLibre } from './Hooks/useEstudioPracticaLibre';
+import { useMetronomoEstudiante } from './Hooks/useMetronomoEstudiante';
 import BarraSuperiorPracticaLibre from './Componentes/BarraSuperiorPracticaLibre';
 import PanelLateralEstudiante from './Componentes/PanelLateralEstudiante';
 import ModalGuardarPracticaLibre from './Componentes/ModalGuardarPracticaLibre';
+import ReproductorCancionHero from './Componentes/ReproductorCancionHero';
 import { formatearDuracion } from './Utilidades/SecuenciaLogic';
 import './EstudioPracticaLibre.css';
 
@@ -29,7 +31,7 @@ interface EstudioPracticaLibreProps {
   resumenGrabacionPendiente: { duracionMs: number; bpm: number; tonalidad: string | null; notas: number } | null;
   ultimaGrabacionGuardada: { id: string; titulo: string } | null;
   onIniciarGrabacion: (tipo?: 'practica_libre' | 'competencia') => void;
-  onDetenerGrabacion: () => void;
+  onDetenerGrabacion: (metadataExtra?: Record<string, any>) => void;
   onGuardarGrabacion: (datos: any) => Promise<boolean>;
   onCancelarGuardado: () => void;
   volumenAcordeon: number;
@@ -37,6 +39,7 @@ interface EstudioPracticaLibreProps {
   onVolver?: () => void;
   esp32Conectado?: boolean;
   conectarESP32?: () => Promise<void>;
+  hero?: any;
 }
 
 const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
@@ -46,7 +49,26 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   tituloSugeridoGrabacion, resumenGrabacionPendiente, ultimaGrabacionGuardada,
   onIniciarGrabacion, onDetenerGrabacion, onGuardarGrabacion, onCancelarGuardado,
   volumenAcordeon, setVolumenAcordeon, onVolver, esp32Conectado = false, conectarESP32,
+  hero,
 }) => {
+  // Canción hero seleccionada para reproducir inline (sin salir de Práctica Libre).
+  const [cancionEnReproductor, setCancionEnReproductor] = React.useState<any>(null);
+  const [seccionInicialPendiente, setSeccionInicialPendiente] = React.useState<any>(null);
+
+  const onSeleccionarCancionHero = React.useCallback((cancion: any) => {
+    setCancionEnReproductor(cancion);
+    setSeccionInicialPendiente(null);
+  }, []);
+
+  const onSeleccionarSeccionHero = React.useCallback((cancion: any, seccion: any) => {
+    setCancionEnReproductor(cancion);
+    setSeccionInicialPendiente(seccion);
+  }, []);
+
+  const cerrarReproductor = React.useCallback(() => {
+    setCancionEnReproductor(null);
+    setSeccionInicialPendiente(null);
+  }, []);
   const estudio = useEstudioPracticaLibre({
     tonalidadSeleccionada: logica.tonalidadSeleccionada,
     instrumentoId: logica.instrumentoId,
@@ -54,6 +76,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     volumenAcordeon,
     setVolumenAcordeon,
   });
+  const metronomo = useMetronomoEstudiante();
 
   const modeloActivo = React.useMemo(
     () => obtenerModeloVisualPorId(estudio.preferencias.modeloVisualId),
@@ -83,10 +106,58 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     return () => window.clearTimeout(timer);
   }, [logica.ajustes?.timbre, logica.guardarAjustes, logica.instrumentoId, logica.modoVista, logica.tonalidadSeleccionada]);
 
+  // Cuando el alumno cambia de modo (sin estar grabando), apagamos todo lo del modo
+  // anterior. Sino, si activó pista en modo "pista" y cambia a "metronomo", la pista
+  // sigue sonando y se mete en su sesión de metrónomo → modos enredados.
+  React.useEffect(() => {
+    if (grabando) return;
+    estudio.pausarPista();
+    if (metronomo.activo) metronomo.setActivo(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estudio.modoGrabacion]);
+
   const manejarGrabacionSesion = async () => {
-    if (grabando) { onDetenerGrabacion(); return; }
-    if (estudio.pistaActiva) await estudio.prepararPistaParaGrabar();
+    if (grabando) {
+      // Al detener: silenciar todo lo que estaba sonando como guía + snapshot del metrónomo
+      // para que el replay lo reconstruya con la misma config (bpm, compás, sonido, etc).
+      const metadataExtra: Record<string, any> = {};
+      if (estudio.modoGrabacion === 'metronomo') {
+        metadataExtra.metronomo = {
+          activo: true,
+          bpm: metronomo.bpm,
+          compas: metronomo.compas,
+          subdivision: metronomo.subdivision,
+          sonido: metronomo.sonido,
+          volumen: metronomo.volumen,
+        };
+      }
+      if (metronomo.activo) metronomo.setActivo(false);
+      estudio.pausarPista();
+      onDetenerGrabacion(metadataExtra);
+      return;
+    }
+    // ARRANQUE — aislamiento estricto: apagamos TODO antes de activar SÓLO el guía del
+    // modo elegido. Si el alumno había manualmente puesto play a la pista, o el metrónomo
+    // venía activo de antes, lo paramos. Cada modo arranca limpio.
+    estudio.pausarPista();
+    if (metronomo.activo) metronomo.setActivo(false);
+
+    if (estudio.modoGrabacion === 'pista') {
+      // Sólo prepara/arranca la pista si hay una seleccionada. Si no, la grabación va
+      // muda (mismo efecto que modo 'libre') — el alumno ve el aviso en el panel.
+      if (estudio.pistaActiva) await estudio.prepararPistaParaGrabar();
+    } else if (estudio.modoGrabacion === 'metronomo') {
+      metronomo.setActivo(true);
+    }
+    // 'libre' no hace nada — solo acordeón.
     onIniciarGrabacion('practica_libre');
+  };
+
+  // El botón REC superior NO inicia/detiene la grabación: solo es atajo para abrir el panel
+  // "Pistas y Estudio", donde el alumno elige el modo y luego graba con el botón REC interno.
+  // Así forzamos que la elección de modo (libre / pista / metrónomo) sea siempre explícita.
+  const abrirPanelGrabacion = () => {
+    if (estudio.panelActivo !== 'pistas') estudio.alternarPanel('pistas');
   };
 
   return (
@@ -101,7 +172,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
         nombrePista={estudio.pistaActiva?.nombre || estudio.preferencias.pistaNombre}
         grabandoSesion={grabando}
         tiempoGrabacionSesion={formatearDuracion(tiempoGrabacionMs)}
-        onAlternarGrabacion={manejarGrabacionSesion}
+        onAlternarGrabacion={abrirPanelGrabacion}
         onVolver={onVolver}
       />
 
@@ -176,6 +247,14 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           onActualizarEfectos={estudio.actualizarEfectos}
           volumenAcordeon={estudio.volumenAcordeon}
           onAjustarVolumenAcordeon={estudio.ajustarVolumenAcordeon}
+          onSeleccionarCancionHero={onSeleccionarCancionHero}
+          onSeleccionarSeccionHero={onSeleccionarSeccionHero}
+          modoGrabacion={estudio.modoGrabacion}
+          onCambiarModoGrabacion={estudio.setModoGrabacion}
+          metronomo={metronomo}
+          grabando={grabando}
+          tiempoGrabacionTexto={formatearDuracion(tiempoGrabacionMs)}
+          onAlternarGrabacion={manejarGrabacionSesion}
         />
       </div>
 
@@ -203,6 +282,15 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
         onCancelar={onCancelarGuardado}
         onGuardar={(titulo, descripcion) => onGuardarGrabacion({ titulo, descripcion })}
       />
+
+      {cancionEnReproductor && (
+        <ReproductorCancionHero
+          cancion={cancionEnReproductor}
+          logica={logica}
+          seccionInicial={seccionInicialPendiente}
+          onCerrar={cerrarReproductor}
+        />
+      )}
     </section>
   );
 };

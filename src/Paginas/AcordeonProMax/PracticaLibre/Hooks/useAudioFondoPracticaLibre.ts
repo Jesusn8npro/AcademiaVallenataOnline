@@ -19,11 +19,6 @@ export interface AnchorReproduccion {
   audio: HTMLAudioElement;
 }
 
-// Margen forward al programar el ancla. Pequeño porque HTMLAudio.currentTime es prácticamente instantáneo
-// para buffers cacheados — el audio empieza a sonar dentro de 1-2 frames de un .play(). 20ms (~1 frame
-// a 60fps) es el mínimo seguro: la RAF tiene tiempo de inicializarse antes de que el reloj cuente.
-const MARGEN_PROGRAMACION_SEG = 0.02;
-
 /**
  * Audio de fondo basado en UN HTMLAudioElement PERSISTENTE por canción. Cargado una sola vez al cambiar
  * de URL, reutilizado en TODOS los seeks/secciones/clicks de la barra. Cada click solo hace dos cosas:
@@ -121,9 +116,12 @@ export const useAudioFondoPracticaLibre = ({
 
   /**
    * Punto de entrada PRINCIPAL: hace seek + play en el HTMLAudio persistente y devuelve el anchor para
-   * sincronización del RAF. Pensado para ser llamado en CADA click de la barra: NO destruye el audio,
-   * NO crea sources nuevos, NO espera eventos asíncronos del audio (más allá del primer canplay si no
-   * se había cargado todavía). En el caso normal (audio ya cacheado) este método retorna en <2ms.
+   * sincronización del RAF. NO destruye el audio ni crea sources nuevos. Espera el evento 'playing'
+   * (o 'seeked' si ya estaba sonando) ANTES de devolver el anchor, para que el RAF del caller arranque
+   * cuando el decoder ya está produciendo sample real (HTMLAudio tarda 50-300ms post-play). El
+   * tickInicialReal devuelto se calcula desde audio.currentTime REAL, no desde el tick pedido — eso
+   * garantiza que el primer tick del RAF coincide exactamente con el sample que está sonando.
+   * Latencia típica: <5ms si audio ya estaba sonando (path 'seeked'), 50-300ms en cold-start (path 'playing').
    */
   const iniciarReproduccionAnclada = useCallback(async (
     tickInicio: number,
@@ -154,43 +152,45 @@ export const useAudioFondoPracticaLibre = ({
     (audio as any).preservesPitch = true;
 
     // Seek instantáneo: HTMLAudio.currentTime = X completa en microsegundos para buffers cacheados.
+    const wasPlaying = !audio.paused;
     try { audio.currentTime = offsetSeg; } catch (_) {}
 
-    // [SYNC DEBUG] medir si el seek se aplicó en sincrónico (HTMLAudio cacheado debería) y si el
-    // evento 'seeked' coincide con offsetSeg pedido (decoder honra la posición exacta?).
-    console.log('[SYNC] post-seek immediate', {
-      pedido: offsetSeg,
-      real: audio.currentTime,
-      deltaSeg: audio.currentTime - offsetSeg,
-      paused: audio.paused,
-      readyState: audio.readyState,
-      seeking: audio.seeking,
+    // ESPERAR a que el decoder produzca sample real antes de devolver el anchor. Sin este await,
+    // el RAF arranca con tick = floor(tickInicio) MIENTRAS el decoder aún warming-up (HTMLAudio
+    // tarda 50-300ms en producir el primer sample post-play()). Durante esa ventana el RAF avanza
+    // linealmente y dispara notas que el alumno oye antes que el MP3 → desync de ~150-300ms.
+    //
+    // Patrón validado en useLogicaProMax.iniciarJuego (modo Maestro/Competencia): esperar 'playing'
+    // y leer audio.currentTime REAL para alinear el tick inicial al sample que está sonando.
+    //
+    // Caso wasPlaying=true (audio ya sonando, seek durante reproducción): esperar 'seeked' — el
+    // decoder ya está activo, solo necesitamos que la nueva posición se aplique antes de leer.
+    await new Promise<void>((resolve) => {
+      let resuelto = false;
+      const finalizar = () => { if (resuelto) return; resuelto = true; resolve(); };
+      if (wasPlaying) {
+        const onSeeked = () => { audio.removeEventListener('seeked', onSeeked); finalizar(); };
+        audio.addEventListener('seeked', onSeeked);
+        setTimeout(() => { audio.removeEventListener('seeked', onSeeked); finalizar(); }, 800);
+      } else {
+        const onPlaying = () => { audio.removeEventListener('playing', onPlaying); finalizar(); };
+        audio.addEventListener('playing', onPlaying);
+        audio.play().catch(() => finalizar());
+        setTimeout(() => { audio.removeEventListener('playing', onPlaying); finalizar(); }, 1500);
+      }
     });
-    const onSeekedDebug = () => {
-      audio.removeEventListener('seeked', onSeekedDebug);
-      console.log('[SYNC] seeked event', {
-        pedido: offsetSeg,
-        real: audio.currentTime,
-        deltaSeg: audio.currentTime - offsetSeg,
-        paused: audio.paused,
-      });
-    };
-    audio.addEventListener('seeked', onSeekedDebug);
-
-    // Play fire-and-forget: ya estaba sonando? .play() es no-op si no estaba paused. Si estaba paused
-    // o el seek causó pause interno, retomamos. NUNCA awaiteamos el evento 'playing' — eso introduce
-    // jitter de 5-50ms variable según browser.
-    if (audio.paused) {
-      audio.play().catch(() => {});
-    }
 
     manualPlaybackActiveRef.current = true;
 
-    // Anchor: el caller anclará su RAF a contextStartTime. El audio empezará a sonar dentro de los
-    // próximos 1-2 frames; durante esos frames el tick queda congelado en tickInicialReal y luego
-    // empieza a contar al ritmo del bpm. Margen 20ms ≈ 1 frame.
-    const contextStartTime = motorAudioPro.tiempoActual + MARGEN_PROGRAMACION_SEG;
+    // CRÍTICO: arrancar el RAF en el tick PEDIDO, NO en audio.currentTime real. El browser aterriza
+    // los seeks de HTMLAudio con jitter de 0-4 ticks (alineamiento de frames del MP3). Si arrancamos
+    // el RAF en el tick aterrizado (típicamente +N ticks), las notas en (tickPedido..tickAterrizado)
+    // quedan "atrás" del playhead → se pierden → el alumno percibe "el ritmo no es el mismo nunca".
+    // El listener 'seeked' que setAudioSync registra recapturará el checkpoint contra audio.currentTime
+    // real cuando el browser termine el seek, manteniendo sample-accuracy del reloj. Las primeras
+    // notas se disparan a tiempo y luego el reloj converge al audio.
     const tickInicialReal = Math.max(0, Math.floor(tickInicio));
+    const contextStartTime = motorAudioPro.tiempoActual;
     tickAnteriorRef.current = tickInicialReal;
 
     return {

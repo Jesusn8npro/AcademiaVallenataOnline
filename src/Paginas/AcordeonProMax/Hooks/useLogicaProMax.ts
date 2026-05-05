@@ -3,6 +3,7 @@ import { useLogicaAcordeon } from '../../../Core/hooks/useLogicaAcordeon';
 import { useReproductorHero } from '../../../Core/hooks/useReproductorHero';
 import { TONALIDADES } from '../../../Core/acordeon/notasAcordeonDiatonico';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
+import { ReproductorMP3 } from '../../../Core/audio/ReproductorMP3';
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import type {
@@ -17,7 +18,7 @@ import type { ResultadoGolpe } from '../TiposProMax';
 import { useSynthesiaProMax } from './useSynthesiaProMax';
 import { useScoringProMax } from './useScoringProMax';
 import { useGrabacionProMax } from './useGrabacionProMax';
-import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import type { Seccion } from '../tiposSecciones';
 
 export type MensajePrueba = {
   texto: string;
@@ -78,7 +79,11 @@ export function useLogicaProMax() {
   const tickActualRef = useRef<number>(0);
   const notasImpactadasRef = useRef<Set<string>>(new Set());
   const posicionUltimoGolpeRef = useRef<{ x: number; y: number } | null>(null);
-  const audioFondoRef = useRef<HTMLAudioElement | null>(null);
+  // Reproductor de la pista de fondo. Migrado de HTMLAudioElement a ReproductorMP3 para usar
+  // el MISMO clock (AudioContext) que las notas → cero drift. Igual al motor que usa GrabadorV2.
+  // ReproductorMP3 emula la API de HTMLAudio (currentTime, paused, readyState, play, pause,
+  // addEventListener para 'playing'/'seeked'/'pause') así que el resto del código no cambia.
+  const audioFondoRef = useRef<ReproductorMP3 | null>(null);
   const bpmOriginalRef = useRef<number>(120);
   const _onBeatCallbackRef = useRef<((beatIndex: number) => void) | undefined>(undefined);
   const direccionAlumnoRef = useRef<'halar' | 'empujar'>('halar');
@@ -99,6 +104,7 @@ export function useLogicaProMax() {
     cancionRef,
     estadisticasRef: scoring.estadisticasRef,
     modoPracticaRef,
+    seccionRef: seccionSeleccionadaRef,
   });
 
   const {
@@ -532,8 +538,8 @@ export function useLogicaProMax() {
     return () => {
       cancelarCapturaActiva();
       if (audioFondoRef.current) {
-        audioFondoRef.current.pause();
-        audioFondoRef.current.src = "";
+        try { audioFondoRef.current.pause(); } catch (_) {}
+        try { audioFondoRef.current.destruir(); } catch (_) {}
         audioFondoRef.current = null;
       }
       reproductor.detenerReproduccion();
@@ -607,7 +613,7 @@ export function useLogicaProMax() {
     const vel = velocidadRef.current;
     const modoActual = modoPracticaForzado || modoPracticaRef.current;
 
-    if (audioFondoRef.current) { audioFondoRef.current.pause(); audioFondoRef.current.src = ""; audioFondoRef.current = null; }
+    if (audioFondoRef.current) { try { audioFondoRef.current.pause(); } catch (_) {} try { audioFondoRef.current.destruir(); } catch (_) {} audioFondoRef.current = null; }
 
     const seccion = seccionSeleccionadaRef.current;
     const resolucion = (cancion as any).resolucion || 192;
@@ -626,92 +632,40 @@ export function useLogicaProMax() {
 
     const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
 
-    // Pre-carga + seek durante el conteo de 3s: cuando termina el conteo, audio.play() arranca instantáneo y el reloj
-    // de ticks en el mismo frame → cero desfase entre MP3 y notas.
-    const audioPrecargado: HTMLAudioElement | null = urlFondo ? new Audio(urlFondo) : null;
+    // ⭐ MIGRACIÓN A AudioBufferSourceNode (mismo motor que GrabadorV2).
+    // Antes usábamos `new Audio()` (HTMLAudio) que tiene dos problemas: (a) `currentTime` jitter
+    // de 16-50ms, (b) latencia de decoder variable 50-500ms entre play() y primer sample real.
+    // Esto generaba el desfase persistente que sufrías en secciones no-intro: el RAF de notas
+    // se alineaba a `audio.currentTime` (que iba adelantado del sonido real) → notas adelantadas.
+    //
+    // `ReproductorMP3` (AudioBufferSourceNode) NO tiene esos problemas: descarga + decodifica
+    // upfront, `currentTime` se calcula desde AudioContext.currentTime continuo, y comparte el
+    // MISMO clock que las notas → cero drift. Es exactamente lo que GrabadorV2 ya usa.
+    const audioPrecargado: ReproductorMP3 | null = urlFondo
+      ? new ReproductorMP3(motorAudioPro.contextoAudio)
+      : null;
     if (audioPrecargado) {
-      // preload='auto': descarga completa apenas pueda. NO llamar .load() — resetea estado y causa re-fetch + stutter.
-      audioPrecargado.preload = 'auto';
-      audioPrecargado.crossOrigin = 'anonymous';
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
-      (audioPrecargado as any).preservesPitch = true;
       audioFondoRef.current = audioPrecargado;
-      // CANONICAL FIX: rutear el MP3 por el AudioContext de motorAudioPro. Sin esto, MP3 (HTMLAudio decoder)
-      // y notas (Web Audio) tienen latencias DIFERENTES → desincronización. Con esto comparten pipeline → mismas latencias.
-      try { motorAudioPro.conectarMediaElement(audioPrecargado); } catch (_) {}
     }
 
-    // Resuelve cuando el audio está listo (sin stutter durante playback) y posicionado en offsetSegundos.
-    // Estrategia escalonada: canplaythrough → canplay@3s → arrancar igual @4.5s (siempre vía aplicarSeek para preservar offset de sección).
-    const audioListo = new Promise<void>((resolve) => {
-      if (!audioPrecargado) { resolve(); return; }
-
-      let resuelto = false;
-      const finalizar = () => {
-        if (resuelto) return;
-        resuelto = true;
-        resolve();
-      };
-
-      const aplicarSeek = () => {
-        // Seek a offsetSegundosAudio (con lead-in restado si es sección no-intro).
-        if (offsetSegundosAudio > 0) {
-          const onSeeked = () => {
-            audioPrecargado.removeEventListener('seeked', onSeeked);
-            // Después del seek, esperar canplay en la nueva posición. Un seek a offset puede mover
-            // el audio a una región SIN buffer (download progresivo), readyState cae a 2 →
-            // play() entra en buffering → 'playing' tarda → fallback 1500ms dispara mientras audio
-            // aún paused → reproducirSecuencia arranca, RAF avanza, audio sigue mudo → notas
-            // adelantadas. La intro (offset=0) no tiene este bug porque siempre hay buffer en 0.
-            if (audioPrecargado.readyState >= 3) {
-              finalizar();
-            } else {
-              const onCanPlayPostSeek = () => {
-                audioPrecargado.removeEventListener('canplay', onCanPlayPostSeek);
-                finalizar();
-              };
-              audioPrecargado.addEventListener('canplay', onCanPlayPostSeek);
-              setTimeout(() => {
-                audioPrecargado.removeEventListener('canplay', onCanPlayPostSeek);
-                finalizar();
-              }, 2000);
-            }
-          };
-          audioPrecargado.addEventListener('seeked', onSeeked, { once: true });
-          try { audioPrecargado.currentTime = offsetSegundosAudio; } catch (_) { finalizar(); }
-        } else {
-          finalizar();
-        }
-      };
-
-      const onCanPlayThrough = () => {
-        audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
-        aplicarSeek();
-      };
-
-      if (audioPrecargado.readyState >= 4) {
-        aplicarSeek();
-      } else {
-        audioPrecargado.addEventListener('canplaythrough', onCanPlayThrough);
-        // 3s: si canplaythrough no llegó pero hay canplay, seguir. Da margen para acumular más buffer en archivos grandes.
-        setTimeout(() => {
-          if (resuelto) return;
-          if (audioPrecargado.readyState >= 3) {
-            audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
-            aplicarSeek();
+    // Carga upfront del buffer + seek a offsetSegundosAudio. ReproductorMP3.cargar descarga el
+    // archivo completo y lo decodifica en una pasada (~200-500ms para canciones de 4 min en
+    // red decente). Sin descarga progresiva → cero buffer underruns mid-playback → cero
+    // 'canplay' tras seek a zona sin buffer (el bug de la intro vs secciones).
+    const audioListo: Promise<void> = audioPrecargado
+      ? (async () => {
+          try {
+            await audioPrecargado.cargar(urlFondo);
+            // Posicionar en offsetSegundosAudio (con lead-in restado si es sección no-intro).
+            // Sample-accurate: setear currentTime cuando paused solo actualiza startOffset.
+            audioPrecargado.currentTime = offsetSegundosAudio;
+          } catch (_) {
+            // Falla de red: arrancamos igual con currentTime=0; mejor algo que nada.
           }
-        }, 3000);
-      }
-
-      // 4.5s: arrancar con lo que sea (red muy lenta). CRÍTICO pasar por aplicarSeek, no finalizar directo —
-      // si no, una sección con offset arrancaría desde tick 0.
-      setTimeout(() => {
-        if (resuelto) return;
-        audioPrecargado.removeEventListener('canplaythrough', onCanPlayThrough);
-        aplicarSeek();
-      }, 4500);
-    });
+        })()
+      : Promise.resolve();
 
     // Arranca audio + reloj de ticks alineados. audio.play() tarda 100-300ms en producir sonido real (latencia decoder),
     // así que esperamos el evento 'playing' y arrancamos el RAF con tickInicialOverride = audio.currentTime real.
@@ -721,7 +675,12 @@ export function useLogicaProMax() {
 
       // Sin MP3 (modo libre / canción sin audio): arranca el reloj inmediato.
       if (!audioPrecargado) {
-        if (modoActual === 'ninguno') iniciarCaptura('competencia');
+        if (modoActual === 'ninguno') {
+          iniciarCaptura('competencia', {
+            tickInicio: rangoTicks?.inicio || 0,
+            bpmOriginal,
+          });
+        }
         reproductor.reproducirSecuencia(cancion, rangoTicks ? { rangoTicks } : undefined);
         return;
       }
@@ -735,8 +694,21 @@ export function useLogicaProMax() {
       // SÍ hay lead-in (sección no-intro).
       const soltarSecuencia = () => {
         if (audioFondoRef.current !== audioPrecargado) return;
-        if (modoActual === 'ninguno') iniciarCaptura('competencia');
+        if (modoActual === 'ninguno') {
+          // Anclar el grabador al audio + posición musical absoluta (tickInicio de la sección
+          // si la hay, sino 0). Sin esto los ticks capturados son RELATIVOS al inicio de
+          // grabación → el replay no podía saber la posición musical real. El audioElement
+          // permite que cada press se timestampee contra audio.currentTime → cero drift.
+          iniciarCaptura('competencia', {
+            tickInicio: rangoTicks?.inicio || 0,
+            audioElement: audioPrecargado,
+            bpmOriginal,
+          });
+        }
         const targetTick = rangoTicks ? rangoTicks.inicio : 0;
+        // Con ReproductorMP3 ambos (audio y notas) viven en el MISMO AudioContext, así que
+        // comparten la misma outputLatency — no hace falta compensar aquí. `currentTime` del
+        // ReproductorMP3 ya es sample-accurate (calculado desde AudioContext.currentTime).
         const audioTickPos = Math.max(0, Math.floor(audioPrecargado.currentTime * factor));
         const tickInicialReal = rangoTicks
           ? audioTickPos
@@ -976,8 +948,8 @@ export function useLogicaProMax() {
     reproductor.setLoopPoints(0, 0, false);
     actualizarLoopAB({ start: 0, end: 0, activo: false, hasStart: false, hasEnd: false });
     if (audioFondoRef.current) {
-      audioFondoRef.current.pause();
-      audioFondoRef.current.src = "";
+      try { audioFondoRef.current.pause(); } catch (_) {}
+      try { audioFondoRef.current.destruir(); } catch (_) {}
       audioFondoRef.current = null;
     }
     cancelarCapturaActiva();

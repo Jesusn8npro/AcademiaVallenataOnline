@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { cargarProgresoSecciones } from '../../../servicios/seccionesProgresoService';
 import type { EstadoSeccionUsuario, SeccionConEstado } from '../TiposProMax';
-import type { Seccion } from '../Admin/Componentes/EditorSecuencia/tiposEditor';
+import type { Seccion } from '../tiposSecciones';
 
 /**
  * Carga el progreso por sección del usuario actual para una canción.

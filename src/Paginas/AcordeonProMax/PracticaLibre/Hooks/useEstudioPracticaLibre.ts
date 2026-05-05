@@ -34,6 +34,9 @@ export function useEstudioPracticaLibre({
   const [cargandoPistas, setCargandoPistas] = React.useState(true);
   const [pistaActiva, setPistaActiva] = React.useState<PistaPracticaLibre | null>(null);
   const [preferenciasListas, setPreferenciasListas] = React.useState(false);
+  // Modo de grabación: 'libre' (solo acordeón), 'pista' (con MP3), 'metronomo' (con clicks).
+  // Mutuamente excluyentes — el alumno elige uno antes de apretar "Grabar sesión".
+  const [modoGrabacion, setModoGrabacion] = React.useState<'libre' | 'pista' | 'metronomo'>('libre');
 
   const urlsLocalesRef = React.useRef<string[]>([]);
   const grabandoAnteriorRef = React.useRef(grabando);
@@ -225,5 +228,8 @@ export function useEstudioPracticaLibre({
     actualizarEfectos,
     volumenAcordeon,
     ajustarVolumenAcordeon,
+    modoGrabacion,
+    setModoGrabacion,
+    pausarPista: pausarTodosLosAudios,
   };
 }

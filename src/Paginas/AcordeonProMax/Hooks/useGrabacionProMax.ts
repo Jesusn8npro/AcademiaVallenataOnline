@@ -1,13 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useGrabadorHero } from '../../../Core/hooks/useGrabadorHero';
 import { guardarGrabacion } from '../../../servicios/grabacionesHeroService';
-import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { obtenerSnapshotMetadataPracticaLibre } from '../PracticaLibre/Servicios/servicioPreferenciasPracticaLibre';
 import { calcularPrecision } from '../TiposProMax';
 import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
 import type { TipoGrabacionPendiente, GrabacionPendienteProMax, GrabacionGuardadaProMax, UseGrabacionProMaxParams } from './_tiposGrabacionProMax';
 
-export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPracticaRef }: UseGrabacionProMaxParams) {
+export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPracticaRef, seccionRef }: UseGrabacionProMaxParams) {
   const grabador = useGrabadorHero(bpm);
   const grabandoHero = grabador.grabando;
   const iniciarGrabacionHeroRef = useRef(grabador.iniciarGrabacion);
@@ -63,16 +62,33 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
     if (limpiarUltimaGrabacion) setUltimaGrabacionGuardada(null);
   }, []);
 
-  const iniciarCaptura = useCallback((tipo: TipoGrabacionPendiente, secuenciaBase?: NotaHero[], tickInicio?: number) => {
+  const iniciarCaptura = useCallback((
+    tipo: TipoGrabacionPendiente,
+    opciones?: {
+      secuenciaBase?: NotaHero[];
+      /** Tick absoluto desde donde arranca la captura (típicamente seccion.tickInicio para
+       *  punch-in / sección, o 0 para intro). Sin esto, el grabador captura ticks RELATIVOS
+       *  al momento de iniciar grabación → la posición musical se pierde. */
+      tickInicio?: number;
+      /** Audio element (HTMLAudio o ReproductorMP3) en curso. Si se pasa, el grabador ancla
+       *  los ticks contra `audio.currentTime` → cero drift contra el MP3 que escucha el alumno. */
+      audioElement?: any;
+      /** BPM original de la canción. CRÍTICO para que los ticks queden en la misma escala que
+       *  la reproducción a velocidad normal (no escalar por slow practice). */
+      bpmOriginal?: number;
+    }
+  ) => {
     limpiarEstadoGrabaciones();
     inicioCronometroGrabacionRef.current = Date.now();
     setTiempoGrabacionMs(0);
     modoGrabacionActivaRef.current = tipo;
-    if (secuenciaBase && tickInicio !== undefined) {
-      iniciarGrabacionHeroRef.current(secuenciaBase, tickInicio);
-    } else {
-      iniciarGrabacionHeroRef.current();
-    }
+    const o = opciones || {};
+    iniciarGrabacionHeroRef.current(
+      o.secuenciaBase || [],
+      o.tickInicio ?? 0,
+      o.audioElement,
+      o.bpmOriginal,
+    );
   }, [limpiarEstadoGrabaciones]);
 
   const finalizarCapturaActiva = useCallback(() => {
@@ -100,6 +116,7 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
     const notasTotales = stats.notasPerfecto + stats.notasBien + stats.notasFalladas + stats.notasPerdidas;
     const notasCorrectas = stats.notasPerfecto + stats.notasBien;
 
+    const seccion = seccionRef?.current || null;
     setGrabacionPendiente({
       tipo: 'competencia',
       tituloSugerido: `Mi mejor intento en ${cancion.titulo}`,
@@ -123,16 +140,26 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
         audio_fondo_url: (cancion as any).audio_fondo_url || cancion.audioFondoUrl || null,
         modo_practica: modoPracticaRef.current,
         racha_maxima: stats.rachaMasLarga,
+        // Datos de la sección que el alumno jugó — el replay los usa para arrancar el audio
+        // y el playhead en el mismo offset musical que el alumno vivió. Si jugó la canción
+        // entera (sin sección), seccion_id queda null y el replay arranca en tick 0.
+        seccion_id: seccion?.id || null,
+        seccion_nombre: seccion?.nombre || null,
+        seccion_tick_inicio: seccion?.tickInicio ?? 0,
+        seccion_tick_fin: seccion?.tickFin ?? null,
+        // Secuencia ORIGINAL de la canción — el replay la usa para mostrar las notas que
+        // "deberían haberse pisado" además de la ejecución del alumno.
+        secuencia_original: (cancion as any).secuencia_json || cancion.secuencia || null,
       },
     });
     setErrorGuardadoGrabacion(null);
-  }, [cancionRef, estadisticasRef, finalizarCapturaActiva, modoPracticaRef]);
+  }, [cancionRef, estadisticasRef, finalizarCapturaActiva, modoPracticaRef, seccionRef]);
 
   const iniciarGrabacionPracticaLibre = useCallback((tipo: 'practica_libre' | 'competencia' = 'practica_libre') => {
     iniciarCaptura(tipo);
   }, [iniciarCaptura]);
 
-  const detenerGrabacionPracticaLibre = useCallback(() => {
+  const detenerGrabacionPracticaLibre = useCallback((metadataExtra?: Record<string, any>) => {
     const captura = finalizarCapturaActiva();
     if (!captura || captura.tipo !== 'practica_libre') return;
     if (captura.secuencia.length === 0) {
@@ -167,6 +194,10 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
         capas_activas: snapshotPracticaLibre.capas_activas,
         efectos: snapshotPracticaLibre.efectos,
         practica_libre: snapshotPracticaLibre,
+        // metadataExtra: bandeja libre que el caller usa para meter cosas que no están en el
+        // snapshot estándar — por ejemplo `metronomo: {bpm, compas, sonido, ...}` cuando el
+        // alumno grabó en modo metrónomo, para que el replay lo reconstruya con el mismo sonido.
+        ...(metadataExtra || {}),
       },
     });
     setErrorGuardadoGrabacion(null);
@@ -205,40 +236,27 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
     setGuardandoGrabacion(true);
     setErrorGuardadoGrabacion(null);
     try {
-      if (pendiente.tipo === 'competencia') {
-        const { data, error } = await scoresHeroService.crearCancionHeroDesdeGrabacion({
-          titulo: tituloLimpio,
-          autor: datos.autor || 'Jesus Gonzalez',
-          descripcion: datos.descripcion || '',
-          youtube_id: datos.youtube_id || '',
-          tipo: datos.tipo || 'cancion',
-          dificultad: datos.dificultad || 'basico',
-          secuencia: pendiente.secuencia,
-          bpm: pendiente.bpm,
-          tonalidad: pendiente.tonalidad || 'ADG',
-          audio_fondo_url: pendiente.metadata?.audio_fondo_url || null,
-        });
-        if (error) throw error;
-        setUltimaGrabacionGuardada({ id: data.id, tipo: 'competencia', titulo: data.titulo });
-      } else {
-        const grabacion = await guardarGrabacion({
-          cancion_id: pendiente.cancionId,
-          modo: pendiente.tipo,
-          titulo: tituloLimpio,
-          descripcion: datos.descripcion?.trim() || '',
-          secuencia_grabada: pendiente.secuencia,
-          bpm: pendiente.bpm,
-          resolucion: pendiente.resolucion,
-          tonalidad: pendiente.tonalidad,
-          duracion_ms: pendiente.duracionMs,
-          precision_porcentaje: pendiente.precisionPorcentaje,
-          puntuacion: pendiente.puntuacion,
-          notas_totales: pendiente.notasTotales,
-          notas_correctas: pendiente.notasCorrectas,
-          metadata: pendiente.metadata,
-        });
-        setUltimaGrabacionGuardada({ id: grabacion.id, tipo: pendiente.tipo, titulo: grabacion.titulo || tituloLimpio });
-      }
+      // Tanto competencia como práctica libre se guardan en `grabaciones_hero` (Mis grabaciones)
+      // como una EJECUCIÓN del alumno, no como una canción nueva. La metadata incluye seccion_*
+      // y secuencia_original para que el replay pueda reproducir audio + secuencia original
+      // + ejecución del alumno sincronizados.
+      const grabacion = await guardarGrabacion({
+        cancion_id: pendiente.cancionId,
+        modo: pendiente.tipo,
+        titulo: tituloLimpio,
+        descripcion: datos.descripcion?.trim() || '',
+        secuencia_grabada: pendiente.secuencia,
+        bpm: pendiente.bpm,
+        resolucion: pendiente.resolucion,
+        tonalidad: pendiente.tonalidad,
+        duracion_ms: pendiente.duracionMs,
+        precision_porcentaje: pendiente.precisionPorcentaje,
+        puntuacion: pendiente.puntuacion,
+        notas_totales: pendiente.notasTotales,
+        notas_correctas: pendiente.notasCorrectas,
+        metadata: pendiente.metadata,
+      });
+      setUltimaGrabacionGuardada({ id: grabacion.id, tipo: pendiente.tipo, titulo: grabacion.titulo || tituloLimpio });
       setGrabacionPendiente(null);
       return true;
     } catch (error: any) {
