@@ -163,16 +163,20 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               <span className="mpub-enlace-texto">{t('menu.paquetes')}</span>
               <div className="mpub-enlace-underline"></div>
             </a>
-            <a href="/eventos" className="mpub-enlace-nav">
-              <span className="mpub-icono-enlace-nav">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
-                  <rect x="3" y="5" width="18" height="16" rx="2" />
-                  <path d="M16 3v4M8 3v4M3 10h18" />
-                </svg>
-              </span>
-              <span className="mpub-enlace-texto">{t('menu.eventos')}</span>
-              <div className="mpub-enlace-underline"></div>
-            </a>
+            {/* "Eventos" oculto para no autenticados / no-admin: la página todavía no está
+                terminada. Se restaura para todos cuando esté lista. */}
+            {usuario?.rol === 'admin' && (
+              <a href="/eventos" className="mpub-enlace-nav">
+                <span className="mpub-icono-enlace-nav">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
+                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                    <path d="M16 3v4M8 3v4M3 10h18" />
+                  </svg>
+                </span>
+                <span className="mpub-enlace-texto">{t('menu.eventos')}</span>
+                <div className="mpub-enlace-underline"></div>
+              </a>
+            )}
             <a href="/nuestra-academia" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
@@ -181,6 +185,15 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
                 </svg>
               </span>
               <span className="mpub-enlace-texto">{t('menu.nuestraAcademia')}</span>
+              <div className="mpub-enlace-underline"></div>
+            </a>
+            <a href="/contacto" className="mpub-enlace-nav">
+              <span className="mpub-icono-enlace-nav">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
+                  <path d="M22 16.92V21a1 1 0 0 1-1.09 1A19 19 0 0 1 2 4.09 1 1 0 0 1 3 3h4.09a1 1 0 0 1 1 .75l1 4a1 1 0 0 1-.29 1L7.21 10.21a16 16 0 0 0 6.58 6.58l1.46-1.59a1 1 0 0 1 1-.29l4 1a1 1 0 0 1 .75 1Z" />
+                </svg>
+              </span>
+              <span className="mpub-enlace-texto">{t('menu.contacto', 'Contacto')}</span>
               <div className="mpub-enlace-underline"></div>
             </a>
           </nav>

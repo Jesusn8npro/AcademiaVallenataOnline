@@ -3,6 +3,15 @@ import { useTranslation, Trans } from 'react-i18next';
 import './SeccionOpciones.css';
 import { opcionesStyles as styles } from './SeccionOpciones.styles';
 
+// Import explícito de las imágenes desde src/assets — Vite las bundlea con hash en el build.
+// Antes el componente usaba strings tipo "/images/Clusters .../Cursos-De-Acordeon.jpg" que
+// apuntan a /public/, pero las imágenes nunca estuvieron en public/ → los <img> daban 404
+// y se veía el placeholder gris de la card. Las imágenes viven en src/assets/images/.
+import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg';
+import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg';
+import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg';
+import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg';
+
 const GRADIENTS: Record<string, string> = {
   'from-blue-500 to-purple-600': 'linear-gradient(135deg, #3b82f6, #9333ea)',
   'from-purple-600 to-pink-600': 'linear-gradient(135deg, #9333ea, #dc2626)',
@@ -36,7 +45,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.cursos.titulo'),
       descripcion: t('seccionOpciones.opciones.cursos.descripcion'),
-      imagen: '/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg',
+      imagen: imgCursos,
       icono: '📚',
       color: 'from-blue-500 to-purple-600',
       beneficios: t('seccionOpciones.opciones.cursos.beneficios', { returnObjects: true }) as string[],
@@ -47,7 +56,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.tutoriales.titulo'),
       descripcion: t('seccionOpciones.opciones.tutoriales.descripcion'),
-      imagen: '/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg',
+      imagen: imgTutoriales,
       icono: '🎥',
       color: 'from-green-500 to-teal-600',
       beneficios: t('seccionOpciones.opciones.tutoriales.beneficios', { returnObjects: true }) as string[],
@@ -58,7 +67,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.paquetes.titulo'),
       descripcion: t('seccionOpciones.opciones.paquetes.descripcion'),
-      imagen: '/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg',
+      imagen: imgPaquetes,
       icono: '📦',
       color: 'from-indigo-500 to-purple-600',
       beneficios: t('seccionOpciones.opciones.paquetes.beneficios', { returnObjects: true }) as string[],
@@ -69,7 +78,7 @@ const SeccionOpciones: React.FC = () => {
     {
       titulo: t('seccionOpciones.opciones.clases.titulo'),
       descripcion: t('seccionOpciones.opciones.clases.descripcion'),
-      imagen: '/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg',
+      imagen: imgClases,
       icono: '👨‍🏫',
       color: 'from-yellow-500 to-orange-600',
       beneficios: t('seccionOpciones.opciones.clases.beneficios', { returnObjects: true }) as string[],
