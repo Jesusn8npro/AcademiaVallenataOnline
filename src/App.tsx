@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import Home from './Paginas/Inicio/Home'
 import Eventos from './Paginas/Eventos/Eventos';
@@ -171,7 +171,8 @@ const AppContent = () => {
         <Route path="/paquetes/:slug" element={<DetallePaquete />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<ArticuloBlog />} />
-        <Route path="/cursos" element={<Cursos />} />
+        <Route path="/tutoriales-de-acordeon" element={<Cursos />} />
+        <Route path="/cursos" element={<Navigate to="/tutoriales-de-acordeon" replace />} />
         <Route path="/cursos/:slug" element={<LandingCurso />} />
         <Route path="/tutoriales/:slug" element={<LandingCurso />} />
         <Route path="/nuestra-academia" element={<NuestraAcademia />} />
