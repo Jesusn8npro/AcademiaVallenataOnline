@@ -221,17 +221,6 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 </div>
             )}
 
-            {/* Carriles verticales guia (overlay fixed encima del acordeon) */}
-            <div className="juego-sim-carriles" aria-hidden="true">
-                {[...Array(10)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="juego-sim-carril"
-                        style={{ left: `${((i + 0.5) / 10) * 100}%` }}
-                    />
-                ))}
-            </div>
-
             {/* Pista de notas cayendo (fixed encima de TODO, debajo del header) */}
             <PistaNotasVertical
                 cancion={cancion}
@@ -239,9 +228,6 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 notasImpactadas={hero.notasImpactadas || new Set()}
                 rangoSeccion={rangoSeccion}
             />
-
-            {/* Linea de impacto pulsante */}
-            <div className="juego-sim-linea-impacto" aria-hidden="true" />
 
             {opacidadDano > 0 && (
                 <div className="juego-sim-dano-overlay" style={{ opacity: opacidadDano }} />

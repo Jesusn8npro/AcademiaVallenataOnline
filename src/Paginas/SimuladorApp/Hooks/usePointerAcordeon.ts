@@ -153,23 +153,24 @@ export const usePointerAcordeon = ({
         // - No tienen el bug de implicit capture.
         // - clientX/Y se entregan correctamente aunque el dedo se mueva fuera del target inicial.
         // - getCoalescedEvents-equivalente: e.changedTouches contiene cada touch individual.
+        // preventDefault SOLO si el target es area de juego (pitos/fuelle/diapason). Si tocas
+        // el header del juego, modales o cualquier otro UI, dejamos pasar el touch para que
+        // los clicks de botones funcionen.
         const handleTouchStart = (e: TouchEvent) => {
             if (desactivarAudioRef.current) return;
+            const target = e.target as HTMLElement;
+            if (!enAreaJuego(target)) return;
             motorAudioPro.activarContexto();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 registrarInicio(t.identifier, t.target as HTMLElement, t.clientX, t.clientY, e.timeStamp);
             }
-            // preventDefault SIEMPRE en el root (no solo en area de juego): impide que iOS
-            // active el "system gesture detection" que dispara el throttling de touchmove con un solo dedo.
             if (e.cancelable) e.preventDefault();
         };
 
         const handleTouchMove = (e: TouchEvent) => {
-            // Procesar TODOS los touches activos (no solo changedTouches): iOS Safari puede
-            // suprimir touchmove individuales con un solo dedo (bug WebKit conocido), pero el
-            // próximo evento que llegue traerá la posición actualizada de ambos dedos en e.touches.
-            // Esto recupera transiciones perdidas durante trinos rápidos.
+            const target = e.target as HTMLElement;
+            if (!enAreaJuego(target)) return;
             for (let i = 0; i < e.touches.length; i++) {
                 const t = e.touches[i];
                 procesarPunto(t.identifier, t.clientX, t.clientY, e.timeStamp);
