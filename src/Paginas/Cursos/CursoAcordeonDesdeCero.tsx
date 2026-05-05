@@ -1,113 +1,389 @@
-import React, { useState, useEffect } from 'react'
-import ContadorOferta from '../../componentes/ComponentesLanding/ContadorOferta'
+import React, { useState, useEffect, useRef } from 'react'
+import BannerOfertaCurso from './BannerOfertaCurso'
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'
+import imgHeroBanner from '../../assets/images/Jesus-Gonzalez--BANNER.jpg'
+import imgMaestroSolucion from '../../assets/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg'
+import imgArtistasFamosos from '../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg'
+import imgMetodosPago from '../../assets/images/Metodos-de-pago.jpg'
+import imgTestimonio from '../../assets/images/Testimonio-Alumno-Academia-Vallenata-ONLINE.jpg'
+import imgFallback from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg'
+import './CursoAcordeonDesdeCero.css'
+
+const cursoAcordeon = {
+  id: 'd30e46d9-7598-45f9-aa82-7ddb70b7e4a6',
+  titulo: 'Curso de Acordeón desde Cero',
+  precio_normal: 379000,
+  precio_rebajado: 289000,
+  descripcion: 'Aprende a tocar acordeón vallenato desde cero absoluto hasta tocar como un profesional',
+}
+
+const PROBLEMAS = [
+  {
+    emoji: '😔',
+    titulo: 'La vergüenza en las reuniones',
+    texto: 'Cuando sacan el acordeón y todos esperan que toques algo... pero solo te quedas callado viendo a otros brillar.',
+  },
+  {
+    emoji: '😤',
+    titulo: 'Años de "algún día lo haré"',
+    texto: 'Ya perdiste la cuenta de cuántas veces dijiste "este año sí aprendo"... pero nunca sabes por dónde empezar.',
+  },
+  {
+    emoji: '🤷‍♂️',
+    titulo: 'Intentos fallidos sin guía',
+    texto: 'Has probado videos de YouTube, apps, hasta un primo que "te enseñó"... pero terminas en lo mismo: ruido sin sentido.',
+  },
+  {
+    emoji: '😰',
+    titulo: '"Es muy difícil para mí"',
+    texto: 'Crees que no tienes "el don" o que empezaste "muy tarde"... mientras ves a niños de 8 años tocar mejor que tú.',
+  },
+]
+
+const TITULOS_HERO = [
+  'Deja de ser EL QUE OBSERVA y conviértete en EL QUE TODOS APLAUDEN',
+  'Toca tu PRIMERA CANCIÓN en 7 DÍAS, aunque NUNCA hayas tocado',
+  'El método que transformó a +5,000 principiantes en ACORDEONISTAS REALES',
+  'Deja de SOÑAR con tocar acordeón. Empieza a TOCARLO DE VERDAD HOY',
+]
+
+const NUEVAS_CLASES = [
+  'Técnicas avanzadas de digitación',
+  'Secretos de acordeonistas profesionales',
+  'Clases EXCLUSIVAS de acompañamiento',
+  'Masterclass de improvisación vallenata',
+]
+
+const TESTIMONIOS = [
+  {
+    texto: 'En solo 2 semanas ya estaba tocando "La Gota Fría" completa. Mi familia no lo podía creer. ¡Ahora soy el alma de la fiesta!',
+    autor: 'Carlos Mendoza',
+    ciudad: 'Barranquilla, Colombia',
+  },
+  {
+    texto: 'Tengo 58 años y pensé que era muy tarde para aprender. Jesús me demostró que nunca es tarde para cumplir un sueño. ¡Ya toco 15 canciones!',
+    autor: 'María Elena Vega',
+    ciudad: 'Medellín, Colombia',
+  },
+  {
+    texto: 'Mi hijo de 12 años y yo aprendemos juntos. Es increíble cómo Jesús hace que algo tan complejo se vea tan fácil.',
+    autor: 'Roberto Jiménez',
+    ciudad: 'Cali, Colombia',
+  },
+]
+
+const formatearCOP = (n: number) => `$${n.toLocaleString('es-CO')} COP`
 
 const CursoAcordeonDesdeCero: React.FC = () => {
   const [mostrarModalPago, setMostrarModalPago] = useState(false)
-  // UUID real del curso en Supabase (`cursos.id`). Antes acá había un slug literal
-  // (`curso-acordeon-desde-cero`) que se enviaba a `pagos_epayco.curso_id`, columna UUID
-  // → la DB rechazaba el insert con "invalid input syntax for type uuid" y el alumno
-  // veía error al apretar Pagar. Reemplazado por el UUID real.
-  const cursoAcordeion = { id: 'd30e46d9-7598-45f9-aa82-7ddb70b7e4a6', titulo: 'Curso de Acordeón desde Cero', precio_normal: 379000, precio_rebajado: 289000, descripcion: 'Aprende a tocar acordeón vallenato desde cero absoluto hasta tocar como un profesional' }
+  const [tituloIdx, setTituloIdx] = useState(0)
+  const [tituloVisible, setTituloVisible] = useState(true)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const ocultar = () => {
-      const selectores = ['.banner-notificaciones', '.menu-superior', '.barra-superior-negra', '.barra-principal-navegacion', '.banner-permisos-notificacion', '.sidebar-moderno', '.menu-publico', '.navbar']
-      selectores.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if (el instanceof HTMLElement) el.style.display = 'none' }) })
-      document.body.style.paddingTop = '0'; document.body.style.margin = '0'
+    document.body.classList.add('cadc-landing-activa')
+    return () => {
+      document.body.classList.remove('cadc-landing-activa')
     }
-    ocultar(); setTimeout(ocultar, 100)
-    const handlePageShow = (e: PageTransitionEvent) => { if (e.persisted) { setTimeout(ocultar, 0); setTimeout(ocultar, 100); setTimeout(ocultar, 500) } }
-    const handleVisibilityChange = () => { if (!document.hidden) setTimeout(ocultar, 50) }
-    window.addEventListener('pageshow', handlePageShow); document.addEventListener('visibilitychange', handleVisibilityChange)
-    const observer = new MutationObserver(() => ocultar()); observer.observe(document.body, { childList: true, subtree: true })
-    return () => { window.removeEventListener('pageshow', handlePageShow); document.removeEventListener('visibilitychange', handleVisibilityChange); observer.disconnect(); const mostrarSel = ['.banner-notificaciones', '.menu-superior', '.barra-superior-negra', '.barra-principal-navegacion', '.banner-permisos-notificacion', '.sidebar-moderno', '.menu-publico', '.navbar']; mostrarSel.forEach(sel => { document.querySelectorAll(sel).forEach(el => { if (el instanceof HTMLElement) el.style.display = '' }) }); document.body.style.paddingTop = ''; document.body.style.margin = '' }
   }, [])
 
-  const comprarAhora = () => { setMostrarModalPago(true) }
+  // Rotación de títulos del hero con crossfade
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTituloVisible(false)
+      setTimeout(() => {
+        setTituloIdx((prev) => (prev + 1) % TITULOS_HERO.length)
+        setTituloVisible(true)
+      }, 380)
+    }, 5500)
+    return () => clearInterval(id)
+  }, [])
 
-  const styles: any = {
-    landingContainer: { width: '100%', minHeight: '100vh', background: '#fff', position: 'relative', zIndex: 1 },
-    contenedor: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px' },
-    heroe: { background: 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #111827 100%)', color: 'white', padding: '60px 0', position: 'relative', overflow: 'hidden' },
-    heroeAntes: { content: '""', position: 'absolute', inset: 0, background: 'url("/images/Jesus-Gonzalez--BANNER.jpg") center/cover', opacity: .1, zIndex: 1 },
-    heroeContenido: { position: 'relative', zIndex: 2, maxWidth: '800px', margin: '0 auto', textAlign: 'center' },
-    insignia: { display: 'inline-block', color: 'white', padding: '10px 20px', borderRadius: '30px', fontWeight: 600, margin: '10px auto', width: 'fit-content' },
-    insigniaFuego: { background: '#dc2626', padding: '12px 25px', borderRadius: '50px', fontWeight: 'bold', animation: 'pulse 2s infinite' },
-    insigniaActualizado: { background: 'linear-gradient(135deg, #10b981, #059669)', fontSize: '.9rem', boxShadow: '0 4px 15px rgba(16,185,129,.3)', animation: 'glow 2s infinite' },
-    tituloPrincipal: { margin: '30px 0' },
-    dolor: { display: 'block', fontSize: '1.1rem', fontWeight: 400, marginBottom: '15px', opacity: .9 },
-    solucionTexto: { display: 'block', fontSize: '2.2rem', fontWeight: 900, lineHeight: 1.2, margin: '30px 0', color: '#fbbf24', textShadow: '2px 2px 4px rgba(0,0,0,.3)' },
-    beneficios: { margin: '30px 0' },
-    beneficio: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '15px', fontSize: '1.05rem' },
-    video: { position: 'relative', width: '100%', maxWidth: '600px', height: '350px', margin: '30px auto', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,.3)' },
-    videoIframe: { position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' },
-    botonPrincipal: { background: 'linear-gradient(135deg, #e6a800 0%, #ff8c00 100%)', color: 'white', border: 'none', padding: '20px 40px', borderRadius: '12px', fontSize: '1.2rem', fontWeight: 900, cursor: 'pointer', width: '100%', margin: '20px 0', transition: 'all .3s ease', boxShadow: '0 8px 25px rgba(230,168,0,.4)', textTransform: 'uppercase' },
-    precios: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', margin: '20px 0' },
-    precioAntes: { fontSize: '1.2rem', textDecoration: 'line-through', opacity: .7 },
-    precioAhora: { fontSize: '2.5rem', fontWeight: 900, color: '#e6a800' },
-    ahorro: { fontSize: '1rem', color: '#059669', fontWeight: 600 },
-    metodosPago: { margin: '25px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
-    metodosImg: { maxWidth: '400px', width: '100%', borderRadius: '12px', boxShadow: '0 8px 25px rgba(0,0,0,.3)', marginBottom: '12px', display: 'block', marginLeft: 'auto', marginRight: 'auto' },
-    social: { display: 'flex', justifyContent: 'space-between', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,.3)' },
-    numero: { fontSize: '1.3rem', fontWeight: 900, color: '#e6a800' },
-    problemas: { padding: '60px 0', background: '#f8fafc' },
-    solucion: { padding: '60px 0', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', color: 'white' },
-    testimonios: { padding: '60px 0', background: '#f8fafc' },
-    oferta: { padding: '60px 0', background: 'linear-gradient(135deg, #dc2626, #991b1b)', color: 'white' },
-    titulo: { fontSize: '2.2rem', textAlign: 'center', marginBottom: '50px', fontWeight: 800 },
-    subtitulo: { fontSize: '1.3rem', color: '#e2e8f0', marginBottom: '25px', fontWeight: 600 },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '30px' },
-    gridDos: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '50px', alignItems: 'center' },
-    gridTres: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '25px' },
-    tarjeta: { background: 'white', padding: '25px', borderRadius: '15px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,.1)', transition: 'transform .3s ease' },
-    emoji: { fontSize: '2.5rem', marginBottom: '15px' },
-    foto: { width: '100%', height: '400px', objectFit: 'cover', borderRadius: '20px', boxShadow: '0 20px 50px rgba(0,0,0,.2)' },
-    cursoInfo: { background: 'rgba(16,185,129,.1)', padding: '25px', borderRadius: '15px', marginBottom: '25px', borderLeft: '5px solid #10b981' },
-    badge: { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', padding: '6px 15px', borderRadius: '20px', fontSize: '.8rem', fontWeight: 700, marginBottom: '15px', display: 'inline-block', animation: 'pulse 2s infinite' },
-    nuevasClases: { marginTop: '20px', padding: '15px', background: 'rgba(16,185,129,.05)', borderLeft: '4px solid #10b981', borderRadius: '8px' },
-    instructor: { background: 'rgba(230,168,0,.15)', padding: '20px', borderRadius: '15px', borderLeft: '5px solid #e6a800' },
-    preciosComparacion: { display: 'flex', justifyContent: 'center', gap: '50px', margin: '40px 0' },
-    precioNormal: { textAlign: 'center', padding: '25px', borderRadius: '15px', background: 'rgba(0,0,0,.2)' },
-    precioOferta: { textAlign: 'center', padding: '25px', borderRadius: '15px', background: 'rgba(255,255,255,.1)', border: '3px solid #e6a800' },
-    label: { fontSize: '1.1rem', fontWeight: 600, marginBottom: '5px' },
-    valor: { fontSize: '2.5rem', fontWeight: 900, margin: '10px 0' },
-    especial: { color: '#e6a800' },
-    urgencia: { textAlign: 'center', margin: '30px 0', background: 'rgba(0,0,0,.1)', padding: '25px', borderRadius: '15px' },
-    cupos: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', margin: '20px 0' },
-    cuposNumero: { background: 'white', color: '#dc2626', padding: '10px 20px', borderRadius: '50px', fontWeight: 900, fontSize: '1.4rem' },
-    garantia: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'rgba(255,255,255,.1)', padding: '20px 30px', borderRadius: '15px', marginTop: '30px' },
-    icono: { fontSize: '1.8rem' },
-    footer: { background: '#1e293b', color: 'white', padding: '30px 0', textAlign: 'center' }
+  // Animaciones reveal al hacer scroll
+  useEffect(() => {
+    if (!rootRef.current) return
+    const elementos = rootRef.current.querySelectorAll('.cadc-reveal')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('cadc-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+    )
+    elementos.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  const comprarAhora = () => setMostrarModalPago(true)
+
+  const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget
+    if (img.dataset.fb === '1') return
+    img.dataset.fb = '1'
+    img.src = imgFallback
   }
 
   return (
     <>
       <title>Aprende a Tocar Acordeón Desde Cero - Curso Completo | Academia Vallenata</title>
-      <meta name="description" content="¡Deja de soñar y empieza a tocar! El único curso paso a paso que te lleva de CERO a tocar acordeón como un profesional en tiempo récord. Con Jesús González, el maestro más reconocido de Colombia." />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta
+        name="description"
+        content="¡Deja de soñar y empieza a tocar! El único curso paso a paso que te lleva de CERO a tocar acordeón como un profesional. Con Jesús González, el maestro más reconocido de Colombia."
+      />
 
-      <main style={styles.landingContainer}>
-        <ContadorOferta />
-        <section style={styles.heroe}><div style={styles.heroeAntes}></div><div style={styles.contenedor}><div style={styles.heroeContenido}><div style={{ ...styles.insignia, ...styles.insigniaFuego }}>🔥 ¡CURSO ESTRELLA! 🔥</div><div style={{ ...styles.insignia, ...styles.insigniaActualizado }}>⚡ ¡CURSO ACTUALIZADO! Ahora incluye 50% MÁS contenido y nuevas clases exclusivas</div><h1 className="titulo-principal" style={styles.tituloPrincipal}><span className="dolor" style={styles.dolor}>¿Llevas AÑOS soñando con tocar acordeón pero nunca sabes por dónde empezar?</span><span className="solucion-texto" style={styles.solucionTexto}>¡Deja de ser EL QUE OBSERVA y conviértete en EL QUE TODOS APLAUDEN!</span></h1><div style={styles.beneficios}><div style={styles.beneficio}>✅ Desde cero absoluto - No necesitas experiencia previa</div><div style={styles.beneficio}>✅ Primera canción en menos de 7 días</div><div style={styles.beneficio}>✅ Método del maestro Jesús González</div></div><div className="video" style={styles.video}><iframe style={styles.videoIframe} src="https://iframe.mediadelivery.net/embed/296804/dfc4d85e-c010-4ed8-96ad-ba6bbb264fcd?autoplay=false&loop=false&muted=false&preload=true&responsive=true" title="Aprende a tocar acordeón desde cero"></iframe></div><button style={styles.botonPrincipal} onClick={comprarAhora} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 35px rgba(230, 168, 0, 0.6)' }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(230, 168, 0, 0.4)' }}>🚀 ¡SÍ, QUIERO APRENDER YA!</button><div style={styles.precios}><div style={styles.precioAntes}>$379.000 COP</div><div style={styles.precioAhora}>$289.000 COP</div><div style={styles.ahorro}>¡Ahorras $90.000 pesos hoy!</div></div><div className="metodos-pago" style={styles.metodosPago}><img src="/images/Metodos-de-pago.jpg" alt="Métodos de pago" style={styles.metodosImg} /><p style={{ color: '#e2e8f0', fontWeight: 500, opacity: .9 }}>💳 Paga seguro con tarjeta, PSE o efectivo</p></div><div style={styles.social}><div><span style={styles.numero}>+5,000</span> Estudiantes felices</div><div>★★★★★ 4.9/5 (847 reseñas)</div></div></div></div></section>
-        <section style={styles.problemas}><div style={styles.contenedor}><h2 style={styles.titulo}>¿Te identificas con alguna de estas situaciones?</h2><div style={styles.grid}><div style={styles.tarjeta}><div style={styles.emoji}>😔</div><h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 700 }}>La vergüenza en las reuniones</h3><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>Cuando sacan el acordeón y todos esperan que toques algo... pero solo te quedas callado viendo a otros brillar.</p></div><div style={styles.tarjeta}><div style={styles.emoji}>😤</div><h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 700 }}>Años de "algún día lo haré"</h3><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>Ya perdiste la cuenta de cuántas veces dijiste "este año sí aprendo acordeón"... pero nunca sabes por dónde empezar.</p></div><div style={styles.tarjeta}><div style={styles.emoji}>🤷‍♂️</div><h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 700 }}>Intentos fallidos sin guía</h3><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>Has probado videos de YouTube, aplicaciones, incluso un primo te "enseñó"... pero siempre te quedas en lo mismo: ruido sin sentido.</p></div><div style={styles.tarjeta}><div style={styles.emoji}>😰</div><h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 700 }}>`Es muy difícil para mí`</h3><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>Crees que no tienes "el don" o que empezaste "muy tarde"... mientras ves a niños de 8 años tocar mejor que tú.</p></div></div></div></section>
-        <section style={styles.solucion}><div style={styles.contenedor}><div style={styles.gridDos}><img src="/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg" alt="Jesús González" style={styles.foto} /><div><h2 style={{ ...styles.titulo, color: '#10b981', fontWeight: 900, marginBottom: '15px' }}>¡Pero todo eso cambia HOY!</h2><h3 style={styles.subtitulo}>El método que ha transformado a +5,000 personas</h3><div style={styles.cursoInfo}><span style={styles.badge}>🚀 RECIÉN ACTUALIZADO</span><h4 style={{ marginBottom: '15px', fontSize: '1.2rem', fontWeight: 700 }}>`Aprende a Tocar Acordeón Desde Cero`</h4><p style={{ marginBottom: '20px', lineHeight: 1.6 }}>El único curso paso a paso que te lleva de tu primera nota hasta tocar como un profesional, sin importar tu edad o experiencia.</p><div style={styles.nuevasClases}><strong style={{ color: '#10b981', display: 'block', marginBottom: '10px' }}>🎯 NUEVAS CLASES INCLUIDAS:</strong><ul style={{ marginLeft: '20px' }}><li style={{ marginBottom: '8px', lineHeight: 1.5 }}>✨ Técnicas avanzadas de digitación</li><li style={{ marginBottom: '8px', lineHeight: 1.5 }}>✨ Secretos de acordeonistas profesionales</li><li style={{ marginBottom: '8px', lineHeight: 1.5 }}>✨ Clases EXCLUSIVAS de acompañamiento</li></ul></div></div><div style={styles.instructor}><h4 style={{ color: '#e6a800', fontWeight: 700, marginBottom: '15px' }}>Tu instructor: Jesús González</h4><p style={{ lineHeight: 1.6 }}>He tenido el honor de acompañar con mi acordeón a grandes intérpretes de la música vallenata como Felipe Peláez y Orlando Acosta. Con más de 20 años de experiencia musical, sé exactamente qué necesitas para dominar este hermoso instrumento.</p></div></div></div></div></section>
-        <section style={styles.testimonios}><div style={styles.contenedor}><h2 style={styles.titulo}>Resultados reales de estudiantes:</h2><div style={styles.gridTres}><div style={styles.tarjeta}><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>`En solo 2 semanas ya estaba tocando 'La Gota Fría' completa. Mi familia no lo podía creer. ¡Ahora soy el alma de la fiesta!`</p><div style={{ fontWeight: 600, color: '#64748b', fontSize: '.9rem' }}>Carlos Mendoza - Barranquilla, Colombia</div><div style={{ color: '#e6a800', fontSize: '1.1rem', marginBottom: '10px' }}>★★★★★</div></div><div style={styles.tarjeta}><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>`Tengo 58 años y pensé que era muy tarde para aprender. Jesús me demostró que nunca es tarde para cumplir un sueño. ¡Ya toco 15 canciones!`</p><div style={{ fontWeight: 600, color: '#64748b', fontSize: '.9rem' }}>María Elena Vega - Medellín, Colombia</div><div style={{ color: '#e6a800', fontSize: '1.1rem', marginBottom: '10px' }}>★★★★★</div></div><div style={styles.tarjeta}><p style={{ color: '#64748b', lineHeight: 1.5, fontStyle: 'italic', marginBottom: '15px' }}>`Mi hijo de 12 años y yo aprendemos juntos. Es increíble cómo Jesús hace que algo tan complejo se vea tan fácil.`</p><div style={{ fontWeight: 600, color: '#64748b', fontSize: '.9rem' }}>Roberto Jiménez - Cali, Colombia</div><div style={{ color: '#e6a800', fontSize: '1.1rem', marginBottom: '10px' }}>★★★★★</div></div></div></div></section>
-        <section style={styles.oferta} id="seccion-oferta"><div style={styles.contenedor}><h2 style={styles.titulo}>⚠️ ATENCIÓN: Esta oferta desaparece en pocas horas</h2><div style={styles.preciosComparacion}><div style={styles.precioNormal}><div style={styles.label}>Precio Normal</div><div style={styles.valor}>$379.000 COP</div></div><div style={styles.precioOferta}><div style={styles.label}>¡HOY SOLO!</div><div style={{ ...styles.valor, ...styles.especial }}>$289.000 COP</div></div></div><div style={styles.urgencia}><p style={{ marginBottom: '20px', lineHeight: 1.6 }}><strong>¿Por qué esta oferta especial?</strong> Porque sé lo frustrante que es soñar con tocar acordeón y no saber cómo empezar. He decidido abrir solo <strong>100 cupos</strong> con precio especial para personas que, como tú, están listas para hacer realidad su sueño.</p><div style={styles.cupos}><span style={styles.cuposNumero}>23</span><span>cupos disponibles</span></div></div><button style={{ ...styles.botonPrincipal, flexDirection: 'column', gap: '8px', fontSize: '1.3rem', padding: '25px 50px' }} onClick={comprarAhora} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 35px rgba(230, 168, 0, 0.6)' }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 25px rgba(230, 168, 0, 0.4)' }}>🚀 ¡QUIERO ACCESO INMEDIATO!<small style={{ fontSize: '.9rem', fontWeight: 400 }}>✅ Garantía de 30 días • ✅ Acceso de por vida</small></button><div style={styles.garantia}><div style={styles.icono}>🛡️</div><div><strong>Garantía de 30 días</strong><br />Si no estás 100% satisfecho, te devolvemos tu dinero sin preguntas</div></div></div></section>
-        <footer style={styles.footer}><div style={styles.contenedor}><p style={{ opacity: .8 }}>© 2025 Academia Vallenata Online. Todos los derechos reservados.</p><p style={{ opacity: .8 }}>Este sitio no está afiliado con Facebook o ninguna entidad de Facebook.</p></div></footer>
-        <ModalPagoInteligente mostrar={mostrarModalPago} setMostrar={setMostrarModalPago} contenido={cursoAcordeion} tipoContenido="curso" />
-      </main>
+      <div ref={rootRef} className="cadc-root">
+        <BannerOfertaCurso descuento={24} onCTA={comprarAhora} />
 
-      <style>{`
-        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-        @keyframes glow{0%,100%{box-shadow:0 4px 15px rgba(16,185,129,.3)}50%{box-shadow:0 4px 20px rgba(16,185,129,.6),0 0 30px rgba(16,185,129,.3)}}
-        @media (max-width:768px){.grid,.grid-tres{grid-template-columns:1fr!important}.grid-dos{grid-template-columns:1fr!important;gap:30px!important}.precios-comparacion{flex-direction:column!important;gap:20px!important;align-items:center!important}.titulo-principal .solucion-texto{font-size:1.8rem!important;line-height:1.3!important}.titulo-principal .dolor{font-size:1rem!important;margin-bottom:10px!important}.video{height:250px!important;max-width:100%!important}.metodos-pago img{max-width:300px!important}.precio-ahora{font-size:2rem!important}.contenedor{padding:0 15px!important}.titulo{font-size:1.8rem!important}.insignia.actualizado{font-size:.8rem!important;padding:8px 15px!important}}
-        .banner-notificaciones,.menu-superior,.sidebar-moderno,.menu-publico,.barra-superior-negra,.barra-principal-navegacion,.banner-permisos-notificacion{display:none!important}
-        body{margin:0!important;padding:0!important;overflow-x:hidden}
-      `}</style>
+        {/* HERO */}
+        <section
+          className="cadc-hero"
+          style={{ ['--cadc-hero-bg' as string]: `url(${imgHeroBanner})` }}
+        >
+          <div className="cadc-container">
+            <div className="cadc-hero-grid">
+              <div className="cadc-hero-info cadc-reveal">
+                <div className="cadc-badges-row">
+                  <span className="cadc-badge cadc-badge-fuego">🔥 Curso Estrella</span>
+                  <span className="cadc-badge cadc-badge-actualizado">⚡ Recién actualizado +50%</span>
+                </div>
+
+                <span className="cadc-titulo-dolor">
+                  ¿Llevas <strong>años soñando</strong> con tocar acordeón pero nunca sabes por dónde empezar?
+                </span>
+
+                <h1 className={`cadc-titulo-principal ${tituloVisible ? '' : 'cadc-titulo-fade'}`}>
+                  {TITULOS_HERO[tituloIdx]}
+                </h1>
+
+                <div className="cadc-beneficios-quick">
+                  <div className="cadc-beneficio-quick">
+                    <span className="cadc-beneficio-quick-icono">✓</span>
+                    <span>Desde cero absoluto - Sin experiencia previa</span>
+                  </div>
+                  <div className="cadc-beneficio-quick">
+                    <span className="cadc-beneficio-quick-icono">✓</span>
+                    <span>Tu primera canción en menos de 7 días</span>
+                  </div>
+                  <div className="cadc-beneficio-quick">
+                    <span className="cadc-beneficio-quick-icono">✓</span>
+                    <span>Método del Maestro Jesús González</span>
+                  </div>
+                </div>
+
+                <button className="cadc-cta-primaria" onClick={comprarAhora}>
+                  🚀 ¡Sí, quiero aprender ya!
+                </button>
+
+                <div className="cadc-precios-row">
+                  <span className="cadc-precio-antes">{formatearCOP(cursoAcordeon.precio_normal)}</span>
+                  <span className="cadc-precio-ahora">{formatearCOP(cursoAcordeon.precio_rebajado)}</span>
+                  <span className="cadc-precio-ahorro">Ahorras $90.000</span>
+                </div>
+
+                <div className="cadc-social-proof">
+                  <div className="cadc-social-item">
+                    <span className="cadc-social-numero">+5,000</span>
+                    <span className="cadc-social-label">estudiantes felices</span>
+                  </div>
+                  <div className="cadc-social-item">
+                    <span className="cadc-stars-row">★★★★★</span>
+                    <span className="cadc-social-label">4.9 / 5 (847 reseñas)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="cadc-hero-video-wrapper cadc-reveal">
+                <div className="cadc-hero-video-glow" />
+                <div className="cadc-hero-video-card">
+                  <iframe
+                    src="https://iframe.mediadelivery.net/embed/296804/dfc4d85e-c010-4ed8-96ad-ba6bbb264fcd?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+                    title="Aprende a tocar acordeón desde cero"
+                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PROBLEMAS */}
+        <section className="cadc-problemas">
+          <div className="cadc-container">
+            <h2 className="cadc-section-titulo cadc-reveal">¿Te identificas con alguna de estas situaciones?</h2>
+            <p className="cadc-section-subtitulo cadc-reveal">
+              Sabemos exactamente lo que estás sintiendo. Lo hemos visto en miles de estudiantes.
+            </p>
+            <div className="cadc-problemas-grid">
+              {PROBLEMAS.map((p, i) => (
+                <div key={i} className="cadc-problema-card cadc-reveal">
+                  <span className="cadc-problema-emoji">{p.emoji}</span>
+                  <h3 className="cadc-problema-titulo">{p.titulo}</h3>
+                  <p className="cadc-problema-texto">{p.texto}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SOLUCIÓN */}
+        <section className="cadc-solucion">
+          <div className="cadc-container">
+            <div className="cadc-solucion-grid">
+              <div className="cadc-solucion-imagen-wrapper cadc-reveal" style={{ position: 'relative' }}>
+                <div className="cadc-solucion-glow" />
+                <div className="cadc-solucion-imagen">
+                  <img src={imgMaestroSolucion} alt="Aprende a tocar acordeón desde cero" onError={onImgError} />
+                </div>
+              </div>
+
+              <div className="cadc-reveal">
+                <h2 className="cadc-solucion-titulo">¡Pero todo eso cambia HOY!</h2>
+                <p className="cadc-solucion-subtitulo">
+                  El método paso a paso que ha transformado a más de <strong>5,000 personas</strong> en acordeonistas reales.
+                </p>
+
+                <div className="cadc-curso-card">
+                  <span className="cadc-curso-card-badge">🚀 Recién actualizado</span>
+                  <h3 className="cadc-curso-card-titulo">Aprende a Tocar Acordeón Desde Cero</h3>
+                  <p className="cadc-curso-card-desc">
+                    El único curso que te lleva de tu primera nota hasta tocar como un profesional, sin importar tu edad o experiencia previa.
+                  </p>
+                  <div className="cadc-nuevas-clases">
+                    <div className="cadc-nuevas-clases-label">🎯 Nuevas clases incluidas</div>
+                    <ul className="cadc-nuevas-clases-lista">
+                      {NUEVAS_CLASES.map((c, i) => (
+                        <li key={i}>{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="cadc-instructor-card">
+                  <h4 className="cadc-instructor-titulo">Tu instructor: Jesús González</h4>
+                  <p className="cadc-instructor-bio">
+                    He acompañado con mi acordeón a grandes intérpretes del vallenato como Felipe Peláez, Orlando Acosta y muchos más. Con +20 años de experiencia musical, sé exactamente qué necesitas para dominar este hermoso instrumento.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CREDIBILIDAD */}
+        <section className="cadc-credibilidad">
+          <div className="cadc-container">
+            <div className="cadc-credibilidad-grid">
+              <div className="cadc-credibilidad-info cadc-reveal">
+                <h2>
+                  Aprende del maestro que ha tocado con <span>las leyendas del vallenato</span>
+                </h2>
+                <p>
+                  Jesús González ha compartido escenario y grabaciones con artistas que marcaron la historia de la música vallenata. Esa experiencia auténtica, cultural y técnica es la que vas a recibir en cada clase del curso.
+                </p>
+              </div>
+              <div className="cadc-credibilidad-imagen cadc-reveal">
+                <img src={imgArtistasFamosos} alt="Jesús González con Orlando Acosta y Felipe Peláez" onError={onImgError} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* TESTIMONIOS */}
+        <section className="cadc-testimonios">
+          <div className="cadc-container">
+            <h2 className="cadc-section-titulo cadc-reveal">Resultados reales de estudiantes</h2>
+            <p className="cadc-section-subtitulo cadc-reveal">
+              No son promesas vacías. Estos son testimonios verificados de personas como tú.
+            </p>
+            <div className="cadc-testimonios-grid">
+              {TESTIMONIOS.map((t, i) => (
+                <div key={i} className="cadc-testimonio-card cadc-reveal">
+                  <div className="cadc-testimonio-quote">"</div>
+                  <p className="cadc-testimonio-texto">{t.texto}</p>
+                  <div className="cadc-testimonio-stars">★★★★★</div>
+                  <div className="cadc-testimonio-autor">{t.autor} · {t.ciudad}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* OFERTA FINAL */}
+        <section className="cadc-oferta" id="seccion-oferta">
+          <div className="cadc-container">
+            <div className="cadc-oferta-warning cadc-reveal">⚠ Atención: Esta oferta desaparece pronto</div>
+            <h2 className="cadc-oferta-titulo cadc-reveal">
+              Tu acceso completo por <span>{formatearCOP(cursoAcordeon.precio_rebajado)}</span>
+            </h2>
+
+            <div className="cadc-precios-comparacion cadc-reveal">
+              <div className="cadc-precio-bloque cadc-precio-bloque-normal">
+                <div className="cadc-precio-label">Precio normal</div>
+                <p className="cadc-precio-valor">{formatearCOP(cursoAcordeon.precio_normal)}</p>
+              </div>
+              <div className="cadc-precio-bloque cadc-precio-bloque-oferta">
+                <div className="cadc-precio-label">Solo hoy</div>
+                <p className="cadc-precio-valor">{formatearCOP(cursoAcordeon.precio_rebajado)}</p>
+              </div>
+            </div>
+
+            <div className="cadc-cupos-row cadc-reveal">
+              <span className="cadc-cupos-numero">23</span>
+              <span>cupos disponibles con precio especial</span>
+            </div>
+
+            <div className="cadc-oferta-cta-wrapper cadc-reveal">
+              <button className="cadc-cta-mega" onClick={comprarAhora}>
+                🚀 ¡Quiero acceso inmediato!
+                <small>✅ Garantía de 30 días · ✅ Acceso de por vida</small>
+              </button>
+
+              <div className="cadc-garantia-row">
+                <span className="cadc-garantia-icono">🛡️</span>
+                <div className="cadc-garantia-texto">
+                  <strong>Garantía de 30 días</strong>
+                  Si no estás 100% satisfecho, te devolvemos tu dinero sin preguntas.
+                </div>
+              </div>
+
+              <div className="cadc-metodos">
+                <img src={imgMetodosPago} alt="Métodos de pago" onError={onImgError} />
+                <p>💳 Paga seguro con tarjeta, PSE o efectivo</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer className="cadc-footer">
+          <div className="cadc-container">
+            <p>© 2025 Academia Vallenata Online. Todos los derechos reservados.</p>
+            <p>Este sitio no está afiliado con Facebook ni ninguna otra entidad.</p>
+          </div>
+        </footer>
+
+        {/* STICKY CTA - solo mobile */}
+        <div className="cadc-sticky-cta">
+          <button onClick={comprarAhora}>🚀 Inscribirme por {formatearCOP(cursoAcordeon.precio_rebajado)}</button>
+        </div>
+
+        <ModalPagoInteligente
+          mostrar={mostrarModalPago}
+          setMostrar={setMostrarModalPago}
+          contenido={cursoAcordeon}
+          tipoContenido="curso"
+        />
+      </div>
+
+      {/* Imagen oculta usada solo para precachear el testimonio si lo querés rotar a futuro */}
+      <img src={imgTestimonio} alt="" style={{ display: 'none' }} aria-hidden="true" />
     </>
   )
 }
 
 export default CursoAcordeonDesdeCero
-

@@ -143,15 +143,23 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               <span className="mpub-enlace-texto">{t('menu.blog')}</span>
               <div className="mpub-enlace-underline"></div>
             </a>
-            <a href="/cursos" className="mpub-enlace-nav">
+            <a href="/tutoriales-de-acordeon" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <rect x="2" y="7" width="20" height="13" rx="2" />
                   <path d="M16 3v4M8 3v4" />
                 </svg>
               </span>
-              <span className="mpub-enlace-texto">{t('menu.cursos')}</span>
+              <span className="mpub-enlace-texto">{t('menu.tutoriales', 'Tutoriales')}</span>
               <div className="mpub-enlace-underline"></div>
+            </a>
+            <a href="/curso-acordeon-desde-cero" className="mpub-enlace-nav mpub-enlace-cta-aprende">
+              <span className="mpub-icono-enlace-nav">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z" />
+                </svg>
+              </span>
+              <span className="mpub-enlace-texto">APRENDE DESDE 0</span>
             </a>
             <a href="/paquetes" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">

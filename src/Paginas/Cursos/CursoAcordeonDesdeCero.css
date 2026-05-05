@@ -1,0 +1,1351 @@
+/* ============================================================
+   LANDING CURSO ACORDEÓN DESDE CERO — REDISEÑO PREMIUM
+   Prefijo: cadc-*
+   ============================================================ */
+
+:global(body.cadc-landing-activa) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #0a0a0a !important;
+    overflow-x: hidden;
+}
+
+.cadc-root {
+    --cadc-bg: #0a0a0a;
+    --cadc-bg-elev: #14100a;
+    --cadc-bg-card: rgba(255, 255, 255, 0.04);
+    --cadc-border: rgba(251, 191, 36, 0.18);
+    --cadc-gold: #fbbf24;
+    --cadc-gold-deep: #d97706;
+    --cadc-red: #dc2626;
+    --cadc-red-deep: #991b1b;
+    --cadc-green: #10b981;
+    --cadc-text: #fafafa;
+    --cadc-text-soft: #cbd5e1;
+    --cadc-text-mute: #94a3b8;
+
+    width: 100%;
+    min-height: 100vh;
+    background: var(--cadc-bg);
+    color: var(--cadc-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
+
+.cadc-container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.cadc-hero {
+    position: relative;
+    padding: 80px 0 100px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at top right, rgba(220, 38, 38, 0.18), transparent 55%),
+        radial-gradient(ellipse at bottom left, rgba(251, 191, 36, 0.15), transparent 60%),
+        linear-gradient(180deg, #0a0a0a 0%, #1a0f08 100%);
+}
+
+.cadc-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--cadc-hero-bg);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.08;
+    z-index: 0;
+    filter: blur(2px) saturate(1.2);
+}
+
+.cadc-hero-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.cadc-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.cadc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.cadc-badge-fuego {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+    animation: cadc-pulse 2.4s ease-in-out infinite;
+}
+
+.cadc-badge-actualizado {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+}
+
+.cadc-titulo-dolor {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--cadc-text-soft);
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+.cadc-titulo-principal {
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 30px rgba(251, 191, 36, 0.3);
+    min-height: 1.4em;
+    transition: opacity 0.38s ease, transform 0.38s ease;
+    opacity: 1;
+    transform: translateY(0);
+    will-change: opacity, transform;
+}
+
+.cadc-titulo-principal.cadc-titulo-fade {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+.cadc-beneficios-quick {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 28px 0 32px;
+}
+
+.cadc-beneficio-quick {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: var(--cadc-text);
+}
+
+.cadc-beneficio-quick-icono {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+
+.cadc-cta-primaria {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 20px 32px;
+    border-radius: 14px;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cadc-cta-primaria::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.25) 50%, transparent 65%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.cadc-cta-primaria:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(245, 158, 11, 0.55);
+}
+
+.cadc-cta-primaria:hover::after {
+    transform: translateX(100%);
+}
+
+.cadc-precios-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.cadc-precio-antes {
+    font-size: 1.1rem;
+    color: var(--cadc-text-mute);
+    text-decoration: line-through;
+}
+
+.cadc-precio-ahora {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: var(--cadc-gold);
+    letter-spacing: -0.02em;
+}
+
+.cadc-precio-ahorro {
+    font-size: 0.95rem;
+    color: var(--cadc-green);
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 6px 12px;
+    border-radius: 999px;
+}
+
+.cadc-social-proof {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+}
+
+.cadc-social-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cadc-social-numero {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--cadc-gold);
+}
+
+.cadc-social-label {
+    font-size: 0.85rem;
+    color: var(--cadc-text-mute);
+}
+
+.cadc-stars-row {
+    color: var(--cadc-gold);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+}
+
+/* Hero - columna derecha (video) */
+.cadc-hero-video-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--cadc-bg-card);
+    border: 1px solid var(--cadc-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(251, 191, 36, 0.1);
+    aspect-ratio: 16 / 10;
+}
+
+.cadc-hero-video-card iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.cadc-hero-video-glow {
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.25), transparent 70%);
+    filter: blur(40px);
+}
+
+/* ============================================================
+   PROBLEMAS
+   ============================================================ */
+.cadc-problemas {
+    padding: 80px 0;
+    background: linear-gradient(180deg, #1a0f08 0%, #0a0a0a 100%);
+    position: relative;
+}
+
+.cadc-section-titulo {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 900;
+    text-align: center;
+    margin: 0 0 12px;
+    color: var(--cadc-text);
+    letter-spacing: -0.01em;
+}
+
+.cadc-section-subtitulo {
+    text-align: center;
+    color: var(--cadc-text-mute);
+    font-size: 1.05rem;
+    margin: 0 auto 50px;
+    max-width: 620px;
+}
+
+.cadc-problemas-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.cadc-problema-card {
+    background: var(--cadc-bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 28px 24px;
+    transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+.cadc-problema-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(220, 38, 38, 0.4);
+    background: rgba(220, 38, 38, 0.05);
+}
+
+.cadc-problema-emoji {
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.cadc-problema-titulo {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--cadc-gold);
+    margin: 0 0 10px;
+}
+
+.cadc-problema-texto {
+    color: var(--cadc-text-soft);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   SOLUCIÓN
+   ============================================================ */
+.cadc-solucion {
+    padding: 90px 0;
+    background:
+        radial-gradient(ellipse at top, rgba(16, 185, 129, 0.08), transparent 60%),
+        linear-gradient(180deg, #0a0a0a 0%, #0f1611 100%);
+}
+
+.cadc-solucion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.cadc-solucion-imagen {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+    aspect-ratio: 4 / 5;
+}
+
+.cadc-solucion-imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease;
+}
+
+.cadc-solucion-imagen:hover img {
+    transform: scale(1.04);
+}
+
+.cadc-solucion-imagen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.7) 100%);
+    pointer-events: none;
+}
+
+.cadc-solucion-glow {
+    position: absolute;
+    inset: -30px;
+    z-index: -1;
+    background: linear-gradient(135deg, #10b981, #059669);
+    filter: blur(35px);
+    opacity: 0.35;
+    border-radius: 24px;
+}
+
+.cadc-solucion-titulo {
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    font-weight: 900;
+    color: var(--cadc-green);
+    margin: 0 0 12px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.cadc-solucion-subtitulo {
+    color: var(--cadc-text-soft);
+    font-size: 1.1rem;
+    margin: 0 0 28px;
+}
+
+.cadc-curso-card {
+    background: var(--cadc-bg-card);
+    border-left: 4px solid var(--cadc-green);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(8px);
+}
+
+.cadc-curso-card-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+}
+
+.cadc-curso-card-titulo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--cadc-text);
+    margin: 0 0 12px;
+}
+
+.cadc-curso-card-desc {
+    color: var(--cadc-text-soft);
+    font-size: 0.95rem;
+    margin: 0 0 18px;
+    line-height: 1.6;
+}
+
+.cadc-nuevas-clases {
+    border-top: 1px solid rgba(16, 185, 129, 0.2);
+    padding-top: 14px;
+}
+
+.cadc-nuevas-clases-label {
+    color: var(--cadc-green);
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.cadc-nuevas-clases-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cadc-nuevas-clases-lista li {
+    color: var(--cadc-text-soft);
+    font-size: 0.92rem;
+    padding-left: 22px;
+    position: relative;
+}
+
+.cadc-nuevas-clases-lista li::before {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    color: var(--cadc-gold);
+    font-weight: 900;
+}
+
+.cadc-instructor-card {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(220, 38, 38, 0.04));
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 16px;
+    padding: 20px 24px;
+}
+
+.cadc-instructor-titulo {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--cadc-gold);
+    margin: 0 0 8px;
+    letter-spacing: 0.02em;
+}
+
+.cadc-instructor-bio {
+    color: var(--cadc-text-soft);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.65;
+}
+
+/* ============================================================
+   CREDIBILIDAD
+   ============================================================ */
+.cadc-credibilidad {
+    padding: 80px 0;
+    background: linear-gradient(180deg, #0f1611 0%, #0a0a0a 100%);
+}
+
+.cadc-credibilidad-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 48px;
+    align-items: center;
+}
+
+.cadc-credibilidad-info h2 {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 900;
+    color: var(--cadc-text);
+    margin: 0 0 16px;
+    line-height: 1.15;
+}
+
+.cadc-credibilidad-info h2 span {
+    color: var(--cadc-gold);
+}
+
+.cadc-credibilidad-info p {
+    color: var(--cadc-text-soft);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.cadc-credibilidad-imagen {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--cadc-border);
+}
+
+.cadc-credibilidad-imagen img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ============================================================
+   TESTIMONIOS
+   ============================================================ */
+.cadc-testimonios {
+    padding: 80px 0;
+    background:
+        radial-gradient(ellipse at center, rgba(251, 191, 36, 0.06), transparent 70%),
+        #0a0a0a;
+}
+
+.cadc-testimonios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.cadc-testimonio-card {
+    background: var(--cadc-bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 28px 24px;
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    position: relative;
+}
+
+.cadc-testimonio-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(251, 191, 36, 0.35);
+}
+
+.cadc-testimonio-quote {
+    font-size: 2.5rem;
+    color: var(--cadc-gold);
+    line-height: 1;
+    opacity: 0.5;
+    margin-bottom: 8px;
+}
+
+.cadc-testimonio-texto {
+    color: var(--cadc-text);
+    font-size: 0.98rem;
+    font-style: italic;
+    line-height: 1.6;
+    margin: 0 0 18px;
+}
+
+.cadc-testimonio-stars {
+    color: var(--cadc-gold);
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.cadc-testimonio-autor {
+    color: var(--cadc-text-mute);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   OFERTA FINAL
+   ============================================================ */
+.cadc-oferta {
+    padding: 100px 0;
+    background:
+        radial-gradient(ellipse at center, rgba(220, 38, 38, 0.18), transparent 60%),
+        linear-gradient(180deg, #1a0606 0%, #0a0a0a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.cadc-oferta-warning {
+    text-align: center;
+    color: var(--cadc-red);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    animation: cadc-blink 1.6s ease-in-out infinite;
+}
+
+.cadc-oferta-titulo {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 900;
+    text-align: center;
+    color: var(--cadc-text);
+    margin: 0 0 50px;
+    line-height: 1.1;
+}
+
+.cadc-oferta-titulo span {
+    color: var(--cadc-gold);
+}
+
+.cadc-precios-comparacion {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 720px;
+    margin: 0 auto 50px;
+}
+
+.cadc-precio-bloque {
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+}
+
+.cadc-precio-bloque-normal {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0.7;
+}
+
+.cadc-precio-bloque-oferta {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(220, 38, 38, 0.08));
+    border: 2px solid var(--cadc-gold);
+    box-shadow: 0 20px 50px rgba(251, 191, 36, 0.25);
+    transform: scale(1.04);
+    position: relative;
+}
+
+.cadc-precio-bloque-oferta::before {
+    content: 'HOY';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f59e0b, #dc2626);
+    color: #fff;
+    padding: 5px 18px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.cadc-precio-label {
+    font-size: 0.95rem;
+    color: var(--cadc-text-mute);
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cadc-precio-valor {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--cadc-text);
+    margin: 0;
+}
+
+.cadc-precio-bloque-oferta .cadc-precio-valor {
+    color: var(--cadc-gold);
+}
+
+.cadc-cupos-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+    color: var(--cadc-text-soft);
+    font-size: 1.05rem;
+}
+
+.cadc-cupos-numero {
+    background: linear-gradient(135deg, #fbbf24, #dc2626);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+    animation: cadc-pulse 2s ease-in-out infinite;
+}
+
+.cadc-oferta-cta-wrapper {
+    max-width: 520px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.cadc-cta-mega {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 26px 40px;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 14px 40px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cadc-cta-mega small {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    opacity: 0.92;
+}
+
+.cadc-cta-mega:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(245, 158, 11, 0.65);
+}
+
+.cadc-garantia-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 32px;
+    padding: 18px 24px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    color: var(--cadc-text-soft);
+    font-size: 0.95rem;
+    text-align: left;
+}
+
+.cadc-garantia-icono {
+    font-size: 1.8rem;
+}
+
+.cadc-garantia-texto strong {
+    color: var(--cadc-green);
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Métodos de pago */
+.cadc-metodos {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.cadc-metodos img {
+    max-width: 360px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.cadc-metodos p {
+    color: var(--cadc-text-mute);
+    font-size: 0.9rem;
+    margin: 12px 0 0;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.cadc-footer {
+    padding: 40px 0 30px;
+    background: #050505;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cadc-footer p {
+    color: var(--cadc-text-mute);
+    font-size: 0.85rem;
+    margin: 4px 0;
+}
+
+/* ============================================================
+   STICKY CTA MOBILE
+   ============================================================ */
+.cadc-sticky-cta {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.95) 30%);
+    backdrop-filter: blur(10px);
+}
+
+.cadc-sticky-cta button {
+    width: 100%;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b, #dc2626);
+    color: #fff;
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.45);
+    cursor: pointer;
+}
+
+/* ============================================================
+   ANIMACIONES
+   ============================================================ */
+@keyframes cadc-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+
+@keyframes cadc-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+@keyframes cadc-fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cadc-reveal {
+    opacity: 0;
+}
+
+.cadc-reveal.cadc-visible {
+    animation: cadc-fade-up 0.7s ease-out forwards;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .cadc-hero-grid,
+    .cadc-solucion-grid,
+    .cadc-credibilidad-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .cadc-testimonios-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .cadc-hero {
+        padding: 50px 0 70px;
+    }
+
+    .cadc-problemas-grid,
+    .cadc-testimonios-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cadc-precios-comparacion {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .cadc-precio-bloque-oferta {
+        transform: none;
+    }
+
+    .cadc-sticky-cta {
+        display: block;
+    }
+
+    .cadc-precio-ahora {
+        font-size: 2.2rem;
+    }
+
+    .cadc-cta-mega {
+        font-size: 1.05rem;
+        padding: 22px 28px;
+    }
+
+    .cadc-garantia-row {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cadc-container {
+        padding: 0 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cadc-hero {
+        padding: 36px 0 50px;
+    }
+
+    .cadc-precio-ahora {
+        font-size: 1.9rem;
+    }
+
+    .cadc-precio-valor {
+        font-size: 2rem;
+    }
+
+    .cadc-problema-card,
+    .cadc-testimonio-card {
+        padding: 22px 18px;
+    }
+}
+
+/* ============================================================
+   BANNER DE OFERTA — INDEPENDIENTE PARA ESTA LANDING
+   Persuasivo: countdown real + mensajes rotativos + animaciones
+   ============================================================ */
+.cadc-banner-oferta {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #7c2d12 0%, #991b1b 45%, #b91c1c 100%);
+    border-bottom: 2px solid var(--cadc-gold);
+    box-shadow: 0 6px 30px rgba(220, 38, 38, 0.35);
+    z-index: 50;
+}
+
+.cadc-banner-glow {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 15% 50%, rgba(251, 191, 36, 0.25), transparent 45%),
+        radial-gradient(circle at 85% 50%, rgba(220, 38, 38, 0.35), transparent 45%);
+    pointer-events: none;
+    animation: cadc-banner-glow-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes cadc-banner-glow-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+.cadc-banner-shimmer {
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+    animation: cadc-banner-shimmer 4.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes cadc-banner-shimmer {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(280%); }
+}
+
+.cadc-banner-fila-superior {
+    position: relative;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 12px 24px 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cadc-banner-fila-inferior {
+    position: relative;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cadc-banner-volver {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cadc-banner-volver:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-2px);
+}
+
+.cadc-banner-centro {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.cadc-banner-titulo-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cadc-banner-emoji {
+    font-size: 1.3rem;
+    display: inline-block;
+    animation: cadc-banner-flame 0.9s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+}
+
+@keyframes cadc-banner-flame {
+    from { transform: scale(0.95) rotate(-4deg); }
+    to { transform: scale(1.1) rotate(4deg); }
+}
+
+.cadc-banner-titulo {
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.88rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.cadc-banner-descuento {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a1a1a;
+    font-weight: 900;
+    font-size: 0.88rem;
+    padding: 4px 12px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.02em;
+    animation: cadc-banner-descuento-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cadc-banner-descuento-pulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(251, 191, 36, 0.5); }
+    50% { box-shadow: 0 4px 22px rgba(251, 191, 36, 0.85), 0 0 0 4px rgba(251, 191, 36, 0.18); }
+}
+
+.cadc-banner-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cadc-banner-time-block {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 8px;
+    padding: 4px 10px;
+    text-align: center;
+    min-width: 46px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cadc-banner-time-num {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--cadc-gold);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+
+.cadc-banner-time-label {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+}
+
+.cadc-banner-time-pulse .cadc-banner-time-num {
+    animation: cadc-banner-tick 1s ease-in-out infinite;
+}
+
+@keyframes cadc-banner-tick {
+    0%, 100% { color: var(--cadc-gold); }
+    50% { color: #fff; text-shadow: 0 0 12px var(--cadc-gold); }
+}
+
+.cadc-banner-time-sep {
+    color: var(--cadc-gold);
+    font-weight: 900;
+    font-size: 1.1rem;
+    opacity: 0.55;
+    line-height: 1;
+}
+
+.cadc-banner-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a0a0a;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(251, 191, 36, 0.5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cadc-banner-cta:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 10px 24px rgba(251, 191, 36, 0.7);
+}
+
+.cadc-banner-mensaje {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 5px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    animation: cadc-banner-mensaje-in 0.55s ease-out;
+}
+
+@keyframes cadc-banner-mensaje-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cadc-banner-mensaje-icono {
+    font-size: 1rem;
+}
+
+.cadc-banner-mensaje-texto {
+    letter-spacing: 0.01em;
+}
+
+.cadc-banner-mensaje-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+    animation: cadc-banner-dot 1.5s infinite;
+    margin-left: 4px;
+}
+
+@keyframes cadc-banner-dot {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@media (max-width: 900px) {
+    .cadc-banner-fila-superior {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 16px 6px;
+    }
+
+    .cadc-banner-centro {
+        gap: 10px;
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .cadc-banner-titulo {
+        font-size: 0.78rem;
+    }
+
+    .cadc-banner-time-block {
+        min-width: 40px;
+        padding: 3px 8px;
+    }
+
+    .cadc-banner-time-num {
+        font-size: 1.05rem;
+    }
+
+    .cadc-banner-cta {
+        margin-left: auto;
+    }
+
+    .cadc-banner-fila-inferior {
+        padding: 0 16px 8px;
+    }
+
+    .cadc-banner-mensaje {
+        font-size: 0.78rem;
+        padding: 4px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cadc-banner-titulo-wrap {
+        gap: 6px;
+    }
+
+    .cadc-banner-titulo {
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+    }
+
+    .cadc-banner-emoji {
+        font-size: 1.1rem;
+    }
+
+    .cadc-banner-time-block {
+        min-width: 36px;
+        padding: 3px 6px;
+    }
+
+    .cadc-banner-time-num {
+        font-size: 0.95rem;
+    }
+
+    .cadc-banner-time-label {
+        font-size: 0.55rem;
+    }
+
+    .cadc-banner-time-sep {
+        font-size: 0.9rem;
+    }
+
+    .cadc-banner-volver span {
+        display: none;
+    }
+
+    .cadc-banner-volver {
+        padding: 7px 9px;
+    }
+
+    .cadc-banner-cta span {
+        display: none;
+    }
+
+    .cadc-banner-cta {
+        padding: 7px 10px;
+    }
+
+    .cadc-banner-mensaje {
+        font-size: 0.74rem;
+    }
+}

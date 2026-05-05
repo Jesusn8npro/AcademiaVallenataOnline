@@ -20,30 +20,25 @@ const VistaPremium = ({ data, verContenido }: Props) => {
     const navigate = useNavigate();
     const [cargando] = useState(false);
     const [tiempoRestante, setTiempoRestante] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+    const [ofertaActiva, setOfertaActiva] = useState(false);
     const [mostrarModalPago, setMostrarModalPago] = useState(false);
     const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const fechaFinRef = useRef<Date | null>(null);
 
     const { contenido, estaInscrito } = data;
     const tipoContenido = contenido.tipo;
 
-    useEffect(() => {
-        if (contenido.fecha_expiracion) {
-            fechaFinRef.current = new Date(contenido.fecha_expiracion);
-        } else if (!fechaFinRef.current) {
-            fechaFinRef.current = new Date(Date.now() + 12 * 60 * 60 * 1000);
-        }
-    }, [contenido.fecha_expiracion]);
-
-    const reiniciarContador = () => {
-        const opts = [4, 12, 24, 48, 72].map(h => h * 3600000);
-        fechaFinRef.current = new Date(Date.now() + opts[Math.floor(Math.random() * opts.length)]);
-    };
-
     const calcularTiempoRestante = () => {
-        if (!fechaFinRef.current) return;
-        const diff = fechaFinRef.current.getTime() - Date.now();
-        if (diff <= 0) { reiniciarContador(); calcularTiempoRestante(); return; }
+        if (!contenido.fecha_expiracion) return;
+        const diff = new Date(contenido.fecha_expiracion).getTime() - Date.now();
+        if (diff <= 0) {
+            setOfertaActiva(false);
+            setTiempoRestante({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+            if (intervaloRef.current) {
+                clearInterval(intervaloRef.current);
+                intervaloRef.current = null;
+            }
+            return;
+        }
         setTiempoRestante({
             dias: Math.floor(diff / 86400000),
             horas: Math.floor((diff % 86400000) / 3600000),
@@ -83,16 +78,27 @@ const VistaPremium = ({ data, verContenido }: Props) => {
 
     useEffect(() => {
         document.body.classList.add('vista-premium-activa');
-        calcularTiempoRestante();
-        intervaloRef.current = setInterval(calcularTiempoRestante, 1000);
+        if (contenido.fecha_expiracion) {
+            const fechaFin = new Date(contenido.fecha_expiracion).getTime();
+            if (fechaFin > Date.now()) {
+                setOfertaActiva(true);
+                calcularTiempoRestante();
+                intervaloRef.current = setInterval(calcularTiempoRestante, 1000);
+            }
+        }
         return () => {
             if (intervaloRef.current) clearInterval(intervaloRef.current);
             document.body.classList.remove('vista-premium-activa');
+            document.body.classList.remove('vista-premium-banner-activo');
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const mostrarBanner = !!(contenido.precio_rebajado || contenido.fecha_expiracion);
+    useEffect(() => {
+        document.body.classList.toggle('vista-premium-banner-activo', ofertaActiva);
+    }, [ofertaActiva]);
+
+    const mostrarBanner = ofertaActiva;
 
     return (
         <div className="vista-premium-container">

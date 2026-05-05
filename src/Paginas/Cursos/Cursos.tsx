@@ -53,8 +53,8 @@ export default function Cursos() {
   return (
     <main>
       <SEO
-        title="Cursos de Acordeón Vallenato | Niveles Principiante a Avanzado"
-        description="Explora nuestro catálogo de cursos de acordeón. Desde 'Cero a Rey Vallenato' hasta tutoriales de canciones específicas. Empieza hoy mismo."
+        title="Tutoriales de Acordeón Vallenato | Aprende Canciones Paso a Paso"
+        description="Explora nuestro catálogo completo de tutoriales de acordeón vallenato. Aprende canciones específicas paso a paso con los mejores maestros."
       />
       <HeroCursos />
       <section id="catalogo-section" className="cp-catalogo-section">

@@ -26,14 +26,32 @@ const MenuPublicoNav: React.FC<Props> = ({ navegarA, manejarIniciarSesion }) => 
           </div>
           <span>Blog</span>
         </button>
-        <button className="menu-lateral-enlace" onClick={() => navegarA('/cursos')}>
+        <button className="menu-lateral-enlace" onClick={() => navegarA('/tutoriales-de-acordeon')}>
           <div className="menu-lateral-icono">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="7" width="20" height="13" rx="2" />
               <path d="M16 3v4" /><path d="M8 3v4" />
             </svg>
           </div>
-          <span>Cursos</span>
+          <span>Tutoriales</span>
+        </button>
+        <button
+          className="menu-lateral-enlace"
+          onClick={() => navegarA('/curso-acordeon-desde-cero')}
+          style={{
+            background: 'linear-gradient(135deg, #f59e0b 0%, #dc2626 100%)',
+            color: '#fff',
+            borderRadius: '12px',
+            margin: '6px 0',
+            fontWeight: 800,
+          }}
+        >
+          <div className="menu-lateral-icono" style={{ color: '#fff' }}>
+            <svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" strokeWidth="2">
+              <path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z" />
+            </svg>
+          </div>
+          <span style={{ color: '#fff' }}>APRENDE DESDE 0</span>
         </button>
         <button className="menu-lateral-enlace" onClick={() => navegarA('/paquetes')}>
           <div className="menu-lateral-icono">
