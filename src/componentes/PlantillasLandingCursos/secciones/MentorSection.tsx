@@ -1,3 +1,10 @@
+// Imports de imágenes desde src/assets — las rutas /images/... apuntaban a public/
+// donde estos archivos nunca existieron, dando 404. PEOR: el onError fallback también
+// usaba un path /images/Home/... también roto → loop infinito de re-asignar src + 404
+// → 13.000+ requests + saturación del Service Worker + Epayco no podía cargar.
+import imgMaestroOficial from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+import imgMaestroFallback from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
+
 interface Props {
     cargando: boolean;
     onComprar: () => void;
@@ -17,10 +24,18 @@ const MentorSection = ({ cargando, onComprar }: Props) => (
                     <div className="vista-premium-mentor-imagen-fondo" />
                     <div className="vista-premium-mentor-imagen-wrapper">
                         <img
-                            src="/images/Foto-maestro-oficial-JESUS-GONZALEZ.jpg"
+                            src={imgMaestroOficial}
                             alt="Jesús González - Maestro de Acordeón"
                             className="vista-premium-mentor-imagen"
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg'; }}
+                            // Guard anti-loop: si el fallback también falla, dataset.fallbackApplied
+                            // queda en true y el handler no vuelve a tocar src → onError no se
+                            // re-dispara infinitamente.
+                            onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                if (img.dataset.fallbackApplied === 'true') return;
+                                img.dataset.fallbackApplied = 'true';
+                                img.src = imgMaestroFallback;
+                            }}
                         />
                     </div>
                 </div>

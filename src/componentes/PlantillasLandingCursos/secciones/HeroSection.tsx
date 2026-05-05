@@ -1,4 +1,7 @@
 import type { Contenido } from '../../../Paginas/Cursos/tipos';
+import imgJesusAvatar from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
+import imgCursosAvatar from '../../../assets/images/Home/Cursos-Acordeon.jpg';
+import imgFallbackHero from '../../../assets/images/Home/Aprende a tocar el acordeon con los mejores cursos.jpg';
 
 interface Props {
     contenido: Contenido;
@@ -12,7 +15,7 @@ interface Props {
 
 const CHECK_CIRCLE = 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z';
 const STAR_PATH = 'M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z';
-const IMG_FALLBACK = '/images/Home/Aprende a tocar el acordeon con los mejores cursos.jpg';
+const IMG_FALLBACK = imgFallbackHero;
 
 const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargando, onComprar, verContenido }: Props) => (
     <div className="vista-premium-hero">
@@ -45,8 +48,8 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                         </span>
                         <div className="vista-premium-estudiantes-container">
                             <div className="vista-premium-avatares">
-                                <img className="vista-premium-avatar" src="/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg" alt="Estudiante" />
-                                <img className="vista-premium-avatar" src="/images/Home/Cursos-Acordeon.jpg" alt="Estudiante" />
+                                <img className="vista-premium-avatar" src={imgJesusAvatar} alt="Estudiante" />
+                                <img className="vista-premium-avatar" src={imgCursosAvatar} alt="Estudiante" />
                             </div>
                             <span className="vista-premium-estudiantes-texto">+{contenido.estudiantes_inscritos || '300'} estudiantes</span>
                         </div>
@@ -135,7 +138,14 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                                 src={contenido.imagen_url || IMG_FALLBACK}
                                 alt={contenido.titulo || 'Imagen del curso'}
                                 className="vista-premium-video-imagen"
-                                onError={(e) => { (e.target as HTMLImageElement).src = IMG_FALLBACK; }}
+                                // Guard anti-loop: si IMG_FALLBACK también falla, dataset.fallbackApplied
+                                // queda en true → onError no vuelve a setear src → no se re-dispara infinito.
+                                onError={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    if (img.dataset.fallbackApplied === 'true') return;
+                                    img.dataset.fallbackApplied = 'true';
+                                    img.src = IMG_FALLBACK;
+                                }}
                             />
                             <div className="vista-premium-play-overlay">
                                 <div className="vista-premium-play-btn">
