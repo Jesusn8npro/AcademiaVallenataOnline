@@ -1,292 +1,210 @@
-# SimuladorApp · Modo Juego — Changelog de la sesión
+# SimuladorApp · Modo Juego — Changelog & Inventario
 
-Trabajo desde el commit `d667a5a` (fix botón COMENZAR de PantallaAprende).
-Toda esta sesión se enfocó en hacer el **modo juego** del SimuladorApp competente
-con dos métodos visuales (notas cayendo libre y boxed estilo Synthesia clásico),
-sin tocar AcordeonProMax.
-
----
-
-## 1. Bugs base arreglados
-
-### Bug A — solo se marcaba el primer botón
-`notasImpactadas` es un `Set` que se muta sin cambiar referencia → React no
-detectaba la mutación en deps de `useMemo`. Agregué `notasImpactadasSize`
-(`.size` del Set) como dep adicional para forzar recálculo cada vez que crece.
-
-### Bug B — al pisar no alumbraba
-El pseudo-elemento `::after` que añadí para el velo de objetivo tapaba el
-gradiente que `nota-activa` aplica al pulsar. **Eliminé `::after`** y dejé
-solo `border` + `box-shadow` para el highlight del objetivo. Ahora el press
-visual (gradiente cian/rojo + scale + transform) se ve sin obstrucciones.
-
-### Bug C — secciones no funcionaban
-`config.seccionId` se elegía pero **nunca se llamaba** a
-`hero.seleccionarSeccion()`. Agregué la llamada antes de `iniciarJuego`.
-Replica el patrón de ProMax: lead-in de 3s, offset al `tickInicio`, y
-`rangoTicks` filtran las notas correctamente.
-
-### Bug D — pre-highlight muy temprano
-Ventana de objetivo iba de `[-20, TICKS_VIAJE=384]` (toda la trayectoria).
-Bajé a `[-5, 40]` ticks → solo se ilumina cuando la nota está **realmente**
-cerca del pito.
-
-### Bug del tono
-La carga asíncrona de ajustes en la nube sobrescribía el tono de la canción.
-Mi `useEffect` ahora **siempre** revierte a `cancion.tonalidad` si la nube
-intenta cambiarlo (replicando ProMax: `seleccionarCancion` + `iniciarJuego`
-ambos llaman a `setTonalidadSeleccionada`).
-
-### Touch del cuero del fuelle
-`.seccion-bajos-contenedor` no estaba en la whitelist `SELECTORES_INTERACTIVOS`
-del touch handler global → se trababa en mobile. Añadido + nueva
-`.juego-sim-fuelle-zona` (zona táctil invisible en modo juego para invertir
-el fuelle al presionar/soltar en modo competitivo).
+Carpeta `src/Paginas/SimuladorApp/Juego/` — todo el flujo "elegir canción + jugar"
+del SimuladorApp en una sola carpeta. Reutiliza dependencias de AcordeonProMax
+(motor, hooks de progreso, score saving) sin modificarlas.
 
 ---
 
-## 2. Pista de notas — Método 1: cayendo libre (Guitar Hero / Synthesia)
+## Inventario · qué hace cada archivo
 
-`PistaNotasVertical.tsx` reescrito para usar **posiciones reales del DOM**:
-- `getBoundingClientRect()` del `.pito-boton[data-pos="X-Y"]` real
-- Las notas caen exactamente sobre el botón correcto
-- Sigue al pan horizontal del tren-deslizable automáticamente
-- Caída vertical estilo Guitar Hero
+### Pantallas (entradas al juego)
 
-Características:
-- **Notas sólidas** con gradiente radial 3D estilo bola (no planas, no translúcidas)
-- **Cola de sostenidos** estilo Guitar Hero — barra ancha vertical detrás de la
-  cabeza que drena con el tiempo. Aparece cuando `duracion > 30 ticks`.
-- **Hit feedback**: la nota se vuelve blanca, hace scale 1→1.9 con brightness
-  burst + 6 partículas radiales que vuelan 34px y se desvanecen.
-- **Notas ordenadas por progreso ASC** → la inminente queda encima en z-stack.
-- **Notas lejanas se atenúan** a opacidad 0.35 cuando hay una inminente
-  (progreso > 0.78), para que no tapen la vista.
-- **Inminente con anillo blanco pulsante** + borde blanco — identificador
-  inequívoco de "esta es la nota a pisar".
-- Filtra notas de bajos (`-bajo` en el botonId) — no se renderizan en juego.
+#### `PantallaAprende.tsx` + `.css`
+Pantalla de selección de canción (la "academia" del simulador).
+- **Vista inicio** — 4 cards de categoría (Canciones · Escalas · Ejercicios · Acordes) con porcentaje de progreso por usuario.
+- **Vista lista** — lista de canciones filtrable (Populares · No tocadas · Nombre · Dificultad) con buscador, dificultad por color, miniatura YouTube.
+- Al hacer clic en JUGAR sobre una canción → abre `PantallaConfigCancion` como modal.
+- Carga favoritos del usuario desde Supabase (`favoritos_acordeon_hero`).
 
----
+#### `PantallaConfigCancion.tsx` + `.css`
+Modal que aparece después de elegir canción. Configura modo + sección + audio antes de empezar.
+- **Modo de juego** — 4 cards (Competitivo · Libre · Synthesia · Maestro) con tooltip flotante en long-press / hover.
+- **Qué parte tocar** — cards de sección con badges de progreso: ✓ Completada · 🪙 monedas ganadas · Mejor X% · 🔒 Bloqueada (desbloqueo secuencial). Reutiliza `useProgresoSecciones` de ProMax.
+- **Toggle** — guía de audio del maestro on/off.
+- **Layout 2 columnas en landscape mobile** (modos+toggle | secciones) sin scroll, con cards `max-content` para que no se estiren con espacio vacío.
+- Botones: Volver · EMPEZAR.
 
-## 3. Pista de notas — Método 2: boxed (Synthesia clásico)
-
-`PistaNotasBoxed.tsx` + `.css` (archivo nuevo, totalmente independiente):
-- Contenedor fijo arriba de la pantalla, altura 25vh, fondo translúcido
-  oscuro, borde inferior gris grueso (4px).
-- Las notas caen DENTRO del contenedor.
-- La nota inminente queda **medio cortada** en el borde inferior gracias
-  a `overflow: hidden` + `transform: translate(-50%, -50%)`.
-- **Aprovecha el motor `synthesia` de useLogicaProMax**: cuando se elige el
-  modo boxed, fuerzo `setModoPractica('synthesia')`. El motor pausa
-  `tickActual` en cada nota → el visual stop-and-wait sale solo.
-- Notas ordenadas por progreso ASC → la inminente queda arriba en z-stack
-  con anillo blanco pulsante + opacidad 1.
-- Las demás (queue) bajan a opacidad 0.28 para que destaque solo la del
-  fondo (la que toca pisar).
-- Cada nota se posiciona en X via `getBoundingClientRect` del pito real
-  → puedes trazar visualmente desde la cajita al pito abajo.
+#### `useConfigCancion.ts`
+Hook de estado para `PantallaConfigCancion`. Mantiene `modo`, `velocidad`,
+`guiaAudio`, `seccionId` y construye el objeto `ConfigCancion` final que se
+pasa a `JuegoSimuladorApp`. Tipos `ModoJuego` + `ConfigCancion` exportados.
 
 ---
 
-## 4. Selector de modo visual + persistencia
+### Pantalla principal del juego
 
-- **Switch real con dos opciones visibles** (`↓ Libre` / `☐ Synth`) en
-  píldora amarilla, al lado del puntaje (right: 200px / 150px en mobile).
-- Persistencia con `localStorage` (key `simulador_modo_visual`).
-- **Toast efímero** al cambiar modo: explica brevemente cómo funciona cada uno
-  ("Modo libre · las notas caen sobre los pitos" / "Modo Synthesia · la
-  canción se pausa en cada nota"). Auto-desaparece a los 2.5s.
-- Al activar boxed, se fuerza `synthesia`. Al activar libre, vuelve al modo
-  original elegido en config.
+#### `JuegoSimuladorApp.tsx` + `.css`
+Componente raíz cuando el alumno está jugando. Recibe `config: ConfigCancion`.
+- Instancia `useLogicaProMax()` → motor de juego compartido con ProMax.
+- Inicializa: aplica `seccionId`, fuerza tono de la canción, llama `iniciarJuego`.
+- **Guía visual del pito objetivo** — `useMemo` que calcula qué pitos resaltar:
+  nota más próxima (ventana `[-5, 40]` ticks) + agrupación de acordes (`UMBRAL_ACORDE=30`)
+  + sostenidos en curso + after-glow de 20 ticks tras pisar.
+- **Switch de modo visual** Libre ↓ / Synth ☐ con persistencia en `localStorage`
+  (`simulador_modo_visual`) + toast efímero al cambiar.
+- **Zona táctil de fuelle** — div invisible entre header y pitos: presionar=empujar, soltar=halar.
+- **Marca de agua** "Acordeón Pro Max" detrás de la pista.
+- Renderiza: `HeaderJuegoSimulador` · `PistaNotasVertical` o `PistaNotasBoxed` ·
+  acordeón (3 hileras de pitos) · `MenuPausaProMax` · `PantallaResultadosSimulador` o `PantallaGameOverSimulador`.
+- Marca `body.juego-sim-activo` para CSS scoping del menú de pausa compacto.
 
----
-
-## 5. Highlight del pito objetivo
-
-Computado por `useMemo` en `JuegoSimuladorApp` que devuelve
-`{ guia: Map<pos, fuelle>, sosteniendo: Set<pos> }`:
-
-1. **Encuentra la nota más próxima** (no impactada, dentro de ventana
-   `[-5, VENTANA_OBJETIVO=40]` ticks).
-2. **Agrupa todas las notas dentro de UMBRAL_ACORDE=30 ticks** del minTick →
-   soporta acordes (multiples botones encendidos a la vez).
-3. **Sostenidos en curso**: notas ya impactadas cuya duración no terminó →
-   permanecen en el set con flag `sosteniendo`.
-
-Visual:
-- **Borde de color fuerte** (azul para halar, rojo para empujar) +
-  tinte interior sutil + halo casi nulo. Conserva el background original
-  del pito.
-- Sostenidos: animación `pito-sosteniendo-cargar` 0.6s ease-in-out infinite
-  que pulsa el halo blanco simulando "energía acumulándose".
+#### `HeaderJuegoSimulador.tsx` + `.css`
+Header durante la partida: botón pausa (izq) + título/autor (centro) + barra de
+vida + multiplicador + puntos (der). Sin botón X de salida — toda la nav
+va por el menú de pausa.
 
 ---
 
-## 6. Marca de agua "Acordeón Pro Max"
+### Pista de notas (dos métodos visuales)
 
-Texto cursivo grande estilo Cassoto en el área negra superior, alpha 0.13,
-detrás de la pista. En modo boxed se mueve a bottom: 38vh para no estorbar
-la cajita.
+#### `PistaNotasVertical.tsx` + `.css`  — Método 1: cayendo libre (Guitar Hero)
+- Notas caen verticalmente sobre el pito real (posicionadas via `getBoundingClientRect`).
+- Sigue el pan horizontal del tren-deslizable.
+- Notas sólidas con gradiente radial 3D + cola de sostenidos cuando `duracion > 30 ticks`.
+- Hit feedback: scale 1→1.9 + brightness burst + 6 partículas radiales.
+- Notas ordenadas por progreso ASC → la inminente queda encima en z-stack con anillo blanco pulsante.
+- Notas lejanas se atenúan a opacidad 0.35 cuando hay una inminente (progreso > 0.78).
+- Filtra notas de bajos (`-bajo` en el botonId) — no se renderizan.
 
----
+#### `PistaNotasBoxed.tsx` + `.css`  — Método 2: Synthesia clásico
+- Cajita fija arriba (altura 25vh) con borde inferior gris grueso.
+- Las notas caen DENTRO de la cajita; la inminente queda medio cortada en el borde.
+- Fuerza `setModoPractica('synthesia')` → motor pausa en cada nota.
+- Inminente con anillo blanco pulsante; demás (queue) bajan a opacidad 0.28.
+- Cada nota se posiciona en X via `getBoundingClientRect` del pito real.
 
-## 7. Header del juego
-
-- **Eliminado el botón X (salir)**. Toda la navegación va por el menú de pausa.
-- Solo queda el botón de pausa, que abre `MenuPausaProMax` con: Reanudar,
-  Reiniciar, Cambiar modo (Synthesia/Maestro/Libre), Salir.
-
----
-
-## 8. Pantalla de resultados — `PantallaResultadosSimulador.tsx`
-
-Nueva, totalmente independiente del de ProMax. Reutiliza el hook
-`usePantallaResultados` para data + score saving (sin duplicar).
-
-Layout horizontal landscape mobile-first:
-- Header compacto (cerrar / título / autor / 3 estrellas)
-- 4 columnas de stats con colores semánticos (Perfectas verde, Bien azul,
-  Fallidas ámbar, Perdidas rojo)
-- Línea meta: Precisión (rosa) · Racha máx · Puntos (ámbar grande)
-- Botones: Salir / Siguiente sección (si aplica) / Otra vez (primario ámbar)
-- Media query landscape `max-height: 540px` afina todo para no apretar.
+Ambos métodos:
+- Calculan `mejorProgreso` y resaltan TODAS las notas dentro de margen 0.04 → acordes pulsan completos.
+- Reciben `cancion`, `tickActual`, `notasImpactadas`, `rangoSeccion`.
 
 ---
 
-## 9. Modal de configuración — `PantallaConfigCancion.tsx`
+### Pantallas de fin de partida
 
-Rediseñado:
-- **Cards compactas** (4 columnas siempre) en lugar de dropdown nativo
-- Cada card: icono Lucide + título corto (sin descripción para no apretar)
-- **Long-press / hover** sobre una card → tooltip flotante ámbar arriba
-  + descripción dinámica debajo del grid
-- Active = azul; previsualizando (long-press) = ámbar
-- **Chips redondas** para selección de sección
-- Toggle de "Guía de audio del maestro" mantenido
-- Panel con sombra blanca exterior para que se distinga claramente
+#### `PantallaResultadosSimulador.tsx` + `.css`
+Pantalla cuando el alumno termina la canción/sección. Reutiliza
+`usePantallaResultados` de ProMax para data + score saving.
+- **Header** compacto: cerrar · título/autor/sección · 3 estrellas.
+- **Banner sección completada** — verde con monedas ganadas, o pendiente con intentos restantes.
+- **Badge Nuevo récord personal** cuando aplica.
+- **Stats 4 col** (Perfectas · Bien · Fallidas · Perdidas) con colores semánticos.
+- **Fila precisión** — porcentaje + barra rosa→morada + racha máx + total notas.
+- **Frase motivación** + puntos grandes ámbar.
+- **Panel XP/monedas** — XP del intento (positivo/negativo/dominada/neutro), monedas ganadas, saldo total, barra 0-100 XP por canción.
+- **Avisos** — "Guardada" o "Necesitas X% para guardar".
+- **Botones** — Elegir canción · Historial · Guardar · Siguiente sección · Otra vez.
+- Panel angosto (max 580px) con borde claro `2px solid` + halo morado, scroll interno si excede.
+- Abre los modales `ModalGuardarSimulador` y `ModalHistorialSimulador`.
 
----
-
-## 10. Switch de modo visual + zona táctil de fuelle
-
-- Switch flotante para alternar Libre / Synth
-- Zona táctil invisible (`.juego-sim-fuelle-zona`) entre el header y los
-  pitos: presionar = `empujar`, soltar = `halar`. No tiene imagen ni colores
-  (queda transparente sobre el fondo negro del root).
-
----
-
-## Archivos creados
-
-- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.css`
-- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.tsx`
-- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.css`
-- `src/Paginas/SimuladorApp/Juego/CHANGELOG_SESION.md` (este archivo)
-
-## Archivos modificados
-
-- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.tsx`
-- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.css`
-- `src/Paginas/SimuladorApp/Juego/HeaderJuegoSimulador.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.css`
-- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.tsx`
-- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.css`
-- `src/Paginas/SimuladorApp/Componentes/ContenedorBajos.tsx`
-- `src/Paginas/SimuladorApp/Hooks/usePointerAcordeon.ts`
-- `src/componentes/Menu/MenuPublico.css`
-
-## Pendiente conocido
-
-- **Bug del Synthesia "notas pasan derecho"** en algunas canciones: el
-  `UMBRAL_ACORDE` del motor (`useLogicaProMax.ts:378`) es de 15 ticks. Si
-  las notas de un acorde están más espaciadas, no se agrupan. Tocar en
-  ProMax también — fuera de scope de SimuladorApp.
-- Métodos 3 (carriles verticales) y 4 (flecha minimalista) — diseñados pero
-  no implementados, decisión del usuario.
-- Error `sw.js:114 Partial response (status code 206) is unsupported` —
-  fuera de scope; el service worker intenta cachear streaming de audio.
-  No afecta funcionalidad del juego.
+#### `PantallaGameOverSimulador.tsx` + `.css`
+Pantalla cuando se acabó la vida en modo competitivo.
+- Mismo lenguaje visual que Resultados pero con acento rojo (`border: 2px solid rgba(239,68,68,0.45)`, halo rojo).
+- Eyebrow "💀 GAME OVER" + título canción.
+- Mensaje motivacional ("no te rindas").
+- Stats 4 col + barra precisión + puntos.
+- Botones: Elegir canción · Reintentar (gradiente rojo).
+- Reemplaza al `PantallaGameOverProMax` que se desbordaba en landscape mobile.
 
 ---
 
-## Iteración 2 — fixes post-prueba en sesión
+### Modales independientes
 
-### Acordes inminentes — ahora pulsan TODOS, no solo uno
-En `PistaNotasVertical` y `PistaNotasBoxed` el cálculo de la nota inminente
-solo guardaba un `id`. Ahora se calcula `mejorProgreso` y se agregan al
-`Set idsInminente` todas las notas dentro de margen `0.04` del máximo.
-Un acorde de 2-3 notas simultáneas pulsa todos los pitos a la vez.
+#### `ModalGuardarSimulador.tsx` + `.css`
+Modal para guardar una grabación (modo competencia ≥ 60% precisión).
+- Header: cerrar · eyebrow "Guardar ejecución" · título canción · badge precisión rosa.
+- Inputs: Título (obligatorio, 120 chars) + Descripción opcional (textarea, 500 chars).
+- Estado guardando deshabilita campos y muestra "Guardando…".
+- Footer: Ahora no · Guardar (primario gradiente morado).
+- Componente "tonto": recibe valores y callbacks, no maneja estado propio salvo focus.
 
-### Pause menu — abre con click manual, no con auto-pausa de synthesia
-El motor entra automáticamente en `pausado_synthesia` cuando espera una
-nota → eso NO debe abrir el menú. Ahora hay un estado local
-`menuPausaAbierto` controlado solo por el click del botón Pausa. El
-`onReanudar` lo cierra y dispara `reanudarConConteo` (cuenta regresiva
-para acomodar dedos).
-
-### Sostenido NO se pierde al pisar
-El `nota-activa` (cyan al pisar) sobrescribía la animación del sostenido.
-El selector ahora tiene prioridad combinada
-`.modo-halar/empujar .pito-boton.objetivo-sosteniendo.nota-activa` con
-`!important` en animation/border/box-shadow. La animación
-`pito-sosteniendo-cargar` (0.55s ease-in-out infinite) muestra halo
-blanco que pulsa de 6px → 22px + 5px de aro blanco + brightness 1.05→1.5.
-
-### After-glow para notas cortas impactadas
-Antes: al pisar correctamente, la nota se removía del set de objetivos →
-el pito quedaba con el visual gris/cyan default de `nota-activa`. Feo.
-Ahora: las notas impactadas mantienen el highlight de color por un
-**after-glow de 20 ticks** (medio beat). El alumno ve el borde rojo/azul
-quedarse un instante después de pisar, confirmando "sí lo hiciste bien".
-Sostenidas siguen con su sustain hasta `tick + dur + 12`.
-
-### Press visual reforzado
-Selector `.modo-halar/empujar .pito-boton.nota-activa.objetivo-halar/empujar`
-añade un anillo blanco de 4px alrededor + glow blanco 16px + inset shadow
-del press original + `translateY(8px) scale(0.92)`. La pisada sobre un
-objetivo se nota claro.
-
-### Menú de pausa más compacto
-Override CSS scoped a `body.juego-sim-activo` (clase añadida por
-`useEffect` en JuegoSimuladorApp). Reduce `min-width` 450 → 320, padding
-30 → 14/18, h2 2.5rem → 1.25rem (1.05rem en landscape mobile),
-`pause-menu-btn` padding 12 → 8/6 y font 1rem → 0.85/0.8rem. Cabe en
-landscape sin recortar. ProMax no se ve afectado.
-
-### Header sin botón X
-Eliminado de `HeaderJuegoSimulador`. Toda la navegación va por el menú
-de pausa que ahora se abre con el botón Pausa.
-
-### `UMBRAL_ACORDE` ampliado
-De 20 → **30 ticks**. Cubre acordes con notas un poco desfasadas que
-antes no se agrupaban en la guía visual.
+#### `ModalHistorialSimulador.tsx` + `.css`
+Modal mobile-first con el historial del usuario en esta canción.
+- **Resumen 4 stat-cards**: Récord · Mejor precisión · Intentos · Tendencia (positiva/negativa según diferencia entre los 2 últimos intentos).
+- **Lista de intentos** como cards apiladas con scroll interno: fecha relativa ("Hace 2 días"), badge "Récord", modo, barra de precisión visual, puntos.
+- Reemplaza al `ModalHistorialHero` que usa recharts + tabla densa (no funciona bien en mobile).
+- Estados: cargando (spinner), vacío (CTA), normal.
 
 ---
 
-## Estado final: archivos tocados en TODA la sesión
+## Sesiones registradas
 
-### Creados
-- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.css`
-- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.tsx`
-- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.css`
-- `src/Paginas/SimuladorApp/Juego/CHANGELOG_SESION.md`
+### Sesión 1 (commit `669a86e`) — Modo juego competente con dos métodos visuales
 
-### Modificados
-- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.tsx`
-- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.css`
-- `src/Paginas/SimuladorApp/Juego/HeaderJuegoSimulador.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.tsx`
-- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.css`
-- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.tsx`
-- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.css`
-- `src/Paginas/SimuladorApp/Componentes/ContenedorBajos.tsx`
-- `src/Paginas/SimuladorApp/Hooks/usePointerAcordeon.ts`
-- `src/componentes/Menu/MenuPublico.css` (fix responsive del navbar público)
+**Bugs base arreglados:**
+- **Bug A** — `notasImpactadas` (Set mutado sin nueva referencia) → React no detectaba cambios en `useMemo`. Fix: `notasImpactadasSize` (`.size`) como dep adicional.
+- **Bug B** — pseudo-elemento `::after` del velo objetivo tapaba el gradiente de `nota-activa`. Fix: eliminado `::after`, solo `border` + `box-shadow`.
+- **Bug C** — `config.seccionId` se elegía pero nunca se llamaba `hero.seleccionarSeccion()`. Fix: llamada antes de `iniciarJuego`.
+- **Bug D** — pre-highlight muy temprano (toda la trayectoria). Fix: ventana `[-5, 40]` ticks.
+- **Bug del tono** — la nube sobrescribía el tono. Fix: `useEffect` que revierte siempre a `cancion.tonalidad`.
+- **Touch del fuelle** — `.seccion-bajos-contenedor` faltaba en whitelist `SELECTORES_INTERACTIVOS`. Fix: añadido + nueva `.juego-sim-fuelle-zona`.
 
-### Sin tocar (intencional)
-- `src/Paginas/AcordeonProMax/**` — ProMax queda intacto. SimuladorApp
-  reutiliza `useLogicaProMax`, `usePantallaResultados` y `MenuPausaProMax`
-  como dependencias compartidas, pero no las modifica.
+**Features:**
+- Pista vertical (Guitar Hero) + Pista boxed (Synthesia clásico).
+- Switch modo visual con persistencia + toast.
+- Highlight del pito objetivo (acordes + sostenidos).
+- Marca de agua "Acordeón Pro Max".
+- Header sin botón X (todo via menú de pausa).
+- Modal de configuración con cards compactas + tooltip long-press.
+
+### Sesión 2 (commit `2778b01`) — After-glow, acordes inminentes, menú compacto
+
+- Acordes inminentes pulsan TODOS los pitos (margen 0.04 sobre `mejorProgreso`).
+- Menú de pausa abre solo con click manual (no con `pausado_synthesia` automático).
+- Sostenido NO se pierde al pisar (selectores combinados con `!important` en animation/border/box-shadow).
+- After-glow de 20 ticks para notas cortas impactadas.
+- Press visual reforzado (anillo blanco 4px + glow blanco 16px + translateY/scale).
+- Menú de pausa compacto scoped a `body.juego-sim-activo`.
+- `UMBRAL_ACORDE` de 20 → 30 ticks para guía visual.
+
+### Sesión 3 (commit `488019d`) — Modales mobile-first y CSS limpio
+
+**PantallaResultadosSimulador (rediseño completo):**
+- Panel angosto (820 → 580px) con borde claro `2px solid` y halo morado.
+- Banner sección completada + monedas, badge nuevo récord personal.
+- Panel XP/monedas/saldo, barra de precisión, total notas.
+- Avisos "guardada" / "necesitas X% para guardar".
+- Botones nuevos: Historial · Guardar · Siguiente sección.
+
+**Modales independientes (nuevos):**
+- `ModalHistorialSimulador` — mobile-first con stat-cards + lista de intentos con barras (reemplaza recharts + tabla del ModalHistorialHero).
+- `ModalGuardarSimulador` — extraído de PantallaResultados a archivo propio para que no rompa estilos.
+
+**PantallaGameOverSimulador (nuevo):**
+- Reemplaza `PantallaGameOverProMax` que se desbordaba en landscape mobile.
+- Mismo lenguaje visual que Resultados pero con acento rojo.
+
+**PantallaConfigCancion (rediseño landscape mobile):**
+- Layout 2 columnas (modos+toggle | secciones) sin scroll en landscape.
+- Cards de modo con `grid-template-columns: repeat(2, max-content)` para ajustarse al contenido en lugar de estirarse.
+- Cards de sección con `space-between` (nombre izq, tags der) → sin espacio vacío.
+- Integrado `useProgresoSecciones` para mostrar badges por sección.
+
+**JuegoSimuladorApp:**
+- Pasa `guardandoGrabacion` + `errorGuardado` a Resultados.
+- Usa `PantallaGameOverSimulador` en lugar de `PantallaGameOverProMax`.
+
+### Sesión 4 (este commit) — Reorganización + limpieza
+
+- **Reorganización**: `Aprende/` consolidada dentro de `Juego/`. Toda la
+  ruta canción→config→juego→fin vive en una sola carpeta.
+- Imports actualizados: `SimuladorApp.tsx` (×2) y `JuegoSimuladorApp.tsx` (×1).
+- Imports muertos removidos (`TICKS_VIAJE` en `JuegoSimuladorApp.tsx` no se usaba).
+- CSS de `PantallaConfigCancion.css` limpiado: removido bloque `.config-select` no usado, restauradas bases para portrait/desktop, leve bump de padding.
+- Estilos de modal inline removidos de `PantallaResultadosSimulador.css` (ahora viven en sus archivos propios).
+- Este CHANGELOG reescrito como inventario + log.
+
+---
+
+## Pendientes conocidos
+
+- **Bug del Synthesia "notas pasan derecho"** — `UMBRAL_ACORDE` del motor (`useLogicaProMax.ts:378`) es 15 ticks; si las notas de un acorde están más espaciadas no se agrupan. Toca también en ProMax — fuera de scope de SimuladorApp.
+- **Métodos 3 (carriles verticales) y 4 (flecha minimalista)** — diseñados pero no implementados.
+- **Service worker** — `sw.js:114 Partial response (status code 206) is unsupported` al cachear streaming de audio. No afecta la funcionalidad.
+
+---
+
+## Sin tocar (intencional)
+
+- `src/Paginas/AcordeonProMax/**` — ProMax queda intacto. SimuladorApp/Juego reutiliza `useLogicaProMax`, `usePantallaResultados`, `useProgresoSecciones`, `seccionesConEstado`, `MenuPausaProMax` y `scoresHeroService` como dependencias compartidas.
+- `src/Paginas/SimuladorApp/Componentes/**` y `Hooks/**` — son del simulador general (no del juego), por eso no se movieron a `Juego/`.
