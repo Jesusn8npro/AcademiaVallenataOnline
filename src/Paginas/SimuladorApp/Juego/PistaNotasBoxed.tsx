@@ -110,15 +110,23 @@ const PistaNotasBoxed: React.FC<PistaNotasBoxedProps> = ({
     const altoCaja = cajaRef.current?.getBoundingClientRect().height ?? 0;
 
     // Ordenar por progreso ASC: las que vienen mas atras se renderizan primero,
-    // la INMINENTE (mayor progreso) sale al final → queda encima en z-stack.
+    // la(s) INMINENTE(s) salen al final → quedan encima en z-stack.
     const notasOrdenadas = [...notas].sort((a, b) => a.progreso - b.progreso);
-    // Solo UNA nota recibe la clase .inminente (la que el alumno debe pisar
-    // ahora). Las demas que vengan en camino no pulsan, para no confundir.
-    let idInminente: string | null = null;
-    for (let i = notasOrdenadas.length - 1; i >= 0; i--) {
-        const n = notasOrdenadas[i];
-        if (!n.impactada && n.progreso > 0.7) { idInminente = n.id; break; }
+    // TODAS las notas con el mayor progreso (margen 0.04) reciben .inminente,
+    // asi un acorde de 2-3 botones simultaneos pulsa todos a la vez.
+    const idsInminente = new Set<string>();
+    let mejorProgreso = 0;
+    for (const n of notasOrdenadas) {
+        if (n.impactada || n.progreso <= 0.7) continue;
+        if (n.progreso > mejorProgreso) mejorProgreso = n.progreso;
     }
+    if (mejorProgreso > 0) {
+        for (const n of notasOrdenadas) {
+            if (n.impactada || n.progreso <= 0.7) continue;
+            if (n.progreso >= mejorProgreso - 0.04) idsInminente.add(n.id);
+        }
+    }
+    const hayInminente = idsInminente.size > 0;
 
     return (
         <div ref={cajaRef} className="pista-notas-boxed" aria-hidden="true">
@@ -143,15 +151,15 @@ const PistaNotasBoxed: React.FC<PistaNotasBoxedProps> = ({
                         ? `0 0 10px rgba(${rgb}, 0.7), 0 0 0 2px rgba(255,255,255,0.6)`
                         : `0 0 4px rgba(${rgb}, 0.4)`;
 
-                const esInminente = n.id === idInminente;
-                // Si HAY una nota inminente, las demas se atenuan fuerte para que
+                const esInminente = idsInminente.has(n.id);
+                // Si HAY notas inminentes, las demas se atenuan fuerte para que
                 // destaque la que toca pisar. Si NO hay (estado inicial / final),
                 // las notas queue se muestran a opacidad media normal.
                 const opacidadFinal = n.impactada
                     ? 1
                     : esInminente
                         ? 1
-                        : idInminente
+                        : hayInminente
                             ? 0.28           // hay una inminente → otras muy tenues
                             : 0.5 + alphaCol * 0.5;
                 return (

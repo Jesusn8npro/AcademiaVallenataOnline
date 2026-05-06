@@ -104,34 +104,51 @@
         inset 0 0 14px rgba(239, 68, 68, 0.35) !important;
 }
 
-/* SOSTENIENDO: el alumno esta pisando una nota larga. La sombra/borde se mantiene
-   y "carga energia" — un halo blanco que crece en pulsos, simulando que el boton
-   acumula brillo mientras lo sostienes. Se aplica encima de objetivo-halar/empujar
-   y de nota-activa, asi nunca desaparece mientras dura el sustain. */
-.pito-boton.objetivo-sosteniendo {
-    animation: pito-sosteniendo-cargar 0.6s ease-in-out infinite;
+/* PRESSED FEEDBACK: cuando el alumno pisa un objetivo (combinacion
+   nota-activa + objetivo-*), reforzamos el "hundido" para que se note
+   claramente que se registro la presion. Anillo blanco + scale fuerte. */
+.modo-halar .pito-boton.nota-activa.objetivo-halar,
+.modo-empujar .pito-boton.nota-activa.objetivo-empujar {
+    box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.92),
+        0 0 16px rgba(255, 255, 255, 0.7),
+        inset 0px 10px 15px rgba(0, 0, 0, 0.9) !important;
+    transform: translateY(8px) scale(0.92) !important;
     border-color: #fff !important;
+}
+
+/* SOSTENIENDO: el alumno esta pisando una nota larga. La sombra/borde se mantiene
+   y "carga energia" — un halo blanco que crece en pulsos. Aplica con prioridad
+   maxima incluso cuando nota-activa este presente (selectores combinados). */
+.pito-boton.objetivo-sosteniendo,
+.modo-halar .pito-boton.objetivo-sosteniendo.nota-activa,
+.modo-empujar .pito-boton.objetivo-sosteniendo.nota-activa {
+    animation: pito-sosteniendo-cargar 0.55s ease-in-out infinite !important;
+    border: 3px solid #fff !important;
 }
 
 @keyframes pito-sosteniendo-cargar {
     0% {
         box-shadow:
-            0 0 4px rgba(255, 255, 255, 0.5),
-            inset 0 0 8px rgba(255, 255, 255, 0.25) !important;
-        filter: brightness(1);
+            0 0 6px rgba(255, 255, 255, 0.7),
+            0 0 0 2px rgba(255, 255, 255, 0.45),
+            inset 0 0 10px rgba(255, 255, 255, 0.35) !important;
+        filter: brightness(1.05);
     }
     50% {
         box-shadow:
-            0 0 18px rgba(255, 255, 255, 1),
-            0 0 36px rgba(255, 255, 255, 0.5),
-            inset 0 0 22px rgba(255, 255, 255, 0.65) !important;
-        filter: brightness(1.4);
+            0 0 22px rgba(255, 255, 255, 1),
+            0 0 0 5px rgba(255, 255, 255, 0.85),
+            0 0 44px rgba(255, 255, 255, 0.55),
+            inset 0 0 26px rgba(255, 255, 255, 0.7) !important;
+        filter: brightness(1.5);
     }
     100% {
         box-shadow:
-            0 0 4px rgba(255, 255, 255, 0.5),
-            inset 0 0 8px rgba(255, 255, 255, 0.25) !important;
-        filter: brightness(1);
+            0 0 6px rgba(255, 255, 255, 0.7),
+            0 0 0 2px rgba(255, 255, 255, 0.45),
+            inset 0 0 10px rgba(255, 255, 255, 0.35) !important;
+        filter: brightness(1.05);
     }
 }
 
