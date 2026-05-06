@@ -1,0 +1,233 @@
+/* ──────────────────────────────────────────────────────────
+   MODAL GUARDAR EJECUCION — independiente, mobile-first
+   ────────────────────────────────────────────────────────── */
+
+.sim-guardar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1700;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    font-family: 'Raleway', system-ui, sans-serif;
+    animation: sim-guardar-fade 0.22s ease-out;
+}
+
+@keyframes sim-guardar-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sim-guardar-panel {
+    width: 100%;
+    max-width: 460px;
+    max-height: 92vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1c 100%);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+.sim-guardar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sim-guardar-cerrar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+}
+.sim-guardar-cerrar:hover { background: rgba(255, 255, 255, 0.12); }
+.sim-guardar-cerrar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sim-guardar-titulo-bloque {
+    flex: 1;
+    min-width: 0;
+}
+.sim-guardar-eyebrow {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+.sim-guardar-titulo-bloque h2 {
+    margin: 1px 0 0;
+    color: #fff;
+    font-size: 0.96rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sim-guardar-precision {
+    background: rgba(236, 72, 153, 0.18);
+    color: #ec4899;
+    border: 1px solid rgba(236, 72, 153, 0.4);
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* ─── BODY ───────────────────────────────────────────────── */
+.sim-guardar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sim-guardar-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sim-guardar-campo > span {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.sim-guardar-campo > span small {
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: none;
+    letter-spacing: 0.2px;
+    margin-left: 4px;
+    font-weight: 500;
+}
+
+.sim-guardar-campo input,
+.sim-guardar-campo textarea {
+    width: 100%;
+    padding: 9px 11px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    color: #fff;
+    font-size: 0.86rem;
+    font-family: inherit;
+    resize: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sim-guardar-campo input::placeholder,
+.sim-guardar-campo textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.sim-guardar-campo input:focus,
+.sim-guardar-campo textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.06);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.sim-guardar-campo input:disabled,
+.sim-guardar-campo textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.sim-guardar-error {
+    margin: 0;
+    padding: 7px 10px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    border-radius: 8px;
+    font-size: 0.76rem;
+}
+
+/* ─── ACCIONES ───────────────────────────────────────────── */
+.sim-guardar-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.sim-guardar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+    transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.sim-guardar-btn:active { transform: scale(0.97); }
+.sim-guardar-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.sim-guardar-btn.secundario {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.85);
+}
+.sim-guardar-btn.secundario:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sim-guardar-btn.primario {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+.sim-guardar-btn.primario:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+/* ─── Landscape mobile compacto ──────────────────────────── */
+@media (orientation: landscape) and (max-height: 540px) {
+    .sim-guardar-overlay { padding: 8px; }
+    .sim-guardar-panel {
+        max-width: 500px;
+        max-height: 96vh;
+        padding: 10px 12px 8px;
+        gap: 7px;
+    }
+    .sim-guardar-header { padding-bottom: 5px; }
+    .sim-guardar-cerrar { width: 26px; height: 26px; }
+    .sim-guardar-titulo-bloque h2 { font-size: 0.86rem; }
+    .sim-guardar-precision { padding: 2px 9px; font-size: 0.7rem; }
+    .sim-guardar-campo > span { font-size: 0.6rem; }
+    .sim-guardar-campo input,
+    .sim-guardar-campo textarea {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+    }
+    .sim-guardar-campo textarea { rows: 2; }
+    .sim-guardar-btn { padding: 7px 13px; font-size: 0.76rem; }
+}

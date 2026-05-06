@@ -1,0 +1,318 @@
+/* ──────────────────────────────────────────────────────────
+   MODAL HISTORIAL — mobile-first, panel angosto con scroll
+   interno. Reemplazo del ModalHistorialHero (desktop-first
+   con tabla y gráfica).
+   ────────────────────────────────────────────────────────── */
+
+.sim-hist-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1700;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    font-family: 'Raleway', system-ui, sans-serif;
+    animation: sim-hist-fade 0.22s ease-out;
+}
+
+@keyframes sim-hist-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sim-hist-panel {
+    width: 100%;
+    max-width: 540px;
+    max-height: 92vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1c 100%);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+.sim-hist-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sim-hist-cerrar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+}
+.sim-hist-cerrar:hover { background: rgba(255, 255, 255, 0.12); }
+
+.sim-hist-titulo-bloque {
+    flex: 1;
+    min-width: 0;
+}
+.sim-hist-eyebrow {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+.sim-hist-titulo-bloque h2 {
+    margin: 1px 0 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── CARGANDO / VACIO ───────────────────────────────────── */
+.sim-hist-cargando,
+.sim-hist-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 26px 16px;
+    color: rgba(255, 255, 255, 0.65);
+    text-align: center;
+}
+.sim-hist-vacio strong { color: #fff; font-weight: 700; }
+.sim-hist-vacio span { font-size: 0.8rem; opacity: 0.65; }
+
+.sim-hist-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.12);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: sim-hist-spin 0.7s linear infinite;
+}
+@keyframes sim-hist-spin { to { transform: rotate(360deg); } }
+
+/* ─── RESUMEN — 4 stat cards ─────────────────────────────── */
+.sim-hist-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.sim-hist-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+}
+.sim-hist-stat svg { opacity: 0.85; }
+
+.sim-hist-stat-label {
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+}
+.sim-hist-stat-valor {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+}
+.sim-hist-stat.record { border-color: rgba(251, 191, 36, 0.4); }
+.sim-hist-stat.record svg, .sim-hist-stat.record .sim-hist-stat-valor { color: #fbbf24; }
+.sim-hist-stat.precision { border-color: rgba(236, 72, 153, 0.4); }
+.sim-hist-stat.precision svg, .sim-hist-stat.precision .sim-hist-stat-valor { color: #ec4899; }
+.sim-hist-stat.intentos { border-color: rgba(99, 102, 241, 0.4); }
+.sim-hist-stat.intentos svg, .sim-hist-stat.intentos .sim-hist-stat-valor { color: #a5b4fc; }
+.sim-hist-stat.tendencia.positiva { border-color: rgba(34, 197, 94, 0.4); }
+.sim-hist-stat.tendencia.positiva svg, .sim-hist-stat.tendencia.positiva .sim-hist-stat-valor { color: #4ade80; }
+.sim-hist-stat.tendencia.negativa { border-color: rgba(239, 68, 68, 0.4); }
+.sim-hist-stat.tendencia.negativa svg, .sim-hist-stat.tendencia.negativa .sim-hist-stat-valor { color: #f87171; }
+
+/* ─── LISTA DE INTENTOS ──────────────────────────────────── */
+.sim-hist-lista-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.sim-hist-lista-titulo {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.sim-hist-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex: 1 1 auto;
+}
+.sim-hist-lista::-webkit-scrollbar { width: 5px; }
+.sim-hist-lista::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+}
+
+.sim-hist-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+}
+.sim-hist-item.record {
+    border-color: rgba(251, 191, 36, 0.5);
+    background: rgba(251, 191, 36, 0.07);
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25) inset;
+}
+
+.sim-hist-item-fila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.sim-hist-item-fecha {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    flex: 1 1 auto;
+}
+
+.sim-hist-item-modo {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+}
+
+.sim-hist-item-record {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background: rgba(251, 191, 36, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.sim-hist-item-precision {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.sim-hist-item-precision-num {
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #ec4899;
+    flex-shrink: 0;
+    min-width: 42px;
+}
+.sim-hist-item-barra {
+    flex: 1 1 auto;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 0;
+}
+.sim-hist-item-barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.sim-hist-item-puntos {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fbbf24;
+    flex-shrink: 0;
+}
+.sim-hist-item-puntos small {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: rgba(251, 191, 36, 0.6);
+    margin-left: 3px;
+}
+
+/* ─── Landscape mobile compacto ──────────────────────────── */
+@media (orientation: landscape) and (max-height: 540px) {
+    .sim-hist-overlay { padding: 8px; }
+    .sim-hist-panel {
+        max-width: 620px;
+        max-height: 96vh;
+        padding: 10px 12px 8px;
+        gap: 7px;
+    }
+    .sim-hist-header { padding-bottom: 5px; }
+    .sim-hist-cerrar { width: 26px; height: 26px; }
+    .sim-hist-titulo-bloque h2 { font-size: 0.86rem; }
+    .sim-hist-stat { padding: 5px 3px; }
+    .sim-hist-stat-valor { font-size: 0.84rem; }
+    .sim-hist-stat-label { font-size: 0.5rem; }
+    .sim-hist-item { padding: 6px 9px; gap: 4px; }
+    .sim-hist-item-fecha { font-size: 0.66rem; }
+    .sim-hist-item-modo { font-size: 0.54rem; padding: 1px 6px; }
+    .sim-hist-item-record { font-size: 0.52rem; padding: 1px 6px; }
+    .sim-hist-item-precision-num { font-size: 0.74rem; min-width: 36px; }
+    .sim-hist-item-puntos { font-size: 0.8rem; }
+}
+
+/* ─── Mobile vertical estrecho ───────────────────────────── */
+@media (max-width: 480px) {
+    .sim-hist-resumen { grid-template-columns: repeat(2, 1fr); }
+    .sim-hist-stat-valor { font-size: 0.94rem; }
+}

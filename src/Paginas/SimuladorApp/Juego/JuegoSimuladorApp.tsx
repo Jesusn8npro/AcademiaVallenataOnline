@@ -4,9 +4,9 @@ import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
-import PantallaGameOverProMax from '../../AcordeonProMax/Componentes/PantallaGameOverProMax';
 import HeaderJuegoSimulador from './HeaderJuegoSimulador';
 import PantallaResultadosSimulador from './PantallaResultadosSimulador';
+import PantallaGameOverSimulador from './PantallaGameOverSimulador';
 import PistaNotasVertical from './PistaNotasVertical';
 import PistaNotasBoxed from './PistaNotasBoxed';
 import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
@@ -491,6 +491,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     cancion={cancion}
                     modo={esCompetitivo ? 'competencia' : modoActual}
                     mostrarGuardado={hero.grabaciones?.mostrarGuardadoResultado ?? false}
+                    guardandoGrabacion={hero.grabaciones?.guardando ?? false}
+                    errorGuardado={hero.grabaciones?.error ?? null}
                     tituloSugeridoGrabacion={hero.grabaciones?.tituloSugerido}
                     tituloGrabacionGuardada={hero.grabaciones?.ultimaGuardada?.tipo === 'competencia'
                         ? hero.grabaciones.ultimaGuardada.titulo
@@ -507,7 +509,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             )}
 
             {hero.estadoJuego === 'gameOver' && cancion && (
-                <PantallaGameOverProMax
+                <PantallaGameOverSimulador
                     estadisticas={hero.estadisticas}
                     cancion={cancion}
                     onReintentar={() => hero.reiniciarDesdeGameOver(cancion)}

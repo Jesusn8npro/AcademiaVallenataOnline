@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap } from 'lucide-react';
+import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap, CheckCircle2, Lock, Coins } from 'lucide-react';
 import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
 import { useConfigCancion, type ModoJuego, type ConfigCancion } from './useConfigCancion';
+import { useProgresoSecciones, seccionesConEstado } from '../../AcordeonProMax/Hooks/useProgresoSecciones';
 import './PantallaConfigCancion.css';
 
 interface PantallaConfigCancionProps {
@@ -44,9 +45,32 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
         setPrevisualizandoModo(null);
     };
 
+    // Hook fuera del early-return: las reglas de hooks exigen orden estable.
+    // Si cancion es null, pasamos null al hook (safe-guarded internamente).
+    const seccionesCancion = useMemo(() => {
+        let secs = (cancion as any)?.secciones || [];
+        if (typeof secs === 'string') {
+            try { secs = JSON.parse(secs); } catch { secs = []; }
+        }
+        return Array.isArray(secs)
+            ? secs.filter((s: any) => s && typeof s.id === 'string' && s.id.length > 0)
+            : [];
+    }, [cancion]);
+
+    const desbloqueoSecuencial = (cancion as any)?.desbloqueo_secuencial !== false;
+    const intentosParaMoneda = typeof (cancion as any)?.intentos_para_moneda === 'number'
+        ? (cancion as any).intentos_para_moneda : 3;
+
+    const { progreso } = useProgresoSecciones((cancion as any)?.id || null);
+    const seccionesEstado = useMemo(
+        () => seccionesConEstado(seccionesCancion, progreso, desbloqueoSecuencial, intentosParaMoneda),
+        [seccionesCancion, progreso, desbloqueoSecuencial, intentosParaMoneda],
+    );
+    const todasCompletadas = seccionesEstado.length > 0 && seccionesEstado.every(s => s.completada);
+    const cancionCompletaPermitida = !desbloqueoSecuencial || todasCompletadas;
+
     if (!cancion) return null;
 
-    const secciones: Array<{ id: string; nombre: string }> = (cancion as any).secciones || [];
     const miniatura = cancion.youtube_id
         ? `https://img.youtube.com/vi/${cancion.youtube_id}/mqdefault.jpg`
         : '/Acordeon PRO MAX.png';
@@ -121,23 +145,72 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
                         </div>
 
                         <div className="config-field">
-                            <span className="config-field-label">Que parte tocar</span>
-                            <div className="config-chips-secciones">
+                            <span className="config-field-label">Qué parte tocar</span>
+                            <div className="config-secciones-grid">
+                                {seccionesEstado.map((s) => {
+                                    const seleccionada = cfg.seccionId === s.id;
+                                    const bloqueada = !s.disponible;
+                                    return (
+                                        <button
+                                            key={s.id}
+                                            type="button"
+                                            className={`config-seccion-card ${seleccionada ? 'activo' : ''} ${bloqueada ? 'bloqueada' : ''} ${s.completada ? 'completada' : ''}`}
+                                            onClick={() => !bloqueada && cfg.setSeccionId(s.id)}
+                                            disabled={bloqueada}
+                                            aria-pressed={seleccionada}
+                                            title={bloqueada ? 'Completa la sección anterior para desbloquear' : ''}
+                                        >
+                                            <span className="config-seccion-nombre">{s.nombre}</span>
+                                            <span className="config-seccion-estado">
+                                                {bloqueada ? (
+                                                    <span className="config-seccion-tag bloqueada">
+                                                        <Lock size={10} /> Bloqueada
+                                                    </span>
+                                                ) : s.completada ? (
+                                                    <span className="config-seccion-tag exito">
+                                                        <CheckCircle2 size={10} /> Completada
+                                                    </span>
+                                                ) : (
+                                                    <span className="config-seccion-tag disponible">Disponible</span>
+                                                )}
+
+                                                {s.monedasGanadas > 0 ? (
+                                                    <span className="config-seccion-tag monedas">
+                                                        <Coins size={10} /> +{s.monedasGanadas}
+                                                    </span>
+                                                ) : (s.monedas > 0 && !s.completada && !bloqueada && s.intentosRestantesParaMoneda > 0) ? (
+                                                    <span className="config-seccion-tag premio">
+                                                        <Coins size={10} /> {s.monedas} · {s.intentosRestantesParaMoneda} int.
+                                                    </span>
+                                                ) : null}
+
+                                                {s.mejorPrecision > 0 && (
+                                                    <span className="config-seccion-tag precision">Mejor {s.mejorPrecision}%</span>
+                                                )}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+
                                 <button
                                     type="button"
-                                    className={`config-chip-seccion ${cfg.seccionId === null ? 'activo' : ''}`}
-                                    onClick={() => cfg.setSeccionId(null)}
+                                    className={`config-seccion-card cancion-completa ${cfg.seccionId === null ? 'activo' : ''} ${!cancionCompletaPermitida ? 'bloqueada' : ''}`}
+                                    onClick={() => cancionCompletaPermitida && cfg.setSeccionId(null)}
+                                    disabled={!cancionCompletaPermitida}
                                     aria-pressed={cfg.seccionId === null}
-                                >Canción completa</button>
-                                {secciones.map((s) => (
-                                    <button
-                                        key={s.id}
-                                        type="button"
-                                        className={`config-chip-seccion ${cfg.seccionId === s.id ? 'activo' : ''}`}
-                                        onClick={() => cfg.setSeccionId(s.id)}
-                                        aria-pressed={cfg.seccionId === s.id}
-                                    >{s.nombre}</button>
-                                ))}
+                                    title={!cancionCompletaPermitida ? 'Completa todas las secciones para desbloquear' : ''}
+                                >
+                                    <span className="config-seccion-nombre">🎵 Canción completa</span>
+                                    <span className="config-seccion-estado">
+                                        {!cancionCompletaPermitida ? (
+                                            <span className="config-seccion-tag bloqueada">
+                                                <Lock size={10} /> Bloqueada
+                                            </span>
+                                        ) : (
+                                            <span className="config-seccion-tag disponible">Toda la pista</span>
+                                        )}
+                                    </span>
+                                </button>
                             </div>
                         </div>
 
