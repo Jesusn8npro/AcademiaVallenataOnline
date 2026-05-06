@@ -218,33 +218,31 @@ export const usePointerAcordeon = ({
         // específico (con touch-action: none) se entregan con mayor frecuencia.
         const rootSimulador = (document.querySelector('.simulador-app-root') as HTMLElement | null) || document;
 
-        // 🎯 iOS throttling fix (single-touch): supresores globales de touchstart Y touchmove
-        // en zonas no interactivas. El throttling adaptativo de iOS se aplica al touchmove
-        // (no solo al touchstart) cuando el browser detecta que el evento PUEDE ser interpretado
-        // como gesto del sistema (swipe-back, edge-pan, scroll). Si UN listener pasivo de
-        // touchmove existe en el path, iOS reduce a 10-15Hz "por las dudas". Marcar el listener
-        // como no-pasivo Y llamar preventDefault le dice a iOS "nadie va a scrollear/zoomear,
-        // entrega los eventos a frecuencia nativa (60Hz)". La whitelist excluye inputs, selects
-        // y todos los overlays de modales para no romper scroll, selección, ni teclado virtual.
-        // UI del simulador normal (barra de herramientas con tonalidades/vista/metronomo/etc,
-        // boton de bajos) Y del modo juego (header pausa/salir, menu pausa, pantallas de
-        // resultados/game over) NO debe ser bloqueada por el preventDefault global —
-        // si no, los botones tactiles no responden en mobile (parece "muteado").
-        const SELECTORES_INTERACTIVOS = 'input, textarea, select, [contenteditable], .modal-instrumentos-overlay, .modal-tonalidades-overlay, .modal-vista-overlay, .modal-metronomo-overlay, .modal-contacto-overlay, .menu-opciones-contenedor, .barra-herramientas-contenedor, .boton-bajos-superior, .seccion-bajos-contenedor, .contenedor-bajos-wrapper, .aprende-overlay, .config-overlay, .header-juego-sim, .juego-sim-cuenta-overlay, .juego-sim-fuelle-zona, .menu-pausa-global-container, .hero-resultados-overlay, .hero-gameover-overlay, [data-touch-allow]';
+        // 🎯 iOS throttling fix (single-touch): preventDefault SOLO sobre el área
+        // jugable (pitos / diapasón / fuelle de bajos). Esto evita que iOS interprete
+        // el toque como gesto del sistema y entregue los touchmove a frecuencia nativa
+        // (60Hz vs 10-15Hz throttled).
+        //
+        // ⚠️ Estrategia "opt-in" (bloquear solo área de juego) en lugar de "opt-out"
+        // (bloquear todo menos whitelist). El opt-out era frágil: cada modal/overlay
+        // nuevo había que añadirlo a la lista o se quedaba con el touch bloqueado y
+        // la pantalla se sentía muerta. Con opt-in, cualquier UI fuera del área
+        // jugable funciona automáticamente sin mantenimiento.
+        const ZONAS_JUGABLES = '.pito-boton, .diapason-marco, .seccion-bajos-contenedor';
 
-        const esZonaInteractiva = (target: EventTarget | null): boolean => {
+        const esZonaJugable = (target: EventTarget | null): boolean => {
             const el = target as HTMLElement | null;
             if (!el || !el.closest) return false;
-            return !!el.closest(SELECTORES_INTERACTIVOS);
+            return !!el.closest(ZONAS_JUGABLES);
         };
 
         const handleWindowTouchStart = (e: TouchEvent) => {
-            if (esZonaInteractiva(e.target)) return;
+            if (!esZonaJugable(e.target)) return;
             if (e.cancelable) e.preventDefault();
         };
 
         const handleWindowTouchMove = (e: TouchEvent) => {
-            if (esZonaInteractiva(e.target)) return;
+            if (!esZonaJugable(e.target)) return;
             if (e.cancelable) e.preventDefault();
         };
 
