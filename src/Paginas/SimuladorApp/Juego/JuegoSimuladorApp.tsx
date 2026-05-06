@@ -9,8 +9,7 @@ import PantallaResultadosSimulador from './PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './PantallaGameOverSimulador';
 import PistaNotasVertical from './PistaNotasVertical';
 import PistaNotasBoxed from './PistaNotasBoxed';
-import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
-import type { ConfigCancion, ModoJuego as ModoConfig } from '../Aprende/useConfigCancion';
+import type { ConfigCancion, ModoJuego as ModoConfig } from './useConfigCancion';
 import '../SimuladorApp.css';
 import './JuegoSimuladorApp.css';
 
