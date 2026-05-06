@@ -3,6 +3,7 @@ import { RotateCcw, X, ArrowRight, Star, Coins, History, Save, Trophy, TrendingU
 import { usePantallaResultados } from '../../AcordeonProMax/Componentes/usePantallaResultados';
 import ModalHistorialSimulador from './ModalHistorialSimulador';
 import ModalGuardarSimulador from './ModalGuardarSimulador';
+import RecomendacionMaestro from './RecomendacionMaestro';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
 import type { Seccion } from '../../AcordeonProMax/tiposSecciones';
 import './PantallaResultadosSimulador.css';
@@ -22,6 +23,7 @@ interface Props {
     onVolverSeleccion: () => void;
     seccionSeleccionada?: Seccion | null;
     onJugarSiguienteSeccion?: (seccion: Seccion) => void;
+    onPracticarMaestro?: () => void;
 }
 
 const PantallaResultadosSimulador: React.FC<Props> = ({
@@ -30,7 +32,7 @@ const PantallaResultadosSimulador: React.FC<Props> = ({
     tituloSugeridoGrabacion, tituloGrabacionGuardada,
     umbralGuardado = 60,
     onGuardarGrabacion, onJugarDeNuevo, onVolverSeleccion,
-    seccionSeleccionada, onJugarSiguienteSeccion,
+    seccionSeleccionada, onJugarSiguienteSeccion, onPracticarMaestro,
 }) => {
     const {
         usuario, puntos, notasPerfecto, notasBien, notasFalladas, notasPerdidas,
@@ -210,6 +212,14 @@ const PantallaResultadosSimulador: React.FC<Props> = ({
                     <div className="sim-res-aviso bloqueado">
                         <Lock size={12} /> Necesitas ≥{umbralGuardado}% de precisión para guardar esta ejecución.
                     </div>
+                )}
+
+                {/* RECOMENDACION MAESTRO si puntaje bajo */}
+                {onPracticarMaestro && (
+                    <RecomendacionMaestro
+                        precision={precision}
+                        onPracticarMaestro={onPracticarMaestro}
+                    />
                 )}
 
                 {/* FOOTER BOTONES ─────────────────────── */}

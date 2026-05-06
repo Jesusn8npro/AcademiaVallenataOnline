@@ -3,6 +3,7 @@ import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
+import BarraTransporte from '../../AcordeonProMax/Modos/BarraTransporte';
 import HeaderJuegoSimulador from './HeaderJuegoSimulador';
 import PantallaResultadosSimulador from './PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './PantallaGameOverSimulador';
@@ -187,6 +188,14 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
         if (hero.cancionSeleccionada) hero.reiniciarDesdeGameOver(hero.cancionSeleccionada);
     };
 
+    // Cambia el modo a maestro_solo y reinicia: el alumno practica la cancion
+    // con barra de transporte (BPM, loop, scrubber) antes de competir de nuevo.
+    const practicarEnModoMaestro = () => {
+        if (!hero.cancionSeleccionada) return;
+        hero.setModoPractica('maestro_solo');
+        setTimeout(() => hero.iniciarJuego(hero.cancionSeleccionada, false, 'maestro_solo'), 80);
+    };
+
     return (
         <div className={`juego-sim-root simulador-app-root modo-${logica?.direccion || 'halar'} ${objetivosMap.guia.size > 0 ? 'hay-objetivo' : ''}`}>
             <HeaderJuegoSimulador
@@ -219,6 +228,33 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 pausado={hero.estadoJuego === 'pausado'}
                 manejarCambioFuelle={manejarCambioFuelle}
             />
+
+            {/* Barra de transporte estilo modo Maestro de ProMax: solo aparece
+                cuando el modo elegido es 'maestro_solo'. Permite scrubber, BPM,
+                loop A/B, adelantar/retroceder. Reusa el componente directamente
+                sin duplicar codigo. */}
+            {modoActual === 'maestro_solo' && (
+                <div className="juego-sim-barra-maestro">
+                    <BarraTransporte
+                        reproduciendo={hero.reproduciendo}
+                        pausado={hero.pausado}
+                        onAlternarPausa={hero.alternarPausa}
+                        onDetener={() => { if (hero.reproduciendo) hero.alternarPausa(); hero.buscarTick(0); }}
+                        tickActual={hero.tickActual}
+                        totalTicks={hero.totalTicks}
+                        onBuscarTick={hero.buscarTick}
+                        bpm={hero.bpm}
+                        loopAB={hero.loopAB}
+                        onMarcarLoopInicio={hero.marcarLoopInicio}
+                        onMarcarLoopFin={hero.marcarLoopFin}
+                        onActualizarLoopInicio={hero.actualizarLoopInicioTick}
+                        onActualizarLoopFin={hero.actualizarLoopFinTick}
+                        onAlternarLoop={hero.alternarLoopAB}
+                        onLimpiarLoop={hero.limpiarLoopAB}
+                        onCambiarBpm={hero.cambiarBpm}
+                    />
+                </div>
+            )}
 
             {logica?.configTonalidad && (
                 <div className="contenedor-acordeon-completo">
@@ -286,6 +322,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                         hero.seleccionarSeccion(s);
                         setTimeout(() => hero.iniciarJuego(cancion), 50);
                     }}
+                    onPracticarMaestro={practicarEnModoMaestro}
                 />
             )}
 
@@ -295,6 +332,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     cancion={cancion}
                     onReintentar={() => hero.reiniciarDesdeGameOver(cancion)}
                     onVolverSeleccion={onSalir}
+                    onPracticarMaestro={practicarEnModoMaestro}
                 />
             )}
 

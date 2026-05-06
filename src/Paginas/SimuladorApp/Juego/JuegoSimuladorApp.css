@@ -274,9 +274,49 @@ body.juego-sim-activo .pause-menu-advanced {
     }
 }
 
+/* Barra de transporte tipo modo Maestro: posicion fixed bajo el header.
+   Solo se monta cuando modoPractica === 'maestro_solo'. z-index alto. */
+.juego-sim-barra-maestro {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    z-index: 700;
+    pointer-events: auto;
+    padding: 4px 8px;
+    background: linear-gradient(180deg, rgba(10, 10, 24, 0.88) 0%, rgba(10, 10, 24, 0.55) 100%);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 720px) {
+    .juego-sim-barra-maestro { top: 44px; padding: 3px 6px; }
+}
+
+/* Cuando la barra Maestro esta visible, la pista de notas y la zona del
+   fuelle deben bajar para no quedar tapadas. Altura aprox de BarraTransporte ~80px. */
+.juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-vertical,
+.juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-guia,
+.juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-foco,
+.juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-carril,
+.juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-boxed,
+.juego-sim-root:has(.juego-sim-barra-maestro) .juego-sim-fuelle-zona {
+    top: calc(48px + 80px);
+}
+
+@media (max-width: 720px) {
+    .juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-vertical,
+    .juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-guia,
+    .juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-foco,
+    .juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-carril,
+    .juego-sim-root:has(.juego-sim-barra-maestro) .pista-notas-boxed,
+    .juego-sim-root:has(.juego-sim-barra-maestro) .juego-sim-fuelle-zona {
+        top: calc(44px + 72px);
+    }
+}
+
 /* ZONA TACTIL DEL FUELLE — invisible, ocupa el espacio entre el header y los
-   pitos. Al pulsar cierra el fuelle (empujar), al soltar lo abre (halar).
-   No tiene imagen de cuero ni colores: el fondo del root ya es negro. */
+   pitos. Al pulsar cierra el fuelle (empujar), al soltar lo abre (halar). */
 .juego-sim-fuelle-zona {
     position: fixed;
     top: 48px;
