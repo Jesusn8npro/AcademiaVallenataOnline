@@ -86,22 +86,68 @@
    ni background overrides — eso tapaba el cambio visual al pisar (nota-activa
    tiene su propio gradiente que debe verse al hundir el boton). */
 
-/* Objetivo halar: borde azul fuerte + tinte interior sutil. NADA de halo
-   exterior gigante (eso bana la zona). El boton conserva su fondo oscuro
-   normal y solo el aro y un brillo interno avisan que es el siguiente. */
+/* Objetivo halar: borde azul + halo conico rotando alrededor del borde.
+   Color saturado para que el ojo lo encuentre rapido, pero el botoncito
+   blanco de fondo sigue visible (mask con agujero central). Los dos picos
+   del conic giran y dan la ilusion de "esto es ahora". */
 .pito-boton.objetivo-halar {
     border: 3px solid #3b82f6 !important;
     box-shadow:
-        0 0 4px rgba(59, 130, 246, 0.55),
-        inset 0 0 14px rgba(59, 130, 246, 0.35) !important;
+        0 0 8px rgba(59, 130, 246, 0.95),
+        inset 0 0 18px rgba(59, 130, 246, 0.45) !important;
+    position: relative;
+}
+.pito-boton.objetivo-halar::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #60a5fa 60deg, #3b82f6 90deg, #60a5fa 120deg,
+        transparent 160deg, transparent 200deg,
+        #60a5fa 240deg, #3b82f6 270deg, #60a5fa 300deg,
+        transparent 340deg, transparent 360deg
+    );
+    -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    animation: pito-halo-rotando 1.4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
 }
 
-/* Objetivo empujar: borde rojo + tinte interior sutil */
+/* Objetivo empujar: mismo halo pero rojo */
 .pito-boton.objetivo-empujar {
     border: 3px solid #ef4444 !important;
     box-shadow:
-        0 0 4px rgba(239, 68, 68, 0.55),
-        inset 0 0 14px rgba(239, 68, 68, 0.35) !important;
+        0 0 8px rgba(239, 68, 68, 0.95),
+        inset 0 0 18px rgba(239, 68, 68, 0.45) !important;
+    position: relative;
+}
+.pito-boton.objetivo-empujar::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #f87171 60deg, #ef4444 90deg, #f87171 120deg,
+        transparent 160deg, transparent 200deg,
+        #f87171 240deg, #ef4444 270deg, #f87171 300deg,
+        transparent 340deg, transparent 360deg
+    );
+    -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    animation: pito-halo-rotando 1.4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes pito-halo-rotando {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 
 /* PRESSED FEEDBACK: cuando el alumno pisa un objetivo (combinacion
