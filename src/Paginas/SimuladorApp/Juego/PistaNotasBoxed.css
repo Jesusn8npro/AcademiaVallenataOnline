@@ -5,15 +5,15 @@
    pausa hasta que el alumno pisa el boton correcto.
    ────────────────────────────────────────────────────────── */
 
-/* La cajita debe llegar hasta justo encima de los pitos (sin hueco negro).
-   En landscape mobile los pitos ocupan ~50% inferior; la pista llena el
-   resto desde el header hasta el borde superior del acordeon. */
+/* Cajita anclada al contenedor de los pitos: bottom: 38vh coincide con
+   .juego-sim-fuelle-zona, asi la linea inferior queda PEGADA al borde
+   superior del acordeon sin hueco negro. Ya no usamos height fija. */
 .pista-notas-boxed {
     position: fixed;
     top: 48px;
+    bottom: 38vh;
     left: 0;
     right: 0;
-    height: 50vh;
     pointer-events: none;
     z-index: 600;
     overflow: hidden;
@@ -25,7 +25,7 @@
 }
 
 @media (max-width: 480px) {
-    .pista-notas-boxed { top: 44px; height: 48vh; }
+    .pista-notas-boxed { top: 44px; }
 }
 
 .nota-boxed {

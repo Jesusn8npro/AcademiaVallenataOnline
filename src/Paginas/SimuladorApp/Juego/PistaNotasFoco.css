@@ -1,131 +1,110 @@
-/* Modo FOCO — tile arriba en la pista (no sobre el pito) con flecha hacia
-   abajo apuntando al pito objetivo. Acordes muestran varias tiles
-   alineadas al X de cada pito. La tile NO tapa el nombre del pito. */
+/* Modo FOCO — UNA tarjeta grande centrada arriba con direccion + nombres
+   de las notas a pisar AHORA + flecha grande hacia abajo. Sin nada mas. */
 
 .pista-notas-foco {
-    position: absolute;
+    position: fixed;
     top: 48px;
+    bottom: 38vh;
     left: 0;
     right: 0;
-    bottom: 0;
     pointer-events: none;
-    z-index: 50;
+    z-index: 600;
     overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12px;
 }
 
 @media (max-width: 720px) { .pista-notas-foco { top: 44px; } }
 
-/* Banner de direccion arriba al centro */
-.foco-direccion {
+.foco-tarjeta {
     position: absolute;
-    top: 8px;
     left: 50%;
-    transform: translateX(-50%);
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-family: 'Raleway', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: 0.95rem;
-    letter-spacing: 2px;
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
-    z-index: 60;
-}
-
-.foco-direccion.abriendo {
-    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
-    border: 2px solid rgba(147, 197, 253, 0.7);
-}
-
-.foco-direccion.cerrando {
-    background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
-    border: 2px solid rgba(252, 165, 165, 0.7);
-}
-
-/* Tile con el nombre del pito y flecha grande */
-.foco-tile {
-    position: absolute;
-    transform: translateX(-50%);
-    width: 78px;
-    height: 78px;
-    border-radius: 14px;
+    transform: translate(-50%, 0);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 2px;
+    gap: 6px;
+    padding: 12px 22px 14px;
+    border-radius: 18px;
     color: #fff;
     font-family: 'Raleway', system-ui, sans-serif;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.65);
-    animation: foco-tile-pulso 0.85s ease-in-out infinite;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.7);
+    animation: foco-tarjeta-pulso 0.85s ease-in-out infinite;
     will-change: transform;
+    min-width: 180px;
 }
 
-.foco-tile.abriendo {
+.foco-tarjeta.abriendo {
     background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 60%, #1e3a8a 100%);
     border: 3px solid #93c5fd;
 }
 
-.foco-tile.cerrando {
+.foco-tarjeta.cerrando {
     background: linear-gradient(160deg, #b91c1c 0%, #ef4444 60%, #7f1d1d 100%);
     border: 3px solid #fca5a5;
 }
 
-.foco-tile-nombre {
-    font-size: 1.45rem;
+.foco-direccion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: 900;
+    font-size: 0.78rem;
+    letter-spacing: 1.6px;
+    opacity: 0.92;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.foco-direccion-flecha {
+    font-size: 1rem;
     line-height: 1;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.foco-notas {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.foco-nota {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 4px 14px;
+    border-radius: 10px;
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1.05;
     letter-spacing: 0.5px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.foco-tile-flecha {
-    font-size: 1.5rem;
+.foco-flecha-grande {
+    font-size: 1.6rem;
+    margin-top: 2px;
     line-height: 1;
-    margin-top: 4px;
-    opacity: 0.95;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    opacity: 0.85;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
     animation: foco-flecha-bajar 0.85s ease-in-out infinite;
 }
 
-@keyframes foco-tile-pulso {
+@keyframes foco-tarjeta-pulso {
     0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.2) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)); }
+    50% { filter: brightness(1.18) drop-shadow(0 0 14px rgba(255, 255, 255, 0.45)); }
 }
 
 @keyframes foco-flecha-bajar {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(4px); }
-}
-
-/* Conector visual entre la tile y el pito */
-.foco-conector {
-    position: absolute;
-    width: 4px;
-    transform: translateX(-50%);
-    border-radius: 2px;
-    opacity: 0.55;
-    animation: foco-conector-pulso 0.85s ease-in-out infinite;
-}
-
-.foco-conector.abriendo {
-    background: linear-gradient(to bottom, #93c5fd 0%, rgba(59, 130, 246, 0.85) 50%, transparent 100%);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
-}
-
-.foco-conector.cerrando {
-    background: linear-gradient(to bottom, #fca5a5 0%, rgba(239, 68, 68, 0.85) 50%, transparent 100%);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
-}
-
-@keyframes foco-conector-pulso {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.9; }
+    0%, 100% { transform: translateY(0); opacity: 0.85; }
+    50% { transform: translateY(4px); opacity: 1; }
 }
 
 @media (max-width: 720px) {
-    .foco-tile { width: 64px; height: 64px; }
-    .foco-tile-nombre { font-size: 1.2rem; }
-    .foco-tile-flecha { font-size: 1.25rem; }
-    .foco-direccion { font-size: 0.78rem; padding: 5px 12px; letter-spacing: 1.4px; }
+    .foco-tarjeta { padding: 9px 16px 11px; gap: 4px; min-width: 140px; }
+    .foco-direccion { font-size: 0.66rem; letter-spacing: 1.2px; }
+    .foco-nota { font-size: 1.25rem; padding: 3px 10px; }
+    .foco-flecha-grande { font-size: 1.3rem; }
 }

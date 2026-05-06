@@ -1,78 +1,9 @@
-/* Modo GUIA — pista con etiquetas explicitas ABRIENDO/CERRANDO + flecha
-   grande sobre la nota activa. Las notas no activas quedan tenues para
-   que el principiante solo se concentre en la siguiente nota. */
+/* Modo GUIA — banner ABRIENDO/CERRANDO arriba al centro. Las notas se
+   renderizan via PistaNotasVertical (mismo render que Libre). */
 
-.pista-notas-guia {
-    position: absolute;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 50;
-    overflow: hidden;
-}
-
-@media (max-width: 720px) { .pista-notas-guia { top: 44px; } }
-
-.guia-nota {
-    position: absolute;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.18s ease;
-    will-change: transform, opacity;
-}
-
-.guia-nota.activa {
-    width: 50px;
-    height: 50px;
-    border-width: 3px;
-    border-color: #fff;
-    animation: guia-activa-pulso 0.85s ease-in-out infinite;
-}
-
-@keyframes guia-activa-pulso {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.35); }
-}
-
-.guia-nota.fallada {
-    filter: grayscale(0.7);
-    opacity: 0.4 !important;
-}
-
-.guia-nota.impactada {
-    border-color: #fff;
-}
-
-.guia-etiqueta {
-    color: #000;
-    font-weight: 800;
-    font-size: 0.78rem;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-    pointer-events: none;
-}
-
-.guia-cola {
-    position: absolute;
-    width: 22px;
-    transform: translateX(-50%);
-    border-radius: 11px;
-    transition: opacity 0.2s ease;
-}
-
-/* Banner ABRIENDO/CERRANDO: arriba al centro de la pista, siempre visible
-   cuando hay nota activa. La pista (.pista-notas-guia) tiene position
-   absolute con top:48 y eso encierra al banner — top:8 lo deja apenas
-   debajo del header. */
 .guia-banner {
-    position: absolute;
-    top: 8px;
+    position: fixed;
+    top: 56px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -88,7 +19,8 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
     animation: guia-banner-aparecer 0.22s ease-out;
     white-space: nowrap;
-    z-index: 50;
+    z-index: 700;
+    pointer-events: none;
 }
 
 .guia-banner.abriendo {
@@ -118,9 +50,12 @@
 }
 
 @media (max-width: 720px) {
-    .guia-nota { width: 32px; height: 32px; }
-    .guia-nota.activa { width: 44px; height: 44px; }
-    .guia-etiqueta { font-size: 0.7rem; }
-    .guia-banner { font-size: 0.78rem; padding: 5px 11px 5px 8px; gap: 6px; }
+    .guia-banner {
+        top: 50px;
+        font-size: 0.82rem;
+        padding: 6px 14px 6px 11px;
+        gap: 7px;
+        letter-spacing: 1.2px;
+    }
     .guia-banner-flecha { font-size: 1.15rem; }
 }
