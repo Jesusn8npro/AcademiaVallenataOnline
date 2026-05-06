@@ -20,14 +20,18 @@
 
 .config-panel {
     width: 100%;
-    max-width: 460px;
+    max-width: 720px;
     background: linear-gradient(160deg, #1a1d2e 0%, #0d0f1c 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    padding: 22px 22px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    padding: 12px 16px 10px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 8px;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 0 24px rgba(255, 255, 255, 0.18),
+        0 18px 48px rgba(0, 0, 0, 0.7);
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
     color: #fff;
 }
@@ -37,20 +41,20 @@
 .config-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding-bottom: 16px;
+    gap: 12px;
+    padding-bottom: 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .config-miniatura {
-    width: 76px;
-    height: 76px;
-    border-radius: 14px;
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
     overflow: hidden;
     flex-shrink: 0;
     background: #0a0c18;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .config-miniatura img {
@@ -69,11 +73,11 @@
 }
 
 .config-titulo {
-    font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+    font-size: clamp(0.95rem, 2.6vw, 1.1rem);
     font-weight: 700;
     margin: 0;
     color: #fff;
-    line-height: 1.2;
+    line-height: 1.15;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -81,7 +85,7 @@
 
 .config-autor {
     margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.74rem;
     color: rgba(255, 255, 255, 0.55);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -106,17 +110,17 @@
 .config-body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .config-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .config-field-label {
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.55);
     letter-spacing: 1px;
@@ -158,6 +162,146 @@
     color: #fff;
 }
 
+/* ─── GRID DE MODOS — 4 casillas en una fila, compactas ──── */
+.config-grid-modos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.config-card-modo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 7px 6px;
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+    color: #fff;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* Tooltip flotante que aparece sobre la card al hacer long-press / hover */
+.config-card-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fbbf24;
+    color: #1a1a2e;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    animation: config-tooltip-aparecer 0.18s ease-out;
+}
+
+.config-card-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #fbbf24;
+}
+
+@keyframes config-tooltip-aparecer {
+    from { opacity: 0; transform: translate(-50%, 4px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.config-card-modo:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.config-card-modo:active {
+    transform: scale(0.96);
+}
+
+.config-card-modo.activo {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.18) 0%, rgba(167, 139, 250, 0.18) 100%);
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.55);
+}
+
+.config-card-modo.previsualizando {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.08);
+}
+
+.config-card-icono {
+    color: #93c5fd;
+    display: inline-flex;
+    align-items: center;
+}
+
+.config-card-modo.activo .config-card-icono { color: #fbbf24; }
+.config-card-modo.previsualizando .config-card-icono { color: #fbbf24; }
+
+.config-card-titulo {
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* Linea de descripcion debajo del grid: cambia segun la card que el usuario
+   tenga seleccionada o este previsualizando con long-press / hover. */
+.config-modo-descripcion {
+    display: block;
+    margin-top: 4px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    min-height: 1.4em;
+    transition: color 0.15s ease;
+}
+
+/* ─── CHIPS DE SECCIONES ──────────────────────────────────── */
+.config-chips-secciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.config-chip-seccion {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 5px 12px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.config-chip-seccion:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.config-chip-seccion.activo {
+    background: rgba(251, 191, 36, 0.18);
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
 /* Toggle simple */
 .config-toggle {
     display: flex;
@@ -166,11 +310,11 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    padding: 11px 14px;
+    padding: 7px 12px;
     cursor: pointer;
     color: #fff;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 600;
     transition: background 0.18s;
 }
@@ -236,11 +380,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 18px;
+    padding: 9px 16px;
     border-radius: 10px;
     border: none;
     font-family: inherit;
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     cursor: pointer;
