@@ -61,12 +61,20 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
             // Las notas de bajos no se renderizan en modo juego — no hay donde caigan.
             if (String(nota.botonId).includes('-bajo')) continue;
             if (rangoSeccion && (nota.tick < rangoSeccion.inicio || nota.tick > rangoSeccion.fin)) continue;
-            if (nota.tick < windowStart) continue;
+            const duracion = Math.max(0, Number(nota.duracion) || 0);
+            // Para notas sostenidas el filtro inicial debe considerar la cola: la
+            // nota sigue activa hasta tick + duracion. Sin esto, sostenidos largos
+            // desaparecen al pisarlos porque su tick base ya es < windowStart.
+            if (nota.tick + duracion < windowStart) continue;
             if ((nota.tick - TICKS_VIAJE) > windowEnd) continue;
 
             const tickSalida = nota.tick - TICKS_VIAJE;
             const progresoCrudo = (tickActual - tickSalida) / TICKS_VIAJE;
-            if (progresoCrudo < -0.05 || progresoCrudo > 1.1) continue;
+            // progresoMax extendido por duracion: una nota con sustain de 100 ticks
+            // sobre TICKS_VIAJE=480 mantiene visible hasta ~1.31. Antes, fixed 1.1
+            // recortaba la cola justo cuando el alumno pisaba el sostenido.
+            const progresoMax = 1.1 + duracion / TICKS_VIAJE;
+            if (progresoCrudo < -0.05 || progresoCrudo > progresoMax) continue;
             const progreso = Math.max(0, Math.min(progresoCrudo, 1.05));
 
             // Posicion real del pito en el DOM (sigue al pan horizontal del tren).
@@ -86,7 +94,6 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
             const id = `${nota.tick}-${nota.botonId}`;
             const impactada = notasImpactadas?.has(id) ?? false;
             const esFallada = progresoCrudo > 1.0 && !impactada;
-            const duracion = Math.max(0, Number(nota.duracion) || 0);
             const progresoFinal = Math.max(0, progreso - duracion / TICKS_VIAJE);
 
             result.push({
@@ -152,9 +159,20 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
                     : n.progreso > 0.88
                         ? 1 + (n.progreso - 0.88) * 1.0
                         : 1;
-                // Bola 3D — gradiente solido, no transparente
+                // Bola 3D — gradiente solido. Cuando esta impactada y todavia
+                // tiene cola (sostenido en curso), conservamos el color base con
+                // un nucleo blanco brillante: el alumno reconoce de un vistazo
+                // que pito esta pisando. Antes la bola se volvia 100% blanca y
+                // se confundia con cualquier otra nota impactada.
+                const tieneSostenido = n.duracion > 30 && !n.esFallada;
                 const fondo = n.impactada
-                    ? '#fff'
+                    ? (tieneSostenido
+                        ? `radial-gradient(circle at 50% 45%,
+                            #fff 0%,
+                            rgba(255,255,255,0.85) 28%,
+                            rgb(${rgb}) 70%,
+                            rgba(${rgb},0.85) 100%)`
+                        : '#fff')
                     : `radial-gradient(circle at 35% 28%,
                         rgba(255,255,255,0.7) 0%,
                         rgb(${rgb}) 55%,

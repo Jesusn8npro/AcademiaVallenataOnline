@@ -80,14 +80,19 @@ export const usePointerAcordeon = ({
         };
 
         // Procesa una posición individual del dedo (extraído para reusar entre touch/move/coalesced).
+        // Orden critico: actualizarVisualBoton PRIMERO (DOM directo, sincrono al
+        // touch event) y actualizarBotonActivo despues (dispara onNotaPresionada
+        // -> procesarGolpeAlumno -> 6 setStates en cascada). En Android low-end
+        // los setStates ceden el main thread durante 5-15ms, lo que crea latencia
+        // perceptible si el visual va despues del motor.
         const procesarPunto = (id: number, clientX: number, clientY: number, ts: number) => {
             const data = pointersMap.current.get(id);
             if (!data) return;
             const pos = encontrarPosEnPunto(clientX, clientY, data.pos || null);
             if (pos !== data.pos) {
                 if (data.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                     actualizarVisualBoton(data.pos, false, false);
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                     registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
                 }
                 if (pos) {
@@ -95,8 +100,8 @@ export const usePointerAcordeon = ({
                     data.pos = pos;
                     data.musicalId = newMId;
                     data.ts = ts;
-                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
                     actualizarVisualBoton(pos, true, false);
+                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
                     data.pos = '';
@@ -116,11 +121,12 @@ export const usePointerAcordeon = ({
             const esAreaJuego = !!(target.closest('.pito-boton') || esToqueFuelle || target.closest('.diapason-marco'));
 
             if (pos) {
+                // Visual primero (sincrono) — ver comentario en procesarPunto.
+                actualizarVisualBoton(pos, true, false);
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(id, { pos, musicalId: mId, ts });
                 logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
-                actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
             } else if (esAreaJuego) {
                 pointersMap.current.set(id, { pos: '', musicalId: '', ts });
@@ -130,8 +136,9 @@ export const usePointerAcordeon = ({
         const registrarFin = (id: number) => {
             const data = pointersMap.current.get(id);
             if (data?.pos) {
-                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
+                // Visual primero — ver comentario en procesarPunto.
                 actualizarVisualBoton(data.pos, false, false);
+                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
             pointersMap.current.delete(id);
