@@ -184,7 +184,7 @@ Modal mobile-first con el historial del usuario en esta canción.
 - Pasa `guardandoGrabacion` + `errorGuardado` a Resultados.
 - Usa `PantallaGameOverSimulador` en lugar de `PantallaGameOverProMax`.
 
-### Sesión 4 (este commit) — Reorganización + limpieza
+### Sesión 4 (commit `7e4c75a`) — Reorganización + limpieza
 
 - **Reorganización**: `Aprende/` consolidada dentro de `Juego/`. Toda la
   ruta canción→config→juego→fin vive en una sola carpeta.
@@ -193,6 +193,99 @@ Modal mobile-first con el historial del usuario en esta canción.
 - CSS de `PantallaConfigCancion.css` limpiado: removido bloque `.config-select` no usado, restauradas bases para portrait/desktop, leve bump de padding.
 - Estilos de modal inline removidos de `PantallaResultadosSimulador.css` (ahora viven en sus archivos propios).
 - Este CHANGELOG reescrito como inventario + log.
+
+### Sesión 5 — Cuatro fixes críticos de touch en mobile
+
+Cuatro bugs táctiles encadenados, descubiertos al probar en mobile real. Cada
+fix abrió la puerta para detectar el siguiente.
+
+#### 5a — Táctil bloqueado tras navegación (commit `a3ac5e1`)
+**Síntoma**: en mobile, después de cierto tiempo navegando, el táctil se
+quedaba muerto. Recargar la página era la única salida.
+
+**Causa**: `usePointerAcordeon` atachaba listeners globales en `window`
+(`touchstart`/`touchmove` con `passive:false, capture:true`) que llamaban
+`preventDefault()` sobre cualquier touch FUERA de una whitelist
+(`SELECTORES_INTERACTIVOS`). El propósito era evitar el throttling de iOS,
+pero la whitelist era frágil — cada modal/overlay nuevo (`sim-resultados-overlay`,
+`sim-go-overlay`, `sim-hist-overlay`, `sim-guardar-overlay`) que no se
+añadiera explícitamente quedaba con touch bloqueado.
+
+**Fix**: invertir la lógica de **opt-out** a **opt-in**. Ahora el
+`preventDefault()` global solo se aplica cuando el target está dentro del
+área jugable (`.pito-boton, .diapason-marco, .seccion-bajos-contenedor`).
+Cualquier UI fuera del área jugable funciona automáticamente sin
+mantenimiento. iOS throttling fix se preserva donde importa.
+
+#### 5b — Multi-touch limitado a 3 dedos + fuelle se traba (commit `87fa805`)
+**Síntoma**: en Android no se podían tocar más de 3 dedos a la vez en los
+pitos. Y al poner dedo en la zona del fuelle se trababa la respuesta.
+
+**Causa 1 (multi-touch)**: los elementos jugables tenían
+`touch-action: manipulation`. Chrome Android interpreta multi-touch en
+elementos con `manipulation` como gestos del sistema (pinch-zoom, pan),
+limitando los dedos a ~3 y bajando la frecuencia de `touchmove`.
+
+**Causa 2 (fuelle)**: la zona del fuelle usaba `onPointerDown`/`onPointerUp`.
+En Chrome Android el browser captura implícitamente el pointer al elemento
+donde inició — con multi-touch concurrente esa captura podía interferir
+con la liberación del evento, dejando el fuelle "trabado" en empujar.
+
+**Fix 1**: CSS scoped a `.juego-sim-root` con `touch-action: none` en
+`.diapason-marco`, `.tren-botones-deslizable` y `.pito-boton`. El simulador
+normal preserva `manipulation` para compat iOS. Inline `touchAction` quitado
+del JSX.
+
+**Fix 2**: zona del fuelle migrada a touch events nativos con un
+**contador de toques activos**. Empujar mientras haya ≥1 dedo en la zona,
+halar cuando se levanta el último. Pointer events quedan solo para mouse
+desktop (`e.pointerType === 'mouse'`).
+
+#### 5c — Coalescing de touchstarts en Android (commit `bd90107`)
+**Síntoma**: con dedo en el fuelle no se podían agregar más de 2 dedos a
+los pitos (4 fingers totales máximo). En iPhone funcionaba sin problema.
+
+**Causa**: `handleTouchStart` y `handleTouchMove` filtraban por `e.target`
+del evento. Chrome Android **coalesce** varios touchstarts en un solo
+evento cuando ocurren en el mismo tick (dedo en fuelle + dedos en pitos
+casi simultáneos). En ese caso `e.target` es solo del primer toque del
+evento — si era el fuelle, `enAreaJuego` fallaba y se descartaba el
+evento entero, ignorando los pitos.
+
+**Fix**: iterar cada touch individualmente y filtrar por `t.target` en
+lugar de `e.target`. Así los toques del fuelle se ignoran (no son área
+de juego) pero los toques de pitos en el mismo evento sí se procesan.
+`handleTouchMove` también refactorizado: en lugar de filtrar por target,
+solo procesa touches que ya estén en `pointersMap`.
+
+iPhone funcionaba porque iOS Safari no coalesce touchstarts del mismo modo.
+
+#### 5d — Touch no registraba hits ni puntaje en competencia (commit `41a5e69`)
+**Síntoma**: desde el computador el teclado registraba notas estilo
+Guitar Hero correctamente. Desde mobile el touch funcionaba (los pitos
+sonaban) pero el motor no detectaba los hits y no sumaba puntaje.
+
+**Causa raíz**: `usePointerAcordeon` llamaba a `actualizarBotonActivo`
+con `silencioso=true` (4to parámetro). En `useLogicaAcordeon`,
+`silencioso=true` SALTA el callback `onNotaPresionada`. Como
+`useLogicaProMax` engancha la detección de hits a través de
+`onNotaPresionada` → `_golpeHandlerRef` → `procesarGolpeAlumno`, el touch
+nunca disparaba la evaluación.
+
+El teclado funcionaba porque `manejarEventoTeclado` llama
+`actualizarBotonActivo` con `silencioso` por defecto (`false`), así que
+`onNotaPresionada` SÍ se disparaba y la cadena del juego se completaba.
+
+**Fix**: cambiar las 6 llamadas a `actualizarBotonActivo` en
+`usePointerAcordeon` de `silencioso=true` a `silencioso=false`
+(`registrarInicio`, `procesarPunto` en los dos sentidos, `registrarFin`,
+watchdog y `limpiarTodo`). Ahora el touch hace el mismo flujo que el
+teclado: dispara `onNotaPresionada`/`onNotaLiberada`, el motor evalúa
+el hit contra la nota que cae, y suma puntaje.
+
+El `silencioso=true` era una optimización histórica para evitar
+re-renders. El costo (~1-2ms por touch) es despreciable para frecuencia
+de toques humanos.
 
 ---
 
