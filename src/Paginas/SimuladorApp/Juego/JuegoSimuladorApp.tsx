@@ -55,6 +55,12 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     // el menu. Solo el click del usuario en el boton de pausa lo abre.
     const [menuPausaAbierto, setMenuPausaAbierto] = useState(false);
 
+    // Contador de dedos sobre la zona del fuelle. Multi-touch correcto:
+    // empujar mientras HAYA al menos un dedo en la zona, halar cuando
+    // se levanta el ultimo. Resuelve el bug de "se traba" en Android
+    // cuando el usuario tiene varios dedos involucrados.
+    const fuelleContadorRef = useRef(0);
+
     // Marca el body para que el override CSS local del menu de pausa
     // (mas compacto) aplique solo cuando estamos en el modo juego del simulador.
     useEffect(() => {
@@ -396,19 +402,34 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 Permite tocar para cerrar el fuelle en modo competencia donde el maestro no toca. */}
             <div
                 className="juego-sim-fuelle-zona"
-                onPointerDown={(e) => {
+                onTouchStart={(e) => {
                     if (hero?.estadoJuego === 'pausado') return;
                     if (e.cancelable) e.preventDefault();
-                    e.stopPropagation();
+                    const wasZero = fuelleContadorRef.current === 0;
+                    fuelleContadorRef.current += e.changedTouches.length;
+                    if (wasZero) manejarCambioFuelle('empujar', motorAudioPro);
+                }}
+                onTouchEnd={(e) => {
+                    if (hero?.estadoJuego === 'pausado') return;
+                    fuelleContadorRef.current = Math.max(0, fuelleContadorRef.current - e.changedTouches.length);
+                    if (fuelleContadorRef.current === 0) manejarCambioFuelle('halar', motorAudioPro);
+                }}
+                onTouchCancel={(e) => {
+                    fuelleContadorRef.current = Math.max(0, fuelleContadorRef.current - e.changedTouches.length);
+                    if (fuelleContadorRef.current === 0) manejarCambioFuelle('halar', motorAudioPro);
+                }}
+                onPointerDown={(e) => {
+                    // Mouse desktop solamente (touch ya cubierto arriba).
+                    if (e.pointerType !== 'mouse') return;
+                    if (hero?.estadoJuego === 'pausado') return;
                     manejarCambioFuelle('empujar', motorAudioPro);
                 }}
                 onPointerUp={(e) => {
+                    if (e.pointerType !== 'mouse') return;
                     if (hero?.estadoJuego === 'pausado') return;
-                    e.stopPropagation();
                     manejarCambioFuelle('halar', motorAudioPro);
                 }}
-                onPointerCancel={() => manejarCambioFuelle('halar', motorAudioPro)}
-                style={{ touchAction: 'manipulation' }}
+                style={{ touchAction: 'none' }}
                 aria-hidden="true"
             />
 
@@ -416,11 +437,11 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             {logica?.configTonalidad && (
                 <div className="contenedor-acordeon-completo">
                     <div className="simulador-canvas">
-                        <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
+                        <div className="diapason-marco">
                             <motion.div
                                 ref={trenRef}
                                 className="tren-botones-deslizable"
-                                style={{ x, touchAction: 'manipulation' }}
+                                style={{ x }}
                             >
                                 <div className="hilera-pitos hilera-adentro">
                                     {renderHilera(logica.configTonalidad?.terceraFila)}
