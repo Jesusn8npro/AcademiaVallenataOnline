@@ -144,21 +144,17 @@ const PistaNotasGuia: React.FC<Props> = ({ cancion, tickActual, notasImpactadas,
                 );
             })}
 
-            {/* Banner instructivo + flecha sobre la nota activa */}
+            {/* Banner instructivo: posicion fija arriba al centro. Antes lo
+                posicionaba relativo a la nota y quedaba fuera del viewport. */}
             {notaActiva && (
-                <>
-                    <div
-                        className={`guia-banner ${notaActiva.fuelle}`}
-                        style={{ left: `${notaActiva.targetX}px`, top: `${notaActiva.targetY * notaActiva.progreso - 70}px` }}
-                    >
-                        <span className="guia-banner-flecha">
-                            {notaActiva.fuelle === 'abriendo' ? '↑' : '↓'}
-                        </span>
-                        <span className="guia-banner-texto">
-                            {notaActiva.fuelle === 'abriendo' ? 'ABRIENDO' : 'CERRANDO'}
-                        </span>
-                    </div>
-                </>
+                <div className={`guia-banner ${notaActiva.fuelle}`}>
+                    <span className="guia-banner-flecha">
+                        {notaActiva.fuelle === 'abriendo' ? '↑' : '↓'}
+                    </span>
+                    <span className="guia-banner-texto">
+                        {notaActiva.fuelle === 'abriendo' ? 'ABRIENDO' : 'CERRANDO'}
+                    </span>
+                </div>
             )}
         </div>
     );
