@@ -205,3 +205,88 @@ Rediseñado:
   ProMax también — fuera de scope de SimuladorApp.
 - Métodos 3 (carriles verticales) y 4 (flecha minimalista) — diseñados pero
   no implementados, decisión del usuario.
+- Error `sw.js:114 Partial response (status code 206) is unsupported` —
+  fuera de scope; el service worker intenta cachear streaming de audio.
+  No afecta funcionalidad del juego.
+
+---
+
+## Iteración 2 — fixes post-prueba en sesión
+
+### Acordes inminentes — ahora pulsan TODOS, no solo uno
+En `PistaNotasVertical` y `PistaNotasBoxed` el cálculo de la nota inminente
+solo guardaba un `id`. Ahora se calcula `mejorProgreso` y se agregan al
+`Set idsInminente` todas las notas dentro de margen `0.04` del máximo.
+Un acorde de 2-3 notas simultáneas pulsa todos los pitos a la vez.
+
+### Pause menu — abre con click manual, no con auto-pausa de synthesia
+El motor entra automáticamente en `pausado_synthesia` cuando espera una
+nota → eso NO debe abrir el menú. Ahora hay un estado local
+`menuPausaAbierto` controlado solo por el click del botón Pausa. El
+`onReanudar` lo cierra y dispara `reanudarConConteo` (cuenta regresiva
+para acomodar dedos).
+
+### Sostenido NO se pierde al pisar
+El `nota-activa` (cyan al pisar) sobrescribía la animación del sostenido.
+El selector ahora tiene prioridad combinada
+`.modo-halar/empujar .pito-boton.objetivo-sosteniendo.nota-activa` con
+`!important` en animation/border/box-shadow. La animación
+`pito-sosteniendo-cargar` (0.55s ease-in-out infinite) muestra halo
+blanco que pulsa de 6px → 22px + 5px de aro blanco + brightness 1.05→1.5.
+
+### After-glow para notas cortas impactadas
+Antes: al pisar correctamente, la nota se removía del set de objetivos →
+el pito quedaba con el visual gris/cyan default de `nota-activa`. Feo.
+Ahora: las notas impactadas mantienen el highlight de color por un
+**after-glow de 20 ticks** (medio beat). El alumno ve el borde rojo/azul
+quedarse un instante después de pisar, confirmando "sí lo hiciste bien".
+Sostenidas siguen con su sustain hasta `tick + dur + 12`.
+
+### Press visual reforzado
+Selector `.modo-halar/empujar .pito-boton.nota-activa.objetivo-halar/empujar`
+añade un anillo blanco de 4px alrededor + glow blanco 16px + inset shadow
+del press original + `translateY(8px) scale(0.92)`. La pisada sobre un
+objetivo se nota claro.
+
+### Menú de pausa más compacto
+Override CSS scoped a `body.juego-sim-activo` (clase añadida por
+`useEffect` en JuegoSimuladorApp). Reduce `min-width` 450 → 320, padding
+30 → 14/18, h2 2.5rem → 1.25rem (1.05rem en landscape mobile),
+`pause-menu-btn` padding 12 → 8/6 y font 1rem → 0.85/0.8rem. Cabe en
+landscape sin recortar. ProMax no se ve afectado.
+
+### Header sin botón X
+Eliminado de `HeaderJuegoSimulador`. Toda la navegación va por el menú
+de pausa que ahora se abre con el botón Pausa.
+
+### `UMBRAL_ACORDE` ampliado
+De 20 → **30 ticks**. Cubre acordes con notas un poco desfasadas que
+antes no se agrupaban en la guía visual.
+
+---
+
+## Estado final: archivos tocados en TODA la sesión
+
+### Creados
+- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.tsx`
+- `src/Paginas/SimuladorApp/Juego/PistaNotasBoxed.css`
+- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.tsx`
+- `src/Paginas/SimuladorApp/Juego/PantallaResultadosSimulador.css`
+- `src/Paginas/SimuladorApp/Juego/CHANGELOG_SESION.md`
+
+### Modificados
+- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.tsx`
+- `src/Paginas/SimuladorApp/Juego/JuegoSimuladorApp.css`
+- `src/Paginas/SimuladorApp/Juego/HeaderJuegoSimulador.tsx`
+- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.tsx`
+- `src/Paginas/SimuladorApp/Juego/PistaNotasVertical.css`
+- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.tsx`
+- `src/Paginas/SimuladorApp/Aprende/PantallaConfigCancion.css`
+- `src/Paginas/SimuladorApp/Componentes/ContenedorBajos.tsx`
+- `src/Paginas/SimuladorApp/Hooks/usePointerAcordeon.ts`
+- `src/componentes/Menu/MenuPublico.css` (fix responsive del navbar público)
+
+### Sin tocar (intencional)
+- `src/Paginas/AcordeonProMax/**` — ProMax queda intacto. SimuladorApp
+  reutiliza `useLogicaProMax`, `usePantallaResultados` y `MenuPausaProMax`
+  como dependencias compartidas, pero no las modifica.

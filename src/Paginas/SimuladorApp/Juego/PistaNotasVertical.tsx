@@ -106,19 +106,24 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
         return result;
     }, [cancion, tickActual, notasImpactadas, rangoSeccion]);
 
-    // Ordena ASC por progreso: la INMINENTE se renderiza al final → queda
-    // encima del resto en el z-stack. Asi nunca se tapa.
+    // Ordena ASC por progreso: la(s) INMINENTE(s) se renderizan al final →
+    // quedan encima del resto en el z-stack. Asi nunca se tapan.
     const notasOrdenadas = [...notasEnVuelo].sort((a, b) => a.progreso - b.progreso);
-    // Si hay alguna nota muy cerca de impactar, las que vienen lejos se
-    // atenuan para que la inminente destaque y no se tape la vista.
-    const hayInminente = notasOrdenadas.some(n => !n.impactada && !n.esFallada && n.progreso > 0.78);
-    // ID de la nota mas proxima al impacto (la que toca pisar AHORA), para
-    // marcarla con anillo blanco pulsante y diferenciarla del resto.
-    let idInminente: string | null = null;
-    for (let i = notasOrdenadas.length - 1; i >= 0; i--) {
-        const n = notasOrdenadas[i];
-        if (!n.impactada && !n.esFallada && n.progreso > 0.78) { idInminente = n.id; break; }
+    // TODAS las notas con el mayor progreso (margen 0.04) reciben .inminente,
+    // asi un acorde de 2-3 botones simultaneos pulsa todos a la vez.
+    const idsInminente = new Set<string>();
+    let mejorProgreso = 0;
+    for (const n of notasOrdenadas) {
+        if (n.impactada || n.esFallada || n.progreso <= 0.78) continue;
+        if (n.progreso > mejorProgreso) mejorProgreso = n.progreso;
     }
+    if (mejorProgreso > 0) {
+        for (const n of notasOrdenadas) {
+            if (n.impactada || n.esFallada || n.progreso <= 0.78) continue;
+            if (n.progreso >= mejorProgreso - 0.04) idsInminente.add(n.id);
+        }
+    }
+    const hayInminente = idsInminente.size > 0;
 
     return (
         <div ref={pistaRef} className="pista-notas-vertical" aria-hidden="true">
@@ -165,7 +170,7 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
                 const tailTopY = n.progresoFinal * n.targetY;
                 const tailHeight = Math.max(0, noteY - tailTopY);
 
-                const esInminente = n.id === idInminente;
+                const esInminente = idsInminente.has(n.id);
                 return (
                     <React.Fragment key={n.id}>
                         {tieneCola && tailHeight > 4 && (

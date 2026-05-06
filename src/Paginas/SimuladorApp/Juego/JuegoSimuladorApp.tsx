@@ -51,6 +51,32 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     const trenRef = useRef<HTMLDivElement>(null);
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
 
+    // Menu de pausa controlado explicitamente: el motor puede entrar en
+    // 'pausado_synthesia' automaticamente al esperar una nota; eso no abre
+    // el menu. Solo el click del usuario en el boton de pausa lo abre.
+    const [menuPausaAbierto, setMenuPausaAbierto] = useState(false);
+
+    // Marca el body para que el override CSS local del menu de pausa
+    // (mas compacto) aplique solo cuando estamos en el modo juego del simulador.
+    useEffect(() => {
+        document.body.classList.add('juego-sim-activo');
+        return () => { document.body.classList.remove('juego-sim-activo'); };
+    }, []);
+
+    const onPausarClick = () => {
+        setMenuPausaAbierto(true);
+        if (hero?.estadoJuego === 'jugando' && typeof hero?.alternarPausaReproduccion === 'function') {
+            hero.alternarPausaReproduccion();
+        }
+    };
+
+    const onReanudar = () => {
+        setMenuPausaAbierto(false);
+        if (hero?.estadoJuego === 'pausado' && typeof hero?.reanudarConConteo === 'function') {
+            hero.reanudarConConteo();
+        }
+    };
+
     // Modo visual de la pista de notas: 'cayendo' (Metodo 1, default) o 'boxed'
     // (Metodo 2, Synthesia clasico). Persiste en localStorage por usuario.
     const [modoVisual, setModoVisual] = useState<ModoVisual>(() => {
@@ -224,21 +250,28 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             }
         }
 
-        // 3) Sostenidos en curso: notas ya impactadas cuya duracion no ha
-        //    terminado. Mantienen el highlight + animacion de vibracion para
-        //    indicar al alumno "sigue pisando".
+        // 3) Notas impactadas: sostenidos en curso (duracion >= 15) muestran
+        //    halo "cargando energia" mientras dura el sustain + 12 ticks de
+        //    cola para no cortar abrupto. Notas cortas reciben after-glow de
+        //    20 ticks despues del impacto: el pito conserva el highlight de
+        //    color (no salta al gris feo de nota-activa) confirmando al alumno
+        //    que su pisada fue valida.
         for (const nota of seq) {
             if (String(nota.botonId).includes('-bajo')) continue;
             const id = `${nota.tick}-${nota.botonId}`;
             if (!notasImpactadasSet.has(id)) continue;
             const dur = Number(nota.duracion) || 0;
-            if (dur < 30) continue;
-            if (tickActual >= nota.tick + dur) continue;
+            const esSostenida = dur >= 15;
+            const tickFin = esSostenida
+                ? nota.tick + dur + 12
+                : nota.tick + 20;
+            if (tickActual >= tickFin) continue;
+            if (tickActual < nota.tick - 5) continue;
             const m = nota.botonId.match(/^([A-Z])-?(\d+)/) || nota.botonId.match(/^(\d+)-(\d+)/);
             if (!m) continue;
             const pos = `${m[1]}-${m[2]}`;
             guia.set(pos, nota.fuelle === 'abriendo' ? 'halar' : 'empujar');
-            sosteniendo.add(pos);
+            if (esSostenida) sosteniendo.add(pos);
         }
 
         return { guia, sosteniendo };
@@ -337,7 +370,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 racha={hero.estadisticas?.rachaActual ?? 0}
                 multiplicador={hero.estadisticas?.multiplicador ?? 1}
                 mostrarVida={esCompetitivo}
-                onPausa={hero.alternarPausaReproduccion}
+                onPausa={onPausarClick}
             />
 
             {hero.estadoJuego === 'contando' && hero.cuenta !== null && (
@@ -483,9 +516,9 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             )}
 
             <MenuPausaProMax
-                visible={hero.estadoJuego === 'pausado'}
-                onReanudar={hero.reanudarConConteo}
-                onReiniciar={reiniciar}
+                visible={menuPausaAbierto}
+                onReanudar={onReanudar}
+                onReiniciar={() => { setMenuPausaAbierto(false); reiniciar(); }}
                 maestroSuena={hero.maestroSuena}
                 onToggleMaestroSuena={hero.setMaestroSuena}
                 modoPractica={hero.modoPractica}

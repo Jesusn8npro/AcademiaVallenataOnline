@@ -148,6 +148,55 @@
     }
 }
 
+/* MENU DE PAUSA — override compacto SOLO cuando el simulador-juego esta activo.
+   Reduce el padding y minWidth del card original (que esta inline en el TSX
+   de ProMax) para que quepa mejor en landscape mobile. */
+body.juego-sim-activo .rhythm-pause-menu-card {
+    min-width: 320px !important;
+    max-width: 92vw !important;
+    padding: 14px 18px !important;
+    gap: 10px !important;
+    border-radius: 14px !important;
+}
+
+body.juego-sim-activo #menuPausaPortal h2 {
+    font-size: 1.25rem !important;
+    letter-spacing: 1px !important;
+    margin: 0 !important;
+}
+
+body.juego-sim-activo .pause-menu-header {
+    margin-bottom: 4px !important;
+}
+
+body.juego-sim-activo .pause-menu-options {
+    gap: 6px !important;
+}
+
+body.juego-sim-activo .pause-menu-btn {
+    padding: 8px 14px !important;
+    font-size: 0.85rem !important;
+}
+
+body.juego-sim-activo .pause-menu-advanced {
+    max-height: 40vh !important;
+    padding-right: 4px !important;
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+    body.juego-sim-activo .rhythm-pause-menu-card {
+        padding: 10px 14px !important;
+        min-width: 300px !important;
+    }
+    body.juego-sim-activo #menuPausaPortal h2 {
+        font-size: 1.05rem !important;
+    }
+    body.juego-sim-activo .pause-menu-btn {
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+    }
+}
+
 /* MARCA DE AGUA — texto del acordeon en el area superior, estilo "Cassoto".
    Posicionada en el centro horizontal del area negra entre header y pitos.
    Va detras de la pista de notas pero suficiente alpha para verse. */
