@@ -1,0 +1,99 @@
+/* Modo CARRIL — el fondo de la pista vira al color del fuelle inminente
+   con la palabra grande "ABRE" o "CIERRA" detras. Asociacion fuerte:
+   espacio fisico = direccion del fuelle. Las notas no inminentes quedan
+   muy tenues, todo el peso visual esta en el fondo + la nota proxima. */
+
+.pista-notas-carril {
+    position: absolute;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+    transition: background 0.35s ease;
+}
+
+@media (max-width: 720px) { .pista-notas-carril { top: 44px; } }
+
+.pista-notas-carril.abriendo {
+    background: linear-gradient(180deg,
+        rgba(59, 130, 246, 0.32) 0%,
+        rgba(59, 130, 246, 0.18) 60%,
+        rgba(0, 0, 0, 0) 100%);
+}
+
+.pista-notas-carril.cerrando {
+    background: linear-gradient(180deg,
+        rgba(239, 68, 68, 0.32) 0%,
+        rgba(239, 68, 68, 0.18) 60%,
+        rgba(0, 0, 0, 0) 100%);
+}
+
+/* Texto enorme de fondo */
+.carril-letrero {
+    position: absolute;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 9vh;
+    letter-spacing: 6px;
+    color: rgba(255, 255, 255, 0.16);
+    text-shadow:
+        0 0 24px rgba(255, 255, 255, 0.25),
+        0 4px 0 rgba(0, 0, 0, 0.5);
+    user-select: none;
+    pointer-events: none;
+    line-height: 1;
+    animation: carril-letrero-pulso 1.4s ease-in-out infinite;
+}
+
+@keyframes carril-letrero-pulso {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.95; }
+}
+
+/* Notas: mismo estilo que Vertical pero con border mas grueso para
+   destacar bien sobre el fondo coloreado */
+.carril-nota {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: opacity 0.18s ease;
+    will-change: transform, opacity;
+}
+
+.carril-nota.inminente {
+    width: 48px;
+    height: 48px;
+    border-width: 3px;
+    border-color: #fff;
+    animation: carril-nota-pulso 0.7s ease-in-out infinite;
+}
+
+@keyframes carril-nota-pulso {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.4); }
+}
+
+.carril-nota.fallada {
+    filter: grayscale(0.7);
+}
+
+.carril-cola {
+    position: absolute;
+    width: 22px;
+    transform: translateX(-50%);
+    border-radius: 11px;
+}
+
+@media (max-width: 720px) {
+    .carril-letrero { font-size: 7.5vh; letter-spacing: 4px; }
+    .carril-nota { width: 32px; height: 32px; }
+    .carril-nota.inminente { width: 42px; height: 42px; }
+}
