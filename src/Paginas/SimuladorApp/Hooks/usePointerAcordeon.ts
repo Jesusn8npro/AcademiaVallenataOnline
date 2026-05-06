@@ -11,11 +11,10 @@ interface PointerLogicProps {
     desactivarAudio?: boolean;
 }
 
-// Hit-test estilo app nativa, robusto contra iOS Safari implicit pointer capture bug
-// (WebKit #199803): cuando el dedo se mueve fuera del elemento donde empezó el toque,
-// los pointermove se entregan a baja frecuencia o se pierden. Para evitarlo usamos
-// Touch Events directamente en dispositivos táctiles (mejor soporte iOS) y Pointer
-// Events solo para mouse en desktop.
+// Hit-test estilo app nativa. iOS Safari implicit pointer capture bug
+// (WebKit #199803) entrega pointermove throttled cuando el dedo sale del target
+// inicial — por eso usamos Touch Events en tactil (clientX/Y siempre fiable) y
+// Pointer Events solo para mouse en desktop.
 const IMAN_ENTRAR = 16;
 const IMAN_SALIR = 22;
 
@@ -57,27 +56,23 @@ export const usePointerAcordeon = ({
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
-            // 🎯 Latency optimization (Android low-end): elementFromPoint cuesta 5-10ms por
-            // llamada en devices low-end. Si el dedo sigue claramente dentro del rect del pito
-            // actual, retornar inmediatamente sin hit-test nativo. Esto cubre la mayoría de los
-            // touchmoves (movimientos pequeños dentro del mismo pito) y reduce el bloqueo del
-            // main thread, lo que se traduce en menor latencia perceptible al disparar notas.
+            // Fast-path Android low-end: elementFromPoint cuesta 5-10ms; si el dedo
+            // sigue dentro del rect del pito actual, retornar sin hit-test nativo.
             if (posActual) {
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, 0)) return posActual;
             }
-            // 1) Hit nativo (siempre exacto aunque el tren se haya deslizado horizontalmente).
             const target = document.elementFromPoint(clientX, clientY);
             if (target) {
                 const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
                 if (pito?.dataset.pos) return pito.dataset.pos;
             }
-            // 2) Histéresis suave si veníamos de un pito y aún estamos dentro de su rect expandido.
+            // Histeresis: aun dentro del rect expandido del pito anterior.
             if (posActual) {
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, IMAN_SALIR)) return posActual;
             }
-            // 3) Imán al pito más cercano si caímos en gap.
+            // Iman al pito mas cercano si caimos en gap.
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (dentroDe(clientX, clientY, r, IMAN_ENTRAR)) return pos;
             }
@@ -148,20 +143,12 @@ export const usePointerAcordeon = ({
         const enAreaJuego = (target: HTMLElement) =>
             !!(target.closest('.pito-boton') || target.closest('.seccion-bajos-contenedor') || target.closest('.diapason-marco'));
 
-        // ============== TOUCH EVENTS (móvil) ==============
-        // Touch events son MÁS confiables en iOS Safari para drag continuo:
-        // - No tienen el bug de implicit capture.
-        // - clientX/Y se entregan correctamente aunque el dedo se mueva fuera del target inicial.
-        // - e.changedTouches contiene cada touch individual de este evento.
-        //
-        // ⚠️ IMPORTANTE — iterar por TOUCH, no por evento.
-        // Chrome Android puede coalesce varios touchstart en un solo evento cuando
-        // ocurren en el mismo tick (ej: dedo en fuelle + dedos en pitos casi a la vez).
-        // En ese caso `e.target` es el target de UN solo toque, pero `changedTouches`
-        // contiene varios. Si filtramos por `e.target` se descarta el evento entero
-        // y los pitos nunca se registran. Iteramos cada touch y filtramos su target
-        // individualmente — así los toques del fuelle se ignoran (no son area de juego)
-        // pero los toques de pitos en el mismo evento sí se registran.
+        // ============== TOUCH EVENTS (movil) ==============
+        // Iterar por TOUCH, no por evento: Chrome Android coalesce varios touchstart
+        // en un solo evento cuando ocurren en el mismo tick (dedo en fuelle + dedos
+        // en pitos). e.target es solo del primer toque; filtrar por e.target descarta
+        // el evento entero. Iteramos cada changedTouch para no perder pitos cuando
+        // hay un dedo en zona no-jugable simultaneamente.
         const handleTouchStart = (e: TouchEvent) => {
             if (desactivarAudioRef.current) return;
             let huboRegistro = false;
@@ -178,11 +165,8 @@ export const usePointerAcordeon = ({
             if (huboRegistro && e.cancelable) e.preventDefault();
         };
 
-        // touchmove: iterar todos los touches activos y procesar solo los que estén
-        // registrados en pointersMap. procesarPunto ya filtra por pointersMap (si el
-        // touch no está registrado, no hace nada), así que no necesita guarda de target.
-        // Esto permite que los movimientos de los pitos se procesen aun cuando hay un
-        // dedo en el fuelle activo simultaneamente.
+        // touchmove: procesar solo touches registrados en pointersMap. Permite que
+        // los movimientos de pitos se procesen aun con dedo en zona no-jugable.
         const handleTouchMove = (e: TouchEvent) => {
             let huboProceso = false;
             for (let i = 0; i < e.touches.length; i++) {
@@ -228,23 +212,17 @@ export const usePointerAcordeon = ({
 
         const esTouchDevice = 'ontouchstart' in window || (navigator as any).maxTouchPoints > 0;
 
-        // 🎯 iOS Safari fix: attachar los listeners al elemento del simulador, NO a document.
-        // En iOS, los eventos táctiles a nivel document son más propensos al throttling
-        // single-touch y al "tap delay" del double-tap detection. A nivel elemento
-        // específico (con touch-action: none) se entregan con mayor frecuencia.
+        // Listeners en elemento del simulador, NO en document: en iOS los tactiles
+        // a nivel document tienen mas throttling single-touch y tap-delay; sobre un
+        // elemento con touch-action: none se entregan a 60Hz.
         const rootSimulador = (document.querySelector('.simulador-app-root') as HTMLElement | null) || document;
 
-        // 🎯 iOS throttling fix (single-touch): preventDefault SOLO sobre el área
-        // jugable (pitos / diapasón / fuelle de bajos). Esto evita que iOS interprete
-        // el toque como gesto del sistema y entregue los touchmove a frecuencia nativa
-        // (60Hz vs 10-15Hz throttled).
-        //
-        // ⚠️ Estrategia "opt-in" (bloquear solo área de juego) en lugar de "opt-out"
-        // (bloquear todo menos whitelist). El opt-out era frágil: cada modal/overlay
-        // nuevo había que añadirlo a la lista o se quedaba con el touch bloqueado y
-        // la pantalla se sentía muerta. Con opt-in, cualquier UI fuera del área
-        // jugable funciona automáticamente sin mantenimiento.
-        const ZONAS_JUGABLES = '.pito-boton, .diapason-marco, .seccion-bajos-contenedor';
+        // Estrategia opt-in: preventDefault SOLO sobre area jugable (no opt-out con
+        // whitelist global, que se rompia cada vez que se anadia un modal nuevo).
+        // .juego-sim-fuelle-zona incluida: sin un gesto sostenido en iOS, los
+        // touchstarts cortos en pitos se entregan throttled — mantenerla como zona
+        // jugable preserva la frecuencia de entrega sin requerir dedo permanente.
+        const ZONAS_JUGABLES = '.pito-boton, .diapason-marco, .seccion-bajos-contenedor, .juego-sim-fuelle-zona';
 
         const esZonaJugable = (target: EventTarget | null): boolean => {
             const el = target as HTMLElement | null;

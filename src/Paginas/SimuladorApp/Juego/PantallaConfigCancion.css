@@ -1,9 +1,8 @@
-/* ──────────────────────────────────────────────────────────
-   CONFIG DE CANCION — Modal compacto, optimizado en landscape
-   mobile (sin scroll). Solo selectores usados por el JSX.
-   ────────────────────────────────────────────────────────── */
+/* CONFIG DE CANCION — modal compacto. Layout landscape mobile (sin scroll)
+   en archivo aparte: PantallaConfigCancion.landscape.css */
+@import './PantallaConfigCancion.landscape.css';
 
-/* ─── OVERLAY + PANEL ─────────────────────────────────────── */
+/* OVERLAY + PANEL */
 .config-overlay {
     position: fixed;
     inset: 0;
@@ -28,12 +27,8 @@
     color: #fff;
 }
 
-/* ─── HEADER (miniatura + info) ──────────────────────────── */
-.config-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+/* HEADER */
+.config-header { display: flex; align-items: center; gap: 12px; }
 
 .config-miniatura {
     width: 52px;
@@ -45,21 +40,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
+.config-miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.config-miniatura img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.config-header-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
+.config-header-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 
 .config-titulo {
     font-size: 20px;
@@ -94,19 +77,9 @@
     letter-spacing: 0.7px;
 }
 
-/* ─── BODY + FIELDS ──────────────────────────────────────── */
-.config-body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.config-field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
+/* BODY + FIELDS */
+.config-body { display: flex; flex-direction: column; gap: 8px; }
+.config-field { display: flex; flex-direction: column; gap: 8px; }
 .config-field-label {
     font-size: 0.66rem;
     font-weight: 700;
@@ -115,12 +88,8 @@
     text-transform: uppercase;
 }
 
-/* ─── MODOS — grid de 4 cards ────────────────────────────── */
-.config-grid-modos {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-}
+/* MODOS */
+.config-grid-modos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 
 .config-card-modo {
     position: relative;
@@ -140,45 +109,21 @@
     -webkit-tap-highlight-color: transparent;
     user-select: none;
 }
-
-.config-card-modo:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.22);
-}
-
-.config-card-modo:active {
-    transform: scale(0.96);
-}
-
+.config-card-modo:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.22); }
+.config-card-modo:active { transform: scale(0.96); }
 .config-card-modo.activo {
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.18) 0%, rgba(167, 139, 250, 0.18) 100%);
     border-color: #60a5fa;
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.55);
 }
+.config-card-modo.previsualizando { border-color: #fbbf24; background: rgba(251, 191, 36, 0.08); }
 
-.config-card-modo.previsualizando {
-    border-color: #fbbf24;
-    background: rgba(251, 191, 36, 0.08);
-}
-
-.config-card-icono {
-    color: #93c5fd;
-    display: inline-flex;
-    align-items: center;
-}
-
+.config-card-icono { color: #93c5fd; display: inline-flex; align-items: center; }
 .config-card-modo.activo .config-card-icono,
-.config-card-modo.previsualizando .config-card-icono {
-    color: #fbbf24;
-}
+.config-card-modo.previsualizando .config-card-icono { color: #fbbf24; }
 
-.config-card-titulo {
-    font-size: 0.78rem;
-    font-weight: 700;
-    line-height: 1.1;
-}
+.config-card-titulo { font-size: 0.78rem; font-weight: 700; line-height: 1.1; }
 
-/* Tooltip flotante en long-press / hover */
 .config-card-tooltip {
     position: absolute;
     bottom: calc(100% + 6px);
@@ -196,7 +141,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     animation: config-tooltip-aparecer 0.18s ease-out;
 }
-
 .config-card-tooltip::after {
     content: '';
     position: absolute;
@@ -206,13 +150,11 @@
     border: 4px solid transparent;
     border-top-color: #fbbf24;
 }
-
 @keyframes config-tooltip-aparecer {
     from { opacity: 0; transform: translate(-50%, 4px); }
     to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Descripción debajo del grid (cambia con la card activa o previsualizada) */
 .config-modo-descripcion {
     display: block;
     margin-top: 4px;
@@ -225,7 +167,7 @@
     transition: color 0.15s ease;
 }
 
-/* ─── SECCIONES — grid con cards de progreso ─────────────── */
+/* SECCIONES */
 .config-secciones-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -247,43 +189,24 @@
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
     -webkit-tap-highlight-color: transparent;
 }
-
-.config-seccion-card:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.config-seccion-card:active:not(:disabled) {
-    transform: scale(0.98);
-}
-
+.config-seccion-card:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+.config-seccion-card:active:not(:disabled) { transform: scale(0.98); }
 .config-seccion-card.activo {
     background: rgba(251, 191, 36, 0.14);
     border-color: #fbbf24;
     box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.55) inset;
 }
-
-.config-seccion-card.activo .config-seccion-nombre {
-    color: #fbbf24;
-}
-
+.config-seccion-card.activo .config-seccion-nombre { color: #fbbf24; }
 .config-seccion-card.completada:not(.activo) {
     border-color: rgba(34, 197, 94, 0.35);
     background: rgba(34, 197, 94, 0.06);
 }
-
-.config-seccion-card.bloqueada {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.02);
-}
-
+.config-seccion-card.bloqueada { opacity: 0.45; cursor: not-allowed; background: rgba(255, 255, 255, 0.02); }
 .config-seccion-card.cancion-completa {
     grid-column: 1 / -1;
     background: rgba(168, 85, 247, 0.06);
     border-color: rgba(168, 85, 247, 0.22);
 }
-
 .config-seccion-card.cancion-completa.activo {
     background: rgba(251, 191, 36, 0.14);
     border-color: #fbbf24;
@@ -298,12 +221,7 @@
     white-space: nowrap;
 }
 
-.config-seccion-estado {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-}
+.config-seccion-estado { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 
 .config-seccion-tag {
     display: inline-flex;
@@ -316,46 +234,14 @@
     letter-spacing: 0.3px;
     text-transform: uppercase;
 }
+.config-seccion-tag.exito     { background: rgba(34, 197, 94, 0.18);  color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35); }
+.config-seccion-tag.disponible{ background: rgba(99, 102, 241, 0.16); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.32); }
+.config-seccion-tag.bloqueada { background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.14); }
+.config-seccion-tag.monedas   { background: rgba(251, 191, 36, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+.config-seccion-tag.premio    { background: rgba(251, 191, 36, 0.06); color: rgba(251, 191, 36, 0.78); border: 1px solid rgba(251, 191, 36, 0.22); text-transform: none; }
+.config-seccion-tag.precision { background: rgba(236, 72, 153, 0.12); color: #f9a8d4; border: 1px solid rgba(236, 72, 153, 0.28); text-transform: none; }
 
-.config-seccion-tag.exito {
-    background: rgba(34, 197, 94, 0.18);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.35);
-}
-
-.config-seccion-tag.disponible {
-    background: rgba(99, 102, 241, 0.16);
-    color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.32);
-}
-
-.config-seccion-tag.bloqueada {
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.config-seccion-tag.monedas {
-    background: rgba(251, 191, 36, 0.18);
-    color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.4);
-}
-
-.config-seccion-tag.premio {
-    background: rgba(251, 191, 36, 0.06);
-    color: rgba(251, 191, 36, 0.78);
-    border: 1px solid rgba(251, 191, 36, 0.22);
-    text-transform: none;
-}
-
-.config-seccion-tag.precision {
-    background: rgba(236, 72, 153, 0.12);
-    color: #f9a8d4;
-    border: 1px solid rgba(236, 72, 153, 0.28);
-    text-transform: none;
-}
-
-/* ─── TOGGLE AUDIO ───────────────────────────────────────── */
+/* TOGGLE AUDIO */
 .config-toggle {
     display: flex;
     align-items: center;
@@ -371,24 +257,10 @@
     font-weight: 600;
     transition: background 0.18s;
 }
-
-.config-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.config-toggle > svg {
-    color: #93c5fd;
-    flex-shrink: 0;
-}
-
-.config-toggle > span:first-of-type {
-    flex: 1;
-    text-align: left;
-}
-
-.config-toggle.on > svg {
-    color: #22c55e;
-}
+.config-toggle:hover { background: rgba(255, 255, 255, 0.08); }
+.config-toggle > svg { color: #93c5fd; flex-shrink: 0; }
+.config-toggle > span:first-of-type { flex: 1; text-align: left; }
+.config-toggle.on > svg { color: #22c55e; }
 
 .config-toggle-switch {
     width: 38px;
@@ -399,10 +271,7 @@
     transition: background 0.22s;
     flex-shrink: 0;
 }
-
-.config-toggle.on .config-toggle-switch {
-    background: #22c55e;
-}
+.config-toggle.on .config-toggle-switch { background: #22c55e; }
 
 .config-toggle-knob {
     position: absolute;
@@ -415,17 +284,10 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: transform 0.22s;
 }
+.config-toggle.on .config-toggle-knob { transform: translateX(16px); }
 
-.config-toggle.on .config-toggle-knob {
-    transform: translateX(16px);
-}
-
-/* ─── FOOTER ──────────────────────────────────────────────── */
-.config-footer {
-    display: flex;
-    gap: 10px;
-    padding-top: 4px;
-}
+/* FOOTER */
+.config-footer { display: flex; gap: 10px; padding-top: 4px; }
 
 .config-btn {
     display: inline-flex;
@@ -442,10 +304,7 @@
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.18s, background 0.18s;
 }
-
-.config-btn:active {
-    transform: translateY(1px);
-}
+.config-btn:active { transform: translateY(1px); }
 
 .config-btn-volver {
     background: rgba(255, 255, 255, 0.06);
@@ -453,11 +312,7 @@
     color: rgba(255, 255, 255, 0.85);
     flex: 0 0 auto;
 }
-
-.config-btn-volver:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-}
+.config-btn-volver:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 
 .config-btn-empezar {
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -466,169 +321,4 @@
     box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
     letter-spacing: 1px;
 }
-
-.config-btn-empezar:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(99, 102, 241, 0.5);
-}
-
-/* ─── LANDSCAPE MOBILE — sin scroll, layout 2 columnas ───── */
-@media (orientation: landscape) and (max-height: 540px) {
-    .config-overlay {
-        padding: 8px;
-        overflow-y: hidden;
-    }
-
-    .config-panel {
-        max-width: 780px;
-        max-height: 96vh;
-        padding: 12px 16px 10px;
-        gap: 8px;
-    }
-
-    .config-header {
-        padding-bottom: 4px;
-        gap: 10px;
-    }
-
-    .config-miniatura {
-        width: 38px;
-        height: 38px;
-        border-radius: 8px;
-    }
-
-    .config-header-info { gap: 1px; }
-    .config-titulo { font-size: 0.92rem; }
-    .config-autor { font-size: 0.68rem; }
-    .config-tono {
-        margin-top: 2px;
-        padding: 1px 9px;
-        font-size: 0.62rem;
-        letter-spacing: 0.5px;
-    }
-
-    /* Body 2 columnas: izq = modos + toggle, der = secciones */
-    .config-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto 1fr;
-        gap: 8px 14px;
-        align-items: start;
-    }
-    .config-body > .config-field:nth-child(1) { grid-column: 1; grid-row: 1; }
-    .config-body > .config-field:nth-child(2) { grid-column: 2; grid-row: 1 / span 2; }
-    .config-body > .config-toggle { grid-column: 1; grid-row: 2; }
-
-    .config-field { gap: 4px; }
-    .config-field-label { font-size: 0.6rem; letter-spacing: 0.7px; }
-
-    /* Modos: 2x2 ajustadas al contenido, alineadas a la izquierda */
-    .config-grid-modos {
-        grid-template-columns: repeat(2, max-content);
-        justify-content: start;
-        gap: 6px;
-    }
-
-    /* Card de modo: layout horizontal (icono | título), padding
-       cómodo para que no se vea apretada. */
-    .config-card-modo {
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
-        padding: 8px 14px;
-        border-radius: 9px;
-    }
-
-    .config-card-titulo {
-        font-size: 0.76rem;
-        line-height: 1;
-    }
-
-    .config-card-icono { flex-shrink: 0; }
-    .config-card-icono svg { width: 15px; height: 15px; }
-
-    /* Descripción del modo: una línea con ellipsis */
-    .config-modo-descripcion {
-        margin-top: 2px;
-        padding: 0 4px;
-        font-size: 0.62rem;
-        min-height: 0;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    /* Secciones: 1 col, layout horizontal nombre|tags */
-    .config-secciones-grid {
-        grid-template-columns: 1fr;
-        gap: 5px;
-    }
-
-    .config-seccion-card {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 4px 10px;
-        padding: 7px 12px;
-        border-radius: 9px;
-    }
-
-    .config-seccion-nombre {
-        font-size: 0.76rem;
-        flex: 0 1 auto;
-        min-width: 0;
-    }
-
-    .config-seccion-estado {
-        flex: 0 1 auto;
-        justify-content: flex-end;
-    }
-
-    .config-seccion-tag {
-        font-size: 0.56rem;
-        padding: 1px 7px;
-        letter-spacing: 0.2px;
-    }
-
-    .config-seccion-card.cancion-completa { grid-column: auto; }
-
-    /* Toggle audio compacto */
-    .config-toggle {
-        padding: 6px 11px;
-        font-size: 0.76rem;
-        gap: 8px;
-        border-radius: 9px;
-    }
-    .config-toggle > svg { width: 15px; height: 15px; }
-    .config-toggle-switch { width: 32px; height: 18px; }
-    .config-toggle-knob { width: 14px; height: 14px; top: 2px; left: 2px; }
-    .config-toggle.on .config-toggle-knob { transform: translateX(14px); }
-
-    /* Footer compacto */
-    .config-footer { gap: 8px; padding-top: 2px; }
-    .config-btn {
-        padding: 8px 14px;
-        font-size: 0.78rem;
-        gap: 6px;
-    }
-    .config-btn-empezar { letter-spacing: 0.6px; }
-}
-
-/* Landscape muy bajo (≤ 400px) — ajuste fino extra */
-@media (orientation: landscape) and (max-height: 400px) {
-    .config-panel { padding: 10px 14px 8px; gap: 6px; }
-    .config-miniatura { width: 34px; height: 34px; }
-    .config-titulo { font-size: 0.86rem; }
-    .config-autor { font-size: 0.64rem; }
-    .config-card-modo { padding: 6px 11px; }
-    .config-card-titulo { font-size: 0.7rem; }
-    .config-seccion-card { padding: 5px 10px; }
-    .config-seccion-nombre { font-size: 0.72rem; }
-    .config-toggle { padding: 5px 10px; font-size: 0.72rem; }
-    .config-btn { padding: 7px 12px; font-size: 0.74rem; }
-}
+.config-btn-empezar:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(99, 102, 241, 0.5); }
