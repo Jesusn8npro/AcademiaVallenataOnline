@@ -8,8 +8,12 @@ import PantallaResultadosSimulador from './PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './PantallaGameOverSimulador';
 import PistaNotasVertical from './PistaNotasVertical';
 import PistaNotasBoxed from './PistaNotasBoxed';
+import PistaNotasGuia from './PistaNotasGuia';
+import PistaNotasFoco from './PistaNotasFoco';
+import PistaNotasCarril from './PistaNotasCarril';
 import HilerasPitos from './HilerasPitos';
 import FuelleZonaJuego from './FuelleZonaJuego';
+import SelectorModoVisual from './SelectorModoVisual';
 import { useGuiaPitoObjetivo } from './useGuiaPitoObjetivo';
 import { useModoVisualPersistido } from './useModoVisualPersistido';
 import type { ConfigCancion, ModoJuego as ModoConfig } from './useConfigCancion';
@@ -235,35 +239,25 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 </div>
             )}
 
-            {modoVisual === 'cayendo' ? (
-                <PistaNotasVertical
-                    cancion={cancion}
-                    tickActual={hero.tickActual}
-                    notasImpactadas={hero.notasImpactadas || new Set()}
-                    rangoSeccion={rangoSeccion}
-                />
-            ) : (
-                <PistaNotasBoxed
-                    cancion={cancion}
-                    tickActual={hero.tickActual}
-                    notasImpactadas={hero.notasImpactadas || new Set()}
-                    rangoSeccion={rangoSeccion}
-                />
-            )}
+            {(() => {
+                const propsPista = {
+                    cancion,
+                    tickActual: hero.tickActual,
+                    notasImpactadas: hero.notasImpactadas || new Set<string>(),
+                    rangoSeccion,
+                };
+                switch (modoVisual) {
+                    case 'boxed':  return <PistaNotasBoxed {...propsPista} />;
+                    case 'guia':   return <PistaNotasGuia {...propsPista} />;
+                    case 'foco':   return <PistaNotasFoco {...propsPista} />;
+                    case 'carril': return <PistaNotasCarril {...propsPista} />;
+                    case 'cayendo':
+                    default:       return <PistaNotasVertical {...propsPista} />;
+                }
+            })()}
 
-            <div className="juego-sim-switch-modo" data-touch-allow role="group" aria-label="Modo visual">
-                <button
-                    type="button"
-                    className={modoVisual === 'cayendo' ? 'activo' : ''}
-                    onClick={() => cambiarModoVisual('cayendo')}
-                    title="Notas cayendo sobre los pitos (libre)"
-                >↓ Libre</button>
-                <button
-                    type="button"
-                    className={modoVisual === 'boxed' ? 'activo' : ''}
-                    onClick={() => cambiarModoVisual('boxed')}
-                    title="Cajita Synthesia (espera en cada nota)"
-                >☐ Synth</button>
+            <div className="juego-sim-switch-modo" data-touch-allow>
+                <SelectorModoVisual modoActual={modoVisual} onCambiar={cambiarModoVisual} />
             </div>
 
             {toastModo && <div className="juego-sim-toast-modo" role="status">{toastModo}</div>}
