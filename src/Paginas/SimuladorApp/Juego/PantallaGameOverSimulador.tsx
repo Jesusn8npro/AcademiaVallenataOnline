@@ -2,6 +2,7 @@ import React from 'react';
 import { RotateCcw, ArrowLeft, X, Skull } from 'lucide-react';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
 import { calcularPrecision } from '../../AcordeonProMax/TiposProMax';
+import RecomendacionMaestro from './RecomendacionMaestro';
 import './PantallaGameOverSimulador.css';
 
 interface Props {
@@ -9,10 +10,11 @@ interface Props {
     cancion: CancionHeroConTonalidad;
     onReintentar: () => void;
     onVolverSeleccion: () => void;
+    onPracticarMaestro?: () => void;
 }
 
 const PantallaGameOverSimulador: React.FC<Props> = ({
-    estadisticas, cancion, onReintentar, onVolverSeleccion,
+    estadisticas, cancion, onReintentar, onVolverSeleccion, onPracticarMaestro,
 }) => {
     const { notasPerfecto, notasBien, notasFalladas, notasPerdidas, puntos, rachaMasLarga } = estadisticas;
     const precision = calcularPrecision(notasPerfecto, notasBien, notasFalladas, notasPerdidas);
@@ -37,6 +39,13 @@ const PantallaGameOverSimulador: React.FC<Props> = ({
                 <div className="sim-go-mensaje">
                     Se acabó la vida · ¡no te rindas, vuelve a intentarlo!
                 </div>
+
+                {onPracticarMaestro && (
+                    <RecomendacionMaestro
+                        precision={precision}
+                        onPracticarMaestro={onPracticarMaestro}
+                    />
+                )}
 
                 <div className="sim-go-stats">
                     <div className="sim-go-stat perfectas">

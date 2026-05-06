@@ -1,0 +1,79 @@
+/* Banner de recomendacion: aparece en pantallas de resultado/gameover
+   cuando precision < 60%. Invita al alumno a practicar en modo Maestro. */
+
+.recom-maestro {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.10) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.15) inset;
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+}
+
+.recom-maestro-icono {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(167, 139, 250, 0.22);
+    border: 1px solid rgba(167, 139, 250, 0.55);
+    border-radius: 50%;
+    color: #c4b5fd;
+}
+
+.recom-maestro-textos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.recom-maestro-textos strong {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #c4b5fd;
+}
+
+.recom-maestro-textos span {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.25;
+}
+
+.recom-maestro-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(167, 139, 250, 0.55);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    flex-shrink: 0;
+}
+
+.recom-maestro-btn:hover { box-shadow: 0 6px 16px rgba(99, 102, 241, 0.55); }
+.recom-maestro-btn:active { transform: scale(0.96); }
+
+@media (max-width: 480px) {
+    .recom-maestro { padding: 7px 9px; gap: 8px; }
+    .recom-maestro-icono { width: 30px; height: 30px; }
+    .recom-maestro-textos strong { font-size: 0.66rem; }
+    .recom-maestro-textos span { font-size: 0.72rem; }
+    .recom-maestro-btn { padding: 6px 10px; font-size: 0.7rem; }
+}
