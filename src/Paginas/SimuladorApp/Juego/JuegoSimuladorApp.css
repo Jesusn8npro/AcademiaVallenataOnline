@@ -11,6 +11,18 @@
     flex-direction: column;
 }
 
+/* Multi-touch fiable en modo juego: touch-action: none deshabilita la
+   interpretacion de gestos del browser (pinch-zoom / pan / scroll) sobre
+   el area jugable. Sin esto, Chrome Android limita a ~3 dedos y entrega
+   touchmove a baja frecuencia. preventDefault del JS sigue cubriendo iOS.
+   Solo aplica a la subarea del juego — el simulador normal preserva
+   "manipulation" para compatibilidad. */
+.juego-sim-root .diapason-marco,
+.juego-sim-root .tren-botones-deslizable,
+.juego-sim-root .pito-boton {
+    touch-action: none;
+}
+
 /* En modo juego ocultamos la barra de herramientas del simulador normal */
 .juego-sim-root .barra-herramientas-contenedor { display: none; }
 
