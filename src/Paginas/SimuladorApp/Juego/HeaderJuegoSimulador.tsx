@@ -53,4 +53,7 @@ const HeaderJuegoSimulador: React.FC<HeaderJuegoSimuladorProps> = ({
     );
 };
 
-export default HeaderJuegoSimulador;
+// Memoizado: el componente recibe puntos/vida/racha que cambian cuando hay un golpe,
+// pero SU contenido depende solo de esos props. Sin memo, cada tick del motor de juego
+// re-renderiza el header aunque nada en sus props haya cambiado realmente.
+export default React.memo(HeaderJuegoSimulador);
