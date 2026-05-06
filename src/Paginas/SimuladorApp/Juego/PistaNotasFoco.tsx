@@ -2,9 +2,9 @@ import React, { useMemo, useRef } from 'react';
 import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
 import './PistaNotasFoco.css';
 
-// Modo FOCO — minimalista. Solo se muestra UNA tile grande sobre el pito
-// que toca AHORA. La siguiente nota aparece pequena y desaturada al fondo.
-// Pensado para mobile pequeno y canciones rapidas: cero distraccion.
+// Modo FOCO — tile en la pista superior con flecha grande apuntando al pito
+// que toca pisar. La tile NO tapa el pito ni su nombre. Acordes muestran
+// varias tiles lado a lado, todas alineadas al X de su pito objetivo.
 
 interface Props {
     cancion: any;
@@ -13,9 +13,8 @@ interface Props {
     rangoSeccion?: { inicio: number; fin: number } | null;
 }
 
-interface NotaFoco {
+interface NotaActual {
     id: string;
-    tick: number;
     fuelle: 'abriendo' | 'cerrando';
     duracion: number;
     progreso: number;
@@ -23,7 +22,6 @@ interface NotaFoco {
     etiqueta: string;
     targetX: number;
     targetY: number;
-    targetW: number;
 }
 
 function botonIdToDataPos(botonId: string): string | null {
@@ -40,27 +38,31 @@ const PistaNotasFoco: React.FC<Props> = ({ cancion, tickActual, notasImpactadas,
     const pistaRef = useRef<HTMLDivElement>(null);
     const elementoCache = useRef<Map<string, Element>>(new Map());
 
-    // Calcula: nota(s) ACTUAL(es) — la mas proxima sin impactar (incluye sus
-    // hermanas de acorde dentro de UMBRAL_ACORDE) + la SIGUIENTE despues.
-    const { actuales, siguiente } = useMemo<{ actuales: NotaFoco[]; siguiente: NotaFoco | null }>(() => {
-        if (!cancion?.secuencia || !Array.isArray(cancion.secuencia)) return { actuales: [], siguiente: null };
-
+    const { actuales, fuelleGrupo } = useMemo<{
+        actuales: NotaActual[];
+        fuelleGrupo: 'abriendo' | 'cerrando' | null;
+    }>(() => {
+        if (!cancion?.secuencia || !Array.isArray(cancion.secuencia)) {
+            return { actuales: [], fuelleGrupo: null };
+        }
         const pistaRect = pistaRef.current?.getBoundingClientRect();
         const offsetX = pistaRect?.left ?? 0;
         const offsetY = pistaRect?.top ?? 0;
 
-        // 1) tick de la proxima nota no-impactada-no-pasada
+        // Tick de la nota mas proxima no impactada y no muy pasada
         let proxTick: number | null = null;
         for (const n of cancion.secuencia) {
             if (String(n.botonId).includes('-bajo')) continue;
             if (rangoSeccion && (n.tick < rangoSeccion.inicio || n.tick > rangoSeccion.fin)) continue;
             const id = `${n.tick}-${n.botonId}`;
             if (notasImpactadas?.has(id)) continue;
-            if (n.tick < tickActual - 60) continue; // ya paso
+            if (n.tick < tickActual - 60) continue;
             if (proxTick === null || n.tick < proxTick) proxTick = n.tick;
         }
 
-        const matearPosicion = (n: any): { x: number; y: number; w: number } | null => {
+        if (proxTick === null) return { actuales: [], fuelleGrupo: null };
+
+        const matearPosicion = (n: any): { x: number; y: number } | null => {
             const dataPos = botonIdToDataPos(n.botonId);
             if (!dataPos) return null;
             let el = elementoCache.current.get(dataPos);
@@ -70,79 +72,77 @@ const PistaNotasFoco: React.FC<Props> = ({ cancion, tickActual, notasImpactadas,
                 elementoCache.current.set(dataPos, el);
             }
             const r = (el as Element).getBoundingClientRect();
-            return { x: r.left + r.width / 2 - offsetX, y: r.top + r.height / 2 - offsetY, w: r.width };
-        };
-
-        const armar = (n: any): NotaFoco | null => {
-            const p = matearPosicion(n);
-            if (!p) return null;
-            const tickSalida = n.tick - TICKS_VIAJE;
-            const progreso = Math.max(0, Math.min(1.05, (tickActual - tickSalida) / TICKS_VIAJE));
-            return {
-                id: `${n.tick}-${n.botonId}`,
-                tick: n.tick,
-                fuelle: n.fuelle === 'abriendo' ? 'abriendo' : 'cerrando',
-                duracion: Math.max(0, Number(n.duracion) || 0),
-                progreso,
-                impactada: notasImpactadas?.has(`${n.tick}-${n.botonId}`) ?? false,
-                etiqueta: extraerEtiqueta(n),
-                targetX: p.x, targetY: p.y, targetW: p.w,
-            };
+            return { x: r.left + r.width / 2 - offsetX, y: r.top + r.height / 2 - offsetY };
         };
 
         const UMBRAL_ACORDE = 30;
-        const actuales: NotaFoco[] = [];
-        let siguiente: NotaFoco | null = null;
+        const result: NotaActual[] = [];
+        let fuelle: 'abriendo' | 'cerrando' | null = null;
 
-        if (proxTick !== null) {
-            for (const n of cancion.secuencia) {
-                if (String(n.botonId).includes('-bajo')) continue;
-                if (rangoSeccion && (n.tick < rangoSeccion.inicio || n.tick > rangoSeccion.fin)) continue;
-                const id = `${n.tick}-${n.botonId}`;
-                if (notasImpactadas?.has(id)) continue;
-                if (Math.abs(n.tick - proxTick) <= UMBRAL_ACORDE) {
-                    const armada = armar(n);
-                    if (armada) actuales.push(armada);
-                } else if (n.tick > proxTick + UMBRAL_ACORDE && (!siguiente || n.tick < siguiente.tick)) {
-                    const armada = armar(n);
-                    if (armada) siguiente = armada;
-                }
-            }
+        for (const n of cancion.secuencia) {
+            if (String(n.botonId).includes('-bajo')) continue;
+            if (rangoSeccion && (n.tick < rangoSeccion.inicio || n.tick > rangoSeccion.fin)) continue;
+            const id = `${n.tick}-${n.botonId}`;
+            if (notasImpactadas?.has(id)) continue;
+            if (Math.abs(n.tick - proxTick) > UMBRAL_ACORDE) continue;
+            const p = matearPosicion(n);
+            if (!p) continue;
+            const tickSalida = n.tick - TICKS_VIAJE;
+            const progreso = Math.max(0, Math.min(1.05, (tickActual - tickSalida) / TICKS_VIAJE));
+            const f = n.fuelle === 'abriendo' ? 'abriendo' : 'cerrando';
+            if (!fuelle) fuelle = f;
+            result.push({
+                id, fuelle: f,
+                duracion: Math.max(0, Number(n.duracion) || 0),
+                progreso,
+                impactada: false,
+                etiqueta: extraerEtiqueta(n),
+                targetX: p.x, targetY: p.y,
+            });
         }
-        return { actuales, siguiente };
+
+        // Ordenar por X para que las tiles del acorde queden alineadas
+        result.sort((a, b) => a.targetX - b.targetX);
+        return { actuales: result, fuelleGrupo: fuelle };
     }, [cancion, tickActual, notasImpactadas, rangoSeccion]);
 
     return (
         <div ref={pistaRef} className="pista-notas-foco" aria-hidden="true">
-            {/* Preview tenue de la siguiente nota (despues del impacto actual) */}
-            {siguiente && (
-                <div
-                    className={`foco-preview ${siguiente.fuelle}`}
-                    style={{
-                        left: `${siguiente.targetX}px`,
-                        top: `${siguiente.targetY * siguiente.progreso}px`,
-                        width: `${siguiente.targetW * 0.55}px`,
-                        height: `${siguiente.targetW * 0.55}px`,
-                    }}
-                >
-                    <span>{siguiente.etiqueta}</span>
+            {/* Banner de direccion arriba */}
+            {fuelleGrupo && (
+                <div className={`foco-direccion ${fuelleGrupo}`}>
+                    {fuelleGrupo === 'abriendo' ? '↑ ABRIENDO' : '↓ CERRANDO'}
                 </div>
             )}
-            {/* Tile grande sobre los pitos del acorde actual */}
-            {actuales.map((n) => (
-                <div
-                    key={n.id}
-                    className={`foco-tile ${n.fuelle}`}
-                    style={{
-                        left: `${n.targetX}px`,
-                        top: `${n.targetY * n.progreso}px`,
-                        width: `${n.targetW * 1.15}px`,
-                        height: `${n.targetW * 1.15}px`,
-                    }}
-                >
-                    <span className="foco-tile-letra">{n.etiqueta}</span>
-                </div>
-            ))}
+
+            {/* Una tile por nota actual, posicionada arriba en la X del pito */}
+            {actuales.map((n) => {
+                // La tile esta en la mitad superior; la flecha conecta con el pito.
+                // tileTop fijo (no escala con progreso): el alumno siempre mira el
+                // mismo punto. La proximidad la indica el "ringando" del pito objetivo.
+                const tileTop = 18;
+                return (
+                    <React.Fragment key={n.id}>
+                        {/* Linea/conector visual de tile hacia el pito (debajo de la tile) */}
+                        <div
+                            className={`foco-conector ${n.fuelle}`}
+                            style={{
+                                left: `${n.targetX}px`,
+                                top: `${tileTop + 78}px`,
+                                height: `${Math.max(0, n.targetY - tileTop - 78)}px`,
+                            }}
+                        />
+                        {/* Tile con nombre del pito + flecha grande hacia abajo */}
+                        <div
+                            className={`foco-tile ${n.fuelle}`}
+                            style={{ left: `${n.targetX}px`, top: `${tileTop}px` }}
+                        >
+                            <span className="foco-tile-nombre">{n.etiqueta}</span>
+                            <span className="foco-tile-flecha">▼</span>
+                        </div>
+                    </React.Fragment>
+                );
+            })}
         </div>
     );
 };
