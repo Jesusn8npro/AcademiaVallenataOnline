@@ -66,11 +66,11 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
         const idUnico = obtenerIdBajoUnico(bajo.id);
         const esActivo = logica.botonesActivos && logica.botonesActivos[idUnico];
         const [numFila, col] = bajo.id.split('-');
-        
+
         // Buscamos las dos notas (halar y empujar) dentro de la misma fila actual
         const idHalar = `${numFila}-${col}-halar-bajo`;
         const idEmpujar = `${numFila}-${col}-empujar-bajo`;
-        
+
         const notaHalar = datosFila.find((x: any) => x.id === idHalar)?.nombre || '';
         const notaEmpujar = datosFila.find((x: any) => x.id === idEmpujar)?.nombre || '';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pause, X, Heart } from 'lucide-react';
+import { Pause, Heart } from 'lucide-react';
 import './HeaderJuegoSimulador.css';
 
 interface HeaderJuegoSimuladorProps {
@@ -11,20 +11,16 @@ interface HeaderJuegoSimuladorProps {
     multiplicador: number;
     mostrarVida: boolean;
     onPausa: () => void;
-    onSalir: () => void;
 }
 
 const HeaderJuegoSimulador: React.FC<HeaderJuegoSimuladorProps> = ({
-    titulo, autor, puntos, vida, racha, multiplicador, mostrarVida, onPausa, onSalir
+    titulo, autor, puntos, vida, racha, multiplicador, mostrarVida, onPausa
 }) => {
     return (
         <header className="header-juego-sim">
             <div className="hjs-izq">
-                <button className="hjs-btn" onClick={onPausa} aria-label="Pausa">
+                <button className="hjs-btn" onClick={onPausa} aria-label="Pausa · menú de juego">
                     <Pause size={18} fill="currentColor" />
-                </button>
-                <button className="hjs-btn" onClick={onSalir} aria-label="Salir">
-                    <X size={18} />
                 </button>
             </div>
 

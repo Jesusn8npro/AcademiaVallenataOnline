@@ -583,7 +583,7 @@
   }
 
   .mpub-barra-superior-negra {
-    padding: 0px 1rem;
+    padding: 0;
   }
 
   .mpub-contenedor-barra-superior {
@@ -595,6 +595,10 @@
     justify-content: space-between;
     width: 100%;
     position: relative;
+  }
+
+  .mpub-redes-sociales {
+    margin-right: 0;
   }
 
   .mpub-botones-accion {

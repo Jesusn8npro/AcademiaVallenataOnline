@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, X, Volume2 } from 'lucide-react';
+import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap } from 'lucide-react';
 import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
 import { useConfigCancion, type ModoJuego, type ConfigCancion } from './useConfigCancion';
 import './PantallaConfigCancion.css';
@@ -11,17 +11,38 @@ interface PantallaConfigCancionProps {
     onEmpezar: (config: ConfigCancion) => void;
 }
 
-const MODOS: Array<{ id: ModoJuego; titulo: string }> = [
-    { id: 'competitivo', titulo: 'Competitivo · Puntos, vida y combo' },
-    { id: 'libre', titulo: 'Libre · Sin penalizacion' },
-    { id: 'synthesia', titulo: 'Synthesia · Pausa en cada nota' },
-    { id: 'maestro_solo', titulo: 'Maestro Solo · Rebobina y practica' },
+const MODOS: Array<{
+    id: ModoJuego;
+    titulo: string;
+    descripcion: string;
+    Icono: React.ComponentType<{ size?: number }>;
+}> = [
+    { id: 'competitivo', titulo: 'Competitivo', descripcion: 'Puntos, vida y combo',  Icono: Trophy },
+    { id: 'libre',       titulo: 'Libre',       descripcion: 'Sin penalización',     Icono: Music2 },
+    { id: 'synthesia',   titulo: 'Synthesia',   descripcion: 'Pausa en cada nota',   Icono: Pause },
+    { id: 'maestro_solo',titulo: 'Maestro',     descripcion: 'Rebobina y practica',  Icono: GraduationCap },
 ];
 
 const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
     cancion, onCerrar, onEmpezar,
 }) => {
     const cfg = useConfigCancion();
+    // Long-press / hover sobre una card muestra su descripcion sin seleccionarla.
+    // En reposo la descripcion visible es la del modo actualmente seleccionado.
+    const [previsualizandoModo, setPrevisualizandoModo] = useState<ModoJuego | null>(null);
+    const longPressRef = useRef<number | null>(null);
+
+    const iniciarLongPress = (id: ModoJuego) => {
+        if (longPressRef.current) window.clearTimeout(longPressRef.current);
+        longPressRef.current = window.setTimeout(() => setPrevisualizandoModo(id), 380);
+    };
+    const cancelarLongPress = () => {
+        if (longPressRef.current) {
+            window.clearTimeout(longPressRef.current);
+            longPressRef.current = null;
+        }
+        setPrevisualizandoModo(null);
+    };
 
     if (!cancion) return null;
 
@@ -29,6 +50,9 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
     const miniatura = cancion.youtube_id
         ? `https://img.youtube.com/vi/${cancion.youtube_id}/mqdefault.jpg`
         : '/Acordeon PRO MAX.png';
+
+    const modoVisible = previsualizandoModo ?? cfg.modo;
+    const descripcionVisible = MODOS.find(m => m.id === modoVisible)?.descripcion ?? '';
 
     return (
         <motion.div
@@ -65,32 +89,57 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
                     </header>
 
                     <div className="config-body">
-                        <label className="config-field">
+                        <div className="config-field">
                             <span className="config-field-label">Modo de juego</span>
-                            <select
-                                className="config-select"
-                                value={cfg.modo}
-                                onChange={(e) => cfg.setModo(e.target.value as ModoJuego)}
-                            >
-                                {MODOS.map((m) => (
-                                    <option key={m.id} value={m.id}>{m.titulo}</option>
+                            <div className="config-grid-modos">
+                                {MODOS.map(({ id, titulo, descripcion, Icono }) => (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        className={`config-card-modo ${cfg.modo === id ? 'activo' : ''} ${previsualizandoModo === id ? 'previsualizando' : ''}`}
+                                        onClick={() => { cancelarLongPress(); cfg.setModo(id); }}
+                                        onPointerDown={() => iniciarLongPress(id)}
+                                        onPointerUp={cancelarLongPress}
+                                        onPointerLeave={cancelarLongPress}
+                                        onPointerCancel={cancelarLongPress}
+                                        onMouseEnter={() => setPrevisualizandoModo(id)}
+                                        onMouseLeave={() => setPrevisualizandoModo(null)}
+                                        aria-pressed={cfg.modo === id}
+                                        aria-label={`${titulo}: ${descripcion}`}
+                                    >
+                                        <span className="config-card-icono"><Icono size={16} /></span>
+                                        <span className="config-card-titulo">{titulo}</span>
+                                        {previsualizandoModo === id && (
+                                            <span className="config-card-tooltip">{descripcion}</span>
+                                        )}
+                                    </button>
                                 ))}
-                            </select>
-                        </label>
+                            </div>
+                            <span className="config-modo-descripcion" role="status">
+                                {descripcionVisible}
+                            </span>
+                        </div>
 
-                        <label className="config-field">
+                        <div className="config-field">
                             <span className="config-field-label">Que parte tocar</span>
-                            <select
-                                className="config-select"
-                                value={cfg.seccionId ?? ''}
-                                onChange={(e) => cfg.setSeccionId(e.target.value || null)}
-                            >
-                                <option value="">Cancion completa</option>
+                            <div className="config-chips-secciones">
+                                <button
+                                    type="button"
+                                    className={`config-chip-seccion ${cfg.seccionId === null ? 'activo' : ''}`}
+                                    onClick={() => cfg.setSeccionId(null)}
+                                    aria-pressed={cfg.seccionId === null}
+                                >Canción completa</button>
                                 {secciones.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                                    <button
+                                        key={s.id}
+                                        type="button"
+                                        className={`config-chip-seccion ${cfg.seccionId === s.id ? 'activo' : ''}`}
+                                        onClick={() => cfg.setSeccionId(s.id)}
+                                        aria-pressed={cfg.seccionId === s.id}
+                                    >{s.nombre}</button>
                                 ))}
-                            </select>
-                        </label>
+                            </div>
+                        </div>
 
                         <button
                             type="button"
@@ -98,7 +147,7 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
                             onClick={() => cfg.setGuiaAudio(!cfg.guiaAudio)}
                         >
                             <Volume2 size={16} />
-                            <span>Guia de audio del maestro</span>
+                            <span>Guía de audio del maestro</span>
                             <span className="config-toggle-switch" aria-hidden="true">
                                 <span className="config-toggle-knob" />
                             </span>
