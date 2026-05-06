@@ -152,30 +152,46 @@ export const usePointerAcordeon = ({
         // Touch events son MÁS confiables en iOS Safari para drag continuo:
         // - No tienen el bug de implicit capture.
         // - clientX/Y se entregan correctamente aunque el dedo se mueva fuera del target inicial.
-        // - getCoalescedEvents-equivalente: e.changedTouches contiene cada touch individual.
-        // preventDefault SOLO si el target es area de juego (pitos/fuelle/diapason). Si tocas
-        // el header del juego, modales o cualquier otro UI, dejamos pasar el touch para que
-        // los clicks de botones funcionen.
+        // - e.changedTouches contiene cada touch individual de este evento.
+        //
+        // ⚠️ IMPORTANTE — iterar por TOUCH, no por evento.
+        // Chrome Android puede coalesce varios touchstart en un solo evento cuando
+        // ocurren en el mismo tick (ej: dedo en fuelle + dedos en pitos casi a la vez).
+        // En ese caso `e.target` es el target de UN solo toque, pero `changedTouches`
+        // contiene varios. Si filtramos por `e.target` se descarta el evento entero
+        // y los pitos nunca se registran. Iteramos cada touch y filtramos su target
+        // individualmente — así los toques del fuelle se ignoran (no son area de juego)
+        // pero los toques de pitos en el mismo evento sí se registran.
         const handleTouchStart = (e: TouchEvent) => {
             if (desactivarAudioRef.current) return;
-            const target = e.target as HTMLElement;
-            if (!enAreaJuego(target)) return;
-            motorAudioPro.activarContexto();
+            let huboRegistro = false;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
-                registrarInicio(t.identifier, t.target as HTMLElement, t.clientX, t.clientY, e.timeStamp);
+                const tTarget = t.target as HTMLElement;
+                if (!enAreaJuego(tTarget)) continue;
+                if (!huboRegistro) {
+                    motorAudioPro.activarContexto();
+                    huboRegistro = true;
+                }
+                registrarInicio(t.identifier, tTarget, t.clientX, t.clientY, e.timeStamp);
             }
-            if (e.cancelable) e.preventDefault();
+            if (huboRegistro && e.cancelable) e.preventDefault();
         };
 
+        // touchmove: iterar todos los touches activos y procesar solo los que estén
+        // registrados en pointersMap. procesarPunto ya filtra por pointersMap (si el
+        // touch no está registrado, no hace nada), así que no necesita guarda de target.
+        // Esto permite que los movimientos de los pitos se procesen aun cuando hay un
+        // dedo en el fuelle activo simultaneamente.
         const handleTouchMove = (e: TouchEvent) => {
-            const target = e.target as HTMLElement;
-            if (!enAreaJuego(target)) return;
+            let huboProceso = false;
             for (let i = 0; i < e.touches.length; i++) {
                 const t = e.touches[i];
+                if (!pointersMap.current.has(t.identifier)) continue;
                 procesarPunto(t.identifier, t.clientX, t.clientY, e.timeStamp);
+                huboProceso = true;
             }
-            if (e.cancelable) e.preventDefault();
+            if (huboProceso && e.cancelable) e.preventDefault();
         };
 
         const handleTouchEnd = (e: TouchEvent) => {
