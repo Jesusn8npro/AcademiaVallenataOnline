@@ -91,7 +91,7 @@ export const usePointerAcordeon = ({
             const pos = encontrarPosEnPunto(clientX, clientY, data.pos || null);
             if (pos !== data.pos) {
                 if (data.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                     actualizarVisualBoton(data.pos, false, false);
                     registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
                 }
@@ -100,7 +100,7 @@ export const usePointerAcordeon = ({
                     data.pos = pos;
                     data.musicalId = newMId;
                     data.ts = ts;
-                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, true);
+                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
                     actualizarVisualBoton(pos, true, false);
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
@@ -124,7 +124,7 @@ export const usePointerAcordeon = ({
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(id, { pos, musicalId: mId, ts });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, true);
+                logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
                 actualizarVisualBoton(pos, true, false);
                 registrarEvento('nota_on', { id: mId, pos });
             } else if (esAreaJuego) {
@@ -135,7 +135,7 @@ export const usePointerAcordeon = ({
         const registrarFin = (id: number) => {
             const data = pointersMap.current.get(id);
             if (data?.pos) {
-                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                 actualizarVisualBoton(data.pos, false, false);
                 registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
             }
@@ -288,7 +288,7 @@ export const usePointerAcordeon = ({
             muertos.forEach(pId => {
                 const data = pointersMap.current.get(pId);
                 if (data?.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                     actualizarVisualBoton(data.pos, false, false);
                 }
                 pointersMap.current.delete(pId);
@@ -300,7 +300,7 @@ export const usePointerAcordeon = ({
             if (pointersMap.current.size === 0) return;
             pointersMap.current.forEach((data) => {
                 if (data.pos) {
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, true);
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                     actualizarVisualBoton(data.pos, false, false);
                 }
             });
