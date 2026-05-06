@@ -1,6 +1,6 @@
-/* Modo FOCO — minimalismo extremo. Solo la nota actual destaca, la siguiente
-   aparece como preview pequeno y tenue. Pensado para mobile pequeno y
-   canciones rapidas donde el "highway" satura. */
+/* Modo FOCO — tile arriba en la pista (no sobre el pito) con flecha hacia
+   abajo apuntando al pito objetivo. Acordes muestran varias tiles
+   alineadas al X de cada pito. La tile NO tapa el nombre del pito. */
 
 .pista-notas-foco {
     position: absolute;
@@ -9,81 +9,123 @@
     right: 0;
     bottom: 0;
     pointer-events: none;
-    z-index: 5;
+    z-index: 50;
     overflow: hidden;
 }
 
 @media (max-width: 720px) { .pista-notas-foco { top: 44px; } }
 
-/* Tile grande sobre el pito que toca pisar AHORA */
-.foco-tile {
+/* Banner de direccion arriba al centro */
+.foco-direccion {
     position: absolute;
-    transform: translate(-50%, -50%);
-    border-radius: 18%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    border-radius: 999px;
     font-family: 'Raleway', system-ui, sans-serif;
     font-weight: 900;
-    font-size: 1.5rem;
-    letter-spacing: 1px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
-    animation: foco-tile-aparecer 0.18s ease-out, foco-tile-pulso 1s ease-in-out infinite;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+    z-index: 60;
+}
+
+.foco-direccion.abriendo {
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+    border: 2px solid rgba(147, 197, 253, 0.7);
+}
+
+.foco-direccion.cerrando {
+    background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+    border: 2px solid rgba(252, 165, 165, 0.7);
+}
+
+/* Tile con el nombre del pito y flecha grande */
+.foco-tile {
+    position: absolute;
+    transform: translateX(-50%);
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.65);
+    animation: foco-tile-pulso 0.85s ease-in-out infinite;
     will-change: transform;
 }
 
 .foco-tile.abriendo {
-    background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 70%, #1e40af 100%);
+    background: linear-gradient(160deg, #1d4ed8 0%, #3b82f6 60%, #1e3a8a 100%);
     border: 3px solid #93c5fd;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 .foco-tile.cerrando {
-    background: linear-gradient(160deg, #b91c1c 0%, #ef4444 70%, #991b1b 100%);
+    background: linear-gradient(160deg, #b91c1c 0%, #ef4444 60%, #7f1d1d 100%);
     border: 3px solid #fca5a5;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
-.foco-tile-letra {
-    font-size: 1.65rem;
+.foco-tile-nombre {
+    font-size: 1.45rem;
+    font-weight: 900;
     line-height: 1;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-@keyframes foco-tile-aparecer {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.foco-tile-flecha {
+    font-size: 1.5rem;
+    line-height: 1;
+    margin-top: 4px;
+    opacity: 0.95;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    animation: foco-flecha-bajar 0.85s ease-in-out infinite;
 }
 
 @keyframes foco-tile-pulso {
-    0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
-    50% { filter: brightness(1.18) drop-shadow(0 0 14px rgba(255, 255, 255, 0.5)); }
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)); }
 }
 
-/* Preview tenue de la siguiente nota — solo orientacion de hacia donde va */
-.foco-preview {
+@keyframes foco-flecha-bajar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+}
+
+/* Conector visual entre la tile y el pito */
+.foco-conector {
     position: absolute;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-family: 'Raleway', system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    opacity: 0.32;
-    border: 1px dashed rgba(255, 255, 255, 0.35);
+    width: 4px;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    opacity: 0.55;
+    animation: foco-conector-pulso 0.85s ease-in-out infinite;
 }
 
-.foco-preview.abriendo {
-    background: rgba(59, 130, 246, 0.18);
+.foco-conector.abriendo {
+    background: linear-gradient(to bottom, #93c5fd 0%, rgba(59, 130, 246, 0.85) 50%, transparent 100%);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
 }
-.foco-preview.cerrando {
-    background: rgba(239, 68, 68, 0.18);
+
+.foco-conector.cerrando {
+    background: linear-gradient(to bottom, #fca5a5 0%, rgba(239, 68, 68, 0.85) 50%, transparent 100%);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+@keyframes foco-conector-pulso {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
 }
 
 @media (max-width: 720px) {
-    .foco-tile-letra { font-size: 1.3rem; }
-    .foco-preview { font-size: 0.62rem; }
+    .foco-tile { width: 64px; height: 64px; }
+    .foco-tile-nombre { font-size: 1.2rem; }
+    .foco-tile-flecha { font-size: 1.25rem; }
+    .foco-direccion { font-size: 0.78rem; padding: 5px 12px; letter-spacing: 1.4px; }
 }
