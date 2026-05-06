@@ -5,12 +5,15 @@
    pausa hasta que el alumno pisa el boton correcto.
    ────────────────────────────────────────────────────────── */
 
+/* La cajita debe llegar hasta justo encima de los pitos (sin hueco negro).
+   En landscape mobile los pitos ocupan ~50% inferior; la pista llena el
+   resto desde el header hasta el borde superior del acordeon. */
 .pista-notas-boxed {
     position: fixed;
     top: 48px;
     left: 0;
     right: 0;
-    height: 25vh;
+    height: 50vh;
     pointer-events: none;
     z-index: 600;
     overflow: hidden;
@@ -22,7 +25,7 @@
 }
 
 @media (max-width: 480px) {
-    .pista-notas-boxed { top: 44px; height: 22vh; }
+    .pista-notas-boxed { top: 44px; height: 48vh; }
 }
 
 .nota-boxed {

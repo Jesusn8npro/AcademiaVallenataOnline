@@ -13,8 +13,9 @@ interface NotaEnVuelo {
     id: string;
     botonId: string;
     fuelle: 'abriendo' | 'cerrando';
-    progreso: number;
-    progresoFinal: number;  // Posicion del END de la nota (cabeza + duracion)
+    progreso: number;       // Clamp [0, 1.05] — para posicionar la cabeza visualmente.
+    progresoCrudo: number;  // Sin clamp — para fade-out post-impacto y consumo de cola.
+    progresoFinal: number;  // Posicion del END de la nota (sigue avanzando durante sustain)
     duracion: number;       // En ticks
     impactada: boolean;
     esFallada: boolean;
@@ -94,13 +95,16 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
             const id = `${nota.tick}-${nota.botonId}`;
             const impactada = notasImpactadas?.has(id) ?? false;
             const esFallada = progresoCrudo > 1.0 && !impactada;
-            const progresoFinal = Math.max(0, progreso - duracion / TICKS_VIAJE);
+            // progresoFinal usa progresoCrudo (no clamp): durante el sustain la cola
+            // sigue avanzando hasta consumirse cuando progresoCrudo - duracion/T = progresoCrudo final.
+            const progresoFinal = Math.max(0, progresoCrudo - duracion / TICKS_VIAJE);
 
             result.push({
                 id,
                 botonId: nota.botonId,
                 fuelle: nota.fuelle === 'abriendo' ? 'abriendo' : 'cerrando',
                 progreso,
+                progresoCrudo,
                 progresoFinal,
                 duracion,
                 impactada,
@@ -142,13 +146,15 @@ const PistaNotasVertical: React.FC<PistaNotasVerticalProps> = ({
                 const rgb = n.esFallada
                     ? '102, 102, 102'
                     : (n.fuelle === 'abriendo' ? '59, 130, 246' : '239, 68, 68');
-                // Opacidad: visible normal por default; cuando hay una nota
-                // inminente, las que vienen lejos (progreso < 0.55) se atenuan
-                // a 0.35 para no tapar la vista del impacto que viene.
+                // Opacidad. Notas no-impactadas que pasaron del target hacen fade
+                // rapido (usar progresoCrudo, no progreso clamp); notas impactadas
+                // sostenidas se mantienen visibles hasta que la cola se consume,
+                // luego fade. Las lejanas se atenuan cuando hay nota inminente.
+                const colaConsumida = n.duracion > 30 && n.progresoFinal >= n.progreso - 0.005;
                 const opacidad = n.impactada
-                    ? 1
-                    : n.progreso > 1.05
-                        ? Math.max(0, 1 - (n.progreso - 1.05) / 0.05)
+                    ? (colaConsumida ? Math.max(0, 1 - (n.progresoCrudo - 1.0) / 0.15) : 1)
+                    : n.progresoCrudo > 1.05
+                        ? Math.max(0, 1 - (n.progresoCrudo - 1.05) / 0.08)
                         : hayInminente && n.progreso < 0.55
                             ? 0.35
                             : 1;
