@@ -3,7 +3,7 @@ import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
-import BarraTransporte from '../../AcordeonProMax/Modos/BarraTransporte';
+import BarraMaestroMobile from './BarraMaestroMobile';
 import HeaderJuegoSimulador from './HeaderJuegoSimulador';
 import PantallaResultadosSimulador from './PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './PantallaGameOverSimulador';
@@ -229,29 +229,24 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 manejarCambioFuelle={manejarCambioFuelle}
             />
 
-            {/* Barra de transporte estilo modo Maestro de ProMax: solo aparece
-                cuando el modo elegido es 'maestro_solo'. Permite scrubber, BPM,
-                loop A/B, adelantar/retroceder. Reusa el componente directamente
-                sin duplicar codigo. */}
+            {/* Barra Maestro compacta solo cuando modo === 'maestro_solo'.
+                Componente mobile-first con una sola fila de controles. */}
             {modoActual === 'maestro_solo' && (
                 <div className="juego-sim-barra-maestro">
-                    <BarraTransporte
+                    <BarraMaestroMobile
                         reproduciendo={hero.reproduciendo}
                         pausado={hero.pausado}
                         onAlternarPausa={hero.alternarPausa}
-                        onDetener={() => { if (hero.reproduciendo) hero.alternarPausa(); hero.buscarTick(0); }}
                         tickActual={hero.tickActual}
                         totalTicks={hero.totalTicks}
                         onBuscarTick={hero.buscarTick}
                         bpm={hero.bpm}
+                        onCambiarBpm={hero.cambiarBpm}
                         loopAB={hero.loopAB}
                         onMarcarLoopInicio={hero.marcarLoopInicio}
                         onMarcarLoopFin={hero.marcarLoopFin}
-                        onActualizarLoopInicio={hero.actualizarLoopInicioTick}
-                        onActualizarLoopFin={hero.actualizarLoopFinTick}
                         onAlternarLoop={hero.alternarLoopAB}
                         onLimpiarLoop={hero.limpiarLoopAB}
-                        onCambiarBpm={hero.cambiarBpm}
                     />
                 </div>
             )}
