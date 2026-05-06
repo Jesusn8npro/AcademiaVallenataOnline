@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, startTransition } from 'react';
 import { MotionValue } from 'framer-motion';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 
@@ -62,6 +62,12 @@ export const usePointerAcordeon = ({
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, 0)) return posActual;
             }
+            // Match exacto sobre rectsCache antes de elementFromPoint: en
+            // touchstart sin posActual, evita los 5-10ms del hit-test nativo
+            // cuando el dedo cae claramente dentro de un pito conocido.
+            for (const [pos, r] of rectsCache.current.entries()) {
+                if (dentroDe(clientX, clientY, r, 0)) return pos;
+            }
             const target = document.elementFromPoint(clientX, clientY);
             if (target) {
                 const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
@@ -81,10 +87,11 @@ export const usePointerAcordeon = ({
 
         // Procesa una posición individual del dedo (extraído para reusar entre touch/move/coalesced).
         // Orden critico: actualizarVisualBoton PRIMERO (DOM directo, sincrono al
-        // touch event) y actualizarBotonActivo despues (dispara onNotaPresionada
-        // -> procesarGolpeAlumno -> 6 setStates en cascada). En Android low-end
-        // los setStates ceden el main thread durante 5-15ms, lo que crea latencia
-        // perceptible si el visual va despues del motor.
+        // touch event) y actualizarBotonActivo despues envuelto en startTransition
+        // (los setStates en cascada -> procesarGolpeAlumno -> notas/guia/maestro/
+        // mensaje/feedback/estado se marcan como non-urgent, React no los procesa
+        // hasta despues del paint del DOM directo). Esto da el feedback visual
+        // inmediato en Android low-end.
         const procesarPunto = (id: number, clientX: number, clientY: number, ts: number) => {
             const data = pointersMap.current.get(id);
             if (!data) return;
@@ -92,8 +99,12 @@ export const usePointerAcordeon = ({
             if (pos !== data.pos) {
                 if (data.pos) {
                     actualizarVisualBoton(data.pos, false, false);
-                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
-                    registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                    const oldMId = data.musicalId;
+                    const oldPos = data.pos;
+                    startTransition(() => {
+                        logicaRef.current.actualizarBotonActivo(oldMId, 'remove', null, false);
+                    });
+                    registrarEvento('nota_off', { id: oldMId, pos: oldPos });
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
@@ -101,7 +112,9 @@ export const usePointerAcordeon = ({
                     data.musicalId = newMId;
                     data.ts = ts;
                     actualizarVisualBoton(pos, true, false);
-                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
+                    startTransition(() => {
+                        logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
+                    });
                     registrarEvento('nota_on', { id: newMId, pos });
                 } else {
                     data.pos = '';
@@ -115,18 +128,22 @@ export const usePointerAcordeon = ({
 
         const registrarInicio = (id: number, target: HTMLElement, clientX: number, clientY: number, ts: number) => {
             if (target.closest('.indicador-fuelle') || target.closest('.barra-herramientas-contenedor')) return;
-            actualizarGeometria();
+            // No recalcular geometria aqui: actualizarGeometria itera ~33 pitos
+            // con getBoundingClientRect (~15ms en Android low-end). Los listeners
+            // de resize/orientation/escala ya mantienen el cache fresco.
             const pos = encontrarPosEnPunto(clientX, clientY);
             const esToqueFuelle = !!target.closest('.seccion-bajos-contenedor');
             const esAreaJuego = !!(target.closest('.pito-boton') || esToqueFuelle || target.closest('.diapason-marco'));
 
             if (pos) {
-                // Visual primero (sincrono) — ver comentario en procesarPunto.
+                // Visual primero (sincrono), motor con startTransition.
                 actualizarVisualBoton(pos, true, false);
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(id, { pos, musicalId: mId, ts });
-                logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
+                startTransition(() => {
+                    logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
+                });
                 registrarEvento('nota_on', { id: mId, pos });
             } else if (esAreaJuego) {
                 pointersMap.current.set(id, { pos: '', musicalId: '', ts });
@@ -136,10 +153,13 @@ export const usePointerAcordeon = ({
         const registrarFin = (id: number) => {
             const data = pointersMap.current.get(id);
             if (data?.pos) {
-                // Visual primero — ver comentario en procesarPunto.
                 actualizarVisualBoton(data.pos, false, false);
-                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
-                registrarEvento('nota_off', { id: data.musicalId, pos: data.pos });
+                const mId = data.musicalId;
+                const pos = data.pos;
+                startTransition(() => {
+                    logicaRef.current.actualizarBotonActivo(mId, 'remove', null, false);
+                });
+                registrarEvento('nota_off', { id: mId, pos });
             }
             pointersMap.current.delete(id);
             if (pointersMap.current.size === 0) {
