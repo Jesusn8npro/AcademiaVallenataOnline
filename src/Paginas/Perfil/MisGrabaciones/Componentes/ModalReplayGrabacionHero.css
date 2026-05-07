@@ -222,7 +222,10 @@
         radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 35%),
         linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.92));
     border: 1px solid rgba(255, 255, 255, 0.06);
-    min-height: 220px;
+    /* Min-height escala con viewport para que el acordeon (980x980 base,
+       escalado por --grabaciones-replay-scale) quepa entero sin que se
+       le corten los pitos arriba/abajo. */
+    min-height: clamp(340px, 55vw, 720px);
     display: flex;
     align-items: center;
     justify-content: center;
