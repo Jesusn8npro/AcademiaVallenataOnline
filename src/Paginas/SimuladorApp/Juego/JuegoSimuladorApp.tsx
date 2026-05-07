@@ -136,10 +136,13 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
     const logica = hero?.logica;
 
-    // Audio del acordeon gateado por estado: solo suena cuando 'jugando'.
-    // Pausado, resultados, gameOver, contando o seleccion silencian los pitos
-    // para que tocar al fondo de un modal no produzca sonido.
-    const audioPitosGateado = hero?.estadoJuego !== 'jugando' || menuPausaAbierto;
+    // Audio del acordeon gateado por estado: suena cuando 'jugando' Y cuando
+    // 'pausado_synthesia' (Synthesia detiene la cancion esperando que el alumno
+    // pise la nota; sin permitir touch en ese estado, en mobile no se puede
+    // avanzar — el teclado en desktop ignora este gate, por eso desktop funciona).
+    // Resultados, gameOver, contando, seleccion o pausa real silencian los pitos.
+    const estadoActivo = hero?.estadoJuego === 'jugando' || hero?.estadoJuego === 'pausado_synthesia';
+    const audioPitosGateado = !estadoActivo || menuPausaAbierto;
     const { limpiarGeometria, manejarCambioFuelle } = usePointerAcordeon({
         x,
         logica: logica || ({} as any),

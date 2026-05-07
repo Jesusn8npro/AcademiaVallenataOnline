@@ -9,6 +9,7 @@ import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
 import { useGrabacionProMax } from '../AcordeonProMax/Hooks/useGrabacionProMax';
 import { obtenerGrabacion } from '../../servicios/grabacionesHeroService';
 import { useReproductorLoops } from './Hooks/useReproductorLoops';
+import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 
@@ -159,11 +160,32 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // alimentar `desactivarAudio` (que se pasa a usePointerAcordeon).
     const [enReproduccion, setEnReproduccion] = useState(false);
     const [errorReproduccion, setErrorReproduccion] = useState<string | null>(null);
+    // Si la grabacion en curso de replay traia metronomo, prendemos/apagamos
+    // metronomoReplay siguiendo el estado del reproductor.
+    const [replayConMetronomo, setReplayConMetronomo] = useState(false);
 
     // Hook de loops/pistas: el audio vive aqui (no en el modal) para que
     // siga sonando aunque el modal se cierre. La barra de herramientas usa
     // `pistaActiva` para mostrar un indicador en el icono LOOPS.
     const loops = useReproductorLoops();
+
+    // Metronomo en VIVO: lifted aqui para que (a) siga sonando al cerrar el modal
+    // y (b) podamos resetearlo al iniciar REC y capturar su snapshot al detener.
+    // Sin esto, useMetronomo vivia dentro de ModalMetronomo → al cerrar el modal
+    // se desmontaba y el metronomo callaba.
+    const metronomoVivo = useMetronomo(bpmMetronomo);
+    useEffect(() => { metronomoVivo.setBpm(bpmMetronomo); }, [bpmMetronomo]);
+
+    // Metronomo de REPLAY: instancia independiente para reproducir el metronomo
+    // de una grabacion sin pisar el estado del metronomo vivo del usuario.
+    const metronomoReplay = useMetronomo(120);
+
+    // Snapshot del metronomo capturado al iniciar REC. Si estaba activo,
+    // resetamos a beat 0 y lo guardamos en metadata al detener.
+    const metronomoEnRecRef = useRef<{
+        activo: boolean; bpm: number; compas: number; subdivision: number;
+        sonido: any; volumen: number;
+    } | null>(null);
 
     const desactivarAudio = useMemo(
         () => enReproduccion || Object.values(modales).some(v => v),
@@ -265,6 +287,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             if (loops.pistaActiva) loops.detener();
             detenerAudioFondoReplay();
 
+            // Si el usuario tenia el metronomo en vivo prendido, lo apagamos
+            // para no encimar con el del replay.
+            if (metronomoVivo.activo) metronomoVivo.detener();
+
             // Aplicar tonalidad de la grabacion para que los pitos coincidan.
             if (g.tonalidad) logica.setTonalidadSeleccionada(g.tonalidad);
             const bpm = g.bpm || 120;
@@ -280,8 +306,24 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             // Sin pista, arrancamos las notas directamente (caso simple).
             const meta = g.metadata || {};
             const audioFondoUrl: string | null = meta.audio_fondo_url || null;
+            const metMeta = meta.metronomo || null;
+
+            // Aplicar config del metronomo de la grabacion al instance de replay.
+            // El arranque (setActivo) lo maneja el effect que lo sincroniza con
+            // reproductor.reproduciendo + !pausado.
+            if (metMeta) {
+                if (typeof metMeta.bpm === 'number') metronomoReplay.setBpm(metMeta.bpm);
+                if (typeof metMeta.compas === 'number') metronomoReplay.setCompas(metMeta.compas);
+                if (typeof metMeta.subdivision === 'number') metronomoReplay.setSubdivision(metMeta.subdivision);
+                if (typeof metMeta.volumen === 'number') metronomoReplay.setVolumen(metMeta.volumen);
+                if (typeof metMeta.sonido === 'string') metronomoReplay.setSonidoEfecto(metMeta.sonido);
+                setReplayConMetronomo(true);
+            } else {
+                setReplayConMetronomo(false);
+            }
             console.log('[Replay] metadata leida:', meta);
             console.log('[Replay] audio_fondo_url:', audioFondoUrl, '| velocidad:', meta.pista_velocidad, '| offset:', meta.pista_offset_segundos);
+            console.log('[Replay] metronomo:', metMeta);
             if (audioFondoUrl) {
                 const audio = new Audio(audioFondoUrl);
                 audio.loop = true;
@@ -375,8 +417,25 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const detenerReproduccion = useCallback(() => {
         reproductor.detenerReproduccion();
         detenerAudioFondoReplay();
+        if (metronomoReplay.activo) metronomoReplay.detener();
+        setReplayConMetronomo(false);
         setEnReproduccion(false);
-    }, [reproductor, detenerAudioFondoReplay]);
+    }, [reproductor, detenerAudioFondoReplay, metronomoReplay]);
+
+    // Sincroniza el metronomo de replay con el reproductor: arranca cuando empieza
+    // la reproduccion (en sync con la primera nota), se apaga al pausar/terminar.
+    // Igual que useReproductorReplay (Mis Grabaciones), al pausar+resumir el
+    // metronomo reinicia desde beat 0 — es la misma limitacion del patron, lo
+    // aceptamos porque el alumno rara vez pausa mid-replay del simulador.
+    useEffect(() => {
+        if (!replayConMetronomo) {
+            if (metronomoReplay.activo) metronomoReplay.detener();
+            return;
+        }
+        const debeSonar = enReproduccion && !reproductor.pausado;
+        if (debeSonar && !metronomoReplay.activo) metronomoReplay.iniciar();
+        else if (!debeSonar && metronomoReplay.activo) metronomoReplay.detener();
+    }, [replayConMetronomo, enReproduccion, reproductor.pausado, metronomoReplay]);
 
     // Si la reproduccion termina sola (no por click en stop), tambien
     // cortar el audio de fondo. El useEffect de detectar fin se encarga
@@ -495,17 +554,33 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             // Capturamos la posicion del loop AHORA, justo antes de iniciar
             // la captura. La diferencia entre estas dos lineas es micro-segundos.
             loopOffsetAtRecordStartRef.current = loops.obtenerPosicion();
+
+            // Metronomo: si esta activo, reseteamos a beat 0 para que el primer
+            // click coincida con t=0 de la grabacion. Sin reset, los clicks caen
+            // en momentos arbitrarios respecto al inicio de la captura → el replay
+            // no puede reconstruir el alineamiento.
+            if (metronomoVivo.activo) {
+                metronomoEnRecRef.current = {
+                    activo: true,
+                    bpm: metronomoVivo.bpm,
+                    compas: metronomoVivo.compas,
+                    subdivision: metronomoVivo.subdivision,
+                    sonido: metronomoVivo.sonidoEfecto,
+                    volumen: metronomoVivo.volumen,
+                };
+                metronomoVivo.detener();
+                metronomoVivo.iniciar();
+            } else {
+                metronomoEnRecRef.current = null;
+            }
+
             grabacion.iniciarGrabacionPracticaLibre('practica_libre');
-            console.log('[REC start]', {
-                pista: loops.pistaActiva?.nombre,
-                velocidad: loops.velocidad,
-                offset: loopOffsetAtRecordStartRef.current,
-            });
         } else {
             // Si hay un loop sonando, lo guardamos en metadata para que el replay
             // pueda reproducirlo a la velocidad/volumen exacta que el alumno uso,
             // empezando desde el mismo offset musical (sync perfecto con las notas).
             const pista = loops.pistaActiva;
+            const snapMet = metronomoEnRecRef.current;
             const metadata = {
                 origen: 'simulador_app',
                 vista_preferida: 'movil',
@@ -517,8 +592,11 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     pista_volumen: loops.volumen,
                     pista_offset_segundos: loopOffsetAtRecordStartRef.current,
                 } : {}),
+                // Metronomo: snapshot tomado al iniciar REC. El replay arranca
+                // un metronomo nuevo con esta config en sync con las notas.
+                ...(snapMet ? { metronomo: snapMet } : {}),
             };
-            console.log('[REC stop] metadata a guardar:', metadata);
+            metronomoEnRecRef.current = null;
             grabacion.detenerGrabacionPracticaLibre(metadata);
         }
     };
@@ -627,7 +705,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 botonRef={refsModales.vista as any}
             />
 
-            <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} />
+            <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} met={metronomoVivo} />
 
             <ModalLoops
                 visible={modales.loops}
