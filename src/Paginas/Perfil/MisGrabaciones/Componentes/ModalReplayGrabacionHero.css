@@ -56,7 +56,10 @@
     cursor: pointer;
     transition: background 0.15s ease;
 }
-.grabaciones-hero-modal-cerrar:hover { background: rgba(255, 255, 255, 0.14); }
+
+.grabaciones-hero-modal-cerrar:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
 
 /* ─── Header ───────────────────────────────────────────────────────────── */
 .grabaciones-hero-modal-encabezado {
@@ -106,10 +109,25 @@
     font-weight: 800;
 }
 
-.grabaciones-hero-badge.competencia { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
-.grabaciones-hero-badge.practica    { background: rgba(34, 197, 94, 0.16);  color: #86efac; }
-.grabaciones-hero-badge.precision   { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
-.grabaciones-hero-badge.audio       { background: rgba(6, 182, 212, 0.16);  color: #a5f3fc; }
+.grabaciones-hero-badge.competencia {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fcd34d;
+}
+
+.grabaciones-hero-badge.practica {
+    background: rgba(34, 197, 94, 0.16);
+    color: #86efac;
+}
+
+.grabaciones-hero-badge.precision {
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+}
+
+.grabaciones-hero-badge.audio {
+    background: rgba(6, 182, 212, 0.16);
+    color: #a5f3fc;
+}
 
 /* ─── Métricas (BPM / Tonalidad / Notas / Puntos) ─────────────────────── */
 .grabaciones-hero-modal-metricas {
@@ -133,7 +151,9 @@
     font-size: 0.72rem;
 }
 
-.grabaciones-hero-modal-metricas strong { font-size: 0.95rem; }
+.grabaciones-hero-modal-metricas strong {
+    font-size: 0.95rem;
+}
 
 /* ─── Toggle Escritorio / Móvil ────────────────────────────────────────── */
 .grabaciones-hero-replay-vista-toggle {
@@ -163,7 +183,11 @@
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
-.grabaciones-hero-replay-vista-btn:hover { color: #fff; }
+
+.grabaciones-hero-replay-vista-btn:hover {
+    color: #fff;
+}
+
 .grabaciones-hero-replay-vista-btn.activa {
     background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
     color: #fff;
@@ -179,13 +203,15 @@
     flex: 1 1 auto;
 }
 
-/* Bajo 1100px o si la altura es chica: una columna, escenario primero. */
-@media (max-width: 1100px) {
+/* En <=840px cada contenedor toma 100% (escenario arriba, panel abajo). */
+@media (max-width: 840px) {
     .grabaciones-hero-replay-layout {
         grid-template-columns: 1fr;
         grid-template-rows: minmax(0, 1fr) auto;
     }
 }
+
+
 
 /* ─── Escenario (donde vive el acordeón) ─────────────────────────────── */
 .grabaciones-hero-replay-escenario {
@@ -222,11 +248,13 @@
     transform: translateY(5px) scale(0.98) !important;
     box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 255, 255, 0.2) !important;
 }
+
 .grabaciones-hero-replay-escenario .boton.halar.activo {
     background: rgba(59, 130, 246, 0.92) !important;
     border: 3px solid #60a5fa !important;
     box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.38), 0 0 22px rgba(96, 165, 250, 0.85) !important;
 }
+
 .grabaciones-hero-replay-escenario .boton.empujar.activo {
     background: rgba(249, 115, 22, 0.94) !important;
     border: 3px solid #fb923c !important;
@@ -271,8 +299,15 @@
     color: rgba(255, 255, 255, 0.72);
     font-size: 0.82rem;
 }
-.grabaciones-hero-replay-progreso-texto strong { color: #fff; }
-.grabaciones-hero-replay-slider { width: 100%; accent-color: #3b82f6; }
+
+.grabaciones-hero-replay-progreso-texto strong {
+    color: #fff;
+}
+
+.grabaciones-hero-replay-slider {
+    width: 100%;
+    accent-color: #3b82f6;
+}
 
 .grabaciones-hero-replay-acciones {
     display: flex;
@@ -296,15 +331,24 @@
     flex: 1 1 auto;
     transition: background 0.15s ease;
 }
-.grabaciones-hero-replay-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+.grabaciones-hero-replay-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .grabaciones-hero-replay-btn.primaria {
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     border: none;
 }
+
 .grabaciones-hero-replay-btn.primaria:hover {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
-.grabaciones-hero-replay-btn:disabled { cursor: not-allowed; opacity: 0.65; }
+
+.grabaciones-hero-replay-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
 
 .grabaciones-hero-replay-btn.ir-simulador {
     flex: 1 1 100%;
@@ -312,6 +356,7 @@
     border: none;
     color: #fff;
 }
+
 .grabaciones-hero-replay-btn.ir-simulador:hover {
     background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
@@ -327,10 +372,12 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
     overflow: hidden;
 }
+
 .grabaciones-hero-replay-descripcion h3 {
     margin: 0 0 6px;
     font-size: 0.92rem;
 }
+
 .grabaciones-hero-replay-descripcion p {
     margin: 0;
     flex: 1 1 auto;
@@ -340,11 +387,4 @@
     color: rgba(255, 255, 255, 0.74);
     font-size: 0.85rem;
     line-height: 1.55;
-}
-
-/* ─── Refinamientos por viewport ──────────────────────────────────────── */
-@media (max-width: 720px) {
-    .grabaciones-hero-modal { padding: 14px; gap: 12px; }
-    .grabaciones-hero-modal-encabezado { padding-right: 44px; }
-    .grabaciones-hero-replay-acciones { gap: 6px; }
 }
