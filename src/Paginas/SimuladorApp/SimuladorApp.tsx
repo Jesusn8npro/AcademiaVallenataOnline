@@ -15,8 +15,8 @@ import ModalTonalidades from './Componentes/BarraHerramientas/ModalTonalidades';
 import ModalVista from './Componentes/BarraHerramientas/ModalVista';
 import ModalMetronomo from './Componentes/BarraHerramientas/ModalMetronomo';
 import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos';
-import PantallaAprende from './Juego/PantallaAprende';
-import type { ConfigCancion } from './Juego/useConfigCancion';
+import PantallaAprende from './Juego/Pantallas/PantallaAprende';
+import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
 import JuegoSimuladorApp from './Juego/JuegoSimuladorApp';
 
 import './SimuladorApp.css';

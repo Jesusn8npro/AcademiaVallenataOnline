@@ -1,8 +1,8 @@
 import React from 'react';
 import { RotateCcw, ArrowLeft, X, Skull } from 'lucide-react';
-import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
-import { calcularPrecision } from '../../AcordeonProMax/TiposProMax';
-import RecomendacionMaestro from './RecomendacionMaestro';
+import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
+import { calcularPrecision } from '../../../AcordeonProMax/TiposProMax';
+import RecomendacionMaestro from '../Piezas/RecomendacionMaestro';
 import './PantallaGameOverSimulador.css';
 
 interface Props {

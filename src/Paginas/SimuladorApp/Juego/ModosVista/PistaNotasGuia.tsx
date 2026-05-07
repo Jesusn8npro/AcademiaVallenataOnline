@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
-import PistaNotasVertical from './PistaNotasVertical';
+import { TICKS_VIAJE } from '../../../AcordeonProMax/TiposProMax';
+import ModoVistaLibre from './ModoVistaLibre';
 import './PistaNotasGuia.css';
 
 // Modo GUIA — REUSA todo el render de la pista vertical (notas cayendo desde
@@ -41,7 +41,7 @@ const PistaNotasGuia: React.FC<Props> = ({ cancion, tickActual, notasImpactadas,
 
     return (
         <>
-            <PistaNotasVertical
+            <ModoVistaLibre
                 cancion={cancion}
                 tickActual={tickActual}
                 notasImpactadas={notasImpactadas}

@@ -3,21 +3,22 @@ import { motion, useMotionValue } from 'framer-motion';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
-import BarraMaestroMobile from './BarraMaestroMobile';
-import HeaderJuegoSimulador from './HeaderJuegoSimulador';
-import PantallaResultadosSimulador from './PantallaResultadosSimulador';
-import PantallaGameOverSimulador from './PantallaGameOverSimulador';
-import PistaNotasVertical from './PistaNotasVertical';
-import PistaNotasBoxed from './PistaNotasBoxed';
-import PistaNotasGuia from './PistaNotasGuia';
-import PistaNotasFoco from './PistaNotasFoco';
-import PistaNotasCarril from './PistaNotasCarril';
-import HilerasPitos from './HilerasPitos';
-import FuelleZonaJuego from './FuelleZonaJuego';
-import SelectorModoVisual from './SelectorModoVisual';
-import { useGuiaPitoObjetivo } from './useGuiaPitoObjetivo';
-import { useModoVisualPersistido } from './useModoVisualPersistido';
-import type { ConfigCancion, ModoJuego as ModoConfig } from './useConfigCancion';
+import BarraMaestroMobile from './Piezas/BarraMaestroMobile';
+import HeaderJuegoSimulador from './Piezas/HeaderJuegoSimulador';
+import PantallaResultadosSimulador from './Pantallas/PantallaResultadosSimulador';
+import PantallaGameOverSimulador from './Pantallas/PantallaGameOverSimulador';
+import ModoVistaLibre from './ModosVista/ModoVistaLibre';
+import PistaNotasBoxed from './ModosVista/PistaNotasBoxed';
+import PistaNotasGuia from './ModosVista/PistaNotasGuia';
+import PistaNotasFoco from './ModosVista/PistaNotasFoco';
+import PistaNotasCarril from './ModosVista/PistaNotasCarril';
+import HilerasPitos from './Piezas/HilerasPitos';
+import FuelleZonaJuego from './Piezas/FuelleZonaJuego';
+import SelectorModoVisual from './Piezas/SelectorModoVisual';
+import JuicioJuego from './Piezas/JuicioJuego';
+import { useGuiaPitoObjetivo } from './Hooks/useGuiaPitoObjetivo';
+import { useModoVisualPersistido } from './Hooks/useModoVisualPersistido';
+import type { ConfigCancion, ModoJuego as ModoConfig } from './Hooks/useConfigCancion';
 import '../SimuladorApp.css';
 import './JuegoSimuladorApp.css';
 
@@ -94,11 +95,16 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     }, [hero, config]);
 
     // Si el usuario cambia de modo visual mid-juego, ajusta el modoPractica.
+    // Dependemos del setter (estable, useCallback en useLogicaProMax) y NO
+    // de `hero` — useLogicaProMax retorna un objeto literal nuevo cada render,
+    // asi que `hero` como dep haria correr el effect cada render y pisaria
+    // setModoPractica('maestro_solo') al hacer click en Practicar.
+    const heroSetModoPractica = hero?.setModoPractica;
     useEffect(() => {
-        if (!inicializadoRef.current || typeof hero?.setModoPractica !== 'function') return;
+        if (!inicializadoRef.current || typeof heroSetModoPractica !== 'function') return;
         const modoPM = modoVisual === 'boxed' ? 'synthesia' : MAPA_MODO[config.modo];
-        hero.setModoPractica(modoPM);
-    }, [modoVisual, config.modo, hero]);
+        heroSetModoPractica(modoPM);
+    }, [modoVisual, config.modo, heroSetModoPractica]);
 
     // ─── Visualizacion imperativa de pitos (mismo patron que SimuladorApp)
     const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
@@ -118,13 +124,17 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
     const logica = hero?.logica;
 
+    // Audio del acordeon gateado por estado: solo suena cuando 'jugando'.
+    // Pausado, resultados, gameOver, contando o seleccion silencian los pitos
+    // para que tocar al fondo de un modal no produzca sonido.
+    const audioPitosGateado = hero?.estadoJuego !== 'jugando' || menuPausaAbierto;
     const { limpiarGeometria, manejarCambioFuelle } = usePointerAcordeon({
         x,
         logica: logica || ({} as any),
         actualizarVisualBoton,
         registrarEvento: () => {},
         trenRef,
-        desactivarAudio: hero?.estadoJuego === 'pausado',
+        desactivarAudio: audioPitosGateado,
     });
 
     // ─── Forzar tonalidad de la cancion (independencia total) ─
@@ -167,6 +177,11 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     const cancion = hero.cancionSeleccionada || config.cancion;
     const modoActual = hero.modoPractica;
     const esCompetitivo = modoActual === 'ninguno';
+    const modoEtiqueta: string =
+        modoActual === 'maestro_solo' ? 'MAESTRO'
+        : modoActual === 'synthesia'   ? 'SYNTH'
+        : modoActual === 'libre'       ? 'LIBRE'
+        : 'COMP';
     const enJuego = hero.estadoJuego === 'jugando' || hero.estadoJuego === 'pausado';
     const opacidadDano = esCompetitivo && enJuego
         ? Math.max(0, ((100 - (hero.estadisticas?.vida ?? 100)) / 100) * 0.88)
@@ -190,10 +205,19 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
     // Cambia el modo a maestro_solo y reinicia: el alumno practica la cancion
     // con barra de transporte (BPM, loop, scrubber) antes de competir de nuevo.
+    // Re-aplica explicitamente la seccion seleccionada para que el reinicio
+    // arranque desde la misma parte que estaba jugando (evita que el ref
+    // interno quede desincronizado del state al pasar por Resultados/GameOver).
+    // iniciarJuego(_, _, 'maestro_solo') ya salta el conteo y auto-arranca el
+    // audio + reloj — no hace falta llamar reproducir/play despues.
     const practicarEnModoMaestro = () => {
-        if (!hero.cancionSeleccionada) return;
+        const cancion = hero.cancionSeleccionada;
+        if (!cancion) return;
         hero.setModoPractica('maestro_solo');
-        setTimeout(() => hero.iniciarJuego(hero.cancionSeleccionada, false, 'maestro_solo'), 80);
+        if (hero.seccionSeleccionada && typeof hero.seleccionarSeccion === 'function') {
+            hero.seleccionarSeccion(hero.seccionSeleccionada);
+        }
+        setTimeout(() => hero.iniciarJuego(cancion, false, 'maestro_solo'), 80);
     };
 
     return (
@@ -207,6 +231,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 multiplicador={hero.estadisticas?.multiplicador ?? 1}
                 mostrarVida={esCompetitivo}
                 onPausa={onPausarClick}
+                modoEtiqueta={modoEtiqueta}
             />
 
             {hero.estadoJuego === 'contando' && hero.cuenta !== null && (
@@ -276,6 +301,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     tickActual: hero.tickActual,
                     notasImpactadas: hero.notasImpactadas || new Set<string>(),
                     rangoSeccion,
+                    modoPractica: modoActual,
                 };
                 switch (modoVisual) {
                     case 'boxed':  return <PistaNotasBoxed {...propsPista} />;
@@ -283,9 +309,16 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     case 'foco':   return <PistaNotasFoco {...propsPista} />;
                     case 'carril': return <PistaNotasCarril {...propsPista} />;
                     case 'cayendo':
-                    default:       return <PistaNotasVertical {...propsPista} />;
+                    default:       return <ModoVistaLibre {...propsPista} />;
                 }
             })()}
+
+            {/* Overlay de juicio: SOLO texto "PERFECTO/BIEN/TARDE" sobre el pito
+                al impactar. El combo lo muestra el header (no duplicar — antes
+                habia un combo gigante aqui que tapaba el titulo). */}
+            {enJuego && (
+                <JuicioJuego efectosVisuales={hero.efectosVisuales || []} />
+            )}
 
             <div className="juego-sim-switch-modo" data-touch-allow>
                 <SelectorModoVisual modoActual={modoVisual} onCambiar={cambiarModoVisual} />

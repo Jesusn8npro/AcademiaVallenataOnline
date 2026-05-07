@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 
 interface FuelleZonaJuegoProps {
     pausado: boolean;
@@ -46,4 +46,4 @@ const FuelleZonaJuego: React.FC<FuelleZonaJuegoProps> = ({ pausado, manejarCambi
     );
 };
 
-export default FuelleZonaJuego;
+export default React.memo(FuelleZonaJuego);

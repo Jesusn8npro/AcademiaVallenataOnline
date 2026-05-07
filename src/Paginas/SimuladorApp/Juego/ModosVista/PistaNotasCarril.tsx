@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
+import { TICKS_VIAJE } from '../../../AcordeonProMax/TiposProMax';
 import './PistaNotasCarril.css';
 
 // Modo CARRIL — el fondo de la pista pinta completamente del color del fuelle

@@ -4,12 +4,12 @@ import {
     ArrowLeft, HelpCircle, Search, Music, Hand, ListMusic, BarChart3, Disc3,
     Star, Wrench, Play, Settings, Headphones
 } from 'lucide-react';
-import { useCancionesProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
-import { supabase } from '../../../servicios/clienteSupabase';
-import { useUsuario } from '../../../contextos/UsuarioContext';
-import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
+import { useCancionesProMax } from '../../../AcordeonProMax/Hooks/useLogicaProMax';
+import { supabase } from '../../../../servicios/clienteSupabase';
+import { useUsuario } from '../../../../contextos/UsuarioContext';
+import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
 import PantallaConfigCancion from './PantallaConfigCancion';
-import type { ConfigCancion } from './useConfigCancion';
+import type { ConfigCancion } from '../Hooks/useConfigCancion';
 import './PantallaAprende.css';
 
 type Vista = 'inicio' | 'lista';

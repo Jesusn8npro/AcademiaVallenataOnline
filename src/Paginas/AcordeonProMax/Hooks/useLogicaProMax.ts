@@ -4,6 +4,12 @@ import { useReproductorHero } from '../../../Core/hooks/useReproductorHero';
 import { TONALIDADES } from '../../../Core/acordeon/notasAcordeonDiatonico';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import { ReproductorMP3 } from '../../../Core/audio/ReproductorMP3';
+import { ReproductorMP3PreservaTono } from '../../../Core/audio/ReproductorMP3PreservaTono';
+
+// Cualquiera de los dos players: AudioBufferSource (sample-accurate, default) o
+// HTMLAudio + preservesPitch (para modo Maestro donde el alumno baja la velocidad
+// y el tono debe mantenerse). Ambos tienen la misma API publica.
+type AudioFondoPlayer = ReproductorMP3 | ReproductorMP3PreservaTono;
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import type {
@@ -83,7 +89,7 @@ export function useLogicaProMax() {
   // el MISMO clock (AudioContext) que las notas → cero drift. Igual al motor que usa GrabadorV2.
   // ReproductorMP3 emula la API de HTMLAudio (currentTime, paused, readyState, play, pause,
   // addEventListener para 'playing'/'seeked'/'pause') así que el resto del código no cambia.
-  const audioFondoRef = useRef<ReproductorMP3 | null>(null);
+  const audioFondoRef = useRef<AudioFondoPlayer | null>(null);
   const bpmOriginalRef = useRef<number>(120);
   const _onBeatCallbackRef = useRef<((beatIndex: number) => void) | undefined>(undefined);
   const direccionAlumnoRef = useRef<'halar' | 'empujar'>('halar');
@@ -641,8 +647,13 @@ export function useLogicaProMax() {
     // `ReproductorMP3` (AudioBufferSourceNode) NO tiene esos problemas: descarga + decodifica
     // upfront, `currentTime` se calcula desde AudioContext.currentTime continuo, y comparte el
     // MISMO clock que las notas → cero drift. Es exactamente lo que GrabadorV2 ya usa.
-    const audioPrecargado: ReproductorMP3 | null = urlFondo
-      ? new ReproductorMP3(motorAudioPro.contextoAudio)
+    // En modo Maestro el alumno baja BPM con el slider y necesita preservesPitch.
+    // En todos los otros modos el BPM no cambia → AudioBufferSourceNode da
+    // sample-accurate sync sin tocar el tono (no hay rate change, no hay pitch shift).
+    const audioPrecargado: AudioFondoPlayer | null = urlFondo
+      ? (modoActual === 'maestro_solo'
+          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio)
+          : new ReproductorMP3(motorAudioPro.contextoAudio))
       : null;
     if (audioPrecargado) {
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;

@@ -10,22 +10,20 @@
    superior del acordeon sin hueco negro. Ya no usamos height fija. */
 .pista-notas-boxed {
     position: fixed;
-    top: 48px;
-    bottom: 38vh;
+    top: 24px;
+    bottom: 60vh;
     left: 0;
     right: 0;
     pointer-events: none;
     z-index: 600;
     overflow: hidden;
-    background: linear-gradient(to bottom,
-        rgba(0, 0, 0, 0.55) 0%,
-        rgba(0, 0, 0, 0.35) 100%);
     border-bottom: 4px solid rgba(180, 180, 180, 0.85);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 480px) {
-    .pista-notas-boxed { top: 44px; }
+    .pista-notas-boxed {
+        top: 44px;
+    }
 }
 
 .nota-boxed {
@@ -74,11 +72,14 @@
 }
 
 @keyframes nota-boxed-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow:
             0 0 8px rgba(255, 255, 255, 0.7),
             0 0 0 3px rgba(255, 255, 255, 0.45);
     }
+
     50% {
         box-shadow:
             0 0 16px rgba(255, 255, 255, 0.95),

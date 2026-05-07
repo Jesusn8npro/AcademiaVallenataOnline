@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { GuiaPitoResultado } from './useGuiaPitoObjetivo';
+import type { GuiaPitoResultado } from '../Hooks/useGuiaPitoObjetivo';
 
 const MAPA_CIFRADO: Record<string, string> = {
     'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb',

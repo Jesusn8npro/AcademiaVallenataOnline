@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
+import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
 
 export type ModoJuego = 'competitivo' | 'libre' | 'synthesia' | 'maestro_solo';
 

@@ -1,11 +1,11 @@
 import React from 'react';
 import { RotateCcw, X, ArrowRight, Star, Coins, History, Save, Trophy, TrendingUp, TrendingDown, Lock, AlertTriangle } from 'lucide-react';
-import { usePantallaResultados } from '../../AcordeonProMax/Componentes/usePantallaResultados';
-import ModalHistorialSimulador from './ModalHistorialSimulador';
-import ModalGuardarSimulador from './ModalGuardarSimulador';
-import RecomendacionMaestro from './RecomendacionMaestro';
-import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
-import type { Seccion } from '../../AcordeonProMax/tiposSecciones';
+import { usePantallaResultados } from '../../../AcordeonProMax/Componentes/usePantallaResultados';
+import ModalHistorialSimulador from '../Modales/ModalHistorialSimulador';
+import ModalGuardarSimulador from '../Modales/ModalGuardarSimulador';
+import RecomendacionMaestro from '../Piezas/RecomendacionMaestro';
+import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
+import type { Seccion } from '../../../AcordeonProMax/tiposSecciones';
 import './PantallaResultadosSimulador.css';
 
 interface Props {

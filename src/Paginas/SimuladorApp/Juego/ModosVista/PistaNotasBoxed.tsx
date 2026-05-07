@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { TICKS_VIAJE } from '../../AcordeonProMax/TiposProMax';
+import { TICKS_VIAJE } from '../../../AcordeonProMax/TiposProMax';
 import './PistaNotasBoxed.css';
 
 /**
