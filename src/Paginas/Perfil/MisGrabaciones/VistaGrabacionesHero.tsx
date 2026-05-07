@@ -1,23 +1,10 @@
 import { createPortal } from 'react-dom';
 import { Disc3, Globe, Lock, Radio, RefreshCcw, Share2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ModalReplayGrabacionHero, { type GrabacionReplayHero } from './Componentes/ModalReplayGrabacionHero';
 import { obtenerSubtituloGrabacion, obtenerMetaGrabacion, obtenerTextoBadge } from './utilsGrabaciones';
 import { useVistaGrabaciones } from './useVistaGrabaciones';
 import './MisGrabaciones.css';
-
-/**
- * Detecta si el dispositivo es movil/tablet REAL (no Chrome devtools en
- * desktop). Combinamos UA con maxTouchPoints porque iPad reciente reporta
- * UA de Mac y solo se distingue por touch.
- */
-function esDispositivoMovilReal(): boolean {
-    if (typeof navigator === 'undefined') return false;
-    const ua = navigator.userAgent || '';
-    if (/android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua)) return true;
-    // iPad moderno reporta MacIntel + touch.
-    return navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1;
-}
 
 interface VistaGrabacionesHeroProps {
     usuarioId?: string | null;
@@ -26,7 +13,6 @@ interface VistaGrabacionesHeroProps {
 }
 
 export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuario }: VistaGrabacionesHeroProps) {
-    const navigate = useNavigate();
     const {
         filtro, setFiltro, grabaciones, cargando, error,
         grabacionActiva, setGrabacionActiva,
@@ -156,21 +142,7 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                                 </div>
 
                                 <div className="mis-grabaciones-card-acciones">
-                                    <button
-                                        className="mis-grabaciones-boton-secundario"
-                                        onClick={() => {
-                                            // Si la grabacion fue hecha desde SimuladorApp Y estamos en
-                                            // un movil real, redirigimos al simulador para reproducirla
-                                            // alli con el acordeon completo. En desktop o si la grabacion
-                                            // viene de ProMax, abrimos la modal normal con el toggle.
-                                            const vistaPref = (grabacion.metadata as any)?.vista_preferida;
-                                            if (vistaPref === 'movil' && esDispositivoMovilReal()) {
-                                                navigate(`/simulador-app?reproducir=${grabacion.id}`);
-                                                return;
-                                            }
-                                            setGrabacionActiva(grabacion);
-                                        }}
-                                    >
+                                    <button className="mis-grabaciones-boton-secundario" onClick={() => setGrabacionActiva(grabacion)}>
                                         Ver replay
                                     </button>
 

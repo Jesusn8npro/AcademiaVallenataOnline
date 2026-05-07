@@ -7,7 +7,8 @@
        distinta en cada fila (no hay translateX manual). */
 
 .vrs-root {
-    --vrs-pito-size: 7.4%;            /* % del ancho del marco */
+    --vrs-pito-size: 8%;
+    /* % del ancho del marco */
     --vrs-pito-gap-h: 0.5%;
     --vrs-hilera-gap-v: 0.4%;
     --vrs-color-empujar: #ef4444;
@@ -23,8 +24,9 @@
 .vrs-marco {
     position: relative;
     width: 100%;
-    max-width: 980px;
-    aspect-ratio: 880 / 470;          /* aspect del PNG real */
+    max-width: 1000px;
+    aspect-ratio: 880 / 470;
+    /* aspect del PNG real */
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
@@ -39,7 +41,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 38%;          /* arranca debajo de "Pro MAX" */
+    top: 50%;
+    /* arranca debajo de "Pro MAX" */
     bottom: 5%;
     display: flex;
     flex-direction: column;
@@ -125,5 +128,7 @@
 }
 
 @media (max-width: 720px) {
-    .vrs-root { padding: 0.5rem; }
+    .vrs-root {
+        padding: 0.5rem;
+    }
 }
