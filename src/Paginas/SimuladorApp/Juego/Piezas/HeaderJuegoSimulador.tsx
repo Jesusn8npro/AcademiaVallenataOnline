@@ -11,17 +11,23 @@ interface HeaderJuegoSimuladorProps {
     multiplicador: number;
     mostrarVida: boolean;
     onPausa: () => void;
+    /** Etiqueta corta del modo activo (ej. "MAESTRO", "LIBRE"). Badge al lado del pause. */
+    modoEtiqueta?: string;
 }
 
 const HeaderJuegoSimulador: React.FC<HeaderJuegoSimuladorProps> = ({
-    titulo, autor, puntos, vida, racha, multiplicador, mostrarVida, onPausa
+    titulo, autor, puntos, vida, racha, multiplicador, mostrarVida, onPausa, modoEtiqueta
 }) => {
+    const enFuego = racha >= 20;
     return (
         <header className="header-juego-sim">
             <div className="hjs-izq">
                 <button className="hjs-btn" onClick={onPausa} aria-label="Pausa · menú de juego">
                     <Pause size={18} fill="currentColor" />
                 </button>
+                {modoEtiqueta && (
+                    <span className="hjs-modo-badge">{modoEtiqueta}</span>
+                )}
             </div>
 
             <div className="hjs-centro">
@@ -38,9 +44,11 @@ const HeaderJuegoSimulador: React.FC<HeaderJuegoSimuladorProps> = ({
                 )}
 
                 {racha > 1 && (
-                    <div className="hjs-racha">
+                    <div className={`hjs-racha ${enFuego ? 'fuego' : ''}`}>
                         x{multiplicador}
-                        <span className="hjs-racha-combo">{racha} combo</span>
+                        <span className="hjs-racha-combo">
+                            {enFuego ? `${racha} 🔥` : `${racha} combo`}
+                        </span>
                     </div>
                 )}
 

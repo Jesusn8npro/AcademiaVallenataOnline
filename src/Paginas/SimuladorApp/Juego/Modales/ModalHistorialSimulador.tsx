@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Trophy, TrendingUp, Calendar, Target, Zap } from 'lucide-react';
-import { scoresHeroService } from '../../../servicios/scoresHeroService';
-import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
+import { scoresHeroService } from '../../../../servicios/scoresHeroService';
+import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
 import './ModalHistorialSimulador.css';
 
 interface Props {

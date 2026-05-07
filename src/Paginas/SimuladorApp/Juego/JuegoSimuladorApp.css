@@ -228,6 +228,14 @@ body.juego-sim-activo .pause-menu-advanced {
     user-select: none;
     white-space: nowrap;
     text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+    transition: opacity 0.4s ease;
+}
+
+/* Durante gameplay activo (con notas en vuelo) el watermark se atenua casi a
+   cero para no competir visualmente con las notas + pitos. Cuando no hay
+   notas (cancion pausada / antes de empezar / terminada) vuelve a verse. */
+.juego-sim-root:has(.nota-cayendo) .juego-sim-marca {
+    opacity: 0.18;
 }
 
 /* En el modo boxed la marca debe ir DEBAJO de la cajita (mas abajo en pantalla)

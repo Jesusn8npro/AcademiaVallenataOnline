@@ -129,4 +129,4 @@ const BarraMaestroMobile: React.FC<Props> = ({
     );
 };
 
-export default BarraMaestroMobile;
+export default React.memo(BarraMaestroMobile);

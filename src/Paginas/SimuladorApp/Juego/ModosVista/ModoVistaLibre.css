@@ -1,0 +1,284 @@
+/* MODO VISTA LIBRE — notas cayendo encima de los pitos. */
+
+.pista-notas-vertical {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 50;
+    transition: background 0.35s ease;
+}
+
+/* Tinte de fondo segun el fuelle inminente. Confinado a una banda alrededor
+   del watermark "Acordeon Pro Max" (no full-pista) — antes el tinte cubria
+   hasta los pitos y el alumno percibia toda la pantalla coloreada. Ahora
+   solo el centro vertical (donde vive el watermark) se tinta. */
+.pista-notas-vertical.abriendo {
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0)            0%,
+        rgba(59, 130, 246, 0.18)   18%,
+        rgba(59, 130, 246, 0.10)   32%,
+        rgba(0, 0, 0, 0)           50%,
+        rgba(0, 0, 0, 0)          100%);
+}
+.pista-notas-vertical.cerrando {
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0)            0%,
+        rgba(239, 68, 68, 0.18)    18%,
+        rgba(239, 68, 68, 0.10)    32%,
+        rgba(0, 0, 0, 0)           50%,
+        rgba(0, 0, 0, 0)          100%);
+}
+
+/* Letrero ABRE/CIERRA — badge compacto centrado bajo el header. NO es texto
+   gigante a pantalla completa: una pildora pequena con el color del fuelle
+   inminente para que se vea de inmediato sin saturar la pista. */
+.libre-letrero {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    user-select: none;
+    pointer-events: none;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(4px);
+    animation: libre-letrero-pulso 1.6s ease-in-out infinite;
+    z-index: 2;
+}
+.pista-notas-vertical.abriendo .libre-letrero {
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+.pista-notas-vertical.cerrando .libre-letrero {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.55);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes libre-letrero-pulso {
+    0%, 100% { opacity: 0.75; }
+    50%      { opacity: 1;    }
+}
+
+.nota-cayendo {
+    position: absolute;
+    width: clamp(38px, 6.5vw, 54px);
+    height: clamp(38px, 6.5vw, 54px);
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, top, opacity;
+    pointer-events: none;
+}
+
+.nota-cayendo.impactada {
+    border-color: #fff;
+    background: #fff !important;
+    animation: nota-burst 0.34s ease-out forwards;
+}
+
+.nota-cayendo.fallada {
+    border-color: #f59e0b;
+}
+
+.nota-cayendo.inminente:not(.impactada):not(.fallada) {
+    animation: nota-cayendo-pulse 0.7s ease-in-out infinite;
+    border-width: 2px;
+}
+
+@keyframes nota-cayendo-pulse {
+    0%, 100% { outline: 0 solid rgba(255, 255, 255, 0); }
+    50%      { outline: 4px solid rgba(255, 255, 255, 0.5); }
+}
+
+@keyframes nota-burst {
+    0%   { transform: translate(-50%, -50%) scale(1);    filter: brightness(1);   }
+    35%  { transform: translate(-50%, -50%) scale(1.55); filter: brightness(1.9); }
+    100% { transform: translate(-50%, -50%) scale(1.9);  filter: brightness(1); opacity: 0; }
+}
+
+.nota-etiqueta-cayendo {
+    color: #fff;
+    font-weight: 900;
+    font-size: clamp(0.7rem, 1.6vw, 1rem);
+    font-family: 'Raleway', system-ui, sans-serif;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.5px;
+    user-select: none;
+    pointer-events: none;
+}
+
+.nota-cayendo.abriendo .nota-etiqueta-cayendo { color: #001a3a; }
+.nota-cayendo.cerrando .nota-etiqueta-cayendo { color: #fff;    }
+.nota-cayendo.impactada .nota-etiqueta-cayendo { color: #000;   }
+
+/* PITO OBJETIVO — borde + halo conico rotando. Mask radial deja un agujero
+   central para que el botoncito blanco siga visible adentro. */
+.pito-boton.objetivo-halar {
+    border: 3px solid #3b82f6 !important;
+    box-shadow:
+        0 0 8px rgba(59, 130, 246, 0.95),
+        inset 0 0 18px rgba(59, 130, 246, 0.45) !important;
+    position: relative;
+}
+.pito-boton.objetivo-halar::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #60a5fa 60deg, #3b82f6 90deg, #60a5fa 120deg,
+        transparent 160deg, transparent 200deg,
+        #60a5fa 240deg, #3b82f6 270deg, #60a5fa 300deg,
+        transparent 340deg, transparent 360deg
+    );
+    -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    animation: pito-halo-rotando 1.4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.pito-boton.objetivo-empujar {
+    border: 3px solid #ef4444 !important;
+    box-shadow:
+        0 0 8px rgba(239, 68, 68, 0.95),
+        inset 0 0 18px rgba(239, 68, 68, 0.45) !important;
+    position: relative;
+}
+.pito-boton.objetivo-empujar::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #f87171 60deg, #ef4444 90deg, #f87171 120deg,
+        transparent 160deg, transparent 200deg,
+        #f87171 240deg, #ef4444 270deg, #f87171 300deg,
+        transparent 340deg, transparent 360deg
+    );
+    -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    animation: pito-halo-rotando 1.4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes pito-halo-rotando {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+}
+
+/* PITO OBJETIVO PISADO — todos los pitos del acorde se ven IGUAL: el fondo
+   lo decide el objetivo (no el modo del usuario) para que en acordes mixtos
+   no quede uno azul y otro rojo. Inset reducido a 0.35 para que el color
+   se vea (antes 0.9 tragaba la mitad superior del pito). */
+.pito-boton.nota-activa.objetivo-halar,
+.pito-boton.nota-activa.objetivo-empujar {
+    transform: translateY(8px) scale(0.92) !important;
+    border-color: #fff !important;
+    box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.92),
+        0 0 16px rgba(255, 255, 255, 0.7),
+        inset 0px 6px 10px rgba(0, 0, 0, 0.35) !important;
+}
+.pito-boton.nota-activa.objetivo-halar {
+    background: radial-gradient(circle at 50% 70%, #93c5fd 0%, #3b82f6 55%, #1e40af 100%) !important;
+}
+.pito-boton.nota-activa.objetivo-empujar {
+    background: radial-gradient(circle at 50% 70%, #fca5a5 0%, #ef4444 55%, #7f1d1d 100%) !important;
+}
+.pito-boton.nota-activa.objetivo-halar .nota-etiqueta,
+.pito-boton.nota-activa.objetivo-empujar .nota-etiqueta {
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* SOSTENIENDO — alumno pisando una nota larga. Halo blanco que crece en
+   pulsos. Aplica con prioridad incluso cuando nota-activa este presente. */
+.pito-boton.objetivo-sosteniendo,
+.modo-halar .pito-boton.objetivo-sosteniendo.nota-activa,
+.modo-empujar .pito-boton.objetivo-sosteniendo.nota-activa {
+    animation: pito-sosteniendo-cargar 0.55s ease-in-out infinite !important;
+    border: 3px solid #fff !important;
+}
+
+@keyframes pito-sosteniendo-cargar {
+    0%, 100% {
+        box-shadow:
+            0 0 6px rgba(255, 255, 255, 0.7),
+            0 0 0 2px rgba(255, 255, 255, 0.45),
+            inset 0 0 10px rgba(255, 255, 255, 0.35) !important;
+        filter: brightness(1.05);
+    }
+    50% {
+        box-shadow:
+            0 0 22px rgba(255, 255, 255, 1),
+            0 0 0 5px rgba(255, 255, 255, 0.85),
+            0 0 44px rgba(255, 255, 255, 0.55),
+            inset 0 0 26px rgba(255, 255, 255, 0.7) !important;
+        filter: brightness(1.5);
+    }
+}
+
+.juego-sim-root.hay-objetivo .nota-cayendo:not(.impactada):not(.fallada) {
+    transition: opacity 0.18s ease;
+}
+
+/* COLA estilo "estela de cometa" — el tope arranca transparente y la
+   opacidad crece bajando hasta llegar a la cabeza. */
+.nota-cola {
+    position: absolute;
+    width: clamp(20px, 3.6vw, 30px);
+    border-radius: 50% 50% 4px 4px / 70% 70% 4px 4px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    will-change: top, height;
+    z-index: 0;
+    border: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
+}
+
+.nota-cola.impactada {
+    background: linear-gradient(to bottom,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.55) 22%,
+        rgba(255,255,255,0.95) 100%) !important;
+}
+
+/* PARTICULAS DE HIT — 6 puntos radiales al impactar una nota. */
+.nota-particula {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: nota-particula-anim 0.36s ease-out forwards;
+    will-change: transform, opacity;
+}
+
+@keyframes nota-particula-anim {
+    0%   { transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(0)    scale(1);   opacity: 1; }
+    100% { transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(34px) scale(0.4); opacity: 0; }
+}

@@ -1,9 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap, CheckCircle2, Lock, Coins } from 'lucide-react';
-import type { CancionHeroConTonalidad } from '../../AcordeonProMax/TiposProMax';
-import { useConfigCancion, type ModoJuego, type ConfigCancion } from './useConfigCancion';
-import { useProgresoSecciones, seccionesConEstado } from '../../AcordeonProMax/Hooks/useProgresoSecciones';
+import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
+import { useConfigCancion, type ModoJuego, type ConfigCancion } from '../Hooks/useConfigCancion';
+import { useProgresoSecciones, seccionesConEstado } from '../../../AcordeonProMax/Hooks/useProgresoSecciones';
 import './PantallaConfigCancion.css';
 
 interface PantallaConfigCancionProps {
