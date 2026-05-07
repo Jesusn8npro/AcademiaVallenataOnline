@@ -206,33 +206,69 @@
     line-height: 1.6;
 }
 
+/* Responsive del modal de replay.
+   El acordeon (CuerpoAcordeon) tiene un tamaño base de 980px y se escala con
+   --grabaciones-replay-scale. Si la escala es demasiado grande para el
+   viewport, el acordeon overflow-ea y los pitos quedan fuera de la pantalla.
+   Por eso bajamos la escala progresivamente segun el ancho disponible. */
+
 @media (max-width: 1220px) {
-    .grabaciones-hero-modal { width: min(1380px, 96vw) }
-    .grabaciones-hero-replay-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(320px, 1fr) auto }
-    .grabaciones-hero-replay-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr); align-items: stretch }
+    .grabaciones-hero-modal {
+        width: min(1380px, 96vw);
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+    }
+    /* Una sola columna: escenario arriba, panel abajo. */
+    .grabaciones-hero-replay-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(280px, 0.9fr) auto;
+    }
+    .grabaciones-hero-replay-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+        align-items: stretch;
+    }
     .grabaciones-hero-replay-panel > :only-child { grid-column: 1 / -1 }
-    .grabaciones-hero-replay-descripcion { min-height: 170px }
+    .grabaciones-hero-replay-descripcion { min-height: 140px }
+    .grabaciones-hero-replay-escenario { min-height: 280px; max-height: 60vh; }
+    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.5 }
 }
 
 @media (max-width: 960px) {
     .grabaciones-hero-modal-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)) }
-    .grabaciones-hero-replay-escenario { min-height: 360px }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.92 }
     .grabaciones-hero-replay-panel { grid-template-columns: 1fr }
+    .grabaciones-hero-replay-escenario { min-height: 240px; max-height: 50vh; }
+    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.42 }
 }
 
 @media (max-width: 720px) {
     .grabaciones-hero-modal-overlay { padding: 12px }
     .grabaciones-hero-modal-encabezado { flex-direction: column }
-    .grabaciones-hero-modal { padding: 18px; height: min(920px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px); grid-template-rows: auto auto minmax(0, 1fr); overflow-y: auto }
+    .grabaciones-hero-modal {
+        padding: 18px;
+        height: calc(100dvh - 24px);
+        max-height: calc(100dvh - 24px);
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        overflow-y: auto;
+    }
     .grabaciones-hero-modal-metricas { grid-template-columns: 1fr }
     .grabaciones-hero-replay-acciones { flex-direction: column }
-    .grabaciones-hero-replay-escenario { min-height: 320px }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.84 }
     .grabaciones-hero-replay-layout,
     .grabaciones-hero-replay-panel { display: flex; flex-direction: column }
-    .grabaciones-hero-replay-descripcion { min-height: 140px }
+    .grabaciones-hero-replay-descripcion { min-height: 120px }
     .grabaciones-hero-replay-btn { width: 100% }
+    .grabaciones-hero-replay-escenario { min-height: 200px; max-height: 45vh; }
+    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.32 }
+}
+
+@media (max-width: 500px) {
+    .grabaciones-hero-modal { padding: 14px; }
+    .grabaciones-hero-modal h2 { font-size: 1.4rem; }
+    .grabaciones-hero-replay-escenario { min-height: 170px; max-height: 38vh; }
+    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.26 }
+}
+
+@media (max-width: 380px) {
+    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.22 }
 }
 
 /* Toggle Escritorio / Movil del replay. */
