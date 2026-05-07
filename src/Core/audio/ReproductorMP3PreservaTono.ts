@@ -22,7 +22,6 @@ import { motorAudioPro } from './AudioEnginePro';
  */
 export class ReproductorMP3PreservaTono {
   private audioEl: HTMLAudioElement;
-  private esElExterno: boolean;
   private gainNode: GainNode;
   private _src: string = '';
   private _playbackRate: number = 1;
@@ -30,33 +29,20 @@ export class ReproductorMP3PreservaTono {
   private _cargado: boolean = false;
   private cargandoUrl: string | null = null;
   private listeners: Map<string, Set<() => void>> = new Map();
-  private listenersWrappers: Array<{ ev: string; fn: () => void }> = [];
 
-  /**
-   * @param audioElExterno Si se provee, reusa este elemento en lugar de crear
-   * uno nuevo. Util para que el caller (motorAudioPro.obtenerAudioMaestro)
-   * pueda "cebar" el elemento durante un gesto del usuario y luego pasarlo
-   * aqui ya desbloqueado.
-   */
+  // Compat: el caller pasa el AudioContext, pero el ruteo Web Audio lo maneja
+  // motorAudioPro.conectarMediaElement (singleton, WeakMap).
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(_contexto: AudioContext, audioElExterno?: HTMLAudioElement) {
-    if (audioElExterno) {
-      this.audioEl = audioElExterno;
-      this.esElExterno = true;
-    } else {
-      this.audioEl = new Audio();
-      this.esElExterno = false;
-      this.audioEl.preload = 'auto';
-      this.audioEl.crossOrigin = 'anonymous';
-    }
+  constructor(_contexto: AudioContext) {
+    this.audioEl = new Audio();
+    this.audioEl.preload = 'auto';
+    this.audioEl.crossOrigin = 'anonymous';
     this.audioEl.volume = 1;
     this._aplicarPreservarTono();
 
     const eventosARePropagar = ['playing', 'pause', 'seeked', 'canplay', 'canplaythrough', 'loadeddata', 'ended'] as const;
     for (const ev of eventosARePropagar) {
-      const fn = () => this._emit(ev);
-      this.audioEl.addEventListener(ev, fn);
-      this.listenersWrappers.push({ ev, fn });
+      this.audioEl.addEventListener(ev, () => this._emit(ev));
     }
 
     this.gainNode = motorAudioPro.conectarMediaElement(this.audioEl);
@@ -93,11 +79,7 @@ export class ReproductorMP3PreservaTono {
     if (this.cargandoUrl === url) return;
     this.cargandoUrl = url;
     try {
-      // Si desbloquearConGesto ya seteo el src al mismo valor, no re-asignar
-      // (re-asignar dispara un reload del elemento y resetea el unlock).
-      if (this.audioEl.src !== url) {
-        this.audioEl.src = url;
-      }
+      this.audioEl.src = url;
       this._src = url;
       this._aplicarPreservarTono();
       if (this.audioEl.readyState < 3) {
@@ -203,16 +185,7 @@ export class ReproductorMP3PreservaTono {
 
   destruir(): void {
     try { this.audioEl.pause(); } catch (_) {}
-    // Desuscribir solo los listeners DEL motor (no los del elemento). Si el
-    // elemento es externo (compartido), futuros wrappers lo reusan; sin esta
-    // limpieza se acumulan listeners zombi que reciben eventos cruzados.
-    for (const { ev, fn } of this.listenersWrappers) {
-      try { this.audioEl.removeEventListener(ev, fn); } catch (_) {}
-    }
-    this.listenersWrappers = [];
-    if (!this.esElExterno) {
-      try { this.audioEl.removeAttribute('src'); this.audioEl.load(); } catch (_) {}
-    }
+    try { this.audioEl.removeAttribute('src'); this.audioEl.load(); } catch (_) {}
     this.listeners.clear();
     this._cargado = false;
     this._src = '';

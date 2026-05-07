@@ -62,18 +62,8 @@ export function useLogicaProMax() {
   const velocidadRef = useRef(100);
   useEffect(() => { velocidadRef.current = velocidad; }, [velocidad]);
 
-  const [modoPractica, _setModoPracticaInterno] = useState<ModoPractica>('ninguno');
+  const [modoPractica, setModoPractica] = useState<ModoPractica>('ninguno');
   const modoPracticaRef = useRef<ModoPractica>('ninguno');
-  // Wrapper que sincroniza el ref ANTES de schedular el state update. Sin
-  // esto, modoPracticaRef.current queda con el valor viejo durante el
-  // render donde se llamo setModoPractica → la cola de notas (line ~365)
-  // lee el modo viejo y procesa notas como si fuera competitivo aunque el
-  // usuario pidio synthesia. Mid-game switching de modos visuales fallaba
-  // intermitentemente por esta ventana de un frame.
-  const setModoPractica = useCallback((modo: ModoPractica) => {
-    modoPracticaRef.current = modo;
-    _setModoPracticaInterno(modo);
-  }, []);
   useEffect(() => { modoPracticaRef.current = modoPractica; }, [modoPractica]);
 
   const [volumenMusica, setVolumenMusica] = useState(70);
@@ -607,7 +597,7 @@ export function useLogicaProMax() {
     setBpm(nuevo);
   }, []);
 
-  const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica, forzarConteo: boolean = false) => {
+  const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica) => {
     await motorAudioPro.activarContexto();
     cancelarCapturaActiva();
     limpiarEstadoGrabaciones();
@@ -660,22 +650,12 @@ export function useLogicaProMax() {
     // En modo Maestro el alumno baja BPM con el slider y necesita preservesPitch.
     // En todos los otros modos el BPM no cambia → AudioBufferSourceNode da
     // sample-accurate sync sin tocar el tono (no hay rate change, no hay pitch shift).
-    // En Maestro: usar el HTMLAudio compartido de motorAudioPro. Permite que
-    // un click handler externo (EMPEZAR / Otra vez / Practicar) lo "cebe"
-    // sincronamente durante el gesto del usuario, evitando que iOS/Android
-    // rechace el play() posterior por gesto expirado.
     const audioPrecargado: AudioFondoPlayer | null = urlFondo
       ? (modoActual === 'maestro_solo'
-          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio, motorAudioPro.obtenerAudioMaestro())
+          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio)
           : new ReproductorMP3(motorAudioPro.contextoAudio))
       : null;
     if (audioPrecargado) {
-      // Tomar control del cebado: pausar/desmutear el HTMLAudio compartido y
-      // cancelar el .then() pendiente del cebar para que no interrumpa nuestro
-      // play() real con un pause() tardio.
-      if (modoActual === 'maestro_solo') {
-        motorAudioPro.finalizarCebadoMaestro();
-      }
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
       audioFondoRef.current = audioPrecargado;
@@ -780,17 +760,13 @@ export function useLogicaProMax() {
       setMaestroSuena(maestroActivo);
     }
 
-    // Conteo de 3s en: (a) competencia siempre, (b) cuando el caller lo
-    // fuerza (reiniciar / Otra vez / Practicar / Siguiente seccion). En el
-    // EMPEZAR inicial de Maestro/Synthesia/Libre el conteo NO se muestra —
-    // el alumno acaba de configurar el modo y espera arranque inmediato.
-    const debeMostrarConteo = forzarConteo || modoActual === 'ninguno';
-    if (saltarConteo || !debeMostrarConteo) {
+    if (modoActual !== 'ninguno' || saltarConteo) {
       setCuenta(null);
       audioListo.then(() => dispararJuegoSincronizado());
       return;
     }
 
+    // Competencia con conteo de 3s: el audio se precarga y posiciona durante el conteo, al final arrancan juntos.
     if (conteoIntervalRef.current) clearInterval(conteoIntervalRef.current);
     setCuenta(3);
     setEstadoJuego('contando');
@@ -998,9 +974,7 @@ export function useLogicaProMax() {
     setEstadisticas({ ...ESTADISTICAS_INICIALES });
     setEfectosVisuales([]);
     notasImpactadasRef.current = new Set();
-    // forzarConteo=true: reiniciar siempre muestra el conteo de 3s, sin importar
-    // el modo. Da feedback visual al alumno y tiempo para preparar los dedos.
-    setTimeout(() => iniciarJuego(cancion, false, undefined, true), 50);
+    setTimeout(() => iniciarJuego(cancion), 50);
   }, [cancelarCapturaActiva, iniciarJuego, limpiarEstadoGrabaciones, setEstadisticas, setEfectosVisuales]);
 
   return {
