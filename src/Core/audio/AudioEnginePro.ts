@@ -22,17 +22,6 @@ export class MotorAudioPro {
     private targetReverb = 0;
     // Cache de elementos HTMLAudio ruteados por Web Audio (createMediaElementSource solo se puede llamar una vez por elemento).
     private mediaElementSources: WeakMap<HTMLAudioElement, { source: MediaElementAudioSourceNode; gain: GainNode }> = new WeakMap();
-    // Singleton HTMLAudio compartido para el modo Maestro. Compartirlo entre
-    // todos los iniciarJuego de Maestro permite "cebarlo" durante un gesto del
-    // usuario (click EMPEZAR) y reusar el MISMO elemento ya desbloqueado en
-    // el iniciarJuego que corre despues en useEffect — donde el gesto de iOS
-    // ya expiro. Sin el elemento compartido, cada iniciarJuego crearia un Audio
-    // nuevo bloqueado por el browser.
-    private _audioMaestroEl: HTMLAudioElement | null = null;
-    // Flag para coordinar el .then() del cebar con iniciarJuego. Si iniciarJuego
-    // toma control del elemento antes de que el cebar resuelva, el .then debe
-    // SALTAR el pause (sino interrumpe la reproduccion real ya en curso).
-    private _cebadoEnCurso = false;
 
     constructor() {
         this.esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -310,72 +299,6 @@ export class MotorAudioPro {
      * por aquí para control sample-accurate). createMediaElementSource solo se puede llamar UNA vez por elemento;
      * el WeakMap evita errores en re-conexiones.
      */
-    /**
-     * Devuelve el HTMLAudio compartido para el modo Maestro. Lazy create.
-     * El llamador puede usarlo directamente como audioElExterno de
-     * ReproductorMP3PreservaTono.
-     */
-    obtenerAudioMaestro(): HTMLAudioElement {
-        if (!this._audioMaestroEl) {
-            const a = new Audio();
-            a.preload = 'auto';
-            a.crossOrigin = 'anonymous';
-            (a as any).preservesPitch = true;
-            (a as any).mozPreservesPitch = true;
-            (a as any).webkitPreservesPitch = true;
-            this._audioMaestroEl = a;
-        }
-        return this._audioMaestroEl;
-    }
-
-    /**
-     * Desbloquea el HTMLAudio Maestro durante un gesto del usuario.
-     * Se debe llamar dentro de un onClick (EMPEZAR / Otra vez / Practicar)
-     * SINCRONO. Asi el iniciarJuego que sigue en useEffect puede llamar
-     * play() sobre el mismo elemento sin chocar con la politica de
-     * autoplay de iOS / Chrome Android.
-     *
-     * Si url se pasa, se setea como src para que el browser empiece a
-     * descargar inmediatamente — minimiza la espera del audioListo.
-     */
-    cebarAudioMaestro(url?: string): void {
-        const a = this.obtenerAudioMaestro();
-        if (url && a.src !== url) {
-            a.src = url;
-        }
-        this._cebadoEnCurso = true;
-        a.muted = true;
-        const p = a.play();
-        if (p && typeof p.then === 'function') {
-            p.then(() => {
-                // Si iniciarJuego ya tomo control via finalizarCebadoMaestro,
-                // NO pausar — interrumpiriamos la reproduccion real en curso.
-                if (!this._cebadoEnCurso) return;
-                this._cebadoEnCurso = false;
-                a.pause();
-                a.muted = false;
-            }).catch(() => {
-                this._cebadoEnCurso = false;
-                a.muted = false;
-            });
-        }
-    }
-
-    /**
-     * iniciarJuego llama esto al tomar control del HTMLAudio Maestro. Cancela
-     * el cebado en curso (el .then() del cebar verificara este flag y saltara
-     * su pause), deja el elemento en estado limpio (paused + unmuted) para
-     * que el play() real de iniciarJuego dispare el evento 'playing' como
-     * espera arrancarTickClock.
-     */
-    finalizarCebadoMaestro(): void {
-        this._cebadoEnCurso = false;
-        const a = this._audioMaestroEl;
-        if (!a) return;
-        try { a.pause(); } catch (_) {}
-        a.muted = false;
-    }
-
     conectarMediaElement(audio: HTMLAudioElement): GainNode {
         const existente = this.mediaElementSources.get(audio);
         if (existente) return existente.gain;
