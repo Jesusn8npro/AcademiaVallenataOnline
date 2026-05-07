@@ -108,20 +108,79 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 12px;
+    padding: 10px 10px 10px 12px;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 10px;
     color: #fff;
     font-family: 'Raleway', system-ui, sans-serif;
     text-align: left;
-    cursor: pointer;
     transition: background 0.12s ease, border-color 0.12s ease;
     -webkit-tap-highlight-color: transparent;
 }
 
-.sim-loops-item:hover { background: rgba(255, 255, 255, 0.06); }
-.sim-loops-item:active { transform: scale(0.99); }
+.sim-loops-item:hover { background: rgba(255, 255, 255, 0.04); }
+
+/* Boton play/pause de la fila — area grande, ergonomico para tactil. */
+.sim-loops-play {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+    transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sim-loops-play:active { transform: scale(0.92); }
+.sim-loops-play.activa {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+}
+
+/* Banner de error de reproduccion: visible al tope del modal cuando play()
+   se rechaza o el audio falla a cargar. Crucial para diagnostico mobile
+   donde no podemos abrir consola. */
+.sim-loops-error-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 10px 12px 0;
+    padding: 10px 12px;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    border-radius: 10px;
+    color: #fecaca;
+    font-family: 'Raleway', system-ui, sans-serif;
+}
+
+.sim-loops-error-banner > svg { flex-shrink: 0; margin-top: 2px; }
+
+.sim-loops-error-textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.sim-loops-error-textos > strong {
+    font-weight: 700;
+    color: #fca5a5;
+    font-size: 0.74rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.sim-loops-error-textos > span { word-break: break-word; }
 
 .sim-loops-item.activa {
     background: linear-gradient(90deg, rgba(96, 165, 250, 0.22) 0%, rgba(59, 130, 246, 0.12) 100%);

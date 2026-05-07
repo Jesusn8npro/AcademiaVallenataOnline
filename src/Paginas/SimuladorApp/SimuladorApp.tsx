@@ -717,6 +717,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onVelocidadChange={loops.setVelocidad}
                 onSeleccionarPista={loops.reproducir}
                 velocidadBloqueada={grabacion.grabandoHero}
+                errorReproduccion={loops.errorReproduccion}
             />
 
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />

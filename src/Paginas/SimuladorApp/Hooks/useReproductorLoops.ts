@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import type { PistaPracticaLibre } from '../../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
 export interface PistaActiva {
@@ -8,6 +7,11 @@ export interface PistaActiva {
     url: string;
     artista?: string | null;
     bpm?: number | null;
+}
+
+export interface EstadoLoopError {
+    name: string;
+    message: string;
 }
 
 /**
@@ -28,18 +32,24 @@ export function useReproductorLoops() {
     const [pistaActiva, setPistaActiva] = useState<PistaActiva | null>(null);
     const [volumen, setVolumen] = useState(0.85);
     const [velocidad, setVelocidad] = useState(1.0);
+    const [errorReproduccion, setErrorReproduccion] = useState<EstadoLoopError | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Crea (una sola vez) el HTMLAudio persistente y lo conecta al motor.
+    // Crea (una sola vez) el HTMLAudio persistente. Importante: NO lo conectamos
+    // a motorAudioPro.conectarMediaElement(). Probamos con conexion via
+    // createMediaElementSource y en iPhone real el audio quedaba mudo (probable
+    // taint por CORS de Supabase Storage o quirk de WebKit). Sin la conexion,
+    // el HTMLAudio reproduce nativo a traves del speaker — el unico downside
+    // es que en iOS los pitos del acordeon podrian bajar de volumen mientras
+    // el loop suena, pero al menos SE OYE.
     const obtenerAudio = useCallback((): HTMLAudioElement => {
         if (audioRef.current) return audioRef.current;
         const audio = new Audio();
         audio.preload = 'auto';
-        audio.crossOrigin = 'anonymous';
+        // Sin crossOrigin: con createMediaElementSource lo necesitabamos, sin el
+        // mejor lo dejamos sin tagging para que iOS lo trate como playback nativo.
         audio.loop = true;
-        try { motorAudioPro.conectarMediaElement(audio); } catch (e) {
-            console.warn('[Loops] no pude conectar al motor de audio:', e);
-        }
+        audio.playsInline = true;
         audioRef.current = audio;
         return audio;
     }, []);
@@ -72,12 +82,12 @@ export function useReproductorLoops() {
         const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
         if (!url) return;
 
+        setErrorReproduccion(null);
         const audio = obtenerAudio();
 
         // CRITICO iOS Safari: TODO esto debe correr SINCRONO dentro del gesto.
         // Cualquier `await` antes de audio.play() invalida la user activation y
-        // iOS rechaza el play() con NotAllowedError silencioso. Por eso ANTES
-        // se veia "funciona en simulador desktop pero no en iPhone real".
+        // iOS rechaza el play() con NotAllowedError silencioso.
         if (audio.src !== url) {
             audio.src = url;
             try { audio.load(); } catch { /* noop */ }
@@ -85,15 +95,7 @@ export function useReproductorLoops() {
         audio.volume = volumen;
         audio.playbackRate = velocidad;
 
-        // Resume del AudioContext fire-and-forget: la llamada se registra durante
-        // el gesto vivo, el await sucede en background sin bloquear el play().
-        motorAudioPro.activarContexto().catch((e) =>
-            console.warn('[Loops] activarContexto fallo:', e)
-        );
-
-        // play() SINCRONO dentro del mismo tick que el touch event. La promise
-        // resuelve luego cuando el buffer carga, pero la "user activation" se
-        // valida en el momento de la llamada — no del resolve.
+        // play() SINCRONO dentro del mismo tick que el touch event.
         const playPromise = audio.play();
 
         // Actualizamos UI optimistamente; si play() falla, revertimos.
@@ -106,9 +108,23 @@ export function useReproductorLoops() {
         });
 
         playPromise?.catch((e: any) => {
-            console.error('[Loops] audio.play() rechazado:', e?.name, e?.message, e);
+            const name = e?.name || 'Error';
+            const message = e?.message || String(e) || 'No se pudo reproducir.';
+            console.error('[Loops] audio.play() rechazado:', name, message, e);
+            setErrorReproduccion({ name, message });
             setPistaActiva(null);
         });
+
+        // Tambien mostramos errores de carga del audio (red/CORS/formato).
+        const onErrorAudio = () => {
+            const err = audio.error;
+            const codigo = err ? `code ${err.code}` : 'desconocido';
+            const msg = err?.message || codigo;
+            console.error('[Loops] audio.error:', codigo, msg);
+            setErrorReproduccion({ name: `MediaError(${codigo})`, message: msg });
+            setPistaActiva(null);
+        };
+        audio.addEventListener('error', onErrorAudio, { once: true });
     }, [pistaActiva, volumen, velocidad, detener, obtenerAudio]);
 
     // Cleanup al desmontar el componente padre.
@@ -138,6 +154,7 @@ export function useReproductorLoops() {
         pistaActiva,
         volumen,
         velocidad,
+        errorReproduccion,
         setVolumen,
         setVelocidad,
         reproducir,
