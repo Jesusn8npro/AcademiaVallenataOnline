@@ -1,3 +1,15 @@
+/* ─── Modal de replay de grabaciones ──────────────────────────────────────
+   Diseño basado en flexbox y clamp() para escalar limpio en cualquier
+   viewport — sin breakpoints "duros" que rompan el layout.
+
+   Reglas que aplican siempre:
+     - Modal: flex-column con gap consistente, contiene su propio scroll.
+     - Escenario del acordeon: posición relativa con overflow hidden, los
+       pitos se escalan con clamp(min, fluid, max) -> nunca overflow.
+     - Layout escenario+panel: 2 columnas en >=1100px, 1 columna debajo.
+     - Padding y tamaños base relativos para que escalen suave.
+*/
+
 .grabaciones-hero-modal-overlay {
     position: fixed;
     inset: 0;
@@ -5,131 +17,216 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 18px;
+    padding: clamp(8px, 2vw, 18px);
     background: rgba(2, 6, 23, 0.84);
     backdrop-filter: blur(14px);
 }
 
 .grabaciones-hero-modal {
     position: relative;
-    width: min(1500px, 96vw);
-    height: min(940px, calc(100dvh - 36px));
-    max-height: calc(100dvh - 36px);
+    width: min(1500px, 100%);
+    height: min(940px, 100%);
+    max-height: 100%;
     overflow: hidden;
-    display: grid;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    gap: 18px;
-    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: clamp(16px, 2vw, 28px);
     background: linear-gradient(180deg, #06101f 0%, #0f172a 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 24px 24px 22px;
+    padding: clamp(14px, 2.4vw, 24px);
     box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
     color: #fff;
 }
 
 .grabaciones-hero-modal-cerrar {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 12px;
+    right: 12px;
     z-index: 6;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: background 0.15s ease;
 }
+.grabaciones-hero-modal-cerrar:hover { background: rgba(255, 255, 255, 0.14); }
 
+/* ─── Header ───────────────────────────────────────────────────────────── */
 .grabaciones-hero-modal-encabezado {
     display: flex;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
     align-items: flex-start;
-    padding-right: 62px;
+    flex-wrap: wrap;
+    padding-right: 48px;
+    flex-shrink: 0;
 }
 
-.grabaciones-hero-modal-eyebrow { margin: 0 0 8px; color: #93c5fd; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase }
-.grabaciones-hero-modal h2 { margin: 0; font-size: 1.8rem }
-.grabaciones-hero-modal-subtitulo { margin: 8px 0 0; color: rgba(255, 255, 255, 0.72) }
+.grabaciones-hero-modal-eyebrow {
+    margin: 0 0 6px;
+    color: #93c5fd;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
 
-.grabaciones-hero-modal-badges { display: flex; flex-wrap: wrap; gap: 10px }
+.grabaciones-hero-modal h2 {
+    margin: 0;
+    font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+    line-height: 1.2;
+}
+
+.grabaciones-hero-modal-subtitulo {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.grabaciones-hero-modal-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
 
 .grabaciones-hero-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 999px;
-    font-size: .78rem;
+    font-size: 0.72rem;
     font-weight: 800;
 }
 
-.grabaciones-hero-badge.competencia { background: rgba(245, 158, 11, 0.16); color: #fcd34d }
-.grabaciones-hero-badge.practica { background: rgba(34, 197, 94, 0.16); color: #86efac }
-.grabaciones-hero-badge.precision { background: rgba(59, 130, 246, 0.18); color: #93c5fd }
-.grabaciones-hero-badge.audio { background: rgba(6, 182, 212, 0.16); color: #a5f3fc }
+.grabaciones-hero-badge.competencia { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+.grabaciones-hero-badge.practica    { background: rgba(34, 197, 94, 0.16);  color: #86efac; }
+.grabaciones-hero-badge.precision   { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+.grabaciones-hero-badge.audio       { background: rgba(6, 182, 212, 0.16);  color: #a5f3fc; }
 
-.grabaciones-hero-modal-metricas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+/* ─── Métricas (BPM / Tonalidad / Notas / Puntos) ─────────────────────── */
+.grabaciones-hero-modal-metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    flex-shrink: 0;
+}
 
 .grabaciones-hero-modal-metricas div {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px;
-    border-radius: 18px;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.05);
 }
 
-.grabaciones-hero-modal-metricas span { color: rgba(255, 255, 255, 0.65); font-size: .8rem }
-.grabaciones-hero-modal-metricas strong { font-size: 1.05rem }
+.grabaciones-hero-modal-metricas span {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.72rem;
+}
 
+.grabaciones-hero-modal-metricas strong { font-size: 0.95rem; }
+
+/* ─── Toggle Escritorio / Móvil ────────────────────────────────────────── */
+.grabaciones-hero-replay-vista-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.grabaciones-hero-replay-vista-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.grabaciones-hero-replay-vista-btn:hover { color: #fff; }
+.grabaciones-hero-replay-vista-btn.activa {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+/* ─── Layout principal: escenario + panel ─────────────────────────────── */
+.grabaciones-hero-replay-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+    gap: 14px;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+/* Bajo 1100px o si la altura es chica: una columna, escenario primero. */
+@media (max-width: 1100px) {
+    .grabaciones-hero-replay-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+    }
+}
+
+/* ─── Escenario (donde vive el acordeón) ─────────────────────────────── */
 .grabaciones-hero-replay-escenario {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 0;
-    height: 100%;
-    border-radius: 26px;
     overflow: hidden;
+    border-radius: 18px;
     background:
         radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 35%),
         linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.92));
     border: 1px solid rgba(255, 255, 255, 0.06);
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.grabaciones-hero-replay-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.78fr);
-    gap: 18px;
-    min-height: 0;
-}
-
-.grabaciones-hero-replay-panel { display: flex; flex-direction: column; gap: 18px; min-height: 0 }
-
+/* CuerpoAcordeon: escala fluida basada en el ancho del viewport.
+   Formula: scale = viewport_width / 2400, con bounds [0.18, 0.55].
+   - 400px:   400/2400 = 0.166 -> clamp 0.18
+   - 720px:   720/2400 = 0.300
+   - 1000px:  1000/2400 = 0.417
+   - 1300px:  1300/2400 = 0.541
+   - 1500px+: clamp 0.55
+   Sin breakpoints discretos -> sin saltos visuales al achicar la ventana. */
 .grabaciones-hero-replay-escenario .disposicion-acordeon {
-    /* scale controlada por TSX; ajustar aquí afecta solo la vista del replay */
-    --grabaciones-replay-scale: 0.55;
+    --grabaciones-replay-scale: clamp(0.18, calc(100vw / 2400px), 0.55);
     transform: translate(-50%, -50%) scale(var(--grabaciones-replay-scale));
     transform-origin: center center;
     pointer-events: none;
 }
 
+/* Estilos visuales de los botones del acordeon dentro del replay. */
 .grabaciones-hero-replay-escenario .boton.activo {
     transform: translateY(5px) scale(0.98) !important;
     box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 255, 255, 0.2) !important;
 }
-
 .grabaciones-hero-replay-escenario .boton.halar.activo {
     background: rgba(59, 130, 246, 0.92) !important;
     border: 3px solid #60a5fa !important;
     box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.38), 0 0 22px rgba(96, 165, 250, 0.85) !important;
 }
-
 .grabaciones-hero-replay-escenario .boton.empujar.activo {
     background: rgba(249, 115, 22, 0.94) !important;
     border: 3px solid #fb923c !important;
@@ -143,59 +240,97 @@
     justify-content: center;
     gap: 12px;
     height: 100%;
-    min-height: 420px;
     color: rgba(255, 255, 255, 0.7);
+}
+
+/* ─── Panel (controles + descripción) ─────────────────────────────────── */
+.grabaciones-hero-replay-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .grabaciones-hero-replay-controles {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 18px;
-    border-radius: 22px;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
 }
 
 .grabaciones-hero-replay-tiempo,
-.grabaciones-hero-replay-progreso-texto { display: flex; justify-content: space-between; gap: 12px; color: rgba(255, 255, 255, 0.72); font-size: .85rem }
+.grabaciones-hero-replay-progreso-texto {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.82rem;
+}
+.grabaciones-hero-replay-progreso-texto strong { color: #fff; }
+.grabaciones-hero-replay-slider { width: 100%; accent-color: #3b82f6; }
 
-.grabaciones-hero-replay-progreso-texto strong { color: #fff }
-.grabaciones-hero-replay-slider { width: 100%; accent-color: #3b82f6 }
-
-.grabaciones-hero-replay-acciones { display: flex; gap: 12px; flex-wrap: wrap }
+.grabaciones-hero-replay-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
 .grabaciones-hero-replay-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
     color: #fff;
-    padding: 12px 16px;
-    border-radius: 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.85rem;
     cursor: pointer;
+    flex: 1 1 auto;
+    transition: background 0.15s ease;
 }
+.grabaciones-hero-replay-btn:hover { background: rgba(255, 255, 255, 0.08); }
+.grabaciones-hero-replay-btn.primaria {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+}
+.grabaciones-hero-replay-btn.primaria:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+.grabaciones-hero-replay-btn:disabled { cursor: not-allowed; opacity: 0.65; }
 
-.grabaciones-hero-replay-btn.primaria { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none }
-.grabaciones-hero-replay-btn:disabled { cursor: not-allowed; opacity: .68 }
+.grabaciones-hero-replay-btn.ir-simulador {
+    flex: 1 1 100%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: #fff;
+}
+.grabaciones-hero-replay-btn.ir-simulador:hover {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
 
 .grabaciones-hero-replay-descripcion {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     min-height: 0;
-    flex: 1 1 auto;
-    padding: 18px;
-    border-radius: 22px;
+    padding: 14px;
+    border-radius: 18px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     overflow: hidden;
 }
-
-.grabaciones-hero-replay-descripcion h3 { margin: 0 0 8px; font-size: 1rem }
-
+.grabaciones-hero-replay-descripcion h3 {
+    margin: 0 0 6px;
+    font-size: 0.92rem;
+}
 .grabaciones-hero-replay-descripcion p {
     margin: 0;
     flex: 1 1 auto;
@@ -203,117 +338,13 @@
     overflow: auto;
     padding-right: 4px;
     color: rgba(255, 255, 255, 0.74);
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.55;
 }
 
-/* Responsive del modal de replay.
-   El acordeon (CuerpoAcordeon) tiene un tamaño base de 980px y se escala con
-   --grabaciones-replay-scale. Si la escala es demasiado grande para el
-   viewport, el acordeon overflow-ea y los pitos quedan fuera de la pantalla.
-   Por eso bajamos la escala progresivamente segun el ancho disponible. */
-
-@media (max-width: 1220px) {
-    .grabaciones-hero-modal {
-        width: min(1380px, 96vw);
-        grid-template-rows: auto auto auto minmax(0, 1fr);
-    }
-    /* Una sola columna: escenario arriba, panel abajo. */
-    .grabaciones-hero-replay-layout {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: minmax(280px, 0.9fr) auto;
-    }
-    .grabaciones-hero-replay-panel {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
-        align-items: stretch;
-    }
-    .grabaciones-hero-replay-panel > :only-child { grid-column: 1 / -1 }
-    .grabaciones-hero-replay-descripcion { min-height: 140px }
-    .grabaciones-hero-replay-escenario { min-height: 280px; max-height: 60vh; }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.5 }
-}
-
-@media (max-width: 960px) {
-    .grabaciones-hero-modal-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)) }
-    .grabaciones-hero-replay-panel { grid-template-columns: 1fr }
-    .grabaciones-hero-replay-escenario { min-height: 240px; max-height: 50vh; }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.42 }
-}
-
+/* ─── Refinamientos por viewport ──────────────────────────────────────── */
 @media (max-width: 720px) {
-    .grabaciones-hero-modal-overlay { padding: 12px }
-    .grabaciones-hero-modal-encabezado { flex-direction: column }
-    .grabaciones-hero-modal {
-        padding: 18px;
-        height: calc(100dvh - 24px);
-        max-height: calc(100dvh - 24px);
-        grid-template-rows: auto auto auto minmax(0, 1fr);
-        overflow-y: auto;
-    }
-    .grabaciones-hero-modal-metricas { grid-template-columns: 1fr }
-    .grabaciones-hero-replay-acciones { flex-direction: column }
-    .grabaciones-hero-replay-layout,
-    .grabaciones-hero-replay-panel { display: flex; flex-direction: column }
-    .grabaciones-hero-replay-descripcion { min-height: 120px }
-    .grabaciones-hero-replay-btn { width: 100% }
-    .grabaciones-hero-replay-escenario { min-height: 200px; max-height: 45vh; }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.32 }
-}
-
-@media (max-width: 500px) {
-    .grabaciones-hero-modal { padding: 14px; }
-    .grabaciones-hero-modal h2 { font-size: 1.4rem; }
-    .grabaciones-hero-replay-escenario { min-height: 170px; max-height: 38vh; }
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.26 }
-}
-
-@media (max-width: 380px) {
-    .grabaciones-hero-replay-escenario .disposicion-acordeon { --grabaciones-replay-scale: 0.22 }
-}
-
-/* Toggle Escritorio / Movil del replay. */
-.grabaciones-hero-replay-vista-toggle {
-    display: inline-flex;
-    align-self: flex-start;
-    gap: 4px;
-    padding: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 999px;
-}
-
-.grabaciones-hero-replay-vista-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: none;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.65);
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.grabaciones-hero-replay-vista-btn:hover { color: #fff; }
-
-.grabaciones-hero-replay-vista-btn.activa {
-    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-}
-
-.grabaciones-hero-replay-btn.ir-simulador {
-    width: 100%;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border: none;
-    color: #fff;
-    margin-top: 4px;
-}
-.grabaciones-hero-replay-btn.ir-simulador:hover {
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    .grabaciones-hero-modal { padding: 14px; gap: 12px; }
+    .grabaciones-hero-modal-encabezado { padding-right: 44px; }
+    .grabaciones-hero-replay-acciones { gap: 6px; }
 }
