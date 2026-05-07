@@ -63,7 +63,7 @@ export function useReproductorLoops() {
         setPistaActiva(null);
     }, []);
 
-    const reproducir = useCallback(async (pista: PistaPracticaLibre) => {
+    const reproducir = useCallback((pista: PistaPracticaLibre) => {
         // Toggle: misma pista → para.
         if (pistaActiva && pistaActiva.id === pista.id) {
             detener();
@@ -74,15 +74,10 @@ export function useReproductorLoops() {
 
         const audio = obtenerAudio();
 
-        // AudioContext en running antes de play() — iOS lo suspende cuando la
-        // tab pierde foco o tras periodos de inactividad.
-        try {
-            await motorAudioPro.activarContexto();
-        } catch (e) {
-            console.warn('[Loops] activarContexto fallo:', e);
-        }
-
-        // Cambio de URL: solo reasignar src + load. Igual que ProMax PracticaLibre.
+        // CRITICO iOS Safari: TODO esto debe correr SINCRONO dentro del gesto.
+        // Cualquier `await` antes de audio.play() invalida la user activation y
+        // iOS rechaza el play() con NotAllowedError silencioso. Por eso ANTES
+        // se veia "funciona en simulador desktop pero no en iPhone real".
         if (audio.src !== url) {
             audio.src = url;
             try { audio.load(); } catch { /* noop */ }
@@ -90,21 +85,30 @@ export function useReproductorLoops() {
         audio.volume = volumen;
         audio.playbackRate = velocidad;
 
-        try {
-            await audio.play();
-            setPistaActiva({
-                id: pista.id,
-                nombre: pista.nombre,
-                url,
-                artista: pista.artista || null,
-                bpm: pista.bpm || null,
-            });
-        } catch (e: any) {
-            // En produccion mobile esto era el catch silencioso que escondia el
-            // error real. Ahora lo logueamos para diagnostico.
+        // Resume del AudioContext fire-and-forget: la llamada se registra durante
+        // el gesto vivo, el await sucede en background sin bloquear el play().
+        motorAudioPro.activarContexto().catch((e) =>
+            console.warn('[Loops] activarContexto fallo:', e)
+        );
+
+        // play() SINCRONO dentro del mismo tick que el touch event. La promise
+        // resuelve luego cuando el buffer carga, pero la "user activation" se
+        // valida en el momento de la llamada — no del resolve.
+        const playPromise = audio.play();
+
+        // Actualizamos UI optimistamente; si play() falla, revertimos.
+        setPistaActiva({
+            id: pista.id,
+            nombre: pista.nombre,
+            url,
+            artista: pista.artista || null,
+            bpm: pista.bpm || null,
+        });
+
+        playPromise?.catch((e: any) => {
             console.error('[Loops] audio.play() rechazado:', e?.name, e?.message, e);
             setPistaActiva(null);
-        }
+        });
     }, [pistaActiva, volumen, velocidad, detener, obtenerAudio]);
 
     // Cleanup al desmontar el componente padre.
