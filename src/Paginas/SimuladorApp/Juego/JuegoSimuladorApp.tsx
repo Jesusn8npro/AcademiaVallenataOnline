@@ -264,7 +264,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
         if (hero.seccionSeleccionada && typeof hero.seleccionarSeccion === 'function') {
             hero.seleccionarSeccion(hero.seccionSeleccionada);
         }
-        setTimeout(() => hero.iniciarJuego(cancion, false, 'maestro_solo'), 80);
+        // forzarConteo=true: practicar muestra los 3s de conteo (es un re-arranque).
+        setTimeout(() => hero.iniciarJuego(cancion, false, 'maestro_solo', true), 80);
     };
 
     return (
@@ -392,14 +393,16 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     onGuardarGrabacion={hero.grabaciones?.guardarPendiente}
                     onJugarDeNuevo={() => {
                         cebarAudioSiMaestro(cancion);
-                        hero.iniciarJuego(cancion);
+                        // forzarConteo=true: "Otra vez" siempre con conteo de 3s.
+                        hero.iniciarJuego(cancion, false, undefined, true);
                     }}
                     onVolverSeleccion={onSalir}
                     seccionSeleccionada={hero.seccionSeleccionada}
                     onJugarSiguienteSeccion={(s: any) => {
                         cebarAudioSiMaestro(cancion);
                         hero.seleccionarSeccion(s);
-                        setTimeout(() => hero.iniciarJuego(cancion), 50);
+                        // forzarConteo=true: avanzar a la siguiente seccion tambien con conteo.
+                        setTimeout(() => hero.iniciarJuego(cancion, false, undefined, true), 50);
                     }}
                     onPracticarMaestro={practicarEnModoMaestro}
                 />

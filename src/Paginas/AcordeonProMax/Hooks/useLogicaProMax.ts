@@ -607,7 +607,7 @@ export function useLogicaProMax() {
     setBpm(nuevo);
   }, []);
 
-  const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica) => {
+  const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica, forzarConteo: boolean = false) => {
     await motorAudioPro.activarContexto();
     cancelarCapturaActiva();
     limpiarEstadoGrabaciones();
@@ -670,6 +670,12 @@ export function useLogicaProMax() {
           : new ReproductorMP3(motorAudioPro.contextoAudio))
       : null;
     if (audioPrecargado) {
+      // Tomar control del cebado: pausar/desmutear el HTMLAudio compartido y
+      // cancelar el .then() pendiente del cebar para que no interrumpa nuestro
+      // play() real con un pause() tardio.
+      if (modoActual === 'maestro_solo') {
+        motorAudioPro.finalizarCebadoMaestro();
+      }
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
       audioFondoRef.current = audioPrecargado;
@@ -774,17 +780,17 @@ export function useLogicaProMax() {
       setMaestroSuena(maestroActivo);
     }
 
-    if (saltarConteo) {
+    // Conteo de 3s en: (a) competencia siempre, (b) cuando el caller lo
+    // fuerza (reiniciar / Otra vez / Practicar / Siguiente seccion). En el
+    // EMPEZAR inicial de Maestro/Synthesia/Libre el conteo NO se muestra —
+    // el alumno acaba de configurar el modo y espera arranque inmediato.
+    const debeMostrarConteo = forzarConteo || modoActual === 'ninguno';
+    if (saltarConteo || !debeMostrarConteo) {
       setCuenta(null);
       audioListo.then(() => dispararJuegoSincronizado());
       return;
     }
 
-    // Conteo de 3s para TODOS los modos. Antes solo competencia tenia conteo —
-    // los modos Maestro/Synthesia/Libre arrancaban abruptamente. Con conteo el
-    // alumno tiene 3s de aviso visual + tiempo para que termine la descarga
-    // del MP3 (audioListo se resuelve en paralelo) y para que iOS/Android
-    // procese el unlock del HTMLAudio cebado en el click handler.
     if (conteoIntervalRef.current) clearInterval(conteoIntervalRef.current);
     setCuenta(3);
     setEstadoJuego('contando');
@@ -992,7 +998,9 @@ export function useLogicaProMax() {
     setEstadisticas({ ...ESTADISTICAS_INICIALES });
     setEfectosVisuales([]);
     notasImpactadasRef.current = new Set();
-    setTimeout(() => iniciarJuego(cancion), 50);
+    // forzarConteo=true: reiniciar siempre muestra el conteo de 3s, sin importar
+    // el modo. Da feedback visual al alumno y tiempo para preparar los dedos.
+    setTimeout(() => iniciarJuego(cancion, false, undefined, true), 50);
   }, [cancelarCapturaActiva, iniciarJuego, limpiarEstadoGrabaciones, setEstadisticas, setEfectosVisuales]);
 
   return {
