@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    Circle,
     Music,
     ShoppingCart,
     Move,
@@ -27,6 +26,8 @@ interface BarraHerramientasProps {
     onToggleInstrumentos: () => void;
     onToggleVista: () => void;
     onToggleAprende: () => void;
+    onToggleLoops?: () => void;
+    loopActivo?: boolean;
     refs?: {
         menu?: React.RefObject<HTMLDivElement>;
         tonalidades?: React.RefObject<HTMLDivElement>;
@@ -34,6 +35,7 @@ interface BarraHerramientasProps {
         instrumentos?: React.RefObject<HTMLDivElement>;
         vista?: React.RefObject<HTMLDivElement>;
         aprende?: React.RefObject<HTMLDivElement>;
+        loops?: React.RefObject<HTMLDivElement>;
     };
     modalesVisibles: {
         menu?: boolean;
@@ -42,6 +44,7 @@ interface BarraHerramientasProps {
         instrumentos?: boolean;
         vista?: boolean;
         aprende?: boolean;
+        loops?: boolean;
     };
     bpmMetronomo: number;
 }
@@ -51,6 +54,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     x, escala, setEscala,
     grabando, toggleGrabacion,
     onToggleMenu, onToggleTonalidades, onToggleMetronomo, onToggleInstrumentos, onToggleVista, onToggleAprende,
+    onToggleLoops, loopActivo,
     modalesVisibles,
     bpmMetronomo,
     refs
@@ -103,6 +107,20 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     <span>APRENDE</span>
                 </div>
 
+                {onToggleLoops && (
+                    <div
+                        ref={refs?.loops}
+                        className={`boton-herramienta ${modalesVisibles.loops ? 'activo' : ''} ${loopActivo ? 'loop-sonando' : ''}`}
+                        onClick={onToggleLoops}
+                    >
+                        <span style={{ fontSize: '20px', lineHeight: 1, position: 'relative' }}>
+                            🥁
+                            {loopActivo && <span className="loop-indicador-punto" aria-hidden="true" />}
+                        </span>
+                        <span>LOOPS</span>
+                    </div>
+                )}
+
                 <div
                     ref={refs?.instrumentos}
                     className={`boton-herramienta ${modalesVisibles.instrumentos ? 'activo' : ''}`}
@@ -121,13 +139,8 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     <span>{logica.tonalidadSeleccionada}</span>
                 </div>
 
-                <div
-                    className={`boton-herramienta boton-grabadora ${grabando ? 'grabando' : ''}`}
-                    onClick={toggleGrabacion}
-                >
-                    <Circle size={20} fill={grabando ? "#ef4444" : "none"} color={grabando ? "#ef4444" : "currentColor"} />
-                    <span>{grabando ? 'REC' : 'GRABAR'}</span>
-                </div>
+                {/* Boton GRABAR removido — se movio a la barra flotante de la
+                    esquina superior derecha (BarraGrabacionFlotante). */}
             </div>
 
             <div className="bloque-anuncio-centro">

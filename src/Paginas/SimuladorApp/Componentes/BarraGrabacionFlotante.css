@@ -1,0 +1,214 @@
+/* Barra flotante REC + PLAY en esquina superior derecha del simulador.
+   Contenedor pill oscuro semitransparente. z-index alto para que no quede
+   tapado por elementos del juego ni por la barra de herramientas. */
+.sim-grab-flotante {
+    position: fixed;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: rgba(15, 18, 28, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 1px;
+    z-index: 980;
+    backdrop-filter: blur(8px);
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.sim-grab-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sim-grab-btn:active {
+    transform: scale(0.92);
+}
+
+.sim-grab-btn-play {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.sim-grab-btn-play:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+/* REC en reposo: rojo pleno con sombra interior. Pulsante cuando graba. */
+.sim-grab-btn-rec {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+}
+
+.sim-grab-btn-rec:hover {
+    background: #dc2626;
+}
+
+.sim-grab-btn-rec.grabando {
+    background: #fff;
+    color: #ef4444;
+    animation: sim-grab-rec-pulse 1s ease-in-out infinite;
+}
+
+@keyframes sim-grab-rec-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+}
+
+/* Cronometro: numeros monospace, color rojo encendido, fondo discreto. */
+.sim-grab-cronometro {
+    color: #fca5a5;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 0 4px;
+    min-width: 32px;
+    text-align: center;
+    user-select: none;
+}
+
+/* TOAST "Grabacion guardada" — pildora oscura centrada abajo, similar al
+   mockup del usuario. Aparece y se desvanece con animacion. */
+.sim-grab-toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(15, 18, 28, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 1100;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+    animation: sim-grab-toast-aparecer 0.22s ease-out;
+}
+
+@keyframes sim-grab-toast-aparecer {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.sim-grab-toast-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.sim-grab-toast-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-grab-toast-cerrar:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+/* Cuando no hay landscape, escondemos la barra: el simulador muestra el
+   overlay "rota el telefono" y la barra encima choca visualmente. */
+@media (max-aspect-ratio: 1/1) {
+    .sim-grab-flotante {
+        display: none;
+    }
+}
+
+/* Modo reproduccion: rewind + pause/stop + forward + cronometro + barra. */
+.sim-grab-flotante.reproduciendo {
+    padding-right: 10px;
+    gap: 4px;
+}
+
+.sim-grab-btn-pause,
+.sim-grab-btn-stop,
+.sim-grab-btn-skip {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.sim-grab-btn-pause:hover,
+.sim-grab-btn-stop:hover,
+.sim-grab-btn-skip:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+/* Skip buttons un poco mas chicos para no saturar la barra. */
+.sim-grab-btn-skip {
+    width: 26px;
+    height: 26px;
+}
+
+/* Cronometro en reproduccion: blanco-azulado, monospace, fijo a 64px
+   para que el ancho no oscile cuando los digitos cambian. */
+.sim-grab-cronometro.reproduciendo {
+    color: #cbd5e1;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 0 4px;
+    min-width: 70px;
+    text-align: center;
+    user-select: none;
+}
+
+.sim-grab-progreso {
+    width: 70px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.sim-grab-progreso-barra {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+    border-radius: 2px;
+    transition: width 0.12s linear;
+}

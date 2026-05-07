@@ -3,8 +3,14 @@ import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
+import { useReproductorHero } from '../../Core/hooks/useReproductorHero';
 import { motorAudioPro } from '../../Core/audio/AudioEnginePro';
 import { usePointerAcordeon } from './Hooks/usePointerAcordeon';
+import { useGrabacionProMax } from '../AcordeonProMax/Hooks/useGrabacionProMax';
+import { obtenerGrabacion } from '../../servicios/grabacionesHeroService';
+import { useReproductorLoops } from './Hooks/useReproductorLoops';
+import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
+import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 
 import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
@@ -18,6 +24,9 @@ import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos
 import PantallaAprende from './Juego/Pantallas/PantallaAprende';
 import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
 import JuegoSimuladorApp from './Juego/JuegoSimuladorApp';
+import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
+import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
+import ModalLoops from './Componentes/ModalLoops';
 
 import './SimuladorApp.css';
 
@@ -41,16 +50,28 @@ interface SimuladorAppNormalProps {
 }
 
 const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego }) => {
+    // Refs estables para que useLogicaAcordeon (que se monta antes que useGrabacionProMax)
+    // pueda delegar press/release al grabador sin race conditions de inicializacion.
+    const registrarPresionRef = useRef<(idBoton: string, fuelle: 'abriendo' | 'cerrando') => void>(() => {});
+    const registrarLiberacionRef = useRef<(idBoton: string) => void>(() => {});
+    const direccionRefGrab = useRef<'halar' | 'empujar'>('halar');
+
     const logica = useLogicaAcordeon({
         onNotaPresionada: (data) => {
             const esBajo = data.idBoton.includes('-bajo');
             const pos = data.idBoton.split('-').slice(0, 2).join('-');
             actualizarVisualBoton(pos, true, esBajo);
+            // Captura para grabacion (no-op si no hay grabacion activa).
+            registrarPresionRef.current(
+                data.idBoton,
+                direccionRefGrab.current === 'halar' ? 'abriendo' : 'cerrando'
+            );
         },
         onNotaLiberada: (data) => {
             const esBajo = data.idBoton.includes('-bajo');
             const pos = data.idBoton.split('-').slice(0, 2).join('-');
             actualizarVisualBoton(pos, false, esBajo);
+            registrarLiberacionRef.current(data.idBoton);
         }
     });
 
@@ -68,7 +89,8 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         metronomo: false,
         instrumentos: false,
         contacto: false,
-        aprende: false
+        aprende: false,
+        loops: false,
     });
 
     const [bajosVisible, setBajosVisible] = useState(false);
@@ -133,7 +155,20 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         return mostrarOctavas ? `${notaBase}${octava}` : notaBase;
     };
 
-    const desactivarAudio = useMemo(() => Object.values(modales).some(v => v), [modales]);
+    // Estado de reproduccion inline. Lo declaramos arriba para que pueda
+    // alimentar `desactivarAudio` (que se pasa a usePointerAcordeon).
+    const [enReproduccion, setEnReproduccion] = useState(false);
+    const [errorReproduccion, setErrorReproduccion] = useState<string | null>(null);
+
+    // Hook de loops/pistas: el audio vive aqui (no en el modal) para que
+    // siga sonando aunque el modal se cierre. La barra de herramientas usa
+    // `pistaActiva` para mostrar un indicador en el icono LOOPS.
+    const loops = useReproductorLoops();
+
+    const desactivarAudio = useMemo(
+        () => enReproduccion || Object.values(modales).some(v => v),
+        [modales, enReproduccion]
+    );
 
     const { manejarCambioFuelle, limpiarGeometria, actualizarGeometria } = usePointerAcordeon({
         x,
@@ -143,6 +178,241 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         trenRef,
         desactivarAudio
     });
+
+    // ─── Grabador de practica libre del simulador ────────────────────────
+    // useGrabacionProMax requiere refs para cancion/estadisticas/modo/seccion.
+    // En modo libre (fuera de juego) los dejamos vacios — el grabador solo usa
+    // la secuencia de presses/releases. La metadata se sincroniza desde logica
+    // mas abajo para que el replay sepa tonalidad/instrumento/modeloVisual.
+    const cancionRefGrab = useRef<any>(null);
+    const estadisticasRefGrab = useRef<any>({
+        notasPerfecto: 0, notasBien: 0, notasFalladas: 0, notasPerdidas: 0,
+        rachaActual: 0, rachaMasLarga: 0, multiplicador: 1, vida: 100, puntos: 0,
+    });
+    const modoPracticaRefGrab = useRef<any>('libre');
+    const seccionRefGrab = useRef<any>(null);
+    const grabacion = useGrabacionProMax({
+        bpm: bpmMetronomo,
+        cancionRef: cancionRefGrab,
+        estadisticasRef: estadisticasRefGrab,
+        modoPracticaRef: modoPracticaRefGrab,
+        seccionRef: seccionRefGrab,
+    });
+
+    // Sincronizar las refs estables que usaron los callbacks de useLogicaAcordeon
+    // arriba con las funciones reales del grabador. Sin esto los callbacks
+    // tendrian un no-op permanente.
+    useEffect(() => {
+        registrarPresionRef.current = grabacion.registrarPresionHero;
+        registrarLiberacionRef.current = grabacion.registrarLiberacionHero;
+    }, [grabacion.registrarPresionHero, grabacion.registrarLiberacionHero]);
+
+    useEffect(() => { direccionRefGrab.current = logica.direccion; }, [logica.direccion]);
+
+    // Sincronizar metadata para que el replay reconstruya la grabacion con
+    // la misma tonalidad/instrumento/vista que tenia el alumno al grabar.
+    useEffect(() => { grabacion.tonalidadGrabacionRef.current = logica.tonalidadSeleccionada; }, [logica.tonalidadSeleccionada, grabacion.tonalidadGrabacionRef]);
+    useEffect(() => { grabacion.modoVistaGrabacionRef.current = logica.modoVista; }, [logica.modoVista, grabacion.modoVistaGrabacionRef]);
+    useEffect(() => { grabacion.instrumentoGrabacionRef.current = logica.instrumentoId || null; }, [logica.instrumentoId, grabacion.instrumentoGrabacionRef]);
+    useEffect(() => { grabacion.timbreGrabacionRef.current = (logica.ajustes as any)?.timbre || null; }, [logica.ajustes, grabacion.timbreGrabacionRef]);
+
+    // ─── Reproductor inline para replay de grabaciones ────────────────────
+    // Reusa la misma `logica` (acordeon visual). Cuando se reproduce una
+    // grabacion: el reproductor llama a `actualizarBotonActivo` para
+    // resaltar las teclas + `reproduceTono` para el audio. Los pitos se
+    // bloquean a touch via la clase root .reproduciendo (CSS pointer-events).
+    const [bpmReproduccion, setBpmReproduccion] = useState(120);
+    const [resolucionReproduccion, setResolucionReproduccion] = useState(192);
+    // Audio de fondo del replay inline: si la grabacion guardo una pista,
+    // la reproducimos en paralelo a la velocidad/volumen guardados.
+    const audioFondoReplayRef = useRef<HTMLAudioElement | null>(null);
+    const reproductor = useReproductorHero(
+        logica.actualizarBotonActivo,
+        logica.setDireccionSinSwap,
+        logica.reproduceTono,
+        bpmReproduccion,
+    );
+
+    // Detectar fin de reproduccion (el reproductor cambia reproduciendo a false).
+    useEffect(() => {
+        if (enReproduccion && !reproductor.reproduciendo) {
+            setEnReproduccion(false);
+        }
+    }, [enReproduccion, reproductor.reproduciendo]);
+
+    // Detener cualquier audio de fondo del replay (helper).
+    const detenerAudioFondoReplay = useCallback(() => {
+        const a = audioFondoReplayRef.current;
+        if (a) {
+            try { a.pause(); } catch { /* noop */ }
+            a.src = '';
+            audioFondoReplayRef.current = null;
+        }
+    }, []);
+
+    const reproducirGrabacion = useCallback(async (id: string) => {
+        try {
+            setErrorReproduccion(null);
+            const g: any = await obtenerGrabacion(id);
+            if (!g) { setErrorReproduccion('Grabacion no encontrada.'); return; }
+            const sec = g.secuencia_grabada || g.secuencia || [];
+            if (!Array.isArray(sec) || sec.length === 0) {
+                setErrorReproduccion('Esta grabacion no tiene notas.');
+                return;
+            }
+            // Si hay un loop sonando ahora, lo paramos antes (no queremos
+            // dos audios encimados si la grabacion tambien trae uno).
+            if (loops.pistaActiva) loops.detener();
+            detenerAudioFondoReplay();
+
+            // Aplicar tonalidad de la grabacion para que los pitos coincidan.
+            if (g.tonalidad) logica.setTonalidadSeleccionada(g.tonalidad);
+            const bpm = g.bpm || 120;
+            const resolucion = g.resolucion || 192;
+            setBpmReproduccion(bpm);
+            setResolucionReproduccion(resolucion);
+            const cancionFake = { secuencia: sec, bpm, resolucion } as any;
+            await motorAudioPro.activarContexto();
+
+            // Audio de fondo: si la grabacion guardo una pista, la cargamos
+            // con el OFFSET correcto (la posicion en que estaba el loop cuando
+            // el alumno empezo a grabar) y la arrancamos en sync con las notas.
+            // Sin pista, arrancamos las notas directamente (caso simple).
+            const meta = g.metadata || {};
+            const audioFondoUrl: string | null = meta.audio_fondo_url || null;
+            console.log('[Replay] metadata leida:', meta);
+            console.log('[Replay] audio_fondo_url:', audioFondoUrl, '| velocidad:', meta.pista_velocidad, '| offset:', meta.pista_offset_segundos);
+            if (audioFondoUrl) {
+                const audio = new Audio(audioFondoUrl);
+                audio.loop = true;
+                const volumenGuardado = typeof meta.pista_volumen === 'number' ? meta.pista_volumen : 0.85;
+                const velocidadGuardada = typeof meta.pista_velocidad === 'number' ? meta.pista_velocidad : 1.0;
+                const offset = typeof meta.pista_offset_segundos === 'number' ? meta.pista_offset_segundos : 0;
+                audioFondoReplayRef.current = audio;
+
+                // Patron de arranque sample-accurate:
+                // 1. Esperar canplay (buffer minimo cargado)
+                // 2. Aplicar volume/playbackRate (no antes — el navegador puede
+                //    resetearlos durante la carga inicial)
+                // 3. Hacer seek al offset y ESPERAR el evento 'seeked' antes
+                //    de play. Sin esto algunos browsers arrancan en 0 mientras
+                //    todavia procesan el seek -> audio totalmente desincronizado.
+                // 4. Re-aplicar playbackRate post-seek (algunos browsers lo
+                //    resetean al hacer seek)
+                // 5. play() y esperar 'playing' antes de arrancar las notas
+                // 6. Compensar el audioDelta entre seek y 'playing' al arrancar
+                //    las notas (tickInicialOverride).
+                const arrancarSync = () => {
+                    audio.volume = volumenGuardado;
+                    audio.playbackRate = velocidadGuardada;
+
+                    let arrancado = false;
+                    const arrancarRAF = () => {
+                        if (arrancado) return;
+                        arrancado = true;
+                        audio.playbackRate = velocidadGuardada;
+                        const audioDelta = Math.max(0, audio.currentTime - offset);
+                        const tickInicialOverride = Math.floor(
+                            (audioDelta / velocidadGuardada) * (bpm / 60) * resolucion
+                        );
+                        console.log('[Replay] arrancando | playbackRate efectivo:', audio.playbackRate, '| velocidadGuardada:', velocidadGuardada, '| offset:', offset, '| audio.currentTime:', audio.currentTime, '| audioDelta:', audioDelta, '| tickInicialOverride:', tickInicialOverride);
+                        reproductor.reproducirSecuencia(cancionFake, {
+                            tickInicialOverride,
+                        } as any);
+                        setEnReproduccion(true);
+                    };
+
+                    const arrancarPlay = () => {
+                        audio.playbackRate = velocidadGuardada; // re-aplicar post-seek
+                        audio.addEventListener('playing', arrancarRAF, { once: true });
+                        setTimeout(arrancarRAF, 600);
+                        Promise.resolve(audio.play()).catch(() => arrancarRAF());
+                    };
+
+                    if (isFinite(offset) && offset > 0.01) {
+                        // Esperar a que el seek COMPLETE antes de play. Sin
+                        // este wait el audio puede arrancar en 0 en lugar de offset.
+                        let seeked = false;
+                        const onSeeked = () => {
+                            if (seeked) return;
+                            seeked = true;
+                            audio.removeEventListener('seeked', onSeeked);
+                            arrancarPlay();
+                        };
+                        audio.addEventListener('seeked', onSeeked);
+                        try { audio.currentTime = offset; } catch { onSeeked(); }
+                        // Fallback 800ms: si 'seeked' no llega (raro pero posible)
+                        setTimeout(onSeeked, 800);
+                    } else {
+                        arrancarPlay();
+                    }
+                };
+
+                if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
+                    arrancarSync();
+                } else {
+                    audio.addEventListener('canplay', arrancarSync, { once: true });
+                    // Fallback: si canplay nunca llega (red lenta), arrancar a 1.5s.
+                    setTimeout(() => {
+                        if (audioFondoReplayRef.current === audio && audio.readyState < 3) {
+                            arrancarSync();
+                        }
+                    }, 1500);
+                    // No llamamos audio.load() — el constructor `new Audio(url)` ya
+                    // dispara la carga, y load() podria resetear playbackRate.
+                }
+                return;
+            }
+
+            // Sin audio de fondo: arrancar las notas directamente.
+            reproductor.reproducirSecuencia(cancionFake);
+            setEnReproduccion(true);
+        } catch (e: any) {
+            setErrorReproduccion(e?.message || 'Error al cargar la grabacion.');
+        }
+    }, [logica, reproductor, loops, detenerAudioFondoReplay]);
+
+    const detenerReproduccion = useCallback(() => {
+        reproductor.detenerReproduccion();
+        detenerAudioFondoReplay();
+        setEnReproduccion(false);
+    }, [reproductor, detenerAudioFondoReplay]);
+
+    // Si la reproduccion termina sola (no por click en stop), tambien
+    // cortar el audio de fondo. El useEffect de detectar fin se encarga
+    // de poner enReproduccion=false; aprovechamos ese momento.
+    useEffect(() => {
+        if (!enReproduccion && audioFondoReplayRef.current) {
+            detenerAudioFondoReplay();
+        }
+    }, [enReproduccion, detenerAudioFondoReplay]);
+
+    // Sincronizar pause/play del audio de fondo con el reproductor de notas.
+    // Sin esto, al pausar la grabacion las notas se detienen pero la pista
+    // de fondo sigue sonando, dejando todo desfasado al reanudar.
+    useEffect(() => {
+        const audio = audioFondoReplayRef.current;
+        if (!audio) return;
+        if (reproductor.pausado) {
+            try { audio.pause(); } catch { /* noop */ }
+        } else if (enReproduccion) {
+            audio.play().catch(() => { /* noop */ });
+        }
+    }, [reproductor.pausado, enReproduccion]);
+
+    // Saltar 5 segundos atras o adelante. Convertimos segundos a ticks usando
+    // la formula inversa: tick = (segundos * bpm * resolucion) / 60.
+    const saltarSegundos = useCallback((segundos: number) => {
+        const ticksASaltar = (segundos * bpmReproduccion * resolucionReproduccion) / 60;
+        const tickObjetivo = Math.max(0, Math.min(
+            reproductor.totalTicks || Number.MAX_SAFE_INTEGER,
+            reproductor.tickActual + ticksASaltar
+        ));
+        reproductor.buscarTick(tickObjetivo);
+    }, [bpmReproduccion, resolucionReproduccion, reproductor]);
+
+    const retrocederReproduccion = useCallback(() => saltarSegundos(-5), [saltarSegundos]);
+    const adelantarReproduccion = useCallback(() => saltarSegundos(5), [saltarSegundos]);
 
     useEffect(() => {
         const check = () => setIsLandscape(window.innerWidth > window.innerHeight);
@@ -211,13 +481,70 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     }, [escala, limpiarGeometria]);
 
     const toggleModal = (nombre: keyof typeof modales) => {
-        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, [nombre]: !prev[nombre] }));
+        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, loops: false, [nombre]: !prev[nombre] }));
     };
 
+    // Posicion del loop EN EL INSTANTE en que empezo la grabacion. Se usa
+    // como offset al reproducir el replay: el audio_fondo seekea a este
+    // valor antes de play() para que el primer tick coincida con el mismo
+    // momento musical que el alumno escucho cuando dijo "empiezo a grabar".
+    const loopOffsetAtRecordStartRef = useRef(0);
+
     const handleToggleGrabacion = () => {
-        if (!grabando) { secuenciaRef.current = []; tiempoInicioRef.current = Date.now(); setGrabando(true); }
-        else setGrabando(false);
+        if (!grabacion.grabandoHero) {
+            // Capturamos la posicion del loop AHORA, justo antes de iniciar
+            // la captura. La diferencia entre estas dos lineas es micro-segundos.
+            loopOffsetAtRecordStartRef.current = loops.obtenerPosicion();
+            grabacion.iniciarGrabacionPracticaLibre('practica_libre');
+            console.log('[REC start]', {
+                pista: loops.pistaActiva?.nombre,
+                velocidad: loops.velocidad,
+                offset: loopOffsetAtRecordStartRef.current,
+            });
+        } else {
+            // Si hay un loop sonando, lo guardamos en metadata para que el replay
+            // pueda reproducirlo a la velocidad/volumen exacta que el alumno uso,
+            // empezando desde el mismo offset musical (sync perfecto con las notas).
+            const pista = loops.pistaActiva;
+            const metadata = {
+                origen: 'simulador_app',
+                vista_preferida: 'movil',
+                ...(pista ? {
+                    audio_fondo_url: pista.url,
+                    pista_id: pista.id,
+                    pista_nombre: pista.nombre,
+                    pista_velocidad: loops.velocidad,
+                    pista_volumen: loops.volumen,
+                    pista_offset_segundos: loopOffsetAtRecordStartRef.current,
+                } : {}),
+            };
+            console.log('[REC stop] metadata a guardar:', metadata);
+            grabacion.detenerGrabacionPracticaLibre(metadata);
+        }
     };
+
+    // Mantener el estado legacy `grabando` en sync con el grabador real
+    // para que la barra de herramientas siga mostrando el indicador correcto.
+    useEffect(() => { setGrabando(grabacion.grabandoHero); }, [grabacion.grabandoHero]);
+
+    // Popup inline con la lista de grabaciones (en lugar de navegar a /grabaciones).
+    const [popupGrabacionesAbierto, setPopupGrabacionesAbierto] = useState(false);
+    const abrirListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(true), []);
+    const cerrarListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(false), []);
+
+    // Toast "Grabacion guardada": se dispara cuando ultimaGrabacionGuardada
+    // cambia (de null a algo) y se auto-oculta a los 3 segundos.
+    const [toastGuardadaVisible, setToastGuardadaVisible] = useState(false);
+    useEffect(() => {
+        if (!grabacion.ultimaGrabacionGuardada) return;
+        setToastGuardadaVisible(true);
+        const id = setTimeout(() => setToastGuardadaVisible(false), 3000);
+        return () => clearTimeout(id);
+    }, [grabacion.ultimaGrabacionGuardada]);
+
+    const guardarPracticaLibre = useCallback(async (titulo: string, descripcion: string) => {
+        return await grabacion.guardarGrabacionPendiente({ titulo, descripcion });
+    }, [grabacion]);
 
     const renderHilera = (fila: any[]) => {
         const p: Record<string, any> = {};
@@ -243,7 +570,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     };
 
     return (
-        <div className={`simulador-app-root modo-${logica.direccion}`}>
+        <div className={`simulador-app-root modo-${logica.direccion} ${enReproduccion ? 'reproduciendo' : ''}`}>
             <ContenedorBajos
                 visible={bajosVisible}
                 onOpen={() => setBajosVisible(true)}
@@ -264,6 +591,8 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         onToggleMenu={() => toggleModal('menu')} onToggleTonalidades={() => toggleModal('tonalidades')}
                         onToggleMetronomo={() => toggleModal('metronomo')} onToggleInstrumentos={() => toggleModal('instrumentos')}
                         onToggleVista={() => toggleModal('vista')} onToggleAprende={() => toggleModal('aprende')}
+                        onToggleLoops={() => toggleModal('loops')}
+                        loopActivo={!!loops.pistaActiva}
                         refs={refsModales as any}
                     />
 
@@ -300,6 +629,18 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
             <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} />
 
+            <ModalLoops
+                visible={modales.loops}
+                onCerrar={() => toggleModal('loops')}
+                pistaActivaId={loops.pistaActiva?.id || null}
+                volumen={loops.volumen}
+                velocidad={loops.velocidad}
+                onVolumenChange={loops.setVolumen}
+                onVelocidadChange={loops.setVelocidad}
+                onSeleccionarPista={loops.reproducir}
+                velocidadBloqueada={grabacion.grabandoHero}
+            />
+
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
 
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
@@ -320,6 +661,52 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     Toca para comenzar
                 </div>
             )}
+
+            <BarraGrabacionFlotante
+                grabando={grabacion.grabandoHero}
+                tiempoMs={grabacion.tiempoGrabacionMs}
+                onAlternarGrabacion={handleToggleGrabacion}
+                onAbrirLista={abrirListaGrabaciones}
+                enReproduccion={enReproduccion}
+                pausado={reproductor.pausado}
+                tickActual={reproductor.tickActual}
+                totalTicks={reproductor.totalTicks}
+                bpmReproduccion={bpmReproduccion}
+                resolucionReproduccion={resolucionReproduccion}
+                onAlternarPausa={reproductor.alternarPausa}
+                onDetenerReproduccion={detenerReproduccion}
+                onRetroceder={retrocederReproduccion}
+                onAdelantar={adelantarReproduccion}
+            />
+
+            <PopupListaGrabaciones
+                visible={popupGrabacionesAbierto}
+                onCerrar={cerrarListaGrabaciones}
+                onSeleccionar={(id) => {
+                    cerrarListaGrabaciones();
+                    reproducirGrabacion(id);
+                }}
+            />
+
+            <ModalGuardarSimulador
+                visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
+                guardando={grabacion.guardandoGrabacion}
+                error={grabacion.errorGuardadoGrabacion}
+                tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Practica libre'}
+                resumen={grabacion.grabacionPendiente ? {
+                    duracionMs: grabacion.grabacionPendiente.duracionMs,
+                    bpm: grabacion.grabacionPendiente.bpm,
+                    tonalidad: grabacion.grabacionPendiente.tonalidad,
+                    notas: grabacion.grabacionPendiente.secuencia.length,
+                } : null}
+                onCancelar={grabacion.descartarGrabacionPendiente}
+                onGuardar={guardarPracticaLibre}
+            />
+
+            <ToastGrabacionGuardada
+                visible={toastGuardadaVisible}
+                onCerrar={() => setToastGuardadaVisible(false)}
+            />
         </div>
     );
 };

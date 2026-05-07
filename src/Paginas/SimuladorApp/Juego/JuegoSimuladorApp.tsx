@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';
 import { usePointerAcordeon } from '../Hooks/usePointerAcordeon';
 import MenuPausaProMax from '../../AcordeonProMax/Componentes/MenuPausaProMax';
@@ -18,6 +19,7 @@ import SelectorModoVisual from './Piezas/SelectorModoVisual';
 import JuicioJuego from './Piezas/JuicioJuego';
 import { useGuiaPitoObjetivo } from './Hooks/useGuiaPitoObjetivo';
 import { useModoVisualPersistido } from './Hooks/useModoVisualPersistido';
+import { useVerNotasPersistido } from './Hooks/useVerNotasPersistido';
 import type { ConfigCancion, ModoJuego as ModoConfig } from './Hooks/useConfigCancion';
 import '../SimuladorApp.css';
 import './JuegoSimuladorApp.css';
@@ -42,6 +44,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
     const [menuPausaAbierto, setMenuPausaAbierto] = useState(false);
     const { modoVisual, cambiar: cambiarModoVisual, toast: toastModo } = useModoVisualPersistido();
+    const { verNotas, alternar: alternarVerNotas, toast: toastVerNotas } = useVerNotasPersistido();
 
     // Marca el body para que el CSS local del menu de pausa (compacto) aplique
     // solo cuando estamos en el modo juego del simulador.
@@ -63,6 +66,14 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     useEffect(() => {
         if (inicializadoRef.current) return;
         if (!hero || typeof hero.iniciarJuego !== 'function') return;
+        // Esperar a que la config del acordeon termine de cargar de la nube ANTES
+        // de arrancar el primer iniciarJuego. Sin esto, el RAF del reproductor se
+        // arranca con closures viejos (instrumentoId default, reproduceTono apuntando
+        // al bank que se va a limpiar+recargar segundos despues) → motorAudioPro.reproducir
+        // devuelve null silenciosamente y no se escucha el acordeon hasta que el alumno
+        // reinicia. Reiniciar funciona porque el handler captura el hero del ultimo render
+        // con los closures actualizados.
+        if (!hero.logica?.disenoCargado) return;
         inicializadoRef.current = true;
 
         // Modo boxed fuerza synthesia (la cancion espera en cada nota; la
@@ -91,8 +102,9 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             console.error('[JuegoSimuladorApp] iniciarJuego fallo:', err);
         });
     // modoVisual al primer init solamente; cambios posteriores los maneja el useEffect de abajo.
+    // disenoCargado se incluye para que el effect se reactive cuando la nube termine.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [hero, config]);
+    }, [hero, config, hero?.logica?.disenoCargado]);
 
     // Si el usuario cambia de modo visual mid-juego, ajusta el modoPractica.
     // Dependemos del setter (estable, useCallback en useLogicaProMax) y NO
@@ -302,6 +314,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     notasImpactadas: hero.notasImpactadas || new Set<string>(),
                     rangoSeccion,
                     modoPractica: modoActual,
+                    verNotas,
                 };
                 switch (modoVisual) {
                     case 'boxed':  return <PistaNotasBoxed {...propsPista} />;
@@ -321,10 +334,22 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             )}
 
             <div className="juego-sim-switch-modo" data-touch-allow>
+                <button
+                    type="button"
+                    className={verNotas ? 'activo' : ''}
+                    onClick={alternarVerNotas}
+                    aria-pressed={verNotas}
+                    title={verNotas ? 'Ocultar nombres de notas' : 'Mostrar nombres de notas (Si, Re, Fa...)'}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                    {verNotas ? <Eye size={12} /> : <EyeOff size={12} />}
+                    <span>Notas</span>
+                </button>
                 <SelectorModoVisual modoActual={modoVisual} onCambiar={cambiarModoVisual} />
             </div>
 
             {toastModo && <div className="juego-sim-toast-modo" role="status">{toastModo}</div>}
+            {toastVerNotas && <div className="juego-sim-toast-modo" role="status">{toastVerNotas}</div>}
 
             {opacidadDano > 0 && (
                 <div className="juego-sim-dano-overlay" style={{ opacity: opacidadDano }} />

@@ -78,10 +78,30 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         [grabacion]
     );
 
+    // Si la grabacion vino de SimuladorApp con un loop de fondo, la velocidad
+    // de la pista la guardamos explicitamente en `metadata.pista_velocidad`.
+    // En ese caso usamos ese valor en lugar del calculo bpm/bpmOriginal porque
+    // el loop NO esta atado al bpm de la cancion (es una pista independiente).
+    const pistaVelocidadGuardada = useMemo(() => {
+        const v = (grabacion?.metadata as any)?.pista_velocidad;
+        return typeof v === 'number' && isFinite(v) && v > 0 ? v : null;
+    }, [grabacion]);
+
     const playbackRateAudio = useMemo(
-        () => limitarPlaybackRate((grabacion?.bpm || bpm || 120) / Math.max(1, bpmPistaOriginal || 120)),
-        [bpm, bpmPistaOriginal, grabacion?.bpm]
+        () => pistaVelocidadGuardada !== null
+            ? limitarPlaybackRate(pistaVelocidadGuardada)
+            : limitarPlaybackRate((grabacion?.bpm || bpm || 120) / Math.max(1, bpmPistaOriginal || 120)),
+        [bpm, bpmPistaOriginal, grabacion?.bpm, pistaVelocidadGuardada]
     );
+
+    // Offset de la pista en el momento de iniciar la grabacion (segundos).
+    // Sin esto el audio arrancaria desde 0 y las notas no harian match con
+    // lo que el alumno escuchaba al grabar. Solo se usa para grabaciones
+    // de practica_libre con loop de fondo (SimuladorApp).
+    const pistaOffsetSegundos = useMemo(() => {
+        const v = (grabacion?.metadata as any)?.pista_offset_segundos;
+        return typeof v === 'number' && isFinite(v) && v >= 0 ? v : 0;
+    }, [grabacion]);
 
     const tonalidadReplayLista = !grabacion?.tonalidad || logica.tonalidadSeleccionada === grabacion.tonalidad;
 
@@ -278,7 +298,14 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         const audio = audioFondoRef.current;
         if (!audio) return;
         try {
-            audio.currentTime = convertirTicksASegundos(tick, bpmPistaOriginal, resolucionActiva);
+            // segMusicales = real_seconds que corresponden a este tick. Para una
+            // grabacion practica_libre con loop, el AUDIO no avanza al ritmo real
+            // sino al ritmo `pista_velocidad` (V). Asi que audio_seconds_consumidos
+            // = real_seconds * V. El offset es la posicion del audio cuando el
+            // alumno empezo a grabar.
+            const segMusicales = convertirTicksASegundos(tick, bpmPistaOriginal, resolucionActiva);
+            const factorAudio = pistaVelocidadGuardada !== null ? pistaVelocidadGuardada : 1;
+            audio.currentTime = pistaOffsetSegundos + segMusicales * factorAudio;
         } catch (_) {}
     };
 
