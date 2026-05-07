@@ -356,13 +356,27 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             // reproducirSecuencia corre antes de que el banco se llene,
             // motorAudioPro.reproducir devuelve null silencioso.
             //
-            // Estrategia doble:
-            //   a) Damos tiempo al useEffect interno para que corra el preload
-            //      de TODOS los pitos de la tonalidad (debounce + fetch).
-            //   b) Manualmente cargamos los samples especificos de los botones
-            //      del recording (fallback si el a falla por timing).
-            await new Promise((r) => setTimeout(r, 250));
+            // Esperamos a que (a) la tonalidad se aplique en logicaRef y
+            // (b) precargamos manualmente los samples que el recording necesita.
+            const tonalidadObjetivo = g.tonalidad || logicaRef.current.tonalidadSeleccionada;
+            // Wait hasta que React commitee setTonalidadSeleccionada
+            // (logicaRef.current se actualiza en useEffect post-render).
+            const tInicio = performance.now();
+            while (
+                logicaRef.current.tonalidadSeleccionada !== tonalidadObjetivo &&
+                performance.now() - tInicio < 1500
+            ) {
+                await new Promise((r) => setTimeout(r, 30));
+            }
+            // Damos otro pequeno respiro al useEffect interno que carga samples
+            // (debounce 80ms + algun fetch). Esto evita race con el motorAudio
+            // si la red es lenta.
+            await new Promise((r) => setTimeout(r, 200));
 
+            // Precarga manual de los samples de los botones del recording.
+            // motorAudioPro.cargarSonidoEnBanco es idempotente (cache interno);
+            // si ya estan, retorna inmediato. Awaiteamos para garantizar que
+            // el banco esta lleno antes de reproducirSecuencia.
             try {
                 const obtenerRutas = (logicaRef.current as any).obtenerRutasAudio;
                 if (typeof obtenerRutas === 'function') {
@@ -498,13 +512,23 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         setVinoDeGrabaciones(true);
     }, [reproducirIdParam, vinoDeGrabaciones, usuarioEligioQuedarse]);
 
-    // Auto-arrancar el replay SOLO cuando el telefono esta en horizontal.
-    // En vertical el SimuladorApp muestra el overlay "rotar a horizontal" y
-    // arrancar la grabacion ahi seria absurdo — el alumno no la veria. En
-    // landscape disparamos el replay automaticamente (un solo intento).
+    // Auto-arrancar el replay SOLO cuando:
+    //   1. Hay ?reproducir=<id> en la URL.
+    //   2. El telefono esta en horizontal (sin esto el alumno no ve nada).
+    //   3. La config + samples del acordeon YA bajaron de la nube
+    //      (logica.disenoCargado === true).
+    //
+    // El (3) es CRITICO: en manual play (boton Play en simulador) funciona
+    // porque el alumno ya esta en el simulador hace rato y disenoCargado es
+    // true. En auto-play sin este guard, disparabamos reproducirGrabacion
+    // antes de que las muestras del acordeon estuvieran listas — las notas
+    // se marcaban visualmente pero motorAudioPro.reproducir devolvia null
+    // porque el banco aun estaba vacio. Mismo flag que usa el modal de
+    // /grabaciones para esperar antes de reproducir.
     useEffect(() => {
         if (!reproducirIdParam || autoArrancado) return;
         if (!isLandscape) return;
+        if (!logica.disenoCargado) return;
         setAutoArrancado(true);
         // Activamos el contexto en paralelo (no awaiteamos: si la activation
         // todavia esta viva, el motor lo aprovecha; si no, queda en suspended
@@ -517,7 +541,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             setAudioListo(true);
         }
         void reproducirGrabacion(reproducirIdParam);
-    }, [reproducirIdParam, autoArrancado, reproducirGrabacion, isLandscape]);
+    }, [reproducirIdParam, autoArrancado, reproducirGrabacion, isLandscape, logica.disenoCargado]);
 
     // Volver inmediatamente a /grabaciones (cancela cualquier countdown).
     const volverAGrabaciones = useCallback(() => {
