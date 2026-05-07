@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { useMetronomo } from '../../Hooks/useMetronomo';
+import type { useMetronomo } from '../../Hooks/useMetronomo';
 import PanelMetronomoInline from './PanelMetronomoInline';
 import './ModalMetronomo.css';
 
@@ -9,15 +9,10 @@ interface ModalMetronomoProps {
     onCerrar: () => void;
     bpm: number;
     setBpm: React.Dispatch<React.SetStateAction<number>>;
+    met: ReturnType<typeof useMetronomo>;
 }
 
-const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, bpm, setBpm }) => {
-    const met = useMetronomo(bpm);
-
-    React.useEffect(() => {
-        met.setBpm(bpm);
-    }, [bpm]);
-
+const ModalMetronomo: React.FC<ModalMetronomoProps> = ({ visible, onCerrar, bpm, setBpm, met }) => {
     if (!visible) return null;
 
     return (
