@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import type { PistaPracticaLibre } from '../../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
 export interface PistaActiva {
@@ -15,46 +16,53 @@ export interface EstadoLoopError {
 }
 
 /**
- * Reproductor de loops del SimuladorApp.
+ * Reproductor de loops del SimuladorApp — implementacion Web Audio API.
  *
- * Bug iOS Safari (documentado: github.com/orgs/supabase/discussions/35866):
- * Supabase Storage sirve los MP3 con Content-Type `application/octet-stream`
- * en lugar de `audio/mpeg`. iOS Safari rechaza decodear cualquier audio cuyo
- * Content-Type no sea `audio/*` -> MediaError code 4 (NotSupportedError).
+ * Bug iOS Safari + HTMLAudio + Supabase Storage:
+ * Probamos varios approaches con HTMLAudioElement (URL directa, Blob URL con
+ * Content-Type forzado, crossOrigin) y TODOS fallaron en iPhone real con
+ * NotSupportedError / MediaError code 4. iOS Safari WebKit es estricto con
+ * HTMLAudio en formas que no podemos saltar desde el cliente.
  *
- * Solucion: descargamos el MP3 con fetch(), lo envolvemos en un Blob nuevo
- * con `type: 'audio/mpeg'` forzado, y reproducimos desde una Object URL local.
- * iOS confia en el MIME del blob local, no del servidor.
+ * Solucion: bypassear HTMLAudio entero y usar Web Audio API directo.
+ *   1. fetch() del MP3 -> ArrayBuffer.
+ *   2. AudioContext.decodeAudioData(arrayBuf) -> AudioBuffer.
+ *   3. AudioBufferSourceNode con loop=true, conectado a GainNode -> destination.
  *
- * Pre-cargamos los blobs cuando el modal se abre. Por ende el play() en
- * el click del usuario es SINCRONO y dentro del gesto -> sin NotAllowedError.
+ * El AudioContext es el mismo que el del acordeon (motorAudioPro.contextoAudio),
+ * que ya esta running en iOS porque el alumno toco un pito antes. Web Audio
+ * API en iOS no tiene los problemas de MIME/CORS de HTMLAudio porque trabajamos
+ * con bytes crudos y los decodificamos nosotros.
+ *
+ * Pre-decodificamos los buffers cuando el modal se abre. El play() en click
+ * es sincrono e inmediato (ya tenemos el AudioBuffer en memoria).
  */
 export function useReproductorLoops() {
     const [pistaActiva, setPistaActiva] = useState<PistaActiva | null>(null);
     const [volumen, setVolumen] = useState(0.85);
     const [velocidad, setVelocidad] = useState(1.0);
     const [errorReproduccion, setErrorReproduccion] = useState<EstadoLoopError | null>(null);
-    // Set de URLs pre-descargadas y listas para reproducir. Lo usa la UI para
-    // mostrar un loader en cada fila hasta que esta lista.
     const [pistasListas, setPistasListas] = useState<Set<string>>(new Set());
 
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    // Mapa: URL original de Supabase → Object URL del blob local.
-    const blobUrlMap = useRef<Map<string, string>>(new Map());
-    // URLs en proceso de descarga, para no duplicar fetches.
+    // Cache: URL original → AudioBuffer ya decodificado.
+    const bufferMap = useRef<Map<string, AudioBuffer>>(new Map());
     const descargandoMap = useRef<Map<string, Promise<void>>>(new Map());
 
+    // Estado de la reproduccion en curso.
+    const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+    const gainRef = useRef<GainNode | null>(null);
+    const startTimeRef = useRef(0);  // contexto.currentTime cuando arranco la fuente
+
     /**
-     * Pre-descarga un MP3 como Blob con Content-Type forzado a 'audio/mpeg'.
-     * Es la unica forma confiable de reproducir audio de Supabase Storage en
-     * iOS Safari sin tocar la configuracion del bucket.
+     * Pre-descarga + decodifica un MP3. Lo deja en bufferMap listo para play.
+     * Si falla, lo loguea pero no setea errorReproduccion (la precarga es
+     * silenciosa; el banner solo aparece si el usuario intenta reproducir).
      */
     const precargarPista = useCallback(async (pista: PistaPracticaLibre): Promise<void> => {
         const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
         if (!url) return;
-        if (blobUrlMap.current.has(url)) return;
+        if (bufferMap.current.has(url)) return;
 
-        // Si ya hay una descarga en curso, esperarla.
         const enCurso = descargandoMap.current.get(url);
         if (enCurso) return enCurso;
 
@@ -62,18 +70,20 @@ export function useReproductorLoops() {
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
-                const buffer = await response.arrayBuffer();
-                // Forzar Content-Type a audio/mpeg para iOS. Sin esto, iOS
-                // recibe application/octet-stream de Supabase y rechaza.
-                const blob = new Blob([buffer], { type: 'audio/mpeg' });
-                const blobUrl = URL.createObjectURL(blob);
-                blobUrlMap.current.set(url, blobUrl);
-                setPistasListas(prev => new Set(prev).add(url));
+                const arrayBuf = await response.arrayBuffer();
+                if (arrayBuf.byteLength === 0) throw new Error('Respuesta vacia');
+                // decodeAudioData: iOS Safari soporta MP3, AAC, M4A. Si llega
+                // otra cosa rechaza con DOMException EncodingError.
+                const ctx = motorAudioPro.contextoAudio;
+                const audioBuf = await ctx.decodeAudioData(arrayBuf);
+                bufferMap.current.set(url, audioBuf);
+                setPistasListas(prev => {
+                    const next = new Set(prev);
+                    next.add(url);
+                    return next;
+                });
             } catch (e: any) {
-                console.error('[Loops] precarga fallo:', url, e?.message || e);
-                // No setear errorReproduccion aqui — el banner solo aparece al
-                // intentar reproducir. La precarga es silenciosa y se reintenta
-                // al hacer click si fallo.
+                console.error('[Loops] precarga fallo:', url, e?.name, e?.message || e);
             } finally {
                 descargandoMap.current.delete(url);
             }
@@ -82,43 +92,32 @@ export function useReproductorLoops() {
         return promesa;
     }, []);
 
-    /** Pre-descarga una lista entera. Usado al abrir el modal. */
     const precargarPistas = useCallback((pistas: PistaPracticaLibre[]) => {
         pistas.forEach(p => { void precargarPista(p); });
     }, [precargarPista]);
 
-    // Aplicar volumen y velocidad en vivo al audio actual.
-    useEffect(() => {
-        if (audioRef.current) audioRef.current.volume = volumen;
-    }, [volumen]);
-    useEffect(() => {
-        if (audioRef.current) audioRef.current.playbackRate = velocidad;
-    }, [velocidad]);
-
     const detener = useCallback(() => {
-        const audio = audioRef.current;
-        if (audio) {
-            try { audio.pause(); } catch { /* noop */ }
+        const source = sourceRef.current;
+        if (source) {
+            try { source.stop(); } catch { /* noop si nunca arranco */ }
+            try { source.disconnect(); } catch { /* noop */ }
         }
+        sourceRef.current = null;
         setPistaActiva(null);
     }, []);
 
     const reproducir = useCallback((pista: PistaPracticaLibre) => {
-        // Toggle: misma pista → para.
         if (pistaActiva && pistaActiva.id === pista.id) {
             detener();
             return;
         }
-        const urlOriginal = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
-        if (!urlOriginal) return;
+        const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
+        if (!url) return;
 
         setErrorReproduccion(null);
 
-        // Si la pista no esta pre-descargada todavia, intentamos descargarla
-        // en background y avisamos al usuario. Si la URL original se intenta
-        // reproducir directo en iOS sin Content-Type correcto -> code 4.
-        const blobUrl = blobUrlMap.current.get(urlOriginal);
-        if (!blobUrl) {
+        const buffer = bufferMap.current.get(url);
+        if (!buffer) {
             void precargarPista(pista);
             setErrorReproduccion({
                 name: 'Cargando',
@@ -127,85 +126,100 @@ export function useReproductorLoops() {
             return;
         }
 
-        // Descartar audio anterior si tenia otra URL.
-        const prev = audioRef.current;
-        if (prev && prev.src !== blobUrl) {
-            try { prev.pause(); } catch { /* noop */ }
-            try { prev.src = ''; } catch { /* noop */ }
-            audioRef.current = null;
+        // Detener la reproduccion anterior (si la habia).
+        const prev = sourceRef.current;
+        if (prev) {
+            try { prev.stop(); } catch { /* noop */ }
+            try { prev.disconnect(); } catch { /* noop */ }
+            sourceRef.current = null;
         }
 
-        // Crear nuevo audio con la blob URL en el constructor. iOS exige el
-        // ciclo de carga correcto (URL en constructor, no asignacion post).
-        let audio = audioRef.current;
-        if (!audio) {
-            audio = new Audio(blobUrl);
-            audio.preload = 'auto';
-            // Sin crossOrigin: el blob es local, no hay cross-origin.
-            audio.loop = true;
-            audio.playsInline = true;
-            audioRef.current = audio;
+        const ctx = motorAudioPro.contextoAudio;
+
+        // Resume del contexto fire-and-forget (el gesto del click cuenta).
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch((e) => console.warn('[Loops] resume fallo:', e));
         }
-        audio.volume = volumen;
-        audio.playbackRate = velocidad;
 
-        const onErrorAudio = () => {
-            const err = audio!.error;
-            const codigo = err ? `code ${err.code}` : 'desconocido';
-            const msg = err?.message || `MediaError ${codigo}`;
-            console.error('[Loops] audio.error:', codigo, msg);
-            setErrorReproduccion({ name: `MediaError ${codigo}`, message: msg });
-            setPistaActiva(null);
-        };
-        audio.addEventListener('error', onErrorAudio, { once: true });
+        // GainNode persistente para volumen (lo reusamos entre pistas).
+        let gain = gainRef.current;
+        if (!gain) {
+            gain = ctx.createGain();
+            gain.connect(ctx.destination);
+            gainRef.current = gain;
+        }
+        gain.gain.value = volumen;
 
-        // play() SINCRONO dentro del gesto. La blob URL ya esta cargada en
-        // memoria local, asi que el play resuelve practicamente instantaneo.
-        const playPromise = audio.play();
+        // AudioBufferSourceNode: nuevo cada vez (no se pueden reusar tras stop).
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.playbackRate.value = velocidad;
+        source.connect(gain);
+
+        try {
+            source.start(0, 0);
+            startTimeRef.current = ctx.currentTime;
+            sourceRef.current = source;
+        } catch (e: any) {
+            const name = e?.name || 'Error';
+            const message = e?.message || 'No se pudo iniciar la pista.';
+            console.error('[Loops] source.start fallo:', name, message, e);
+            setErrorReproduccion({ name, message });
+            return;
+        }
 
         setPistaActiva({
             id: pista.id,
             nombre: pista.nombre,
-            url: urlOriginal,
+            url,
             artista: pista.artista || null,
             bpm: pista.bpm || null,
         });
-
-        playPromise?.catch((e: any) => {
-            const name = e?.name || 'Error';
-            const message = e?.message || String(e) || 'No se pudo reproducir.';
-            console.error('[Loops] audio.play() rechazado:', name, message, e);
-            setErrorReproduccion({ name, message });
-            setPistaActiva(null);
-        });
     }, [pistaActiva, volumen, velocidad, detener, precargarPista]);
 
-    // Cleanup: liberar todos los object URLs al desmontar.
+    // Volumen en vivo via GainNode.
+    useEffect(() => {
+        if (gainRef.current) gainRef.current.gain.value = volumen;
+    }, [volumen]);
+
+    // Velocidad en vivo via AudioParam de la fuente.
+    useEffect(() => {
+        const source = sourceRef.current;
+        if (source) source.playbackRate.value = velocidad;
+    }, [velocidad]);
+
+    // Cleanup al desmontar.
     useEffect(() => {
         return () => {
-            const audio = audioRef.current;
-            if (audio) {
-                try { audio.pause(); } catch { /* noop */ }
-                audio.src = '';
-                audioRef.current = null;
+            const source = sourceRef.current;
+            if (source) {
+                try { source.stop(); } catch { /* noop */ }
+                try { source.disconnect(); } catch { /* noop */ }
             }
-            blobUrlMap.current.forEach(blobUrl => {
-                try { URL.revokeObjectURL(blobUrl); } catch { /* noop */ }
-            });
-            blobUrlMap.current.clear();
+            sourceRef.current = null;
+            const gain = gainRef.current;
+            if (gain) {
+                try { gain.disconnect(); } catch { /* noop */ }
+            }
+            gainRef.current = null;
+            bufferMap.current.clear();
         };
     }, []);
 
     /**
-     * Devuelve la posicion actual del loop en segundos (audio.currentTime).
-     * Usado por el grabador para anclar la pista al momento exacto en que
-     * se inicio la grabacion → replay seekea a este offset y suena en sync.
+     * Posicion en segundos dentro del buffer (para anclar grabaciones).
+     * Loop: modulo de la duracion del buffer.
      */
     const obtenerPosicion = useCallback(() => {
-        const a = audioRef.current;
-        if (!a || !isFinite(a.currentTime)) return 0;
-        return a.currentTime;
-    }, []);
+        const source = sourceRef.current;
+        if (!source || !source.buffer) return 0;
+        const ctx = motorAudioPro.contextoAudio;
+        const elapsed = (ctx.currentTime - startTimeRef.current) * velocidad;
+        const dur = source.buffer.duration;
+        if (!isFinite(dur) || dur <= 0) return 0;
+        return elapsed % dur;
+    }, [velocidad]);
 
     return {
         pistaActiva,
