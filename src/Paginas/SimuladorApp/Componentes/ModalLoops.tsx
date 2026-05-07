@@ -16,6 +16,8 @@ interface Props {
     onSeleccionarPista: (pista: PistaPracticaLibre) => void;
     velocidadBloqueada?: boolean;  // True durante grabacion: la velocidad queda fija.
     errorReproduccion?: EstadoLoopError | null;
+    pistasListas?: Set<string>;  // URLs de pistas pre-descargadas y listas para play.
+    onPrecargarPistas?: (pistas: PistaPracticaLibre[]) => void;
 }
 
 /**
@@ -29,6 +31,8 @@ const ModalLoops: React.FC<Props> = ({
     onVolumenChange, onVelocidadChange, onSeleccionarPista,
     velocidadBloqueada = false,
     errorReproduccion = null,
+    pistasListas,
+    onPrecargarPistas,
 }) => {
     const [pistas, setPistas] = useState<PistaPracticaLibre[]>([]);
     const [cargando, setCargando] = useState(false);
@@ -49,6 +53,14 @@ const ModalLoops: React.FC<Props> = ({
             .finally(() => { if (!cancelado) setCargando(false); });
         return () => { cancelado = true; };
     }, [visible, pistas.length]);
+
+    // Pre-descarga de blobs ni bien tenemos la lista. Sin esto, la primera
+    // reproduccion en iOS falla con MediaError code 4 (Supabase sirve los MP3
+    // con Content-Type incorrecto que iOS rechaza).
+    useEffect(() => {
+        if (!visible || pistas.length === 0) return;
+        onPrecargarPistas?.(pistas);
+    }, [visible, pistas, onPrecargarPistas]);
 
     if (!visible) return null;
 
@@ -89,6 +101,8 @@ const ModalLoops: React.FC<Props> = ({
                     )}
                     {!cargando && !error && pistas.map((p) => {
                         const activa = p.id === pistaActivaId;
+                        const url = p.audioUrl || (p.capas && p.capas[0]?.url) || '';
+                        const lista = !pistasListas || pistasListas.has(url);
                         return (
                             <div
                                 key={p.id}
@@ -102,6 +116,7 @@ const ModalLoops: React.FC<Props> = ({
                                     <span className="sim-loops-meta">
                                         {p.artista || 'Sin artista'}
                                         {p.bpm ? ` · ${p.bpm} BPM` : ''}
+                                        {!lista && ' · descargando…'}
                                     </span>
                                 </span>
                                 {activa && (
@@ -111,13 +126,15 @@ const ModalLoops: React.FC<Props> = ({
                                 )}
                                 <button
                                     type="button"
-                                    className={`sim-loops-play ${activa ? 'activa' : ''}`}
+                                    className={`sim-loops-play ${activa ? 'activa' : ''} ${!lista ? 'cargando' : ''}`}
                                     onClick={() => onSeleccionarPista(p)}
-                                    aria-label={activa ? 'Pausar' : 'Reproducir'}
+                                    aria-label={activa ? 'Pausar' : (lista ? 'Reproducir' : 'Descargando…')}
                                 >
-                                    {activa
-                                        ? <Pause size={20} fill="currentColor" />
-                                        : <Play size={20} fill="currentColor" />}
+                                    {!lista
+                                        ? <Loader size={18} className="sim-loops-spinner" />
+                                        : activa
+                                            ? <Pause size={20} fill="currentColor" />
+                                            : <Play size={20} fill="currentColor" />}
                                 </button>
                             </div>
                         );

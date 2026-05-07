@@ -145,6 +145,13 @@
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
 }
 
+.sim-loops-play.cargando {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.55);
+    box-shadow: none;
+    cursor: wait;
+}
+
 /* Banner de error de reproduccion: visible al tope del modal cuando play()
    se rechaza o el audio falla a cargar. Crucial para diagnostico mobile
    donde no podemos abrir consola. */

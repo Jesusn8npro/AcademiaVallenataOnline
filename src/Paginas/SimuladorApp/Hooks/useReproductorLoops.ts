@@ -15,41 +15,77 @@ export interface EstadoLoopError {
 }
 
 /**
- * Hook que vive en SimuladorAppNormal y maneja la pista de loops del SimuladorApp.
- * El audio se mantiene fuera del modal — si el usuario cierra el modal, el loop
- * sigue sonando.
+ * Reproductor de loops del SimuladorApp.
  *
- * Patron mobile-first (copiado de useAudioFondoPracticaLibre): el HTMLAudio se
- * enruta por el AudioContext del motor con `conectarMediaElement`. iOS Safari
- * exige una sola sesion de audio activada por gesto — sin esto, el HTMLAudio
- * compite con el AudioContext del acordeon y el play() es rechazado o silenciado.
+ * Bug iOS Safari (documentado: github.com/orgs/supabase/discussions/35866):
+ * Supabase Storage sirve los MP3 con Content-Type `application/octet-stream`
+ * en lugar de `audio/mpeg`. iOS Safari rechaza decodear cualquier audio cuyo
+ * Content-Type no sea `audio/*` -> MediaError code 4 (NotSupportedError).
  *
- * Reusamos el MISMO HTMLAudioElement en cada cambio de pista (solo cambiamos
- * `src`). Crear `new Audio()` dentro del mismo gesto que un `pause()` previo
- * tambien rompe la user activation en iOS.
+ * Solucion: descargamos el MP3 con fetch(), lo envolvemos en un Blob nuevo
+ * con `type: 'audio/mpeg'` forzado, y reproducimos desde una Object URL local.
+ * iOS confia en el MIME del blob local, no del servidor.
+ *
+ * Pre-cargamos los blobs cuando el modal se abre. Por ende el play() en
+ * el click del usuario es SINCRONO y dentro del gesto -> sin NotAllowedError.
  */
 export function useReproductorLoops() {
     const [pistaActiva, setPistaActiva] = useState<PistaActiva | null>(null);
     const [volumen, setVolumen] = useState(0.85);
     const [velocidad, setVelocidad] = useState(1.0);
     const [errorReproduccion, setErrorReproduccion] = useState<EstadoLoopError | null>(null);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+    // Set de URLs pre-descargadas y listas para reproducir. Lo usa la UI para
+    // mostrar un loader en cada fila hasta que esta lista.
+    const [pistasListas, setPistasListas] = useState<Set<string>>(new Set());
 
-    // Helper para crear un HTMLAudio con la URL ya en el constructor. iPhone real
-    // dio MEDIA_ERR_SRC_NOT_SUPPORTED (code 4) cuando crebamos el audio vacio y
-    // luego seteabamos `audio.src = url` — iOS no carga bien el src asignado
-    // post-construccion en cierto orden. Pasar la URL al constructor (igual que
-    // PracticaLibre) lo dispara en el ciclo correcto y carga sin problema.
-    // crossOrigin='anonymous' es necesario para Supabase Storage en iOS: sin
-    // CORS explicito el response queda opaco y iOS lo rechaza con code 4.
-    const crearAudio = useCallback((url: string): HTMLAudioElement => {
-        const audio = new Audio(url);
-        audio.preload = 'auto';
-        audio.crossOrigin = 'anonymous';
-        audio.loop = true;
-        audio.playsInline = true;
-        return audio;
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    // Mapa: URL original de Supabase → Object URL del blob local.
+    const blobUrlMap = useRef<Map<string, string>>(new Map());
+    // URLs en proceso de descarga, para no duplicar fetches.
+    const descargandoMap = useRef<Map<string, Promise<void>>>(new Map());
+
+    /**
+     * Pre-descarga un MP3 como Blob con Content-Type forzado a 'audio/mpeg'.
+     * Es la unica forma confiable de reproducir audio de Supabase Storage en
+     * iOS Safari sin tocar la configuracion del bucket.
+     */
+    const precargarPista = useCallback(async (pista: PistaPracticaLibre): Promise<void> => {
+        const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
+        if (!url) return;
+        if (blobUrlMap.current.has(url)) return;
+
+        // Si ya hay una descarga en curso, esperarla.
+        const enCurso = descargandoMap.current.get(url);
+        if (enCurso) return enCurso;
+
+        const promesa = (async () => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+                const buffer = await response.arrayBuffer();
+                // Forzar Content-Type a audio/mpeg para iOS. Sin esto, iOS
+                // recibe application/octet-stream de Supabase y rechaza.
+                const blob = new Blob([buffer], { type: 'audio/mpeg' });
+                const blobUrl = URL.createObjectURL(blob);
+                blobUrlMap.current.set(url, blobUrl);
+                setPistasListas(prev => new Set(prev).add(url));
+            } catch (e: any) {
+                console.error('[Loops] precarga fallo:', url, e?.message || e);
+                // No setear errorReproduccion aqui — el banner solo aparece al
+                // intentar reproducir. La precarga es silenciosa y se reintenta
+                // al hacer click si fallo.
+            } finally {
+                descargandoMap.current.delete(url);
+            }
+        })();
+        descargandoMap.current.set(url, promesa);
+        return promesa;
     }, []);
+
+    /** Pre-descarga una lista entera. Usado al abrir el modal. */
+    const precargarPistas = useCallback((pistas: PistaPracticaLibre[]) => {
+        pistas.forEach(p => { void precargarPista(p); });
+    }, [precargarPista]);
 
     // Aplicar volumen y velocidad en vivo al audio actual.
     useEffect(() => {
@@ -63,9 +99,6 @@ export function useReproductorLoops() {
         const audio = audioRef.current;
         if (audio) {
             try { audio.pause(); } catch { /* noop */ }
-            // No borramos src ni desconectamos: queremos que el mismo audio
-            // este listo para la proxima pista sin re-crear (preserva user
-            // activation y evita el cold-start de iOS).
         }
         setPistaActiva(null);
     }, []);
@@ -76,50 +109,64 @@ export function useReproductorLoops() {
             detener();
             return;
         }
-        const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
-        if (!url) return;
+        const urlOriginal = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
+        if (!urlOriginal) return;
 
         setErrorReproduccion(null);
 
-        // Si hay un audio anterior con OTRA URL, lo descartamos. iOS no aplica
-        // bien `audio.src = nuevaUrl` despues de tener src previo — code 4.
-        // Mejor crear uno nuevo con la URL en el constructor.
+        // Si la pista no esta pre-descargada todavia, intentamos descargarla
+        // en background y avisamos al usuario. Si la URL original se intenta
+        // reproducir directo en iOS sin Content-Type correcto -> code 4.
+        const blobUrl = blobUrlMap.current.get(urlOriginal);
+        if (!blobUrl) {
+            void precargarPista(pista);
+            setErrorReproduccion({
+                name: 'Cargando',
+                message: 'Esta pista todavia se esta descargando. Intenta de nuevo en un segundo.',
+            });
+            return;
+        }
+
+        // Descartar audio anterior si tenia otra URL.
         const prev = audioRef.current;
-        if (prev && prev.src !== url) {
+        if (prev && prev.src !== blobUrl) {
             try { prev.pause(); } catch { /* noop */ }
             try { prev.src = ''; } catch { /* noop */ }
             audioRef.current = null;
         }
 
-        // Crear audio nuevo con URL en constructor (si no hay) o reusar.
+        // Crear nuevo audio con la blob URL en el constructor. iOS exige el
+        // ciclo de carga correcto (URL en constructor, no asignacion post).
         let audio = audioRef.current;
         if (!audio) {
-            audio = crearAudio(url);
+            audio = new Audio(blobUrl);
+            audio.preload = 'auto';
+            // Sin crossOrigin: el blob es local, no hay cross-origin.
+            audio.loop = true;
+            audio.playsInline = true;
             audioRef.current = audio;
         }
         audio.volume = volumen;
         audio.playbackRate = velocidad;
 
-        // Listener de error ANTES de play() para capturar fallos de carga.
         const onErrorAudio = () => {
             const err = audio!.error;
             const codigo = err ? `code ${err.code}` : 'desconocido';
-            const msg = err?.message || `MediaError ${codigo} (no se pudo cargar el audio)`;
-            console.error('[Loops] audio.error:', codigo, msg, 'url:', url);
+            const msg = err?.message || `MediaError ${codigo}`;
+            console.error('[Loops] audio.error:', codigo, msg);
             setErrorReproduccion({ name: `MediaError ${codigo}`, message: msg });
             setPistaActiva(null);
         };
         audio.addEventListener('error', onErrorAudio, { once: true });
 
-        // CRITICO iOS Safari: play() SINCRONO dentro del mismo tick del touch.
-        // Cualquier `await` antes invalida la user activation -> NotAllowedError.
+        // play() SINCRONO dentro del gesto. La blob URL ya esta cargada en
+        // memoria local, asi que el play resuelve practicamente instantaneo.
         const playPromise = audio.play();
 
-        // UI optimista; revertimos si play() rechaza.
         setPistaActiva({
             id: pista.id,
             nombre: pista.nombre,
-            url,
+            url: urlOriginal,
             artista: pista.artista || null,
             bpm: pista.bpm || null,
         });
@@ -131,9 +178,9 @@ export function useReproductorLoops() {
             setErrorReproduccion({ name, message });
             setPistaActiva(null);
         });
-    }, [pistaActiva, volumen, velocidad, detener, crearAudio]);
+    }, [pistaActiva, volumen, velocidad, detener, precargarPista]);
 
-    // Cleanup al desmontar el componente padre.
+    // Cleanup: liberar todos los object URLs al desmontar.
     useEffect(() => {
         return () => {
             const audio = audioRef.current;
@@ -142,6 +189,10 @@ export function useReproductorLoops() {
                 audio.src = '';
                 audioRef.current = null;
             }
+            blobUrlMap.current.forEach(blobUrl => {
+                try { URL.revokeObjectURL(blobUrl); } catch { /* noop */ }
+            });
+            blobUrlMap.current.clear();
         };
     }, []);
 
@@ -161,10 +212,12 @@ export function useReproductorLoops() {
         volumen,
         velocidad,
         errorReproduccion,
+        pistasListas,
         setVolumen,
         setVelocidad,
         reproducir,
         detener,
         obtenerPosicion,
+        precargarPistas,
     };
 }
