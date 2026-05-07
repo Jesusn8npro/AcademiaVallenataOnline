@@ -660,22 +660,19 @@ export function useLogicaProMax() {
     // En modo Maestro el alumno baja BPM con el slider y necesita preservesPitch.
     // En todos los otros modos el BPM no cambia → AudioBufferSourceNode da
     // sample-accurate sync sin tocar el tono (no hay rate change, no hay pitch shift).
+    // En Maestro: usar el HTMLAudio compartido de motorAudioPro. Permite que
+    // un click handler externo (EMPEZAR / Otra vez / Practicar) lo "cebe"
+    // sincronamente durante el gesto del usuario, evitando que iOS/Android
+    // rechace el play() posterior por gesto expirado.
     const audioPrecargado: AudioFondoPlayer | null = urlFondo
       ? (modoActual === 'maestro_solo'
-          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio)
+          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio, motorAudioPro.obtenerAudioMaestro())
           : new ReproductorMP3(motorAudioPro.contextoAudio))
       : null;
     if (audioPrecargado) {
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
       audioFondoRef.current = audioPrecargado;
-
-      // Maestro mobile: desbloquear HTMLAudio durante el gesto fresco. Sin
-      // esto, el play() que vive dentro de audioListo.then(...) ocurre tras
-      // la descarga (~200-2000ms) y iOS/Android lo rechaza por gesto expirado.
-      if (modoActual === 'maestro_solo' && urlFondo && (audioPrecargado as any).desbloquearConGesto) {
-        (audioPrecargado as any).desbloquearConGesto(urlFondo);
-      }
     }
 
     // Carga upfront del buffer + seek a offsetSegundosAudio. ReproductorMP3.cargar descarga el
@@ -777,13 +774,17 @@ export function useLogicaProMax() {
       setMaestroSuena(maestroActivo);
     }
 
-    if (modoActual !== 'ninguno' || saltarConteo) {
+    if (saltarConteo) {
       setCuenta(null);
       audioListo.then(() => dispararJuegoSincronizado());
       return;
     }
 
-    // Competencia con conteo de 3s: el audio se precarga y posiciona durante el conteo, al final arrancan juntos.
+    // Conteo de 3s para TODOS los modos. Antes solo competencia tenia conteo —
+    // los modos Maestro/Synthesia/Libre arrancaban abruptamente. Con conteo el
+    // alumno tiene 3s de aviso visual + tiempo para que termine la descarga
+    // del MP3 (audioListo se resuelve en paralelo) y para que iOS/Android
+    // procese el unlock del HTMLAudio cebado en el click handler.
     if (conteoIntervalRef.current) clearInterval(conteoIntervalRef.current);
     setCuenta(3);
     setEstadoJuego('contando');
