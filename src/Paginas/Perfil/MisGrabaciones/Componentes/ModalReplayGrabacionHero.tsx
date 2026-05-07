@@ -209,7 +209,7 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                 )}
                             </div>
 
-                            {grabacion.id && (
+                            {grabacion.id && vista === 'movil' && (
                                 <button
                                     className="grabaciones-hero-replay-btn ir-simulador"
                                     type="button"
