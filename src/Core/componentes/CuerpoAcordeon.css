@@ -309,3 +309,14 @@ body.diseno-activo .cursor-anillo-externo {
         transform: rotate(360deg);
     }
 }
+
+/* Labels "Afuera (1) / Medio (2) / Adentro (3)" debajo de cada hilera.
+   En pantallas chicas (≤720px) y SIEMPRE dentro del modal de replay de
+   Grabaciones, las ocultamos: ocupan espacio vertical que rompe el layout
+   del acordeon cuando se renderiza a escala reducida. La ubicacion de los
+   pitos no cambia — solo desaparecen las etiquetas decorativas. */
+@media (max-width: 720px) {
+    .cuerpo-acordeon-fila-label { display: none; }
+}
+
+.grabaciones-hero-replay-escenario .cuerpo-acordeon-fila-label { display: none; }
