@@ -74,12 +74,48 @@ export class ReproductorMP3PreservaTono {
 
   // --------- Carga ---------
 
+  /**
+   * Desbloquea el elemento HTMLAudio durante un gesto del usuario (click/tap).
+   *
+   * En iOS y Android Chrome, HTMLAudio.play() solo se permite la primera vez
+   * dentro de un gesto fresco. Si esperamos al `await cargar(url)` (descarga
+   * + decode = 200-2000ms) y recien ahi llamamos play(), el gesto pudo
+   * expirar y el browser lo rechaza silenciosamente → MP3 no suena hasta que
+   * el usuario hace tap manual otra vez.
+   *
+   * Solucion: setear src e invocar play() SINCRONO en el handler del gesto,
+   * con muted=true para que no haya glitch si el audio buferea rapido.
+   * Despues del play() se pausa: el elemento ya quedo "primed" y futuros
+   * play() funcionan sin restriccion.
+   */
+  desbloquearConGesto(url: string): void {
+    if (this.audioEl.src !== url || !this._src) {
+      this.audioEl.src = url;
+      this._src = url;
+      this._aplicarPreservarTono();
+    }
+    this.audioEl.muted = true;
+    const p = this.audioEl.play();
+    if (p && typeof p.then === 'function') {
+      p.then(() => {
+        this.audioEl.pause();
+        this.audioEl.muted = false;
+      }).catch(() => {
+        this.audioEl.muted = false;
+      });
+    }
+  }
+
   async cargar(url: string): Promise<void> {
     if (this._src === url && this._cargado) return;
     if (this.cargandoUrl === url) return;
     this.cargandoUrl = url;
     try {
-      this.audioEl.src = url;
+      // Si desbloquearConGesto ya seteo el src al mismo valor, no re-asignar
+      // (re-asignar dispara un reload del elemento y resetea el unlock).
+      if (this.audioEl.src !== url) {
+        this.audioEl.src = url;
+      }
       this._src = url;
       this._aplicarPreservarTono();
       if (this.audioEl.readyState < 3) {
