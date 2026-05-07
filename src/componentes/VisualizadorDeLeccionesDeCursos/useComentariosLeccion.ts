@@ -151,7 +151,7 @@ export function useComentariosLeccion({ leccionId, usuarioActual, tipo = 'clase'
   }
 
   return {
-    comentarios, nuevoComentario, cargando, error,
+    nuevoComentario, cargando, error,
     respuestas, mostrandoFormRespuesta, likeCargando, comentariosMostrados,
     comentariosPrincipales, respuestasPorComentario,
     setNuevoComentario, setMostrandoFormRespuesta, setRespuestas, setComentariosMostrados,

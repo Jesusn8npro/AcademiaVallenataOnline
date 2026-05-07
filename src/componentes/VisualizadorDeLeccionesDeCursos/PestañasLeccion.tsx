@@ -6,10 +6,6 @@ import ComentariosLeccion from './ComentariosLeccion'
 import NotasLeccion from './NotasLeccion'
 
 interface PestañasLeccionProps {
-    contenido?: string
-    recursos?: string
-    comentarios?: any[]
-    cursoId: string
     usuarioActual?: any
     leccionId: string
     tipo?: 'leccion' | 'clase'
@@ -21,10 +17,6 @@ interface PestañasLeccionProps {
 }
 
 const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
-    contenido = '',
-    recursos = '',
-    comentarios = [],
-    cursoId,
     usuarioActual = null,
     leccionId,
     tipo = 'clase',
@@ -120,9 +112,6 @@ const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
                                         artista={curso?.artista || ''}
                                         acordeonista={curso?.acordeonista || ''}
                                         tonalidad={curso?.tonalidad || ''}
-                                        conteo_lecciones={curso?.conteo_lecciones || 0}
-                                        estudiantes_inscritos={curso?.estudiantes_inscritos || 0}
-                                        tipo={tipo === 'leccion' ? 'curso' : 'tutorial'}
                                     />
                                 </div>
                             )}
@@ -161,9 +150,6 @@ const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
                                     artista={curso?.artista || ''}
                                     acordeonista={curso?.acordeonista || ''}
                                     tonalidad={curso?.tonalidad || ''}
-                                    conteo_lecciones={curso?.conteo_lecciones || 0}
-                                    estudiantes_inscritos={curso?.estudiantes_inscritos || 0}
-                                    tipo={tipo === 'leccion' ? 'curso' : 'tutorial'}
                                 />
                             </div>
                             <div className={`panel-pestaña ${pestañaActiva === 1 ? 'active' : ''}`}>

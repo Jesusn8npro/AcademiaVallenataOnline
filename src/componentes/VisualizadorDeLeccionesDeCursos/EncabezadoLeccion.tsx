@@ -3,6 +3,7 @@ import './EncabezadoLeccion.css'
 import BarraProgresoGeneral from './BarraProgresoGeneral'
 import BarraLateralCurso from './BarraLateralCurso'
 import { useEncabezadoLeccion } from './useEncabezadoLeccion'
+import { useUsuario } from '../../contextos/UsuarioContext'
 
 type TipoContenido = 'leccion' | 'clase'
 
@@ -14,6 +15,9 @@ interface EncabezadoLeccionProps {
   tipo?: TipoContenido
   mostrarSidebar?: boolean
   onToggleSidebar?: () => void
+  mostrarAcordeon?: boolean
+  onToggleAcordeon?: () => void
+  obtenerTiempoVideo?: () => number
   curso?: any
   moduloActivo?: string
   progreso?: any
@@ -23,6 +27,17 @@ interface EncabezadoLeccionProps {
   leccionSiguiente?: any
 }
 
+const IconoAcordeon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="6" width="18" height="12" rx="1.5" />
+    <line x1="7" y1="6" x2="7" y2="18" />
+    <line x1="11" y1="6" x2="11" y2="18" />
+    <line x1="15" y1="6" x2="15" y2="18" />
+    <circle cx="6" cy="20" r="0.6" fill="currentColor" />
+    <circle cx="18" cy="20" r="0.6" fill="currentColor" />
+  </svg>
+)
+
 const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
   cursoTitulo,
   leccionTitulo,
@@ -31,6 +46,9 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
   tipo = 'clase',
   mostrarSidebar = true,
   onToggleSidebar = () => { },
+  mostrarAcordeon = false,
+  onToggleAcordeon = () => { },
+  obtenerTiempoVideo,
   curso = null,
   moduloActivo = '',
   progreso = {},
@@ -47,6 +65,21 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
     urlCurso, leccionActual, totalLecciones,
     alternarPantallaCompleta, compartir, cerrarSesion, navegarA, navegarLeccion,
   } = useEncabezadoLeccion({ cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo })
+
+  // Acordeón embebido en la clase: por ahora solo lo ven administradores mientras
+  // afinamos la experiencia. Una vez listo se libera al resto de roles.
+  const { usuario } = useUsuario()
+  const esAdmin = usuario?.rol === 'admin'
+
+  // Mobile abre el simulador con ?volverA=... para que el simulador muestre el botón
+  // "Volver a la clase" y reanude el video en el segundo en que el alumno lo dejó.
+  const irAlSimuladorMovil = () => {
+    const tiempo = Math.max(0, Math.floor(obtenerTiempoVideo?.() ?? 0))
+    const urlActual = window.location.pathname + window.location.search
+    const params = new URLSearchParams({ volverA: urlActual })
+    if (tiempo > 0) params.set('t', String(tiempo))
+    navegarA(`/simulador-app?${params.toString()}`)
+  }
 
   return (
     <>
@@ -103,12 +136,17 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
             <div className="progress-label-mobile">Tus avances</div>
             <BarraProgresoGeneral
               tipo={tipo === 'leccion' ? 'curso' : 'tutorial'}
-              contenidoId={cursoId}
               completadas={estadisticasProgreso.completadas}
               total={estadisticasProgreso.total}
               porcentaje={estadisticasProgreso.porcentaje}
             />
           </div>
+
+          {esAdmin && (
+            <button className="header-btn acordeon-btn mobile-only" type="button" onClick={irAlSimuladorMovil} aria-label="Abrir acordeón virtual" title="Abrir acordeón virtual">
+              <IconoAcordeon size={20} />
+            </button>
+          )}
 
           {/* Opciones en móvil */}
           <div className="options-container mobile-only">
@@ -129,6 +167,18 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
           </button>
 
           <div className="actions-container desktop-only">
+            {esAdmin && (
+              <button
+                className={`toggle-acordeon-btn ${mostrarAcordeon ? 'activo' : ''}`}
+                type="button"
+                onClick={onToggleAcordeon}
+                aria-label={mostrarAcordeon ? 'Cerrar acordeón virtual' : 'Abrir acordeón virtual'}
+                title={mostrarAcordeon ? 'Cerrar acordeón' : 'Abrir acordeón virtual'}
+              >
+                <IconoAcordeon size={18} />
+                <span className="toggle-text">{mostrarAcordeon ? 'Cerrar acordeón' : 'Ver acordeón'}</span>
+              </button>
+            )}
             <button className="toggle-sidebar-btn" type="button" onClick={onToggleSidebar} aria-label={mostrarSidebar ? 'Ocultar contenido del curso' : 'Mostrar contenido del curso'} title={mostrarSidebar ? 'Ocultar contenido' : 'Ver contenido'}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -183,7 +233,6 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
               leccionActiva={leccionId}
               progreso={progreso}
               tipo={tipo === 'leccion' ? 'curso' : 'tutorial'}
-              mostrarSidebar={true}
               onCerrarSidebar={() => setSidebarMovilAbierta(false)}
             />
           </div>
@@ -203,7 +252,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
                 <div className="avances-stats">
                   <div className="stat-item">
                     <div className="stat-label">Progreso general</div>
-                    <BarraProgresoGeneral tipo={tipo === 'leccion' ? 'curso' : 'tutorial'} contenidoId={cursoId} />
+                    <BarraProgresoGeneral tipo={tipo === 'leccion' ? 'curso' : 'tutorial'} />
                   </div>
                   <div className="stat-item">
                     <div className="stat-label">{tipo === 'leccion' ? 'Lección' : 'Clase'} actual</div>

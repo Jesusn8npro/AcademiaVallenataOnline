@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useReproductorLecciones } from './useReproductorLecciones';
 import { useVideoFirmado } from '../../hooks/useVideoFirmado';
 import './ReproductorLecciones.css';
@@ -66,6 +66,8 @@ interface ReproductorLeccionesProps {
   marcarComoCompletada?: () => void;
   errorCompletar?: string;
   autoplay?: boolean;
+  tiempoInicial?: number;
+  onTiempoActualizado?: (segundos: number) => void;
 }
 
 const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
@@ -79,6 +81,8 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   completada = false,
   cargandoCompletar = false,
   marcarComoCompletada = () => {},
+  tiempoInicial = 0,
+  onTiempoActualizado,
 }) => {
   const usarFirmado = !!(parteId || leccionId);
   const firmado = useVideoFirmado(usarFirmado ? { parteId, leccionId } : {});
@@ -106,18 +110,85 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   // Para YouTube: transforma /watch?v= a /embed/ porque YouTube bloquea
   // iframes con X-Frame-Options:sameorigin si no es formato embed.
   // Para otras URLs externas: pasarlas tal cual.
+  // tiempoInicial>0 activa autoplay y agrega t/start para reanudar donde el alumno
+  // dejó el video al saltar al simulador en móvil.
   const srcIframe = (() => {
-    if (!usarFirmado) return urlProcesada;
+    if (!usarFirmado) {
+      if (!urlProcesada) return '';
+      if (tiempoInicial > 0 && !urlProcesada.includes('start=') && !urlProcesada.includes('t=')) {
+        const sep = urlProcesada.includes('?') ? '&' : '?';
+        return `${urlProcesada}${sep}start=${tiempoInicial}&autoplay=1`;
+      }
+      return urlProcesada;
+    }
     if (!firmado.url) return '';
     if (firmado.plataforma === 'bunny') {
       const sep = firmado.url.includes('?') ? '&' : '?';
-      return `${firmado.url}${sep}autoplay=false&preload=false&responsive=true`;
+      const autoplay = tiempoInicial > 0 ? 'true' : 'false';
+      let url = `${firmado.url}${sep}autoplay=${autoplay}&preload=false&responsive=true`;
+      if (tiempoInicial > 0) url += `&t=${tiempoInicial}`;
+      return url;
     }
     // YouTube necesita /embed/ — la EF devuelve plataforma='externa' para no-Bunny.
     const youtubeEmbed = transformarYouTubeAEmbed(firmado.url);
-    if (youtubeEmbed) return youtubeEmbed;
+    if (youtubeEmbed) {
+      if (tiempoInicial > 0) {
+        const sep = youtubeEmbed.includes('?') ? '&' : '?';
+        return `${youtubeEmbed}${sep}start=${tiempoInicial}&autoplay=1`;
+      }
+      return youtubeEmbed;
+    }
     return firmado.url;
   })();
+
+  // Captura del segundo actual del video para que el header pueda pasarlo al
+  // simulador en móvil. Tres caminos coexisten porque cada player tiene su
+  // formato propio de postMessage:
+  //  - Bunny stream emite { message:'time', value } o { currentTime } automático.
+  //  - YouTube responde a { event:'command', func:'getCurrentTime' } con
+  //    { event:'infoDelivery', info:{ currentTime } }.
+  //  - El listener pasivo cubre ambos casos sin acoplarse al formato.
+  useEffect(() => {
+    if (!onTiempoActualizado) return;
+    const handler = (e: MessageEvent) => {
+      let data: any = e.data;
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { return; }
+      }
+      if (!data || typeof data !== 'object') return;
+      if (data.event === 'infoDelivery' && typeof data.info?.currentTime === 'number') {
+        onTiempoActualizado(data.info.currentTime);
+        return;
+      }
+      if (data.message === 'time' && typeof data.value === 'number') {
+        onTiempoActualizado(data.value);
+        return;
+      }
+      if (typeof data.currentTime === 'number') {
+        onTiempoActualizado(data.currentTime);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [onTiempoActualizado]);
+
+  // Polling: pide currentTime al iframe cada 2s. Para Bunny y YouTube el formato
+  // del mensaje es distinto, mandamos los dos — el iframe que no entienda lo ignora.
+  useEffect(() => {
+    if (!onTiempoActualizado || !srcIframe) return;
+    const intervalo = window.setInterval(() => {
+      const iframe = elementoIframeRef.current;
+      if (!iframe?.contentWindow) return;
+      try { iframe.contentWindow.postMessage({ method: 'getCurrentTime' }, '*'); } catch { /* noop */ }
+      try {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'getCurrentTime', args: [] }),
+          '*'
+        );
+      } catch { /* noop */ }
+    }, 2000);
+    return () => window.clearInterval(intervalo);
+  }, [onTiempoActualizado, srcIframe, elementoIframeRef]);
   const referrerPolicyIframe = usarFirmado
     ? (esBunnyFirmado ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin')
     : (esBunny ? 'no-referrer-when-downgrade' : 'strict-origin-when-cross-origin');

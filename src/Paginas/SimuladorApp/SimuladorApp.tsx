@@ -281,10 +281,39 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const reproducirIdParam = searchParams.get('reproducir');
+    // Cuando el alumno entró al simulador desde una clase móvil, llega con
+    // ?volverA=<url-de-la-clase>&t=<segundos>. Mostramos un botón flotante para
+    // regresar al video en el mismo segundo donde lo dejó.
+    const volverAClaseParam = searchParams.get('volverA');
+    const tiempoVideoClaseParam = searchParams.get('t');
     const [vinoDeGrabaciones, setVinoDeGrabaciones] = useState(false);
     const [autoArrancado, setAutoArrancado] = useState(false);
     const [countdownVolver, setCountdownVolver] = useState<number | null>(null);
     const [usuarioEligioQuedarse, setUsuarioEligioQuedarse] = useState(false);
+
+    const volverALaClase = useCallback(() => {
+        if (!volverAClaseParam) return;
+        // En Android entramos en fullscreen al primer touch (ver useEffect de
+        // intentarFullscreen). Si navegamos sin salir, la clase queda atrapada
+        // en fullscreen con el scroll bloqueado. Salimos primero y después
+        // navegamos para que la clase aparezca normal.
+        const doc: any = document;
+        if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+            try {
+                const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+                if (typeof exit === 'function') exit.call(doc);
+            } catch { /* noop */ }
+        }
+        document.body.classList.remove('bloquear-scroll-simulador');
+        const sep = volverAClaseParam.includes('?') ? '&' : '?';
+        const tiempoSeguro = tiempoVideoClaseParam && /^\d+$/.test(tiempoVideoClaseParam)
+            ? tiempoVideoClaseParam
+            : null;
+        const url = tiempoSeguro
+            ? `${volverAClaseParam}${sep}t=${tiempoSeguro}`
+            : volverAClaseParam;
+        navigate(url);
+    }, [navigate, volverAClaseParam, tiempoVideoClaseParam]);
     // Tiempo (performance.now) en que arranco el replay y duracion total de
     // la grabacion en ms. Sirve para esperar a que termine TODA la grabacion
     // (no solo la ultima nota) antes de mostrar el countdown.
@@ -997,6 +1026,21 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 visible={toastGuardadaVisible}
                 onCerrar={() => setToastGuardadaVisible(false)}
             />
+
+            {/* Overlay "vine de la clase": botón siempre visible que regresa al video
+                en el mismo segundo donde el alumno lo dejó. Independiente del flujo
+                de Grabaciones — pueden coexistir aunque en la práctica no se da. */}
+            {volverAClaseParam && (
+                <button
+                    type="button"
+                    className="sim-volver-clase"
+                    onClick={volverALaClase}
+                    aria-label="Volver a la clase"
+                >
+                    <ArrowLeft size={16} />
+                    <span>Volver a la clase</span>
+                </button>
+            )}
 
             {/* Overlay de "vine de Grabaciones": boton Volver siempre visible
                 durante la reproduccion. Al terminar el replay, countdown 3s

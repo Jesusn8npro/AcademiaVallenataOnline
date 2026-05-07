@@ -14,12 +14,8 @@ interface TarjetaInformacionCursoProps {
     artista?: string
     acordeonista?: string
     tonalidad?: string
-    conteo_lecciones?: number
-    estudiantes_inscritos?: number
-    tipo?: 'curso' | 'tutorial'
 }
 
-// Función para procesar objetivos/requisitos (copiada del Svelte)
 function procesarLista(lista: string[] | string | undefined): string[] {
     if (!lista) return []
     if (typeof lista === 'string') {
@@ -49,7 +45,6 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
     acordeonista = '',
     tonalidad = ''
 }) => {
-    // Procesar objetivos y requisitos
     const objetivosLista = useMemo(() => procesarLista(objetivos), [objetivos])
     const requisitosLista = useMemo(() => procesarLista(requisitos), [requisitos])
 
@@ -65,7 +60,6 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
 
     return (
         <div className="tarjeta-informacion-curso">
-            {/* Encabezado con imagen */}
             <div className="encabezado-curso">
                 {imagen_url && (
                     <img src={imagen_url} alt={titulo} className="imagen-curso" />
@@ -86,7 +80,6 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
                 </div>
             </div>
 
-            {/* Descripción */}
             {(descripcion || descripcion_corta) && (
                 <div className="seccion">
                     <h3>Descripción</h3>
@@ -94,7 +87,6 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
                 </div>
             )}
 
-            {/* Información musical */}
             {(artista || acordeonista || tonalidad) && (
                 <div className="seccion">
                     <h3>Información Musical</h3>
@@ -121,10 +113,8 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
                 </div>
             )}
 
-            {/* Objetivos y Requisitos lado a lado */}
             {(objetivosLista.length > 0 || requisitosLista.length > 0) && (
                 <div className="objetivos-requisitos-container">
-                    {/* Objetivos (izquierda) */}
                     {objetivosLista.length > 0 && (
                         <div className="objetivos-columna">
                             <h3>¿Qué aprenderás?</h3>
@@ -139,7 +129,6 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
                         </div>
                     )}
 
-                    {/* Requisitos (derecha) */}
                     {requisitosLista.length > 0 && (
                         <div className="requisitos-columna">
                             <h3>Requisitos</h3>

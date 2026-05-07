@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../servicios/clienteSupabase'
 import { generarSlug } from '../../utilidades/slug'
 import ReproductorLecciones from '../../componentes/VisualizadorDeLeccionesDeCursos/ReproductorLecciones'
 import EncabezadoLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/EncabezadoLeccion'
 import BarraLateralCurso from '../../componentes/VisualizadorDeLeccionesDeCursos/BarraLateralCurso'
+import PanelAcordeonEnClase from '../../componentes/VisualizadorDeLeccionesDeCursos/PanelAcordeonEnClase'
 import PestañasLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/PestañasLeccion'
 import SkeletonClase from '../../componentes/Skeletons/SkeletonClase'
 import '../Tutoriales/contenido-tutorial.css' // Reutilizamos los estilos de pantalla completa
@@ -27,10 +28,38 @@ export default function ClaseCurso() {
         }
         return true
     })
+    const [mostrarAcordeon, setMostrarAcordeon] = useState(false)
 
     const [estadisticasProgreso, setEstadisticasProgreso] = useState({ completadas: 0, total: 0, porcentaje: 0 })
     const [progresoMap, setProgresoMap] = useState<Record<string, number>>({})
     const [usuarioActual, setUsuarioActual] = useState<any>(null)
+
+    // Cuando el alumno vuelve del simulador con ?t=N, retomamos el video en ese segundo.
+    const [searchParams] = useSearchParams()
+    const tiempoInicialParam = searchParams.get('t')
+    const tiempoInicialVideo = tiempoInicialParam ? Math.max(0, parseInt(tiempoInicialParam, 10) || 0) : 0
+
+    // Al volver del simulador con ?t=N el navegador puede restaurar la posición
+    // de scroll previa Y el iframe del video con autoplay puede pedir foco —
+    // ambos empujan el scroll hacia abajo. Forzamos scrollRestoration manual y
+    // hacemos varios intentos para vencer ambos efectos.
+    useEffect(() => {
+        if (tiempoInicialParam === null) return
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+        document.body.classList.remove('bloquear-scroll-simulador')
+        const irArriba = () => {
+            window.scrollTo(0, 0)
+            document.documentElement.scrollTop = 0
+            document.body.scrollTop = 0
+        }
+        irArriba()
+        const timers = [50, 200, 500, 1000].map((ms) => window.setTimeout(irArriba, ms))
+        return () => { timers.forEach(window.clearTimeout) }
+    }, [tiempoInicialParam])
+
+    // Ref con el segundo actual del iframe — el header lo lee al abrir el simulador en móvil.
+    const tiempoVideoRef = useRef(0)
+    const obtenerTiempoVideo = () => tiempoVideoRef.current
 
     // Efectos de layout "Distraction-Free"
     useEffect(() => {
@@ -244,6 +273,9 @@ export default function ClaseCurso() {
                 tipo="leccion"
                 mostrarSidebar={mostrarSidebar}
                 onToggleSidebar={() => setMostrarSidebar(v => !v)}
+                mostrarAcordeon={mostrarAcordeon}
+                onToggleAcordeon={() => setMostrarAcordeon(v => !v)}
+                obtenerTiempoVideo={obtenerTiempoVideo}
                 curso={curso}
                 moduloActivo={moduloSlug}
                 progreso={progresoMap}
@@ -265,11 +297,12 @@ export default function ClaseCurso() {
                         cargandoCompletar={cargandoCompletar}
                         marcarComoCompletada={marcarComoCompletada}
                         errorCompletar={errorCompletar}
-                        autoplay={false}
+                        autoplay={tiempoInicialVideo > 0}
+                        tiempoInicial={tiempoInicialVideo}
+                        onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
                     />
                     <div className="tutorial-scroll-container">
                         <PestañasLeccion
-                            cursoId={curso.id}
                             leccionId={leccion.id}
                             tipo="leccion"
                             curso={curso}
@@ -280,16 +313,19 @@ export default function ClaseCurso() {
                         />
                     </div>
                 </div>
-                <div className={`leccion-sidebar ${mostrarSidebar ? 'visible' : ''}`}>
-                    <BarraLateralCurso
-                        curso={curso}
-                        moduloActivo={moduloSlug}
-                        leccionActiva={leccion.id}
-                        progreso={progresoMap}
-                        tipo="curso"
-                        mostrarSidebar={mostrarSidebar}
-                        onCerrarSidebar={() => setMostrarSidebar(false)}
-                    />
+                <div className={`leccion-sidebar ${(mostrarSidebar || mostrarAcordeon) ? 'visible' : ''} ${mostrarAcordeon ? 'con-acordeon' : ''}`}>
+                    {mostrarAcordeon ? (
+                        <PanelAcordeonEnClase onCerrar={() => setMostrarAcordeon(false)} />
+                    ) : (
+                        <BarraLateralCurso
+                            curso={curso}
+                            moduloActivo={moduloSlug}
+                            leccionActiva={leccion.id}
+                            progreso={progresoMap}
+                            tipo="curso"
+                            onCerrarSidebar={() => setMostrarSidebar(false)}
+                        />
+                    )}
                 </div>
             </div>
         </div>

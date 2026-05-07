@@ -173,7 +173,7 @@ export function useEncabezadoLeccion({
     sidebarMovilAbierta, setSidebarMovilAbierta,
     menuOpcionesAbierto, setMenuOpcionesAbierto,
     modalAvancesAbierto, setModalAvancesAbierto,
-    cursoSlug, urlCurso, leccionActual, totalLecciones,
+    urlCurso, leccionActual, totalLecciones,
     alternarPantallaCompleta, compartir, cerrarSesion, navegarA, navegarLeccion,
   };
 }
