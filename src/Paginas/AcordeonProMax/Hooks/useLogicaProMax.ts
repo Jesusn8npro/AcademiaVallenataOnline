@@ -62,8 +62,18 @@ export function useLogicaProMax() {
   const velocidadRef = useRef(100);
   useEffect(() => { velocidadRef.current = velocidad; }, [velocidad]);
 
-  const [modoPractica, setModoPractica] = useState<ModoPractica>('ninguno');
+  const [modoPractica, _setModoPracticaInterno] = useState<ModoPractica>('ninguno');
   const modoPracticaRef = useRef<ModoPractica>('ninguno');
+  // Wrapper que sincroniza el ref ANTES de schedular el state update. Sin
+  // esto, modoPracticaRef.current queda con el valor viejo durante el
+  // render donde se llamo setModoPractica → la cola de notas (line ~365)
+  // lee el modo viejo y procesa notas como si fuera competitivo aunque el
+  // usuario pidio synthesia. Mid-game switching de modos visuales fallaba
+  // intermitentemente por esta ventana de un frame.
+  const setModoPractica = useCallback((modo: ModoPractica) => {
+    modoPracticaRef.current = modo;
+    _setModoPracticaInterno(modo);
+  }, []);
   useEffect(() => { modoPracticaRef.current = modoPractica; }, [modoPractica]);
 
   const [volumenMusica, setVolumenMusica] = useState(70);
@@ -659,6 +669,13 @@ export function useLogicaProMax() {
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
       audioPrecargado.playbackRate = vel / 100;
       audioFondoRef.current = audioPrecargado;
+
+      // Maestro mobile: desbloquear HTMLAudio durante el gesto fresco. Sin
+      // esto, el play() que vive dentro de audioListo.then(...) ocurre tras
+      // la descarga (~200-2000ms) y iOS/Android lo rechaza por gesto expirado.
+      if (modoActual === 'maestro_solo' && urlFondo && (audioPrecargado as any).desbloquearConGesto) {
+        (audioPrecargado as any).desbloquearConGesto(urlFondo);
+      }
     }
 
     // Carga upfront del buffer + seek a offsetSegundosAudio. ReproductorMP3.cargar descarga el
