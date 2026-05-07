@@ -29,6 +29,10 @@ export class MotorAudioPro {
     // ya expiro. Sin el elemento compartido, cada iniciarJuego crearia un Audio
     // nuevo bloqueado por el browser.
     private _audioMaestroEl: HTMLAudioElement | null = null;
+    // Flag para coordinar el .then() del cebar con iniciarJuego. Si iniciarJuego
+    // toma control del elemento antes de que el cebar resuelva, el .then debe
+    // SALTAR el pause (sino interrumpe la reproduccion real ya en curso).
+    private _cebadoEnCurso = false;
 
     constructor() {
         this.esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -339,16 +343,37 @@ export class MotorAudioPro {
         if (url && a.src !== url) {
             a.src = url;
         }
+        this._cebadoEnCurso = true;
         a.muted = true;
         const p = a.play();
         if (p && typeof p.then === 'function') {
             p.then(() => {
+                // Si iniciarJuego ya tomo control via finalizarCebadoMaestro,
+                // NO pausar — interrumpiriamos la reproduccion real en curso.
+                if (!this._cebadoEnCurso) return;
+                this._cebadoEnCurso = false;
                 a.pause();
                 a.muted = false;
             }).catch(() => {
+                this._cebadoEnCurso = false;
                 a.muted = false;
             });
         }
+    }
+
+    /**
+     * iniciarJuego llama esto al tomar control del HTMLAudio Maestro. Cancela
+     * el cebado en curso (el .then() del cebar verificara este flag y saltara
+     * su pause), deja el elemento en estado limpio (paused + unmuted) para
+     * que el play() real de iniciarJuego dispare el evento 'playing' como
+     * espera arrancarTickClock.
+     */
+    finalizarCebadoMaestro(): void {
+        this._cebadoEnCurso = false;
+        const a = this._audioMaestroEl;
+        if (!a) return;
+        try { a.pause(); } catch (_) {}
+        a.muted = false;
     }
 
     conectarMediaElement(audio: HTMLAudioElement): GainNode {
