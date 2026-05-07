@@ -293,6 +293,12 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // Timer del fin real del replay; lo cancelamos en stop manual.
     const finReplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Ref siempre fresca a `logica` (que es un objeto que React recrea en
+    // cada render). La usamos en reproducirGrabacion para chequear/esperar
+    // a que tonalidad+samples se hayan aplicado tras el setTonalidadSeleccionada.
+    const logicaRef = useRef(logica);
+    useEffect(() => { logicaRef.current = logica; }, [logica]);
+
     // Detener el audio de fondo del replay (Web Audio).
     const detenerAudioFondoReplay = useCallback(() => {
         const data = audioFondoReplayRef.current;
@@ -319,7 +325,8 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             // Capturamos la duracion real (en ms) de la grabacion para saber
             // cuando "termino" de verdad — no solo cuando suena la ultima nota.
             duracionReplayMsRef.current = typeof g.duracion_ms === 'number' && g.duracion_ms > 0 ? g.duracion_ms : null;
-            replayStartTimeRef.current = performance.now();
+            // replayStartTimeRef se setea mas abajo, justo antes de reproducirSecuencia,
+            // para que no incluya el tiempo del preload en el calculo de "elapsed".
             if (finReplayTimerRef.current) {
                 clearTimeout(finReplayTimerRef.current);
                 finReplayTimerRef.current = null;
@@ -341,6 +348,50 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             setResolucionReproduccion(resolucion);
             const cancionFake = { secuencia: sec, bpm, resolucion } as any;
             await motorAudioPro.activarContexto();
+
+            // ─── Esperar que la tonalidad se aplique + precargar samples ─────
+            // Sin este paso, el auto-replay (al entrar con ?reproducir=) marca
+            // las notas pero no SUENAN: el setTonalidadSeleccionada de arriba
+            // dispara una nueva carga de samples (async); reproducirSecuencia
+            // corre antes de que terminen y motorAudioPro.reproducir devuelve
+            // null porque el banco de muestras esta vacio para esa tonalidad.
+            // En manual-play funciona porque el alumno ya pulso pitos antes.
+            const tonalidadObjetivo = g.tonalidad || logicaRef.current.tonalidadSeleccionada;
+            const TIMEOUT_TONALIDAD_MS = 3000;
+            const tInicio = performance.now();
+            while (
+                logicaRef.current.tonalidadSeleccionada !== tonalidadObjetivo ||
+                logicaRef.current.cargandoCloud
+            ) {
+                if (performance.now() - tInicio > TIMEOUT_TONALIDAD_MS) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            // Precargamos el sample de cada boton presente en la grabacion.
+            // motorAudioPro.cargarSonidoEnBanco es idempotente (cache interno),
+            // asi que es seguro llamarlo aunque ya esten cargados.
+            try {
+                const obtenerRutas = (logicaRef.current as any).obtenerRutasAudio;
+                if (typeof obtenerRutas === 'function') {
+                    const botonIdsUnicos = Array.from(new Set(sec.map((n: any) => n.botonId).filter(Boolean)));
+                    const rutasUnicas = new Map<string, string>();
+                    botonIdsUnicos.forEach((botonId: any) => {
+                        const rutas: string[] = obtenerRutas(botonId) || [];
+                        rutas.forEach((rutaRaw: string) => {
+                            const ruta = rutaRaw.startsWith('pitch:') ? rutaRaw.split('|')[1] : rutaRaw;
+                            const rutaFinal = ruta.startsWith('http') || ruta.startsWith('/') ? ruta : `/${ruta}`;
+                            rutasUnicas.set(ruta, rutaFinal);
+                        });
+                    });
+                    await Promise.allSettled(
+                        Array.from(rutasUnicas.entries()).map(([ruta, rutaFinal]) =>
+                            motorAudioPro.cargarSonidoEnBanco(logicaRef.current.instrumentoId, ruta, rutaFinal),
+                        ),
+                    );
+                }
+            } catch (e) {
+                console.warn('[Replay] precarga de samples fallo:', e);
+            }
 
             // Audio de fondo: si la grabacion guardo una pista, la cargamos
             // con el OFFSET correcto (la posicion en que estaba el loop cuando
@@ -413,6 +464,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     };
 
                     // Notas arrancan SINCRONO con la fuente -> tick 0 == offset.
+                    replayStartTimeRef.current = performance.now();
                     reproductor.reproducirSecuencia(cancionFake);
                     setEnReproduccion(true);
                     return;
@@ -424,6 +476,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             }
 
             // Sin audio de fondo: arrancar las notas directamente.
+            replayStartTimeRef.current = performance.now();
             reproductor.reproducirSecuencia(cancionFake);
             setEnReproduccion(true);
         } catch (e: any) {
