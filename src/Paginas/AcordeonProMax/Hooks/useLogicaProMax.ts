@@ -599,6 +599,43 @@ export function useLogicaProMax() {
 
   const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica) => {
     await motorAudioPro.activarContexto();
+
+    // Espera a que el bank de samples del acordeon tenga buffers reales antes de
+    // arrancar el RAF. Sin esto, la primera reproduccion tras montar JuegoSimuladorApp
+    // dispara las notas mientras el bank esta vacio — los efectos de useLogicaAcordeon
+    // limpian y recargan el bank en cadena (samples default → JSON local → instrumento
+    // de la nube), y motorAudioPro.reproducir devuelve null silenciosamente. Por eso
+    // sin reiniciar no se escucha el acordeon. Reintentamos cargas si vienen rutas
+    // disponibles, y poll como fallback hasta 2s.
+    try {
+      const bancoId = logica.instrumentoId || 'acordeon';
+      const idsUnicos = new Set<string>();
+      ((cancion as any).secuencia || []).forEach((nota: any) => {
+        if (nota?.botonId) idsUnicos.add(nota.botonId);
+      });
+      const inicio = Date.now();
+      const TIMEOUT_MS = 2000;
+      while (Date.now() - inicio < TIMEOUT_MS) {
+        const banco = (motorAudioPro as any).bancos?.get?.(bancoId);
+        if (banco && banco.muestras && banco.muestras.size > 0) {
+          // El bank ya tiene muestras: intentamos cargar las que faltan para esta cancion
+          // (idempotente). Si obtenerRutasAudio devuelve algo, esto cierra los huecos.
+          const cargas: Promise<void>[] = [];
+          idsUnicos.forEach(id => {
+            const rutas = logica.obtenerRutasAudio?.(id) || [];
+            rutas.forEach((rRaw: string) => {
+              const r = rRaw.startsWith('pitch:') ? rRaw.split('|')[1] : rRaw;
+              const rutaFinal = r.startsWith('http') || r.startsWith('/') ? r : `/${r}`;
+              cargas.push(motorAudioPro.cargarSonidoEnBanco(bancoId, r, rutaFinal));
+            });
+          });
+          if (cargas.length > 0) await Promise.all(cargas);
+          break;
+        }
+        await new Promise(r => setTimeout(r, 50));
+      }
+    } catch (_) { /* si la espera falla, seguimos: mejor que bloquear el juego */ }
+
     cancelarCapturaActiva();
     limpiarEstadoGrabaciones();
     bpmOriginalRef.current = cancionPreConfigRef.current?.bpm ?? cancion.bpm;

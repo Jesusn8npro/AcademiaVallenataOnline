@@ -15,19 +15,20 @@
    solo el centro vertical (donde vive el watermark) se tinta. */
 .pista-notas-vertical.abriendo {
     background: linear-gradient(180deg,
-        rgba(0, 0, 0, 0)            0%,
-        rgba(59, 130, 246, 0.18)   18%,
-        rgba(59, 130, 246, 0.10)   32%,
-        rgba(0, 0, 0, 0)           50%,
-        rgba(0, 0, 0, 0)          100%);
+            rgba(0, 0, 0, 0) 0%,
+            rgba(59, 130, 246, 0.18) 18%,
+            rgba(59, 130, 246, 0.10) 32%,
+            rgba(0, 0, 0, 0) 50%,
+            rgba(0, 0, 0, 0) 100%);
 }
+
 .pista-notas-vertical.cerrando {
     background: linear-gradient(180deg,
-        rgba(0, 0, 0, 0)            0%,
-        rgba(239, 68, 68, 0.18)    18%,
-        rgba(239, 68, 68, 0.10)    32%,
-        rgba(0, 0, 0, 0)           50%,
-        rgba(0, 0, 0, 0)          100%);
+            rgba(0, 0, 0, 0) 0%,
+            rgba(239, 68, 68, 0.18) 18%,
+            rgba(239, 68, 68, 0.10) 32%,
+            rgba(0, 0, 0, 0) 50%,
+            rgba(0, 0, 0, 0) 100%);
 }
 
 /* Letrero ABRE/CIERRA — badge compacto centrado bajo el header. NO es texto
@@ -54,11 +55,13 @@
     animation: libre-letrero-pulso 1.6s ease-in-out infinite;
     z-index: 2;
 }
+
 .pista-notas-vertical.abriendo .libre-letrero {
     color: #93c5fd;
     border-color: rgba(59, 130, 246, 0.55);
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
+
 .pista-notas-vertical.cerrando .libre-letrero {
     color: #fca5a5;
     border-color: rgba(239, 68, 68, 0.55);
@@ -66,16 +69,40 @@
 }
 
 @keyframes libre-letrero-pulso {
-    0%, 100% { opacity: 0.75; }
-    50%      { opacity: 1;    }
+
+    0%,
+    100% {
+        opacity: 0.75;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
+/* Notas que caen: SIEMPRE muestran la imagen real del boton (blanca.JPG con
+   gradiente 3D) en TODOS los estados. El color del fuelle NO tapa la textura
+   — viene del BORDE (color), un GLOW INTERIOR sutil y, para la inminente,
+   un HALO CONICO rotando alrededor (mismo efecto que .pito-boton.objetivo-*
+   en synthesia). Asi la tecla queda visualmente reconocible. */
 .nota-cayendo {
     position: absolute;
-    width: clamp(38px, 6.5vw, 54px);
-    height: clamp(38px, 6.5vw, 54px);
+    /* Mismo tamano que el pito real con 90% para no tapar exactamente. */
+    width: calc(var(--pito-boton-size, 18.5vh) * 0.9 * var(--escala-acordeon, 1));
+    height: calc(var(--pito-boton-size, 18.5vh) * 0.9 * var(--escala-acordeon, 1));
     border-radius: 50%;
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border: 3px solid rgba(0, 0, 0, 0.55);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: multiply;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 1),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.15),
+        0px 2px 0px #1a1a1a,
+        0px 4px 8px rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -83,46 +110,232 @@
     pointer-events: none;
 }
 
+/* Background tintado con multiply: el JPG blanca + un overlay del color del
+   fuelle. Multiply preserva el sombreado 3D (highlights y shadows) pero
+   tinta toda la cara del boton. La textura sigue visible — pero el fondo
+   ahora se ve OBVIAMENTE rojo o azul, no solo el borde. */
+.nota-cayendo.abriendo {
+    border-color: rgba(59, 130, 246, 0.9);
+    background:
+        linear-gradient(rgba(96, 165, 250, 0.6), rgba(37, 99, 235, 0.7)),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: multiply, multiply, normal;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.85),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.15),
+        inset 0 0 14px rgba(59, 130, 246, 0.55),
+        0 0 6px rgba(59, 130, 246, 0.55),
+        0px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.nota-cayendo.cerrando {
+    border-color: rgba(255, 0, 0, 0.9);
+    background:
+        linear-gradient(rgba(255, 80, 80, 0.65), rgba(255, 0, 0, 0.75)),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: multiply, multiply, normal;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.85),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.15),
+        inset 0 0 14px rgba(255, 0, 0, 0.55),
+        0 0 6px rgba(255, 0, 0, 0.55),
+        0px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* INMINENTE: tinte saturado al maximo, borde grueso, glow fuerte y HALO. */
+.nota-cayendo.inminente.abriendo {
+    border: 4px solid #3b82f6;
+    background:
+        linear-gradient(rgba(56, 189, 248, 0.85), rgba(14, 165, 233, 0.95)),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: multiply, multiply, normal;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.85),
+        inset 0 0 22px rgba(59, 130, 246, 0.7),
+        0 0 12px rgba(59, 130, 246, 0.95),
+        0px 4px 8px rgba(0, 0, 0, 0.4);
+    animation: nota-inminente-pulse-azul 1s ease-in-out infinite;
+}
+
+.nota-cayendo.inminente.cerrando {
+    border: 4px solid #ef4444;
+    background:
+        linear-gradient(rgba(255, 0, 0, 0.9), rgba(180, 0, 0, 0.95)),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 200, 0.4) 100%),
+        url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
+    background-blend-mode: multiply, multiply, normal;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.85),
+        inset 0 0 22px rgba(255, 0, 0, 0.7),
+        0 0 12px rgba(255, 0, 0, 0.95),
+        0px 4px 8px rgba(0, 0, 0, 0.4);
+    animation: nota-inminente-pulse-rojo 1s ease-in-out infinite;
+}
+
+/* Halo conico rotando alrededor del inminente (estilo objetivo-halar/empujar).
+   Mismo patron que .pito-boton.objetivo-halar::before en SimuladorApp.css:
+   z-index 1 + mascara radial que recorta el centro 55% para que el boton
+   se siga viendo por dentro (solo la corona externa se pinta con el conic). */
+.nota-cayendo.inminente::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    animation: nota-cayendo-halo-rotando 1.4s linear infinite;
+}
+
+.nota-cayendo.inminente.abriendo::before {
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #60a5fa 60deg, #3b82f6 90deg, #60a5fa 120deg,
+        transparent 160deg, transparent 200deg,
+        #60a5fa 240deg, #3b82f6 270deg, #60a5fa 300deg,
+        transparent 340deg, transparent 360deg
+    );
+}
+
+.nota-cayendo.inminente.cerrando::before {
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 20deg,
+        #f87171 60deg, #ef4444 90deg, #f87171 120deg,
+        transparent 160deg, transparent 200deg,
+        #f87171 240deg, #ef4444 270deg, #f87171 300deg,
+        transparent 340deg, transparent 360deg
+    );
+}
+
+@keyframes nota-cayendo-halo-rotando {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Pulso sutil de glow interior del inminente — la textura no cambia, solo
+   intensifica/atenua el resplandor del color. */
+@keyframes nota-inminente-pulse-azul {
+    0%, 100% {
+        box-shadow:
+            inset 0px 2px 4px rgba(255, 255, 255, 0.9),
+            inset 0 0 18px rgba(59, 130, 246, 0.55),
+            0 0 10px rgba(59, 130, 246, 0.85),
+            0px 4px 8px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        box-shadow:
+            inset 0px 2px 4px rgba(255, 255, 255, 0.9),
+            inset 0 0 28px rgba(59, 130, 246, 0.8),
+            0 0 18px rgba(59, 130, 246, 1),
+            0px 4px 8px rgba(0, 0, 0, 0.4);
+    }
+}
+
+@keyframes nota-inminente-pulse-rojo {
+    0%, 100% {
+        box-shadow:
+            inset 0px 2px 4px rgba(255, 255, 255, 0.9),
+            inset 0 0 18px rgba(255, 0, 0, 0.55),
+            0 0 10px rgba(255, 0, 0, 0.85),
+            0px 4px 8px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        box-shadow:
+            inset 0px 2px 4px rgba(255, 255, 255, 0.9),
+            inset 0 0 28px rgba(255, 0, 0, 0.8),
+            0 0 18px rgba(255, 0, 0, 1),
+            0px 4px 8px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* IMPACTADA: flash blanco rapido cuando la nota se activa. */
 .nota-cayendo.impactada {
-    border-color: #fff;
     background: #fff !important;
-    animation: nota-burst 0.34s ease-out forwards;
+    border-color: #fff !important;
+    animation: nota-burst 0.22s ease-out forwards;
 }
 
+/* Quitamos el overlay de color durante el flash impactada — sin esto el
+   multiply seguiria mostrando el tinte rojo/azul sobre el blanco. */
+.nota-cayendo.impactada::before {
+    display: none;
+}
+
+/* FALLADA: tinte naranja tenue sobre el boton (perdida la ventana de impacto). */
 .nota-cayendo.fallada {
-    border-color: #f59e0b;
+    border-color: #f59e0b !important;
+    box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.5),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.3),
+        0px 2px 0px #1a1a1a,
+        0px 6px 10px rgba(0, 0, 0, 0.5),
+        0 0 6px rgba(245, 158, 11, 0.5);
+    filter: grayscale(0.6);
 }
 
-.nota-cayendo.inminente:not(.impactada):not(.fallada) {
-    animation: nota-cayendo-pulse 0.7s ease-in-out infinite;
-    border-width: 2px;
-}
-
-@keyframes nota-cayendo-pulse {
-    0%, 100% { outline: 0 solid rgba(255, 255, 255, 0); }
-    50%      { outline: 4px solid rgba(255, 255, 255, 0.5); }
-}
-
+/* Burst suavizado: scale max 1.35 (antes 1.9) y fade en 0.22s para no
+   tapar la siguiente nota inminente en racimos densos. */
 @keyframes nota-burst {
-    0%   { transform: translate(-50%, -50%) scale(1);    filter: brightness(1);   }
-    35%  { transform: translate(-50%, -50%) scale(1.55); filter: brightness(1.9); }
-    100% { transform: translate(-50%, -50%) scale(1.9);  filter: brightness(1); opacity: 0; }
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: brightness(1);
+    }
+
+    35% {
+        transform: translate(-50%, -50%) scale(1.22);
+        filter: brightness(1.45);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.35);
+        filter: brightness(1);
+        opacity: 0;
+    }
 }
 
+/* Etiqueta de la nota cayendo. Por defecto color oscuro porque el fondo
+   del boton no-inminente es claro (mismo JPG blanco que .pito-boton).
+   Cuando la nota es inminente (azul/rojo saturado), pasa a blanco. */
 .nota-etiqueta-cayendo {
-    color: #fff;
-    font-weight: 900;
-    font-size: clamp(0.7rem, 1.6vw, 1rem);
+    color: #1a1a1a;
+    font-weight: 800;
+    font-size: clamp(0.78rem, 1.5vw, 1.05rem);
     font-family: 'Raleway', system-ui, sans-serif;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-    letter-spacing: 0.5px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.3px;
     user-select: none;
     pointer-events: none;
+    line-height: 1;
+    z-index: 2;
 }
 
-.nota-cayendo.abriendo .nota-etiqueta-cayendo { color: #001a3a; }
-.nota-cayendo.cerrando .nota-etiqueta-cayendo { color: #fff;    }
-.nota-cayendo.impactada .nota-etiqueta-cayendo { color: #000;   }
+.nota-cayendo.inminente .nota-etiqueta-cayendo {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.nota-cayendo.impactada .nota-etiqueta-cayendo {
+    color: #000;
+    text-shadow: none;
+}
+
+.nota-cayendo.fallada .nota-etiqueta-cayendo {
+    color: #92400e;
+}
 
 /* PITO OBJETIVO — borde + halo conico rotando. Mask radial deja un agujero
    central para que el botoncito blanco siga visible adentro. */
@@ -133,21 +346,20 @@
         inset 0 0 18px rgba(59, 130, 246, 0.45) !important;
     position: relative;
 }
+
 .pito-boton.objetivo-halar::before {
     content: '';
     position: absolute;
     inset: -7px;
     border-radius: 50%;
-    background: conic-gradient(
-        from 0deg,
-        transparent 0deg, transparent 20deg,
-        #60a5fa 60deg, #3b82f6 90deg, #60a5fa 120deg,
-        transparent 160deg, transparent 200deg,
-        #60a5fa 240deg, #3b82f6 270deg, #60a5fa 300deg,
-        transparent 340deg, transparent 360deg
-    );
+    background: conic-gradient(from 0deg,
+            transparent 0deg, transparent 20deg,
+            #60a5fa 60deg, #3b82f6 90deg, #60a5fa 120deg,
+            transparent 160deg, transparent 200deg,
+            #60a5fa 240deg, #3b82f6 270deg, #60a5fa 300deg,
+            transparent 340deg, transparent 360deg);
     -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
-            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
     animation: pito-halo-rotando 1.4s linear infinite;
     pointer-events: none;
     z-index: 1;
@@ -160,29 +372,33 @@
         inset 0 0 18px rgba(239, 68, 68, 0.45) !important;
     position: relative;
 }
+
 .pito-boton.objetivo-empujar::before {
     content: '';
     position: absolute;
     inset: -7px;
     border-radius: 50%;
-    background: conic-gradient(
-        from 0deg,
-        transparent 0deg, transparent 20deg,
-        #f87171 60deg, #ef4444 90deg, #f87171 120deg,
-        transparent 160deg, transparent 200deg,
-        #f87171 240deg, #ef4444 270deg, #f87171 300deg,
-        transparent 340deg, transparent 360deg
-    );
+    background: conic-gradient(from 0deg,
+            transparent 0deg, transparent 20deg,
+            #f87171 60deg, #ef4444 90deg, #f87171 120deg,
+            transparent 160deg, transparent 200deg,
+            #f87171 240deg, #ef4444 270deg, #f87171 300deg,
+            transparent 340deg, transparent 360deg);
     -webkit-mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
-            mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
+    mask: radial-gradient(circle, transparent 55%, #000 60%, #000 100%);
     animation: pito-halo-rotando 1.4s linear infinite;
     pointer-events: none;
     z-index: 1;
 }
 
 @keyframes pito-halo-rotando {
-    from { transform: rotate(0deg);   }
-    to   { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* PITO OBJETIVO PISADO — todos los pitos del acorde se ven IGUAL: el fondo
@@ -198,12 +414,15 @@
         0 0 16px rgba(255, 255, 255, 0.7),
         inset 0px 6px 10px rgba(0, 0, 0, 0.35) !important;
 }
+
 .pito-boton.nota-activa.objetivo-halar {
     background: radial-gradient(circle at 50% 70%, #93c5fd 0%, #3b82f6 55%, #1e40af 100%) !important;
 }
+
 .pito-boton.nota-activa.objetivo-empujar {
     background: radial-gradient(circle at 50% 70%, #fca5a5 0%, #ef4444 55%, #7f1d1d 100%) !important;
 }
+
 .pito-boton.nota-activa.objetivo-halar .nota-etiqueta,
 .pito-boton.nota-activa.objetivo-empujar .nota-etiqueta {
     color: #fff !important;
@@ -220,13 +439,16 @@
 }
 
 @keyframes pito-sosteniendo-cargar {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow:
             0 0 6px rgba(255, 255, 255, 0.7),
             0 0 0 2px rgba(255, 255, 255, 0.45),
             inset 0 0 10px rgba(255, 255, 255, 0.35) !important;
         filter: brightness(1.05);
     }
+
     50% {
         box-shadow:
             0 0 22px rgba(255, 255, 255, 1),
@@ -241,29 +463,123 @@
     transition: opacity 0.18s ease;
 }
 
-/* COLA estilo "estela de cometa" — el tope arranca transparente y la
-   opacidad crece bajando hasta llegar a la cabeza. */
+/* COLA en estado normal (nota acercandose): linea fina del color del fuelle,
+   transparente arriba, opaca abajo. Ancho proporcional al pito real. */
 .nota-cola {
     position: absolute;
-    width: clamp(20px, 3.6vw, 30px);
-    border-radius: 50% 50% 4px 4px / 70% 70% 4px 4px;
+    width: calc(var(--pito-boton-size, 18.5vh) * 0.18 * var(--escala-acordeon, 1));
+    border-radius: 6px;
     transform: translateX(-50%);
     pointer-events: none;
-    will-change: top, height;
+    will-change: top, height, transform;
     z-index: 0;
     border: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 15%, #000 38%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 15%, #000 38%, #000 100%);
 }
 
+/* COLA en sustain (alumno pisando una nota larga) — ESTILO GUITAR HERO:
+   barra ancha y vibrante con glow externo intenso, nucleo blanco interior,
+   pulso continuo. Esto es lo que confirma "estoy pisando bien y aguantando".
+   Sin el !important el inline style del componente pisa estos overrides. */
 .nota-cola.impactada {
-    background: linear-gradient(to bottom,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,0.55) 22%,
-        rgba(255,255,255,0.95) 100%) !important;
+    width: calc(var(--pito-boton-size, 18.5vh) * 0.55 * var(--escala-acordeon, 1)) !important;
+    border-radius: 14px !important;
+    animation: nota-cola-sustain-pulse 0.4s ease-in-out infinite !important;
+    /* mascara mas suave: la cola se ve solida casi hasta arriba */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 8%, #000 25%, #000 100%) !important;
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 8%, #000 25%, #000 100%) !important;
 }
 
-/* PARTICULAS DE HIT — 6 puntos radiales al impactar una nota. */
+.nota-cola.impactada.abriendo {
+    background: linear-gradient(to bottom,
+            rgba(125, 211, 252, 0) 0%,
+            rgba(125, 211, 252, 0.7) 22%,
+            rgba(56, 189, 248, 0.95) 60%,
+            rgba(255, 255, 255, 1) 100%) !important;
+    box-shadow:
+        0 0 12px rgba(56, 189, 248, 0.95),
+        0 0 28px rgba(56, 189, 248, 0.65),
+        inset 0 0 14px rgba(255, 255, 255, 0.7);
+}
+
+.nota-cola.impactada.cerrando {
+    background: linear-gradient(to bottom,
+            rgba(252, 165, 165, 0) 0%,
+            rgba(252, 165, 165, 0.7) 22%,
+            rgba(239, 68, 68, 0.95) 60%,
+            rgba(255, 255, 255, 1) 100%) !important;
+    box-shadow:
+        0 0 12px rgba(239, 68, 68, 0.95),
+        0 0 28px rgba(239, 68, 68, 0.65),
+        inset 0 0 14px rgba(255, 255, 255, 0.7);
+}
+
+/* Pulso de brillo y saturacion durante el sustain — efecto "energia que late". */
+@keyframes nota-cola-sustain-pulse {
+
+    0%,
+    100% {
+        filter: brightness(1.05) saturate(1.2);
+        transform: translateX(-50%) scaleX(1);
+    }
+
+    50% {
+        filter: brightness(1.45) saturate(1.6);
+        transform: translateX(-50%) scaleX(1.08);
+    }
+}
+
+/* Sparks/destellos en la BASE de la cola (donde se conecta con el pito):
+   un anillo expandiente que pulsa. Es la "explosion controlada" del sustain. */
+.nota-cola.impactada::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    width: 240%;
+    height: 32px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: nota-cola-sparks 0.35s ease-out infinite;
+}
+
+.nota-cola.impactada.abriendo::after {
+    background: radial-gradient(ellipse at 50% 50%,
+            rgba(125, 211, 252, 0.85) 0%,
+            rgba(56, 189, 248, 0.5) 40%,
+            transparent 75%);
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.7);
+}
+
+.nota-cola.impactada.cerrando::after {
+    background: radial-gradient(ellipse at 50% 50%,
+            rgba(252, 165, 165, 0.85) 0%,
+            rgba(239, 68, 68, 0.5) 40%,
+            transparent 75%);
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.7);
+}
+
+@keyframes nota-cola-sparks {
+    0% {
+        opacity: 0.55;
+        transform: translateX(-50%) scale(0.85);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.15);
+    }
+
+    100% {
+        opacity: 0.55;
+        transform: translateX(-50%) scale(0.85);
+    }
+}
+
+/* PARTICULAS DE HIT — 6 puntos radiales al impactar una nota.
+   z-index 3 para que vayan encima del overlay de tinte (z-index 1). */
 .nota-particula {
     position: absolute;
     left: 50%;
@@ -276,9 +592,17 @@
     transform: translate(-50%, -50%);
     animation: nota-particula-anim 0.36s ease-out forwards;
     will-change: transform, opacity;
+    z-index: 3;
 }
 
 @keyframes nota-particula-anim {
-    0%   { transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(0)    scale(1);   opacity: 1; }
-    100% { transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(34px) scale(0.4); opacity: 0; }
+    0% {
+        transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(var(--angulo)) translateX(34px) scale(0.4);
+        opacity: 0;
+    }
 }

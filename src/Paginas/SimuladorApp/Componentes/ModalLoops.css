@@ -1,0 +1,294 @@
+/* Modal "Loops": popup oscuro centrado con la lista de pistas. Click en
+   una pista → reproduce / toggle. Volumen + velocidad globales abajo. */
+.sim-loops-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+    animation: sim-loops-fade 0.16s ease-out;
+}
+
+@keyframes sim-loops-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.sim-loops {
+    position: relative;
+    width: min(460px, 94vw);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #1c1f30 0%, #0e0f1c 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+    animation: sim-loops-pop 0.18s ease-out;
+}
+
+@keyframes sim-loops-pop {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0);     }
+}
+
+.sim-loops-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sim-loops-head h3 {
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    letter-spacing: 0.4px;
+}
+
+.sim-loops-cerrar {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-loops-cerrar:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.sim-loops-cuerpo {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sim-loops-estado {
+    padding: 24px 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sim-loops-estado.error { color: #fca5a5; }
+
+.sim-loops-spinner { animation: sim-loops-spin 1s linear infinite; }
+
+@keyframes sim-loops-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.sim-loops-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sim-loops-item:hover { background: rgba(255, 255, 255, 0.06); }
+.sim-loops-item:active { transform: scale(0.99); }
+
+.sim-loops-item.activa {
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.22) 0%, rgba(59, 130, 246, 0.12) 100%);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.sim-loops-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(96, 165, 250, 0.16);
+    border-radius: 10px;
+    color: #60a5fa;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-loops-icono.reproduciendo {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+}
+
+.sim-loops-textos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sim-loops-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sim-loops-meta {
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* Animacion de "ondas sonando" a la derecha cuando la pista esta activa.
+   Tres barritas que pulsan con timings escalonados. */
+.sim-loops-pulso {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.sim-loops-pulso > span {
+    width: 3px;
+    background: #60a5fa;
+    border-radius: 2px;
+    animation: sim-loops-pulso-bar 0.9s ease-in-out infinite;
+}
+
+.sim-loops-pulso > span:nth-child(1) { height: 60%; animation-delay: 0s; }
+.sim-loops-pulso > span:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+.sim-loops-pulso > span:nth-child(3) { height: 75%; animation-delay: 0.3s; }
+
+@keyframes sim-loops-pulso-bar {
+    0%, 100% { transform: scaleY(0.45); }
+    50%      { transform: scaleY(1);    }
+}
+
+/* Footer: controles de volumen y velocidad. */
+.sim-loops-controles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 12px 18px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.sim-loops-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: 'Raleway', system-ui, sans-serif;
+}
+
+.sim-loops-control > span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+}
+
+.sim-loops-control > span em {
+    font-style: normal;
+    color: #60a5fa;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.sim-loops-control input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.sim-loops-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 2px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.sim-loops-control input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 2px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Velocidad bloqueada durante grabacion: el slider se ve apagado y un
+   chip rojo indica el motivo. La velocidad debe quedar fija mientras se
+   graba para que el sync con el audio sea exacto al reproducir el replay. */
+.sim-loops-control.bloqueado input[type="range"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sim-loops-control.bloqueado input[type="range"]::-webkit-slider-thumb {
+    background: #71717a;
+    cursor: not-allowed;
+}
+
+.sim-loops-control-lock {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.18);
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    text-transform: none;
+}

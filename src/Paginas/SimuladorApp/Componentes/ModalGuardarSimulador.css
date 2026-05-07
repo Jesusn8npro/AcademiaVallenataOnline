@@ -1,0 +1,178 @@
+/* Modal compacto para guardar grabacion en SimuladorApp.
+   Pensado para landscape mobile: panel mas estrecho centrado, no full screen. */
+.sim-modal-grab-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+    animation: sim-modal-grab-fade 0.16s ease-out;
+}
+
+@keyframes sim-modal-grab-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.sim-modal-grab {
+    position: relative;
+    width: min(420px, 92vw);
+    max-height: 86vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1a1d2e 0%, #0e0f1c 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    padding: 18px 20px 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    animation: sim-modal-grab-pop 0.18s ease-out;
+}
+
+@keyframes sim-modal-grab-pop {
+    from { opacity: 0; transform: scale(0.94) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0);     }
+}
+
+.sim-modal-grab-cerrar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-modal-grab-cerrar:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.sim-modal-grab-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.sim-modal-grab-kicker {
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+.sim-modal-grab-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.sim-modal-grab-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+    font-family: 'Raleway', system-ui, sans-serif;
+}
+
+.sim-modal-grab-campo > span {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.72);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.sim-modal-grab-campo > span em {
+    font-style: normal;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
+.sim-modal-grab-campo input {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.92rem;
+    font-family: inherit;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sim-modal-grab-campo input:focus {
+    border-color: rgba(251, 191, 36, 0.65);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sim-modal-grab-error {
+    margin: -4px 0 8px;
+    color: #fca5a5;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 0.78rem;
+}
+
+.sim-modal-grab-acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.sim-modal-grab-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sim-modal-grab-btn:active { transform: scale(0.96); }
+.sim-modal-grab-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.sim-modal-grab-btn.secundaria {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.sim-modal-grab-btn.secundaria:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.sim-modal-grab-btn.primaria {
+    background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+    color: #1f1100;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.35);
+}
+
+.sim-modal-grab-btn.primaria:hover:not(:disabled) {
+    background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%);
+}

@@ -345,3 +345,20 @@
         opacity: 1;
     }
 }
+
+/* Cuando se esta reproduciendo una grabacion guardada, los pitos quedan
+   en modo "espectador": no se pueden pisar (pointer-events: none) para
+   que el alumno no interrumpa la reproduccion con sus propios sonidos.
+   La animacion de las teclas iluminandose la maneja la logica.actualizarBotonActivo
+   que el reproductor llama por cada nota. */
+.simulador-app-root.reproduciendo .pito-boton,
+.simulador-app-root.reproduciendo .boton-bajo-contenedor {
+    pointer-events: none;
+}
+
+/* Indicador sutil de que estamos en modo "viendo grabacion" — borde
+   con resplandor azul sobre el contenedor del acordeon. */
+.simulador-app-root.reproduciendo .contenedor-acordeon-completo {
+    box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.45);
+    transition: box-shadow 0.2s ease;
+}

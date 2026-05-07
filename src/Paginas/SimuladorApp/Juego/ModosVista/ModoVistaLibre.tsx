@@ -11,6 +11,9 @@ interface ModoVistaLibreProps {
      *  (la maestra toca sola): no aplicamos opacidad reducida a no-inminentes
      *  porque no hay urgencia y la atencion debe estar en TODA la secuencia. */
     modoPractica?: string;
+    /** Si true, muestra el nombre del pito (Si, Re, Fa, La...) dentro de la
+     *  nota cayendo, igual que la etiqueta del pito objetivo. Toggle global. */
+    verNotas?: boolean;
 }
 
 interface NotaEnVuelo {
@@ -26,6 +29,7 @@ interface NotaEnVuelo {
     etiqueta: string;
     targetX: number;
     targetY: number;
+    radioPito: number;       // radio real del pito objetivo (medido del DOM).
 }
 
 function botonIdToDataPos(botonId: string): string | null {
@@ -42,7 +46,7 @@ function extraerEtiqueta(nota: any): string {
 }
 
 const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
-    cancion, tickActual, notasImpactadas, rangoSeccion, modoPractica
+    cancion, tickActual, notasImpactadas, rangoSeccion, modoPractica, verNotas
 }) => {
     const esModoMaestro = modoPractica === 'maestro_solo';
     const pistaRef = useRef<HTMLDivElement>(null);
@@ -108,11 +112,23 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
             const r = (el as Element).getBoundingClientRect();
             const targetX = r.left + r.width / 2 - offsetX;
             const targetY = r.top + r.height / 2 - offsetY;
+            const radioPito = r.width / 2;
 
             const id = `${nota.tick}-${nota.botonId}`;
             const impactada = notasImpactadas?.has(id) ?? false;
             const esFallada = progresoCrudo > 1.0 && !impactada;
             const progresoFinal = Math.max(0, progresoCrudo - duracion / TICKS_VIAJE);
+
+            // Si el toggle "Ver Notas" esta activo, leemos el label del pito
+            // objetivo desde el DOM (mismo texto que se ve en la tecla, ej: "Si",
+            // "Re", "Fa"). Sin toggle usamos el extractor por defecto que apenas
+            // muestra algo cuando la nota lo trae embebido.
+            let etiqueta = extraerEtiqueta(nota);
+            if (verNotas) {
+                const labelEl = (el as Element).querySelector('.nota-etiqueta');
+                const labelDom = labelEl?.textContent?.trim();
+                if (labelDom) etiqueta = labelDom;
+            }
 
             result.push({
                 id,
@@ -124,13 +140,14 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                 duracion,
                 impactada,
                 esFallada,
-                etiqueta: extraerEtiqueta(nota),
+                etiqueta,
                 targetX,
                 targetY,
+                radioPito,
             });
         }
         return result;
-    }, [cancion, tickActual, notasImpactadas, rangoSeccion]);
+    }, [cancion, tickActual, notasImpactadas, rangoSeccion, verNotas]);
 
     // ASC por progreso: las inminentes salen al final del map → quedan encima
     // en el z-stack. Sin esto las notas mas viejas tapan a las nuevas.
@@ -164,20 +181,25 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
             )}
             {notasOrdenadas.map((n) => {
                 const noteY = n.targetY * n.progreso;
+                // rgb solo se usa para colorear la cola y particulas. El fondo del
+                // boton-nota lo maneja el CSS (estados .abriendo/.cerrando/.inminente).
                 const rgb = n.esFallada
-                    ? '102, 102, 102'
-                    : (n.fuelle === 'abriendo' ? '59, 130, 246' : '239, 68, 68');
+                    ? '180, 120, 60'
+                    : (n.fuelle === 'abriendo' ? '14, 165, 233' : '239, 68, 68');
                 // En Maestro NO marcamos inminentes — la urgencia visual no aplica cuando
-                // el alumno solo observa. Sin esto las notas ganan outline pulsante que
-                // distrae mas de lo que ayuda en este modo.
+                // el alumno solo observa.
                 const esInminente = !esModoMaestro && idsInminente.has(n.id);
-                // En Maestro la maestra "toca" las notas → motor las marca impactadas →
-                // dispararia animacion nota-burst (white + scale + opacity 0). El alumno
-                // ve una "sombra" porque la nota esta en su animacion de salida. En este
-                // modo el alumno solo observa: las queremos cruzando el pito limpias,
-                // sin animacion de impacto. Render como NO-impactada para todo proposito visual.
+                // En Maestro la maestra "toca" las notas → motor las marca impactadas.
+                // En este modo el alumno solo observa: queremos las notas cruzando el pito
+                // limpias, sin animacion de impacto.
                 const renderImpactada = !esModoMaestro && n.impactada;
                 const colaConsumida = n.duracion > 30 && n.progresoFinal >= n.progreso - 0.005;
+                // Rampa de opacidad por distancia al pito: lejos = casi fantasma
+                // (0.15), llegando al punto de impacto = totalmente opaca (1.0).
+                // Asi las notas lejanas se ven "de fondo" sin saturar la pantalla
+                // y las que ya van a pisarse cobran color real.
+                const rampa = Math.max(0, Math.min(1, n.progreso / 0.78));
+                const opacidadDistancia = 0.15 + rampa * 0.85;
                 const opacidad = renderImpactada
                     ? (colaConsumida ? Math.max(0, 1 - (n.progresoCrudo - 1.0) / 0.15) : 1)
                     : n.progresoCrudo > 1.05
@@ -186,25 +208,22 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                             ? 1
                             : esInminente
                                 ? 1
-                                : 0.4;
+                                : opacidadDistancia;
+                // Jerarquia por tamano: lejos = chico, cerca = crece, inminente = grande.
                 const escala = renderImpactada
                     ? 1
-                    : n.progreso > 0.88
-                        ? 1 + (n.progreso - 0.88) * 1.0
-                        : 1;
-                const tieneSostenido = n.duracion > 30 && !n.esFallada;
-                const fondo = renderImpactada
-                    ? (tieneSostenido
-                        ? `radial-gradient(circle at 50% 45%, #fff 0%, rgba(255,255,255,0.85) 28%, rgb(${rgb}) 70%, rgba(${rgb},0.85) 100%)`
-                        : '#fff')
-                    : `radial-gradient(circle at 35% 28%, rgba(255,255,255,0.7) 0%, rgb(${rgb}) 55%, rgba(0,0,0,0.25) 100%)`;
-                const glow = renderImpactada
-                    ? `0 0 18px rgba(${rgb}, 0.95), 0 0 36px rgba(${rgb}, 0.6)`
-                    : `0 0 8px rgba(${rgb},0.55), 0 3px 6px rgba(0,0,0,0.35)`;
+                    : esModoMaestro
+                        ? (n.progreso > 0.88 ? 1 + (n.progreso - 0.88) * 0.6 : 1)
+                        : esInminente
+                            ? 1.18 + (n.progreso > 0.88 ? (n.progreso - 0.88) * 0.4 : 0)
+                            : 0.82 + rampa * 0.13;
 
                 const tieneCola = n.duracion > 30 && !n.esFallada;
                 const tailTopY = n.progresoFinal * n.targetY;
-                const tailHeight = Math.max(0, noteY - tailTopY);
+                // Cortamos la cola en el BORDE SUPERIOR del pito (radio real medido
+                // del DOM), no en su centro, asi siempre queda afuera del boton.
+                const tailBottomY = Math.min(noteY, n.targetY) - n.radioPito;
+                const tailHeight = Math.max(0, tailBottomY - tailTopY);
 
                 return (
                     <React.Fragment key={n.id}>
@@ -215,7 +234,7 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                                     left: `${n.targetX}px`,
                                     top: `${tailTopY}px`,
                                     height: `${tailHeight}px`,
-                                    background: `linear-gradient(to bottom, rgba(${rgb}, 0) 0%, rgba(${rgb}, 0.4) 28%, rgba(${rgb}, 0.95) 100%)`,
+                                    background: `linear-gradient(to bottom, rgba(${rgb}, 0) 0%, rgba(${rgb}, 0.25) 18%, rgba(${rgb}, 0.7) 55%, rgba(${rgb}, 1) 100%)`,
                                     opacity: opacidad,
                                 }}
                             />
@@ -225,13 +244,8 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                             style={{
                                 left: `${n.targetX}px`,
                                 top: `${noteY}px`,
-                                background: fondo,
                                 opacity: opacidad,
                                 transform: `translate(-50%, -50%) scale(${escala})`,
-                                boxShadow: esInminente
-                                    ? `${glow}, 0 0 0 3px rgba(255,255,255,0.9)`
-                                    : glow,
-                                borderColor: esInminente ? '#fff' : 'rgba(255,255,255,0.55)',
                             }}
                         >
                             <span className="nota-etiqueta-cayendo">{n.etiqueta}</span>

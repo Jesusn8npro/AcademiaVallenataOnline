@@ -25,6 +25,9 @@ interface PistaNotasBoxedProps {
     tickActual: number;
     notasImpactadas: Set<string>;
     rangoSeccion?: { inicio: number; fin: number } | null;
+    /** Si true, la cajita muestra el nombre del pito (Si, Re, Fa...) en cada
+     *  nota — guia visual mas completa. Toggle global "Ver Notas". */
+    verNotas?: boolean;
 }
 
 interface NotaBoxed {
@@ -51,7 +54,7 @@ function extraerEtiqueta(nota: any): string {
 }
 
 const PistaNotasBoxed: React.FC<PistaNotasBoxedProps> = ({
-    cancion, tickActual, notasImpactadas, rangoSeccion
+    cancion, tickActual, notasImpactadas, rangoSeccion, verNotas
 }) => {
     const cajaRef = useRef<HTMLDivElement>(null);
     const elementoCache = useRef<Map<string, Element>>(new Map());
@@ -93,18 +96,28 @@ const PistaNotasBoxed: React.FC<PistaNotasBoxedProps> = ({
             const id = `${nota.tick}-${nota.botonId}`;
             const impactada = notasImpactadas?.has(id) ?? false;
 
+            // Toggle "Ver Notas": leemos el label del pito objetivo del DOM
+            // (mismo texto que muestra la tecla, ej: "Si"). Sin toggle usamos
+            // el extractor por defecto (suele venir vacio).
+            let etiqueta = extraerEtiqueta(nota);
+            if (verNotas) {
+                const labelEl = (el as Element).querySelector('.nota-etiqueta');
+                const labelDom = labelEl?.textContent?.trim();
+                if (labelDom) etiqueta = labelDom;
+            }
+
             result.push({
                 id,
                 botonId: nota.botonId,
                 fuelle: nota.fuelle === 'abriendo' ? 'abriendo' : 'cerrando',
                 progreso,
                 impactada,
-                etiqueta: extraerEtiqueta(nota),
+                etiqueta,
                 targetX,
             });
         }
         return result;
-    }, [cancion, tickActual, notasImpactadas, rangoSeccion]);
+    }, [cancion, tickActual, notasImpactadas, rangoSeccion, verNotas]);
 
     // Altura util de la cajita en pixels — calculada al render
     const altoCaja = cajaRef.current?.getBoundingClientRect().height ?? 0;
