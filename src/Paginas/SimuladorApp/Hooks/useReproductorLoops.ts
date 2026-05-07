@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import type { PistaPracticaLibre } from '../../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
 export interface PistaActiva {
@@ -12,15 +13,36 @@ export interface PistaActiva {
 /**
  * Hook que vive en SimuladorAppNormal y maneja la pista de loops del SimuladorApp.
  * El audio se mantiene fuera del modal — si el usuario cierra el modal, el loop
- * sigue sonando. Tambien expone la pista activa para que el icono de la barra
- * pueda mostrar un indicador "sonando" y para que el grabador la guarde como
- * audio de fondo en la metadata.
+ * sigue sonando.
+ *
+ * Patron mobile-first (copiado de useAudioFondoPracticaLibre): el HTMLAudio se
+ * enruta por el AudioContext del motor con `conectarMediaElement`. iOS Safari
+ * exige una sola sesion de audio activada por gesto — sin esto, el HTMLAudio
+ * compite con el AudioContext del acordeon y el play() es rechazado o silenciado.
+ *
+ * Reusamos el MISMO HTMLAudioElement en cada cambio de pista (solo cambiamos
+ * `src`). Crear `new Audio()` dentro del mismo gesto que un `pause()` previo
+ * tambien rompe la user activation en iOS.
  */
 export function useReproductorLoops() {
     const [pistaActiva, setPistaActiva] = useState<PistaActiva | null>(null);
     const [volumen, setVolumen] = useState(0.85);
     const [velocidad, setVelocidad] = useState(1.0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Crea (una sola vez) el HTMLAudio persistente y lo conecta al motor.
+    const obtenerAudio = useCallback((): HTMLAudioElement => {
+        if (audioRef.current) return audioRef.current;
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.crossOrigin = 'anonymous';
+        audio.loop = true;
+        try { motorAudioPro.conectarMediaElement(audio); } catch (e) {
+            console.warn('[Loops] no pude conectar al motor de audio:', e);
+        }
+        audioRef.current = audio;
+        return audio;
+    }, []);
 
     // Aplicar volumen y velocidad en vivo al audio actual.
     useEffect(() => {
@@ -34,45 +56,56 @@ export function useReproductorLoops() {
         const audio = audioRef.current;
         if (audio) {
             try { audio.pause(); } catch { /* noop */ }
-            audio.src = '';
-            audioRef.current = null;
+            // No borramos src ni desconectamos: queremos que el mismo audio
+            // este listo para la proxima pista sin re-crear (preserva user
+            // activation y evita el cold-start de iOS).
         }
         setPistaActiva(null);
     }, []);
 
-    const reproducir = useCallback((pista: PistaPracticaLibre) => {
+    const reproducir = useCallback(async (pista: PistaPracticaLibre) => {
         // Toggle: misma pista → para.
         if (pistaActiva && pistaActiva.id === pista.id) {
             detener();
             return;
         }
-        // Para la actual antes de empezar la nueva.
-        const prev = audioRef.current;
-        if (prev) {
-            try { prev.pause(); } catch { /* noop */ }
-            prev.src = '';
-        }
         const url = pista.audioUrl || (pista.capas && pista.capas[0]?.url);
         if (!url) return;
-        const audio = new Audio(url);
+
+        const audio = obtenerAudio();
+
+        // AudioContext en running antes de play() — iOS lo suspende cuando la
+        // tab pierde foco o tras periodos de inactividad.
+        try {
+            await motorAudioPro.activarContexto();
+        } catch (e) {
+            console.warn('[Loops] activarContexto fallo:', e);
+        }
+
+        // Cambio de URL: solo reasignar src + load. Igual que ProMax PracticaLibre.
+        if (audio.src !== url) {
+            audio.src = url;
+            try { audio.load(); } catch { /* noop */ }
+        }
         audio.volume = volumen;
         audio.playbackRate = velocidad;
-        audio.loop = true;
-        audio.play().catch(() => {
-            // Autoplay puede fallar si no hubo gesto reciente.
-            // No dejamos audioRef colgado: lo limpiamos.
-            audioRef.current = null;
+
+        try {
+            await audio.play();
+            setPistaActiva({
+                id: pista.id,
+                nombre: pista.nombre,
+                url,
+                artista: pista.artista || null,
+                bpm: pista.bpm || null,
+            });
+        } catch (e: any) {
+            // En produccion mobile esto era el catch silencioso que escondia el
+            // error real. Ahora lo logueamos para diagnostico.
+            console.error('[Loops] audio.play() rechazado:', e?.name, e?.message, e);
             setPistaActiva(null);
-        });
-        audioRef.current = audio;
-        setPistaActiva({
-            id: pista.id,
-            nombre: pista.nombre,
-            url,
-            artista: pista.artista || null,
-            bpm: pista.bpm || null,
-        });
-    }, [pistaActiva, volumen, velocidad, detener]);
+        }
+    }, [pistaActiva, volumen, velocidad, detener, obtenerAudio]);
 
     // Cleanup al desmontar el componente padre.
     useEffect(() => {
