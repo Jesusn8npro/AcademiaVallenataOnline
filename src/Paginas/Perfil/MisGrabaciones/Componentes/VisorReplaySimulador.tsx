@@ -18,6 +18,21 @@ interface VisorReplaySimuladorProps {
     direccion: 'halar' | 'empujar';
 }
 
+const MAPA_CIFRADO: Record<string, string> = {
+    'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
+    'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab',
+    'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B',
+};
+
+function formatearNombreNota(notaObj: any, modo: string): string {
+    if (!notaObj) return '';
+    const nombre = notaObj.nombre || '';
+    const partes = nombre.split(' ');
+    let notaBase = partes[0];
+    if (modo === 'cifrado') notaBase = MAPA_CIFRADO[notaBase] || notaBase;
+    return notaBase;
+}
+
 const VisorReplaySimulador: React.FC<VisorReplaySimuladorProps> = ({ logica, direccion }) => {
     const filas = useMemo(() => ({
         afuera: logica?.configTonalidad?.primeraFila || [],
@@ -26,10 +41,12 @@ const VisorReplaySimulador: React.FC<VisorReplaySimuladorProps> = ({ logica, dir
     }), [logica?.configTonalidad]);
 
     const botonesActivos = logica?.botonesActivos || {};
+    const modoVista: string = logica?.modoVista || 'notas';
+    const esHalar = direccion === 'halar';
 
-    const renderHilera = (fila: any[], hileraClass: string) => {
+    const renderHilera = (fila: any[]) => {
         // Agrupar por posicion (cada pito tiene una nota halar y una empujar).
-        const grupos: Record<string, any> = {};
+        const grupos: Record<string, { halar: any; empujar: any }> = {};
         fila?.forEach((n: any) => {
             const pos = n.id.split('-').slice(0, 2).join('-');
             if (!grupos[pos]) grupos[pos] = { halar: null, empujar: null };
@@ -42,16 +59,25 @@ const VisorReplaySimulador: React.FC<VisorReplaySimuladorProps> = ({ logica, dir
         );
 
         return (
-            <div className={`vrs-hilera ${hileraClass}`}>
-                {ordenadas.map(([pos]) => {
+            <div className="vrs-hilera">
+                {ordenadas.map(([pos, n]) => {
                     const idActivo = `${pos}-${direccion}`;
                     const activo = !!botonesActivos[idActivo];
+                    const labelHalar = formatearNombreNota(n.halar, modoVista);
+                    const labelEmpujar = formatearNombreNota(n.empujar, modoVista);
                     return (
                         <div
                             key={pos}
                             className={`vrs-pito ${activo ? 'nota-activa' : ''}`}
                             data-pos={pos}
-                        />
+                        >
+                            {esHalar && (
+                                <span className="vrs-nota-etiqueta vrs-label-halar">{labelHalar}</span>
+                            )}
+                            {!esHalar && (
+                                <span className="vrs-nota-etiqueta vrs-label-empujar">{labelEmpujar}</span>
+                            )}
+                        </div>
                     );
                 })}
             </div>
@@ -65,9 +91,9 @@ const VisorReplaySimulador: React.FC<VisorReplaySimuladorProps> = ({ logica, dir
                 style={{ backgroundImage: `url(${marcoSimuladorApp})` }}
             >
                 <div className="vrs-tren">
-                    {renderHilera(filas.adentro, 'vrs-hilera-adentro')}
-                    {renderHilera(filas.medio, 'vrs-hilera-medio')}
-                    {renderHilera(filas.afuera, 'vrs-hilera-afuera')}
+                    {renderHilera(filas.adentro)}
+                    {renderHilera(filas.medio)}
+                    {renderHilera(filas.afuera)}
                 </div>
             </div>
         </div>
