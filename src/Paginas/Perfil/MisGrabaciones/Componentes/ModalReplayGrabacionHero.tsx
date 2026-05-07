@@ -22,8 +22,7 @@ interface ModalReplayGrabacionHeroProps {
 
 const IMAGEN_REPLAY = '/Acordeon PRO MAX.png';
 const TAMANO_ACORDEON_REPLAY_PX = 980;
-const POSICION_X_ACORDEON = '50%';
-const POSICION_Y_ACORDEON = '50%';
+const POSICION_ACORDEON = '50%';
 
 function formatearTiempoDesdeTicks(ticks: number, bpm: number, resolucion: number) {
     const totalSegundos = Math.max(0, Math.floor((ticks / Math.max(1, resolucion)) * (60 / Math.max(1, bpm))));
@@ -33,8 +32,8 @@ function formatearTiempoDesdeTicks(ticks: number, bpm: number, resolucion: numbe
 }
 
 export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar }: ModalReplayGrabacionHeroProps) {
-    const [bpm, setBpm] = useState(120);
     const navigate = useNavigate();
+    const [bpm, setBpm] = useState(120);
 
     const logica = useLogicaAcordeon({ deshabilitarInteraccion: false });
 
@@ -51,17 +50,16 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
             motorAudioPro.reproducir(
                 beatEnCompas === 0 ? 'click_fuerte' : 'click_debil',
                 'metronomo',
-                beatEnCompas === 0 ? 0.6 : 0.4
+                beatEnCompas === 0 ? 0.6 : 0.4,
             );
-        }
+        },
     );
 
     const { preparandoReplay, totalTicksCalculados, tonalidadReplayLista, urlAudioFondo,
-            reproducirOReanudar, pausar, buscarTick, reiniciar } = useReproductorReplay({
-        abierta, grabacion, logica, reproductor, bpm, setBpm,
-    });
+        reproducirOReanudar, pausar, buscarTick, reiniciar } = useReproductorReplay({
+            abierta, grabacion, logica, reproductor, bpm, setBpm,
+        });
 
-    // Toggle Escritorio / Movil. Default automatico segun donde se grabo.
     const vistaPreferidaGrabacion = (grabacion?.metadata as any)?.vista_preferida || null;
     const { vista, setVista } = useVistaReplayPersistida(vistaPreferidaGrabacion);
 
@@ -73,8 +71,8 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
     const ajustesReplay = useMemo(() => ({
         ...logica.ajustes,
         tamano: `${TAMANO_ACORDEON_REPLAY_PX}px`,
-        x: POSICION_X_ACORDEON,
-        y: POSICION_Y_ACORDEON,
+        x: POSICION_ACORDEON,
+        y: POSICION_ACORDEON,
     }), [logica.ajustes]);
 
     if (!abierta || !grabacion) return null;
@@ -83,6 +81,11 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
     const totalTicks = reproductor.totalTicks || totalTicksCalculados;
     const progreso = totalTicks > 0 ? Math.min(100, (reproductor.tickActual / totalTicks) * 100) : 0;
     const replayListo = logica.disenoCargado && !logica.cargando && tonalidadReplayLista && !preparandoReplay;
+    const reproduciendoActivo = reproductor.reproduciendo && !reproductor.pausado;
+
+    const subtituloModal = grabacion.canciones_hero?.titulo
+        || (grabacion.modo === 'competencia' ? 'Modo competencia' : 'Practica libre');
+    const autorTexto = grabacion.canciones_hero?.autor ? ` · ${grabacion.canciones_hero.autor}` : '';
 
     return createPortal(
         <div className="grabaciones-hero-modal-overlay" onClick={onCerrar}>
@@ -91,14 +94,12 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                     <X size={18} />
                 </button>
 
-                <div className="grabaciones-hero-modal-encabezado">
+                {/* Header: titulo + badges */}
+                <header className="grabaciones-hero-modal-encabezado">
                     <div>
                         <p className="grabaciones-hero-modal-eyebrow">Replay privado</p>
                         <h2>{grabacion.titulo || 'Grabacion sin titulo'}</h2>
-                        <p className="grabaciones-hero-modal-subtitulo">
-                            {grabacion.canciones_hero?.titulo || (grabacion.modo === 'competencia' ? 'Modo competencia' : 'Practica libre')}
-                            {grabacion.canciones_hero?.autor ? ` · ${grabacion.canciones_hero.autor}` : ''}
-                        </p>
+                        <p className="grabaciones-hero-modal-subtitulo">{subtituloModal}{autorTexto}</p>
                     </div>
                     <div className="grabaciones-hero-modal-badges">
                         <span className={`grabaciones-hero-badge ${grabacion.modo === 'competencia' ? 'competencia' : 'practica'}`}>
@@ -109,15 +110,17 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                             <span className="grabaciones-hero-badge precision">{Math.round(grabacion.precision_porcentaje)}%</span>
                         )}
                     </div>
-                </div>
+                </header>
 
-                <div className="grabaciones-hero-modal-metricas">
+                {/* Métricas */}
+                <section className="grabaciones-hero-modal-metricas">
                     <div><span>BPM</span><strong>{bpm}</strong></div>
                     <div><span>Tonalidad</span><strong>{grabacion.tonalidad || 'N/D'}</strong></div>
                     <div><span>Notas</span><strong>{grabacion.notas_totales || grabacion.secuencia_grabada.length}</strong></div>
                     <div><span>Puntos</span><strong>{grabacion.puntuacion?.toLocaleString('es-CO') || 'N/D'}</strong></div>
-                </div>
+                </section>
 
+                {/* Toggle Escritorio / Móvil */}
                 <div className="grabaciones-hero-replay-vista-toggle" role="tablist" aria-label="Vista del replay">
                     <button
                         type="button"
@@ -139,12 +142,13 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                     </button>
                 </div>
 
-                <div className="grabaciones-hero-replay-layout">
+                {/* Layout principal: escenario + panel */}
+                <main className="grabaciones-hero-replay-layout">
                     <div className="grabaciones-hero-replay-escenario">
                         {!logica.disenoCargado ? (
                             <div className="grabaciones-hero-replay-cargando">
                                 <Music2 size={24} />
-                                <span>Cargando replay...</span>
+                                <span>Cargando replay…</span>
                             </div>
                         ) : vista === 'movil' ? (
                             <VisorReplaySimulador logica={logica} direccion={logica.direccion} />
@@ -159,19 +163,20 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                 botonSeleccionado={null}
                                 modoVista={logica.modoVista}
                                 vistaDoble={false}
-                                setBotonSeleccionado={() => {}}
-                                actualizarBotonActivo={() => {}}
-                                listo={true}
+                                setBotonSeleccionado={() => { }}
+                                actualizarBotonActivo={() => { }}
+                                listo
                             />
                         )}
                     </div>
 
-                    <div className="grabaciones-hero-replay-panel">
+                    <aside className="grabaciones-hero-replay-panel">
                         <div className="grabaciones-hero-replay-controles">
                             <div className="grabaciones-hero-replay-tiempo">
                                 <span>{formatearTiempoDesdeTicks(reproductor.tickActual, bpm, resolucionActiva)}</span>
                                 <span>{formatearTiempoDesdeTicks(totalTicks, bpm, resolucionActiva)}</span>
                             </div>
+
                             <input
                                 className="grabaciones-hero-replay-slider"
                                 type="range"
@@ -180,20 +185,26 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                 value={Math.min(reproductor.tickActual, Math.max(totalTicks, 1))}
                                 onChange={(event) => buscarTick(Number(event.target.value))}
                             />
+
                             <div className="grabaciones-hero-replay-acciones">
-                                <button className="grabaciones-hero-replay-btn" onClick={reiniciar}>
+                                <button className="grabaciones-hero-replay-btn" onClick={reiniciar} type="button">
                                     <RotateCcw size={16} />
                                     Reiniciar
                                 </button>
-                                {reproductor.reproduciendo && !reproductor.pausado ? (
-                                    <button className="grabaciones-hero-replay-btn primaria" onClick={pausar}>
+                                {reproduciendoActivo ? (
+                                    <button className="grabaciones-hero-replay-btn primaria" onClick={pausar} type="button">
                                         <Pause size={16} />
                                         Pausar
                                     </button>
                                 ) : (
-                                    <button className="grabaciones-hero-replay-btn primaria" onClick={reproducirOReanudar} disabled={!replayListo}>
+                                    <button
+                                        className="grabaciones-hero-replay-btn primaria"
+                                        onClick={reproducirOReanudar}
+                                        disabled={!replayListo}
+                                        type="button"
+                                    >
                                         <Play size={16} />
-                                        {reproductor.reproduciendo ? 'Reanudar' : replayListo ? 'Reproducir replay' : 'Preparando replay...'}
+                                        {reproductor.reproduciendo ? 'Reanudar' : replayListo ? 'Reproducir replay' : 'Preparando…'}
                                     </button>
                                 )}
                             </div>
@@ -201,6 +212,7 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                             {grabacion.id && (
                                 <button
                                     className="grabaciones-hero-replay-btn ir-simulador"
+                                    type="button"
                                     onClick={() => {
                                         onCerrar();
                                         navigate(`/simulador-app?reproducir=${grabacion.id}`);
@@ -211,21 +223,23 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                     Reproducir en simulador
                                 </button>
                             )}
+
                             <div className="grabaciones-hero-replay-progreso-texto">
                                 <span>Avance del replay</span>
                                 <strong>{Math.round(progreso)}%</strong>
                             </div>
                         </div>
+
                         {grabacion.descripcion && (
                             <div className="grabaciones-hero-replay-descripcion">
                                 <h3>Notas del estudiante</h3>
                                 <p>{grabacion.descripcion}</p>
                             </div>
                         )}
-                    </div>
-                </div>
+                    </aside>
+                </main>
             </div>
         </div>,
-        document.body
+        document.body,
     );
 }
