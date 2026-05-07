@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Pause, X, AudioLines, Loader } from 'lucide-react';
+import { Pause, Play, X, AudioLines, Loader, AlertTriangle } from 'lucide-react';
 import { listarPistasPracticaLibre } from '../../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
+import type { EstadoLoopError } from '../Hooks/useReproductorLoops';
 import './ModalLoops.css';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
     onVelocidadChange: (v: number) => void;
     onSeleccionarPista: (pista: PistaPracticaLibre) => void;
     velocidadBloqueada?: boolean;  // True durante grabacion: la velocidad queda fija.
+    errorReproduccion?: EstadoLoopError | null;
 }
 
 /**
@@ -26,6 +28,7 @@ const ModalLoops: React.FC<Props> = ({
     pistaActivaId, volumen, velocidad,
     onVolumenChange, onVelocidadChange, onSeleccionarPista,
     velocidadBloqueada = false,
+    errorReproduccion = null,
 }) => {
     const [pistas, setPistas] = useState<PistaPracticaLibre[]>([]);
     const [cargando, setCargando] = useState(false);
@@ -59,6 +62,16 @@ const ModalLoops: React.FC<Props> = ({
                     </button>
                 </div>
 
+                {errorReproduccion && (
+                    <div className="sim-loops-error-banner" role="alert">
+                        <AlertTriangle size={16} />
+                        <div className="sim-loops-error-textos">
+                            <strong>{errorReproduccion.name}</strong>
+                            <span>{errorReproduccion.message}</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="sim-loops-cuerpo">
                     {cargando && (
                         <div className="sim-loops-estado">
@@ -77,14 +90,12 @@ const ModalLoops: React.FC<Props> = ({
                     {!cargando && !error && pistas.map((p) => {
                         const activa = p.id === pistaActivaId;
                         return (
-                            <button
+                            <div
                                 key={p.id}
-                                type="button"
                                 className={`sim-loops-item ${activa ? 'activa' : ''}`}
-                                onClick={() => onSeleccionarPista(p)}
                             >
-                                <span className={`sim-loops-icono ${activa ? 'reproduciendo' : ''}`}>
-                                    {activa ? <Pause size={18} fill="currentColor" /> : <AudioLines size={18} />}
+                                <span className="sim-loops-icono" aria-hidden="true">
+                                    <AudioLines size={18} />
                                 </span>
                                 <span className="sim-loops-textos">
                                     <span className="sim-loops-titulo">{p.nombre}</span>
@@ -98,7 +109,17 @@ const ModalLoops: React.FC<Props> = ({
                                         <span /><span /><span />
                                     </span>
                                 )}
-                            </button>
+                                <button
+                                    type="button"
+                                    className={`sim-loops-play ${activa ? 'activa' : ''}`}
+                                    onClick={() => onSeleccionarPista(p)}
+                                    aria-label={activa ? 'Pausar' : 'Reproducir'}
+                                >
+                                    {activa
+                                        ? <Pause size={20} fill="currentColor" />
+                                        : <Play size={20} fill="currentColor" />}
+                                </button>
+                            </div>
                         );
                     })}
                 </div>
