@@ -501,10 +501,15 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         if (!vinoDeGrabaciones || usuarioEligioQuedarse) return;
         if (!autoArrancado || enReproduccion) return;
         if (countdownVolver !== null) return;
+        // Guard race condition: setAutoArrancado(true) corre antes de que
+        // reproducirGrabacion (async) llegue a setear replayStartTimeRef.
+        // Si todavia no se seteo, NO arrancar el countdown — hay que esperar
+        // a que el replay realmente arranque y termine.
         const startedAt = replayStartTimeRef.current;
+        if (startedAt === null) return;
         const dur = duracionReplayMsRef.current;
-        // Sin info de duracion -> arrancar countdown de inmediato.
-        if (startedAt === null || dur === null || dur <= 0) {
+        if (dur === null || dur <= 0) {
+            // Replay arranco pero sin info de duracion -> countdown inmediato.
             setCountdownVolver(3);
             return;
         }
