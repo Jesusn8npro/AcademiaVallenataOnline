@@ -19,6 +19,7 @@ import JuicioJuego from './Piezas/JuicioJuego';
 import { useGuiaPitoObjetivo } from './Hooks/useGuiaPitoObjetivo';
 import { useModoVisualPersistido } from './Hooks/useModoVisualPersistido';
 import type { ConfigCancion, ModoJuego as ModoConfig } from './Hooks/useConfigCancion';
+import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import '../SimuladorApp.css';
 import './JuegoSimuladorApp.css';
 
@@ -94,17 +95,41 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hero, config]);
 
-    // Si el usuario cambia de modo visual mid-juego, ajusta el modoPractica.
-    // Dependemos del setter (estable, useCallback en useLogicaProMax) y NO
-    // de `hero` — useLogicaProMax retorna un objeto literal nuevo cada render,
-    // asi que `hero` como dep haria correr el effect cada render y pisaria
-    // setModoPractica('maestro_solo') al hacer click en Practicar.
+    // Si el usuario cambia de modo visual mid-juego, ajusta el modoPractica
+    // y rebobina ~3 segundos para que la pista se acomode al nuevo modo y el
+    // alumno tenga tiempo de procesar el cambio. Dependemos del setter
+    // (estable, useCallback en useLogicaProMax) y NO de `hero` — useLogicaProMax
+    // retorna un objeto literal nuevo cada render, asi que `hero` como dep haria
+    // correr el effect cada render y pisaria setModoPractica('maestro_solo')
+    // al hacer click en Practicar.
     const heroSetModoPractica = hero?.setModoPractica;
+    const heroBuscarTick = hero?.buscarTick;
+    const yaCambioVisualRef = useRef(false);
     useEffect(() => {
         if (!inicializadoRef.current || typeof heroSetModoPractica !== 'function') return;
         const modoPM = modoVisual === 'boxed' ? 'synthesia' : MAPA_MODO[config.modo];
         heroSetModoPractica(modoPM);
-    }, [modoVisual, config.modo, heroSetModoPractica]);
+
+        // Saltar el primer disparo (mismo modoVisual con que arranco). Solo
+        // rebobinar cuando el usuario cambia activamente desde el selector.
+        if (!yaCambioVisualRef.current) {
+            yaCambioVisualRef.current = true;
+            return;
+        }
+        if (typeof heroBuscarTick === 'function') {
+            const cancion = hero?.cancionSeleccionada || config.cancion;
+            const bpmActual = hero?.bpm || cancion?.bpm || 120;
+            const resolucion = (cancion as any)?.resolucion || 192;
+            const ticksPorSegundo = (bpmActual * resolucion) / 60;
+            const REWIND_SEGUNDOS = 3;
+            const rewindTicks = Math.round(REWIND_SEGUNDOS * ticksPorSegundo);
+            const tickActualNum = hero?.tickActual ?? 0;
+            const seccion = hero?.seccionSeleccionada;
+            const tickMinimo = seccion ? seccion.tickInicio : 0;
+            const targetTick = Math.max(tickMinimo, tickActualNum - rewindTicks);
+            heroBuscarTick(targetTick);
+        }
+    }, [modoVisual, config.modo, heroSetModoPractica, heroBuscarTick]);
 
     // ─── Visualizacion imperativa de pitos (mismo patron que SimuladorApp)
     const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
@@ -124,10 +149,17 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
     const logica = hero?.logica;
 
-    // Audio del acordeon gateado por estado: solo suena cuando 'jugando'.
-    // Pausado, resultados, gameOver, contando o seleccion silencian los pitos
-    // para que tocar al fondo de un modal no produzca sonido.
-    const audioPitosGateado = hero?.estadoJuego !== 'jugando' || menuPausaAbierto;
+    // Audio del acordeon gateado por estado: solo suena cuando 'jugando' o
+    // 'pausado_synthesia'. En pausado_synthesia el motor pausa la pista pero
+    // ESPERA que el alumno toque la nota correcta — los presses tactiles
+    // tienen que pasar al motor o el modo Synth se siente "muerto" en mobile.
+    // Resto de estados (resultados / gameOver / contando / seleccion / pausado
+    // manual / menu de pausa abierto) silencian los pitos para que tocar al
+    // fondo de un modal no produzca sonido.
+    const audioPitosGateado = (
+        hero?.estadoJuego !== 'jugando' &&
+        hero?.estadoJuego !== 'pausado_synthesia'
+    ) || menuPausaAbierto;
     const { limpiarGeometria, manejarCambioFuelle } = usePointerAcordeon({
         x,
         logica: logica || ({} as any),
@@ -199,8 +231,22 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             hero.reanudarConConteo();
         }
     };
+    // Helper: ceba el HTMLAudio Maestro durante el gesto del usuario para
+    // desbloquear iOS/Android. Idempotente — llamarlo en cada onClick que
+    // pueda terminar en iniciarJuego con maestro_solo es seguro y barato.
+    const cebarAudioSiMaestro = (cancion: any, modo?: string) => {
+        const url = cancion?.audio_fondo_url || cancion?.audioFondoUrl;
+        const modoEfectivo = modo || hero?.modoPractica;
+        if (modoEfectivo === 'maestro_solo' && url) {
+            try { motorAudioPro.cebarAudioMaestro(url); } catch (_) {}
+        }
+    };
+
     const reiniciar = () => {
-        if (hero.cancionSeleccionada) hero.reiniciarDesdeGameOver(hero.cancionSeleccionada);
+        if (hero.cancionSeleccionada) {
+            cebarAudioSiMaestro(hero.cancionSeleccionada);
+            hero.reiniciarDesdeGameOver(hero.cancionSeleccionada);
+        }
     };
 
     // Cambia el modo a maestro_solo y reinicia: el alumno practica la cancion
@@ -208,11 +254,12 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
     // Re-aplica explicitamente la seccion seleccionada para que el reinicio
     // arranque desde la misma parte que estaba jugando (evita que el ref
     // interno quede desincronizado del state al pasar por Resultados/GameOver).
-    // iniciarJuego(_, _, 'maestro_solo') ya salta el conteo y auto-arranca el
-    // audio + reloj — no hace falta llamar reproducir/play despues.
     const practicarEnModoMaestro = () => {
         const cancion = hero.cancionSeleccionada;
         if (!cancion) return;
+        // Cebar PRIMERO (sincrono dentro del onClick) — el setTimeout posterior
+        // rompe el gesto, asi el unlock de HTMLAudio tiene que pasar antes.
+        cebarAudioSiMaestro(cancion, 'maestro_solo');
         hero.setModoPractica('maestro_solo');
         if (hero.seccionSeleccionada && typeof hero.seleccionarSeccion === 'function') {
             hero.seleccionarSeccion(hero.seccionSeleccionada);
@@ -343,10 +390,14 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                         ? hero.grabaciones.ultimaGuardada.titulo
                         : null}
                     onGuardarGrabacion={hero.grabaciones?.guardarPendiente}
-                    onJugarDeNuevo={() => hero.iniciarJuego(cancion)}
+                    onJugarDeNuevo={() => {
+                        cebarAudioSiMaestro(cancion);
+                        hero.iniciarJuego(cancion);
+                    }}
                     onVolverSeleccion={onSalir}
                     seccionSeleccionada={hero.seccionSeleccionada}
                     onJugarSiguienteSeccion={(s: any) => {
+                        cebarAudioSiMaestro(cancion);
                         hero.seleccionarSeccion(s);
                         setTimeout(() => hero.iniciarJuego(cancion), 50);
                     }}
@@ -358,7 +409,10 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                 <PantallaGameOverSimulador
                     estadisticas={hero.estadisticas}
                     cancion={cancion}
-                    onReintentar={() => hero.reiniciarDesdeGameOver(cancion)}
+                    onReintentar={() => {
+                        cebarAudioSiMaestro(cancion);
+                        hero.reiniciarDesdeGameOver(cancion);
+                    }}
                     onVolverSeleccion={onSalir}
                     onPracticarMaestro={practicarEnModoMaestro}
                 />

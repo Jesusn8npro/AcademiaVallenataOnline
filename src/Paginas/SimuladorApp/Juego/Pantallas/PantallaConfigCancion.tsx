@@ -4,6 +4,7 @@ import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap, CheckCircle2, L
 import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
 import { useConfigCancion, type ModoJuego, type ConfigCancion } from '../Hooks/useConfigCancion';
 import { useProgresoSecciones, seccionesConEstado } from '../../../AcordeonProMax/Hooks/useProgresoSecciones';
+import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import './PantallaConfigCancion.css';
 
 interface PantallaConfigCancionProps {
@@ -233,7 +234,18 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
                         </button>
                         <button
                             className="config-btn config-btn-empezar"
-                            onClick={() => onEmpezar(cfg.construirConfig(cancion))}
+                            onClick={() => {
+                                // Cebar HTMLAudio Maestro durante el gesto fresco. iOS/Android
+                                // exigen que el primer play() ocurra dentro del onClick — el
+                                // iniciarJuego que sigue en useEffect ya esta fuera del gesto
+                                // y sin este unlock el MP3 no suena hasta que el alumno hace
+                                // tap en "Otra vez". Se ejecuta solo si el audio_fondo_url existe
+                                // y el modo elegido va a usar el reproductor con preservesPitch.
+                                if (cfg.modo === 'maestro_solo' && (cancion as any).audio_fondo_url) {
+                                    try { motorAudioPro.cebarAudioMaestro((cancion as any).audio_fondo_url); } catch (_) {}
+                                }
+                                onEmpezar(cfg.construirConfig(cancion));
+                            }}
                         >
                             <Play size={16} fill="#fff" /> EMPEZAR
                         </button>
