@@ -349,27 +349,20 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             const cancionFake = { secuencia: sec, bpm, resolucion } as any;
             await motorAudioPro.activarContexto();
 
-            // ─── Esperar que la tonalidad se aplique + precargar samples ─────
-            // Sin este paso, el auto-replay (al entrar con ?reproducir=) marca
-            // las notas pero no SUENAN: el setTonalidadSeleccionada de arriba
-            // dispara una nueva carga de samples (async); reproducirSecuencia
-            // corre antes de que terminen y motorAudioPro.reproducir devuelve
-            // null porque el banco de muestras esta vacio para esa tonalidad.
-            // En manual-play funciona porque el alumno ya pulso pitos antes.
-            const tonalidadObjetivo = g.tonalidad || logicaRef.current.tonalidadSeleccionada;
-            const TIMEOUT_TONALIDAD_MS = 3000;
-            const tInicio = performance.now();
-            while (
-                logicaRef.current.tonalidadSeleccionada !== tonalidadObjetivo ||
-                logicaRef.current.cargandoCloud
-            ) {
-                if (performance.now() - tInicio > TIMEOUT_TONALIDAD_MS) break;
-                await new Promise((r) => setTimeout(r, 50));
-            }
+            // ─── Precarga de samples antes de disparar la secuencia ─────────
+            // Sin este paso, las notas se MARCAN visualmente pero NO SUENAN:
+            // setTonalidadSeleccionada dispara una recarga de samples interna
+            // (useEffect con debounce 80ms en useLogicaAcordeon). Si
+            // reproducirSecuencia corre antes de que el banco se llene,
+            // motorAudioPro.reproducir devuelve null silencioso.
+            //
+            // Estrategia doble:
+            //   a) Damos tiempo al useEffect interno para que corra el preload
+            //      de TODOS los pitos de la tonalidad (debounce + fetch).
+            //   b) Manualmente cargamos los samples especificos de los botones
+            //      del recording (fallback si el a falla por timing).
+            await new Promise((r) => setTimeout(r, 250));
 
-            // Precargamos el sample de cada boton presente en la grabacion.
-            // motorAudioPro.cargarSonidoEnBanco es idempotente (cache interno),
-            // asi que es seguro llamarlo aunque ya esten cargados.
             try {
                 const obtenerRutas = (logicaRef.current as any).obtenerRutasAudio;
                 if (typeof obtenerRutas === 'function') {
@@ -383,14 +376,20 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                             rutasUnicas.set(ruta, rutaFinal);
                         });
                     });
-                    await Promise.allSettled(
-                        Array.from(rutasUnicas.entries()).map(([ruta, rutaFinal]) =>
-                            motorAudioPro.cargarSonidoEnBanco(logicaRef.current.instrumentoId, ruta, rutaFinal),
-                        ),
-                    );
+                    if (rutasUnicas.size > 0) {
+                        await Promise.allSettled(
+                            Array.from(rutasUnicas.entries()).map(([ruta, rutaFinal]) =>
+                                motorAudioPro.cargarSonidoEnBanco(
+                                    logicaRef.current.instrumentoId,
+                                    ruta,
+                                    rutaFinal,
+                                ),
+                            ),
+                        );
+                    }
                 }
             } catch (e) {
-                console.warn('[Replay] precarga de samples fallo:', e);
+                console.warn('[Replay] precarga manual de samples fallo:', e);
             }
 
             // Audio de fondo: si la grabacion guardo una pista, la cargamos
