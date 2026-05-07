@@ -285,6 +285,13 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const [autoArrancado, setAutoArrancado] = useState(false);
     const [countdownVolver, setCountdownVolver] = useState<number | null>(null);
     const [usuarioEligioQuedarse, setUsuarioEligioQuedarse] = useState(false);
+    // Tiempo (performance.now) en que arranco el replay y duracion total de
+    // la grabacion en ms. Sirve para esperar a que termine TODA la grabacion
+    // (no solo la ultima nota) antes de mostrar el countdown.
+    const replayStartTimeRef = useRef<number | null>(null);
+    const duracionReplayMsRef = useRef<number | null>(null);
+    // Timer del fin real del replay; lo cancelamos en stop manual.
+    const finReplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Detener el audio de fondo del replay (Web Audio).
     const detenerAudioFondoReplay = useCallback(() => {
@@ -308,6 +315,14 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             if (!Array.isArray(sec) || sec.length === 0) {
                 setErrorReproduccion('Esta grabacion no tiene notas.');
                 return;
+            }
+            // Capturamos la duracion real (en ms) de la grabacion para saber
+            // cuando "termino" de verdad — no solo cuando suena la ultima nota.
+            duracionReplayMsRef.current = typeof g.duracion_ms === 'number' && g.duracion_ms > 0 ? g.duracion_ms : null;
+            replayStartTimeRef.current = performance.now();
+            if (finReplayTimerRef.current) {
+                clearTimeout(finReplayTimerRef.current);
+                finReplayTimerRef.current = null;
             }
             // Si hay un loop sonando ahora, lo paramos antes (no queremos
             // dos audios encimados si la grabacion tambien trae uno).
@@ -424,16 +439,20 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         setEnReproduccion(false);
     }, [reproductor, detenerAudioFondoReplay, metronomoReplay]);
 
-    // Auto-arrancar el replay cuando se entra con ?reproducir=<id>.
-    // Estrategia:
-    //   1. Intentar arranque INMEDIATO en mount: la SPA navigation desde
-    //      Grabaciones puede preservar user activation, asi que en muchos
-    //      browsers funciona sin tap extra.
-    //   2. Si no, audioListo se vuelve true en el primer pointerdown (dentro
-    //      del SimuladorApp), y arranca el replay en ese momento.
+    // Marcamos vinoDeGrabaciones apenas detectamos ?reproducir=<id> para que
+    // el overlay "Volver" aparezca de una (independiente del landscape).
+    useEffect(() => {
+        if (!reproducirIdParam || vinoDeGrabaciones || usuarioEligioQuedarse) return;
+        setVinoDeGrabaciones(true);
+    }, [reproducirIdParam, vinoDeGrabaciones, usuarioEligioQuedarse]);
+
+    // Auto-arrancar el replay SOLO cuando el telefono esta en horizontal.
+    // En vertical el SimuladorApp muestra el overlay "rotar a horizontal" y
+    // arrancar la grabacion ahi seria absurdo — el alumno no la veria. En
+    // landscape disparamos el replay automaticamente (un solo intento).
     useEffect(() => {
         if (!reproducirIdParam || autoArrancado) return;
-        setVinoDeGrabaciones(true);
+        if (!isLandscape) return;
         setAutoArrancado(true);
         // Activamos el contexto en paralelo (no awaiteamos: si la activation
         // todavia esta viva, el motor lo aprovecha; si no, queda en suspended
@@ -446,10 +465,14 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             setAudioListo(true);
         }
         void reproducirGrabacion(reproducirIdParam);
-    }, [reproducirIdParam, autoArrancado, reproducirGrabacion]);
+    }, [reproducirIdParam, autoArrancado, reproducirGrabacion, isLandscape]);
 
     // Volver inmediatamente a /grabaciones (cancela cualquier countdown).
     const volverAGrabaciones = useCallback(() => {
+        if (finReplayTimerRef.current) {
+            clearTimeout(finReplayTimerRef.current);
+            finReplayTimerRef.current = null;
+        }
         setCountdownVolver(null);
         navigate('/grabaciones');
     }, [navigate]);
@@ -457,6 +480,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // El usuario eligio quedarse. Removemos el flag y limpiamos el query param
     // para que el simulador quede en modo normal (sin overlay nunca mas).
     const quedarseEnSimulador = useCallback(() => {
+        if (finReplayTimerRef.current) {
+            clearTimeout(finReplayTimerRef.current);
+            finReplayTimerRef.current = null;
+        }
         setUsuarioEligioQuedarse(true);
         setCountdownVolver(null);
         setVinoDeGrabaciones(false);
@@ -466,14 +493,35 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         setSearchParams(params, { replace: true });
     }, [searchParams, setSearchParams]);
 
-    // Cuando termina el replay (enReproduccion: true -> false) Y vino de
-    // grabaciones Y no eligio quedarse -> arranca countdown de 3s.
+    // Countdown solo cuando termina la grabacion REAL (la duracion completa
+    // que se grabo, no solo hasta la ultima nota). Si la ultima nota suena en
+    // el segundo 8 pero la grabacion es de 30s, el countdown debe esperar
+    // hasta el segundo 30. Sin esto, el alumno se siente sacado a medias.
     useEffect(() => {
         if (!vinoDeGrabaciones || usuarioEligioQuedarse) return;
         if (!autoArrancado || enReproduccion) return;
-        // El replay termino solo. Iniciar countdown.
-        setCountdownVolver(3);
-    }, [vinoDeGrabaciones, usuarioEligioQuedarse, autoArrancado, enReproduccion]);
+        if (countdownVolver !== null) return;
+        const startedAt = replayStartTimeRef.current;
+        const dur = duracionReplayMsRef.current;
+        // Sin info de duracion -> arrancar countdown de inmediato.
+        if (startedAt === null || dur === null || dur <= 0) {
+            setCountdownVolver(3);
+            return;
+        }
+        const elapsed = performance.now() - startedAt;
+        const restante = Math.max(0, dur - elapsed);
+        if (finReplayTimerRef.current) clearTimeout(finReplayTimerRef.current);
+        finReplayTimerRef.current = setTimeout(() => {
+            setCountdownVolver(3);
+            finReplayTimerRef.current = null;
+        }, restante);
+        return () => {
+            if (finReplayTimerRef.current) {
+                clearTimeout(finReplayTimerRef.current);
+                finReplayTimerRef.current = null;
+            }
+        };
+    }, [vinoDeGrabaciones, usuarioEligioQuedarse, autoArrancado, enReproduccion, countdownVolver]);
 
     // Tick del countdown: cada 1s decrementa, al llegar a 0 navega.
     useEffect(() => {

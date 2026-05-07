@@ -229,15 +229,16 @@
 }
 
 /* CuerpoAcordeon: escala fluida basada en el ancho del viewport.
-   Formula: scale = viewport_width / 2400, con bounds [0.18, 0.55].
-   - 400px:   400/2400 = 0.166 -> clamp 0.18
-   - 720px:   720/2400 = 0.300
-   - 1000px:  1000/2400 = 0.417
-   - 1300px:  1300/2400 = 0.541
-   - 1500px+: clamp 0.55
-   Sin breakpoints discretos -> sin saltos visuales al achicar la ventana. */
+   Formula: scale = viewport_width / 1500, con bounds [0.30, 0.85].
+   El acordeon ocupa una parte mas grande del escenario sin overflow:
+   - 414px:   414/1500 = 0.276 -> clamp 0.30 (~294px de acordeon)
+   - 720px:   720/1500 = 0.480 (~470px)
+   - 1000px:  1000/1500 = 0.667 (~653px)
+   - 1300px:  1300/1500 = 0.867 -> clamp 0.85 (~833px)
+   - 1500px+: clamp 0.85
+   Sin breakpoints discretos -> sin saltos al achicar la ventana. */
 .grabaciones-hero-replay-escenario .disposicion-acordeon {
-    --grabaciones-replay-scale: clamp(0.18, calc(100vw / 2400px), 0.55);
+    --grabaciones-replay-scale: clamp(0.30, calc(100vw / 1500px), 0.85);
     transform: translate(-50%, -50%) scale(var(--grabaciones-replay-scale));
     transform-origin: center center;
     pointer-events: none;
