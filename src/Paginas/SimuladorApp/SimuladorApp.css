@@ -392,6 +392,36 @@
 .sim-volver-grabaciones:hover { background: rgba(15, 23, 42, 0.95); }
 .sim-volver-grabaciones:active { transform: scale(0.96); }
 
+/* "Volver a la clase": mismo patrón que el botón de Grabaciones pero con acento
+   azul (asociación visual con el acordeón). Aparece cuando el alumno llegó
+   desde una clase de curso/tutorial. */
+.sim-volver-clase {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 12px;
+    background: rgba(59, 130, 246, 0.92);
+    color: #fff;
+    border: 1px solid rgba(147, 197, 253, 0.5);
+    border-radius: 999px;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.sim-volver-clase:hover { background: rgba(37, 99, 235, 0.96); }
+.sim-volver-clase:active { transform: scale(0.96); }
+
 .sim-countdown-volver {
     position: fixed;
     top: 50%;

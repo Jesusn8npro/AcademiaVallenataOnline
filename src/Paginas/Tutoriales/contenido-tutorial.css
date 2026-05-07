@@ -71,6 +71,12 @@ body {
     display: flex;
 }
 
+/* Cuando contiene el panel del acordeón ensanchamos para que el instrumento
+   tenga espacio cómodo (los botones del lado de pitos + el lado de bajos). */
+.leccion-sidebar.con-acordeon {
+    width: var(--ancho-panel-acordeon, 760px);
+}
+
 
 /* =========================================
    ESTILOS ESPECÍFICOS PARA MÓVIL (< 768px)

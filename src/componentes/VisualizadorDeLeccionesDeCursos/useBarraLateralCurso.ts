@@ -15,11 +15,9 @@ function generarSlug(texto: string = ''): string {
 
 interface UseBarraLateralCursoProps {
   curso: any;
-  moduloActivo: string;
   leccionActiva: string;
   progreso?: Record<string, number | boolean>;
   tipo?: 'curso' | 'tutorial';
-  onCerrarSidebar?: () => void;
 }
 
 export function useBarraLateralCurso({
@@ -30,31 +28,18 @@ export function useBarraLateralCurso({
   const [cursoAdaptado, setCursoAdaptado] = useState<any>(curso);
 
   useEffect(() => {
-    if (curso && !curso.modulos) {
-      const opcionesLecciones = ['partes_tutorial', 'clases_tutorial', 'partes', 'clases'];
-      let leccionesArray = null;
-      for (const opcion of opcionesLecciones) {
-        if (Array.isArray(curso[opcion]) && curso[opcion].length > 0) {
-          leccionesArray = curso[opcion];
-          break;
-        }
-      }
-      if (leccionesArray && leccionesArray.length > 0) {
-        const leccionesUnicas = leccionesArray.filter((parte: any, index: number, array: any[]) =>
-          array.findIndex((p: any) => p.id === parte.id) === index
-        );
-        const partesNormalizadas = leccionesUnicas.map((parte: any) => ({
-          ...parte,
-          thumbnail_url: parte.thumbnail_url || parte.thumbnail || parte.video_miniatura_url || '',
-        }));
-        setCursoAdaptado({
-          ...curso,
-          modulos: [{ id: 'tutorial-partes', titulo: 'Clases', lecciones: partesNormalizadas }],
-        });
-      }
-    } else {
-      setCursoAdaptado(curso);
-    }
+    if (!curso || curso.modulos) { setCursoAdaptado(curso); return; }
+    const lecciones = curso.partes_tutorial || curso.clases_tutorial || curso.partes || curso.clases;
+    if (!Array.isArray(lecciones) || !lecciones.length) { setCursoAdaptado(curso); return; }
+    const unicas = lecciones.filter((p: any, i: number, arr: any[]) => arr.findIndex((q: any) => q.id === p.id) === i);
+    const normalizadas = unicas.map((p: any) => ({
+      ...p,
+      thumbnail_url: p.thumbnail_url || p.thumbnail || p.video_miniatura_url || '',
+    }));
+    setCursoAdaptado({
+      ...curso,
+      modulos: [{ id: 'tutorial-partes', titulo: 'Clases', lecciones: normalizadas }],
+    });
   }, [curso]);
 
   useEffect(() => {
@@ -113,7 +98,7 @@ export function useBarraLateralCurso({
 
   function esLeccionCompletada(leccionId: string): boolean {
     const p = progreso[leccionId];
-    return p === true || p >= 90 || p === 100;
+    return p === true || p >= 90;
   }
 
   function esLeccionActiva(leccion: any): boolean {

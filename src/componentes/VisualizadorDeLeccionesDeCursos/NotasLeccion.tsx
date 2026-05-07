@@ -48,12 +48,6 @@ const NotasLeccion: React.FC<NotasLeccionProps> = ({
         setMensaje(null)
 
         try {
-            if (!usuarioActual?.id) {
-                setNotas([])
-                setCargando(false)
-                return
-            }
-
             const { data, error: err } = await supabase
                 .from('notas_lecciones')
                 .select('*')
@@ -65,7 +59,7 @@ const NotasLeccion: React.FC<NotasLeccionProps> = ({
             if (err) throw err
 
             setNotas(data || [])
-        } catch (e: any) {
+        } catch {
             setError('No se pudieron cargar tus notas. Intenta de nuevo.')
         } finally {
             setCargando(false)

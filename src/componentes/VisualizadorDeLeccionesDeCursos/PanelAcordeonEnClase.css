@@ -1,0 +1,461 @@
+.panel-acordeon-clase {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #0f0f1a;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.panel-acordeon-clase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.panel-acordeon-clase-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+}
+
+.panel-acordeon-clase-cerrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.panel-acordeon-clase-cerrar:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.panel-acordeon-clase-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.panel-acordeon-clase-tab {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.panel-acordeon-clase-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.panel-acordeon-clase-tab.activa {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.panel-acordeon-clase-contenido {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.panel-acordeon-clase-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.panel-acordeon-clase-tonalidad {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-acordeon-clase-tonalidad label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.panel-acordeon-clase-tonalidad select {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.panel-acordeon-clase-tonalidad select:hover,
+.panel-acordeon-clase-tonalidad select:focus {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.panel-acordeon-clase-tonalidad select option {
+  background: #0f0f1a;
+  color: #e2e8f0;
+}
+
+.panel-acordeon-clase-zoom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-acordeon-clase-zoom-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.panel-acordeon-clase-zoom-cabecera label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.panel-acordeon-clase-zoom-cabecera span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.panel-acordeon-clase-zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-acordeon-clase-zoom-control button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.panel-acordeon-clase-zoom-control button:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.panel-acordeon-clase-zoom-control input[type="range"] {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.panel-acordeon-clase-zoom-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+}
+
+.panel-acordeon-clase-zoom-control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+}
+
+/* Tamaño FIJO en píxeles (mismo patrón que ModalReplay). El acordeón usa
+   --unit calculado de var(--sim-tamano) — si es porcentaje los botones quedan
+   invisibles, si es px los botones se posicionan correctamente. SIN override
+   de .disposicion-acordeon para preservar position/transform originales. */
+.panel-acordeon-clase-instrumento {
+  position: relative;
+  width: var(--tamano-acordeon-clase, 540px);
+  height: var(--tamano-acordeon-clase, 540px);
+  max-width: 100%;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2a 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  touch-action: none;
+}
+
+.panel-acordeon-clase-fuelle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.panel-acordeon-clase-fuelle.halar {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.panel-acordeon-clase-fuelle.empujar {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.panel-acordeon-clase-fuelle:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.panel-acordeon-clase-fuelle:active {
+  transform: translateY(0);
+}
+
+.panel-acordeon-clase-fuelle-tip {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.panel-acordeon-clase-tip {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.panel-acordeon-clase-sonido {
+  padding: 16px;
+}
+
+/* Reusamos los estilos del estudio para SeccionPLSonido (vienen del CSS global
+   del simulador). Aquí solo ajustamos espaciados para que encajen en la sidebar
+   más angosta. */
+.panel-acordeon-clase-sonido .estudio-practica-libre-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-bloque-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-grid-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-chip-boton {
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-chip-boton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-chip-boton.activo {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.35);
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-grid-doble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-card-boton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-card-boton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-card-boton.activo {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-card-boton strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-card-boton span {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-lista-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-item-lista {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-item-lista:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-item-lista.activo {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-item-lista strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-item-lista span {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-vacio {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-btn-linea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 14px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.panel-acordeon-clase-sonido .estudio-practica-libre-btn-linea:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* En móviles este panel no debería verse — el botón mobile navega directamente
+   al simulador. La regla queda como defensa por si el panel llegara a montarse
+   a un viewport menor: respetamos el ancho disponible. */
+@media (max-width: 1023px) {
+  .panel-acordeon-clase-instrumento {
+    width: min(var(--tamano-acordeon-clase, 540px), 90vw);
+    height: min(var(--tamano-acordeon-clase, 540px), 90vw);
+  }
+}

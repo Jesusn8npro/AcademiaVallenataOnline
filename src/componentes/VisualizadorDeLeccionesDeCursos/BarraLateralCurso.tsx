@@ -9,7 +9,6 @@ interface BarraLateralCursoProps {
   leccionActiva: string
   progreso?: Record<string, number | boolean>
   tipo?: 'curso' | 'tutorial'
-  mostrarSidebar?: boolean
   onCerrarSidebar?: () => void
 }
 
@@ -19,14 +18,13 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
   leccionActiva,
   progreso = {},
   tipo = 'curso',
-  mostrarSidebar = true,
   onCerrarSidebar
 }) => {
   const {
     cursoAdaptado, modulosExpandidos,
     obtenerMiniatura, toggleModulo, irALeccion,
     esLeccionCompletada, esLeccionActiva,
-  } = useBarraLateralCurso({ curso, moduloActivo, leccionActiva, progreso, tipo, onCerrarSidebar })
+  } = useBarraLateralCurso({ curso, leccionActiva, progreso, tipo })
 
   function manejarCerrarSidebar(e: React.MouseEvent | React.TouchEvent) {
     e.stopPropagation()
