@@ -245,9 +245,19 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // bloquean a touch via la clase root .reproduciendo (CSS pointer-events).
     const [bpmReproduccion, setBpmReproduccion] = useState(120);
     const [resolucionReproduccion, setResolucionReproduccion] = useState(192);
-    // Audio de fondo del replay inline: si la grabacion guardo una pista,
-    // la reproducimos en paralelo a la velocidad/volumen guardados.
-    const audioFondoReplayRef = useRef<HTMLAudioElement | null>(null);
+    // Audio de fondo del replay inline via Web Audio API. iOS Safari rechaza
+    // HTMLAudio + Supabase Storage (Content-Type incorrecto) — el unico camino
+    // confiable es decodificar el MP3 nosotros y reproducirlo via AudioBuffer.
+    // Mantenemos el buffer + gain + el source actual + estado de offset para
+    // pause/resume (los AudioBufferSourceNode no se pueden reusar tras stop).
+    const audioFondoReplayRef = useRef<{
+        buffer: AudioBuffer;
+        gain: GainNode;
+        source: AudioBufferSourceNode | null;
+        startContextTime: number;  // ctx.currentTime cuando arranco la fuente
+        offsetActual: number;      // offset en el buffer al arrancar la fuente
+        velocidad: number;
+    } | null>(null);
     const reproductor = useReproductorHero(
         logica.actualizarBotonActivo,
         logica.setDireccionSinSwap,
@@ -262,12 +272,15 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     }, [enReproduccion, reproductor.reproduciendo]);
 
-    // Detener cualquier audio de fondo del replay (helper).
+    // Detener el audio de fondo del replay (Web Audio).
     const detenerAudioFondoReplay = useCallback(() => {
-        const a = audioFondoReplayRef.current;
-        if (a) {
-            try { a.pause(); } catch { /* noop */ }
-            a.src = '';
+        const data = audioFondoReplayRef.current;
+        if (data) {
+            if (data.source) {
+                try { data.source.stop(); } catch { /* noop */ }
+                try { data.source.disconnect(); } catch { /* noop */ }
+            }
+            try { data.gain.disconnect(); } catch { /* noop */ }
             audioFondoReplayRef.current = null;
         }
     }, []);
@@ -325,85 +338,60 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             console.log('[Replay] audio_fondo_url:', audioFondoUrl, '| velocidad:', meta.pista_velocidad, '| offset:', meta.pista_offset_segundos);
             console.log('[Replay] metronomo:', metMeta);
             if (audioFondoUrl) {
-                const audio = new Audio(audioFondoUrl);
-                audio.loop = true;
                 const volumenGuardado = typeof meta.pista_volumen === 'number' ? meta.pista_volumen : 0.85;
                 const velocidadGuardada = typeof meta.pista_velocidad === 'number' ? meta.pista_velocidad : 1.0;
                 const offset = typeof meta.pista_offset_segundos === 'number' ? meta.pista_offset_segundos : 0;
-                audioFondoReplayRef.current = audio;
 
-                // Patron de arranque sample-accurate:
-                // 1. Esperar canplay (buffer minimo cargado)
-                // 2. Aplicar volume/playbackRate (no antes — el navegador puede
-                //    resetearlos durante la carga inicial)
-                // 3. Hacer seek al offset y ESPERAR el evento 'seeked' antes
-                //    de play. Sin esto algunos browsers arrancan en 0 mientras
-                //    todavia procesan el seek -> audio totalmente desincronizado.
-                // 4. Re-aplicar playbackRate post-seek (algunos browsers lo
-                //    resetean al hacer seek)
-                // 5. play() y esperar 'playing' antes de arrancar las notas
-                // 6. Compensar el audioDelta entre seek y 'playing' al arrancar
-                //    las notas (tickInicialOverride).
-                const arrancarSync = () => {
-                    audio.volume = volumenGuardado;
-                    audio.playbackRate = velocidadGuardada;
+                // Web Audio: descargamos + decodificamos el MP3 (HTMLAudio falla
+                // en iOS por el Content-Type incorrecto de Supabase). decodeAudioData
+                // sample-accurate -> el seek al offset es exacto, sin events ni jitter.
+                try {
+                    const response = await fetch(audioFondoUrl);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const arrayBuf = await response.arrayBuffer();
+                    const ctx = motorAudioPro.contextoAudio;
+                    const buffer = await ctx.decodeAudioData(arrayBuf);
 
-                    let arrancado = false;
-                    const arrancarRAF = () => {
-                        if (arrancado) return;
-                        arrancado = true;
-                        audio.playbackRate = velocidadGuardada;
-                        const audioDelta = Math.max(0, audio.currentTime - offset);
-                        const tickInicialOverride = Math.floor(
-                            (audioDelta / velocidadGuardada) * (bpm / 60) * resolucion
-                        );
-                        console.log('[Replay] arrancando | playbackRate efectivo:', audio.playbackRate, '| velocidadGuardada:', velocidadGuardada, '| offset:', offset, '| audio.currentTime:', audio.currentTime, '| audioDelta:', audioDelta, '| tickInicialOverride:', tickInicialOverride);
-                        reproductor.reproducirSecuencia(cancionFake, {
-                            tickInicialOverride,
-                        } as any);
-                        setEnReproduccion(true);
-                    };
-
-                    const arrancarPlay = () => {
-                        audio.playbackRate = velocidadGuardada; // re-aplicar post-seek
-                        audio.addEventListener('playing', arrancarRAF, { once: true });
-                        setTimeout(arrancarRAF, 600);
-                        Promise.resolve(audio.play()).catch(() => arrancarRAF());
-                    };
-
-                    if (isFinite(offset) && offset > 0.01) {
-                        // Esperar a que el seek COMPLETE antes de play. Sin
-                        // este wait el audio puede arrancar en 0 en lugar de offset.
-                        let seeked = false;
-                        const onSeeked = () => {
-                            if (seeked) return;
-                            seeked = true;
-                            audio.removeEventListener('seeked', onSeeked);
-                            arrancarPlay();
-                        };
-                        audio.addEventListener('seeked', onSeeked);
-                        try { audio.currentTime = offset; } catch { onSeeked(); }
-                        // Fallback 800ms: si 'seeked' no llega (raro pero posible)
-                        setTimeout(onSeeked, 800);
-                    } else {
-                        arrancarPlay();
+                    if (ctx.state === 'suspended') {
+                        try { await ctx.resume(); } catch { /* noop */ }
                     }
-                };
 
-                if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
-                    arrancarSync();
-                } else {
-                    audio.addEventListener('canplay', arrancarSync, { once: true });
-                    // Fallback: si canplay nunca llega (red lenta), arrancar a 1.5s.
-                    setTimeout(() => {
-                        if (audioFondoReplayRef.current === audio && audio.readyState < 3) {
-                            arrancarSync();
-                        }
-                    }, 1500);
-                    // No llamamos audio.load() — el constructor `new Audio(url)` ya
-                    // dispara la carga, y load() podria resetear playbackRate.
+                    const gain = ctx.createGain();
+                    gain.gain.value = volumenGuardado;
+                    gain.connect(ctx.destination);
+
+                    const source = ctx.createBufferSource();
+                    source.buffer = buffer;
+                    source.loop = true;
+                    source.playbackRate.value = velocidadGuardada;
+                    source.connect(gain);
+
+                    // Arranque sample-accurate: source.start(when, offset) en el
+                    // mismo instante que reproductor.reproducirSecuencia. No hay
+                    // jitter de seek/canplay/playing como con HTMLAudio.
+                    const offsetSeguro = isFinite(offset) && offset > 0
+                        ? offset % buffer.duration
+                        : 0;
+                    source.start(0, offsetSeguro);
+
+                    audioFondoReplayRef.current = {
+                        buffer,
+                        gain,
+                        source,
+                        startContextTime: ctx.currentTime,
+                        offsetActual: offsetSeguro,
+                        velocidad: velocidadGuardada,
+                    };
+
+                    // Notas arrancan SINCRONO con la fuente -> tick 0 == offset.
+                    reproductor.reproducirSecuencia(cancionFake);
+                    setEnReproduccion(true);
+                    return;
+                } catch (err: any) {
+                    console.error('[Replay] audio_fondo Web Audio fallo:', err?.name, err?.message || err);
+                    setErrorReproduccion(`No se pudo cargar el audio de fondo: ${err?.message || err}`);
+                    // Caemos al path sin audio para que las notas igual suenen.
                 }
-                return;
             }
 
             // Sin audio de fondo: arrancar las notas directamente.
@@ -446,16 +434,32 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     }, [enReproduccion, detenerAudioFondoReplay]);
 
-    // Sincronizar pause/play del audio de fondo con el reproductor de notas.
-    // Sin esto, al pausar la grabacion las notas se detienen pero la pista
-    // de fondo sigue sonando, dejando todo desfasado al reanudar.
+    // Sincronizar pause/resume del audio de fondo con el reproductor.
+    // Web Audio: no hay pause/resume nativo en AudioBufferSourceNode, hay que
+    // detener la fuente y crear una nueva al reanudar (con el offset guardado).
     useEffect(() => {
-        const audio = audioFondoReplayRef.current;
-        if (!audio) return;
-        if (reproductor.pausado) {
-            try { audio.pause(); } catch { /* noop */ }
-        } else if (enReproduccion) {
-            audio.play().catch(() => { /* noop */ });
+        const data = audioFondoReplayRef.current;
+        if (!data) return;
+        const ctx = motorAudioPro.contextoAudio;
+
+        if (reproductor.pausado && data.source) {
+            // Calcular cuanto avanzo desde que arranco esta fuente y guardar.
+            const elapsed = (ctx.currentTime - data.startContextTime) * data.velocidad;
+            const nuevoOffset = (data.offsetActual + elapsed) % data.buffer.duration;
+            try { data.source.stop(); } catch { /* noop */ }
+            try { data.source.disconnect(); } catch { /* noop */ }
+            data.source = null;
+            data.offsetActual = nuevoOffset;
+        } else if (!reproductor.pausado && enReproduccion && !data.source) {
+            // Reanudar: nueva fuente desde el offset guardado.
+            const source = ctx.createBufferSource();
+            source.buffer = data.buffer;
+            source.loop = true;
+            source.playbackRate.value = data.velocidad;
+            source.connect(data.gain);
+            source.start(0, data.offsetActual);
+            data.source = source;
+            data.startContextTime = ctx.currentTime;
         }
     }, [reproductor.pausado, enReproduccion]);
 
