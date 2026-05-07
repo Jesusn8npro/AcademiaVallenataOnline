@@ -35,22 +35,19 @@ export function useReproductorLoops() {
     const [errorReproduccion, setErrorReproduccion] = useState<EstadoLoopError | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Crea (una sola vez) el HTMLAudio persistente. Importante: NO lo conectamos
-    // a motorAudioPro.conectarMediaElement(). Probamos con conexion via
-    // createMediaElementSource y en iPhone real el audio quedaba mudo (probable
-    // taint por CORS de Supabase Storage o quirk de WebKit). Sin la conexion,
-    // el HTMLAudio reproduce nativo a traves del speaker — el unico downside
-    // es que en iOS los pitos del acordeon podrian bajar de volumen mientras
-    // el loop suena, pero al menos SE OYE.
-    const obtenerAudio = useCallback((): HTMLAudioElement => {
-        if (audioRef.current) return audioRef.current;
-        const audio = new Audio();
+    // Helper para crear un HTMLAudio con la URL ya en el constructor. iPhone real
+    // dio MEDIA_ERR_SRC_NOT_SUPPORTED (code 4) cuando crebamos el audio vacio y
+    // luego seteabamos `audio.src = url` — iOS no carga bien el src asignado
+    // post-construccion en cierto orden. Pasar la URL al constructor (igual que
+    // PracticaLibre) lo dispara en el ciclo correcto y carga sin problema.
+    // crossOrigin='anonymous' es necesario para Supabase Storage en iOS: sin
+    // CORS explicito el response queda opaco y iOS lo rechaza con code 4.
+    const crearAudio = useCallback((url: string): HTMLAudioElement => {
+        const audio = new Audio(url);
         audio.preload = 'auto';
-        // Sin crossOrigin: con createMediaElementSource lo necesitabamos, sin el
-        // mejor lo dejamos sin tagging para que iOS lo trate como playback nativo.
+        audio.crossOrigin = 'anonymous';
         audio.loop = true;
         audio.playsInline = true;
-        audioRef.current = audio;
         return audio;
     }, []);
 
@@ -83,22 +80,42 @@ export function useReproductorLoops() {
         if (!url) return;
 
         setErrorReproduccion(null);
-        const audio = obtenerAudio();
 
-        // CRITICO iOS Safari: TODO esto debe correr SINCRONO dentro del gesto.
-        // Cualquier `await` antes de audio.play() invalida la user activation y
-        // iOS rechaza el play() con NotAllowedError silencioso.
-        if (audio.src !== url) {
-            audio.src = url;
-            try { audio.load(); } catch { /* noop */ }
+        // Si hay un audio anterior con OTRA URL, lo descartamos. iOS no aplica
+        // bien `audio.src = nuevaUrl` despues de tener src previo — code 4.
+        // Mejor crear uno nuevo con la URL en el constructor.
+        const prev = audioRef.current;
+        if (prev && prev.src !== url) {
+            try { prev.pause(); } catch { /* noop */ }
+            try { prev.src = ''; } catch { /* noop */ }
+            audioRef.current = null;
+        }
+
+        // Crear audio nuevo con URL en constructor (si no hay) o reusar.
+        let audio = audioRef.current;
+        if (!audio) {
+            audio = crearAudio(url);
+            audioRef.current = audio;
         }
         audio.volume = volumen;
         audio.playbackRate = velocidad;
 
-        // play() SINCRONO dentro del mismo tick que el touch event.
+        // Listener de error ANTES de play() para capturar fallos de carga.
+        const onErrorAudio = () => {
+            const err = audio!.error;
+            const codigo = err ? `code ${err.code}` : 'desconocido';
+            const msg = err?.message || `MediaError ${codigo} (no se pudo cargar el audio)`;
+            console.error('[Loops] audio.error:', codigo, msg, 'url:', url);
+            setErrorReproduccion({ name: `MediaError ${codigo}`, message: msg });
+            setPistaActiva(null);
+        };
+        audio.addEventListener('error', onErrorAudio, { once: true });
+
+        // CRITICO iOS Safari: play() SINCRONO dentro del mismo tick del touch.
+        // Cualquier `await` antes invalida la user activation -> NotAllowedError.
         const playPromise = audio.play();
 
-        // Actualizamos UI optimistamente; si play() falla, revertimos.
+        // UI optimista; revertimos si play() rechaza.
         setPistaActiva({
             id: pista.id,
             nombre: pista.nombre,
@@ -114,18 +131,7 @@ export function useReproductorLoops() {
             setErrorReproduccion({ name, message });
             setPistaActiva(null);
         });
-
-        // Tambien mostramos errores de carga del audio (red/CORS/formato).
-        const onErrorAudio = () => {
-            const err = audio.error;
-            const codigo = err ? `code ${err.code}` : 'desconocido';
-            const msg = err?.message || codigo;
-            console.error('[Loops] audio.error:', codigo, msg);
-            setErrorReproduccion({ name: `MediaError(${codigo})`, message: msg });
-            setPistaActiva(null);
-        };
-        audio.addEventListener('error', onErrorAudio, { once: true });
-    }, [pistaActiva, volumen, velocidad, detener, obtenerAudio]);
+    }, [pistaActiva, volumen, velocidad, detener, crearAudio]);
 
     // Cleanup al desmontar el componente padre.
     useEffect(() => {
