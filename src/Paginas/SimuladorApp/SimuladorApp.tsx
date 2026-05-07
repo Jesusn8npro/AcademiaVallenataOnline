@@ -425,14 +425,28 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     }, [reproductor, detenerAudioFondoReplay, metronomoReplay]);
 
     // Auto-arrancar el replay cuando se entra con ?reproducir=<id>.
-    // Esperamos al audioListo para que el AudioContext este activo y el
-    // motor pueda decodificar el audio_fondo del MP3.
+    // Estrategia:
+    //   1. Intentar arranque INMEDIATO en mount: la SPA navigation desde
+    //      Grabaciones puede preservar user activation, asi que en muchos
+    //      browsers funciona sin tap extra.
+    //   2. Si no, audioListo se vuelve true en el primer pointerdown (dentro
+    //      del SimuladorApp), y arranca el replay en ese momento.
     useEffect(() => {
-        if (!reproducirIdParam || autoArrancado || !audioListo) return;
+        if (!reproducirIdParam || autoArrancado) return;
         setVinoDeGrabaciones(true);
         setAutoArrancado(true);
+        // Activamos el contexto en paralelo (no awaiteamos: si la activation
+        // todavia esta viva, el motor lo aprovecha; si no, queda en suspended
+        // y el primer pointerdown lo activa).
+        void motorAudioPro.activarContexto();
+        // Marcamos audioListo nosotros mismos para no esperar el primer
+        // pointerdown (ya tenemos un gesto previo de Grabaciones).
+        if (!audioContextIniciadoRef.current) {
+            audioContextIniciadoRef.current = true;
+            setAudioListo(true);
+        }
         void reproducirGrabacion(reproducirIdParam);
-    }, [reproducirIdParam, autoArrancado, audioListo, reproducirGrabacion]);
+    }, [reproducirIdParam, autoArrancado, reproducirGrabacion]);
 
     // Volver inmediatamente a /grabaciones (cancela cualquier countdown).
     const volverAGrabaciones = useCallback(() => {

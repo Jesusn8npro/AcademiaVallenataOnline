@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Monitor, Music2, Pause, Play, RotateCcw, Smartphone, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ExternalLink, Monitor, Music2, Pause, Play, RotateCcw, Smartphone, X } from 'lucide-react';
 import CuerpoAcordeon from '../../../../Core/componentes/CuerpoAcordeon';
 import { useLogicaAcordeon } from '../../../../Core/hooks/useLogicaAcordeon';
 import { useReproductorHero } from '../../../../Core/hooks/useReproductorHero';
@@ -33,6 +34,7 @@ function formatearTiempoDesdeTicks(ticks: number, bpm: number, resolucion: numbe
 
 export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar }: ModalReplayGrabacionHeroProps) {
     const [bpm, setBpm] = useState(120);
+    const navigate = useNavigate();
 
     const logica = useLogicaAcordeon({ deshabilitarInteraccion: false });
 
@@ -195,6 +197,20 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                     </button>
                                 )}
                             </div>
+
+                            {grabacion.id && (
+                                <button
+                                    className="grabaciones-hero-replay-btn ir-simulador"
+                                    onClick={() => {
+                                        onCerrar();
+                                        navigate(`/simulador-app?reproducir=${grabacion.id}`);
+                                    }}
+                                    title="Abre el SimuladorApp completo y reproduce la grabación allí"
+                                >
+                                    <ExternalLink size={16} />
+                                    Reproducir en simulador
+                                </button>
+                            )}
                             <div className="grabaciones-hero-replay-progreso-texto">
                                 <span>Avance del replay</span>
                                 <strong>{Math.round(progreso)}%</strong>
