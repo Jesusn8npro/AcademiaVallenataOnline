@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Music2, Pause, Play, RotateCcw, X } from 'lucide-react';
+import { Monitor, Music2, Pause, Play, RotateCcw, Smartphone, X } from 'lucide-react';
 import CuerpoAcordeon from '../../../../Core/componentes/CuerpoAcordeon';
 import { useLogicaAcordeon } from '../../../../Core/hooks/useLogicaAcordeon';
 import { useReproductorHero } from '../../../../Core/hooks/useReproductorHero';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import { resolverImagenModeloAcordeon } from '../../../AcordeonProMax/PracticaLibre/Datos/modelosVisualesAcordeon';
 import { useReproductorReplay } from './useReproductorReplay';
+import VisorReplaySimulador from './VisorReplaySimulador';
+import { useVistaReplayPersistida } from './useVistaReplayPersistida';
 import './ModalReplayGrabacionHero.css';
 
 export type { GrabacionReplayHero } from './tiposReplay';
@@ -56,6 +58,10 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
             reproducirOReanudar, pausar, buscarTick, reiniciar } = useReproductorReplay({
         abierta, grabacion, logica, reproductor, bpm, setBpm,
     });
+
+    // Toggle Escritorio / Movil. Default automatico segun donde se grabo.
+    const vistaPreferidaGrabacion = (grabacion?.metadata as any)?.vista_preferida || null;
+    const { vista, setVista } = useVistaReplayPersistida(vistaPreferidaGrabacion);
 
     const imagenReplay = useMemo(() => {
         const modeloId = grabacion?.metadata?.modelo_visual_id || grabacion?.metadata?.practica_libre?.modelo_visual_id;
@@ -110,9 +116,37 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                     <div><span>Puntos</span><strong>{grabacion.puntuacion?.toLocaleString('es-CO') || 'N/D'}</strong></div>
                 </div>
 
+                <div className="grabaciones-hero-replay-vista-toggle" role="tablist" aria-label="Vista del replay">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={vista === 'escritorio'}
+                        className={`grabaciones-hero-replay-vista-btn ${vista === 'escritorio' ? 'activa' : ''}`}
+                        onClick={() => setVista('escritorio')}
+                    >
+                        <Monitor size={14} /> Escritorio
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={vista === 'movil'}
+                        className={`grabaciones-hero-replay-vista-btn ${vista === 'movil' ? 'activa' : ''}`}
+                        onClick={() => setVista('movil')}
+                    >
+                        <Smartphone size={14} /> Móvil
+                    </button>
+                </div>
+
                 <div className="grabaciones-hero-replay-layout">
                     <div className="grabaciones-hero-replay-escenario">
-                        {logica.disenoCargado ? (
+                        {!logica.disenoCargado ? (
+                            <div className="grabaciones-hero-replay-cargando">
+                                <Music2 size={24} />
+                                <span>Cargando replay...</span>
+                            </div>
+                        ) : vista === 'movil' ? (
+                            <VisorReplaySimulador logica={logica} direccion={logica.direccion} />
+                        ) : (
                             <CuerpoAcordeon
                                 imagenFondo={imagenReplay}
                                 ajustes={ajustesReplay as any}
@@ -127,11 +161,6 @@ export default function ModalReplayGrabacionHero({ abierta, grabacion, onCerrar 
                                 actualizarBotonActivo={() => {}}
                                 listo={true}
                             />
-                        ) : (
-                            <div className="grabaciones-hero-replay-cargando">
-                                <Music2 size={24} />
-                                <span>Cargando replay...</span>
-                            </div>
                         )}
                     </div>
 

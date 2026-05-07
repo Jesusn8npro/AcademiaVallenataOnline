@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { RotateCw } from 'lucide-react';
+import { ArrowLeft, RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
 import { useReproductorHero } from '../../Core/hooks/useReproductorHero';
@@ -272,6 +273,19 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     }, [enReproduccion, reproductor.reproduciendo]);
 
+    // ─── Modo "vino a reproducir desde Grabaciones" ──────────────────────────
+    // Si la URL tiene ?reproducir=<id>, auto-disparamos el replay y mostramos
+    // un overlay con boton Volver. Cuando termina la reproduccion, countdown
+    // 3s + boton "Quedarme aqui" para cancelar el regreso. Si el usuario elige
+    // quedarse, removemos el flag y desaparecen los botones para siempre.
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const reproducirIdParam = searchParams.get('reproducir');
+    const [vinoDeGrabaciones, setVinoDeGrabaciones] = useState(false);
+    const [autoArrancado, setAutoArrancado] = useState(false);
+    const [countdownVolver, setCountdownVolver] = useState<number | null>(null);
+    const [usuarioEligioQuedarse, setUsuarioEligioQuedarse] = useState(false);
+
     // Detener el audio de fondo del replay (Web Audio).
     const detenerAudioFondoReplay = useCallback(() => {
         const data = audioFondoReplayRef.current;
@@ -409,6 +423,54 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         setReplayConMetronomo(false);
         setEnReproduccion(false);
     }, [reproductor, detenerAudioFondoReplay, metronomoReplay]);
+
+    // Auto-arrancar el replay cuando se entra con ?reproducir=<id>.
+    // Esperamos al audioListo para que el AudioContext este activo y el
+    // motor pueda decodificar el audio_fondo del MP3.
+    useEffect(() => {
+        if (!reproducirIdParam || autoArrancado || !audioListo) return;
+        setVinoDeGrabaciones(true);
+        setAutoArrancado(true);
+        void reproducirGrabacion(reproducirIdParam);
+    }, [reproducirIdParam, autoArrancado, audioListo, reproducirGrabacion]);
+
+    // Volver inmediatamente a /grabaciones (cancela cualquier countdown).
+    const volverAGrabaciones = useCallback(() => {
+        setCountdownVolver(null);
+        navigate('/grabaciones');
+    }, [navigate]);
+
+    // El usuario eligio quedarse. Removemos el flag y limpiamos el query param
+    // para que el simulador quede en modo normal (sin overlay nunca mas).
+    const quedarseEnSimulador = useCallback(() => {
+        setUsuarioEligioQuedarse(true);
+        setCountdownVolver(null);
+        setVinoDeGrabaciones(false);
+        // Limpiar ?reproducir= sin recargar, mantiene el estado actual.
+        const params = new URLSearchParams(searchParams);
+        params.delete('reproducir');
+        setSearchParams(params, { replace: true });
+    }, [searchParams, setSearchParams]);
+
+    // Cuando termina el replay (enReproduccion: true -> false) Y vino de
+    // grabaciones Y no eligio quedarse -> arranca countdown de 3s.
+    useEffect(() => {
+        if (!vinoDeGrabaciones || usuarioEligioQuedarse) return;
+        if (!autoArrancado || enReproduccion) return;
+        // El replay termino solo. Iniciar countdown.
+        setCountdownVolver(3);
+    }, [vinoDeGrabaciones, usuarioEligioQuedarse, autoArrancado, enReproduccion]);
+
+    // Tick del countdown: cada 1s decrementa, al llegar a 0 navega.
+    useEffect(() => {
+        if (countdownVolver === null) return;
+        if (countdownVolver <= 0) {
+            navigate('/grabaciones');
+            return;
+        }
+        const id = window.setTimeout(() => setCountdownVolver((c) => (c === null ? null : c - 1)), 1000);
+        return () => window.clearTimeout(id);
+    }, [countdownVolver, navigate]);
 
     // Sincroniza el metronomo de replay con el reproductor: arranca cuando empieza
     // la reproduccion (en sync con la primera nota), se apaga al pausar/terminar.
@@ -792,6 +854,42 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 visible={toastGuardadaVisible}
                 onCerrar={() => setToastGuardadaVisible(false)}
             />
+
+            {/* Overlay de "vine de Grabaciones": boton Volver siempre visible
+                durante la reproduccion. Al terminar el replay, countdown 3s
+                + opcion de quedarse en el simulador. Solo aparecen si llego
+                con ?reproducir=<id> y NO eligio quedarse. */}
+            {vinoDeGrabaciones && !usuarioEligioQuedarse && (
+                <>
+                    <button
+                        type="button"
+                        className="sim-volver-grabaciones"
+                        onClick={volverAGrabaciones}
+                        aria-label="Volver a Grabaciones"
+                    >
+                        <ArrowLeft size={16} />
+                        <span>Volver</span>
+                    </button>
+
+                    {countdownVolver !== null && (
+                        <div className="sim-countdown-volver" role="dialog" aria-live="polite">
+                            <p>
+                                <strong>Replay terminado.</strong>
+                                <br />
+                                Volviendo a Grabaciones en <strong>{countdownVolver}s</strong>…
+                            </p>
+                            <div className="sim-countdown-volver-acciones">
+                                <button type="button" onClick={volverAGrabaciones}>
+                                    Volver ahora
+                                </button>
+                                <button type="button" className="primaria" onClick={quedarseEnSimulador}>
+                                    Quedarme aquí
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 };

@@ -362,3 +362,89 @@
     box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.45);
     transition: box-shadow 0.2s ease;
 }
+/* Overlay "Volver a Grabaciones": aparece cuando el usuario llego con
+   ?reproducir=<id> desde Grabaciones. Boton flotante arriba a la izquierda
+   + countdown modal cuando termina el replay. */
+.sim-volver-grabaciones {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 12px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    font-family: 'Raleway', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease;
+}
+
+.sim-volver-grabaciones:hover { background: rgba(15, 23, 42, 0.95); }
+.sim-volver-grabaciones:active { transform: scale(0.96); }
+
+.sim-countdown-volver {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1110;
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
+    padding: 18px 22px;
+    color: #fff;
+    font-family: 'Raleway', system-ui, sans-serif;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    max-width: min(92vw, 420px);
+}
+
+.sim-countdown-volver p {
+    margin: 0 0 14px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.sim-countdown-volver p strong { color: #fff; font-weight: 800; }
+
+.sim-countdown-volver-acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.sim-countdown-volver-acciones button {
+    flex: 1 1 140px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease;
+}
+
+.sim-countdown-volver-acciones button:hover { background: rgba(255, 255, 255, 0.12); }
+
+.sim-countdown-volver-acciones button.primaria {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+}

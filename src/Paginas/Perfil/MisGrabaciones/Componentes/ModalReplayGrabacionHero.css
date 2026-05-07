@@ -17,7 +17,7 @@
     max-height: calc(100dvh - 36px);
     overflow: hidden;
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     gap: 18px;
     border-radius: 30px;
     background: linear-gradient(180deg, #06101f 0%, #0f172a 100%);
@@ -233,4 +233,40 @@
     .grabaciones-hero-replay-panel { display: flex; flex-direction: column }
     .grabaciones-hero-replay-descripcion { min-height: 140px }
     .grabaciones-hero-replay-btn { width: 100% }
+}
+
+/* Toggle Escritorio / Movil del replay. */
+.grabaciones-hero-replay-vista-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+}
+
+.grabaciones-hero-replay-vista-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.grabaciones-hero-replay-vista-btn:hover { color: #fff; }
+
+.grabaciones-hero-replay-vista-btn.activa {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
