@@ -199,7 +199,7 @@ const CuerpoAcordeon: React.FC<CuerpoAcordeonProps> = ({
                                 </div>
                             );
                         })}
-                        <h4 style={{ margin: '5px 0', fontSize: '9px', fontWeight: 'bold', color: 'white', textShadow: '1px 1px 2px black' }}>{getFilaDisplay(f)}</h4>
+                        <h4 className="cuerpo-acordeon-fila-label" style={{ margin: '5px 0', fontSize: '9px', fontWeight: 'bold', color: 'white', textShadow: '1px 1px 2px black' }}>{getFilaDisplay(f)}</h4>
                     </div>
                 ))}
             </div>
