@@ -62,6 +62,11 @@ interface BarraHerramientasProps {
         efectos?: boolean;
     };
     bpmMetronomo: number;
+    /** Si true, ocultamos los botones de la barra. El banner central queda
+     *  visible solo para usuarios free (gatillo de venta). Premium oculta
+     *  todo. */
+    modoFoco?: boolean;
+    esPremium?: boolean;
 }
 
 const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
@@ -72,7 +77,9 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     onToggleLoops, onToggleEfectos, loopActivo,
     modalesVisibles,
     bpmMetronomo,
-    refs
+    refs,
+    modoFoco = false,
+    esPremium = false,
 }) => {
     React.useEffect(() => {
         const actualizarPosicionFlecha = () => {
@@ -122,8 +129,15 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     const aumentarTam = () => setEscala(prev => Math.min(prev + 0.10, 1.8));
     const disminuirTam = () => setEscala(prev => Math.max(prev - 0.10, 0.5));
 
+    // Clases del modo foco:
+    // - foco-premium: barra entera oculta (premium tiene la pantalla 100%
+    //   limpia para tocar).
+    // - foco-free: solo se ocultan los botones laterales; el banner Hero
+    //   queda visible (es gatillo de venta del plan Plus).
+    const claseFoco = !modoFoco ? '' : (esPremium ? 'foco-premium' : 'foco-free');
+
     return (
-        <div className="barra-herramientas-contenedor">
+        <div className={`barra-herramientas-contenedor ${claseFoco}`}>
 
             {/* Orden estratégico izquierda: aprender → instrumento → tono →
                 pistas → efectos. Es el flujo natural del alumno: primero

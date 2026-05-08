@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { ArrowLeft, RotateCw } from 'lucide-react';
+import { ArrowLeft, RotateCw, Eye, EyeOff } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -100,6 +100,12 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         loops: false,
         efectos: false,
     });
+
+    // Modo Foco: oculta la barra de herramientas para dejar todo el espacio
+    // visible al acordeón. Premium oculta TODO (incluido el banner). Free
+    // sigue viendo el banner Hero (gatillo de venta — los anuncios al
+    // alumno no premium no se ocultan).
+    const [modoFoco, setModoFoco] = useState(false);
 
     // ─── Panel de Efectos de Audio ──────────────────────────────────────────
     // Estados controlados que mapean al motor de audio. Reverb arranca apagado
@@ -1078,6 +1084,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // Solo admins ven el modal expandido con opción de publicar como Canción Hero
     // y subir MP3 de fondo. El resto de roles ve el modal normal de Práctica Libre.
     const { usuario, esAdmin } = useUsuario();
+    // Premium = admin por ahora. Cuando se agregue `plan_activo` u otro
+    // campo en la tabla `perfiles`, ampliar esta condición. Free incluye
+    // estudiantes y usuarios sin sesión.
+    const esPremium = esAdmin || (usuario as any)?.plan_activo === true;
 
     // "Re-grabar todo": descarta la grabación pendiente y vuelve a arrancar la
     // captura — pensado para que el admin pueda corregir notas malas sin
@@ -1159,7 +1169,24 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         onToggleEfectos={() => toggleModal('efectos')}
                         loopActivo={!!loops.pistaActiva}
                         refs={refsModales as any}
+                        modoFoco={modoFoco}
+                        esPremium={esPremium}
                     />
+
+                    {/* Modo Foco: oculta la barra para liberar espacio al
+                        acordeón. Free sigue viendo el banner Hero (gatillo de
+                        venta — el plan Plus se vende ahí mismo). Premium
+                        oculta todo. El botón flotante es siempre visible. */}
+                    <button
+                        type="button"
+                        className={`btn-modo-foco ${modoFoco ? 'activo' : ''} ${esPremium ? 'premium' : 'free'}`}
+                        onClick={() => setModoFoco(v => !v)}
+                        title={modoFoco ? 'Salir de modo foco' : 'Modo foco — esconder herramientas'}
+                        aria-label={modoFoco ? 'Salir de modo foco' : 'Activar modo foco'}
+                    >
+                        {modoFoco ? <EyeOff size={16} /> : <Eye size={16} />}
+                        <span>{modoFoco ? 'MOSTRAR' : 'FOCO'}</span>
+                    </button>
 
                     <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
                         <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'manipulation' }}>
