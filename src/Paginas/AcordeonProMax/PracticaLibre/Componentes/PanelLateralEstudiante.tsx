@@ -147,8 +147,10 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
         <PanelEfectosAudio
           reverbActivo={preferencias.efectos.reverb > 0}
           reverbIntensidad={preferencias.efectos.reverb}
+          reverbPreset={preferencias.efectos.reverbPreset}
           onCambiarReverbActivo={(activo) => onActualizarEfectos({ reverb: activo ? Math.max(preferencias.efectos.reverb, 25) : 0 })}
           onCambiarReverbIntensidad={(v) => onActualizarEfectos({ reverb: v })}
+          onCambiarReverbPreset={(preset) => onActualizarEfectos({ reverbPreset: preset })}
           graves={preferencias.efectos.bajos}
           medios={preferencias.efectos.medios}
           agudos={preferencias.efectos.agudos}

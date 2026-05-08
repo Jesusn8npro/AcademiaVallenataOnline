@@ -4,52 +4,194 @@ import { cargarSonidoEnBanco as _cargarSonido } from './_cargador';
 export type { BancoSonido };
 
 // ─── Presets de Reverb (impulse responses sintéticos) ──────────────────────
-// Basado en Moorer "About This Reverberation Business": ruido blanco con
-// decay exponencial es un IR sorprendentemente convincente. Cada preset
-// modela un espacio distinto cambiando duración, decay shape, pre-delay,
-// reflexiones tempranas y filtrado tonal (brillo).
+// Cada preset genera un IR distinto en runtime — sin archivos extra, sin
+// descargas. La diferencia entre presets NO es solo duración: cada uno tiene
+// un carácter tonal que cambia completamente la forma en que el generador
+// construye el IR.
+//
+// - natural: ruido blanco con decay exp + early reflections (rooms / halls)
+// - metallic: red densa de echoes Schroeder con feedback (Plate Lexicon-style)
+// - spring: decay modulado con chorus (muelle de ampli vintage)
+// - open: pocas reflexiones discretas, slap audible (escenario / cañón)
+// - cave: oscuro, lowpass duro, ecos lejanos espaciados (cueva)
+// - tile: brillante reflectivo, early refl muy marcadas (baño / garaje)
+// - tunnel: slap echoes regulares con ping-pong stereo (túnel)
+// - phone: bandpass angosto sin graves ni agudos (cabina / radio antigua)
+// - tape: modulación lenta + ruido suave (cinta vintage)
+// - shimmer: brillo extra con armónicos sumados (efecto angelical)
 export interface ReverbPreset {
-    duracion: number;           // segundos del cuerpo del IR (cola)
-    preDelay: number;           // segundos de silencio antes del cuerpo (sensación de distancia)
-    decayShape: number;         // exponente del decay (mayor = más rápido = más seco)
-    earlyRefl: number[];        // tiempos en segundos de las reflexiones tempranas
+    duracion: number;            // segundos del cuerpo del IR (cola)
+    preDelay: number;            // segundos de silencio antes del cuerpo
+    decayShape: number;          // exponente del decay (mayor = más rápido = más seco)
+    earlyRefl: number[];         // tiempos en segundos de las reflexiones tempranas
     amplitudReflexiones: number; // 0..1 amplitud de los pulsos discretos
-    brillo: number;             // <1 más cálido (graves), >1 más brillante (agudos)
+    brillo: number;              // <1 más cálido, >1 más brillante (filtro tonal global)
+    damping: number;             // 0..1 cuánto se atenúan los agudos a lo largo del decay (alto = catedral)
+    difusion: number;            // 0..1 densidad de echoes (alto = plate)
+    modulacion: number;          // 0..1 cantidad de chorus aplicado al IR (spring/tape)
+    modulacionFreq: number;      // Hz de la modulación
+    caracter:
+        | 'natural' | 'metallic' | 'spring' | 'open'
+        | 'cave' | 'tile' | 'tunnel' | 'phone' | 'tape' | 'shimmer';
 }
 
 export type PresetReverbId =
-    | 'cuarto_mediano'
-    | 'cuarto_grande'
-    | 'vestibulo_mediano'
-    | 'vestibulo_grande'
-    | 'escenario_abierto';
+    // Pequeños / secos
+    | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
+    // Medianos
+    | 'sala_ensayo' | 'cuarto_grande' | 'club'
+    // Grandes
+    | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
+    // Aire libre / espacios abiertos
+    | 'escenario_abierto' | 'canon' | 'bosque'
+    // Vintage / efectos especiales
+    | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer';
 
 export const PRESETS_REVERB: Record<PresetReverbId, ReverbPreset> = {
-    // Cuarto seco y rápido: simula una sala de ensayo pequeña con decay corto.
+    // ─── Pequeños / secos ─────────────────────────────────────────────────
+    habitacion: {
+        duracion: 0.4, preDelay: 0.002, decayShape: 4.5,
+        earlyRefl: [0.006, 0.013], amplitudReflexiones: 0.30, brillo: 1.05,
+        damping: 0.15, difusion: 0.30, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
+    },
+    estudio: {
+        duracion: 0.6, preDelay: 0.004, decayShape: 4.0,
+        earlyRefl: [0.005, 0.011, 0.018, 0.026], amplitudReflexiones: 0.55, brillo: 1.30,
+        damping: 0.05, difusion: 0.55, modulacion: 0, modulacionFreq: 0,
+        caracter: 'tile',
+    },
     cuarto_mediano: {
-        duracion: 0.7, preDelay: 0.005, decayShape: 3.5,
-        earlyRefl: [0.012, 0.025], amplitudReflexiones: 0.4, brillo: 1.0,
+        duracion: 0.9, preDelay: 0.006, decayShape: 3.2,
+        earlyRefl: [0.012, 0.025, 0.038], amplitudReflexiones: 0.38, brillo: 1.0,
+        damping: 0.20, difusion: 0.40, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
     },
-    // Sala de tamaño medio con cola perceptible y reflexiones más espaciadas.
+    garaje: {
+        duracion: 1.1, preDelay: 0.008, decayShape: 2.8,
+        // Tile pequeño con muchas reflexiones brillantes y slap audible
+        earlyRefl: [0.014, 0.028, 0.044, 0.060, 0.078], amplitudReflexiones: 0.65, brillo: 1.25,
+        damping: 0.10, difusion: 0.40, modulacion: 0, modulacionFreq: 0,
+        caracter: 'tile',
+    },
+
+    // ─── Medianos ─────────────────────────────────────────────────────────
+    sala_ensayo: {
+        duracion: 1.3, preDelay: 0.010, decayShape: 2.8,
+        earlyRefl: [0.018, 0.035, 0.055], amplitudReflexiones: 0.42, brillo: 0.85,
+        damping: 0.40, difusion: 0.45, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
+    },
     cuarto_grande: {
-        duracion: 1.4, preDelay: 0.012, decayShape: 2.6,
-        earlyRefl: [0.020, 0.040, 0.065], amplitudReflexiones: 0.42, brillo: 0.95,
+        duracion: 1.6, preDelay: 0.014, decayShape: 2.4,
+        earlyRefl: [0.022, 0.045, 0.070, 0.095], amplitudReflexiones: 0.42, brillo: 0.95,
+        damping: 0.25, difusion: 0.50, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
     },
-    // Vestíbulo / lobby con cola larga y tonalidad ligeramente cálida.
+    club: {
+        duracion: 1.9, preDelay: 0.018, decayShape: 2.2,
+        earlyRefl: [0.025, 0.055, 0.085, 0.120], amplitudReflexiones: 0.50, brillo: 0.75,
+        damping: 0.55, difusion: 0.75, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
+    },
+
+    // ─── Grandes ──────────────────────────────────────────────────────────
     vestibulo_mediano: {
-        duracion: 2.2, preDelay: 0.025, decayShape: 2.0,
-        earlyRefl: [0.030, 0.060, 0.090, 0.130], amplitudReflexiones: 0.38, brillo: 0.85,
+        duracion: 2.4, preDelay: 0.025, decayShape: 1.9,
+        earlyRefl: [0.030, 0.060, 0.090, 0.130], amplitudReflexiones: 0.38, brillo: 0.95,
+        damping: 0.30, difusion: 0.55, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
     },
-    // Vestíbulo grande tipo iglesia/teatro: cola muy larga, mucho cuerpo en bajos.
+    iglesia: {
+        duracion: 3.2, preDelay: 0.035, decayShape: 1.8,
+        earlyRefl: [0.040, 0.080, 0.130, 0.190], amplitudReflexiones: 0.40, brillo: 0.70,
+        damping: 0.65, difusion: 0.60, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
+    },
     vestibulo_grande: {
-        duracion: 3.5, preDelay: 0.040, decayShape: 1.7,
-        earlyRefl: [0.040, 0.080, 0.120, 0.170], amplitudReflexiones: 0.35, brillo: 0.78,
+        duracion: 3.8, preDelay: 0.045, decayShape: 1.6,
+        earlyRefl: [0.045, 0.090, 0.140, 0.200], amplitudReflexiones: 0.35, brillo: 1.05,
+        damping: 0.35, difusion: 0.50, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
     },
-    // Escenario abierto: pre-delay grande (sensación de distancia), reflexiones
-    // dispersas (sin paredes cercanas), decay medio con brillo presente.
+    catedral: {
+        duracion: 6.0, preDelay: 0.060, decayShape: 1.2,
+        earlyRefl: [0.055, 0.110, 0.175, 0.250, 0.330], amplitudReflexiones: 0.32, brillo: 0.55,
+        damping: 0.85, difusion: 0.55, modulacion: 0, modulacionFreq: 0,
+        caracter: 'natural',
+    },
+    cueva: {
+        duracion: 4.5, preDelay: 0.040, decayShape: 1.5,
+        // Cave: ecos lejanos espaciados, lowpass duro (ambiente oscuro y húmedo)
+        earlyRefl: [0.075, 0.155, 0.245, 0.355, 0.490], amplitudReflexiones: 0.55, brillo: 0.45,
+        damping: 0.70, difusion: 0.40, modulacion: 0, modulacionFreq: 0,
+        caracter: 'cave',
+    },
+    arena: {
+        duracion: 4.8, preDelay: 0.050, decayShape: 1.4,
+        // Estadio enorme: cola larguísima, brillante, reflexiones dispersas
+        earlyRefl: [0.060, 0.130, 0.210, 0.310, 0.430, 0.580], amplitudReflexiones: 0.45, brillo: 1.10,
+        damping: 0.45, difusion: 0.40, modulacion: 0, modulacionFreq: 0,
+        caracter: 'open',
+    },
+
+    // ─── Aire libre / espacios abiertos ───────────────────────────────────
     escenario_abierto: {
-        duracion: 1.8, preDelay: 0.060, decayShape: 1.6,
-        earlyRefl: [0.050, 0.100, 0.150, 0.210], amplitudReflexiones: 0.5, brillo: 1.1,
+        duracion: 1.8, preDelay: 0.060, decayShape: 1.7,
+        earlyRefl: [0.050, 0.100, 0.150, 0.210], amplitudReflexiones: 0.50, brillo: 1.1,
+        damping: 0.20, difusion: 0.30, modulacion: 0, modulacionFreq: 0,
+        caracter: 'open',
+    },
+    canon: {
+        duracion: 4.5, preDelay: 0.080, decayShape: 1.4,
+        earlyRefl: [0.090, 0.190, 0.310, 0.470, 0.680, 0.920], amplitudReflexiones: 0.75, brillo: 0.95,
+        damping: 0.35, difusion: 0.15, modulacion: 0, modulacionFreq: 0,
+        caracter: 'open',
+    },
+    bosque: {
+        duracion: 2.2, preDelay: 0.045, decayShape: 1.8,
+        // Bosque: pocas reflexiones suaves, mucho damping de agudos por la vegetación
+        earlyRefl: [0.040, 0.090, 0.150, 0.220, 0.310], amplitudReflexiones: 0.30, brillo: 0.65,
+        damping: 0.55, difusion: 0.50, modulacion: 0, modulacionFreq: 0,
+        caracter: 'open',
+    },
+
+    // ─── Vintage / efectos especiales ─────────────────────────────────────
+    tunel: {
+        duracion: 2.8, preDelay: 0.025, decayShape: 1.7,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 0.90,
+        damping: 0.40, difusion: 0.50, modulacion: 0, modulacionFreq: 0,
+        caracter: 'tunnel',
+    },
+    cabina: {
+        duracion: 0.5, preDelay: 0.002, decayShape: 4.0,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 1.0,
+        damping: 0.30, difusion: 0.85, modulacion: 0, modulacionFreq: 0,
+        caracter: 'phone',
+    },
+    plate: {
+        duracion: 2.0, preDelay: 0.005, decayShape: 2.0,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 1.20,
+        damping: 0.05, difusion: 0.95, modulacion: 0, modulacionFreq: 0,
+        caracter: 'metallic',
+    },
+    spring: {
+        duracion: 1.5, preDelay: 0.003, decayShape: 2.4,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 0.85,
+        damping: 0.25, difusion: 0.70, modulacion: 0.65, modulacionFreq: 5.5,
+        caracter: 'spring',
+    },
+    tape_vintage: {
+        duracion: 1.8, preDelay: 0.012, decayShape: 2.2,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 0.75,
+        damping: 0.45, difusion: 0.60, modulacion: 0.30, modulacionFreq: 0.8,
+        caracter: 'tape',
+    },
+    shimmer: {
+        duracion: 3.0, preDelay: 0.020, decayShape: 1.6,
+        earlyRefl: [], amplitudReflexiones: 0, brillo: 1.40,
+        damping: 0.10, difusion: 0.65, modulacion: 0, modulacionFreq: 0,
+        caracter: 'shimmer',
     },
 };
 
@@ -203,13 +345,35 @@ export class MotorAudioPro {
         this._conmutarRuta(necesitaFiltros);
     }
 
-    // Generador de impulse response sintético basado en el paper de Moorer
-    // ("About This Reverberation Business"): ruido blanco con decay exponencial.
-    // Agregamos pre-delay (silencio inicial) y early reflections (pulsos discretos
-    // sobre el ataque) para dar sensación de espacio realista. Cada canal usa
-    // ruido descorrelacionado para sensación estéreo.
+    // Generador de impulse response sintético con 4 caracteres tonales que
+    // producen sonidos completamente distintos (no solo duraciones distintas).
+    //
+    // - 'natural'  → ruido blanco con decay exp + early refl (rooms / halls)
+    // - 'metallic' → red de echoes Schroeder con feedback denso (Plate vintage)
+    // - 'spring'   → decay con modulación tipo chorus (muelle de amp)
+    // - 'open'     → pocas reflexiones bien marcadas (espacio abierto / cañón)
+    //
+    // El damping se aplica como filtro lowpass cuyo cutoff se reduce con el
+    // tiempo, modelando que en espacios grandes los agudos mueren primero.
     private _generarIRSintetico(preset: ReverbPreset): AudioBuffer {
-        const { duracion, preDelay, decayShape, earlyRefl, amplitudReflexiones, brillo } = preset;
+        const { caracter } = preset;
+        if (caracter === 'metallic') return this._irMetallic(preset);
+        if (caracter === 'spring')   return this._irSpring(preset);
+        if (caracter === 'cave')     return this._irCave(preset);
+        if (caracter === 'tile')     return this._irTile(preset);
+        if (caracter === 'tunnel')   return this._irTunnel(preset);
+        if (caracter === 'phone')    return this._irPhone(preset);
+        if (caracter === 'tape')     return this._irTape(preset);
+        if (caracter === 'shimmer')  return this._irShimmer(preset);
+        // 'natural' y 'open' comparten el mismo motor; difieren en parámetros
+        // (cantidad y separación de reflexiones, decayShape, brillo).
+        return this._irNatural(preset);
+    }
+
+    // Cuerpos naturales (rooms, halls, escenarios): ruido decorrelacionado por
+    // canal con decay exponencial y damping progresivo de agudos.
+    private _irNatural(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, earlyRefl, amplitudReflexiones, brillo, damping } = preset;
         const sampleRate = this.contexto.sampleRate;
         const totalLength = Math.floor((preDelay + duracion) * sampleRate);
         const preDelayLength = Math.floor(preDelay * sampleRate);
@@ -218,34 +382,367 @@ export class MotorAudioPro {
         for (let ch = 0; ch < 2; ch++) {
             const data = buffer.getChannelData(ch);
             const bodyLength = totalLength - preDelayLength;
-            // Cuerpo principal: ruido blanco con decay exponencial. El brillo
-            // simula filtrado tonal: <1 atenúa agudos (más cálido), >1 los realza.
+            // Filtro lowpass de un polo. El factor base depende del brillo;
+            // damping añade un decremento extra a lo largo del decay para que
+            // los agudos mueran antes que los graves (clave en catedrales).
             let prev = 0;
-            const filterFactor = Math.max(0.05, Math.min(0.6, 0.3 / brillo));
+            const filterBase = Math.max(0.05, Math.min(0.6, 0.3 / brillo));
             for (let i = 0; i < bodyLength; i++) {
                 const t = i / bodyLength;
+                const dampFactor = filterBase * (1 - damping * t);
+                const ff = Math.max(0.02, dampFactor);
                 const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
-                // Filtro IIR de un polo (lowpass simple): suaviza el ruido
-                // según el brillo. Más cálido = más filtrado.
-                prev = prev * (1 - filterFactor) + ruido * filterFactor;
+                prev = prev * (1 - ff) + ruido * ff;
                 data[preDelayLength + i] = prev * brillo;
             }
-            // Early reflections: pulsos discretos en los primeros ms con
-            // descorrelación estéreo para amplitud espacial.
+            // Early reflections con descorrelación estéreo.
             earlyRefl.forEach((tiempo, idx) => {
                 const offset = ch === 0 ? 0 : Math.floor(0.0007 * sampleRate);
                 const sampleIdx = Math.floor(tiempo * sampleRate) + offset;
                 if (sampleIdx < totalLength) {
-                    const factorAtenuacion = amplitudReflexiones * (1 - idx / Math.max(earlyRefl.length, 1));
-                    data[sampleIdx] += (Math.random() * 2 - 1) * factorAtenuacion;
+                    const factor = amplitudReflexiones * (1 - idx / Math.max(earlyRefl.length, 1));
+                    data[sampleIdx] += (Math.random() * 2 - 1) * factor;
                 }
             });
         }
         return buffer;
     }
 
+    // Plate-style: red densa de echoes con feedback. Suena denso, brillante y
+    // metálico. La técnica clave es sumar varias líneas de delay primas entre
+    // sí (Schroeder) para evitar que los echoes se alineen y produzcan tonos.
+    private _irMetallic(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, difusion, damping } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        // Delays primos (en samples) — Schroeder/Moorer plate-like.
+        const delaysSeg = [0.0043, 0.0067, 0.0091, 0.0113, 0.0137, 0.0163, 0.0181, 0.0211];
+        const numDelays = Math.max(4, Math.floor(4 + difusion * 4));
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+
+            // Impulso inicial brillante en cada canal (descorrelacionado).
+            data[preDelayLength] = ch === 0 ? 0.6 : 0.55;
+
+            // Sumar trenes de delays con feedback decreciente.
+            for (let d = 0; d < numDelays; d++) {
+                const delaySamples = Math.floor(delaysSeg[d] * sampleRate * (ch === 0 ? 1 : 1.03));
+                const feedback = 0.85 - d * 0.04;
+                let pos = preDelayLength + delaySamples;
+                let amp = 0.4;
+                while (pos < totalLength && amp > 0.001) {
+                    data[pos] += (Math.random() * 2 - 1) * amp;
+                    pos += delaySamples;
+                    amp *= feedback;
+                }
+            }
+
+            // Decay exponencial global + damping de agudos.
+            let prev = 0;
+            const filterBase = Math.max(0.1, Math.min(0.7, 0.4 / brillo));
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const idx = preDelayLength + i;
+                const envelope = Math.pow(1 - t, decayShape);
+                const ff = Math.max(0.05, filterBase * (1 - damping * t));
+                prev = prev * (1 - ff) + data[idx] * ff;
+                data[idx] = prev * envelope * brillo;
+            }
+        }
+        return buffer;
+    }
+
+    // Spring-style: decay corto con fuerte modulación tipo chorus (boing). El
+    // pitch del IR se modula con un LFO senoidal — efecto característico de
+    // los muelles de los amplificadores de guitarra vintage.
+    private _irSpring(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, modulacion, modulacionFreq, damping } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        // Generamos primero un IR base con muchos echoes cercanos.
+        const base = new Float32Array(totalLength);
+        const delaysSeg = [0.011, 0.017, 0.023, 0.029];
+        for (const dSeg of delaysSeg) {
+            const dSamples = Math.floor(dSeg * sampleRate);
+            let pos = preDelayLength + dSamples;
+            let amp = 0.5;
+            while (pos < totalLength && amp > 0.001) {
+                base[pos] += (Math.random() * 2 - 1) * amp;
+                pos += dSamples;
+                amp *= 0.75;
+            }
+        }
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+
+            // Aplicamos modulación: leemos del IR base con un offset que oscila
+            // a `modulacionFreq` Hz. Esto introduce el pitch wobble del muelle.
+            const fasePh = ch === 0 ? 0 : Math.PI / 2;
+            const maxOffset = modulacion * 0.004 * sampleRate; // ms de pitch shift
+            let prev = 0;
+            const filterBase = Math.max(0.1, Math.min(0.6, 0.35 / brillo));
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const idx = preDelayLength + i;
+                const lfo = Math.sin(2 * Math.PI * modulacionFreq * (i / sampleRate) + fasePh);
+                const offset = Math.floor(lfo * maxOffset);
+                const readIdx = Math.max(0, Math.min(totalLength - 1, idx + offset));
+                const envelope = Math.pow(1 - t, decayShape);
+                const sample = base[readIdx] * envelope;
+                const ff = Math.max(0.05, filterBase * (1 - damping * t));
+                prev = prev * (1 - ff) + sample * ff;
+                data[idx] = prev * brillo;
+            }
+        }
+        return buffer;
+    }
+
+    // Cave: oscuro, lowpass agresivo desde el inicio + ecos lejanos espaciados.
+    // Suena húmedo y ahogado, característico de cuevas naturales.
+    private _irCave(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, earlyRefl, amplitudReflexiones, brillo, damping } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Lowpass MUY duro (filterBase muy bajo) — los agudos casi no entran.
+            let prev = 0, prev2 = 0;
+            const filterBase = Math.max(0.02, Math.min(0.18, 0.12 / brillo));
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const ff = Math.max(0.01, filterBase * (1 - damping * t * 0.7));
+                const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
+                // Doble polo lowpass para corte más pronunciado (tipo cueva).
+                prev = prev * (1 - ff) + ruido * ff;
+                prev2 = prev2 * (1 - ff) + prev * ff;
+                data[preDelayLength + i] = prev2 * brillo;
+            }
+            // Ecos lejanos discretos: cada uno suena casi como un slap distante.
+            earlyRefl.forEach((tiempo, idx) => {
+                const offset = ch === 0 ? 0 : Math.floor(0.0015 * sampleRate);
+                const sampleIdx = Math.floor(tiempo * sampleRate) + offset;
+                if (sampleIdx < totalLength) {
+                    const factor = amplitudReflexiones * (1 - idx / Math.max(earlyRefl.length, 1));
+                    // Cada eco lleva un pequeño tail (no es solo un click).
+                    for (let k = 0; k < 200 && sampleIdx + k < totalLength; k++) {
+                        data[sampleIdx + k] += (Math.random() * 2 - 1) * factor * Math.exp(-k / 50);
+                    }
+                }
+            });
+        }
+        return buffer;
+    }
+
+    // Tile: reflexiones tempranas MUY marcadas y brillantes (baño / garaje).
+    // El cuerpo es corto pero el ataque es percusivo y reflectivo.
+    private _irTile(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, earlyRefl, amplitudReflexiones, brillo, damping, difusion } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Cuerpo brillante (filterBase ALTO = poco filtrado de agudos).
+            let prev = 0;
+            const filterBase = Math.max(0.3, Math.min(0.85, 0.55 / Math.max(0.5, 1 / brillo)));
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const ff = Math.max(0.1, filterBase * (1 - damping * t));
+                const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
+                prev = prev * (1 - ff) + ruido * ff;
+                data[preDelayLength + i] = prev * brillo;
+            }
+            // Reflexiones extra brillantes y densas (azulejo, vidrio).
+            const reflBoost = 1.4;
+            earlyRefl.forEach((tiempo, idx) => {
+                const offset = ch === 0 ? 0 : Math.floor(0.0005 * sampleRate);
+                const sampleIdx = Math.floor(tiempo * sampleRate) + offset;
+                if (sampleIdx < totalLength) {
+                    const factor = amplitudReflexiones * reflBoost * (1 - idx / Math.max(earlyRefl.length, 1));
+                    data[sampleIdx] += (Math.random() * 2 - 1) * factor;
+                }
+            });
+            // Reflexiones secundarias agregadas por difusion (más densidad = más tile).
+            const extraRefl = Math.floor(difusion * 12);
+            for (let k = 0; k < extraRefl; k++) {
+                const t = 0.02 + Math.random() * 0.15;
+                const sampleIdx = preDelayLength + Math.floor(t * sampleRate);
+                if (sampleIdx < totalLength) {
+                    data[sampleIdx] += (Math.random() * 2 - 1) * 0.18;
+                }
+            }
+        }
+        return buffer;
+    }
+
+    // Tunnel: slap echoes regulares con ping-pong stereo (eco direccional).
+    // Cada repetición se atenúa pero mantiene su carácter de eco discreto.
+    private _irTunnel(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, damping } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        // Espaciado del slap (~150ms) y feedback decreciente.
+        const slapMs = 0.150;
+        const slapSamples = Math.floor(slapMs * sampleRate);
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Slaps alternados L/R (ping-pong)
+            let pos = preDelayLength + (ch === 0 ? slapSamples : Math.floor(slapSamples * 1.5));
+            let amp = 0.7;
+            let count = 0;
+            while (pos < totalLength && amp > 0.005) {
+                // Cada slap es un pulso corto con decay propio (~30ms).
+                for (let k = 0; k < 1500 && pos + k < totalLength; k++) {
+                    data[pos + k] += (Math.random() * 2 - 1) * amp * Math.exp(-k / 350);
+                }
+                pos += slapSamples * 2; // ping-pong: 2× separación entre slaps del mismo canal
+                amp *= 0.65;
+                count++;
+            }
+            // Cuerpo tenue debajo de los slaps (cola del túnel).
+            let prev = 0;
+            const filterBase = Math.max(0.1, Math.min(0.35, 0.22 / brillo));
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const ff = Math.max(0.02, filterBase * (1 - damping * t));
+                const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape) * 0.25;
+                prev = prev * (1 - ff) + ruido * ff;
+                data[preDelayLength + i] += prev * brillo;
+            }
+        }
+        return buffer;
+    }
+
+    // Phone: bandpass angosto (sin graves ni agudos), tipo cabina o radio antigua.
+    // Suena lo-fi, comprimido y con presencia solo en medios.
+    private _irPhone(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, damping } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Bandpass = highpass + lowpass en cascada. Centrado en ~1-2 kHz.
+            let lp = 0, hp = 0;
+            const lpCoef = 0.30; // corta agudos
+            const hpCoef = 0.05; // corta graves (0=mucho corte, 1=ninguno)
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const ff = Math.max(0.05, lpCoef * (1 - damping * t));
+                const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
+                lp = lp * (1 - ff) + ruido * ff;
+                hp = hp * (1 - hpCoef) + (lp - hp) * hpCoef;
+                data[preDelayLength + i] = (lp - hp) * brillo * 1.5;
+            }
+        }
+        return buffer;
+    }
+
+    // Tape vintage: cuerpo cálido + modulación lenta (wow/flutter de cinta).
+    // Suena suave, oscuro, con leve oscilación de pitch (rolloff de cinta).
+    private _irTape(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, damping, modulacion, modulacionFreq } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        // Generamos primero un IR base cálido.
+        const base = new Float32Array(totalLength);
+        let prev = 0;
+        const filterBase = 0.18; // lowpass cálido permanente (cinta no tiene agudos)
+        for (let i = 0; i < totalLength - preDelayLength; i++) {
+            const t = i / (totalLength - preDelayLength);
+            const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
+            prev = prev * (1 - filterBase) + ruido * filterBase;
+            base[preDelayLength + i] = prev;
+        }
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Wow/flutter: modulación lenta del read offset (simula el motor de la cinta).
+            const fasePh = ch === 0 ? 0 : Math.PI / 3;
+            const maxOffset = modulacion * 0.0025 * sampleRate;
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const idx = preDelayLength + i;
+                const lfo = Math.sin(2 * Math.PI * modulacionFreq * (i / sampleRate) + fasePh);
+                const offset = Math.floor(lfo * maxOffset);
+                const readIdx = Math.max(0, Math.min(totalLength - 1, idx + offset));
+                // Tape "noise" sutil (hiss característico).
+                const hiss = (Math.random() * 2 - 1) * 0.015 * (1 - damping * t);
+                data[idx] = (base[readIdx] + hiss) * brillo * Math.pow(1 - t, 0.4);
+            }
+        }
+        return buffer;
+    }
+
+    // Shimmer: brillo extra agregando un IR base + un IR brillante con armónicos
+    // simulados (sumando ruido filtrado en bandas altas separadas). Crea un
+    // efecto angelical/etéreo característico de pedales tipo Big Sky / EHX.
+    private _irShimmer(preset: ReverbPreset): AudioBuffer {
+        const { duracion, preDelay, decayShape, brillo, damping, difusion } = preset;
+        const sampleRate = this.contexto.sampleRate;
+        const totalLength = Math.floor((preDelay + duracion) * sampleRate);
+        const preDelayLength = Math.floor(preDelay * sampleRate);
+        const buffer = this.contexto.createBuffer(2, totalLength, sampleRate);
+
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            const bodyLength = totalLength - preDelayLength;
+            // Cuerpo principal brillante.
+            let prev = 0;
+            const filterBase = 0.45;
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                const ff = Math.max(0.1, filterBase * (1 - damping * t));
+                const ruido = (Math.random() * 2 - 1) * Math.pow(1 - t, decayShape);
+                prev = prev * (1 - ff) + ruido * ff;
+                data[preDelayLength + i] = prev * brillo;
+            }
+            // Capa "shimmer": ruido alta frecuencia que crece y decrece (armónicos
+            // simulados). Descorrelacionado entre canales para amplitud espacial.
+            const shimmerAmt = difusion * 0.4;
+            for (let i = 0; i < bodyLength; i++) {
+                const t = i / bodyLength;
+                // Envelope con fade-in lento (50ms) + decay con la cola
+                const fadeIn = Math.min(1, i / (sampleRate * 0.05));
+                const env = fadeIn * Math.pow(1 - t, decayShape * 0.6);
+                // Ruido de alta frecuencia (alterna +/- a sample rate completo)
+                const hf = ((i + ch * 7) & 1 ? 1 : -1) * Math.random();
+                data[preDelayLength + i] += hf * env * shimmerAmt;
+            }
+        }
+        return buffer;
+    }
+
     private _crearImpulsoSintetico() {
-        // Default: cuarto grande (preset balanceado para arranque).
         this.reverbNode.buffer = this._generarIRSintetico(PRESETS_REVERB.cuarto_grande);
     }
 

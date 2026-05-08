@@ -32,8 +32,16 @@ export interface PistaPracticaLibre {
   nombreArchivo?: string | null;
 }
 
+export type PresetReverbIdPL =
+  | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
+  | 'sala_ensayo' | 'cuarto_grande' | 'club'
+  | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
+  | 'escenario_abierto' | 'canon' | 'bosque'
+  | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer';
+
 export interface EfectosPracticaLibre {
   reverb: number;
+  reverbPreset: PresetReverbIdPL;
   bajos: number;
   medios: number;
   agudos: number;
@@ -54,6 +62,7 @@ export interface PreferenciasPracticaLibre {
 
 export const EFECTOS_PRACTICA_LIBRE_POR_DEFECTO: EfectosPracticaLibre = {
   reverb: 18,
+  reverbPreset: 'cuarto_grande',
   bajos: 0,
   medios: 0,
   agudos: 0,

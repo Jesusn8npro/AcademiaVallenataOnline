@@ -96,6 +96,7 @@ export function useEstudioPracticaLibre({
     const { efectos } = preferencias;
     motorAudioPro.actualizarEQ(efectos.bajos, efectos.medios, efectos.agudos);
     motorAudioPro.actualizarReverb(efectos.reverb / 100);
+    motorAudioPro.cargarPresetReverb(efectos.reverbPreset);
     motorAudioPro.setVolumenMaestro(volumenAcordeon / 100);
   }, [preferencias.efectos, volumenAcordeon, preferenciasListas]);
 

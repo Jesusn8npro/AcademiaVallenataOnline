@@ -104,7 +104,13 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // por defecto (mantiene latencia mínima en Android: directBus activo).
     const [reverbActivo, setReverbActivo] = useState(false);
     const [reverbIntensidad, setReverbIntensidad] = useState(20);
-    const [reverbPreset, setReverbPreset] = useState<'cuarto_mediano' | 'cuarto_grande' | 'vestibulo_mediano' | 'vestibulo_grande' | 'escenario_abierto'>('cuarto_grande');
+    const [reverbPreset, setReverbPreset] = useState<
+        | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
+        | 'sala_ensayo' | 'cuarto_grande' | 'club'
+        | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
+        | 'escenario_abierto' | 'canon' | 'bosque'
+        | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer'
+    >('cuarto_grande');
     const [graves, setGraves] = useState(0);
     const [medios, setMedios] = useState(0);
     const [agudos, setAgudos] = useState(0);
