@@ -1,0 +1,644 @@
+/* PanelEfectosSimulador — versión compacta para el modal flotante del
+   SimuladorApp. Cabe en ~640×460px sin cubrir todo el simulador. Mismo
+   look-and-feel del PanelEfectosAudio grande, pero con dimensiones
+   reducidas (knobs 38px, faders 80px, padding apretado). Clases peas-*
+   no chocan con las pea-* del panel grande de Práctica Libre. */
+
+/* Drawer lateral derecho — sin backdrop, no bloquea el simulador detrás.
+   pointer-events:none en el wrapper deja que los clicks sobre el acordeón
+   pasen, mientras que el panel interno (auto) captura los suyos. Cierre =
+   solo botón X. */
+.peas-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px;
+    animation: peas-fade 0.18s ease-out;
+}
+
+.peas-modal-contenido {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 540px;
+    max-height: calc(100vh - 16px);
+    overflow: auto;
+    animation: peas-slide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes peas-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes peas-slide {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Contenedor raíz */
+.peas-root {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #0e1422 0%, #07090f 100%);
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+/* Header (compactísimo) */
+.peas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.peas-header-titulo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.peas-header-titulo h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+}
+
+.peas-header-acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.peas-btn-secundario {
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    color: #e2e8f0;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+}
+
+.peas-btn-secundario:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.peas-btn-secundario:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.peas-btn-cerrar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #dc2626;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.peas-btn-cerrar:hover {
+    background: #ef4444;
+    transform: scale(1.05);
+}
+
+/* Fila procesadores: REVERB / ECO / DISTORS / EQ — 4 columnas. EQ ocupa
+   más ancho porque tiene 5 sliders dentro. */
+.peas-fila-procesadores {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1.5fr;
+    gap: 5px;
+    padding: 6px 7px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.peas-procesador,
+.peas-eq {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.peas-procesador-cabecera,
+.peas-eq-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.peas-procesador-nombre {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+.peas-procesador-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+}
+
+.peas-procesador-knobs {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-start;
+}
+
+/* Preset dropdown */
+.peas-preset-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+}
+
+.peas-preset-row span {
+    font-size: 9px;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.peas-preset-row select {
+    padding: 3px 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    color: #e2e8f0;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+}
+
+.peas-preset-row select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.peas-preset-row select option {
+    background: #0e1422;
+}
+
+/* Switch */
+.peas-switch {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+}
+
+.peas-switch span {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 14px;
+    height: 14px;
+    background: #cbd5e1;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.peas-switch.activo {
+    background: #22c55e;
+    border-color: #4ade80;
+}
+
+.peas-switch.activo span {
+    transform: translateX(13px);
+    background: #ffffff;
+}
+
+/* Knobs (perillas más chicas — 32px) */
+.peas-knob {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.peas-knob-cuerpo {
+    position: relative;
+    width: 32px;
+    height: 32px;
+}
+
+.peas-knob-disco {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 35% 30%, #9ca3af 0%, #6b7280 35%, #374151 70%, #1f2937 100%);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+        inset 0 2px 4px rgba(255, 255, 255, 0.15),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.55),
+        0 3px 6px rgba(0, 0, 0, 0.55);
+    position: relative;
+    transition: filter 0.15s;
+}
+
+.peas-knob-disco::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+        from -135deg,
+        transparent 0deg,
+        transparent 12deg,
+        rgba(0, 0, 0, 0.45) 12deg,
+        rgba(0, 0, 0, 0.45) 13.5deg
+    );
+    pointer-events: none;
+}
+
+.peas-knob-disco::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f3f4f6, #d1d5db 60%, #9ca3af 100%);
+    box-shadow:
+        0 1px 2px rgba(255, 255, 255, 0.4),
+        0 2px 3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.peas-knob-marca {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    width: 2px;
+    height: 7px;
+    background: #fbbf24;
+    border-radius: 2px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.8);
+    z-index: 2;
+}
+
+.peas-knob input[type="range"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: grab;
+    margin: 0;
+}
+
+.peas-knob input[type="range"]:active { cursor: grabbing; }
+.peas-knob input[type="range"]:disabled { cursor: not-allowed; }
+
+.peas-knob-disabled .peas-knob-disco {
+    filter: grayscale(0.7) brightness(0.5);
+}
+
+.peas-knob-disabled .peas-knob-marca {
+    background: #4b5563;
+    box-shadow: none;
+}
+
+.peas-knob-etiqueta {
+    font-size: 9px;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Acentos por color */
+.peas-acento-cyan .peas-knob-marca { background: #22d3ee; box-shadow: 0 0 5px rgba(34, 211, 238, 0.8); }
+.peas-acento-azul .peas-knob-marca { background: #60a5fa; box-shadow: 0 0 5px rgba(96, 165, 250, 0.8); }
+.peas-acento-naranja .peas-knob-marca { background: #fb923c; box-shadow: 0 0 5px rgba(251, 146, 60, 0.8); }
+.peas-acento-verde .peas-knob-marca { background: #4ade80; box-shadow: 0 0 5px rgba(74, 222, 128, 0.8); }
+.peas-acento-morado .peas-knob-marca { background: #a78bfa; box-shadow: 0 0 5px rgba(167, 139, 250, 0.8); }
+
+/* Ecualizador 5 bandas (sliders más cortos) */
+.peas-eq-tabs {
+    display: flex;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.peas-eq-tab {
+    padding: 3px 9px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.peas-eq-tab.activo {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(59, 130, 246, 0.4);
+}
+
+.peas-eq-tab:hover:not(.activo) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+}
+
+.peas-eq-grid-controles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    align-items: end;
+    padding: 3px 0;
+}
+
+.peas-eq-banda {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.peas-eq-banda input[type="range"] {
+    width: 4px;
+    height: 48px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(180deg, #ef4444 0%, #fbbf24 50%, #3b82f6 100%);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.peas-eq-banda input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border: 2px solid #1e293b;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.peas-eq-banda input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border: 2px solid #1e293b;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.peas-eq-frec {
+    font-size: 9px;
+    font-weight: 700;
+    color: #cbd5e1;
+    font-variant-numeric: tabular-nums;
+}
+
+.peas-eq-escala {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    padding: 0 3px;
+    font-size: 8px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Volúmenes */
+.peas-volumenes-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 10px 2px;
+}
+
+.peas-volumenes-cabecera h3 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.peas-fila-volumenes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 0 7px 7px;
+}
+
+.peas-canal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 2px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+}
+
+/* "Pan" como etiqueta del knob es redundante con "I D" abajo. La ocultamos
+   solo dentro de los canales de volumen para ahorrar altura. */
+.peas-canal .peas-knob-etiqueta {
+    display: none;
+}
+
+.peas-canal-titulo {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+/* Faders (sliders verticales más cortos y estrechos — 56×38px) */
+.peas-fader {
+    position: relative;
+    height: 56px;
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.peas-fader::before,
+.peas-fader::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 4px;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.28) 0px,
+        rgba(255, 255, 255, 0.28) 1px,
+        transparent 1px,
+        transparent 8px
+    );
+    pointer-events: none;
+}
+
+.peas-fader::before { left: 6px; }
+.peas-fader::after { right: 6px; }
+
+.peas-fader input[type="range"] {
+    position: relative;
+    z-index: 2;
+    width: 7px;
+    height: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.peas-fader-canales {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.peas-fader-canal {
+    width: 3px;
+    align-self: flex-end;
+    border-radius: 2px;
+    transition: height 0.08s linear;
+    box-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
+}
+
+.peas-fader.peas-acento-naranja .peas-fader-canal {
+    background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #4ade80 100%);
+}
+
+.peas-fader.peas-acento-azul .peas-fader-canal {
+    background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #60a5fa 100%);
+}
+
+.peas-fader.peas-acento-verde .peas-fader-canal {
+    background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #4ade80 100%);
+}
+
+.peas-fader.peas-acento-morado .peas-fader-canal {
+    background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #a78bfa 100%);
+}
+
+.peas-fader input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border: 2px solid #1e293b;
+    border-radius: 3px;
+    cursor: pointer;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.peas-fader input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border: 2px solid #1e293b;
+    border-radius: 3px;
+    cursor: pointer;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.peas-canal-pan-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 32px;
+    font-size: 7px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.3px;
+}
+
+/* Responsive: en pantallas chicas pasamos a 2 columnas y mantenemos
+   altura limitada con scroll interno para no romper el simulador detrás. */
+@media (max-width: 720px) {
+    .peas-fila-procesadores {
+        grid-template-columns: 1fr 1fr;
+    }
+    .peas-eq {
+        grid-column: 1 / -1;
+    }
+    .peas-fila-volumenes {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .peas-fader {
+        height: 75px;
+        width: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .peas-fila-procesadores,
+    .peas-fila-volumenes {
+        grid-template-columns: 1fr 1fr;
+    }
+    .peas-eq {
+        grid-column: 1 / -1;
+    }
+    .peas-fader {
+        height: 70px;
+    }
+    .peas-knob-cuerpo {
+        width: 34px;
+        height: 34px;
+    }
+}

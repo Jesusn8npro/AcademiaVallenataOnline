@@ -13,7 +13,7 @@ import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
-import PanelEfectosAudio from '../../componentes/Efectos/PanelEfectosAudio';
+import PanelEfectosSimulador from './Componentes/PanelEfectosSimulador';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -111,6 +111,21 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         | 'escenario_abierto' | 'canon' | 'bosque'
         | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer'
     >('cuarto_grande');
+    // Eco: intensidad 0..100 = wet+feedback; tiempo 0..100 mapea a 50..800ms.
+    const [ecoActivo, setEcoActivo] = useState(false);
+    const [ecoIntensidad, setEcoIntensidad] = useState(30);
+    const [ecoTiempo, setEcoTiempo] = useState(40);
+    // Distorsión: intensidad 0..100 = mezcla del path distorsionado;
+    // preset selecciona curva (tanh/hardclip/fuzz/etc) + EQ tonal pre/post.
+    const [distorsActivo, setDistorsActivo] = useState(false);
+    const [distorsIntensidad, setDistorsIntensidad] = useState(40);
+    const [distorsPreset, setDistorsPreset] = useState<
+        | 'tubo_calido' | 'tubo_cremoso' | 'vintage_drive' | 'lofi_tape'
+        | 'crunch_clasico' | 'overdrive_blues' | 'rock_70s'
+        | 'distorsion_dura' | 'heavy_metal' | 'thrash' | 'death_metal'
+        | 'fuzz_muff' | 'fuzz_tone' | 'octave_fuzz'
+        | 'bit_crusher' | 'megafono' | 'telefono' | 'wave_folder'
+    >('crunch_clasico');
     const [graves, setGraves] = useState(0);
     const [medios, setMedios] = useState(0);
     const [agudos, setAgudos] = useState(0);
@@ -155,6 +170,24 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         motorAudioPro.cargarPresetReverb(reverbPreset);
     }, [reverbPreset]);
 
+    // Eco: cuando está apagado se manda intensidad=0 (silencia wet+feedback).
+    // Tiempo 0..100 UI → 50..800ms (cubre slap-back, delay clásico y dub).
+    useEffect(() => {
+        const intensidadFinal = ecoActivo ? ecoIntensidad / 100 : 0;
+        const tiempoSeg = 0.05 + (ecoTiempo / 100) * 0.75;
+        motorAudioPro.actualizarEco(intensidadFinal, tiempoSeg);
+    }, [ecoActivo, ecoIntensidad, ecoTiempo]);
+
+    // Distorsión: el preset define curva + EQ; el knob controla wet mix.
+    useEffect(() => {
+        const intensidadFinal = distorsActivo ? distorsIntensidad / 100 : 0;
+        motorAudioPro.actualizarDistorsion(intensidadFinal);
+    }, [distorsActivo, distorsIntensidad]);
+
+    useEffect(() => {
+        motorAudioPro.cargarPresetDistorsion(distorsPreset);
+    }, [distorsPreset]);
+
     useEffect(() => {
         motorAudioPro.actualizarEQ(graves, medios, agudos);
     }, [graves, medios, agudos]);
@@ -176,6 +209,11 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const restaurarEfectos = useCallback(() => {
         setReverbActivo(false);
         setReverbIntensidad(20);
+        setEcoActivo(false);
+        setEcoIntensidad(30);
+        setEcoTiempo(40);
+        setDistorsActivo(false);
+        setDistorsIntensidad(40);
         setGraves(0);
         setMedios(0);
         setAgudos(0);
@@ -345,8 +383,12 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         sonido: any; volumen: number;
     } | null>(null);
 
+    // El panel FX se diseñó para no bloquear el simulador (drawer lateral con
+    // pointer-events: none en el overlay). Lo excluimos de la lista que apaga
+    // el audio para que el alumno pueda seguir tocando los pitos visibles
+    // mientras ajusta efectos. Otros modales sí siguen apagando el audio.
     const desactivarAudio = useMemo(
-        () => enReproduccion || Object.values(modales).some(v => v),
+        () => enReproduccion || Object.entries(modales).some(([key, v]) => v && key !== 'efectos'),
         [modales, enReproduccion]
     );
 
@@ -1121,15 +1163,27 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
 
             {modales.efectos && (
-                <div className="pea-modal-overlay" onClick={() => toggleModal('efectos')}>
-                    <div className="pea-modal-contenido" onClick={(e) => e.stopPropagation()}>
-                        <PanelEfectosAudio
+                <div className="peas-modal-overlay" onClick={() => toggleModal('efectos')}>
+                    <div className="peas-modal-contenido" onClick={(e) => e.stopPropagation()}>
+                        <PanelEfectosSimulador
                             reverbActivo={reverbActivo}
                             reverbIntensidad={reverbIntensidad}
                             reverbPreset={reverbPreset}
                             onCambiarReverbActivo={setReverbActivo}
                             onCambiarReverbIntensidad={setReverbIntensidad}
                             onCambiarReverbPreset={setReverbPreset}
+                            ecoActivo={ecoActivo}
+                            ecoIntensidad={ecoIntensidad}
+                            ecoTiempo={ecoTiempo}
+                            onCambiarEcoActivo={setEcoActivo}
+                            onCambiarEcoIntensidad={setEcoIntensidad}
+                            onCambiarEcoTiempo={setEcoTiempo}
+                            distorsActivo={distorsActivo}
+                            distorsIntensidad={distorsIntensidad}
+                            distorsPreset={distorsPreset}
+                            onCambiarDistorsActivo={setDistorsActivo}
+                            onCambiarDistorsIntensidad={setDistorsIntensidad}
+                            onCambiarDistorsPreset={setDistorsPreset}
                             graves={graves}
                             medios={medios}
                             agudos={agudos}

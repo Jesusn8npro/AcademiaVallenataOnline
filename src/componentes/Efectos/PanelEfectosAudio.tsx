@@ -22,6 +22,18 @@ type PresetReverbId =
   // Vintage / efectos especiales
   | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer';
 
+type PresetDistorsionId =
+  // Cálidos / tube
+  | 'tubo_calido' | 'tubo_cremoso' | 'vintage_drive' | 'lofi_tape'
+  // Crunch
+  | 'crunch_clasico' | 'overdrive_blues' | 'rock_70s'
+  // Hard / Metal
+  | 'distorsion_dura' | 'heavy_metal' | 'thrash' | 'death_metal'
+  // Fuzz
+  | 'fuzz_muff' | 'fuzz_tone' | 'octave_fuzz'
+  // Experimentales
+  | 'bit_crusher' | 'megafono' | 'telefono' | 'wave_folder';
+
 interface PanelEfectosAudioProps {
   reverbActivo: boolean;
   reverbIntensidad: number;
@@ -29,6 +41,23 @@ interface PanelEfectosAudioProps {
   onCambiarReverbActivo: (activo: boolean) => void;
   onCambiarReverbIntensidad: (valor: number) => void;
   onCambiarReverbPreset?: (preset: PresetReverbId) => void;
+
+  // Eco — opcionales con fallback a state local. Permite que páginas que aún
+  // no cablearon el eco al motor (ej. Práctica Libre) sigan mostrando la UI.
+  ecoActivo?: boolean;
+  ecoIntensidad?: number;
+  ecoTiempo?: number;
+  onCambiarEcoActivo?: (activo: boolean) => void;
+  onCambiarEcoIntensidad?: (v: number) => void;
+  onCambiarEcoTiempo?: (v: number) => void;
+
+  // Distorsión — mismo patrón opcional que el eco.
+  distorsActivo?: boolean;
+  distorsIntensidad?: number;
+  distorsPreset?: PresetDistorsionId;
+  onCambiarDistorsActivo?: (activo: boolean) => void;
+  onCambiarDistorsIntensidad?: (v: number) => void;
+  onCambiarDistorsPreset?: (preset: PresetDistorsionId) => void;
 
   // Las 3 bandas reales del motor. Internamente las exponemos como 5 sliders.
   graves: number;
@@ -221,6 +250,10 @@ const Fader: React.FC<FaderProps> = ({
 
 const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
   reverbActivo, reverbIntensidad, reverbPreset, onCambiarReverbActivo, onCambiarReverbIntensidad, onCambiarReverbPreset,
+  ecoActivo: ecoActivoExt, ecoIntensidad: ecoIntensidadExt, ecoTiempo: ecoTiempoExt,
+  onCambiarEcoActivo, onCambiarEcoIntensidad, onCambiarEcoTiempo,
+  distorsActivo: distorsActivoExt, distorsIntensidad: distorsIntensidadExt, distorsPreset: distorsPresetExt,
+  onCambiarDistorsActivo, onCambiarDistorsIntensidad, onCambiarDistorsPreset,
   graves, medios, agudos, onCambiarGraves, onCambiarMedios, onCambiarAgudos,
   volumenTeclado, volumenBajos, volumenLoops, volumenMetronomo,
   onCambiarVolumenTeclado, onCambiarVolumenBajos, onCambiarVolumenLoops, onCambiarVolumenMetronomo,
@@ -232,13 +265,26 @@ const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
   onCambiarPanTeclado, onCambiarPanBajos, onCambiarPanLoops, onCambiarPanMetronomo,
   onCerrar, onRestaurar,
 }) => {
-  // Estados de toggles para Eco y Distors (UI funcional pero sin backend audio
-  // hoy — se conectarán a DelayNode + WaveShaperNode en una fase posterior).
-  const [ecoActivo, setEcoActivo] = useState(false);
-  const [ecoIntensidad, setEcoIntensidad] = useState(30);
-  const [ecoTiempo, setEcoTiempo] = useState(40);
-  const [distorsActivo, setDistorsActivo] = useState(false);
-  const [distorsIntensidad, setDistorsIntensidad] = useState(25);
+  // Eco controlado o local (fallback para páginas sin motor cableado).
+  const [ecoActivoLocal, setEcoActivoLocal] = useState(false);
+  const [ecoIntensidadLocal, setEcoIntensidadLocal] = useState(30);
+  const [ecoTiempoLocal, setEcoTiempoLocal] = useState(40);
+  const ecoActivo = ecoActivoExt ?? ecoActivoLocal;
+  const ecoIntensidad = ecoIntensidadExt ?? ecoIntensidadLocal;
+  const ecoTiempo = ecoTiempoExt ?? ecoTiempoLocal;
+  const setEcoActivo = onCambiarEcoActivo ?? setEcoActivoLocal;
+  const setEcoIntensidad = onCambiarEcoIntensidad ?? setEcoIntensidadLocal;
+  const setEcoTiempo = onCambiarEcoTiempo ?? setEcoTiempoLocal;
+  // Distorsión controlada o local (fallback para páginas sin motor cableado).
+  const [distorsActivoLocal, setDistorsActivoLocal] = useState(false);
+  const [distorsIntensidadLocal, setDistorsIntensidadLocal] = useState(40);
+  const [distorsPresetLocal, setDistorsPresetLocal] = useState<PresetDistorsionId>('crunch_clasico');
+  const distorsActivo = distorsActivoExt ?? distorsActivoLocal;
+  const distorsIntensidad = distorsIntensidadExt ?? distorsIntensidadLocal;
+  const distorsPreset = distorsPresetExt ?? distorsPresetLocal;
+  const setDistorsActivo = onCambiarDistorsActivo ?? setDistorsActivoLocal;
+  const setDistorsIntensidad = onCambiarDistorsIntensidad ?? setDistorsIntensidadLocal;
+  const setDistorsPreset = onCambiarDistorsPreset ?? setDistorsPresetLocal;
 
   // EQ de 5 bandas. Internamente mantiene los 5 valores propios; en useEffect
   // los promedia y empuja a las 3 props reales (graves/medios/agudos).
@@ -315,9 +361,41 @@ const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
   const gruposReverb = ['Pequeños', 'Medianos', 'Grandes', 'Aire Libre', 'Especiales'];
   const presetActualReverb: PresetReverbId | 'manual' = reverbPreset ?? 'cuarto_grande';
 
+  // Presets de Distorsión — el preset define curva (tanh, hard_clip, fuzz...)
+  // y EQ tonal pre/post. El knob solo controla el wet mix.
+  const presetsDistorsion: Array<{ id: PresetDistorsionId; nombre: string; grupo: string }> = [
+    { id: 'tubo_calido',     nombre: 'Tubo Cálido',      grupo: 'Cálidos' },
+    { id: 'tubo_cremoso',    nombre: 'Tubo Cremoso',     grupo: 'Cálidos' },
+    { id: 'vintage_drive',   nombre: 'Vintage Drive',    grupo: 'Cálidos' },
+    { id: 'lofi_tape',       nombre: 'Lo-Fi Tape',       grupo: 'Cálidos' },
+    { id: 'crunch_clasico',  nombre: 'Crunch Clásico',   grupo: 'Crunch' },
+    { id: 'overdrive_blues', nombre: 'Overdrive Blues',  grupo: 'Crunch' },
+    { id: 'rock_70s',        nombre: 'Rock 70s',         grupo: 'Crunch' },
+    { id: 'distorsion_dura', nombre: 'Distorsión Dura',  grupo: 'Hard / Metal' },
+    { id: 'heavy_metal',     nombre: 'Heavy Metal',      grupo: 'Hard / Metal' },
+    { id: 'thrash',          nombre: 'Thrash',           grupo: 'Hard / Metal' },
+    { id: 'death_metal',     nombre: 'Death Metal',      grupo: 'Hard / Metal' },
+    { id: 'fuzz_muff',       nombre: 'Fuzz Big Muff',    grupo: 'Fuzz' },
+    { id: 'fuzz_tone',       nombre: 'Fuzz Tone',        grupo: 'Fuzz' },
+    { id: 'octave_fuzz',     nombre: 'Octave Fuzz',      grupo: 'Fuzz' },
+    { id: 'bit_crusher',     nombre: 'Bit Crusher',      grupo: 'Experimentales' },
+    { id: 'megafono',        nombre: 'Megáfono',         grupo: 'Experimentales' },
+    { id: 'telefono',        nombre: 'Teléfono',         grupo: 'Experimentales' },
+    { id: 'wave_folder',     nombre: 'Wave Folder',      grupo: 'Experimentales' },
+  ];
+  const gruposDistorsion = ['Cálidos', 'Crunch', 'Hard / Metal', 'Fuzz', 'Experimentales'];
+
   const handleRestaurarTodo = () => {
     setEcoActivo(false);
+    setEcoIntensidad(30);
+    setEcoTiempo(40);
+    setEcoActivoLocal(false);
+    setEcoIntensidadLocal(30);
+    setEcoTiempoLocal(40);
     setDistorsActivo(false);
+    setDistorsIntensidad(40);
+    setDistorsActivoLocal(false);
+    setDistorsIntensidadLocal(40);
     setEq60(0); setEq230(0); setEq910(0); setEq3600(0); setEq14k(0);
     setPanTeclado(0); setPanBajos(0); setPanLoops(0); setPanMetronomo(0);
     setPanTecladoLocal(0); setPanBajosLocal(0); setPanLoopsLocal(0); setPanMetronomoLocal(0);
@@ -424,10 +502,21 @@ const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
           <div className="pea-procesador-control">
             <label className="pea-preset-row">
               <span>Preaj.</span>
-              <select disabled={!distorsActivo} defaultValue="drum">
-                <option value="drum">Drum room</option>
-                <option value="vocal">Vocal warm</option>
-                <option value="hard">Hard rock</option>
+              <select
+                value={distorsPreset}
+                disabled={!distorsActivo}
+                onChange={(e) => {
+                  const preset = presetsDistorsion.find((p) => p.id === e.target.value);
+                  if (preset) setDistorsPreset(preset.id);
+                }}
+              >
+                {gruposDistorsion.map((g) => (
+                  <optgroup key={g} label={g}>
+                    {presetsDistorsion.filter((p) => p.grupo === g).map((p) => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </label>
             <Knob
