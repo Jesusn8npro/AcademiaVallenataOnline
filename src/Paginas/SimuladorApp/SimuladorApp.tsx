@@ -1324,7 +1324,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     error={grabacion.errorGuardadoGrabacion}
                     tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Mi grabación'}
                     autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
-                    usoMetronomo={!!metronomoEnRecRef.current}
+                    usoMetronomo={!!grabacion.grabacionPendiente?.metadata?.metronomo}
                     resumen={grabacion.grabacionPendiente ? {
                         duracionMs: grabacion.grabacionPendiente.duracionMs,
                         bpm: grabacion.grabacionPendiente.bpm,

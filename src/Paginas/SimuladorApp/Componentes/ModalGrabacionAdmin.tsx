@@ -58,6 +58,19 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
     const [audioFondoFile, setAudioFondoFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // En mobile landscape el teclado virtual ocupa la mitad inferior y tapa
+    // los inputs. Al recibir focus, esperamos a que el teclado termine de
+    // aparecer (~300ms) y hacemos scroll del input hacia el centro del
+    // viewport disponible para que el alumno vea lo que escribe.
+    const handleFocusInput = (e: React.FocusEvent<HTMLElement>) => {
+        const el = e.currentTarget;
+        setTimeout(() => {
+            try {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (_) { /* navegadores antiguos: no-op */ }
+        }, 300);
+    };
+
     // Reset al abrir/cerrar.
     useEffect(() => {
         if (!visible) return;
@@ -194,6 +207,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
                             className="mga-input"
                             value={titulo}
                             onChange={(e) => setTitulo(e.target.value)}
+                            onFocus={handleFocusInput}
                             placeholder="Ej: Camino de la noche"
                             disabled={guardando}
                             maxLength={120}
@@ -208,6 +222,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
                                 className="mga-textarea"
                                 value={descripcion}
                                 onChange={(e) => setDescripcion(e.target.value)}
+                                onFocus={handleFocusInput}
                                 rows={2}
                                 disabled={guardando}
                                 maxLength={500}
@@ -225,6 +240,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
                                     className="mga-input"
                                     value={autor}
                                     onChange={(e) => setAutor(e.target.value)}
+                                    onFocus={handleFocusInput}
                                     placeholder="Nombre del autor / artista"
                                     disabled={guardando}
                                     maxLength={120}
@@ -238,6 +254,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
                                         className="mga-select"
                                         value={dificultad}
                                         onChange={(e) => setDificultad(e.target.value as Dificultad)}
+                                        onFocus={handleFocusInput}
                                         disabled={guardando}
                                     >
                                         <option value="basico">Básico</option>
@@ -251,6 +268,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
                                         className="mga-select"
                                         value={tipo}
                                         onChange={(e) => setTipo(e.target.value as Tipo)}
+                                        onFocus={handleFocusInput}
                                         disabled={guardando}
                                     >
                                         <option value="cancion">Canción</option>
