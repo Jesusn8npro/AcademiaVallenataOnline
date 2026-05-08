@@ -402,14 +402,19 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     );
 
     // Cuando el panel FX está abierto, ocupa la mitad derecha de la pantalla.
-    // Pasamos su rect como "bloqueador" para que `usePointerAcordeon` ignore
-    // hits que caen tapados por el panel (evita que el slide del dedo desde
-    // un pito visible al lado active los pitos detrás del panel).
+    // Pasamos su rect + el del botón FOCO como "bloqueadores" para que
+    // `usePointerAcordeon` ignore hits que caen sobre ellos (evita que tocar
+    // el botón FOCO active el pito que queda debajo, o que el slide del dedo
+    // desde un pito visible active los pitos tapados por el panel FX).
     const obtenerRectsBloqueadores = useCallback((): DOMRect[] => {
-        if (!modales.efectos) return [];
-        const panel = document.querySelector('.peas-modal-contenido') as HTMLElement | null;
-        if (!panel) return [];
-        return [panel.getBoundingClientRect()];
+        const rects: DOMRect[] = [];
+        if (modales.efectos) {
+            const panel = document.querySelector('.peas-modal-contenido') as HTMLElement | null;
+            if (panel) rects.push(panel.getBoundingClientRect());
+        }
+        const btnFoco = document.querySelector('.btn-modo-foco') as HTMLElement | null;
+        if (btnFoco) rects.push(btnFoco.getBoundingClientRect());
+        return rects;
     }, [modales.efectos]);
 
     const { manejarCambioFuelle, limpiarGeometria, actualizarGeometria } = usePointerAcordeon({

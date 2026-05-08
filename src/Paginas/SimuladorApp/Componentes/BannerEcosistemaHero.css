@@ -7,17 +7,17 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 8px 5px 6px;
+    gap: 5px;
+    padding: 4px 7px 4px 5px;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 9px;
+    border-radius: 8px;
     cursor: pointer;
     overflow: hidden;
     width: 100%;
-    /* Banner comprimible: max bajado de 360→260px y min de 240→160px para
-       que no empuje a los demás botones de la barra y todos quepan. */
-    max-width: 260px;
-    min-width: 160px;
+    /* Banner comprimible — más chico para que quepan todos los botones
+       laterales sin desbordar la barra. */
+    max-width: 210px;
+    min-width: 130px;
     text-align: left;
     color: #ffffff;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;

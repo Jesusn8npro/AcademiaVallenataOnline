@@ -38,7 +38,7 @@
 .seccion-barra {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     height: 100%;
     position: relative;
 }
@@ -184,15 +184,16 @@
 .boton-herramienta.activo span { color: var(--bh-acento); }
 
 /* El banner Hero ya tiene su propio gradiente y border. Aquí solo
-   centramos el contenedor sin agregar otro fondo encima. */
+   centramos el contenedor sin agregar otro fondo encima. flex-shrink
+   permite que se comprima cuando los demás botones necesitan espacio. */
 .bloque-anuncio-centro {
-    flex: 1;
-    max-width: 360px;
+    flex: 0 1 auto;
+    max-width: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    margin: 0 8px;
+    margin: 0 4px;
 }
 
 .miniatura-acordeon-pro {
@@ -459,48 +460,12 @@
    Activado vía clase en el contenedor. Free oculta botones pero deja el
    banner Hero (gatillo de venta). Premium oculta toda la barra. */
 
-/* La barra usa transiciones SIEMPRE — fluyen el ocultar y el reaparecer
-   con la misma cadencia. CRÍTICO: NO colapsamos height/padding/margin al
-   activar foco — eso haría que el padre redistribuya el espacio y los
-   pitos crezcan ("se acercaría" la imagen del acordeón). En su lugar
-   solo tocamos opacity + visibility + pointer-events, así el espacio
-   físico se mantiene y el acordeón queda EXACTAMENTE como antes. */
-.barra-herramientas-contenedor {
-    transition:
-        opacity 0.4s cubic-bezier(0.65, 0, 0.35, 1),
-        visibility 0s linear 0s,
-        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
-}
+/* La animación de la barra se controla desde .simulador-canvas.modo-foco
+   (max-height + opacity + margin + transform — todo coordinado con la
+   transición de height del canvas). Aquí solo dejamos las transiciones
+   internas de las secciones por si se reactivan en otra fase. */
 .barra-herramientas-contenedor .seccion-barra {
-    transition:
-        opacity 0.32s cubic-bezier(0.65, 0, 0.35, 1),
-        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-/* PREMIUM: barra entera invisible + slide-up suave. Espacio físico se
-   mantiene → acordeón queda en la misma posición sin "acercarse". */
-.barra-herramientas-contenedor.foco-premium {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(-6px);
-    /* Delay del visibility para que se mantenga visible durante el fade */
-    transition:
-        opacity 0.4s cubic-bezier(0.65, 0, 0.35, 1),
-        visibility 0s linear 0.4s,
-        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-/* FREE: secciones laterales invisibles, banner queda visible. La barra
-   sigue ahí (mismo espacio) pero solo se ve el banner Hero centrado —
-   gatillo de venta del Plus permanece. */
-.barra-herramientas-contenedor.foco-free .seccion-barra {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition:
-        opacity 0.32s cubic-bezier(0.65, 0, 0.35, 1),
-        visibility 0s linear 0.32s;
+    transition: opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* ─── Botón "Modo Foco" — pestaña vertical slim pegada al borde izquierdo
