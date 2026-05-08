@@ -459,14 +459,32 @@
    Activado vía clase en el contenedor. Free oculta botones pero deja el
    banner Hero (gatillo de venta). Premium oculta toda la barra. */
 
-/* FREE: ocultamos las secciones laterales con animación; el banner queda
-   visible centrado. La barra se compacta al ancho del banner. */
+/* La barra y sus secciones tienen transición SIEMPRE — para que tanto el
+   ocultar como el mostrar fluyan suavemente (no solo al activar foco).
+   Cubic-bezier easeInOutCirc da una sensación de inercia mecánica
+   elegante, mucho más sutil que un ease estándar. */
+.barra-herramientas-contenedor {
+    transition:
+        height 0.45s cubic-bezier(0.65, 0, 0.35, 1),
+        opacity 0.32s ease-out 0.06s,
+        max-width 0.45s cubic-bezier(0.65, 0, 0.35, 1),
+        padding 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+        margin 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+        border-width 0.3s ease;
+}
+.barra-herramientas-contenedor .seccion-barra {
+    transition:
+        width 0.42s cubic-bezier(0.65, 0, 0.35, 1),
+        opacity 0.28s ease-out,
+        gap 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* FREE: ocultamos las secciones laterales; el banner queda visible. */
 .barra-herramientas-contenedor.foco-free .seccion-barra {
     width: 0;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
-    transition: width 0.25s ease, opacity 0.2s;
     gap: 0;
     padding: 0;
 }
@@ -474,10 +492,9 @@
     max-width: 380px;
     width: auto;
     padding: 0 6px;
-    transition: max-width 0.25s ease;
 }
 
-/* PREMIUM: ocultamos la barra ENTERA con un slide-up tenue. */
+/* PREMIUM: ocultamos la barra ENTERA con slide-up suave + fade. */
 .barra-herramientas-contenedor.foco-premium {
     height: 0;
     border-width: 0;
@@ -486,61 +503,169 @@
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
-    transition: height 0.28s ease, opacity 0.2s, margin 0.28s;
 }
 
-/* ─── Botón flotante "Modo Foco" ────────────────────────────────────────
-   Posicionado abajo-izquierda del simulador. Siempre visible (también
-   cuando el modo foco está activo, para poder salir). */
+/* ─── Botón "Modo Foco" — pestaña vertical slim pegada al borde izquierdo
+   Diseño minimalista: ocupa muy poco espacio, no compite con BAJOS, REC
+   ni con los pitos. Cuando inactivo muestra el texto "FOCO" rotado 90°.
+   Cuando activo, se reduce a solo el ícono del ojo (más sutil aún). */
 .btn-modo-foco {
     position: fixed;
-    bottom: 14px;
-    left: 14px;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 1500;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
-    padding: 7px 11px;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+    justify-content: center;
+    gap: 8px;
+    width: 26px;
+    padding: 12px 4px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.92) 100%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(34, 211, 238, 0.4);
-    border-radius: 999px;
+    border-left: none;
+    border-radius: 0 10px 10px 0;
     color: #22d3ee;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
     cursor: pointer;
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.5),
+        2px 0 8px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transition: all 0.18s;
+    transition:
+        transform 0.25s cubic-bezier(0.65, 0, 0.35, 1),
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        box-shadow 0.2s,
+        padding 0.3s cubic-bezier(0.65, 0, 0.35, 1);
     user-select: none;
     -webkit-user-select: none;
 }
 
+/* Texto "FOCO" rotado a vertical (rl + rotate 180 lo ordena top→bottom) */
+.btn-modo-foco span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    line-height: 1;
+}
+
 .btn-modo-foco:hover {
-    background: linear-gradient(180deg, rgba(34, 211, 238, 0.18) 0%, rgba(8, 145, 178, 0.18) 100%);
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.22) 0%, rgba(8, 145, 178, 0.22) 100%);
     border-color: #22d3ee;
-    transform: translateY(-1px);
+    transform: translateY(-50%) translateX(2px);
     box-shadow:
-        0 6px 16px rgba(34, 211, 238, 0.3),
+        4px 0 14px rgba(34, 211, 238, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-modo-foco:active {
-    transform: translateY(0);
+    transform: translateY(-50%) translateX(0);
 }
 
-/* Cuando el modo foco está activo, el botón cambia a "salir" — color de
-   alerta ambar para indicar que estás en un estado especial. */
+/* MODO FOCO ACTIVO: solo el ícono del ojo (texto oculto), color ámbar
+   tenue. Lo más mínimo posible para no estorbar mientras se toca. */
 .btn-modo-foco.activo {
-    background: linear-gradient(180deg, rgba(180, 83, 9, 0.95) 0%, rgba(120, 53, 15, 0.95) 100%);
-    border-color: rgba(251, 191, 36, 0.6);
+    padding: 9px 3px;
+    background: linear-gradient(180deg, rgba(180, 83, 9, 0.85) 0%, rgba(120, 53, 15, 0.85) 100%);
+    border-color: rgba(251, 191, 36, 0.5);
     color: #fbbf24;
 }
+.btn-modo-foco.activo span { display: none; }
 
 .btn-modo-foco.activo:hover {
     background: linear-gradient(180deg, rgba(217, 119, 6, 0.95) 0%, rgba(180, 83, 9, 0.95) 100%);
-    box-shadow: 0 6px 16px rgba(251, 191, 36, 0.3);
+    border-color: #fbbf24;
+    box-shadow: 4px 0 14px rgba(251, 191, 36, 0.35);
+}
+
+/* ─── Toast de upgrade Premium (al expirar el modo foco free) ────────── */
+.toast-upgrade-premium {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #fbbf24 100%);
+    color: #1f2937;
+    border-radius: 10px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 32px rgba(251, 191, 36, 0.4);
+    max-width: 92vw;
+    animation: toast-up-in 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.toast-upgrade-premium .toast-icono {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 50%;
+}
+
+.toast-upgrade-premium .toast-mensaje {
+    flex: 1;
+    line-height: 1.3;
+    font-size: 11.5px;
+}
+.toast-upgrade-premium .toast-mensaje strong {
+    font-weight: 800;
+    display: block;
+}
+
+.toast-upgrade-premium .toast-cta {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    background: #1f2937;
+    color: #fbbf24;
+    border: none;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.15s, transform 0.15s;
+}
+.toast-upgrade-premium .toast-cta:hover {
+    background: #0f172a;
+    transform: translateY(-1px);
+}
+
+.toast-upgrade-premium .toast-cerrar {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: rgba(31, 41, 55, 0.7);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+.toast-upgrade-premium .toast-cerrar:hover {
+    background: rgba(0, 0, 0, 0.15);
+    color: #1f2937;
+}
+
+@keyframes toast-up-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
