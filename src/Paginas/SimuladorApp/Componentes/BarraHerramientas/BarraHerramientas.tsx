@@ -164,7 +164,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     onClick={onToggleTonalidades}
                 >
                     <Music size={20} />
-                    <span>{logica.tonalidadSeleccionada}</span>
+                    <span>Tono</span>
                 </div>
 
                 {onToggleEfectos && (

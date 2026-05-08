@@ -195,6 +195,175 @@ export const PRESETS_REVERB: Record<PresetReverbId, ReverbPreset> = {
     },
 };
 
+// ─── Presets de Distorsión (WaveShaperNode + EQ tonal) ─────────────────────
+// Cada preset genera una curva no-lineal distinta (`tanh`, `hard_clip`, etc.)
+// y configura un filtro pre-distorsión (color de entrada) + post-distorsión
+// (taming de agudos chillones). El output `compensacion` corrige el nivel
+// porque algunas curvas suben mucho la energía RMS.
+//
+// Curvas:
+// - tanh: saturación cálida tipo tubo (sweet spot blues/jazz)
+// - tanh_asym: tubo con asimetría — armónicos pares (suena más "musical")
+// - sigmoid_asym: fuzz con offset DC — Big Muff style
+// - hard_clip: clipeo plano — agresivo, tipo amplificador saturado
+// - fold: wave folding — sonido alien, FM-like
+// - bitcrush: cuantización — lo-fi digital, chiptune
+// - octave_fuzz: full-wave rectifier — duplica frecuencia, fuzz octavado
+export type CurvaDistorsion =
+    | 'tanh' | 'tanh_asym' | 'sigmoid_asym' | 'hard_clip'
+    | 'fold' | 'bitcrush' | 'octave_fuzz';
+
+export interface PresetDistorsion {
+    curva: CurvaDistorsion;
+    drive: number;          // intensidad de la curva (1-100). En curvas tipo tanh, drive más alto = más saturado.
+    asimetria?: number;     // -0.5 a 0.5 (solo para curvas asimétricas)
+    bits?: number;          // 1-12 (solo para bitcrush)
+    // Pre-EQ: moldea la entrada antes de distorsionar (color)
+    preFreq?: number;
+    preTipo?: BiquadFilterType;
+    preGain?: number;       // dB (peaking/lowshelf/highshelf)
+    preQ?: number;
+    // Post-EQ: tame de la salida distorsionada (suaviza chillidos)
+    postFreq?: number;
+    postTipo?: BiquadFilterType;
+    postGain?: number;
+    postQ?: number;
+    // Compensación de output: 0.3-1.5. Curvas hard_clip tienden a salir altas;
+    // tanh suaves salen bajas. Este multiplicador iguala el loudness.
+    compensacion?: number;
+}
+
+export type PresetDistorsionId =
+    // Cálidos / tube
+    | 'tubo_calido' | 'tubo_cremoso' | 'vintage_drive' | 'lofi_tape'
+    // Crunch
+    | 'crunch_clasico' | 'overdrive_blues' | 'rock_70s'
+    // Hard / Metal
+    | 'distorsion_dura' | 'heavy_metal' | 'thrash' | 'death_metal'
+    // Fuzz
+    | 'fuzz_muff' | 'fuzz_tone' | 'octave_fuzz'
+    // Experimentales
+    | 'bit_crusher' | 'megafono' | 'telefono' | 'wave_folder';
+
+export const PRESETS_DISTORSION: Record<PresetDistorsionId, PresetDistorsion> = {
+    // ─── Cálidos / tube ────────────────────────────────────────────────────
+    tubo_calido: {
+        curva: 'tanh', drive: 4,
+        preFreq: 800, preTipo: 'peaking', preGain: 3, preQ: 0.7,
+        postFreq: 6500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 1.0,
+    },
+    tubo_cremoso: {
+        curva: 'tanh_asym', drive: 6, asimetria: 0.15,
+        preFreq: 700, preTipo: 'peaking', preGain: 4, preQ: 0.6,
+        postFreq: 5500, postTipo: 'lowpass', postQ: 0.6,
+        compensacion: 1.1,
+    },
+    vintage_drive: {
+        curva: 'tanh', drive: 3,
+        preFreq: 1200, preTipo: 'peaking', preGain: 2, preQ: 0.8,
+        postFreq: 7000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.95,
+    },
+    lofi_tape: {
+        curva: 'tanh', drive: 5,
+        preFreq: 4000, preTipo: 'lowpass', preQ: 0.7,
+        postFreq: 3500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 1.05,
+    },
+
+    // ─── Crunch ────────────────────────────────────────────────────────────
+    crunch_clasico: {
+        curva: 'tanh', drive: 12,
+        preFreq: 900, preTipo: 'peaking', preGain: 5, preQ: 0.9,
+        postFreq: 7500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.85,
+    },
+    overdrive_blues: {
+        curva: 'tanh_asym', drive: 18, asimetria: 0.1,
+        preFreq: 800, preTipo: 'peaking', preGain: 6, preQ: 1.0,
+        postFreq: 6500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.75,
+    },
+    rock_70s: {
+        curva: 'tanh', drive: 22,
+        preFreq: 1500, preTipo: 'peaking', preGain: 5, preQ: 1.0,
+        postFreq: 8500, postTipo: 'lowpass', postQ: 0.6,
+        compensacion: 0.7,
+    },
+
+    // ─── Hard / Metal ──────────────────────────────────────────────────────
+    distorsion_dura: {
+        curva: 'hard_clip', drive: 25,
+        preFreq: 1200, preTipo: 'peaking', preGain: 6, preQ: 1.2,
+        postFreq: 8000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.55,
+    },
+    heavy_metal: {
+        curva: 'hard_clip', drive: 40,
+        preFreq: 100, preTipo: 'highpass', preQ: 0.8,
+        postFreq: 9000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.5,
+    },
+    thrash: {
+        curva: 'hard_clip', drive: 55,
+        preFreq: 2500, preTipo: 'peaking', preGain: 7, preQ: 1.5,
+        postFreq: 10000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.45,
+    },
+    death_metal: {
+        curva: 'hard_clip', drive: 75,
+        preFreq: 800, preTipo: 'peaking', preGain: -4, preQ: 1.5,  // mids scoopeados
+        postFreq: 11000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.4,
+    },
+
+    // ─── Fuzz ──────────────────────────────────────────────────────────────
+    fuzz_muff: {
+        curva: 'sigmoid_asym', drive: 35, asimetria: 0.2,
+        preFreq: 600, preTipo: 'peaking', preGain: 5, preQ: 0.8,
+        postFreq: 5500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.5,
+    },
+    fuzz_tone: {
+        curva: 'sigmoid_asym', drive: 28, asimetria: 0.25,
+        preFreq: 1800, preTipo: 'peaking', preGain: 6, preQ: 1.0,
+        postFreq: 6500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.55,
+    },
+    octave_fuzz: {
+        curva: 'octave_fuzz', drive: 30,
+        preFreq: 1000, preTipo: 'peaking', preGain: 4, preQ: 0.9,
+        postFreq: 5500, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.5,
+    },
+
+    // ─── Experimentales ────────────────────────────────────────────────────
+    bit_crusher: {
+        curva: 'bitcrush', drive: 1, bits: 4,
+        postFreq: 6000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.7,
+    },
+    megafono: {
+        curva: 'hard_clip', drive: 30,
+        preFreq: 1500, preTipo: 'bandpass', preQ: 1.5,
+        postFreq: 1500, postTipo: 'bandpass', postQ: 1.5,
+        compensacion: 0.55,
+    },
+    telefono: {
+        curva: 'tanh', drive: 8,
+        preFreq: 1200, preTipo: 'bandpass', preQ: 2.0,
+        postFreq: 1500, postTipo: 'bandpass', postQ: 1.8,
+        compensacion: 0.85,
+    },
+    wave_folder: {
+        curva: 'fold', drive: 35,
+        preFreq: 1200, preTipo: 'peaking', preGain: 3, preQ: 0.7,
+        postFreq: 7000, postTipo: 'lowpass', postQ: 0.7,
+        compensacion: 0.6,
+    },
+};
+
 export class MotorAudioPro {
     private contexto: AudioContext;
     private bancos: Map<string, BancoSonido>;
@@ -209,9 +378,30 @@ export class MotorAudioPro {
     private filtroAltos!: BiquadFilterNode;
     private reverbNode!: ConvolverNode;
     private reverbGanancia!: GainNode;
+    // ─── Eco / Delay ────────────────────────────────────────────────────────
+    // Patrón canónico Web Audio: mixBus → ecoDelay → ecoWet → output, con
+    // feedback ecoDelay → ecoFeedback → ecoDelay (genera la cola de repeticiones).
+    // El feedback nunca pasa de ~0.6 para evitar runaway. La spec garantiza un
+    // bloque de procesamiento mínimo (128 samples ≈ 3ms) en cualquier loop con
+    // un DelayNode, así que el feedback es estable matemáticamente.
+    private ecoDelay!: DelayNode;
+    private ecoFeedback!: GainNode;
+    private ecoWet!: GainNode;
+    // ─── Distorsión ─────────────────────────────────────────────────────────
+    // Cadena en paralelo al path limpio: mixBus → distInput → distPreFilter →
+    // distNode (WaveShaperNode) → distPostFilter → distWet → output. El wet
+    // controla cuánto se oye la señal distorsionada por encima del clean.
+    private distInput!: GainNode;
+    private distPreFilter!: BiquadFilterNode;
+    private distNode!: WaveShaperNode;
+    private distPostFilter!: BiquadFilterNode;
+    private distWet!: GainNode;
+    private presetDistorsionActual: PresetDistorsion | null = null;
     private rutaConFiltros = false;
     private targetEQ = { bajos: 0, medios: 0, altos: 0 };
     private targetReverb = 0;
+    private targetEco = 0;
+    private targetDistorsion = 0;
 
     // Sub-buses con volumen + pan stereo independientes para teclado y bajos.
     // Permiten que el alumno controle ambos por separado en el panel de efectos
@@ -267,6 +457,38 @@ export class MotorAudioPro {
         this.mixBus.connect(this.reverbNode);
         this.reverbNode.connect(this.reverbGanancia);
         this.reverbGanancia.connect(this.nodoGananciaPrincipal);
+
+        // Eco con feedback. maxDelay=2.0s cubre desde slap-back (~50ms) hasta
+        // delays largos estilo dub (~800ms). Wet y feedback arrancan en 0.
+        this.ecoDelay = this.contexto.createDelay(2.0);
+        this.ecoDelay.delayTime.value = 0.3;
+        this.ecoFeedback = this.contexto.createGain();
+        this.ecoFeedback.gain.value = 0;
+        this.ecoWet = this.contexto.createGain();
+        this.ecoWet.gain.value = 0;
+        this.mixBus.connect(this.ecoDelay);
+        this.ecoDelay.connect(this.ecoFeedback);
+        this.ecoFeedback.connect(this.ecoDelay);
+        this.ecoDelay.connect(this.ecoWet);
+        this.ecoWet.connect(this.nodoGananciaPrincipal);
+
+        // Distorsión: cadena en paralelo. WaveShaperNode con oversample 4x
+        // suaviza el aliasing inevitable de las curvas no-lineales.
+        this.distInput = this.contexto.createGain();
+        this.distInput.gain.value = 1;
+        this.distPreFilter = this.contexto.createBiquadFilter();
+        this.distNode = this.contexto.createWaveShaper();
+        this.distNode.oversample = '4x';
+        this.distPostFilter = this.contexto.createBiquadFilter();
+        this.distWet = this.contexto.createGain();
+        this.distWet.gain.value = 0;
+        this.mixBus.connect(this.distInput);
+        this.distInput.connect(this.distPreFilter);
+        this.distPreFilter.connect(this.distNode);
+        this.distNode.connect(this.distPostFilter);
+        this.distPostFilter.connect(this.distWet);
+        this.distWet.connect(this.nodoGananciaPrincipal);
+        this._aplicarPresetDistorsion(PRESETS_DISTORSION.crunch_clasico);
 
         // 🎯 Android latency optimization: bus directo (sin EQ ni reverb) que se usa
         // cuando ningun efecto está activo. Ahorra 3 BiquadFilters + ConvolverNode en
@@ -341,7 +563,7 @@ export class MotorAudioPro {
     }
 
     private _evaluarRuta() {
-        const necesitaFiltros = this.targetEQ.bajos !== 0 || this.targetEQ.medios !== 0 || this.targetEQ.altos !== 0 || this.targetReverb > 0;
+        const necesitaFiltros = this.targetEQ.bajos !== 0 || this.targetEQ.medios !== 0 || this.targetEQ.altos !== 0 || this.targetReverb > 0 || this.targetEco > 0 || this.targetDistorsion > 0;
         this._conmutarRuta(necesitaFiltros);
     }
 
@@ -771,6 +993,192 @@ export class MotorAudioPro {
         // da presencia clara sin distorsión audible incluso en intensidad 100%.
         this.reverbGanancia.gain.setTargetAtTime(cantidad * 0.85, this.contexto.currentTime, 0.05);
         this.targetReverb = cantidad;
+        this._evaluarRuta();
+    }
+
+    /**
+     * Configura el eco. `intensidad` controla wet+feedback (cuánto se oye y
+     * cuántas repeticiones); `tiempoSeg` es el delay entre repeticiones.
+     * - intensidad=0 → silencio (wet=0, feedback=0). Útil para apagar el efecto.
+     * - intensidad=1 → wet ≈ 0.7, feedback ≈ 0.55 (cola larga sin runaway).
+     * - tiempoSeg típicos: 0.05 (slap-back) → 0.25 (clásico) → 0.6+ (dub).
+     */
+    actualizarEco(intensidad: number, tiempoSeg: number) {
+        if (!this.ecoDelay) return;
+        const cTime = this.contexto.currentTime;
+        const safeIntensidad = Math.max(0, Math.min(1, intensidad));
+        const safeTiempo = Math.max(0.001, Math.min(2.0, tiempoSeg));
+        // Wet: cuánto del eco llega al output. 0.7 a 100% mantiene presencia
+        // clara sin tapar la nota original.
+        this.ecoWet.gain.setTargetAtTime(safeIntensidad * 0.7, cTime, 0.05);
+        // Feedback: cuántas repeticiones audibles. Tope 0.6 — más allá la
+        // energía crece y la cadena entra en feedback infinito audible.
+        this.ecoFeedback.gain.setTargetAtTime(safeIntensidad * 0.6, cTime, 0.05);
+        this.ecoDelay.delayTime.setTargetAtTime(safeTiempo, cTime, 0.05);
+        this.targetEco = safeIntensidad;
+        this._evaluarRuta();
+    }
+
+    // ─── Distorsión ────────────────────────────────────────────────────────
+    // Generadores de curva. Cada uno produce un Float32Array de 4096 muestras
+    // mapeando entrada [-1, 1] a salida [-1, 1] no-lineal. El WaveShaperNode
+    // las usa como look-up table.
+    private _curvaTanh(drive: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            c[i] = Math.tanh(drive * x);
+        }
+        return c;
+    }
+
+    private _curvaTanhAsim(drive: number, asym: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        const baseline = Math.tanh(drive * asym);
+        let max = 0;
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            c[i] = Math.tanh(drive * (x + asym)) - baseline;
+            if (Math.abs(c[i]) > max) max = Math.abs(c[i]);
+        }
+        if (max > 0) for (let i = 0; i < n; i++) c[i] /= max;
+        return c;
+    }
+
+    private _curvaSigmoidAsim(drive: number, asym: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        const baseline = 2 / (1 + Math.exp(-drive * asym)) - 1;
+        let max = 0;
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            c[i] = (2 / (1 + Math.exp(-drive * (x + asym))) - 1) - baseline;
+            if (Math.abs(c[i]) > max) max = Math.abs(c[i]);
+        }
+        if (max > 0) for (let i = 0; i < n; i++) c[i] /= max;
+        return c;
+    }
+
+    private _curvaHardClip(drive: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        const k = drive / 8; // pre-amp: drive 8 → x1, drive 80 → x10
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            c[i] = Math.max(-1, Math.min(1, x * k));
+        }
+        return c;
+    }
+
+    private _curvaFold(drive: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        const k = drive / 10;
+        for (let i = 0; i < n; i++) {
+            let y = ((i * 2) / (n - 1) - 1) * k;
+            // Triangle-wave folder: rebota en ±1 hasta converger. Itera porque
+            // un solo rebote no basta cuando |y| > 3 (drive alto + extremos).
+            while (y > 1 || y < -1) {
+                if (y > 1) y = 2 - y;
+                else y = -2 - y;
+            }
+            c[i] = y;
+        }
+        return c;
+    }
+
+    private _curvaBitcrush(bits: number): Float32Array {
+        const n = 4096;
+        const c = new Float32Array(n);
+        const niveles = Math.pow(2, Math.max(1, bits));
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            c[i] = Math.round(x * (niveles / 2)) / (niveles / 2);
+        }
+        return c;
+    }
+
+    private _curvaOctaveFuzz(drive: number): Float32Array {
+        // Full-wave rectifier + saturación: |x| sube una octava al fundamental
+        const n = 4096;
+        const c = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+            const x = (i * 2) / (n - 1) - 1;
+            const rect = Math.abs(x) * 2 - 1;
+            c[i] = Math.tanh(drive / 6 * rect);
+        }
+        return c;
+    }
+
+    private _generarCurvaDistorsion(p: PresetDistorsion): Float32Array {
+        switch (p.curva) {
+            case 'tanh':         return this._curvaTanh(p.drive);
+            case 'tanh_asym':    return this._curvaTanhAsim(p.drive, p.asimetria ?? 0.1);
+            case 'sigmoid_asym': return this._curvaSigmoidAsim(p.drive, p.asimetria ?? 0.2);
+            case 'hard_clip':    return this._curvaHardClip(p.drive);
+            case 'fold':         return this._curvaFold(p.drive);
+            case 'bitcrush':     return this._curvaBitcrush(p.bits ?? 4);
+            case 'octave_fuzz':  return this._curvaOctaveFuzz(p.drive);
+        }
+    }
+
+    private _aplicarPresetDistorsion(p: PresetDistorsion) {
+        if (!this.distNode) return;
+        this.distNode.curve = this._generarCurvaDistorsion(p);
+        // Pre-filter: si no hay freq definida, dejamos un allpass neutro.
+        if (p.preFreq != null && p.preTipo) {
+            this.distPreFilter.type = p.preTipo;
+            this.distPreFilter.frequency.value = p.preFreq;
+            if (p.preGain != null) this.distPreFilter.gain.value = p.preGain;
+            if (p.preQ != null) this.distPreFilter.Q.value = p.preQ;
+        } else {
+            this.distPreFilter.type = 'allpass';
+            this.distPreFilter.frequency.value = 1000;
+            this.distPreFilter.gain.value = 0;
+        }
+        // Post-filter
+        if (p.postFreq != null && p.postTipo) {
+            this.distPostFilter.type = p.postTipo;
+            this.distPostFilter.frequency.value = p.postFreq;
+            if (p.postGain != null) this.distPostFilter.gain.value = p.postGain;
+            if (p.postQ != null) this.distPostFilter.Q.value = p.postQ;
+        } else {
+            this.distPostFilter.type = 'allpass';
+            this.distPostFilter.frequency.value = 8000;
+            this.distPostFilter.gain.value = 0;
+        }
+        this.presetDistorsionActual = p;
+        // Reaplica el wet target con la nueva compensación del preset.
+        const cTime = this.contexto.currentTime;
+        const compensacion = p.compensacion ?? 0.7;
+        this.distWet.gain.setTargetAtTime(this.targetDistorsion * compensacion, cTime, 0.05);
+    }
+
+    /**
+     * Cambia el preset de distorsión: regenera la curva del WaveShaperNode y
+     * reconfigura los BiquadFilters pre/post. La intensidad del knob (target)
+     * se mantiene; solo cambia el "carácter" de la distorsión.
+     */
+    cargarPresetDistorsion(presetId: PresetDistorsionId) {
+        const preset = PRESETS_DISTORSION[presetId];
+        if (!preset) return;
+        this._aplicarPresetDistorsion(preset);
+    }
+
+    /**
+     * Controla cuánto se mezcla la señal distorsionada con el path limpio.
+     * - 0 → silenciada (la señal limpia sale sola, vuelve al directBus si nada más activo).
+     * - 1 → wet a la compensación del preset (típicamente 0.4-1.0).
+     */
+    actualizarDistorsion(intensidad: number) {
+        if (!this.distWet) return;
+        const cTime = this.contexto.currentTime;
+        const safe = Math.max(0, Math.min(1, intensidad));
+        const compensacion = this.presetDistorsionActual?.compensacion ?? 0.7;
+        this.distWet.gain.setTargetAtTime(safe * compensacion, cTime, 0.05);
+        this.targetDistorsion = safe;
         this._evaluarRuta();
     }
 
