@@ -1,68 +1,148 @@
+/* Variables del tema "DAW pro" — slate oscuro + acento cyan único.
+   Cambia el feel de "industrial gris" a "consola de mezclas premium". */
 .barra-herramientas-contenedor {
+    --bh-acento: #22d3ee;
+    --bh-acento-glow: rgba(34, 211, 238, 0.35);
+    --bh-aprende: #fbbf24;
+    --bh-rec: #ef4444;
+    --bh-loop: #60a5fa;
+
     position: relative;
     width: 92%;
     margin: 0 auto;
-    height: 42px;
+    height: 44px;
     flex-shrink: 0;
-    background: linear-gradient(180deg, #333333 0%, #111111 100%);
-    border: 2px solid #555;
-    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 6px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), inset 0px 1px 1px rgba(255, 255, 255, 0.2);
+    padding: 0 8px;
+    /* Sombra exterior + ambient cyan tenue (el cyan se nota solo si miras de
+       cerca — da el toque "premium" sin saturar). Inset highlight arriba
+       remarca que la barra sobresale del fondo. */
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.6),
+        0 0 32px rgba(34, 211, 238, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     z-index: 200;
-    overflow: hidden;
+    overflow: visible;
 }
-.seccion-barra { display: flex; align-items: center; gap: 3px; height: 100%; }
 
+/* Divisores verticales sutiles entre secciones — separan grupos sin
+   ser dividers explícitos. Aparecen como gradientes que desaparecen. */
+.seccion-barra {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    position: relative;
+}
+
+/* Botón "saliente" como un botón físico de acordeón. El truco es combinar:
+   - Gradiente claro arriba → oscuro abajo (luz cae desde arriba)
+   - Inset highlight 1px en el borde superior (brilla como si hubiera vidrio)
+   - Drop shadow abajo (la pieza sobresale del panel)
+   El conjunto da la ilusión de relieve sin ser caricaturesco. */
 .boton-herramienta {
-    height: 34px;
-    min-width: 34px;
-    background: linear-gradient(180deg, #444 0%, #222 100%);
-    border: 1px solid #000;
-    border-radius: 6px;
+    height: 36px;
+    min-width: 36px;
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 9px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    color: #ccc;
-    transition: all 0.2s;
-    box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    transition: transform 0.12s ease, background 0.18s, border-color 0.18s, box-shadow 0.18s;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        0 2px 5px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(0, 0, 0, 0.3);
     position: relative;
-    padding: 0 4px;
+    padding: 0 5px;
 }
-.boton-herramienta:active { background: #111; transform: translateY(1px); }
 
+.boton-herramienta:hover:not(.activo) {
+    background: linear-gradient(180deg, #3f4f63 0%, #243149 100%);
+    border-color: rgba(34, 211, 238, 0.35);
+    color: #e2e8f0;
+}
+
+/* Press físico: se hunde un poquito y la sombra exterior se reduce */
+.boton-herramienta:active {
+    transform: translateY(1px);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.5),
+        0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Estado ACTIVO (modal abierto) — botón "hundido" como apretado en un
+   acordeón real. Gradiente invertido + sombra interna profunda + ring cyan.
+   Crítico: NO usar transform aquí — la flecha indicadora se ancla con
+   getBoundingClientRect() y un transform ofuscaría su cálculo. En su
+   lugar reducimos box-shadow exterior para simular el descenso. */
 .boton-herramienta.activo {
-    border-color: #fb923c;
-    background: linear-gradient(180deg, #333 0%, #111 100%);
-    box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(251, 146, 60, 0.6);
-    transform: translateY(2px);
+    background: linear-gradient(180deg, #0a1220 0%, #1a2438 100%);
+    border-color: var(--bh-acento);
+    color: var(--bh-acento);
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.7),
+        inset 0 -1px 0 rgba(34, 211, 238, 0.1),
+        0 0 0 1px var(--bh-acento-glow),
+        0 0 14px rgba(34, 211, 238, 0.25);
 }
 
+/* APRENDE conserva el oro como botón "primary" del sistema — es el llamado
+   a la acción principal. Mantiene el patrón saliente/hundido pero con
+   gradiente ámbar + glow dorado en lugar de cyan. */
 .boton-herramienta.boton-aprende {
-    background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
-    border: 1px solid #b45309;
+    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+    border: 1px solid rgba(180, 83, 9, 0.7);
     color: #422006;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1px 0 rgba(120, 53, 15, 0.4),
+        0 2px 5px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(0, 0, 0, 0.3);
 }
 .boton-herramienta.boton-aprende span {
     color: #422006;
     font-weight: 800;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.boton-herramienta.boton-aprende:hover:not(.activo) {
+    background: linear-gradient(180deg, #fcd34d 0%, #ea580c 100%);
+    border-color: #b45309;
 }
 .boton-herramienta.boton-aprende:active {
-    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
     transform: translateY(1px);
 }
 .boton-herramienta.boton-aprende.activo {
-    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
-    border-color: #fff;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.3), 0 0 18px rgba(251, 191, 36, 0.85);
+    background: linear-gradient(180deg, #b45309 0%, #92400e 100%);
+    border-color: #fbbf24;
+    color: #fef3c7;
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.55),
+        inset 0 -1px 0 rgba(251, 191, 36, 0.25),
+        0 0 0 1px rgba(251, 191, 36, 0.5),
+        0 0 16px rgba(251, 191, 36, 0.45);
+}
+.boton-herramienta.boton-aprende.activo span {
+    color: #fef3c7;
+    text-shadow: none;
 }
 
+/* Flecha indicadora que conecta el botón activo con el modal abierto.
+   Triángulo cyan con glow + sombra para parecer "luz emergiendo del botón".
+   Position fixed con CSS vars que el JS actualiza en cada open/resize. */
 .boton-herramienta.activo::after {
     content: '';
     position: fixed;
@@ -70,39 +150,49 @@
     top: var(--flecha-top, 0);
     transform: translateX(-50%);
     width: 0; height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 10px solid #fb923c;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 11px solid var(--bh-acento);
+    filter: drop-shadow(0 0 4px var(--bh-acento-glow)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     opacity: 1;
     z-index: 9999;
-    animation: flecha-pulse 0.3s ease-out;
+    animation: flecha-aparecer 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
     pointer-events: none;
 }
-@keyframes flecha-pulse {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
+
+/* APRENDE tiene su propio acento dorado — la flecha también. */
+.boton-herramienta.boton-aprende.activo::after {
+    border-top-color: var(--bh-aprende);
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.55)) drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+@keyframes flecha-aparecer {
+    from { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.6); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
 .boton-herramienta span {
-    font-size: 7px;
+    font-size: 7.5px;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.4px;
     margin-top: 1px;
-    color: #aaa;
+    color: #94a3b8;
+    transition: color 0.15s;
 }
+.boton-herramienta:hover:not(.activo) span { color: #cbd5e1; }
+.boton-herramienta.activo span { color: var(--bh-acento); }
 
+/* El banner Hero ya tiene su propio gradiente y border. Aquí solo
+   centramos el contenedor sin agregar otro fondo encima. */
 .bloque-anuncio-centro {
     flex: 1;
-    max-width: 320px;
-    height: 36px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
+    max-width: 360px;
     display: flex;
     align-items: center;
-    padding: 0 6px;
-    margin: 0 10px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    justify-content: center;
+    padding: 0;
+    margin: 0 8px;
 }
 
 .miniatura-acordeon-pro {
@@ -241,37 +331,48 @@
     width: 60px; height: 46px;
     position: relative;
     overflow: hidden;
-    background: #111 !important;
-    border: 1px solid #333 !important;
-    border-radius: 6px;
+    background: linear-gradient(180deg, #0a1220 0%, #1a2438 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 9px;
     display: flex;
     justify-content: center;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.5),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 .label-botones {
     font-size: 8px;
-    font-weight: 950;
-    color: #cbd5e1;
+    font-weight: 800;
+    color: #94a3b8;
     position: absolute;
     top: 3px;
     pointer-events: none;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
     z-index: 3;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .icono-drag-handle {
     width: 28px; height: 26px;
-    background: linear-gradient(180deg, #444 0%, #222 100%);
-    border: 1px solid #555;
-    border-radius: 4px;
+    background: linear-gradient(180deg, #475569 0%, #1e293b 100%);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: grab;
     margin-top: 16px;
-    color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    color: #e2e8f0;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 2px 5px rgba(0, 0, 0, 0.55);
     z-index: 2;
+    transition: background 0.15s, border-color 0.15s;
+}
+.icono-drag-handle:hover {
+    background: linear-gradient(180deg, #64748b 0%, #334155 100%);
+    border-color: rgba(34, 211, 238, 0.4);
+    color: var(--bh-acento, #22d3ee);
 }
 .icono-drag-handle:active { cursor: grabbing; }
 
@@ -292,26 +393,32 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+    background: rgba(34, 211, 238, 0.15);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    color: #e2e8f0;
     font-family: 'Inter', system-ui, sans-serif;
     font-size: 7px;
     font-weight: 800;
     line-height: 1;
+    transition: background 0.15s, border-color 0.15s;
+}
+.boton-herramienta:hover .icono-vistas-mini span {
+    background: rgba(34, 211, 238, 0.25);
+    border-color: rgba(34, 211, 238, 0.5);
 }
 
 .metronomo-btn-barra { gap: 0; position: relative; }
 .label-metronomo-mini {
     font-size: 6.5px !important;
     font-weight: 900 !important;
-    color: #fb923c !important;
+    color: #94a3b8 !important;
     text-transform: uppercase;
     margin-top: 0 !important;
     line-height: 1;
+    transition: color 0.15s;
 }
-.metronomo-btn-barra.activo { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
-.metronomo-btn-barra.activo .label-metronomo-mini { color: #3b82f6 !important; }
+.metronomo-btn-barra:hover:not(.activo) .label-metronomo-mini { color: var(--bh-acento) !important; }
+.metronomo-btn-barra.activo .label-metronomo-mini { color: var(--bh-acento) !important; }
 
 .boton-grabadora.grabando {
     border-color: #ef4444;
