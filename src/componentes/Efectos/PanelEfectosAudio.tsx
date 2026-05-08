@@ -11,11 +11,16 @@ import './PanelEfectosAudio.css';
 // gradual sobre 5 zonas frecuenciales.
 
 type PresetReverbId =
-  | 'cuarto_mediano'
-  | 'cuarto_grande'
-  | 'vestibulo_mediano'
-  | 'vestibulo_grande'
-  | 'escenario_abierto';
+  // Pequeños / secos
+  | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
+  // Medianos
+  | 'sala_ensayo' | 'cuarto_grande' | 'club'
+  // Grandes
+  | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
+  // Aire libre
+  | 'escenario_abierto' | 'canon' | 'bosque'
+  // Vintage / efectos especiales
+  | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer';
 
 interface PanelEfectosAudioProps {
   reverbActivo: boolean;
@@ -275,16 +280,39 @@ const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
   const setPanLoops = onCambiarPanLoops ?? setPanLoopsLocal;
   const setPanMetronomo = onCambiarPanMetronomo ?? setPanMetronomoLocal;
 
-  // Presets de Reverb: cada uno regenera el impulse response del ConvolverNode
-  // con un perfil distinto (duración, decay, pre-delay, brillo) y aplica una
-  // intensidad sugerida acorde al espacio. El padre maneja la lógica de motor.
-  const presetsReverb: Array<{ id: PresetReverbId; nombre: string; intensidad: number }> = [
-    { id: 'cuarto_mediano',     nombre: 'Cuarto Mediano',     intensidad: 30 },
-    { id: 'cuarto_grande',      nombre: 'Cuarto Grande',      intensidad: 45 },
-    { id: 'vestibulo_mediano',  nombre: 'Vestíbulo Mediano',  intensidad: 60 },
-    { id: 'vestibulo_grande',   nombre: 'Vestíbulo Grande',   intensidad: 75 },
-    { id: 'escenario_abierto',  nombre: 'Escenario Abierto',  intensidad: 65 },
+  // Presets de Reverb agrupados por categoría. Cambiar de preset SOLO regenera
+  // el IR del ConvolverNode (timbre del espacio) — la intensidad la controla
+  // el alumno con el knob a su gusto.
+  const presetsReverb: Array<{ id: PresetReverbId; nombre: string; grupo: string }> = [
+    // Pequeños / secos
+    { id: 'habitacion',         nombre: 'Habitación',          grupo: 'Pequeños' },
+    { id: 'estudio',            nombre: 'Estudio (brillante)', grupo: 'Pequeños' },
+    { id: 'cuarto_mediano',     nombre: 'Cuarto Mediano',      grupo: 'Pequeños' },
+    { id: 'garaje',             nombre: 'Garaje (azulejo)',    grupo: 'Pequeños' },
+    // Medianos
+    { id: 'sala_ensayo',        nombre: 'Sala de Ensayo',      grupo: 'Medianos' },
+    { id: 'cuarto_grande',      nombre: 'Cuarto Grande',       grupo: 'Medianos' },
+    { id: 'club',               nombre: 'Club / Bar',          grupo: 'Medianos' },
+    // Grandes
+    { id: 'vestibulo_mediano',  nombre: 'Vestíbulo Mediano',   grupo: 'Grandes' },
+    { id: 'iglesia',            nombre: 'Iglesia',             grupo: 'Grandes' },
+    { id: 'vestibulo_grande',   nombre: 'Vestíbulo Grande',    grupo: 'Grandes' },
+    { id: 'catedral',           nombre: 'Catedral',            grupo: 'Grandes' },
+    { id: 'cueva',              nombre: 'Cueva (oscuro)',      grupo: 'Grandes' },
+    { id: 'arena',              nombre: 'Arena / Estadio',     grupo: 'Grandes' },
+    // Aire libre
+    { id: 'escenario_abierto',  nombre: 'Escenario Abierto',   grupo: 'Aire Libre' },
+    { id: 'canon',              nombre: 'Cañón (slap)',        grupo: 'Aire Libre' },
+    { id: 'bosque',             nombre: 'Bosque',              grupo: 'Aire Libre' },
+    // Vintage / efectos especiales
+    { id: 'tunel',              nombre: 'Túnel (ping-pong)',   grupo: 'Especiales' },
+    { id: 'cabina',             nombre: 'Cabina (lo-fi)',      grupo: 'Especiales' },
+    { id: 'plate',              nombre: 'Plate (metálico)',    grupo: 'Especiales' },
+    { id: 'spring',             nombre: 'Spring (muelle)',     grupo: 'Especiales' },
+    { id: 'tape_vintage',       nombre: 'Tape Vintage',        grupo: 'Especiales' },
+    { id: 'shimmer',            nombre: 'Shimmer (etéreo)',    grupo: 'Especiales' },
   ];
+  const gruposReverb = ['Pequeños', 'Medianos', 'Grandes', 'Aire Libre', 'Especiales'];
   const presetActualReverb: PresetReverbId | 'manual' = reverbPreset ?? 'cuarto_grande';
 
   const handleRestaurarTodo = () => {
@@ -335,14 +363,17 @@ const PanelEfectosAudio: React.FC<PanelEfectosAudioProps> = ({
                 onChange={(e) => {
                   const preset = presetsReverb.find((p) => p.id === e.target.value);
                   if (!preset) return;
-                  // Cambia el IR del ConvolverNode (timbre del espacio) y
-                  // aplica la intensidad sugerida de ese preset.
+                  // Solo cambia el IR del ConvolverNode (timbre del espacio).
+                  // La intensidad la mantiene el alumno con el knob aparte.
                   onCambiarReverbPreset?.(preset.id);
-                  onCambiarReverbIntensidad(preset.intensidad);
                 }}
               >
-                {presetsReverb.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                {gruposReverb.map((g) => (
+                  <optgroup key={g} label={g}>
+                    {presetsReverb.filter((p) => p.grupo === g).map((p) => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </label>
