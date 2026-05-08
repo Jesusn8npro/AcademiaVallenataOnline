@@ -5,6 +5,7 @@ import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibr
 import SeccionPLSonido from './SeccionPLSonido';
 import SeccionPLPistas, { type ModoGrabacionPL } from './SeccionPLPistas';
 import SeccionPLEfectos from './SeccionPLEfectos';
+import PanelEfectosAudio from '../../../../componentes/Efectos/PanelEfectosAudio';
 import SeccionPLLibreria from './SeccionPLLibreria';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
@@ -143,9 +144,26 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
       )}
 
       {seccionActiva === 'efectos' && (
-        <SeccionPLEfectos
-          preferencias={preferencias} volumenAcordeon={volumenAcordeon}
-          onAjustarVolumenAcordeon={onAjustarVolumenAcordeon} onActualizarEfectos={onActualizarEfectos}
+        <PanelEfectosAudio
+          reverbActivo={preferencias.efectos.reverb > 0}
+          reverbIntensidad={preferencias.efectos.reverb}
+          onCambiarReverbActivo={(activo) => onActualizarEfectos({ reverb: activo ? Math.max(preferencias.efectos.reverb, 25) : 0 })}
+          onCambiarReverbIntensidad={(v) => onActualizarEfectos({ reverb: v })}
+          graves={preferencias.efectos.bajos}
+          medios={preferencias.efectos.medios}
+          agudos={preferencias.efectos.agudos}
+          onCambiarGraves={(v) => onActualizarEfectos({ bajos: v })}
+          onCambiarMedios={(v) => onActualizarEfectos({ medios: v })}
+          onCambiarAgudos={(v) => onActualizarEfectos({ agudos: v })}
+          volumenTeclado={volumenAcordeon}
+          volumenBajos={volumenAcordeon}
+          volumenLoops={preferencias.efectos.volumenPista}
+          volumenMetronomo={50}
+          onCambiarVolumenTeclado={onAjustarVolumenAcordeon}
+          onCambiarVolumenBajos={onAjustarVolumenAcordeon}
+          onCambiarVolumenLoops={(v) => onActualizarEfectos({ volumenPista: v })}
+          onCambiarVolumenMetronomo={() => { /* preview-only en Práctica Libre */ }}
+          onRestaurar={() => onActualizarEfectos({ reverb: 0, bajos: 0, medios: 0, agudos: 0 })}
         />
       )}
 

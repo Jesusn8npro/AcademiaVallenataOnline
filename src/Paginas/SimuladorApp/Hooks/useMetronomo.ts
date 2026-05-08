@@ -9,6 +9,7 @@ export const useMetronomo = (bpmInicial: number) => {
     const [compas, setCompas] = useState(4);
     const [subdivision, setSubdivision] = useState(1);
     const [volumen, setVolumen] = useState(0.5);
+    const [pan, setPan] = useState(0); // -1..1 balance L/R stereo
     const [sonidoEfecto, setSonidoEfecto] = useState<SonidoEfecto>('Baqueta');
     const [pulsoActual, setPulsoActual] = useState(0);
 
@@ -16,6 +17,9 @@ export const useMetronomo = (bpmInicial: number) => {
     const nextNoteTime = useRef(0);
     const timerID = useRef<number | null>(null);
     const pulseCount = useRef(0);
+    // StereoPannerNode persistente: cada click se conecta aquí (no a destination
+    // directo). Permite controlar el balance L/R desde el panel de efectos.
+    const panNodeRef = useRef<StereoPannerNode | null>(null);
 
     const bpmRef = useRef(bpm);
     const lastBpmRef = useRef(bpm);
@@ -66,7 +70,13 @@ export const useMetronomo = (bpmInicial: number) => {
         envelope.gain.setValueAtTime(volumenRef.current, time);
         envelope.gain.exponentialRampToValueAtTime(0.001, time + decay);
         osc.connect(envelope);
-        envelope.connect(audioCtx.current.destination);
+        // Routing con pan: envelope → panNode → destination. El panNode se
+        // crea perezosamente en iniciar() y persiste mientras vive el hook.
+        if (panNodeRef.current) {
+            envelope.connect(panNodeRef.current);
+        } else {
+            envelope.connect(audioCtx.current.destination);
+        }
         osc.start(time);
         osc.stop(time + decay);
     }, []);
@@ -97,6 +107,13 @@ export const useMetronomo = (bpmInicial: number) => {
         if (ctx.state === 'suspended') {
             try { await ctx.resume(); } catch { /* user gesture requerido */ }
         }
+        // Crear el panNode una sola vez (persiste entre clicks). Lo conectamos
+        // al destination una vez y todos los envelopes futuros pasan por aquí.
+        if (!panNodeRef.current) {
+            panNodeRef.current = ctx.createStereoPanner();
+            panNodeRef.current.pan.value = pan;
+            panNodeRef.current.connect(ctx.destination);
+        }
         nextNoteTime.current = ctx.currentTime;
         pulseCount.current = 0;
         setPulsoActual(0);
@@ -110,9 +127,17 @@ export const useMetronomo = (bpmInicial: number) => {
         setPulsoActual(-1);
     };
 
+    // Pan en vivo via StereoPannerNode (rampa 30ms para evitar zipper noise).
+    useEffect(() => {
+        const node = panNodeRef.current;
+        if (!node || !audioCtx.current) return;
+        const valor = Math.max(-1, Math.min(1, pan));
+        node.pan.setTargetAtTime(valor, audioCtx.current.currentTime, 0.03);
+    }, [pan]);
+
     return {
         activo, bpm, setBpm, compas, setCompas, subdivision, setSubdivision,
-        volumen, setVolumen, sonidoEfecto, setSonidoEfecto, pulsoActual,
+        volumen, setVolumen, pan, setPan, sonidoEfecto, setSonidoEfecto, pulsoActual,
         iniciar, detener
     };
 };

@@ -1,10 +1,10 @@
 :root {
-    --pito-boton-size: 18.5vh;
-    --pitos-dist-h: 4.2vh;
+    --pito-boton-size: 19vh;
+    --pitos-dist-h: 2vh;
     --pitos-fuente: 3.4vh;
     --color-halar: #38bdf8;
     --color-empujar: #ff0000;
-    --escala-inicial: 1.0;
+    --escala-inicial: 1.5;
 }
 
 .simulador-app-root {

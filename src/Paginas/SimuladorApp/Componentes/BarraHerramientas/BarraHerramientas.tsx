@@ -5,12 +5,24 @@ import {
     Move,
     MoreVertical,
     Star,
-    Eye,
     Timer,
-    BookOpen
+    BookOpen,
+    SlidersHorizontal
 } from 'lucide-react';
-import { motion, MotionValue } from 'framer-motion';
+import { motion, MotionValue, animate } from 'framer-motion';
 import './BarraHerramientas.css';
+
+// Mini-grid 2x2 que indica los modos de vista disponibles (cifrado y notas
+// mezclados). Reemplaza el ícono genérico de ojo por algo que comunica QUÉ
+// abre el botón: el modal de selección de vista (notas / cifrado / números / teclas).
+const IconoVistas: React.FC = () => (
+    <div className="icono-vistas-mini" aria-hidden="true">
+        <span>C</span>
+        <span>Re</span>
+        <span>E</span>
+        <span>Fa</span>
+    </div>
+);
 
 interface BarraHerramientasProps {
     logica: any;
@@ -27,6 +39,7 @@ interface BarraHerramientasProps {
     onToggleVista: () => void;
     onToggleAprende: () => void;
     onToggleLoops?: () => void;
+    onToggleEfectos?: () => void;
     loopActivo?: boolean;
     refs?: {
         menu?: React.RefObject<HTMLDivElement>;
@@ -36,6 +49,7 @@ interface BarraHerramientasProps {
         vista?: React.RefObject<HTMLDivElement>;
         aprende?: React.RefObject<HTMLDivElement>;
         loops?: React.RefObject<HTMLDivElement>;
+        efectos?: React.RefObject<HTMLDivElement>;
     };
     modalesVisibles: {
         menu?: boolean;
@@ -45,6 +59,7 @@ interface BarraHerramientasProps {
         vista?: boolean;
         aprende?: boolean;
         loops?: boolean;
+        efectos?: boolean;
     };
     bpmMetronomo: number;
 }
@@ -54,7 +69,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     x, escala, setEscala,
     grabando, toggleGrabacion,
     onToggleMenu, onToggleTonalidades, onToggleMetronomo, onToggleInstrumentos, onToggleVista, onToggleAprende,
-    onToggleLoops, loopActivo,
+    onToggleLoops, onToggleEfectos, loopActivo,
     modalesVisibles,
     bpmMetronomo,
     refs
@@ -84,11 +99,24 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     }, [modalesVisibles]);
 
     const handleDrag = (_: any, info: { delta: { x: number } }) => {
-        if (x) {
-            const factor = 8 / escala;
-            const nuevoX = x.get() + (info.delta.x * factor);
-            x.set(nuevoX);
-        }
+        if (!x) return;
+        // Factor suavizado (antes 8) para que el desplazamiento siga al cursor
+        // sin saltos abruptos al mover lento.
+        const factor = 4 / escala;
+        // Límite duro: el acordeón nunca se desplaza más de ~35% del viewport en
+        // cada lado. Sin esto el alumno arrastra y los botones se salen completos
+        // de la pantalla; con esto siempre queda al menos la mitad visible.
+        const limite = window.innerWidth * 0.35;
+        const propuesto = x.get() + info.delta.x * factor;
+        const nuevoX = Math.max(-limite, Math.min(limite, propuesto));
+        x.set(nuevoX);
+    };
+
+    // Doble clic en el handle: regresa el acordeón a la posición inicial (centro)
+    // con una animación suave de 300ms. Atajo cómodo para deshacer un mal arrastre.
+    const resetearPosicion = () => {
+        if (!x) return;
+        animate(x, 0, { duration: 0.3, ease: 'easeOut' });
     };
 
     const aumentarTam = () => setEscala(prev => Math.min(prev + 0.10, 1.8));
@@ -139,6 +167,18 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     <span>{logica.tonalidadSeleccionada}</span>
                 </div>
 
+                {onToggleEfectos && (
+                    <div
+                        ref={refs?.efectos}
+                        className={`boton-herramienta ${modalesVisibles.efectos ? 'activo' : ''}`}
+                        onClick={onToggleEfectos}
+                        title="Efectos de audio"
+                    >
+                        <SlidersHorizontal size={20} />
+                        <span>FX</span>
+                    </div>
+                )}
+
                 {/* Boton GRABAR removido — se movio a la barra flotante de la
                     esquina superior derecha (BarraGrabacionFlotante). */}
             </div>
@@ -178,10 +218,17 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     <motion.div
                         className="icono-drag-handle"
                         drag="x"
+                        // Contenedor 60px / ícono 28px ⇒ 16px libres en total. Limito a ±8px
+                        // por lado dejando 1-2px de respiro contra el borde. dragElastic=0
+                        // detiene el handle EN SECO al llegar al límite (sin estirarse fuera).
+                        // dragSnapToOrigin lo devuelve al centro al soltar.
+                        dragConstraints={{ left: -8, right: 8 }}
                         dragElastic={0}
-                        dragMomentum={false}
+                        dragSnapToOrigin
                         onDrag={handleDrag}
-                        whileTap={{ scale: 0.7, cursor: 'grabbing' }}
+                        onDoubleClick={resetearPosicion}
+                        whileTap={{ scale: 0.85, cursor: 'grabbing' }}
+                        title="Doble clic para centrar"
                     >
                         <Move size={18} />
                     </motion.div>
@@ -191,18 +238,31 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     ref={refs?.vista}
                     className={`boton-herramienta ${modalesVisibles.vista ? 'activo' : ''}`}
                     onClick={onToggleVista}
+                    title="Modo de vista (notas / cifrado / números / teclas)"
                 >
-                    <Eye size={20} />
+                    <IconoVistas />
                 </div>
 
                 <div className="grupo-tamano">
                     <div className="label-tam-contenedor">
-                        <span className="label-tam">TAM</span>
+                        <span className="label-tam">Tamaño</span>
                         <span className="valor-tam">{(escala * 100).toFixed(0)}%</span>
                     </div>
                     <div className="tam-controles">
-                        <button className="tam-btn" onClick={disminuirTam}>−</button>
-                        <button className="tam-btn" onClick={aumentarTam}>+</button>
+                        <button
+                            type="button"
+                            className="tam-btn"
+                            onClick={disminuirTam}
+                            aria-label="Reducir tamaño del acordeón"
+                            title="Reducir tamaño"
+                        >−</button>
+                        <button
+                            type="button"
+                            className="tam-btn"
+                            onClick={aumentarTam}
+                            aria-label="Aumentar tamaño del acordeón"
+                            title="Aumentar tamaño"
+                        >+</button>
                     </div>
                 </div>
 

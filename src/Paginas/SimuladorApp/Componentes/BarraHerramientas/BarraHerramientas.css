@@ -160,34 +160,57 @@
 
 .grupo-tamano {
     background: #222;
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    padding: 0 6px;
-    height: 34px;
-    gap: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    height: 46px;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.label-tam-contenedor { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 30px; }
-.label-tam { font-size: 6px; color: #888; font-weight: 950; text-transform: uppercase; line-height: 1; }
-.valor-tam { font-size: 10px; color: #fb923c; font-weight: 900; font-family: monospace; }
-.tam-controles { display: flex; align-items: center; }
+.label-tam-contenedor { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 38px; gap: 2px; }
+.label-tam {
+    font-size: 9px;
+    color: #cbd5e1;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    line-height: 1;
+}
+.valor-tam {
+    font-size: 13px;
+    color: #fb923c;
+    font-weight: 900;
+    font-family: 'Inter', monospace;
+    line-height: 1;
+}
+.tam-controles { display: flex; align-items: center; gap: 4px; }
 
 .tam-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 16px;
-    width: 20px; height: 20px;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    width: 32px; height: 32px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 2px;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    user-select: none;
 }
-.tam-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fb923c; }
+.tam-btn:hover {
+    background: rgba(251, 146, 60, 0.2);
+    border-color: rgba(251, 146, 60, 0.5);
+    color: #fb923c;
+}
+.tam-btn:active {
+    transform: scale(0.92);
+    background: rgba(251, 146, 60, 0.35);
+}
 
 .oferta-tag {
     position: absolute;
@@ -215,7 +238,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .contenedor-control-drag {
-    width: 60px; height: 34px;
+    width: 60px; height: 46px;
     position: relative;
     overflow: hidden;
     background: #111 !important;
@@ -225,17 +248,19 @@
     justify-content: center;
 }
 .label-botones {
-    font-size: 7px;
+    font-size: 8px;
     font-weight: 950;
-    color: #888;
+    color: #cbd5e1;
     position: absolute;
-    top: 4px;
+    top: 3px;
     pointer-events: none;
     text-transform: uppercase;
-    z-index: 1;
+    letter-spacing: 0.4px;
+    z-index: 3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .icono-drag-handle {
-    width: 28px; height: 28px;
+    width: 28px; height: 26px;
     background: linear-gradient(180deg, #444 0%, #222 100%);
     border: 1px solid #555;
     border-radius: 4px;
@@ -243,12 +268,38 @@
     justify-content: center;
     align-items: center;
     cursor: grab;
-    margin-top: 6px;
+    margin-top: 16px;
     color: #fff;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
 .icono-drag-handle:active { cursor: grabbing; }
+
+/* Mini-grid 2x2 que reemplaza el ícono de ojo en el botón de Vista. Comunica
+   visualmente las 4 modalidades disponibles (cifrado / notas) con chips
+   compactos. Al hacer clic abre el modal donde se puede cambiar el modo. */
+.icono-vistas-mini {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    width: 30px;
+    height: 30px;
+    padding: 1px;
+}
+
+.icono-vistas-mini span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 7px;
+    font-weight: 800;
+    line-height: 1;
+}
 
 .metronomo-btn-barra { gap: 0; position: relative; }
 .label-metronomo-mini {

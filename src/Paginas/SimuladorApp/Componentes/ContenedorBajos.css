@@ -226,43 +226,61 @@
     cursor: grabbing;
 }
 
+/* Botón circular translúcido — solo se ve la mitad inferior. El círculo se corta
+   por arriba al estar posicionado con top negativo igual al radio, dando el
+   efecto de "asoma desde arriba" típico de apps de acordeón móvil. */
 .boton-bajos-superior {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: -50px;
+    left: 12px;
     z-index: 1500;
-    width: 75px;
-    background: transparent;
-    border: none;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.boton-bajos-superior:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.boton-bajos-superior:active {
+    transform: scale(0.96);
 }
 
 .texto-bajos {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
-    letter-spacing: 1px;
-    padding: 8px 12px;
-    width: 100%;
-    background: linear-gradient(180deg, #5a4a3a 0%, #3d3029 100%);
-    border: 1px solid #6b5a48;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 35px;
+    letter-spacing: 1.4px;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    line-height: 1;
 }
 
 .flecha-bajos {
-    font-size: 10px;
-    padding: 4px 6px;
-    background: linear-gradient(180deg, #3d3029 0%, #2d1f18 100%);
-    border: 1px solid #6b5a48;
-    width: 100%;
-    text-align: center;
-    border-radius: 0 0 40px 40px;
+    font-size: 11px;
+    color: #cbd5e1;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-top: 4px;
+    line-height: 1;
 }
 
 @media (max-width: 768px) {
@@ -295,11 +313,18 @@
     }
 
     .boton-bajos-superior {
-        width: 68px;
+        width: 80px;
+        height: 80px;
+        top: -40px;
+        padding-bottom: 10px;
     }
 
     .texto-bajos {
-        font-size: 11px;
-        min-height: 32px;
+        font-size: 10px;
+        letter-spacing: 1.2px;
+    }
+
+    .flecha-bajos {
+        font-size: 10px;
     }
 }
