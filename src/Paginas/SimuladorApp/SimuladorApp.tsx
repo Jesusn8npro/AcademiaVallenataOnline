@@ -1179,7 +1179,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             />
 
             <div className="contenedor-acordeon-completo">
-                <div className="simulador-canvas">
+                <div className={`simulador-canvas ${modoFoco ? 'modo-foco' : ''}`}>
                     <BarraHerramientas
                         logica={logica} x={x} escala={escala} setEscala={setEscala}
                         modoVista={config.modoVista} grabando={grabando} toggleGrabacion={handleToggleGrabacion}
