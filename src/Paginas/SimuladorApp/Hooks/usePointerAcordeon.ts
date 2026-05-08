@@ -9,6 +9,11 @@ interface PointerLogicProps {
     registrarEvento: (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => void;
     trenRef: React.RefObject<HTMLDivElement>;
     desactivarAudio?: boolean;
+    // Lista de rects (en coords de viewport) que ocluyen el hit-test del
+    // acordeón. Pensado para drawers laterales como el panel FX: aunque el
+    // pito siga vivo en rectsCache, si el dedo cae bajo el rect del panel,
+    // tratamos el punto como sin pito (no se activa nada).
+    obtenerRectsBloqueadores?: () => DOMRect[];
 }
 
 // Hit-test estilo app nativa. iOS Safari implicit pointer capture bug
@@ -19,7 +24,8 @@ const IMAN_ENTRAR = 16;
 const IMAN_SALIR = 22;
 
 export const usePointerAcordeon = ({
-    x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false
+    x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false,
+    obtenerRectsBloqueadores
 }: PointerLogicProps) => {
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
@@ -29,6 +35,9 @@ export const usePointerAcordeon = ({
 
     const desactivarAudioRef = useRef(desactivarAudio);
     useEffect(() => { desactivarAudioRef.current = desactivarAudio; }, [desactivarAudio]);
+
+    const rectsBloqueadoresRef = useRef(obtenerRectsBloqueadores);
+    useEffect(() => { rectsBloqueadoresRef.current = obtenerRectsBloqueadores; }, [obtenerRectsBloqueadores]);
 
     const actualizarGeometria = useCallback(() => {
         const tren = trenRef.current;
@@ -55,7 +64,22 @@ export const usePointerAcordeon = ({
         const dentroDe = (cx: number, cy: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
+        // Devuelve true si (cx,cy) cae dentro de alguno de los rects que el
+        // padre marcó como "bloqueadores" (ej. rect del panel FX abierto).
+        // Cuando es true, ignoramos el punto como si no hubiera pito ahí —
+        // así el slide de un pito visible hacia debajo del panel no enciende
+        // los pitos que quedan tapados.
+        const enRectBloqueador = (cx: number, cy: number): boolean => {
+            const rects = rectsBloqueadoresRef.current?.();
+            if (!rects || rects.length === 0) return false;
+            for (const r of rects) {
+                if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) return true;
+            }
+            return false;
+        };
+
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
+            if (enRectBloqueador(clientX, clientY)) return null;
             // Fast-path Android low-end: elementFromPoint cuesta 5-10ms; si el dedo
             // sigue dentro del rect del pito actual, retornar sin hit-test nativo.
             if (posActual) {
@@ -183,6 +207,9 @@ export const usePointerAcordeon = ({
                 const t = e.changedTouches[i];
                 const tTarget = t.target as HTMLElement;
                 if (!enAreaJuego(tTarget)) continue;
+                // Si el touch empieza sobre un rect bloqueador (panel FX), no
+                // se registra — evita activar pitos tapados por el panel.
+                if (enRectBloqueador(t.clientX, t.clientY)) continue;
                 if (!huboRegistro) {
                     motorAudioPro.activarContexto();
                     huboRegistro = true;
@@ -215,6 +242,8 @@ export const usePointerAcordeon = ({
         const handlePointerDown = (e: PointerEvent) => {
             if (e.pointerType === 'touch') return; // En táctil usamos touch events.
             if (desactivarAudioRef.current) return;
+            // Click sobre el panel FX: ignora — los pitos tapados no deben sonar.
+            if (enRectBloqueador(e.clientX, e.clientY)) return;
             const target = e.target as HTMLElement;
             if (enAreaJuego(target) && e.cancelable) e.preventDefault();
             motorAudioPro.activarContexto();
