@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { ChevronUp, MoveHorizontal } from 'lucide-react';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
-import imagenBajos from '../Parte restante Bajos.jpg';
+import imagenBajosDefault from '../Parte restante Bajos.jpg';
 import './ContenedorBajos.css';
 
 interface ContenedorBajosProps {
@@ -14,6 +14,9 @@ interface ContenedorBajosProps {
     escala: number;
     manejarCambioFuelle: (dir: 'empujar' | 'halar', engine: any) => void;
     vistaDoble?: boolean;
+    /** URL de la imagen del fondo de bajos según el tema activo. Si no se
+     *  pasa, cae al asset original importado. */
+    imagenBajosUrl?: string;
 }
 
 const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
@@ -24,8 +27,10 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
     desactivarAudio = false,
     escala,
     manejarCambioFuelle,
-    vistaDoble = false
+    vistaDoble = false,
+    imagenBajosUrl,
 }) => {
+    const imagenBajos = imagenBajosUrl || imagenBajosDefault;
     const x = useMotionValue(0);
     const draggingRef = useRef(false);
     const startXRef = useRef(0);
