@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { ArrowLeft, RotateCw, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, RotateCw, Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -106,6 +106,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // sigue viendo el banner Hero (gatillo de venta — los anuncios al
     // alumno no premium no se ocultan).
     const [modoFoco, setModoFoco] = useState(false);
+    const [toastUpgradeVisible, setToastUpgradeVisible] = useState(false);
 
     // ─── Panel de Efectos de Audio ──────────────────────────────────────────
     // Estados controlados que mapean al motor de audio. Reverb arranca apagado
@@ -1089,6 +1090,27 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // estudiantes y usuarios sin sesión.
     const esPremium = esAdmin || (usuario as any)?.plan_activo === true;
 
+    // Timer del modo foco para usuarios FREE: 60s gratis y luego se sale
+    // automáticamente con un toast invitando a Plus. Premium queda siempre
+    // activo. Idea: el alumno prueba la sensación de "pantalla limpia"
+    // pero solo Plus tiene uso ilimitado — gatillo de venta concreto.
+    const SEGUNDOS_FOCO_FREE = 60;
+    useEffect(() => {
+        if (!modoFoco || esPremium) return;
+        const id = window.setTimeout(() => {
+            setModoFoco(false);
+            setToastUpgradeVisible(true);
+        }, SEGUNDOS_FOCO_FREE * 1000);
+        return () => window.clearTimeout(id);
+    }, [modoFoco, esPremium]);
+
+    // Toast upgrade auto-cierra después de 8s.
+    useEffect(() => {
+        if (!toastUpgradeVisible) return;
+        const id = window.setTimeout(() => setToastUpgradeVisible(false), 8000);
+        return () => window.clearTimeout(id);
+    }, [toastUpgradeVisible]);
+
     // "Re-grabar todo": descarta la grabación pendiente y vuelve a arrancar la
     // captura — pensado para que el admin pueda corregir notas malas sin
     // guardarlas. Reseteamos también el offset del loop para que el primer
@@ -1173,10 +1195,9 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         esPremium={esPremium}
                     />
 
-                    {/* Modo Foco: oculta la barra para liberar espacio al
-                        acordeón. Free sigue viendo el banner Hero (gatillo de
-                        venta — el plan Plus se vende ahí mismo). Premium
-                        oculta todo. El botón flotante es siempre visible. */}
+                    {/* Modo Foco: pestaña vertical slim pegada al borde
+                        izquierdo. Cuando está activo se muestra solo el ojo
+                        (sin texto) — minimalismo total mientras se toca. */}
                     <button
                         type="button"
                         className={`btn-modo-foco ${modoFoco ? 'activo' : ''} ${esPremium ? 'premium' : 'free'}`}
@@ -1184,9 +1205,42 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         title={modoFoco ? 'Salir de modo foco' : 'Modo foco — esconder herramientas'}
                         aria-label={modoFoco ? 'Salir de modo foco' : 'Activar modo foco'}
                     >
-                        {modoFoco ? <EyeOff size={16} /> : <Eye size={16} />}
-                        <span>{modoFoco ? 'MOSTRAR' : 'FOCO'}</span>
+                        {modoFoco ? <EyeOff size={14} /> : <Eye size={14} />}
+                        {!modoFoco && <span>FOCO</span>}
                     </button>
+
+                    {/* Toast que aparece cuando un usuario FREE consumió sus
+                        60s gratuitos de modo foco. Aparece arriba del simulador
+                        sin bloquear la jugabilidad, auto-cierra en 8s. */}
+                    {toastUpgradeVisible && (
+                        <div className="toast-upgrade-premium" role="status">
+                            <div className="toast-icono">
+                                <Crown size={14} />
+                            </div>
+                            <div className="toast-mensaje">
+                                <strong>Modo Foco gratuito terminó</strong>
+                                Hazte Plus y disfrutalo sin límites
+                            </div>
+                            <button
+                                type="button"
+                                className="toast-cta"
+                                onClick={() => {
+                                    setToastUpgradeVisible(false);
+                                    navigate('/paquetes');
+                                }}
+                            >
+                                Ver Plus
+                            </button>
+                            <button
+                                type="button"
+                                className="toast-cerrar"
+                                onClick={() => setToastUpgradeVisible(false)}
+                                aria-label="Cerrar"
+                            >
+                                <XIcon size={14} />
+                            </button>
+                        </div>
+                    )}
 
                     <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
                         <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'manipulation' }}>
