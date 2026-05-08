@@ -459,69 +459,65 @@
    Activado vía clase en el contenedor. Free oculta botones pero deja el
    banner Hero (gatillo de venta). Premium oculta toda la barra. */
 
-/* La barra y sus secciones tienen transición SIEMPRE — para que tanto el
-   ocultar como el mostrar fluyan suavemente (no solo al activar foco).
-   Cubic-bezier easeInOutCirc da una sensación de inercia mecánica
-   elegante, mucho más sutil que un ease estándar. */
+/* La barra usa transiciones SIEMPRE — fluyen el ocultar y el reaparecer
+   con la misma cadencia. CRÍTICO: NO colapsamos height/padding/margin al
+   activar foco — eso haría que el padre redistribuya el espacio y los
+   pitos crezcan ("se acercaría" la imagen del acordeón). En su lugar
+   solo tocamos opacity + visibility + pointer-events, así el espacio
+   físico se mantiene y el acordeón queda EXACTAMENTE como antes. */
 .barra-herramientas-contenedor {
     transition:
-        height 0.45s cubic-bezier(0.65, 0, 0.35, 1),
-        opacity 0.32s ease-out 0.06s,
-        max-width 0.45s cubic-bezier(0.65, 0, 0.35, 1),
-        padding 0.4s cubic-bezier(0.65, 0, 0.35, 1),
-        margin 0.4s cubic-bezier(0.65, 0, 0.35, 1),
-        border-width 0.3s ease;
+        opacity 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+        visibility 0s linear 0s,
+        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .barra-herramientas-contenedor .seccion-barra {
     transition:
-        width 0.42s cubic-bezier(0.65, 0, 0.35, 1),
-        opacity 0.28s ease-out,
-        gap 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+        opacity 0.32s cubic-bezier(0.65, 0, 0.35, 1),
+        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* FREE: ocultamos las secciones laterales; el banner queda visible. */
-.barra-herramientas-contenedor.foco-free .seccion-barra {
-    width: 0;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    gap: 0;
-    padding: 0;
-}
-.barra-herramientas-contenedor.foco-free {
-    max-width: 380px;
-    width: auto;
-    padding: 0 6px;
-}
-
-/* PREMIUM: ocultamos la barra ENTERA con slide-up suave + fade. */
+/* PREMIUM: barra entera invisible + slide-up suave. Espacio físico se
+   mantiene → acordeón queda en la misma posición sin "acercarse". */
 .barra-herramientas-contenedor.foco-premium {
-    height: 0;
-    border-width: 0;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    transform: translateY(-6px);
+    /* Delay del visibility para que se mantenga visible durante el fade */
+    transition:
+        opacity 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+        visibility 0s linear 0.4s,
+        transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* FREE: secciones laterales invisibles, banner queda visible. La barra
+   sigue ahí (mismo espacio) pero solo se ve el banner Hero centrado —
+   gatillo de venta del Plus permanece. */
+.barra-herramientas-contenedor.foco-free .seccion-barra {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.32s cubic-bezier(0.65, 0, 0.35, 1),
+        visibility 0s linear 0.32s;
 }
 
 /* ─── Botón "Modo Foco" — pestaña vertical slim pegada al borde izquierdo
-   Diseño minimalista: ocupa muy poco espacio, no compite con BAJOS, REC
-   ni con los pitos. Cuando inactivo muestra el texto "FOCO" rotado 90°.
-   Cuando activo, se reduce a solo el ícono del ojo (más sutil aún). */
+   alineada con la barra de herramientas (esquina superior). La flecha
+   apunta a la derecha — señala "esto controla la barra que está aquí". */
 .btn-modo-foco {
     position: fixed;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 140px;
     z-index: 1500;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     width: 26px;
-    padding: 12px 4px;
+    padding: 10px 4px;
     background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.92) 100%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -539,9 +535,29 @@
         border-color 0.2s,
         color 0.2s,
         box-shadow 0.2s,
-        padding 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+        padding 0.3s cubic-bezier(0.65, 0, 0.35, 1),
+        top 0.3s ease;
     user-select: none;
     -webkit-user-select: none;
+}
+
+/* Flecha pequeña pegada al borde derecho del botón apuntando hacia la
+   barra. Triángulo CSS puro (con border-trick), color cyan glow tenue
+   para que comunique direccionalidad sin gritar. */
+.btn-modo-foco::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid rgba(34, 211, 238, 0.7);
+    filter: drop-shadow(0 0 3px rgba(34, 211, 238, 0.5));
+    pointer-events: none;
+    transition: border-left-color 0.2s, filter 0.2s;
 }
 
 /* Texto "FOCO" rotado a vertical (rl + rotate 180 lo ordena top→bottom) */
@@ -557,30 +573,43 @@
 .btn-modo-foco:hover {
     background: linear-gradient(180deg, rgba(34, 211, 238, 0.22) 0%, rgba(8, 145, 178, 0.22) 100%);
     border-color: #22d3ee;
-    transform: translateY(-50%) translateX(2px);
+    transform: translateX(2px);
     box-shadow:
         4px 0 14px rgba(34, 211, 238, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
+.btn-modo-foco:hover::after {
+    border-left-color: #22d3ee;
+    filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.7));
+}
 
 .btn-modo-foco:active {
-    transform: translateY(-50%) translateX(0);
+    transform: translateX(0);
 }
 
 /* MODO FOCO ACTIVO: solo el ícono del ojo (texto oculto), color ámbar
-   tenue. Lo más mínimo posible para no estorbar mientras se toca. */
+   tenue. Lo más mínimo posible para no estorbar mientras se toca. La
+   flecha cambia a ámbar para mantener coherencia visual. */
 .btn-modo-foco.activo {
-    padding: 9px 3px;
+    padding: 8px 3px;
     background: linear-gradient(180deg, rgba(180, 83, 9, 0.85) 0%, rgba(120, 53, 15, 0.85) 100%);
     border-color: rgba(251, 191, 36, 0.5);
     color: #fbbf24;
 }
 .btn-modo-foco.activo span { display: none; }
+.btn-modo-foco.activo::after {
+    border-left-color: rgba(251, 191, 36, 0.7);
+    filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.5));
+}
 
 .btn-modo-foco.activo:hover {
     background: linear-gradient(180deg, rgba(217, 119, 6, 0.95) 0%, rgba(180, 83, 9, 0.95) 100%);
     border-color: #fbbf24;
     box-shadow: 4px 0 14px rgba(251, 191, 36, 0.35);
+}
+.btn-modo-foco.activo:hover::after {
+    border-left-color: #fbbf24;
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.7));
 }
 
 /* ─── Toast de upgrade Premium (al expirar el modo foco free) ────────── */
