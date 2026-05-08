@@ -4,12 +4,12 @@ import {
     ShoppingCart,
     Move,
     MoreVertical,
-    Star,
     Timer,
     BookOpen,
     SlidersHorizontal
 } from 'lucide-react';
 import { motion, MotionValue, animate } from 'framer-motion';
+import BannerEcosistemaHero from '../BannerEcosistemaHero';
 import './BarraHerramientas.css';
 
 // Mini-grid 2x2 que indica los modos de vista disponibles (cifrado y notas
@@ -184,25 +184,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
             </div>
 
             <div className="bloque-anuncio-centro">
-                <div className="miniatura-acordeon-pro">
-                    <img
-                        src="https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG"
-                        alt="Icono Acordeón"
-                        className="img-miniatura-anuncio"
-                    />
-                </div>
-                <div className="info-anuncio-pro">
-                    <h4 className="anuncio-titulo-pro">Acordeón Piano Cassotto</h4>
-                    <div className="anuncio-meta-flex">
-                        <div className="estrellas-flex">
-                            {[1, 2, 3, 4, 5].map(i => <Star key={i} size={8} fill="#fbbf24" color="#fbbf24" />)}
-                        </div>
-                        <p className="anuncio-desc-premium">Descarga el app de Acordeón más Real...</p>
-                    </div>
-                </div>
-                <button className="boton-instalar-premium" onClick={() => window.open('https://academiavallenataonline.com', '_blank')}>
-                    INSTALAR
-                </button>
+                <BannerEcosistemaHero />
             </div>
 
             <div className="seccion-barra seccion-derecha">
