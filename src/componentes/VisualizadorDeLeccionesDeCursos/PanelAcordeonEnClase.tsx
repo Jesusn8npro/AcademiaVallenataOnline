@@ -74,6 +74,26 @@ const PanelAcordeonEnClase: React.FC<PanelAcordeonEnClaseProps> = ({ onCerrar })
     <div className="panel-acordeon-clase">
       <div className="panel-acordeon-clase-header">
         <h2>Acordeón virtual</h2>
+        <div className="panel-acordeon-clase-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={pestanaActiva === 'acordeon'}
+            onClick={() => setPestanaActiva('acordeon')}
+            className={`panel-acordeon-clase-tab ${pestanaActiva === 'acordeon' ? 'activa' : ''}`}
+          >
+            Acordeón
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={pestanaActiva === 'sonido'}
+            onClick={() => setPestanaActiva('sonido')}
+            className={`panel-acordeon-clase-tab ${pestanaActiva === 'sonido' ? 'activa' : ''}`}
+          >
+            Sonido
+          </button>
+        </div>
         <button
           type="button"
           onClick={onCerrar}
@@ -84,27 +104,6 @@ const PanelAcordeonEnClase: React.FC<PanelAcordeonEnClaseProps> = ({ onCerrar })
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
-        </button>
-      </div>
-
-      <div className="panel-acordeon-clase-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={pestanaActiva === 'acordeon'}
-          onClick={() => setPestanaActiva('acordeon')}
-          className={`panel-acordeon-clase-tab ${pestanaActiva === 'acordeon' ? 'activa' : ''}`}
-        >
-          Acordeón
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={pestanaActiva === 'sonido'}
-          onClick={() => setPestanaActiva('sonido')}
-          className={`panel-acordeon-clase-tab ${pestanaActiva === 'sonido' ? 'activa' : ''}`}
-        >
-          Sonido
         </button>
       </div>
 

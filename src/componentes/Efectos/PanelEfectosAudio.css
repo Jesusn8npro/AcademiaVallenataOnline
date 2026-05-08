@@ -1,0 +1,639 @@
+/* PanelEfectosAudio — layout horizontal compacto inspirado en apps móviles
+   de acordeón. Cabe en ~960×620px sin scroll. Mismas clases pea-* en
+   SimuladorApp (modal flotante) y Práctica Libre (sidebar). */
+
+/* Modal overlay (solo SimuladorApp lo usa) */
+.pea-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  animation: pea-fade 0.18s ease-out;
+}
+
+.pea-modal-contenido {
+  width: 100%;
+  max-width: 880px;
+  max-height: 92vh;
+  animation: pea-zoom 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pea-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pea-zoom {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Contenedor raíz */
+.pea-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: linear-gradient(180deg, #0e1422 0%, #07090f 100%);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* Header */
+.pea-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pea-header-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pea-header-titulo h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+}
+
+.pea-header-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pea-btn-secundario {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+
+.pea-btn-secundario:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pea-btn-secundario:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pea-btn-cerrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #dc2626;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pea-btn-cerrar:hover {
+  background: #ef4444;
+  transform: scale(1.05);
+}
+
+/* Fila procesadores: Reverb / Eco / Distors / Ecualizador (4 columnas) */
+.pea-fila-procesadores {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.7fr;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pea-procesador,
+.pea-eq {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pea-procesador-cabecera,
+.pea-eq-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pea-procesador-nombre {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.pea-procesador-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.pea-procesador-knobs {
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+/* Preset dropdown */
+.pea-preset-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.pea-preset-row span {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.pea-preset-row select {
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.pea-preset-row select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pea-preset-row select option {
+  background: #0e1422;
+}
+
+/* Switch */
+.pea-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.pea-switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #cbd5e1;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.pea-switch.activo {
+  background: #22c55e;
+  border-color: #4ade80;
+}
+
+.pea-switch.activo span {
+  transform: translateX(16px);
+  background: #ffffff;
+}
+
+/* Knobs (perillas rotacionales) */
+.pea-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pea-knob-cuerpo {
+  position: relative;
+  width: 50px;
+  height: 50px;
+}
+
+.pea-knob-disco {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #9ca3af 0%, #6b7280 35%, #374151 70%, #1f2937 100%);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, 0.15),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+    0 4px 10px rgba(0, 0, 0, 0.55);
+  position: relative;
+  transition: filter 0.15s;
+}
+
+/* Estrías radiales del knob (pseudo-elemento): repeating-conic-gradient genera
+   las líneas grises tipo "perilla de mezclador real" que el usuario pidió. */
+.pea-knob-disco::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from -135deg,
+    transparent 0deg,
+    transparent 12deg,
+    rgba(0, 0, 0, 0.45) 12deg,
+    rgba(0, 0, 0, 0.45) 13.5deg
+  );
+  pointer-events: none;
+}
+
+/* Núcleo central del knob: punto blanco brillante que destaca sobre las estrías */
+.pea-knob-disco::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f3f4f6, #d1d5db 60%, #9ca3af 100%);
+  box-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.pea-knob-marca {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 3px;
+  height: 12px;
+  background: #fbbf24;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+  z-index: 2;
+}
+
+.pea-knob input[type="range"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: grab;
+  margin: 0;
+}
+
+.pea-knob input[type="range"]:active {
+  cursor: grabbing;
+}
+
+.pea-knob input[type="range"]:disabled {
+  cursor: not-allowed;
+}
+
+.pea-knob-disabled .pea-knob-disco {
+  filter: grayscale(0.7) brightness(0.5);
+}
+
+.pea-knob-disabled .pea-knob-marca {
+  background: #4b5563;
+  box-shadow: none;
+}
+
+.pea-knob-etiqueta {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Acentos por color */
+.pea-acento-cyan .pea-knob-marca { background: #22d3ee; box-shadow: 0 0 6px rgba(34, 211, 238, 0.8); }
+.pea-acento-azul .pea-knob-marca { background: #60a5fa; box-shadow: 0 0 6px rgba(96, 165, 250, 0.8); }
+.pea-acento-naranja .pea-knob-marca { background: #fb923c; box-shadow: 0 0 6px rgba(251, 146, 60, 0.8); }
+.pea-acento-verde .pea-knob-marca { background: #4ade80; box-shadow: 0 0 6px rgba(74, 222, 128, 0.8); }
+.pea-acento-morado .pea-knob-marca { background: #a78bfa; box-shadow: 0 0 6px rgba(167, 139, 250, 0.8); }
+
+/* Ecualizador 5 bandas */
+.pea-eq-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.pea-eq-tab {
+  padding: 4px 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pea-eq-tab.activo {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.pea-eq-tab:hover:not(.activo) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+}
+
+.pea-eq-grid-controles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  align-items: end;
+  padding: 4px 0;
+}
+
+.pea-eq-banda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pea-eq-banda input[type="range"] {
+  width: 6px;
+  height: 100px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: linear-gradient(180deg, #ef4444 0%, #fbbf24 50%, #3b82f6 100%);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.pea-eq-banda input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  border: 2px solid #1e293b;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pea-eq-banda input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  border: 2px solid #1e293b;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pea-eq-frec {
+  font-size: 10px;
+  font-weight: 700;
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pea-eq-escala {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 4px;
+  font-size: 9px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Volúmenes */
+.pea-volumenes-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 18px 6px;
+}
+
+.pea-volumenes-cabecera h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.pea-fila-volumenes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.pea-canal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.pea-canal-titulo {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+/* Faders (sliders verticales con thumb estilo mixer) — el contenedor incluye
+   marcas laterales tipo regla a izquierda y derecha del riel del slider, igual
+   que un mixer físico real. */
+.pea-fader {
+  position: relative;
+  height: 120px;
+  width: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Marcas/líneas a los costados del riel (pseudo-elementos). Repeating-linear
+   genera las líneas horizontales pequeñas espaciadas verticalmente. */
+.pea-fader::before,
+.pea-fader::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.28) 0px,
+    rgba(255, 255, 255, 0.28) 1px,
+    transparent 1px,
+    transparent 11px
+  );
+  pointer-events: none;
+}
+
+.pea-fader::before { left: 12px; }
+.pea-fader::after { right: 12px; }
+
+.pea-fader input[type="range"] {
+  position: relative;
+  z-index: 2;
+  width: 8px;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Visualizador estéreo: dos barras paralelas (canal L y R) detrás del thumb.
+   La altura de cada barra refleja el volumen ajustado por pan — mover el knob
+   PAN reduce visualmente una de las dos columnas mientras la otra crece. */
+.pea-fader-canales {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pea-fader-canal {
+  width: 4px;
+  align-self: flex-end;
+  border-radius: 2px;
+  transition: height 0.08s linear;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+}
+
+.pea-fader.pea-acento-naranja .pea-fader-canal {
+  background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #4ade80 100%);
+}
+
+.pea-fader.pea-acento-azul .pea-fader-canal {
+  background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #60a5fa 100%);
+}
+
+.pea-fader.pea-acento-verde .pea-fader-canal {
+  background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #4ade80 100%);
+}
+
+.pea-fader.pea-acento-morado .pea-fader-canal {
+  background: linear-gradient(180deg, #ef4444 0%, #fbbf24 35%, #a78bfa 100%);
+}
+
+.pea-fader input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 28px;
+  height: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  border: 2px solid #1e293b;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.pea-fader input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  border: 2px solid #1e293b;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.pea-canal-pan-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 56px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive: en pantallas chicas pasamos a 2 columnas para procesadores y
+   reducimos faders. En pantallas muy chicas el panel hace scroll vertical. */
+@media (max-width: 880px) {
+  .pea-fila-procesadores {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: auto;
+  }
+  .pea-eq {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .pea-fila-procesadores,
+  .pea-fila-volumenes {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pea-eq {
+    grid-column: 1 / -1;
+  }
+  .pea-fader {
+    height: 110px;
+  }
+  .pea-knob-cuerpo {
+    width: 48px;
+    height: 48px;
+  }
+}

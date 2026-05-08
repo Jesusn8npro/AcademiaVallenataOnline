@@ -13,6 +13,9 @@ import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
+import PanelEfectosAudio from '../../componentes/Efectos/PanelEfectosAudio';
+import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
+import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
 import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
@@ -93,7 +96,84 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         contacto: false,
         aprende: false,
         loops: false,
+        efectos: false,
     });
+
+    // ─── Panel de Efectos de Audio ──────────────────────────────────────────
+    // Estados controlados que mapean al motor de audio. Reverb arranca apagado
+    // por defecto (mantiene latencia mínima en Android: directBus activo).
+    const [reverbActivo, setReverbActivo] = useState(false);
+    const [reverbIntensidad, setReverbIntensidad] = useState(20);
+    const [reverbPreset, setReverbPreset] = useState<'cuarto_mediano' | 'cuarto_grande' | 'vestibulo_mediano' | 'vestibulo_grande' | 'escenario_abierto'>('cuarto_grande');
+    const [graves, setGraves] = useState(0);
+    const [medios, setMedios] = useState(0);
+    const [agudos, setAgudos] = useState(0);
+    // Volúmenes y panning independientes para teclado y bajos. El motor tiene
+    // sub-buses busTeclado/busBajos cada uno con su GainNode + StereoPannerNode,
+    // así el slider TECLADO solo afecta pitos y BAJOS solo afecta el lado bajos.
+    const [volumenTeclado, setVolumenTeclado] = useState(85);
+    const [volumenBajos, setVolumenBajos] = useState(85);
+    // Pan stereo: -50 = izquierda, 0 = centro, 50 = derecha (UI). El motor
+    // recibe el rango -1..1 estándar de StereoPannerNode.
+    const [panTeclado, setPanTeclado] = useState(0);
+    const [panBajos, setPanBajos] = useState(0);
+    // Loops y metrónomo aún no tienen pan en su pipeline propio (placeholder UI).
+    const [panLoops, setPanLoops] = useState(0);
+    const [panMetronomo, setPanMetronomo] = useState(0);
+
+    // Lista de pistas disponibles para usar como preview del slider LOOPS.
+    // Buscamos "chande sabor" como default; si no, la primera disponible.
+    const [pistasDisponibles, setPistasDisponibles] = useState<PistaPracticaLibre[]>([]);
+    useEffect(() => {
+        listarPistasPracticaLibre()
+            .then((pistas) => setPistasDisponibles(pistas || []))
+            .catch(() => { /* silencioso: si falla la red el preview de loops queda en noop */ });
+    }, []);
+    const pistaPreviewLoops = useMemo(() => {
+        const chande = pistasDisponibles.find((p) =>
+            p.nombre?.toLowerCase().includes('chande sabor')
+        );
+        return chande || pistasDisponibles[0] || null;
+    }, [pistasDisponibles]);
+
+    // Sincroniza Reverb con el motor: cuando el toggle está apagado mandamos 0
+    // (el motor se pasa al directBus sin filtros — latencia mínima en Android).
+    useEffect(() => {
+        const cantidad = reverbActivo ? reverbIntensidad / 100 : 0;
+        motorAudioPro.actualizarReverb(cantidad);
+    }, [reverbActivo, reverbIntensidad]);
+
+    // Cambiar preset regenera el impulse response del ConvolverNode → cambia
+    // la "personalidad" del espacio (cuarto vs vestíbulo vs escenario abierto).
+    useEffect(() => {
+        motorAudioPro.cargarPresetReverb(reverbPreset);
+    }, [reverbPreset]);
+
+    useEffect(() => {
+        motorAudioPro.actualizarEQ(graves, medios, agudos);
+    }, [graves, medios, agudos]);
+
+    // Sub-buses con volumen + pan independientes (TECLADO y BAJOS).
+    useEffect(() => {
+        motorAudioPro.setVolumenBusTeclado(volumenTeclado / 100);
+    }, [volumenTeclado]);
+    useEffect(() => {
+        motorAudioPro.setVolumenBusBajos(volumenBajos / 100);
+    }, [volumenBajos]);
+    useEffect(() => {
+        motorAudioPro.setPanTeclado(panTeclado / 50);
+    }, [panTeclado]);
+    useEffect(() => {
+        motorAudioPro.setPanBajos(panBajos / 50);
+    }, [panBajos]);
+
+    const restaurarEfectos = useCallback(() => {
+        setReverbActivo(false);
+        setReverbIntensidad(20);
+        setGraves(0);
+        setMedios(0);
+        setAgudos(0);
+    }, []);
 
     const [bajosVisible, setBajosVisible] = useState(false);
     const [bpmMetronomo, setBpmMetronomo] = useState(80);
@@ -176,6 +256,77 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // se desmontaba y el metronomo callaba.
     const metronomoVivo = useMetronomo(bpmMetronomo);
     useEffect(() => { metronomoVivo.setBpm(bpmMetronomo); }, [bpmMetronomo]);
+
+    // Pan de loops y metrónomo (van por sus propios StereoPannerNode dentro
+    // del hook respectivo, no por el motor principal).
+    useEffect(() => {
+        loops.setPan(panLoops / 50);
+    }, [panLoops, loops]);
+    useEffect(() => {
+        metronomoVivo.setPan(panMetronomo / 50);
+    }, [panMetronomo, metronomoVivo]);
+
+    // ─── Previews del Panel de Efectos ──────────────────────────────────────
+    // Tocan un sonido mientras el alumno mantiene presionado un slider de
+    // volumen. Cada handler es estable (useCallback) para evitar arranques
+    // fantasma por re-creación de funciones entre renders.
+    const PREVIEW_TECLADO_ID = '1-3-halar';
+    const PREVIEW_BAJOS_ID = '1-1-halar-bajo';
+
+    const previewTecladoIniciar = useCallback(() => {
+        motorAudioPro.activarContexto();
+        logica.actualizarBotonActivo(PREVIEW_TECLADO_ID, 'add');
+    }, [logica.actualizarBotonActivo]);
+    const previewTecladoDetener = useCallback(() => {
+        logica.actualizarBotonActivo(PREVIEW_TECLADO_ID, 'remove');
+    }, [logica.actualizarBotonActivo]);
+
+    const previewBajosIniciar = useCallback(() => {
+        motorAudioPro.activarContexto();
+        logica.actualizarBotonActivo(PREVIEW_BAJOS_ID, 'add');
+    }, [logica.actualizarBotonActivo]);
+    const previewBajosDetener = useCallback(() => {
+        logica.actualizarBotonActivo(PREVIEW_BAJOS_ID, 'remove');
+    }, [logica.actualizarBotonActivo]);
+
+    // Loops: arrancamos "Pista de chande sabor" (o la primera disponible) si
+    // todavía no hay pista sonando, y la silenciamos al soltar — solo si fuimos
+    // nosotros quienes la activamos. Si el alumno ya tenía una pista corriendo
+    // por su cuenta, no la tocamos para no interrumpir la práctica.
+    const loopsActivadoPorPreviewRef = useRef(false);
+    const previewLoopsIniciar = useCallback(() => {
+        motorAudioPro.activarContexto();
+        if (loops.pistaActiva || !pistaPreviewLoops) return;
+        // precargarPistas es idempotente: si ya está en cache no descarga;
+        // si no, descarga + decodifica antes del play (silencio breve la primera vez).
+        loops.precargarPistas([pistaPreviewLoops]);
+        loopsActivadoPorPreviewRef.current = true;
+        loops.reproducir(pistaPreviewLoops);
+    }, [loops, pistaPreviewLoops]);
+    const previewLoopsDetener = useCallback(() => {
+        if (loopsActivadoPorPreviewRef.current) {
+            loopsActivadoPorPreviewRef.current = false;
+            loops.detener();
+        }
+    }, [loops]);
+
+    // Metrónomo: lo encendemos al tocar el slider y guardamos un flag para
+    // saber si fuimos nosotros (así no apagamos un metrónomo que el alumno
+    // ya había activado por su cuenta).
+    const metronomoEncendidoPorPreviewRef = useRef(false);
+    const previewMetronomoIniciar = useCallback(() => {
+        motorAudioPro.activarContexto();
+        if (!metronomoVivo.activo) {
+            metronomoEncendidoPorPreviewRef.current = true;
+            void metronomoVivo.iniciar();
+        }
+    }, [metronomoVivo]);
+    const previewMetronomoDetener = useCallback(() => {
+        if (metronomoEncendidoPorPreviewRef.current) {
+            metronomoEncendidoPorPreviewRef.current = false;
+            metronomoVivo.detener();
+        }
+    }, [metronomoVivo]);
 
     // Metronomo de REPLAY: instancia independiente para reproducir el metronomo
     // de una grabacion sin pisar el estado del metronomo vivo del usuario.
@@ -778,7 +929,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     }, [escala, limpiarGeometria]);
 
     const toggleModal = (nombre: keyof typeof modales) => {
-        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, loops: false, [nombre]: !prev[nombre] }));
+        setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, loops: false, efectos: false, [nombre]: !prev[nombre] }));
     };
 
     // Posicion del loop EN EL INSTANTE en que empezo la grabacion. Se usa
@@ -908,6 +1059,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         onToggleMetronomo={() => toggleModal('metronomo')} onToggleInstrumentos={() => toggleModal('instrumentos')}
                         onToggleVista={() => toggleModal('vista')} onToggleAprende={() => toggleModal('aprende')}
                         onToggleLoops={() => toggleModal('loops')}
+                        onToggleEfectos={() => toggleModal('efectos')}
                         loopActivo={!!loops.pistaActiva}
                         refs={refsModales as any}
                     />
@@ -961,6 +1113,53 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             />
 
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
+
+            {modales.efectos && (
+                <div className="pea-modal-overlay" onClick={() => toggleModal('efectos')}>
+                    <div className="pea-modal-contenido" onClick={(e) => e.stopPropagation()}>
+                        <PanelEfectosAudio
+                            reverbActivo={reverbActivo}
+                            reverbIntensidad={reverbIntensidad}
+                            reverbPreset={reverbPreset}
+                            onCambiarReverbActivo={setReverbActivo}
+                            onCambiarReverbIntensidad={setReverbIntensidad}
+                            onCambiarReverbPreset={setReverbPreset}
+                            graves={graves}
+                            medios={medios}
+                            agudos={agudos}
+                            onCambiarGraves={setGraves}
+                            onCambiarMedios={setMedios}
+                            onCambiarAgudos={setAgudos}
+                            volumenTeclado={volumenTeclado}
+                            volumenBajos={volumenBajos}
+                            volumenLoops={Math.round(loops.volumen * 100)}
+                            volumenMetronomo={Math.round(metronomoVivo.volumen * 100)}
+                            onCambiarVolumenTeclado={setVolumenTeclado}
+                            onCambiarVolumenBajos={setVolumenBajos}
+                            onCambiarVolumenLoops={(v) => loops.setVolumen(v / 100)}
+                            onCambiarVolumenMetronomo={(v) => metronomoVivo.setVolumen(v / 100)}
+                            panTeclado={panTeclado}
+                            panBajos={panBajos}
+                            panLoops={panLoops}
+                            panMetronomo={panMetronomo}
+                            onCambiarPanTeclado={setPanTeclado}
+                            onCambiarPanBajos={setPanBajos}
+                            onCambiarPanLoops={setPanLoops}
+                            onCambiarPanMetronomo={setPanMetronomo}
+                            onPreviewTecladoIniciar={previewTecladoIniciar}
+                            onPreviewTecladoDetener={previewTecladoDetener}
+                            onPreviewBajosIniciar={previewBajosIniciar}
+                            onPreviewBajosDetener={previewBajosDetener}
+                            onPreviewLoopsIniciar={previewLoopsIniciar}
+                            onPreviewLoopsDetener={previewLoopsDetener}
+                            onPreviewMetronomoIniciar={previewMetronomoIniciar}
+                            onPreviewMetronomoDetener={previewMetronomoDetener}
+                            onCerrar={() => toggleModal('efectos')}
+                            onRestaurar={restaurarEfectos}
+                        />
+                    </div>
+                </div>
+            )}
 
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
 

@@ -426,8 +426,13 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const reproducirTono = useCallback((id: string, tiempoProgramado?: number, duracionSec?: number, loop: boolean = false) => {
         const rawRutas = soundsPerKeyRef.current[id] || obtenerRutasAudio(id);
 
-        const volume = id.includes('bajo') ? VOL_BAJOS : VOL_PITOS;
+        const esBajo = id.includes('bajo');
+        const volume = esBajo ? VOL_BAJOS : VOL_PITOS;
         const userPitch = ajustesRef.current.pitchPersonalizado?.[id] || 0;
+        // Routing al sub-bus correcto del motor: el slider TECLADO afecta solo
+        // pitos y el slider BAJOS afecta solo los del lado bajos. Antes ambos
+        // compartían el nodoGananciaPrincipal y se movían juntos.
+        const seccion: 'teclado' | 'bajos' = esBajo ? 'bajos' : 'teclado';
 
         const instances = rawRutas.map(rutaRaw => {
             let ruta = rutaRaw;
@@ -438,7 +443,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 ruta = parts[1];
             }
             const globalPitch = ajustesRef.current.pitchGlobal || 0;
-            return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase, loop, tiempoProgramado, duracionSec);
+            return motorAudioPro.reproducir(ruta, instrumentoId, volume, globalPitch + userPitch + pitchBase, loop, tiempoProgramado, duracionSec, seccion);
         }).filter(Boolean);
 
         soundsPerKeyRef.current[id] = rawRutas;

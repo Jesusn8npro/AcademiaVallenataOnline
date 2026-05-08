@@ -41,6 +41,7 @@ export function useReproductorLoops() {
     const [pistaActiva, setPistaActiva] = useState<PistaActiva | null>(null);
     const [volumen, setVolumen] = useState(0.85);
     const [velocidad, setVelocidad] = useState(1.0);
+    const [pan, setPan] = useState(0); // -1..1: balance L/R stereo
     const [errorReproduccion, setErrorReproduccion] = useState<EstadoLoopError | null>(null);
     const [pistasListas, setPistasListas] = useState<Set<string>>(new Set());
 
@@ -51,6 +52,7 @@ export function useReproductorLoops() {
     // Estado de la reproduccion en curso.
     const sourceRef = useRef<AudioBufferSourceNode | null>(null);
     const gainRef = useRef<GainNode | null>(null);
+    const panNodeRef = useRef<StereoPannerNode | null>(null);
     const startTimeRef = useRef(0);  // contexto.currentTime cuando arranco la fuente
 
     /**
@@ -141,14 +143,20 @@ export function useReproductorLoops() {
             ctx.resume().catch((e) => console.warn('[Loops] resume fallo:', e));
         }
 
-        // GainNode persistente para volumen (lo reusamos entre pistas).
+        // GainNode + StereoPannerNode persistentes (los reusamos entre pistas).
+        // Routing: source → gain → pan → destination. Sin pan stereo el slider
+        // PAN del panel de efectos no podía afectar la pista de loops.
         let gain = gainRef.current;
         if (!gain) {
             gain = ctx.createGain();
-            gain.connect(ctx.destination);
+            const panNode = ctx.createStereoPanner();
+            gain.connect(panNode);
+            panNode.connect(ctx.destination);
             gainRef.current = gain;
+            panNodeRef.current = panNode;
         }
         gain.gain.value = volumen;
+        if (panNodeRef.current) panNodeRef.current.pan.value = pan;
 
         // AudioBufferSourceNode: nuevo cada vez (no se pueden reusar tras stop).
         const source = ctx.createBufferSource();
@@ -182,6 +190,14 @@ export function useReproductorLoops() {
     useEffect(() => {
         if (gainRef.current) gainRef.current.gain.value = volumen;
     }, [volumen]);
+
+    // Pan en vivo via StereoPannerNode con rampa para evitar zipper noise.
+    useEffect(() => {
+        const node = panNodeRef.current;
+        if (!node) return;
+        const ctx = motorAudioPro.contextoAudio;
+        node.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), ctx.currentTime, 0.03);
+    }, [pan]);
 
     // Velocidad en vivo via AudioParam de la fuente.
     useEffect(() => {
@@ -225,10 +241,12 @@ export function useReproductorLoops() {
         pistaActiva,
         volumen,
         velocidad,
+        pan,
         errorReproduccion,
         pistasListas,
         setVolumen,
         setVelocidad,
+        setPan,
         reproducir,
         detener,
         obtenerPosicion,

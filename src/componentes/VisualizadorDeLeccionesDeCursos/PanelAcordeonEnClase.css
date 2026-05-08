@@ -11,18 +11,20 @@
 .panel-acordeon-clase-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
+  gap: 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
 .panel-acordeon-clase-header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.2px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .panel-acordeon-clase-cerrar {
@@ -46,24 +48,25 @@
 
 .panel-acordeon-clase-tabs {
   display: flex;
+  flex: 1;
   gap: 4px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  flex-shrink: 0;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
 }
 
 .panel-acordeon-clase-tab {
   flex: 1;
-  padding: 10px 14px;
+  padding: 7px 14px;
   border: none;
   background: transparent;
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 }
 
 .panel-acordeon-clase-tab:hover {
