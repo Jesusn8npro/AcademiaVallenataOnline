@@ -504,12 +504,14 @@
 }
 
 /* ─── Botón "Modo Foco" — pestaña vertical slim pegada al borde izquierdo
-   alineada con la barra de herramientas (esquina superior). La flecha
-   apunta a la derecha — señala "esto controla la barra que está aquí". */
+   del simulador-canvas. position:absolute (NO fixed) → cuando el canvas
+   se encoge en modo foco, el botón también baja con él (queda anclado
+   a la esquina superior izquierda del contenedor). La flecha apunta a
+   la derecha — señala "esto controla la barra que está aquí". */
 .btn-modo-foco {
-    position: fixed;
+    position: absolute;
     left: 0;
-    top: 140px;
+    top: 8px;
     z-index: 1500;
     display: flex;
     flex-direction: column;

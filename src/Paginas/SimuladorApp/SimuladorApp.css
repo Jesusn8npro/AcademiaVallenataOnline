@@ -63,9 +63,10 @@
 }
 
 .simulador-canvas {
+    --espacio-barra: 62px;
     position: relative;
     width: 100% !important;
-    height: calc((var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) + 62px + var(--offset-ios, 0px)) !important;
+    height: calc((var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) + var(--espacio-barra) + var(--offset-ios, 0px)) !important;
     background-image: url('/Diapason%20con%20fondo%20firme.jpg');
     background-size: 100% 100%;
     background-position: center bottom;
@@ -75,7 +76,18 @@
     justify-content: flex-start;
     align-items: center;
     gap: 0;
-    transition: height 0.2s ease-out;
+    transition: height 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Modo foco: el canvas pierde el espacio reservado para la barra (los
+   62px del `--espacio-barra`). Los pitos están dimensionados en vh,
+   NO en flex — así no crecen al reducir el canvas. La barra se quita
+   del flow con display:none + el contenedor se "encoge" naturalmente. */
+.simulador-canvas.modo-foco {
+    --espacio-barra: 0px;
+}
+.simulador-canvas.modo-foco .barra-herramientas-contenedor {
+    display: none;
 }
 
 .diapason-marco {
