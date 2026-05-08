@@ -13,6 +13,8 @@ import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 import ModalGrabacionAdmin from './Componentes/ModalGrabacionAdmin';
+import GaleriaAcordeones from './Componentes/GaleriaAcordeones';
+import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosSimulador from './Componentes/PanelEfectosSimulador';
@@ -107,6 +109,18 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // alumno no premium no se ocultan).
     const [modoFoco, setModoFoco] = useState(false);
     const [toastUpgradeVisible, setToastUpgradeVisible] = useState(false);
+
+    // Galería de modelos visuales del acordeón. Persiste la elección en
+    // localStorage — al volver a abrir el simulador, el alumno conserva
+    // su modelo. Default: 'pro_max' (lo que se ve hoy).
+    const [galeriaAbierta, setGaleriaAbierta] = useState(false);
+    const [temaAcordeonId, setTemaAcordeonId] = useState<string>(() => leerTemaGuardado());
+    const temaAcordeon = useMemo(() => obtenerTemaPorId(temaAcordeonId), [temaAcordeonId]);
+    const seleccionarTema = useCallback((id: string) => {
+        setTemaAcordeonId(id);
+        guardarTemaElegido(id);
+        setGaleriaAbierta(false);
+    }, []);
 
     // ─── Panel de Efectos de Audio ──────────────────────────────────────────
     // Estados controlados que mapean al motor de audio. Reverb arranca apagado
@@ -1181,10 +1195,14 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 manejarCambioFuelle={manejarCambioFuelle}
                 desactivarAudio={desactivarAudio}
                 vistaDoble={config.vistaDoble}
+                imagenBajosUrl={temaAcordeon.bajos}
             />
 
             <div className="contenedor-acordeon-completo">
-                <div className={`simulador-canvas ${modoFoco ? 'modo-foco' : ''}`}>
+                <div
+                    className={`simulador-canvas ${modoFoco ? 'modo-foco' : ''}`}
+                    style={{ '--imagen-diapason': `url("${temaAcordeon.diapason}")` } as React.CSSProperties}
+                >
                     <BarraHerramientas
                         logica={logica} x={x} escala={escala} setEscala={setEscala}
                         modoVista={config.modoVista} grabando={grabando} toggleGrabacion={handleToggleGrabacion}
@@ -1262,6 +1280,15 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onCerrar={() => toggleModal('menu')}
                 botonRef={refsModales.menu as any}
                 onAbrirContacto={() => toggleModal('contacto')}
+                onAbrirGaleria={() => setGaleriaAbierta(true)}
+            />
+
+            <GaleriaAcordeones
+                visible={galeriaAbierta}
+                temaActivoId={temaAcordeonId}
+                esPremium={esPremium}
+                onCerrar={() => setGaleriaAbierta(false)}
+                onSeleccionar={seleccionarTema}
             />
 
             <ModalTonalidades visible={modales.tonalidades} onCerrar={() => toggleModal('tonalidades')} tonalidadSeleccionada={logica.tonalidadSeleccionada} onSeleccionarTonalidad={logica.setTonalidadSeleccionada} listaTonalidades={logica.listaTonalidades} botonRef={refsModales.tonalidades as any} />

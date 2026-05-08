@@ -67,7 +67,11 @@
     position: relative;
     width: 100% !important;
     height: calc((var(--pito-boton-size) * 3 + var(--pitos-dist-v) * 2) * var(--escala-acordeon, 1) + var(--espacio-barra) + var(--offset-ios, 0px)) !important;
-    background-image: url('/Diapason%20con%20fondo%20firme.jpg');
+    /* Imagen de fondo del acordeón. La variable `--imagen-diapason` viene del
+       tema activo (galería de modelos). Si no hay tema seleccionado, cae al
+       Pro MAX original. Cambiar de modelo solo redibuja el background — los
+       pitos no se ven afectados. */
+    background-image: var(--imagen-diapason, url('/acordeones/pro-max/diapason.jpg'));
     background-size: 100% 100%;
     background-position: center bottom;
     background-repeat: no-repeat;

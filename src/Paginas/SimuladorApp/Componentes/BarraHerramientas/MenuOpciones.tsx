@@ -10,7 +10,8 @@ import {
     ChevronUp,
     ArrowLeftRight,
     ArrowUpDown,
-    Crown
+    Crown,
+    Sparkles
 } from 'lucide-react';
 import './MenuOpciones.css';
 
@@ -19,6 +20,8 @@ interface MenuOpcionesProps {
     onCerrar: () => void;
     botonRef?: React.RefObject<HTMLDivElement>;
     onAbrirContacto?: () => void;
+    /** Abre la galería de modelos visuales del acordeón. */
+    onAbrirGaleria?: () => void;
 }
 
 const ControlSliderCSS: React.FC<{
@@ -60,7 +63,7 @@ const ControlSliderCSS: React.FC<{
 };
 
 const MenuOpciones: React.FC<MenuOpcionesProps> = ({
-    visible, onCerrar, botonRef, onAbrirContacto
+    visible, onCerrar, botonRef, onAbrirContacto, onAbrirGaleria
 }) => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [estilo, setEstilo] = useState<React.CSSProperties>({ opacity: 0 });
@@ -159,6 +162,11 @@ const MenuOpciones: React.FC<MenuOpcionesProps> = ({
                             </div>
 
                             <div className="menu-opciones-lista">
+                                <MenuItem
+                                    icon={<Sparkles />}
+                                    text="Galería de Acordeones"
+                                    onClick={() => { onAbrirGaleria?.(); onCerrar(); }}
+                                />
                                 <MenuItem icon={<Volume2 />} text="Ajustes del fuelle" />
                                 <MenuItem icon={<Sliders />} text="Tamaños, Posiciones y Diseño" onClick={() => setVistaActual('diseno')} />
                                 <MenuItem icon={<MessageCircle />} text="Contáctanos" onClick={onAbrirContacto} />
