@@ -76,18 +76,37 @@
     justify-content: flex-start;
     align-items: center;
     gap: 0;
-    transition: height 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+    /* easeInOutQuart — más sutil y "premium" que un ease estándar */
+    transition: height 0.55s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-/* Modo foco: el canvas pierde el espacio reservado para la barra (los
-   62px del `--espacio-barra`). Los pitos están dimensionados en vh,
-   NO en flex — así no crecen al reducir el canvas. La barra se quita
-   del flow con display:none + el contenedor se "encoge" naturalmente. */
+/* Modo foco: el canvas pierde los 62px del `--espacio-barra`, la barra
+   colapsa con max-height + opacity (NO display:none — eso cortaría la
+   animación). Animación coordinada: la barra se desvanece y se aplasta
+   mientras el canvas se encoge a la misma cadencia. Los pitos están
+   dimensionados en vh así que NO crecen. */
 .simulador-canvas.modo-foco {
     --espacio-barra: 0px;
 }
+
+/* La barra siempre tiene transition — fluye igual al ocultar y mostrar */
+.simulador-canvas .barra-herramientas-contenedor {
+    overflow: hidden;
+    max-height: 80px;
+    transition:
+        max-height 0.55s cubic-bezier(0.76, 0, 0.24, 1),
+        opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+        margin 0.5s cubic-bezier(0.76, 0, 0.24, 1),
+        transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
 .simulador-canvas.modo-foco .barra-herramientas-contenedor {
-    display: none;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
 }
 
 .diapason-marco {
