@@ -5,7 +5,7 @@ import {
     Move,
     MoreVertical,
     Timer,
-    BookOpen,
+    GraduationCap,
     SlidersHorizontal
 } from 'lucide-react';
 import { motion, MotionValue, animate } from 'framer-motion';
@@ -125,34 +125,26 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     return (
         <div className="barra-herramientas-contenedor">
 
+            {/* Orden estratégico izquierda: aprender → instrumento → tono →
+                pistas → efectos. Es el flujo natural del alumno: primero
+                "qué aprender", después "con qué timbre", "en qué tono", "con
+                qué fondo musical" y finalmente "con qué efecto". */}
             <div className="seccion-barra seccion-izquierda">
                 <div
                     ref={refs?.aprende}
                     className={`boton-herramienta boton-aprende ${modalesVisibles.aprende ? 'activo' : ''}`}
                     onClick={onToggleAprende}
+                    title="Tutoriales y lecciones"
                 >
-                    <BookOpen size={20} />
-                    <span>APRENDE</span>
+                    <GraduationCap size={20} />
+                    <span>TUTORIALES</span>
                 </div>
-
-                {onToggleLoops && (
-                    <div
-                        ref={refs?.loops}
-                        className={`boton-herramienta ${modalesVisibles.loops ? 'activo' : ''} ${loopActivo ? 'loop-sonando' : ''}`}
-                        onClick={onToggleLoops}
-                    >
-                        <span style={{ fontSize: '20px', lineHeight: 1, position: 'relative' }}>
-                            🥁
-                            {loopActivo && <span className="loop-indicador-punto" aria-hidden="true" />}
-                        </span>
-                        <span>LOOPS</span>
-                    </div>
-                )}
 
                 <div
                     ref={refs?.instrumentos}
                     className={`boton-herramienta ${modalesVisibles.instrumentos ? 'activo' : ''}`}
                     onClick={onToggleInstrumentos}
+                    title="Cambiar instrumento / timbre"
                 >
                     <div style={{ fontSize: '20px' }}>🪗</div>
                     {logica.cargandoCloud && <div className="loader-mini"></div>}
@@ -162,10 +154,26 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     ref={refs?.tonalidades}
                     className={`boton-herramienta ${modalesVisibles.tonalidades ? 'activo' : ''}`}
                     onClick={onToggleTonalidades}
+                    title="Cambiar tonalidad"
                 >
                     <Music size={20} />
                     <span>Tono</span>
                 </div>
+
+                {onToggleLoops && (
+                    <div
+                        ref={refs?.loops}
+                        className={`boton-herramienta ${modalesVisibles.loops ? 'activo' : ''} ${loopActivo ? 'loop-sonando' : ''}`}
+                        onClick={onToggleLoops}
+                        title="Pistas musicales de fondo"
+                    >
+                        <span style={{ fontSize: '20px', lineHeight: 1, position: 'relative' }}>
+                            🥁
+                            {loopActivo && <span className="loop-indicador-punto" aria-hidden="true" />}
+                        </span>
+                        <span>PISTAS</span>
+                    </div>
+                )}
 
                 {onToggleEfectos && (
                     <div
@@ -187,15 +195,11 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                 <BannerEcosistemaHero />
             </div>
 
+            {/* Orden estratégico derecha (controles del simulador): mover/ver
+                → tamaño → metrónomo → oferta → menú. Lo más usado primero,
+                lo "secundario" (oferta) cerca del menú al final. */}
             <div className="seccion-barra seccion-derecha">
-                <div className="contenedor-oferta">
-                    <div className="oferta-tag">-40%</div>
-                    <div className="boton-herramienta">
-                        <ShoppingCart size={20} />
-                    </div>
-                </div>
-
-                <div className="boton-herramienta contenedor-control-drag">
+                <div className="boton-herramienta contenedor-control-drag" title="Doble clic para centrar">
                     <div className="label-botones">BOTONES</div>
                     <motion.div
                         className="icono-drag-handle"
@@ -210,7 +214,6 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                         onDrag={handleDrag}
                         onDoubleClick={resetearPosicion}
                         whileTap={{ scale: 0.85, cursor: 'grabbing' }}
-                        title="Doble clic para centrar"
                     >
                         <Move size={18} />
                     </motion.div>
@@ -252,15 +255,24 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     ref={refs?.metronomo}
                     className={`boton-herramienta metronomo-btn-barra ${modalesVisibles.metronomo ? 'activo' : ''}`}
                     onClick={onToggleMetronomo}
+                    title="Metrónomo"
                 >
                     <Timer size={20} />
                     <span className="label-metronomo-mini">BPM: {bpmMetronomo}</span>
+                </div>
+
+                <div className="contenedor-oferta" title="Ofertas">
+                    <div className="oferta-tag">-40%</div>
+                    <div className="boton-herramienta">
+                        <ShoppingCart size={20} />
+                    </div>
                 </div>
 
                 <div
                     ref={refs?.menu}
                     className={`boton-herramienta ${modalesVisibles.menu ? 'activo' : ''}`}
                     onClick={onToggleMenu}
+                    title="Más opciones"
                 >
                     <MoreVertical size={20} />
                 </div>
