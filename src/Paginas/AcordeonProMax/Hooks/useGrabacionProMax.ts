@@ -1,10 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useGrabadorHero } from '../../../Core/hooks/useGrabadorHero';
 import { guardarGrabacion } from '../../../servicios/grabacionesHeroService';
+import { crearCancionV2, subirAudioFondoV2 } from '../GrabadorV2/servicioGrabadorV2';
 import { obtenerSnapshotMetadataPracticaLibre } from '../PracticaLibre/Servicios/servicioPreferenciasPracticaLibre';
 import { calcularPrecision } from '../TiposProMax';
 import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
 import type { TipoGrabacionPendiente, GrabacionPendienteProMax, GrabacionGuardadaProMax, UseGrabacionProMaxParams } from './_tiposGrabacionProMax';
+import type { NotaHero } from '../../../Core/hero/tipos_Hero';
 
 export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPracticaRef, seccionRef }: UseGrabacionProMaxParams) {
   const grabador = useGrabadorHero(bpm);
@@ -267,6 +269,70 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
     }
   }, []);
 
+  // Guarda la grabación pendiente como CANCIÓN HERO (tabla canciones_hero,
+  // visible para todos los alumnos). Solo debe llamarse desde admin — la
+  // protección de rol vive en el componente que lo invoca, no aquí.
+  const guardarComoCancionHero = useCallback(async (datos: {
+    titulo: string;
+    autor: string;
+    bpm: number;
+    tonalidad: string;
+    dificultad: 'basico' | 'intermedio' | 'avanzado';
+    tipo: 'cancion' | 'secuencia' | 'melodia';
+    usoMetronomo: boolean;
+    audioFondoFile?: File | null;
+  }) => {
+    const pendiente = grabacionPendienteRef.current;
+    const titulo = datos.titulo?.trim();
+    if (!pendiente || !pendiente.secuencia.length) {
+      setErrorGuardadoGrabacion('No hay grabación para guardar.');
+      return null;
+    }
+    if (!titulo) {
+      setErrorGuardadoGrabacion('Debes escribir un título.');
+      return null;
+    }
+    setGuardandoGrabacion(true);
+    setErrorGuardadoGrabacion(null);
+    try {
+      // 1) Creamos la canción primero para obtener el ID. El audio se sube
+      //    después contra ese ID si el admin adjuntó MP3.
+      const cancion = await crearCancionV2({
+        titulo,
+        autor: datos.autor || 'Jesus Gonzalez',
+        bpm: datos.bpm,
+        audio_fondo_url: null,
+        secuencia_json: pendiente.secuencia as NotaHero[],
+        secciones: [],
+        tonalidad: datos.tonalidad,
+        dificultad: datos.dificultad,
+        tipo: datos.tipo,
+        usoMetronomo: datos.usoMetronomo,
+      });
+      // 2) Si hay MP3, subir y actualizar la fila con la URL pública.
+      if (datos.audioFondoFile) {
+        try {
+          const url = await subirAudioFondoV2(datos.audioFondoFile, cancion.id);
+          // Actualizamos el campo en la fila recién creada.
+          const { actualizarCancionV2 } = await import('../GrabadorV2/servicioGrabadorV2');
+          await actualizarCancionV2(cancion.id, { audio_fondo_url: url });
+          cancion.audio_fondo_url = url;
+        } catch (errAudio: any) {
+          // No abortamos: la canción ya quedó guardada, solo el audio falló.
+          setErrorGuardadoGrabacion(`Canción guardada, pero falló subir el MP3: ${errAudio?.message || 'error desconocido'}`);
+        }
+      }
+      setUltimaGrabacionGuardada({ id: cancion.id, tipo: 'cancion_hero', titulo: cancion.titulo });
+      setGrabacionPendiente(null);
+      return cancion;
+    } catch (error: any) {
+      setErrorGuardadoGrabacion(error?.message || 'Error al guardar como Canción Hero.');
+      return null;
+    } finally {
+      setGuardandoGrabacion(false);
+    }
+  }, []);
+
   return {
     grabandoHero,
     registrarPresionHero: grabador.registrarPresion,
@@ -289,6 +355,7 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
     iniciarGrabacionPracticaLibre,
     detenerGrabacionPracticaLibre,
     guardarGrabacionPendiente,
+    guardarComoCancionHero,
     descartarGrabacionPendiente,
   };
 }

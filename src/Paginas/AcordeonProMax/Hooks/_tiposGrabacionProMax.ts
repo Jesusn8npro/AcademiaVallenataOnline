@@ -2,7 +2,7 @@ import type { MutableRefObject } from 'react';
 import type { CancionHeroConTonalidad, EstadisticasPartida, ModoPractica, NotaHero } from '../TiposProMax';
 import type { Seccion } from '../tiposSecciones';
 
-export type TipoGrabacionPendiente = 'competencia' | 'practica_libre';
+export type TipoGrabacionPendiente = 'competencia' | 'practica_libre' | 'cancion_hero';
 
 export interface GrabacionPendienteProMax {
     tipo: TipoGrabacionPendiente;

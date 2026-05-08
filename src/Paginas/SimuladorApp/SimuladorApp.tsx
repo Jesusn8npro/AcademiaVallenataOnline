@@ -12,6 +12,8 @@ import { obtenerGrabacion } from '../../servicios/grabacionesHeroService';
 import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
+import ModalGrabacionAdmin from './Componentes/ModalGrabacionAdmin';
+import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosSimulador from './Componentes/PanelEfectosSimulador';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
@@ -1073,6 +1075,41 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         return await grabacion.guardarGrabacionPendiente({ titulo, descripcion });
     }, [grabacion]);
 
+    // Solo admins ven el modal expandido con opción de publicar como Canción Hero
+    // y subir MP3 de fondo. El resto de roles ve el modal normal de Práctica Libre.
+    const { usuario, esAdmin } = useUsuario();
+
+    // "Re-grabar todo": descarta la grabación pendiente y vuelve a arrancar la
+    // captura — pensado para que el admin pueda corregir notas malas sin
+    // guardarlas. Reseteamos también el offset del loop para que el primer
+    // tick de la nueva grabación coincida con el momento actual del MP3.
+    const regrabarDesdeCero = useCallback(() => {
+        grabacion.descartarGrabacionPendiente();
+        // Pequeño delay para que el modal se desmonte antes de reiniciar REC
+        // (evita race con el listener `grabacionPendiente` que reabre el modal).
+        setTimeout(() => {
+            loopOffsetAtRecordStartRef.current = loops.obtenerPosicion();
+            if (metronomoVivo.activo) {
+                metronomoVivo.detener();
+                metronomoVivo.iniciar();
+            }
+            grabacion.iniciarGrabacionPracticaLibre('practica_libre');
+        }, 50);
+    }, [grabacion, loops, metronomoVivo]);
+
+    const guardarComoCancionHero = useCallback(async (datos: {
+        titulo: string;
+        autor: string;
+        bpm: number;
+        tonalidad: string;
+        dificultad: 'basico' | 'intermedio' | 'avanzado';
+        tipo: 'cancion' | 'secuencia' | 'melodia';
+        usoMetronomo: boolean;
+        audioFondoFile?: File | null;
+    }) => {
+        return await grabacion.guardarComoCancionHero(datos);
+    }, [grabacion]);
+
     const renderHilera = (fila: any[]) => {
         const p: Record<string, any> = {};
         fila?.forEach(n => {
@@ -1278,20 +1315,43 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 }}
             />
 
-            <ModalGuardarSimulador
-                visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
-                guardando={grabacion.guardandoGrabacion}
-                error={grabacion.errorGuardadoGrabacion}
-                tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Practica libre'}
-                resumen={grabacion.grabacionPendiente ? {
-                    duracionMs: grabacion.grabacionPendiente.duracionMs,
-                    bpm: grabacion.grabacionPendiente.bpm,
-                    tonalidad: grabacion.grabacionPendiente.tonalidad,
-                    notas: grabacion.grabacionPendiente.secuencia.length,
-                } : null}
-                onCancelar={grabacion.descartarGrabacionPendiente}
-                onGuardar={guardarPracticaLibre}
-            />
+            {/* Admin: modal expandido con Canción Hero + re-grabar + MP3 fondo.
+                Resto de roles: modal simple original. */}
+            {esAdmin ? (
+                <ModalGrabacionAdmin
+                    visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
+                    guardando={grabacion.guardandoGrabacion}
+                    error={grabacion.errorGuardadoGrabacion}
+                    tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Mi grabación'}
+                    autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
+                    usoMetronomo={!!metronomoEnRecRef.current}
+                    resumen={grabacion.grabacionPendiente ? {
+                        duracionMs: grabacion.grabacionPendiente.duracionMs,
+                        bpm: grabacion.grabacionPendiente.bpm,
+                        tonalidad: grabacion.grabacionPendiente.tonalidad,
+                        notas: grabacion.grabacionPendiente.secuencia.length,
+                    } : null}
+                    onCancelar={grabacion.descartarGrabacionPendiente}
+                    onRegrabar={regrabarDesdeCero}
+                    onGuardarPersonal={guardarPracticaLibre}
+                    onGuardarCancionHero={guardarComoCancionHero}
+                />
+            ) : (
+                <ModalGuardarSimulador
+                    visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
+                    guardando={grabacion.guardandoGrabacion}
+                    error={grabacion.errorGuardadoGrabacion}
+                    tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Practica libre'}
+                    resumen={grabacion.grabacionPendiente ? {
+                        duracionMs: grabacion.grabacionPendiente.duracionMs,
+                        bpm: grabacion.grabacionPendiente.bpm,
+                        tonalidad: grabacion.grabacionPendiente.tonalidad,
+                        notas: grabacion.grabacionPendiente.secuencia.length,
+                    } : null}
+                    onCancelar={grabacion.descartarGrabacionPendiente}
+                    onGuardar={guardarPracticaLibre}
+                />
+            )}
 
             <ToastGrabacionGuardada
                 visible={toastGuardadaVisible}
