@@ -32,7 +32,8 @@ interface Props {
     onCancelar: () => void;
     /** Descarta la grabación pendiente y vuelve a iniciar REC desde cero. */
     onRegrabar: () => void;
-    onGuardarPersonal: (datos: { titulo: string; descripcion: string }) => Promise<boolean>;
+    /** Mismo contrato que ModalGuardarSimulador.onGuardar — args posicionales. */
+    onGuardarPersonal: (titulo: string, descripcion: string) => Promise<boolean> | boolean;
     onGuardarCancionHero: (datos: {
         titulo: string;
         autor: string;
@@ -96,7 +97,7 @@ const ModalGrabacionAdmin: React.FC<Props> = ({
 
     const handleGuardar = async () => {
         if (destino === 'personal') {
-            await onGuardarPersonal({ titulo, descripcion });
+            await onGuardarPersonal(titulo, descripcion);
         } else {
             await onGuardarCancionHero({
                 titulo,
