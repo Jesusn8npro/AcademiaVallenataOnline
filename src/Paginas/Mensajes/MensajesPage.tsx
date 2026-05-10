@@ -8,21 +8,24 @@ import './mensajes.css'
 
 /**
  * Pagina unica para /mensajes y /mensajes/:chatId.
- * - Sin chatId: layout completo (sidebar + empty state)
- * - Con chatId en mobile: solo chat (sidebar oculto)
- * - Con chatId en desktop: sidebar + chat
+ * Mobile: muestra lista o chat (uno u otro). Si hay chat abierto, oculta menus globales.
+ * Desktop: muestra ambos (sidebar + chat o empty state).
  */
 export default function MensajesPage() {
   const { chatId } = useParams()
   const navigate = useNavigate()
   const [autenticado, setAutenticado] = useState<boolean | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<any>(null)
-  const [chatSeleccionado, setChatSeleccionado] = useState<Chat | null>(null)
   const [chatCargado, setChatCargado] = useState<any>(null)
   const [cargandoChat, setCargandoChat] = useState(false)
   const [errorChat, setErrorChat] = useState('')
-  const esMobile = typeof window !== 'undefined' && window.innerWidth < 900
-  const [mostrarLista, setMostrarLista] = useState(!chatId || !esMobile)
+
+  // Body class para ocultar menus globales en mobile cuando hay chat abierto
+  useEffect(() => {
+    if (chatId) document.body.classList.add('modo-chat-abierto')
+    else document.body.classList.remove('modo-chat-abierto')
+    return () => document.body.classList.remove('modo-chat-abierto')
+  }, [chatId])
 
   // Auth + perfil
   useEffect(() => {
@@ -38,18 +41,16 @@ export default function MensajesPage() {
     return () => { activo = false }
   }, [])
 
-  // Si la URL trae chatId, cargar el chat directamente (sin pasar por la lista)
+  // Cargar chat por URL
   useEffect(() => {
-    if (!chatId || !usuarioActual) return
+    if (!chatId || !usuarioActual) { setChatCargado(null); return }
     let activo = true
     ;(async () => {
       setCargandoChat(true); setErrorChat('')
       const { data, error } = await supabase
         .from('chats')
         .select(`*, miembros_chat(*, usuario:perfiles!miembros_chat_usuario_id_fkey(nombre_completo,url_foto_perfil,nombre_usuario,rol))`)
-        .eq('id', chatId)
-        .eq('activo', true)
-        .single()
+        .eq('id', chatId).eq('activo', true).single()
       if (!activo) return
       if (error || !data) { setErrorChat('No se pudo cargar el chat'); setCargandoChat(false); return }
       const esMiembro = (data.miembros_chat || []).some(
@@ -57,24 +58,15 @@ export default function MensajesPage() {
       )
       if (!esMiembro) { setErrorChat('No tienes acceso a este chat'); setCargandoChat(false); return }
       setChatCargado({ ...data, miembros: data.miembros_chat })
-      setChatSeleccionado({ id: data.id } as Chat)
       setCargandoChat(false)
-      if (esMobile) setMostrarLista(false)
     })()
     return () => { activo = false }
   }, [chatId, usuarioActual?.id])
 
   function seleccionar(chat: Chat) {
-    setChatSeleccionado(chat)
-    setChatCargado(chat)
     navigate(`/mensajes/${chat.id}`)
-    if (window.innerWidth < 900) setMostrarLista(false)
   }
-
   function volverALista() {
-    setMostrarLista(true)
-    setChatSeleccionado(null)
-    setChatCargado(null)
     navigate('/mensajes')
   }
 
@@ -83,10 +75,10 @@ export default function MensajesPage() {
   }
 
   return (
-    <div className="msg_layout">
-      <aside className={`msg_sidebar ${mostrarLista ? '' : 'is-hidden'}`}>
+    <div className={`msg_layout ${chatId ? 'has-chat' : ''}`}>
+      <aside className="msg_sidebar">
         <ListaChats
-          chatSeleccionado={chatSeleccionado?.id || null}
+          chatSeleccionado={chatCargado?.id || null}
           onSeleccionarChat={seleccionar}
           usuarioActual={usuarioActual}
         />
@@ -95,8 +87,7 @@ export default function MensajesPage() {
       <main className="msg_view">
         {cargandoChat ? (
           <div className="msg_loading" style={{ height: '100%' }}>
-            <div className="msg_spinner" />
-            <p>Cargando chat...</p>
+            <div className="msg_spinner" /><p>Cargando chat...</p>
           </div>
         ) : errorChat ? (
           <div className="msg_empty">
