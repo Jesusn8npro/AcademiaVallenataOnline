@@ -1,0 +1,20 @@
+{
+  "top_hat": {
+    "image": "C:\\PROGRAMACION\\Academia\\public\\modelos3d\\generados\\refs\\Sombrero.png",
+    "task_id": "07cae654-ade1-4403-b5b6-4a0cba4628b7",
+    "status": "submitted",
+    "files": []
+  },
+  "pig_head": {
+    "image": "C:\\PROGRAMACION\\Academia\\public\\modelos3d\\generados\\refs\\Cabeza de puerco.png",
+    "task_id": null,
+    "status": "pending",
+    "files": []
+  },
+  "pig_body": {
+    "image": "C:\\PROGRAMACION\\Academia\\public\\modelos3d\\generados\\refs\\Cuerpo.png",
+    "task_id": null,
+    "status": "pending",
+    "files": []
+  }
+}
