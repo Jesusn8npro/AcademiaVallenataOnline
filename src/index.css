@@ -20,6 +20,24 @@
   padding: 0;
 }
 
+/* ── Safe areas (notch / status bar / home indicator) ──
+   Variables expuestas para que cualquier componente las use.
+   Solo aplican padding al body cuando corre en Capacitor (clase 'es-nativo'
+   añadida desde main.tsx). En web siguen siendo 0px (fallback). */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+body.es-nativo {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
 /* ── 2. ESCALA FLUIDA GLOBAL (🔑 LA CLAVE) ────────────
    En pantallas grandes (1920px) el font-size base será ~87.5% = 14px
    En pantallas medianas (1280px) será ~81.25% ≈ 13px
