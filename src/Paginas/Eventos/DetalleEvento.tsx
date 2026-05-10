@@ -2,15 +2,8 @@ import React from 'react';
 import { useDetalleEvento } from './useDetalleEvento';
 import HeroEvento from './Componentes/HeroEvento';
 import { sanitizarTextoConSaltos } from '../../utilidades/sanitizar';
+import { formatearFechaLarga as formatearFecha, formatearHora } from '../../utilidades/formatadores';
 import './DetalleEvento.css';
-
-function formatearFecha(fecha: string) {
-  return new Date(fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatearHora(fecha: string) {
-  return new Date(fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-}
 
 function obtenerModalidadTexto(modalidad: string) {
   const modalidades: Record<string, string> = { online: 'Online', presencial: 'Presencial', hibrido: 'Híbrido' };

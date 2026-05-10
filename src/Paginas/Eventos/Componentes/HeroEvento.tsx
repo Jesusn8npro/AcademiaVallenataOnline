@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatearFechaLarga as formatearFecha, formatearHora } from '../../../utilidades/formatadores';
 
 interface HeroEventoProps {
   evento: any;
@@ -14,14 +15,6 @@ interface HeroEventoProps {
   onConfirmarCancelacion: () => void;
   onCancelarConfirmacion: () => void;
   onNavegar: (ruta: string) => void;
-}
-
-function formatearFecha(fecha: string) {
-  return new Date(fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatearHora(fecha: string) {
-  return new Date(fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 }
 
 function obtenerTipoEventoTexto(tipo: string) {
