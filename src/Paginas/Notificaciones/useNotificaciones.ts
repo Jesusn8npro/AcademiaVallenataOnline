@@ -112,9 +112,10 @@ export function useNotificaciones() {
         });
     };
 
-    const manejarClicNotificacion = async (notificacion: Notificacion) => {
-        await marcarComoLeida(notificacion);
+    const manejarClicNotificacion = (notificacion: Notificacion) => {
+        // Navega INMEDIATO; marcar leída en background (no bloquear navegación).
         if (notificacion.url_accion) navigate(notificacion.url_accion);
+        if (!notificacion.leida) marcarComoLeida(notificacion);
     };
 
     const ejecutarConfirmacion = async () => {
