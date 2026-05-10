@@ -44,7 +44,7 @@ export const TEMAS_ACORDEON: TemaAcordeon[] = [
         categoria: 'pro_max',
         diapason: '/acordeones/pro-max/diapason.jpg',
         bajos: '/acordeones/pro-max/bajos.jpg',
-        preview: '/acordeones/pro-max/preview.png',
+        preview: '/acordeones/pro-max/preview.webp',
         descripcion: 'Modelo principal. Acabado azul perlado clásico.',
     },
     {
@@ -53,7 +53,7 @@ export const TEMAS_ACORDEON: TemaAcordeon[] = [
         categoria: 'originales',
         diapason: '/acordeones/rojo/diapason.jpg',
         bajos: '/acordeones/rojo/bajos.jpg',
-        preview: '/acordeones/rojo/preview.png',
+        preview: '/acordeones/rojo/preview.webp',
         descripcion: 'Look rojo con detalles dorados — vallenato puro.',
     },
     {
@@ -62,7 +62,7 @@ export const TEMAS_ACORDEON: TemaAcordeon[] = [
         categoria: 'originales',
         diapason: '/acordeones/verde/diapason.jpg',
         bajos: '/acordeones/verde/bajos.jpg',
-        preview: '/acordeones/verde/preview.png',
+        preview: '/acordeones/verde/preview.webp',
         descripcion: 'Edición verde tropical con acentos.',
     },
 ];

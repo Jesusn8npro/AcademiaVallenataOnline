@@ -9,7 +9,7 @@ interface PanelAcordeonEnClaseProps {
   onCerrar: () => void;
 }
 
-const IMAGEN_ACORDEON_DEFAULT = '/Acordeon PRO MAX.png';
+const IMAGEN_ACORDEON_DEFAULT = '/Acordeon PRO MAX.webp';
 const TONALIDAD_DEFAULT = 'BES';
 
 const MODOS_VISTA = [

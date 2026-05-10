@@ -20,7 +20,7 @@ interface ModalReplayGrabacionHeroProps {
     onCerrar: () => void;
 }
 
-const IMAGEN_REPLAY = '/Acordeon PRO MAX.png';
+const IMAGEN_REPLAY = '/Acordeon PRO MAX.webp';
 const TAMANO_ACORDEON_REPLAY_PX = 980;
 const POSICION_ACORDEON = '50%';
 

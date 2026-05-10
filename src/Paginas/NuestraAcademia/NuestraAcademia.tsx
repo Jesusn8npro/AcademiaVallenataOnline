@@ -11,7 +11,7 @@ import imgClasesPersonalizadas from '../../assets/images/NuestraAcademia/Clases-
 import imgOrlandoFelipe from '../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg'
 import imgBienvenida from '../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg'
 import imgBanner from '../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg'
-import imgAcordeonProMax from '../../assets/images/Acordeon PRO MAX.png'
+import imgAcordeonProMax from '../../assets/images/Acordeon PRO MAX.webp'
 
 const testimonios = [
   { nombre: 'Carlos Mendoza', ciudad: 'Valledupar, Cesar', tiempo: '6 meses', texto: 'El simulador es increíble, siento que tengo al maestro Jesús aquí conmigo. Jamás pensé aprender tan rápido.', nivel: 'Principiante a Intermedio' },

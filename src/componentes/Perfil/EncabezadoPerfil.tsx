@@ -172,11 +172,11 @@ export default function EncabezadoPerfil({ urlPortada, urlAvatar, nombreCompleto
     <>
       <div className="ep-contenedor-portada" onMouseMove={manejarDragPortada as any} onTouchMove={manejarDragPortada as any}>
         <img
-          src={vistaPortadaTemporal || urlPortada || '/images/perfil-portada/Imagen de portada.png'}
+          src={vistaPortadaTemporal || urlPortada || '/images/perfil-portada/Imagen de portada.webp'}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null;
-            target.src = '/images/perfil-portada/Imagen de portada.png';
+            target.src = '/images/perfil-portada/Imagen de portada.webp';
           }}
           alt="Portada de perfil"
           className={`ep-imagen-portada ${reposicionandoPortada ? 'ep-reposicionando' : ''}`}

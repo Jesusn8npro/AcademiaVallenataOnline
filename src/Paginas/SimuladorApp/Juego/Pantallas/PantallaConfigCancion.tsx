@@ -73,7 +73,7 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
 
     const miniatura = cancion.youtube_id
         ? `https://img.youtube.com/vi/${cancion.youtube_id}/mqdefault.jpg`
-        : '/Acordeon PRO MAX.png';
+        : '/Acordeon PRO MAX.webp';
 
     const modoVisible = previsualizandoModo ?? cfg.modo;
     const descripcionVisible = MODOS.find(m => m.id === modoVisible)?.descripcion ?? '';
@@ -99,8 +99,8 @@ const PantallaConfigCancion: React.FC<PantallaConfigCancionProps> = ({
                                 alt={cancion.titulo}
                                 onError={(e) => {
                                     const el = e.currentTarget as HTMLImageElement;
-                                    if (!el.src.endsWith('/Acordeon PRO MAX.png')) {
-                                        el.src = '/Acordeon PRO MAX.png';
+                                    if (!el.src.endsWith('/Acordeon PRO MAX.webp')) {
+                                        el.src = '/Acordeon PRO MAX.webp';
                                     }
                                 }}
                             />
