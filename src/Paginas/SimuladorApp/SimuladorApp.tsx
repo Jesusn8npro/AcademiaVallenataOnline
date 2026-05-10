@@ -13,6 +13,7 @@ import { useReplaySimulador } from './Hooks/useReplaySimulador';
 import { useGrabacionSimulador } from './Hooks/useGrabacionSimulador';
 import { useModoFoco } from './Hooks/useModoFoco';
 import { usePreviewsEfectos } from './Hooks/usePreviewsEfectos';
+import { useFullscreenAndroid } from './Hooks/useFullscreenAndroid';
 import ModalGuardarGrabacionWrapper from './Componentes/ModalGuardarGrabacionWrapper';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
@@ -336,33 +337,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         };
     }, [actualizarGeometria]);
 
-    // Fullscreen en Android: requestFullscreen requiere user activation valida.
-    // Lo disparamos en touchend/mouseup (no en pointerdown) porque el preventDefault
-    // que aplicamos en touchstart consume la activation y Chrome Android rechaza
-    // requestFullscreen llamado desde pointerdown. touchend no tiene preventDefault
-    // y el browser aun considera el gesto valido.
-    useEffect(() => {
-        const esMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-        if (!esMobile) return;
-
-        const intentarFullscreen = () => {
-            const noEsPWA = !window.matchMedia('(display-mode: standalone)').matches;
-            const yaEnFullscreen = !!document.fullscreenElement;
-            const esAndroid = /android/i.test(navigator.userAgent);
-            if (esAndroid && noEsPWA && !yaEnFullscreen) {
-                document.documentElement.requestFullscreen?.().catch(() => { /* fallback silencioso */ });
-            }
-            document.removeEventListener('touchend', intentarFullscreen);
-            document.removeEventListener('mouseup', intentarFullscreen);
-        };
-
-        document.addEventListener('touchend', intentarFullscreen);
-        document.addEventListener('mouseup', intentarFullscreen);
-        return () => {
-            document.removeEventListener('touchend', intentarFullscreen);
-            document.removeEventListener('mouseup', intentarFullscreen);
-        };
-    }, []);
+    useFullscreenAndroid();
 
     useEffect(() => {
         elementosCache.current.clear();
