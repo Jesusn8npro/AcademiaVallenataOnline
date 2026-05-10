@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
-import { ArrowLeft, RotateCw, Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
+import { RotateCw, Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -18,6 +18,7 @@ import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
+import OverlaysNavegacion from './Componentes/OverlaysNavegacion';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -770,56 +771,15 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onCerrar={() => setToastGuardadaVisible(false)}
             />
 
-            {/* Overlay "vine de la clase": botón siempre visible que regresa al video
-                en el mismo segundo donde el alumno lo dejó. Independiente del flujo
-                de Grabaciones — pueden coexistir aunque en la práctica no se da. */}
-            {volverAClaseParam && (
-                <button
-                    type="button"
-                    className="sim-volver-clase"
-                    onClick={volverALaClase}
-                    aria-label="Volver a la clase"
-                >
-                    <ArrowLeft size={16} />
-                    <span>Volver a la clase</span>
-                </button>
-            )}
-
-            {/* Overlay de "vine de Grabaciones": boton Volver siempre visible
-                durante la reproduccion. Al terminar el replay, countdown 3s
-                + opcion de quedarse en el simulador. Solo aparecen si llego
-                con ?reproducir=<id> y NO eligio quedarse. */}
-            {replay.vinoDeGrabaciones && !replay.usuarioEligioQuedarse && (
-                <>
-                    <button
-                        type="button"
-                        className="sim-volver-grabaciones"
-                        onClick={replay.volverAGrabaciones}
-                        aria-label="Volver a Grabaciones"
-                    >
-                        <ArrowLeft size={16} />
-                        <span>Volver</span>
-                    </button>
-
-                    {replay.countdownVolver !== null && (
-                        <div className="sim-countdown-volver" role="dialog" aria-live="polite">
-                            <p>
-                                <strong>Replay terminado.</strong>
-                                <br />
-                                Volviendo a Grabaciones en <strong>{replay.countdownVolver}s</strong>…
-                            </p>
-                            <div className="sim-countdown-volver-acciones">
-                                <button type="button" onClick={replay.volverAGrabaciones}>
-                                    Volver ahora
-                                </button>
-                                <button type="button" className="primaria" onClick={replay.quedarseEnSimulador}>
-                                    Quedarme aquí
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
+            <OverlaysNavegacion
+                volverAClaseParam={volverAClaseParam}
+                onVolverALaClase={volverALaClase}
+                vinoDeGrabaciones={replay.vinoDeGrabaciones}
+                usuarioEligioQuedarse={replay.usuarioEligioQuedarse}
+                countdownVolver={replay.countdownVolver}
+                onVolverAGrabaciones={replay.volverAGrabaciones}
+                onQuedarseEnSimulador={replay.quedarseEnSimulador}
+            />
         </div>
     );
 };
