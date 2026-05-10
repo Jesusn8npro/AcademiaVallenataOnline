@@ -472,19 +472,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     useEffect(() => { botonesActivosRef.current = botonesActivos; }, [botonesActivos]);
     useEffect(() => { if (direccionProp !== direccion) setDireccion(direccionProp); }, [direccionProp]);
 
-    useEffect(() => {
-        const handleInteraction = () => {
-            motorAudioPro.activarContexto();
-            window.removeEventListener('click', handleInteraction);
-            window.removeEventListener('keydown', handleInteraction);
-        };
-        window.addEventListener('click', handleInteraction);
-        window.addEventListener('keydown', handleInteraction);
-        return () => {
-            window.removeEventListener('click', handleInteraction);
-            window.removeEventListener('keydown', handleInteraction);
-        };
-    }, []);
+    // (Listener de gesto-para-activar-audio fusionado arriba — antes había dos
+    // useEffect duplicados haciendo lo mismo sobre window.)
 
     useEffect(() => {
         // Vaciamos solo el mapa de rutas rápidas; NO limpiamos el banco de audio para no forzar redescargas en cada cambio.
