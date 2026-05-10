@@ -12,8 +12,7 @@ import { useEfectosAudio } from './Hooks/useEfectosAudio';
 import { useReplaySimulador } from './Hooks/useReplaySimulador';
 import { useGrabacionSimulador } from './Hooks/useGrabacionSimulador';
 import { useModoFoco } from './Hooks/useModoFoco';
-import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
-const ModalGrabacionAdmin = lazy(() => import('./Componentes/ModalGrabacionAdmin'));
+import ModalGuardarGrabacionWrapper from './Componentes/ModalGuardarGrabacionWrapper';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
@@ -615,45 +614,14 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 }}
             />
 
-            {/* Admin: modal expandido con Canción Hero + re-grabar + MP3 fondo.
-                Resto de roles: modal simple original. */}
-            {esAdmin ? (
-                <Suspense fallback={null}>
-                    <ModalGrabacionAdmin
-                        visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
-                        guardando={grabacion.guardandoGrabacion}
-                        error={grabacion.errorGuardadoGrabacion}
-                        tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Mi grabación'}
-                        autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
-                        usoMetronomo={!!grabacion.grabacionPendiente?.metadata?.metronomo}
-                        resumen={grabacion.grabacionPendiente ? {
-                            duracionMs: grabacion.grabacionPendiente.duracionMs,
-                            bpm: grabacion.grabacionPendiente.bpm,
-                            tonalidad: grabacion.grabacionPendiente.tonalidad,
-                            notas: grabacion.grabacionPendiente.secuencia.length,
-                        } : null}
-                        onCancelar={grabacion.descartarGrabacionPendiente}
-                        onRegrabar={regrabarDesdeCero}
-                        onGuardarPersonal={guardarPracticaLibre}
-                        onGuardarCancionHero={guardarComoCancionHero}
-                    />
-                </Suspense>
-            ) : (
-                <ModalGuardarSimulador
-                    visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
-                    guardando={grabacion.guardandoGrabacion}
-                    error={grabacion.errorGuardadoGrabacion}
-                    tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Practica libre'}
-                    resumen={grabacion.grabacionPendiente ? {
-                        duracionMs: grabacion.grabacionPendiente.duracionMs,
-                        bpm: grabacion.grabacionPendiente.bpm,
-                        tonalidad: grabacion.grabacionPendiente.tonalidad,
-                        notas: grabacion.grabacionPendiente.secuencia.length,
-                    } : null}
-                    onCancelar={grabacion.descartarGrabacionPendiente}
-                    onGuardar={guardarPracticaLibre}
-                />
-            )}
+            <ModalGuardarGrabacionWrapper
+                esAdmin={esAdmin}
+                autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
+                grabacion={grabacion}
+                onGuardarPersonal={guardarPracticaLibre}
+                onGuardarCancionHero={guardarComoCancionHero}
+                onRegrabar={regrabarDesdeCero}
+            />
 
             <ToastGrabacionGuardada
                 visible={toastGuardadaVisible}
