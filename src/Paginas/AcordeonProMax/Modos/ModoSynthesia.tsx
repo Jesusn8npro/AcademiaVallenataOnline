@@ -214,7 +214,7 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
                     <span className="hero-acordeon-label">Maestro</span>
                     {logica.disenoCargado && (
                         <CuerpoAcordeon
-                            imagenFondo={'/Acordeon Jugador.png'}
+                            imagenFondo={'/Acordeon Jugador.webp'}
                             ajustes={ajustesDuelo}
                             direccion={direccionMaestro}
                             configTonalidad={configTonalidad}

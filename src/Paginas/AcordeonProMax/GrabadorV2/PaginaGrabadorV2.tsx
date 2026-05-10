@@ -38,7 +38,7 @@ import type { CancionV2, NotaHero, SeccionV2 } from './tipos';
 import './PaginaGrabadorV2.css';
 
 const CuerpoAcordeon = React.memo(CuerpoAcordeonBase);
-const IMG_ACORDEON = '/Acordeon PRO MAX.png';
+const IMG_ACORDEON = '/Acordeon PRO MAX.webp';
 
 function uuid() { return `sec-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`; }
 

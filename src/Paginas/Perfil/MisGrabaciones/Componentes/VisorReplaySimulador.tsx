@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import marcoSimuladorApp from '../../../../assets/Marco acordeon simulador app.png';
+import marcoSimuladorApp from '../../../../assets/Marco acordeon simulador app.webp';
 import './VisorReplaySimulador.css';
 
 /**

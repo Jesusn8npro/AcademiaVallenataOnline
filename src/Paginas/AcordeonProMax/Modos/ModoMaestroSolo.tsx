@@ -206,7 +206,7 @@ const ModoMaestroSolo: React.FC<ModoMaestroSoloProps> = ({
                         <div className="hero-maestro-solo-acordeon">
                             {logica.disenoCargado && (
                                 <CuerpoAcordeon
-                                    imagenFondo={'/Acordeon Jugador.png'}
+                                    imagenFondo={'/Acordeon Jugador.webp'}
                                     ajustes={ajustesMaestroSolo}
                                     direccion={direccionMaestro}
                                     configTonalidad={logica.configTonalidad}

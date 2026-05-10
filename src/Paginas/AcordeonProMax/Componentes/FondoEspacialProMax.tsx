@@ -134,7 +134,7 @@ const FondoEspacialProMax: React.FC = () => {
     <div style={{ position: 'fixed', inset: 0, zIndex: -1 }}>
       {/* Imagen base */}
       <img 
-        src="/assets/purpleSpace.jpg" 
+        src="/assets/purpleSpace.webp"
         alt="espacio"
         style={{
           width: '100%',

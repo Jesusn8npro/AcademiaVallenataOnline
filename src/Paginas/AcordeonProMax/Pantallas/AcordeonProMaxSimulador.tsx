@@ -15,7 +15,7 @@ import '../Modos/_BaseSimulador.css';
 import '../Componentes/PantallaPreJuegoProMax.css';
 import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
 
-const IMG_ALUMNO = '/Acordeon PRO MAX.png';
+const IMG_ALUMNO = '/Acordeon PRO MAX.webp';
 
 const AcordeonProMaxSimulador: React.FC = () => {
   const {

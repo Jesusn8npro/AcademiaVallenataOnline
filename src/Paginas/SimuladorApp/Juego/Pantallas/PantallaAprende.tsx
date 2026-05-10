@@ -17,7 +17,7 @@ type Categoria = 'canciones' | 'escalas' | 'ejercicios' | 'acordes';
 type FiltroCanciones = 'populares' | 'no_tocadas' | 'nombre' | 'dificultad';
 type Dificultad = 'NORMAL' | 'FACIL' | 'EXTREMO';
 
-const PLACEHOLDER_IMG = '/Acordeon PRO MAX.png';
+const PLACEHOLDER_IMG = '/Acordeon PRO MAX.webp';
 
 const ETIQUETAS_DIFICULTAD: Record<string, Dificultad> = {
     basico: 'FACIL', intermedio: 'NORMAL', profesional: 'EXTREMO',
@@ -47,13 +47,13 @@ interface CardInicio {
 }
 
 const CARDS_INICIO: CardInicio[] = [
-    { cat: 'canciones', titulo: 'CANCIONES', icono: <Music size={24} />, imagen: '/Acordeon PRO MAX.png', statsKey: 'canciones', delay: 0,
+    { cat: 'canciones', titulo: 'CANCIONES', icono: <Music size={24} />, imagen: '/Acordeon PRO MAX.webp', statsKey: 'canciones', delay: 0,
         descripcion: n => `${n} ${n === 1 ? 'CANCION APRENDIDA' : 'CANCIONES APRENDIDAS'}` },
     { cat: 'escalas', titulo: 'ESCALAS', icono: <BarChart3 size={24} />, imagen: null, statsKey: 'escalas', delay: 0.06, proximamente: true,
         descripcion: () => '0 ESCALAS APRENDIDAS' },
-    { cat: 'ejercicios', titulo: 'EJERCICIOS', icono: <Hand size={24} />, imagen: '/Acordeon Jugador.png', statsKey: 'ejercicios', delay: 0.12,
+    { cat: 'ejercicios', titulo: 'EJERCICIOS', icono: <Hand size={24} />, imagen: '/Acordeon Jugador.webp', statsKey: 'ejercicios', delay: 0.12,
         descripcion: () => 'MOD. 1 - AGILIDAD' },
-    { cat: 'acordes', titulo: 'ACORDES', icono: <Disc3 size={24} />, imagen: '/Diapason Acordeon PNG.png', statsKey: 'secuencias', delay: 0.18,
+    { cat: 'acordes', titulo: 'ACORDES', icono: <Disc3 size={24} />, imagen: '/Diapason Acordeon PNG.webp', statsKey: 'secuencias', delay: 0.18,
         descripcion: n => `${n} ACORDES APRENDIDOS` },
 ];
 
