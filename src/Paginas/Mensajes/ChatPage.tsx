@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import MensajesLayout from './MensajesLayout'
 import ChatVista from './ChatVista'
-import './mensajes.css'
+import './mensajes-v2.css'
 import { supabase } from '../../servicios/clienteSupabase'
 
 export default function ChatPage() {

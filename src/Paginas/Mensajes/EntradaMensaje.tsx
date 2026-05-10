@@ -13,10 +13,10 @@ export default function EntradaMensaje({ onEnviar, disabled }: Props) {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     const emojisComunes = [
-        '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
-        '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩',
-        '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪',
-        '👍', '👋', '🙏', '💪', '🔥', '✨', '🎉', '❤️'
+        '😀', '😂', '😍', '😊', '😎', '🤣', '🥰', '😘',
+        '😉', '😋', '🤪', '😜', '🤩', '😇', '🙂', '🙃',
+        '👍', '👋', '🙏', '💪', '🔥', '✨', '🎉', '❤️',
+        '👏', '🙌', '🤝', '🤙', '☝️', '👌', '✌️', '🤘',
     ]
 
     useEffect(() => {
@@ -34,14 +34,13 @@ export default function EntradaMensaje({ onEnviar, disabled }: Props) {
         if (!contenido.trim() || enviando) return
         setEnviando(true)
         try {
-            await onEnviar(contenido)
+            await onEnviar(contenido.trim())
             setContenido('')
-            setEnviando(false)
             if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto'
                 textareaRef.current.focus()
             }
-        } catch {
+        } finally {
             setEnviando(false)
         }
     }
@@ -66,33 +65,36 @@ export default function EntradaMensaje({ onEnviar, disabled }: Props) {
                     <button
                         type="button"
                         className="em-btn"
-                        onClick={() => setMostrarEmojis(!mostrarEmojis)}
+                        onClick={() => setMostrarEmojis(v => !v)}
                         title="Emojis"
+                        aria-label="Insertar emoji"
                     >
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </button>
 
                     {mostrarEmojis && (
-                        <div className="em-emoji-picker">
-                            {emojisComunes.map(emoji => (
-                                <button
-                                    key={emoji}
-                                    onClick={() => insertarEmoji(emoji)}
-                                    className="em-emoji-btn"
-                                >
-                                    {emoji}
-                                </button>
-                            ))}
-                        </div>
+                        <>
+                            <div
+                                style={{ position: 'fixed', inset: 0, zIndex: 55 }}
+                                onClick={() => setMostrarEmojis(false)}
+                            />
+                            <div className="em-emoji-picker">
+                                {emojisComunes.map(emoji => (
+                                    <button
+                                        key={emoji}
+                                        onClick={() => insertarEmoji(emoji)}
+                                        className="em-emoji-btn"
+                                        type="button"
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
-
-                <button
-                    className="em-btn"
-                    title="Adjuntar (Próximamente)"
-                >
-                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                </button>
 
                 <div className="em-textarea-wrapper">
                     <textarea
@@ -112,11 +114,17 @@ export default function EntradaMensaje({ onEnviar, disabled }: Props) {
                     disabled={!contenido.trim() || enviando || disabled}
                     className="em-btn em-btn-send"
                     title="Enviar"
+                    aria-label="Enviar mensaje"
                 >
                     {enviando ? (
-                        <svg className="animate-spin" width="20" height="20" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg className="animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3"></circle>
+                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
                     ) : (
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
                     )}
                 </button>
             </div>
