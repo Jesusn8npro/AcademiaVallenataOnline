@@ -21,18 +21,11 @@ export function useMenuSuperiorAutenticado({ onCerrarSesion }: Props) {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (usuario) {
-      setNombre(usuario.nombre || '')
-      const cargarConteo = async () => {
-        const conteo = await notificacionesService.obtenerContadorNoLeidas()
-        setConteoNotificaciones(conteo)
-      }
-      cargarConteo()
-      const unsubscribe = notificacionesService.suscribirseAContador((nuevoConteo) => {
-        setConteoNotificaciones(nuevoConteo)
-      })
-      return () => { unsubscribe() }
-    }
+    if (!usuario) return
+    setNombre(usuario.nombre || '')
+    // suscribirseAContador ya carga el conteo inicial y se actualiza en realtime
+    const unsubscribe = notificacionesService.suscribirseAContador(setConteoNotificaciones)
+    return () => { unsubscribe() }
   }, [usuario])
 
   useEffect(() => {
