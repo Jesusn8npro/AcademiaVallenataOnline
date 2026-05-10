@@ -19,23 +19,23 @@ interface Preset {
 
 const PRESETS_DIAPASON: Preset[] = [
   { id: 'solido_negro', nombre: 'Negro sólido', swatch: '#0a0a0a', textura: null },
-  { id: 'celuloide_negro', nombre: 'Celuloide negro', swatch: '#1a1a1a', textura: '/modelos3d/textures/diapason_celuloide_negro.png' },
-  { id: 'celuloide_rojo', nombre: 'Celuloide rojo', swatch: '#7a0e1c', textura: '/modelos3d/textures/diapason_celuloide_rojo.png' },
-  { id: 'celuloide_azul', nombre: 'Celuloide azul', swatch: '#1a3a6e', textura: '/modelos3d/textures/diapason_celuloide_negro.png', tinte: '#3a6ed8' },
+  { id: 'celuloide_negro', nombre: 'Celuloide negro', swatch: '#1a1a1a', textura: '/modelos3d/textures/diapason_celuloide_negro.webp' },
+  { id: 'celuloide_rojo', nombre: 'Celuloide rojo', swatch: '#7a0e1c', textura: '/modelos3d/textures/diapason_celuloide_rojo.webp' },
+  { id: 'celuloide_azul', nombre: 'Celuloide azul', swatch: '#1a3a6e', textura: '/modelos3d/textures/diapason_celuloide_negro.webp', tinte: '#3a6ed8' },
   { id: 'celuloide_azul_real', nombre: 'Celuloide azul (foto real)', swatch: '#0f2868', textura: '/modelos3d/textures/diapason_celuloide_azul_real.jpg' },
-  { id: 'celuloide_verde', nombre: 'Celuloide verde', swatch: '#0e4a2a', textura: '/modelos3d/textures/diapason_celuloide_negro.png', tinte: '#3eb878' },
-  { id: 'celuloide_dorado', nombre: 'Celuloide dorado', swatch: '#a07020', textura: '/modelos3d/textures/diapason_celuloide_negro.png', tinte: '#d4a040' },
-  { id: 'celuloide_morado', nombre: 'Celuloide morado', swatch: '#3a1a5a', textura: '/modelos3d/textures/diapason_celuloide_negro.png', tinte: '#7c40c8' },
-  { id: 'rojo_intenso', nombre: 'Rojo intenso', swatch: '#a00010', textura: '/modelos3d/textures/diapason_celuloide_rojo.png', tinte: '#ff5060' },
+  { id: 'celuloide_verde', nombre: 'Celuloide verde', swatch: '#0e4a2a', textura: '/modelos3d/textures/diapason_celuloide_negro.webp', tinte: '#3eb878' },
+  { id: 'celuloide_dorado', nombre: 'Celuloide dorado', swatch: '#a07020', textura: '/modelos3d/textures/diapason_celuloide_negro.webp', tinte: '#d4a040' },
+  { id: 'celuloide_morado', nombre: 'Celuloide morado', swatch: '#3a1a5a', textura: '/modelos3d/textures/diapason_celuloide_negro.webp', tinte: '#7c40c8' },
+  { id: 'rojo_intenso', nombre: 'Rojo intenso', swatch: '#a00010', textura: '/modelos3d/textures/diapason_celuloide_rojo.webp', tinte: '#ff5060' },
 ];
 
 const PRESETS_BOTON: Preset[] = [
   { id: 'solido_blanco', nombre: 'Blanco sólido', swatch: '#f5f5ee', textura: null },
-  { id: 'nacar_blanco', nombre: 'Nácar blanco', swatch: '#fafaee', textura: '/modelos3d/textures/boton_nacar.png' },
-  { id: 'nacar_crema', nombre: 'Nácar crema', swatch: '#f0e0c0', textura: '/modelos3d/textures/boton_nacar.png', tinte: '#fff0c8' },
-  { id: 'nacar_negro', nombre: 'Nácar negro', swatch: '#2a2a2a', textura: '/modelos3d/textures/boton_nacar.png', tinte: '#404040' },
-  { id: 'nacar_dorado', nombre: 'Nácar dorado', swatch: '#c8a040', textura: '/modelos3d/textures/boton_nacar.png', tinte: '#e8c060' },
-  { id: 'nacar_rosa', nombre: 'Nácar rosado', swatch: '#e0a0b0', textura: '/modelos3d/textures/boton_nacar.png', tinte: '#ffb0c0' },
+  { id: 'nacar_blanco', nombre: 'Nácar blanco', swatch: '#fafaee', textura: '/modelos3d/textures/boton_nacar.webp' },
+  { id: 'nacar_crema', nombre: 'Nácar crema', swatch: '#f0e0c0', textura: '/modelos3d/textures/boton_nacar.webp', tinte: '#fff0c8' },
+  { id: 'nacar_negro', nombre: 'Nácar negro', swatch: '#2a2a2a', textura: '/modelos3d/textures/boton_nacar.webp', tinte: '#404040' },
+  { id: 'nacar_dorado', nombre: 'Nácar dorado', swatch: '#c8a040', textura: '/modelos3d/textures/boton_nacar.webp', tinte: '#e8c060' },
+  { id: 'nacar_rosa', nombre: 'Nácar rosado', swatch: '#e0a0b0', textura: '/modelos3d/textures/boton_nacar.webp', tinte: '#ffb0c0' },
   { id: 'solido_negro', nombre: 'Negro sólido', swatch: '#1a1a1a', textura: null },
   { id: 'solido_rojo', nombre: 'Rojo sólido', swatch: '#a02030', textura: null },
 ];
