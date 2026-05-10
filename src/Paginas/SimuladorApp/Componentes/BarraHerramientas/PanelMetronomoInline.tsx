@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Music, Sliders } from 'lucide-react';
 import type { useMetronomo } from '../../Hooks/useMetronomo';
+import { usePulsoMetronomo } from '../../store/pulsoMetronomoStore';
 
 interface PanelMetronomoInlineProps {
     met: ReturnType<typeof useMetronomo>;
@@ -10,6 +11,9 @@ interface PanelMetronomoInlineProps {
 
 const PanelMetronomoInline: React.FC<PanelMetronomoInlineProps> = ({ met, bpm, setBpm }) => {
     const [mostrarSelectorSonido, setMostrarSelectorSonido] = useState(false);
+    // Suscripción al store del pulso: solo este panel se re-renderiza 1-4 Hz,
+    // y solo cuando está montado (modal abierto).
+    const pulsoActual = usePulsoMetronomo();
 
     return (
         <div className="modal-metronomo-cuerpo modal-metronomo-cuerpo-inline">
@@ -26,7 +30,7 @@ const PanelMetronomoInline: React.FC<PanelMetronomoInlineProps> = ({ met, bpm, s
                         {Array.from({ length: met.compas }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`pulso-circulo ${met.pulsoActual === i ? 'activo' : ''} ${i === 0 ? 'acento' : ''}`}
+                                className={`pulso-circulo ${pulsoActual === i ? 'activo' : ''} ${i === 0 ? 'acento' : ''}`}
                             />
                         ))}
                     </div>
