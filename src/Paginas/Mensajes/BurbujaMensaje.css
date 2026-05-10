@@ -1,199 +1,199 @@
-/* BurbujaMensaje.css - Copy Exacto de Svelte con Tailwind Values */
+/* ============================================================
+   BurbujaMensaje — Estilo WhatsApp con identidad vallenata
+   ============================================================ */
 
-/* Reset de caja para asegurar consistencia */
 .bm-group,
 .bm-bubble,
 .bm-avatar-container,
 .bm-meta {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-/* Contenedor del grupo (mb-1 = 4px) */
+/* Grupo: contiene avatar + content */
 .bm-group {
-    display: flex;
-    width: 100%;
-    margin-bottom: 4px;
-    position: relative;
-    padding: 0 4px;
-    /* Un poco de padding lateral */
+  display: flex;
+  width: 100%;
+  margin-bottom: 2px;
+  position: relative;
+  padding: 0 4px;
+  animation: bubble-in 0.18s cubic-bezier(.4,0,.2,1);
 }
 
-/* Alineación (justify-end / start) */
+.bm-group.bm-first {
+  margin-top: 8px;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .bm-group.bm-own {
-    justify-content: flex-end;
+  justify-content: flex-end;
 }
 
 .bm-group.bm-other {
-    justify-content: flex-start;
+  justify-content: flex-start;
 }
 
-/* Avatar Container (w-8 h-8 = 32px) */
+/* Avatar (solo en mensajes "other") */
 .bm-avatar-container {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    margin-bottom: 4px;
-    /* mb-1 aligned to bottom */
-    display: flex;
-    align-items: flex-end;
-    margin-right: 8px;
-    /* space-x-2 */
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  margin-right: 6px;
 }
 
 .bm-avatar-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 9999px;
-    object-fit: cover;
-    border: 2px solid white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #d1d7db;
 }
 
 .bm-avatar-spacer {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    margin-right: 8px;
-    /* space placeholder */
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
-/* Contenedor de contenido (Flex col) */
+/* Contenedor de contenido — limita ancho */
 .bm-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-width: 85%;
-    /* max-w-xs / lg:max-w-md aprox */
+  display: flex;
+  flex-direction: column;
+  max-width: min(70%, 520px);
 }
 
-/* Alineación interna */
 .bm-own .bm-content-wrapper {
-    align-items: flex-end;
+  align-items: flex-end;
 }
 
 .bm-other .bm-content-wrapper {
-    align-items: flex-start;
+  align-items: flex-start;
 }
 
-/* Nombre de usuario (text-xs font-semibold mb-1 px-3) */
+@media (max-width: 640px) {
+  .bm-content-wrapper {
+    max-width: 82%;
+  }
+}
+
+/* Nombre de usuario en grupos */
 .bm-username {
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-    padding: 0 12px;
-    color: #6b7280;
-    /* text-gray-500 fallback */
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 0 8px 2px;
+  color: var(--mv-green-deep, #075e54);
+  letter-spacing: 0.005em;
 }
-
 
 /* --------------------------------------------------------------------------
-   LA BURBUJA (Estilos Base Svelte: p-3 rounded-2xl shadow-sm)
+   LA BURBUJA — esquinas asimétricas estilo WhatsApp
    -------------------------------------------------------------------------- */
 .bm-bubble {
-    position: relative;
-    padding: 12px;
-    border-radius: 16px;
-    /* rounded-2xl */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    word-break: break-word;
-    font-size: 14.5px;
-    line-height: 1.5;
+  position: relative;
+  padding: 6px 9px 8px;
+  border-radius: 7.5px;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  min-width: 60px;
 }
 
-/* Estilos MIO (bg-blue-600 text-white) */
+/* MIO — verde whatsapp */
 .bm-own .bm-bubble {
-    background-color: #2563eb;
-    /* Tailwind blue-600 */
-    color: #ffffff;
+  background-color: #d9fdd3;
+  color: #111b21;
+  border-bottom-right-radius: 0;
 }
 
-/* Estilos OTRO (bg-gray-100 text-gray-900) */
+/* OTRO — blanco */
 .bm-other .bm-bubble {
-    background-color: #f3f4f6;
-    /* Tailwind gray-100 */
-    color: #111827;
-    /* Tailwind gray-900 */
+  background-color: #ffffff;
+  color: #111b21;
+  border-bottom-left-radius: 0;
 }
 
+/* Cola triangular en la primera burbuja del grupo */
+.bm-group.bm-first.bm-own .bm-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 9px 8px;
+  border-color: transparent transparent #d9fdd3 transparent;
+}
+
+.bm-group.bm-first.bm-other .bm-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 8px 9px 0;
+  border-color: transparent #ffffff transparent transparent;
+}
+
+/* Texto del mensaje */
+.bm-bubble > span {
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding-right: 60px; /* hueco para meta */
+}
 
 /* --------------------------------------------------------------------------
-   LÓGICA DE BORDES (Svelte Exact Logic)
-   -------------------------------------------------------------------------- */
-
-/* MIO: Si siguiente es mio -> rounded-br-md (6px) */
-/* Nota: En React pasamos la clase .bm-next-own si cumple la condicion */
-.bm-bubble.bm-round-br-md {
-    border-bottom-right-radius: 6px !important;
-}
-
-/* MIO: Si anterior es mio -> rounded-tr-md */
-.bm-bubble.bm-round-tr-md {
-    border-top-right-radius: 6px !important;
-}
-
-/* OTRO: Si siguiente es otro (mismo usuario) -> rounded-bl-md */
-.bm-bubble.bm-round-bl-md {
-    border-bottom-left-radius: 6px !important;
-}
-
-/* OTRO: Si anterior es otro (mismo usuario) -> rounded-tl-md */
-.bm-bubble.bm-round-tl-md {
-    border-top-left-radius: 6px !important;
-}
-
-
-/* --------------------------------------------------------------------------
-   METADATA
+   META (hora + checks) — flotando abajo a la derecha
    -------------------------------------------------------------------------- */
 .bm-meta {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-    margin-top: 4px;
-    padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  pointer-events: none;
 }
 
-/* Texto de hora (text-xs opacity-75 approx) */
 .bm-time {
-    font-size: 0.70rem;
-    opacity: 0.8;
-    color: inherit;
-    /* Hereda color (blanco en own, negro en other) */
+  font-size: 0.68rem;
+  color: rgba(17, 27, 33, 0.45);
+  white-space: nowrap;
+  font-weight: 400;
 }
 
-/* Checks w-3 h-3 */
+.bm-own .bm-time {
+  color: rgba(17, 27, 33, 0.5);
+}
+
 .bm-checks svg {
-    width: 14px;
-    height: 14px;
+  width: 16px;
+  height: 11px;
+  display: block;
 }
 
-/* Color Checks */
-.bm-own .bm-checks {
-    color: rgba(255, 255, 255, 0.9);
-    /* Blanco en azul */
-}
-
-/* Si fuera visto (azul), pero sobre fondo azul se ve blanco. 
-   Svelte usa check gris o azul segun estado.
-   Sobre fondo azul, el check azul no se ve. Svelte lo pone blanco o gris claro?
-   En el codigo Svelte: text-blue-500.
-   Si el fondo es azul-600, text-blue-500 no contrasta bien. 
-   Posiblemente Svelte usa burbuja blanca para propios?
-   Revisando codigo Svelte: `bg-blue-600 text-white`.
-   Checks: `text-blue-500` (Visto).
-   Esto es raro. Blue-500 sobre Blue-600.
-   Asumiremos que para "Own" los checks deben ser Blancos o Azul Claro muy brillante.
-   Forzaremos blanco para contraste.
-*/
-.bm-own .bm-check-visto {
-    color: #93c5fd;
-    /* blue-300 lighter */
-}
-
-.bm-own .bm-check-enviado {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.bm-other .bm-time {
-    color: #6b7280;
+/* Imagen adjunta */
+.bm-bubble img {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  display: block;
 }

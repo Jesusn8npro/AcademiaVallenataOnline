@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import './mensajes-v2.css'
 import ModalNuevoChat from './ModalNuevoChat'
@@ -16,6 +16,7 @@ export interface Chat {
   ultimo_mensaje?: {
     contenido?: string
     creado_en?: string
+    usuario_id?: string
     usuario?: { nombre_completo?: string }
   } | null
   miembros?: any[]
@@ -28,6 +29,36 @@ interface Props {
   usuarioActual: any
 }
 
+function tiempoCorto(iso?: string): string {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso)
+    const ahora = new Date()
+    const sameDay =
+      d.getFullYear() === ahora.getFullYear() &&
+      d.getMonth() === ahora.getMonth() &&
+      d.getDate() === ahora.getDate()
+
+    if (sameDay) {
+      return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    }
+    const ayer = new Date(ahora)
+    ayer.setDate(ahora.getDate() - 1)
+    if (
+      d.getFullYear() === ayer.getFullYear() &&
+      d.getMonth() === ayer.getMonth() &&
+      d.getDate() === ayer.getDate()
+    ) {
+      return 'Ayer'
+    }
+    const diff = (ahora.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+    if (diff < 7) return d.toLocaleDateString('es-ES', { weekday: 'short' })
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
+  } catch {
+    return ''
+  }
+}
+
 export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuarioActual }: Props) {
   const [chats, setChats] = useState<Chat[]>([])
   const [cargando, setCargando] = useState(true)
@@ -38,7 +69,11 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
   const [menuVisible, setMenuVisible] = useState(false)
   const [menuPos, setMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [chatSeleccionadoMenu, setChatSeleccionadoMenu] = useState<Chat | null>(null)
+  const chatSeleccionadoRef = useRef<string | null>(chatSeleccionado)
 
+  useEffect(() => { chatSeleccionadoRef.current = chatSeleccionado }, [chatSeleccionado])
+
+  // Cargar chats
   useEffect(() => {
     let activo = true
       ; (async () => {
@@ -61,7 +96,7 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
           .select(`
           *,
           miembros_chat(*, usuario:perfiles!miembros_chat_usuario_id_fkey(id,nombre_completo,url_foto_perfil,nombre_usuario)),
-          ultimo_mensaje:mensajes!chats_ultimo_mensaje_id_fkey(id,contenido,creado_en,usuario:perfiles(nombre_completo),usuario_id)
+          ultimo_mensaje:mensajes!chats_ultimo_mensaje_id_fkey(id,contenido,creado_en,usuario_id,usuario:perfiles(nombre_completo))
         `)
           .in('id', chatIds)
           .eq('activo', true)
@@ -123,6 +158,48 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
     return () => { activo = false }
   }, [])
 
+  // Realtime: actualizar lista cuando llega mensaje en cualquiera de mis chats
+  useEffect(() => {
+    if (!usuarioId) return
+    const channel = supabase
+      .channel(`lista_chats_${usuarioId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'mensajes' },
+        (payload: any) => {
+          const nuevo = payload.new
+          if (!nuevo) return
+          setChats(prev => {
+            const indice = prev.findIndex(c => c.id === nuevo.chat_id)
+            if (indice === -1) return prev // no es uno de mis chats
+            const chatPrev = prev[indice]
+            const incrementar = nuevo.usuario_id !== usuarioId && chatSeleccionadoRef.current !== nuevo.chat_id
+            const actualizado: Chat = {
+              ...chatPrev,
+              ultimo_mensaje: {
+                contenido: nuevo.contenido,
+                creado_en: nuevo.creado_en,
+                usuario_id: nuevo.usuario_id,
+              },
+              actualizado_en: nuevo.creado_en,
+              mensajes_no_leidos: incrementar ? (chatPrev.mensajes_no_leidos || 0) + 1 : chatPrev.mensajes_no_leidos
+            }
+            const restantes = prev.filter((_, i) => i !== indice)
+            return [actualizado, ...restantes]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [usuarioId])
+
+  // Limpiar contador al seleccionar
+  useEffect(() => {
+    if (!chatSeleccionado) return
+    setChats(prev => prev.map(c => c.id === chatSeleccionado ? { ...c, mensajes_no_leidos: 0 } : c))
+  }, [chatSeleccionado])
+
   async function salirDelChat(chat: Chat) {
     if (!usuarioId) return
     await supabase
@@ -137,8 +214,13 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
   const filtrados = useMemo(() => {
     const t = termino.trim().toLowerCase()
     if (!t) return chats
-    return chats.filter(c => (c.nombre || '').toLowerCase().includes(t))
-  }, [termino, chats])
+    return chats.filter(c => {
+      if ((c.nombre || '').toLowerCase().includes(t)) return true
+      const partner = (c.miembros || []).find((m: any) => m.usuario_id !== usuarioId)
+      const nombrePartner = partner?.usuario?.nombre_completo || ''
+      return nombrePartner.toLowerCase().includes(t)
+    })
+  }, [termino, chats, usuarioId])
 
   return (
     <div className="msg_sidebar_inner">
@@ -152,54 +234,91 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
             </div>
           </div>
           <div className="acciones">
-            <button className="msg_new_chat_btn" onClick={() => setModalAbierto(true)}>+</button>
+            <button className="msg_new_chat_btn" onClick={() => setModalAbierto(true)} title="Nuevo chat" aria-label="Crear nuevo chat">+</button>
           </div>
         </div>
-      </div>
-      <div className="msg_search_container">
-        <input className="msg_search_input" value={termino} onChange={e => setTermino(e.target.value)} placeholder="Buscar chats" />
-      </div>
-      {cargando ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div className="msg_search_container" style={{ padding: 0 }}>
+          <input
+            className="msg_search_input"
+            value={termino}
+            onChange={e => setTermino(e.target.value)}
+            placeholder="Buscar chats"
+          />
         </div>
-      ) : (
-        filtrados.map((c) => (
-          <div
-            key={c.id}
-            className={`msg_chat_item ${chatSeleccionado === c.id ? 'msg_active' : ''}`}
-            onClick={() => { onSeleccionarChat(c); navigate(`/mensajes/${c.id}`) }}
-            onContextMenu={(e) => { e.preventDefault(); setMenuVisible(true); setMenuPos({ x: e.clientX, y: e.clientY }); setChatSeleccionadoMenu(c) }}
-          >
-            {(() => {
-              const partner = (c.miembros || []).find((m: any) => m.usuario_id !== usuarioId)
-              const avatar = partner?.usuario?.url_foto_perfil || c.imagen_url || '/images/default-curso.jpg'
-              return (
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {cargando ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <div className="spinner" />
+          </div>
+        ) : filtrados.length === 0 ? (
+          <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#667781' }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>💭</div>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              {termino ? 'No se encontraron chats' : 'Aún no tienes chats. Crea uno con el botón +'}
+            </p>
+          </div>
+        ) : (
+          filtrados.map((c) => {
+            const partner = (c.miembros || []).find((m: any) => m.usuario_id !== usuarioId)
+            const avatar = partner?.usuario?.url_foto_perfil || c.imagen_url || '/images/default-user.png'
+            const nombre = c.es_grupal
+              ? (c.nombre || 'Grupo')
+              : (partner?.usuario?.nombre_completo || c.nombre || 'Chat')
+            const ultimoTexto = c.ultimo_mensaje
+              ? ((c.ultimo_mensaje.usuario_id === usuarioId) ? `Tú: ${c.ultimo_mensaje.contenido}` : c.ultimo_mensaje.contenido)
+              : 'Sin mensajes aún'
+            const tiempo = tiempoCorto(c.ultimo_mensaje?.creado_en || c.actualizado_en)
+
+            return (
+              <div
+                key={c.id}
+                className={`msg_chat_item ${chatSeleccionado === c.id ? 'msg_active' : ''}`}
+                onClick={() => { onSeleccionarChat(c); navigate(`/mensajes/${c.id}`) }}
+                onContextMenu={(e) => { e.preventDefault(); setMenuVisible(true); setMenuPos({ x: e.clientX, y: e.clientY }); setChatSeleccionadoMenu(c) }}
+              >
                 <div className="msg_chat_avatar_container">
-                  <img className="msg_chat_avatar" src={avatar} alt="chat" />
-                  <span className="msg_status_dot" />
+                  <img
+                    className="msg_chat_avatar"
+                    src={avatar}
+                    alt={nombre}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }}
+                  />
                 </div>
-              )
-            })()}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {(() => {
-                const partner = (c.miembros || []).find((m: any) => m.usuario_id !== usuarioId)
-                const nombre = partner?.usuario?.nombre_completo || c.nombre || 'Chat Privado'
-                return <div className="msg_chat_name" title={nombre}>{nombre}</div>
-              })()}
-              <div className="msg_chat_last_msg">{c.ultimo_mensaje ? ((c.ultimo_mensaje.usuario_id === usuarioId) ? `Tú: ${c.ultimo_mensaje.contenido}` : c.ultimo_mensaje.contenido) : 'Sin mensajes aún'}</div>
-            </div>
-            {c.mensajes_no_leidos ? (
-              <div className="msg_unread_badge">{c.mensajes_no_leidos}</div>
-            ) : null}
-          </div>
-        ))
-      )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                    <div className="msg_chat_name" title={nombre}>{nombre}</div>
+                    {tiempo && (
+                      <div style={{ fontSize: '0.72rem', color: c.mensajes_no_leidos ? '#128c7e' : '#8696a0', fontWeight: c.mensajes_no_leidos ? 600 : 400, flexShrink: 0 }}>
+                        {tiempo}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div className="msg_chat_last_msg">{ultimoTexto}</div>
+                    {c.mensajes_no_leidos ? (
+                      <div className="msg_unread_badge">{c.mensajes_no_leidos}</div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
       {menuVisible && chatSeleccionadoMenu && (
-        <div className="msg_context_menu" style={{ left: menuPos.x, top: menuPos.y }}>
-          <div className="msg_context_option msg_danger" onClick={() => salirDelChat(chatSeleccionadoMenu!)}>Salir del chat</div>
-          <div className="msg_context_option" onClick={() => setMenuVisible(false)}>Cancelar</div>
-        </div>
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+            onClick={() => setMenuVisible(false)}
+          />
+          <div className="msg_context_menu" style={{ left: menuPos.x, top: menuPos.y }}>
+            <div className="msg_context_option msg_danger" onClick={() => salirDelChat(chatSeleccionadoMenu!)}>Salir del chat</div>
+            <div className="msg_context_option" onClick={() => setMenuVisible(false)}>Cancelar</div>
+          </div>
+        </>
       )}
       <ModalNuevoChat
         abierto={modalAbierto}
