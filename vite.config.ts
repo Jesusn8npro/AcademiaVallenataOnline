@@ -1,13 +1,91 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    react()
+    react(),
+    VitePWA({
+      registerType: 'prompt',
+      // Registramos el SW manualmente desde src/registerSW.ts
+      injectRegister: null,
+      includeAssets: ['offline.html', 'favicon.png', 'iconos-pwa/*.svg'],
+      manifest: {
+        name: 'Academia Vallenata Online',
+        short_name: 'Academia Vallenata',
+        description: 'Aprende acordeón vallenato online con la mejor academia virtual',
+        start_url: '/',
+        display: 'standalone',
+        orientation: 'landscape',
+        theme_color: '#8b5cf6',
+        background_color: '#1f2937',
+        icons: [
+          { src: '/iconos-pwa/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+          { src: '/iconos-pwa/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' }
+        ]
+      },
+      workbox: {
+        navigateFallback: '/offline.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
+        globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,webp,svg,ico,woff,woff2}'],
+        // Excluir assets pesados del precache; se sirven por runtimeCaching.
+        // Audio (mp3) y modelos3d quedan fuera del precache porque pesan demasiado.
+        globIgnores: [
+          '**/audio/**',
+          '**/modelos3d/**',
+          '**/*.mp3',
+          '**/*.wav',
+          '**/*.glb',
+          '**/*.gltf',
+          '**/*.obj'
+        ],
+        // El chunk `vendor` pesa ~3.3 MB; permitimos hasta 4 MB para que entre en precache.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/audio/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-cache',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/modelos3d/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'modelos3d-cache',
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'image-cache',
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
+          {
+            urlPattern: ({ request }) => request.destination === 'font',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'font-cache',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
+          }
+        ]
+      },
+      // Capacitor empaqueta assets sin SW; deshabilitar PWA en ese build evita SW colgado.
+      disable: mode === 'capacitor'
+    })
   ],
-  base: '/',
+  base: mode === 'capacitor' ? './' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -65,4 +143,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));
