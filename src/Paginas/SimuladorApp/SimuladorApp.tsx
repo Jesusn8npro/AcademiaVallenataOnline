@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { ArrowLeft, RotateCw, Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,12 +12,12 @@ import { obtenerGrabacion } from '../../servicios/grabacionesHeroService';
 import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
-import ModalGrabacionAdmin from './Componentes/ModalGrabacionAdmin';
+const ModalGrabacionAdmin = lazy(() => import('./Componentes/ModalGrabacionAdmin'));
 import GaleriaAcordeones from './Componentes/GaleriaAcordeones';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
-import PanelEfectosSimulador from './Componentes/PanelEfectosSimulador';
+const PanelEfectosSimulador = lazy(() => import('./Componentes/PanelEfectosSimulador'));
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -30,12 +30,12 @@ import ModalTonalidades from './Componentes/BarraHerramientas/ModalTonalidades';
 import ModalVista from './Componentes/BarraHerramientas/ModalVista';
 import ModalMetronomo from './Componentes/BarraHerramientas/ModalMetronomo';
 import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos';
-import PantallaAprende from './Juego/Pantallas/PantallaAprende';
+const PantallaAprende = lazy(() => import('./Juego/Pantallas/PantallaAprende'));
 import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
-import JuegoSimuladorApp from './Juego/JuegoSimuladorApp';
+const JuegoSimuladorApp = lazy(() => import('./Juego/JuegoSimuladorApp'));
 import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
 import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
-import ModalLoops from './Componentes/ModalLoops';
+const ModalLoops = lazy(() => import('./Componentes/ModalLoops'));
 
 import './SimuladorApp.css';
 
@@ -44,10 +44,12 @@ const SimuladorApp: React.FC = () => {
 
     if (juegoActivo) {
         return (
-            <JuegoSimuladorApp
-                config={juegoActivo}
-                onSalir={() => setJuegoActivo(null)}
-            />
+            <Suspense fallback={null}>
+                <JuegoSimuladorApp
+                    config={juegoActivo}
+                    onSalir={() => setJuegoActivo(null)}
+                />
+            </Suspense>
         );
     }
 
@@ -1304,26 +1306,29 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
             <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} met={metronomoVivo} />
 
-            <ModalLoops
-                visible={modales.loops}
-                onCerrar={() => toggleModal('loops')}
-                pistaActivaId={loops.pistaActiva?.id || null}
-                volumen={loops.volumen}
-                velocidad={loops.velocidad}
-                onVolumenChange={loops.setVolumen}
-                onVelocidadChange={loops.setVelocidad}
-                onSeleccionarPista={loops.reproducir}
-                velocidadBloqueada={grabacion.grabandoHero}
-                errorReproduccion={loops.errorReproduccion}
-                pistasListas={loops.pistasListas}
-                onPrecargarPistas={loops.precargarPistas}
-            />
+            <Suspense fallback={null}>
+                <ModalLoops
+                    visible={modales.loops}
+                    onCerrar={() => toggleModal('loops')}
+                    pistaActivaId={loops.pistaActiva?.id || null}
+                    volumen={loops.volumen}
+                    velocidad={loops.velocidad}
+                    onVolumenChange={loops.setVolumen}
+                    onVelocidadChange={loops.setVelocidad}
+                    onSeleccionarPista={loops.reproducir}
+                    velocidadBloqueada={grabacion.grabandoHero}
+                    errorReproduccion={loops.errorReproduccion}
+                    pistasListas={loops.pistasListas}
+                    onPrecargarPistas={loops.precargarPistas}
+                />
+            </Suspense>
 
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
 
             {modales.efectos && (
                 <div className="peas-modal-overlay" onClick={() => toggleModal('efectos')}>
                     <div className="peas-modal-contenido" onClick={(e) => e.stopPropagation()}>
+                        <Suspense fallback={null}>
                         <PanelEfectosSimulador
                             reverbActivo={reverbActivo}
                             reverbIntensidad={reverbIntensidad}
@@ -1376,20 +1381,25 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                             onCerrar={() => toggleModal('efectos')}
                             onRestaurar={restaurarEfectos}
                         />
+                        </Suspense>
                     </div>
                 </div>
             )}
 
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
 
-            <PantallaAprende
-                visible={modales.aprende}
-                onCerrar={() => toggleModal('aprende')}
-                tonalidadActual={logica.tonalidadSeleccionada}
-                onEmpezarCancion={(config: ConfigCancion) => {
-                    onIniciarJuego(config);
-                }}
-            />
+            {modales.aprende && (
+                <Suspense fallback={null}>
+                    <PantallaAprende
+                        visible={modales.aprende}
+                        onCerrar={() => toggleModal('aprende')}
+                        tonalidadActual={logica.tonalidadSeleccionada}
+                        onEmpezarCancion={(config: ConfigCancion) => {
+                            onIniciarJuego(config);
+                        }}
+                    />
+                </Suspense>
+            )}
 
             {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
 
@@ -1428,24 +1438,26 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             {/* Admin: modal expandido con Canción Hero + re-grabar + MP3 fondo.
                 Resto de roles: modal simple original. */}
             {esAdmin ? (
-                <ModalGrabacionAdmin
-                    visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
-                    guardando={grabacion.guardandoGrabacion}
-                    error={grabacion.errorGuardadoGrabacion}
-                    tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Mi grabación'}
-                    autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
-                    usoMetronomo={!!grabacion.grabacionPendiente?.metadata?.metronomo}
-                    resumen={grabacion.grabacionPendiente ? {
-                        duracionMs: grabacion.grabacionPendiente.duracionMs,
-                        bpm: grabacion.grabacionPendiente.bpm,
-                        tonalidad: grabacion.grabacionPendiente.tonalidad,
-                        notas: grabacion.grabacionPendiente.secuencia.length,
-                    } : null}
-                    onCancelar={grabacion.descartarGrabacionPendiente}
-                    onRegrabar={regrabarDesdeCero}
-                    onGuardarPersonal={guardarPracticaLibre}
-                    onGuardarCancionHero={guardarComoCancionHero}
-                />
+                <Suspense fallback={null}>
+                    <ModalGrabacionAdmin
+                        visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
+                        guardando={grabacion.guardandoGrabacion}
+                        error={grabacion.errorGuardadoGrabacion}
+                        tituloSugerido={grabacion.grabacionPendiente?.tituloSugerido || 'Mi grabación'}
+                        autorDefault={usuario?.nombre || 'Jesus Gonzalez'}
+                        usoMetronomo={!!grabacion.grabacionPendiente?.metadata?.metronomo}
+                        resumen={grabacion.grabacionPendiente ? {
+                            duracionMs: grabacion.grabacionPendiente.duracionMs,
+                            bpm: grabacion.grabacionPendiente.bpm,
+                            tonalidad: grabacion.grabacionPendiente.tonalidad,
+                            notas: grabacion.grabacionPendiente.secuencia.length,
+                        } : null}
+                        onCancelar={grabacion.descartarGrabacionPendiente}
+                        onRegrabar={regrabarDesdeCero}
+                        onGuardarPersonal={guardarPracticaLibre}
+                        onGuardarCancionHero={guardarComoCancionHero}
+                    />
+                </Suspense>
             ) : (
                 <ModalGuardarSimulador
                     visible={!!grabacion.grabacionPendiente && grabacion.grabacionPendiente.tipo === 'practica_libre'}
