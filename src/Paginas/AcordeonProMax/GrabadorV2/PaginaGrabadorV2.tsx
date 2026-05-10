@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Play, Pause, Square, Mic, Save, RotateCcw,
-  Upload, Loader2, AlertCircle, Music, ListMusic,
-} from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 import CuerpoAcordeonBase from '../../../Core/componentes/CuerpoAcordeon';
 import { useLogicaAcordeon } from '../../../Core/hooks/useLogicaAcordeon';
@@ -16,11 +13,8 @@ import { useGrabadorV2 } from './hooks/useGrabadorV2';
 import { useAntiNotasPegadas } from './hooks/useAntiNotasPegadas';
 import { useRAFPlayback } from './hooks/useRAFPlayback';
 
-import VisorCapturaEnVivo from './componentes/VisorCapturaEnVivo';
-import TimelineV2 from './componentes/TimelineV2';
-import EditorSeccionesV2 from './componentes/EditorSeccionesV2';
+import EditorCancion from './componentes/EditorCancion';
 import ListaCancionesV2 from './componentes/ListaCancionesV2';
-import PanelMetronomoStudio from './componentes/PanelMetronomoStudio';
 import BarraSuperiorV2, { type TabGrabadorV2 } from './componentes/BarraSuperiorV2';
 import PanelGestorV2 from './componentes/PanelGestorV2';
 import PanelCrearAcordeV2 from './componentes/PanelCrearAcordeV2';
@@ -590,234 +584,42 @@ const PaginaGrabadorV2: React.FC = () => {
           )}
 
           {tabActivo === 'canciones' && vista === 'editor' && (
-            <>
-              {/* Barra de acciones del editor: volver a lista + guardar */}
-              <div className="grabv2-editor-acciones">
-                <button className="grabv2-editor-volver" onClick={volverALista}>
-                  ← Volver a la lista
-                </button>
-                <button
-                  className={`grabv2-btn-guardar estado-${estadoGuardado}`}
-                  onClick={guardar}
-                  disabled={estadoGuardado === 'guardando' || grabador.grabando}
-                >
-                  {estadoGuardado === 'guardando' ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
-                  {estadoGuardado === 'guardado' ? '¡Guardado!' : 'Guardar'}
-                </button>
-              </div>
-
-              {/* Datos básicos */}
-              <div className="grabv2-bloque">
-                <input
-                  className="grabv2-input grabv2-titulo"
-                  type="text"
-                  placeholder="Título de la canción"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                />
-                <input
-                  className="grabv2-input"
-                  type="text"
-                  placeholder="Autor"
-                  value={autor}
-                  onChange={(e) => setAutor(e.target.value)}
-                />
-                <div className="grabv2-bpm-row">
-                  <label>BPM</label>
-                  <button className="grabv2-bpm-step" onClick={() => setBpmState(b => Math.max(30, b - 5))}>−</button>
-                  <span className="grabv2-bpm-val">{bpm}</span>
-                  <button className="grabv2-bpm-step" onClick={() => setBpmState(b => Math.min(300, b + 5))}>+</button>
-                  <input
-                    type="range"
-                    min={30}
-                    max={300}
-                    value={bpm}
-                    onChange={(e) => setBpmState(Number(e.target.value))}
-                    className="grabv2-bpm-slider"
-                  />
-                </div>
-              </div>
-
-              {/* Modo de referencia: Pista MP3 o Metrónomo. Solo se muestra el contenido del
-                  modo seleccionado para no abultar la columna. `usoMetronomo` es la fuente de
-                  verdad: false = pista, true = metrónomo. Se persiste en la canción. */}
-              <div className="grabv2-bloque">
-                <div className="grabv2-bloque-titulo">Modo de referencia</div>
-                <div className="grabv2-modo-toggle">
-                  <button
-                    className={`grabv2-modo-opcion ${!usoMetronomo ? 'activa' : ''}`}
-                    onClick={() => setUsoMetronomo(false)}
-                  >
-                    <Music size={13} />
-                    <span>Pista MP3</span>
-                  </button>
-                  <button
-                    className={`grabv2-modo-opcion ${usoMetronomo ? 'activa' : ''}`}
-                    onClick={() => setUsoMetronomo(true)}
-                  >
-                    <ListMusic size={13} />
-                    <span>Metrónomo</span>
-                  </button>
-                </div>
-
-                {!usoMetronomo ? (
-                  <div className="grabv2-modo-contenido">
-                    {audioUrl ? (
-                      <div className="grabv2-mp3-cargado">
-                        <span className="grabv2-mp3-ok">✓ pista cargada</span>
-                        <span className="grabv2-mp3-dur">{reproductor.duracionSeg.toFixed(1)}s</span>
-                      </div>
-                    ) : (
-                      <div className="grabv2-mp3-vacio">Sin pista — subí un MP3 para acompañar la grabación.</div>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="audio/*"
-                      style={{ display: 'none' }}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) void subirMP3(f);
-                        e.target.value = '';
-                      }}
-                    />
-                    <button className="grabv2-btn-secundario" onClick={() => fileInputRef.current?.click()}>
-                      <Upload size={12} /> {audioUrl ? 'Reemplazar pista' : 'Subir pista MP3'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grabv2-modo-contenido">
-                    <button
-                      className="grabv2-met-cabecera-toggle"
-                      onClick={() => setMetronomoExpandido(v => !v)}
-                    >
-                      <span className="grabv2-met-resumen">
-                        <Music size={12} /> {metronomo.bpm} BPM · {metronomo.compas}/4 ·
-                        <span className={metronomo.activo ? 'on' : 'off'}>
-                          {metronomo.activo ? ' ON' : ' OFF'}
-                        </span>
-                      </span>
-                      <span className="grabv2-met-chevron">{metronomoExpandido ? '▾' : '▸'}</span>
-                    </button>
-                    {metronomoExpandido && <PanelMetronomoStudio met={metronomo} />}
-                  </div>
-                )}
-              </div>
-
-              {/* Transporte + timeline */}
-              <div className="grabv2-bloque">
-                <TimelineV2
-                  totalTicks={totalTicks}
-                  tickActual={tickActual}
-                  secuencia={secuencia}
-                  secciones={secciones}
-                  bpm={bpm}
-                  resolucion={192}
-                  onSeek={seekA}
-                />
-                <div className="grabv2-transporte">
-                  <button className="grabv2-btn-trans" onClick={() => seekA(0)} title="Al inicio">
-                    <RotateCcw size={14} />
-                  </button>
-                  <button
-                    className={`grabv2-btn-play ${reproductor.reproduciendo ? 'activo' : ''}`}
-                    onClick={togglePlay}
-                    disabled={grabador.grabando}
-                  >
-                    {reproductor.reproduciendo ? <Pause size={18} /> : <Play size={18} fill="currentColor" />}
-                  </button>
-                  <button className="grabv2-btn-trans" onClick={detenerTodo} title="Detener todo">
-                    <Square size={14} />
-                  </button>
-                  {enPreroll ? (
-                    <button className="grabv2-btn-rec preroll" onClick={cancelarPreroll}>
-                      <Square size={14} /> Cancelar preroll
-                    </button>
-                  ) : !grabador.grabando ? (
-                    <button className="grabv2-btn-rec" onClick={iniciarGrabacionNueva}>
-                      <Mic size={14} /> Grabar todo
-                    </button>
-                  ) : (
-                    <button className="grabv2-btn-rec activa" onClick={detenerGrabacion}>
-                      <Square size={14} /> Detener {enGrabacionPunch ? 'punch' : ''}
-                    </button>
-                  )}
-                </div>
-                <div className="grabv2-preroll-row">
-                  <label>Pre-roll</label>
-                  <button className="grabv2-bpm-step" onClick={() => setPrerollSeg(s => Math.max(0, s - 1))} disabled={enPreroll || grabador.grabando}>−</button>
-                  <span className="grabv2-preroll-val">{prerollSeg}s</span>
-                  <button className="grabv2-bpm-step" onClick={() => setPrerollSeg(s => Math.min(8, s + 1))} disabled={enPreroll || grabador.grabando}>+</button>
-                  <span className="grabv2-preroll-hint">segundos antes de empezar a grabar la sección</span>
-                </div>
-                <div className="grabv2-velocidad-row">
-                  <label>Velocidad</label>
-                  <button className="grabv2-bpm-step" onClick={() => setVelocidad(v => Math.max(0.25, +(v - 0.05).toFixed(2)))}>−</button>
-                  <span className={`grabv2-velocidad-val ${velocidad !== 1 ? 'modificada' : ''}`}>
-                    {Math.round(velocidad * 100)}%
-                  </span>
-                  <button className="grabv2-bpm-step" onClick={() => setVelocidad(v => Math.min(2, +(v + 0.05).toFixed(2)))}>+</button>
-                  <input
-                    type="range"
-                    min={0.25}
-                    max={2}
-                    step={0.05}
-                    value={velocidad}
-                    onChange={(e) => setVelocidad(parseFloat(e.target.value))}
-                    className="grabv2-velocidad-slider"
-                  />
-                  {velocidad !== 1 && (
-                    <button className="grabv2-velocidad-reset" onClick={() => setVelocidad(1)} title="Restaurar 100%">
-                      ↺ {Math.round(bpm * velocidad)} BPM
-                    </button>
-                  )}
-                </div>
-                {enPreroll && (
-                  <div className="grabv2-banner-preroll">
-                    🎬 Preparate… <b>{prerollRestanteSeg.toFixed(1)}s</b> hasta que arranque la grabación
-                  </div>
-                )}
-                {enGrabacionPunch && (
-                  <div className="grabv2-banner-punch">
-                    🎯 Grabando punch-in en sección [{grabador.modo?.rango?.tickInicio}, {grabador.modo?.rango?.tickFin}]. Las notas fuera del rango se ignoran.
-                  </div>
-                )}
-                {enGrabacionNueva && (
-                  <div className="grabv2-banner-grab">
-                    ⏺ Grabando canción nueva. Detené para mezclar con la secuencia local.
-                  </div>
-                )}
-              </div>
-
-              {/* Visor en vivo */}
-              <VisorCapturaEnVivo
-                eventos={grabador.ultimosEventos}
-                bpm={bpm}
-                resolucion={192}
-              />
-
-              {/* Editor secciones */}
-              <EditorSeccionesV2
-                secciones={secciones}
-                tickActual={tickActual}
-                bpm={bpm}
-                resolucion={192}
-                puedeGrabar={!grabador.grabando}
-                onAgregar={agregarSeccion}
-                onActualizar={actualizarSeccion}
-                onEliminar={eliminarSeccion}
-                onSeek={seekA}
-                onGrabarSeccion={grabarSeccion}
-              />
-
-              <div className="grabv2-bloque grabv2-resumen">
-                <div className="grabv2-resumen-item">Notas: <b>{secuencia.length}</b></div>
-                <div className="grabv2-resumen-item">Secciones: <b>{secciones.length}</b></div>
-                <div className="grabv2-resumen-item">
-                  Duración: <b>{((totalTicks / ((bpm / 60) * 192))).toFixed(1)}s</b>
-                </div>
-              </div>
-            </>
+            <EditorCancion
+              titulo={titulo} setTitulo={setTitulo}
+              autor={autor} setAutor={setAutor}
+              bpm={bpm} setBpmState={setBpmState}
+              velocidad={velocidad} setVelocidad={setVelocidad}
+              audioUrl={audioUrl}
+              usoMetronomo={usoMetronomo} setUsoMetronomo={setUsoMetronomo}
+              metronomoExpandido={metronomoExpandido} setMetronomoExpandido={setMetronomoExpandido}
+              metronomo={metronomo}
+              fileInputRef={fileInputRef}
+              onSubirMP3={(f) => void subirMP3(f)}
+              totalTicks={totalTicks}
+              tickActual={tickActual}
+              secuencia={secuencia}
+              secciones={secciones}
+              reproductor={reproductor}
+              grabador={grabador}
+              prerollSeg={prerollSeg} setPrerollSeg={setPrerollSeg}
+              enPreroll={enPreroll}
+              prerollRestanteSeg={prerollRestanteSeg}
+              enGrabacionPunch={enGrabacionPunch}
+              enGrabacionNueva={enGrabacionNueva}
+              onSeekA={seekA}
+              onTogglePlay={togglePlay}
+              onDetenerTodo={detenerTodo}
+              onCancelarPreroll={cancelarPreroll}
+              onIniciarGrabacionNueva={iniciarGrabacionNueva}
+              onDetenerGrabacion={detenerGrabacion}
+              onAgregarSeccion={agregarSeccion}
+              onActualizarSeccion={actualizarSeccion}
+              onEliminarSeccion={eliminarSeccion}
+              onGrabarSeccion={grabarSeccion}
+              onVolverALista={volverALista}
+              onGuardar={guardar}
+              estadoGuardado={estadoGuardado}
+            />
           )}
         </aside>
       </div>
