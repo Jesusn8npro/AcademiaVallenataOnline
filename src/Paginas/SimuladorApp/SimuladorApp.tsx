@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
-import { RotateCw, Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import { motion, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ import { useMetronomo } from './Hooks/useMetronomo';
 import { useEfectosAudio } from './Hooks/useEfectosAudio';
 import { useReplaySimulador } from './Hooks/useReplaySimulador';
 import { useGrabacionSimulador } from './Hooks/useGrabacionSimulador';
+import { useModoFoco } from './Hooks/useModoFoco';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 const ModalGrabacionAdmin = lazy(() => import('./Componentes/ModalGrabacionAdmin'));
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
@@ -19,6 +20,7 @@ import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
 import OverlaysNavegacion from './Componentes/OverlaysNavegacion';
 import ModalesBarraSimulador from './Componentes/ModalesBarraSimulador';
+import BotonModoFoco from './Componentes/BotonModoFoco';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -101,13 +103,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         loops: false,
         efectos: false,
     });
-
-    // Modo Foco: oculta la barra de herramientas para dejar todo el espacio
-    // visible al acordeón. Premium oculta TODO (incluido el banner). Free
-    // sigue viendo el banner Hero (gatillo de venta — los anuncios al
-    // alumno no premium no se ocultan).
-    const [modoFoco, setModoFoco] = useState(false);
-    const [toastUpgradeVisible, setToastUpgradeVisible] = useState(false);
 
     // Galería de modelos visuales del acordeón. Persiste la elección en
     // localStorage — al volver a abrir el simulador, el alumno conserva
@@ -466,26 +461,9 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // estudiantes y usuarios sin sesión.
     const esPremium = esAdmin || (usuario as any)?.plan_activo === true;
 
-    // Timer del modo foco para usuarios FREE: 60s gratis y luego se sale
-    // automáticamente con un toast invitando a Plus. Premium queda siempre
-    // activo. Idea: el alumno prueba la sensación de "pantalla limpia"
-    // pero solo Plus tiene uso ilimitado — gatillo de venta concreto.
-    const SEGUNDOS_FOCO_FREE = 60;
-    useEffect(() => {
-        if (!modoFoco || esPremium) return;
-        const id = window.setTimeout(() => {
-            setModoFoco(false);
-            setToastUpgradeVisible(true);
-        }, SEGUNDOS_FOCO_FREE * 1000);
-        return () => window.clearTimeout(id);
-    }, [modoFoco, esPremium]);
-
-    // Toast upgrade auto-cierra después de 8s.
-    useEffect(() => {
-        if (!toastUpgradeVisible) return;
-        const id = window.setTimeout(() => setToastUpgradeVisible(false), 8000);
-        return () => window.clearTimeout(id);
-    }, [toastUpgradeVisible]);
+    // Modo Foco: oculta la barra de herramientas. Premium ilimitado, free
+    // 60s + toast invitando a Plus (gatillo de venta).
+    const { modoFoco, setModoFoco, toastUpgradeVisible, setToastUpgradeVisible } = useModoFoco(esPremium);
 
     const renderHilera = (fila: any[]) => {
         const p: Record<string, any> = {};
@@ -544,52 +522,17 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         esPremium={esPremium}
                     />
 
-                    {/* Modo Foco: pestaña vertical slim pegada al borde
-                        izquierdo. Cuando está activo se muestra solo el ojo
-                        (sin texto) — minimalismo total mientras se toca. */}
-                    <button
-                        type="button"
-                        className={`btn-modo-foco ${modoFoco ? 'activo' : ''} ${esPremium ? 'premium' : 'free'}`}
-                        onClick={() => setModoFoco(v => !v)}
-                        title={modoFoco ? 'Salir de modo foco' : 'Modo foco — esconder herramientas'}
-                        aria-label={modoFoco ? 'Salir de modo foco' : 'Activar modo foco'}
-                    >
-                        {modoFoco ? <EyeOff size={14} /> : <Eye size={14} />}
-                        {!modoFoco && <span>FOCO</span>}
-                    </button>
-
-                    {/* Toast que aparece cuando un usuario FREE consumió sus
-                        60s gratuitos de modo foco. Aparece arriba del simulador
-                        sin bloquear la jugabilidad, auto-cierra en 8s. */}
-                    {toastUpgradeVisible && (
-                        <div className="toast-upgrade-premium" role="status">
-                            <div className="toast-icono">
-                                <Crown size={14} />
-                            </div>
-                            <div className="toast-mensaje">
-                                <strong>Modo Foco gratuito terminó</strong>
-                                Hazte Plus y disfrutalo sin límites
-                            </div>
-                            <button
-                                type="button"
-                                className="toast-cta"
-                                onClick={() => {
-                                    setToastUpgradeVisible(false);
-                                    navigate('/paquetes');
-                                }}
-                            >
-                                Ver Plus
-                            </button>
-                            <button
-                                type="button"
-                                className="toast-cerrar"
-                                onClick={() => setToastUpgradeVisible(false)}
-                                aria-label="Cerrar"
-                            >
-                                <XIcon size={14} />
-                            </button>
-                        </div>
-                    )}
+                    <BotonModoFoco
+                        modoFoco={modoFoco}
+                        onToggle={() => setModoFoco((v) => !v)}
+                        esPremium={esPremium}
+                        toastUpgradeVisible={toastUpgradeVisible}
+                        onCerrarToast={() => setToastUpgradeVisible(false)}
+                        onClickVerPlus={() => {
+                            setToastUpgradeVisible(false);
+                            navigate('/paquetes');
+                        }}
+                    />
 
                     <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
                         <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'manipulation' }}>
