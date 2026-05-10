@@ -295,4 +295,4 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     );
 };
 
-export default BarraHerramientas;
+export default React.memo(BarraHerramientas);
