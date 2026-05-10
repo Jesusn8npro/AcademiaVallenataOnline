@@ -12,6 +12,7 @@ import { useEfectosAudio } from './Hooks/useEfectosAudio';
 import { useReplaySimulador } from './Hooks/useReplaySimulador';
 import { useGrabacionSimulador } from './Hooks/useGrabacionSimulador';
 import { useModoFoco } from './Hooks/useModoFoco';
+import { usePreviewsEfectos } from './Hooks/usePreviewsEfectos';
 import ModalGuardarGrabacionWrapper from './Componentes/ModalGuardarGrabacionWrapper';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
@@ -189,66 +190,17 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     }, [efectos.panMetronomo, metronomoVivo]);
 
     // ─── Previews del Panel de Efectos ──────────────────────────────────────
-    // Tocan un sonido mientras el alumno mantiene presionado un slider de
-    // volumen. Cada handler es estable (useCallback) para evitar arranques
-    // fantasma por re-creación de funciones entre renders.
-    const PREVIEW_TECLADO_ID = '1-3-halar';
-    const PREVIEW_BAJOS_ID = '1-1-halar-bajo';
-
-    const previewTecladoIniciar = useCallback(() => {
-        motorAudioPro.activarContexto();
-        logica.actualizarBotonActivo(PREVIEW_TECLADO_ID, 'add');
-    }, [logica.actualizarBotonActivo]);
-    const previewTecladoDetener = useCallback(() => {
-        logica.actualizarBotonActivo(PREVIEW_TECLADO_ID, 'remove');
-    }, [logica.actualizarBotonActivo]);
-
-    const previewBajosIniciar = useCallback(() => {
-        motorAudioPro.activarContexto();
-        logica.actualizarBotonActivo(PREVIEW_BAJOS_ID, 'add');
-    }, [logica.actualizarBotonActivo]);
-    const previewBajosDetener = useCallback(() => {
-        logica.actualizarBotonActivo(PREVIEW_BAJOS_ID, 'remove');
-    }, [logica.actualizarBotonActivo]);
-
-    // Loops: arrancamos "Pista de chande sabor" (o la primera disponible) si
-    // todavía no hay pista sonando, y la silenciamos al soltar — solo si fuimos
-    // nosotros quienes la activamos. Si el alumno ya tenía una pista corriendo
-    // por su cuenta, no la tocamos para no interrumpir la práctica.
-    const loopsActivadoPorPreviewRef = useRef(false);
-    const previewLoopsIniciar = useCallback(() => {
-        motorAudioPro.activarContexto();
-        if (loops.pistaActiva || !pistaPreviewLoops) return;
-        // precargarPistas es idempotente: si ya está en cache no descarga;
-        // si no, descarga + decodifica antes del play (silencio breve la primera vez).
-        loops.precargarPistas([pistaPreviewLoops]);
-        loopsActivadoPorPreviewRef.current = true;
-        loops.reproducir(pistaPreviewLoops);
-    }, [loops, pistaPreviewLoops]);
-    const previewLoopsDetener = useCallback(() => {
-        if (loopsActivadoPorPreviewRef.current) {
-            loopsActivadoPorPreviewRef.current = false;
-            loops.detener();
-        }
-    }, [loops]);
-
-    // Metrónomo: lo encendemos al tocar el slider y guardamos un flag para
-    // saber si fuimos nosotros (así no apagamos un metrónomo que el alumno
-    // ya había activado por su cuenta).
-    const metronomoEncendidoPorPreviewRef = useRef(false);
-    const previewMetronomoIniciar = useCallback(() => {
-        motorAudioPro.activarContexto();
-        if (!metronomoVivo.activo) {
-            metronomoEncendidoPorPreviewRef.current = true;
-            void metronomoVivo.iniciar();
-        }
-    }, [metronomoVivo]);
-    const previewMetronomoDetener = useCallback(() => {
-        if (metronomoEncendidoPorPreviewRef.current) {
-            metronomoEncendidoPorPreviewRef.current = false;
-            metronomoVivo.detener();
-        }
-    }, [metronomoVivo]);
+    // Cada handler suena mientras el alumno mantiene presionado un slider.
+    const {
+        previewTecladoIniciar,
+        previewTecladoDetener,
+        previewBajosIniciar,
+        previewBajosDetener,
+        previewLoopsIniciar,
+        previewLoopsDetener,
+        previewMetronomoIniciar,
+        previewMetronomoDetener,
+    } = usePreviewsEfectos({ logica, loops, metronomoVivo, pistaPreviewLoops });
 
     // ─── URL params: ?reproducir=<id> (auto-replay) y ?volverA=&t= (clase)
     const navigate = useNavigate();
