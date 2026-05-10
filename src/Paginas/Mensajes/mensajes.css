@@ -53,6 +53,11 @@
   z-index: 1;
 }
 
+/* En /mensajes: eliminar padding-bottom global del body y override del padding del main */
+body.en-mensajes { padding-bottom: 0 !important; overflow: hidden !important; }
+body main.msg_view,
+body.con-sidebar main.msg_view { padding: 0 !important; }
+
 /* ---------- Sidebar ---------- */
 .msg_sb_inner { display: flex; flex-direction: column; height: 100%; }
 
@@ -169,7 +174,7 @@
 @keyframes pop { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
 
 /* ---------- Chat view ---------- */
-.msg_chat_view { height: 100%; display: flex; flex-direction: column; overflow: hidden; background: var(--mv-bg-chat); }
+.msg_chat_view { flex: 1; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--mv-bg-chat); }
 
 .msg_chat_header {
   background: var(--mv-active);
@@ -234,10 +239,7 @@
     radial-gradient(circle at 75% 65%, rgba(7, 94, 84, .02) 1px, transparent 1px);
   background-size: 90px 90px, 60px 60px;
   scroll-behavior: smooth;
-  display: flex;
-  flex-direction: column;
 }
-.msg_area > :first-child { margin-top: auto; } /* empuja mensajes al fondo */
 .msg_area::-webkit-scrollbar { width: 8px; }
 .msg_area::-webkit-scrollbar-thumb { background: rgba(7, 94, 84, .18); border-radius: 4px; }
 .msg_area::-webkit-scrollbar-thumb:hover { background: rgba(7, 94, 84, .3); }
@@ -434,12 +436,22 @@
 
   .msg_area { padding: 12px 4% 8px; }
 
-  /* MOBILE + CHAT ABIERTO: ocultar menus globales + ajustar body */
-  body.modo-chat-abierto { padding: 0 !important; }
+  /* MOBILE + CHAT ABIERTO: bloquea scroll del body, oculta menus globales */
+  body.modo-chat-abierto {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    height: 100dvh !important;
+  }
   body.modo-chat-abierto .nav-auth-container,
   body.modo-chat-abierto .menu-inferior-responsivo,
   body.modo-chat-abierto .sidebar-admin-moderno { display: none !important; }
-  body.modo-chat-abierto .msg_layout { height: 100dvh; }
+  body.modo-chat-abierto .msg_layout {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    width: 100vw;
+  }
 }
 
 @media (max-width: 640px) {
