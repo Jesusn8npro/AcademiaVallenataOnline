@@ -46,11 +46,22 @@ const NotificacionesDropdown: React.FC<NotificacionesDropdownProps> = ({ onCerra
         setCargando(false);
     };
 
-    const manejarClickNotificacion = async (notificacion: Notificacion) => {
-        // 1. Cerrar dropdown primero (UX más rápida)
+    const manejarClickNotificacion = (notificacion: Notificacion) => {
+        // 1. Navegar PRIMERO (cambia la URL antes de que el dropdown se desmonte).
+        if (notificacion.url_accion) {
+            const destino = notificacion.url_accion;
+            const actual = window.location.pathname + window.location.search;
+            if (destino === actual) {
+                navigate(destino, { replace: true, state: { ts: Date.now() } });
+            } else {
+                navigate(destino);
+            }
+        }
+
+        // 2. Cerrar dropdown.
         onCerrar();
 
-        // 2. Marcar como leída si no lo está (en background)
+        // 3. Marcar como leída en background (no bloquea ni la navegación ni el cierre).
         if (!notificacion.leida) {
             notificacionesService.marcarComoLeida([notificacion.id]).then(() => {
                 setNotificaciones(prev =>
@@ -58,18 +69,6 @@ const NotificacionesDropdown: React.FC<NotificacionesDropdownProps> = ({ onCerra
                 );
                 if (onNotificacionLeida) onNotificacionLeida();
             }).catch(() => {});
-        }
-
-        // 3. Navegar a la acción
-        if (notificacion.url_accion) {
-            const destino = notificacion.url_accion;
-            const actual = window.location.pathname + window.location.search;
-            if (destino === actual) {
-                // Misma ruta: forzar recarga del componente con state
-                navigate(destino, { replace: true, state: { ts: Date.now() } });
-            } else {
-                navigate(destino);
-            }
         }
     };
 

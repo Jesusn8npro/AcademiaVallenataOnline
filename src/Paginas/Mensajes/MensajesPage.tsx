@@ -43,8 +43,10 @@ export default function MensajesPage() {
 
   // Cargar chat por URL
   useEffect(() => {
-    if (!chatId || !usuarioActual) { setChatCargado(null); return }
+    if (!chatId || !usuarioActual) { setChatCargado(null); setErrorChat(''); return }
     let activo = true
+    // Reset inmediato del chat anterior para evitar flash al cambiar entre chats.
+    setChatCargado(null)
     ;(async () => {
       setCargandoChat(true); setErrorChat('')
       const { data, error } = await supabase
