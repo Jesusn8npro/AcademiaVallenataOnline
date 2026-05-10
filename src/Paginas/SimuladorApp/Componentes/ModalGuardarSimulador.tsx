@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { vibracionMedia } from '../../../utilidades/plataforma';
 import './ModalGuardarSimulador.css';
 
 interface Resumen {
@@ -53,6 +54,7 @@ const ModalGuardarSimulador: React.FC<Props> = ({
             return;
         }
         setErrorLocal('');
+        vibracionMedia();
         await onGuardar(titulo, descripcion);
     };
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { vibracionLeve } from '../../../utilidades/plataforma';
 import './PagoError.css';
 
 interface DatosError {
@@ -29,6 +30,9 @@ const PagoError: React.FC = () => {
                 fecha: new Date().toLocaleDateString('es-CO'),
                 hora: new Date().toLocaleTimeString('es-CO')
             });
+
+            // Haptic suave para senalar error de pago (no-op en web)
+            vibracionLeve();
 
             setLoading(false);
         } catch {

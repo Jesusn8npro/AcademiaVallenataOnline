@@ -86,6 +86,7 @@ import { supabase } from './servicios/clienteSupabase'
 import DashboardAdmin from './Paginas/administrador/Dashboard/DashboardAdmin'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
 import { useSesionTracker } from './hooks/useSesionTracker'
+import { useBackButtonNativo } from './hooks/useBackButtonNativo'
 import CursorPersonalizado from './componentes/ui/CursorPersonalizado/CursorPersonalizado'
 
 // Componente interno que tiene acceso al contexto de usuario
@@ -96,6 +97,9 @@ const AppContent = () => {
   // Activar efectos globales de seguridad (Sonido manejado ahora por CursorPersonalizado y AudioManager)
   useSeguridadConsola();
   // useEfectosSonido(); // Reemplazado por CursorPersonalizado + AudioManager
+
+  // Back button hardware Android (no-op en web)
+  useBackButtonNativo();
 
   // Rastrear sesión del usuario autenticado
   useSesionTracker(usuario?.id || null)

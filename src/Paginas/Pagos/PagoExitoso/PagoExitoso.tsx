@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePagoExitoso } from './Hooks/usePagoExitoso';
+import { vibracionMedia } from '../../../utilidades/plataforma';
 import './PagoExitoso.css';
 
 const IcoCheck = () => (
@@ -28,6 +29,11 @@ const PagoExitoso: React.FC = () => {
         montoFmt, compartirEnWhatsApp, getEstadoClase,
         irAPanelEstudiante, irAMisCursos, irAInicio, intentarDeNuevo,
     } = usePagoExitoso();
+
+    // Haptic feedback al confirmarse el pago (no-op en web)
+    useEffect(() => {
+        if (estadoPago === 'aceptada') vibracionMedia();
+    }, [estadoPago]);
 
     return (
         <div className={`pago-exitoso-container ${getEstadoClase()}`}>
