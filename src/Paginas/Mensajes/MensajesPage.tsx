@@ -20,11 +20,17 @@ export default function MensajesPage() {
   const [cargandoChat, setCargandoChat] = useState(false)
   const [errorChat, setErrorChat] = useState('')
 
-  // Body class para ocultar menus globales en mobile cuando hay chat abierto
+  // Body classes:
+  // - en-mensajes: siempre que estes en /mensajes (quita padding-bottom global, evita scroll)
+  // - modo-chat-abierto: solo cuando hay chat abierto (en mobile oculta menus globales)
   useEffect(() => {
+    document.body.classList.add('en-mensajes')
     if (chatId) document.body.classList.add('modo-chat-abierto')
     else document.body.classList.remove('modo-chat-abierto')
-    return () => document.body.classList.remove('modo-chat-abierto')
+    return () => {
+      document.body.classList.remove('en-mensajes')
+      document.body.classList.remove('modo-chat-abierto')
+    }
   }, [chatId])
 
   // Auth + perfil
