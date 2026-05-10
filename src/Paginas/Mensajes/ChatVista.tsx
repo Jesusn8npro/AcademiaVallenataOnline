@@ -52,6 +52,16 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     }
   }, [chat, usuarioActual])
 
+  // Map de miembros del chat por usuario_id para hidratar avatar/nombre en mensajes realtime
+  // (el payload de postgres_changes NO trae el JOIN con perfiles).
+  const miembrosPorId = React.useMemo(() => {
+    const map = new Map<string, any>()
+    ;(chat?.miembros || []).forEach((m: any) => {
+      if (m.usuario_id && m.usuario) map.set(m.usuario_id, m.usuario)
+    })
+    return map
+  }, [chat])
+
   useEffect(() => {
     let activo = true
     const cargar = async () => {
@@ -67,7 +77,15 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     mensajeriaService.suscribirseAChat(chat.id, {
       onNuevoMensaje: (raw: any) => {
         if (!activo) return
-        const mensaje: Mensaje = { ...raw, es_mio: raw.usuario_id === usuarioActual?.id, reacciones: [], lecturas: [], leido_por_mi: raw.usuario_id === usuarioActual?.id }
+        // Hidratar usuario (avatar, nombre) desde el chat ya cargado
+        const usuarioInfo = miembrosPorId.get(raw.usuario_id) || raw.usuario || null
+        const mensaje: Mensaje = {
+          ...raw,
+          usuario: usuarioInfo,
+          es_mio: raw.usuario_id === usuarioActual?.id,
+          reacciones: [], lecturas: [],
+          leido_por_mi: raw.usuario_id === usuarioActual?.id,
+        }
         setMensajes(prev => prev.some(m => m.id === mensaje.id) ? prev : [...prev, mensaje])
         setTimeout(() => fin.current?.scrollIntoView({ behavior: 'smooth' }), 80)
       },
@@ -77,7 +95,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     mensajeriaService.marcarMensajesComoLeidos(chat.id).catch(() => {})
 
     return () => { activo = false; mensajeriaService.desuscribirseDeChat(chat.id).catch(() => {}) }
-  }, [chat.id, usuarioActual?.id])
+  }, [chat.id, usuarioActual?.id, miembrosPorId])
 
   const enviar = async (contenido: string) => {
     setErrorEnvio('')
