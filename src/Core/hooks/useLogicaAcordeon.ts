@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '../../servicios/clienteSupabase';
 import { motorAudioPro } from '../audio/AudioEnginePro';
 import { encontrarMejorMuestra, type Muestra } from '../audio/UniversalSampler';
@@ -567,7 +567,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }
     }, []);
 
-    return {
+    // Memoizado: mantener referencia estable del objeto retornado salvo cuando
+    // CAMBIA un valor real. Los callbacks ya son estables vía useCallback;
+    // listamos solo los state/values primitivos como dependencias. Esto evita
+    // que cada render del componente padre cause cascada en hijos memoizados.
+    return useMemo(() => ({
         botonesActivos, direccion, setDireccion, modoAjuste, setModoAjuste, modoVista, setModoVista,
         vistaDoble, setVistaDoble, ajustes, setAjustes, botonSeleccionado, setBotonSeleccionado,
         pestanaActiva, setPestanaActiva, tonalidadSeleccionada, setTonalidadSeleccionada,
@@ -585,5 +589,19 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         samplesBrillante: samplesPitos, samplesBajos, samplesArmonizado,
         mapaBotonesActual: mapaBotonesActual.current,
         preprogramarTono, setFuelleVirtual
-    };
+    }), [
+        botonesActivos, direccion, modoAjuste, modoVista, vistaDoble, ajustes,
+        botonSeleccionado, pestanaActiva, tonalidadSeleccionada, listaTonalidades,
+        nombresTonalidades, sonidosVirtuales, muestrasDB, configTonalidad,
+        midiActivado, esp32Conectado, listaInstrumentos, instrumentoId,
+        cargandoCloud, disenoCargado, tipoFuelleActivo,
+        samplesPitos, samplesBajos, samplesArmonizado,
+        // Callbacks (estables, pero los listamos por correctness):
+        setListaTonalidades, actualizarNombreTonalidad, setSonidosVirtuales,
+        limpiarTodasLasNotas, actualizarBotonActivo, ejecutarSwapDireccion,
+        guardarAjustes, resetearAjustes, setDireccionSinSwap, obtenerRutasAudio,
+        cargarMuestrasLocales, guardarNuevoSonidoVirtual, eliminarTonalidad,
+        playPreview, stopPreview, reproducirTono, conectarESP32,
+        preprogramarTono, setFuelleVirtual,
+    ]);
 };
