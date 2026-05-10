@@ -90,7 +90,6 @@ const PaginaGrabadorV2: React.FC = () => {
   const [enPreroll, setEnPreroll] = useState(false);
   const [prerollRestanteSeg, setPrerollRestanteSeg] = useState(0);
   const grabacionPendienteRef = useRef<number>(0);
-  const prerollTickRef = useRef<number>(0);
 
   // Velocidad de reproducción/grabación. 1.0 = velocidad original. Permite ralentizar canciones
   // rápidas para aprenderlas o grabarlas más fácil. Los TICKS son musicales (invariantes a la
@@ -680,7 +679,6 @@ const PaginaGrabadorV2: React.FC = () => {
       // el banner cuenta hacia atrás y la barra muestra "preparate". El grabador NO captura.
       setEnPreroll(true);
       setPrerollRestanteSeg(prerollSeg);
-      prerollTickRef.current = s.tickInicio;
       // Timer visual: actualiza el contador cada 100ms para que el usuario vea el countdown.
       const inicio = Date.now();
       const tickerVisual = window.setInterval(() => {
