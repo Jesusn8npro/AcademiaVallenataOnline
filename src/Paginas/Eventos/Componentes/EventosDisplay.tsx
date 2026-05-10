@@ -1,17 +1,10 @@
 import React from 'react';
 import type { Evento } from './useCalendarioEventos';
-
-function formatearFecha(fecha: string) {
-  return new Date(fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatearHora(fecha: string) {
-  return new Date(fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatearPrecio(precio: number) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(precio);
-}
+import {
+  formatearFechaLarga as formatearFecha,
+  formatearHora,
+  formatearPrecioCOP as formatearPrecio,
+} from '../../../utilidades/formatadores';
 
 function getBadgeStyle(tipo: string) {
   const colorMap: Record<string, [string, string]> = {
