@@ -3,7 +3,69 @@ import { motion, useMotionValue } from 'framer-motion';
 import { ChevronUp, MoveHorizontal } from 'lucide-react';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import imagenBajosDefault from '../Parte restante Bajos.jpg';
+import { useBotonActivo } from '../store/botonesActivosStore';
 import './ContenedorBajos.css';
+
+// Función estable a nivel módulo: garantiza id único de bajo para suscripción.
+const obtenerIdBajoUnico = (idOriginal: string) =>
+    idOriginal.includes('-bajo') ? idOriginal : `${idOriginal}-bajo`;
+
+interface BotonBajoProps {
+    bajo: any;
+    datosFila: any[];
+    vistaDoble: boolean;
+    desactivarAudio: boolean;
+    actualizarBotonActivo: (id: string, accion: 'add' | 'remove', extra?: any, silencioso?: boolean) => void;
+}
+
+/**
+ * Botón de bajo aislado: se suscribe SOLO a su propio id en el store externo.
+ * Cuando se presiona/libera otro botón distinto, este NO se re-renderiza.
+ */
+const BotonBajo: React.FC<BotonBajoProps> = React.memo(({
+    bajo, datosFila, vistaDoble, desactivarAudio, actualizarBotonActivo,
+}) => {
+    const idUnico = obtenerIdBajoUnico(bajo.id);
+    const estado = useBotonActivo(idUnico);
+    const esActivo = !!estado;
+
+    const [numFila, col] = bajo.id.split('-');
+    const idHalar = `${numFila}-${col}-halar-bajo`;
+    const idEmpujar = `${numFila}-${col}-empujar-bajo`;
+    const notaHalar = datosFila.find((x: any) => x.id === idHalar)?.nombre || '';
+    const notaEmpujar = datosFila.find((x: any) => x.id === idEmpujar)?.nombre || '';
+
+    return (
+        <button
+            data-pos={`${numFila}-${col}`}
+            className={`boton-bajo-contenedor ${esActivo ? 'activo' : ''} ${vistaDoble ? 'vista-doble' : ''}`}
+            onPointerDown={(e) => {
+                if (desactivarAudio) return;
+                e.preventDefault(); e.stopPropagation();
+                (e.target as HTMLElement).setPointerCapture(e.pointerId);
+                actualizarBotonActivo(idUnico, 'add', null, true);
+            }}
+            onPointerUp={(e) => {
+                e.preventDefault(); e.stopPropagation();
+                actualizarBotonActivo(idUnico, 'remove', null, true);
+            }}
+            onPointerLeave={() => actualizarBotonActivo(idUnico, 'remove', null, true)}
+            onPointerCancel={() => actualizarBotonActivo(idUnico, 'remove', null, true)}
+            style={{ touchAction: 'manipulation' }}
+            title={bajo.nombre}
+        >
+            {!vistaDoble ? (
+                <span className="texto-boton-bajo">{bajo.nombre}</span>
+            ) : (
+                <div className="layout-bajos-doble">
+                    <span className="bajo-label-doble label-halar">{notaHalar}</span>
+                    <span className="bajo-label-doble label-empujar">{notaEmpujar}</span>
+                </div>
+            )}
+        </button>
+    );
+});
+BotonBajo.displayName = 'BotonBajo';
 
 interface ContenedorBajosProps {
     visible: boolean;
@@ -60,57 +122,6 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     };
 
-    // 🎹 FUNCIÓN PARA ASEGURAR ID ÚNICO DE BAJO
-    const obtenerIdBajoUnico = (idOriginal: string) => {
-        if (idOriginal.includes('-bajo')) return idOriginal;
-        return `${idOriginal}-bajo`;
-    };
-
-    // 🔘 RENDERIZADO DE BOTÓN (ASPECTO GAMING)
-    const renderBotonBajo = (bajo: any, datosFila: any[]) => {
-        const idUnico = obtenerIdBajoUnico(bajo.id);
-        const esActivo = logica.botonesActivos && logica.botonesActivos[idUnico];
-        const [numFila, col] = bajo.id.split('-');
-
-        // Buscamos las dos notas (halar y empujar) dentro de la misma fila actual
-        const idHalar = `${numFila}-${col}-halar-bajo`;
-        const idEmpujar = `${numFila}-${col}-empujar-bajo`;
-
-        const notaHalar = datosFila.find((x: any) => x.id === idHalar)?.nombre || '';
-        const notaEmpujar = datosFila.find((x: any) => x.id === idEmpujar)?.nombre || '';
-
-        return (
-            <button
-                key={idUnico}
-                data-pos={`${numFila}-${col}`} // 🔍 IDENTIFICADOR PARA EL HUNDIMIENTO INTELIGENTE
-                className={`boton-bajo-contenedor ${esActivo ? 'activo' : ''} ${vistaDoble ? 'vista-doble' : ''}`}
-                onPointerDown={(e) => {
-                    if (desactivarAudio) return;
-                    e.preventDefault(); e.stopPropagation();
-                    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-                    logica.actualizarBotonActivo(idUnico, 'add', null, true);
-                }}
-                onPointerUp={(e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    logica.actualizarBotonActivo(idUnico, 'remove', null, true);
-                }}
-                onPointerLeave={() => logica.actualizarBotonActivo(idUnico, 'remove', null, true)}
-                onPointerCancel={() => logica.actualizarBotonActivo(idUnico, 'remove', null, true)}
-                style={{ touchAction: 'manipulation' }}
-                title={bajo.nombre}
-            >
-                {!vistaDoble ? (
-                    <span className="texto-boton-bajo">{bajo.nombre}</span>
-                ) : (
-                    <div className="layout-bajos-doble">
-                        <span className="bajo-label-doble label-halar">{notaHalar}</span>
-                        <span className="bajo-label-doble label-empujar">{notaEmpujar}</span>
-                    </div>
-                )}
-            </button>
-        );
-    };
-
     const renderFila = (datosFila: any[]) => {
         if (!datosFila) return null;
 
@@ -119,18 +130,36 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
             const grupos: Record<string, any> = {};
             datosFila.forEach(b => {
                 const pos = b.id.split('-').slice(0, 2).join('-');
-                if (!grupos[pos]) grupos[pos] = b; 
+                if (!grupos[pos]) grupos[pos] = b;
             });
             return Object.values(grupos)
                 .sort((a: any, b: any) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]))
-                .map(b => renderBotonBajo(b, datosFila));
+                .map((b: any) => (
+                    <BotonBajo
+                        key={obtenerIdBajoUnico(b.id)}
+                        bajo={b}
+                        datosFila={datosFila}
+                        vistaDoble={vistaDoble}
+                        desactivarAudio={desactivarAudio}
+                        actualizarBotonActivo={logica.actualizarBotonActivo}
+                    />
+                ));
         }
 
         // Si es vista normal, filtramos por dirección
         return datosFila
             .filter((b: any) => b.id.includes(logica.direccion))
             .sort((a: any, b: any) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]))
-            .map(b => renderBotonBajo(b, datosFila));
+            .map((b: any) => (
+                <BotonBajo
+                    key={obtenerIdBajoUnico(b.id)}
+                    bajo={b}
+                    datosFila={datosFila}
+                    vistaDoble={vistaDoble}
+                    desactivarAudio={desactivarAudio}
+                    actualizarBotonActivo={logica.actualizarBotonActivo}
+                />
+            ));
     };
 
     const handlePointerDownFuelle = (e: React.PointerEvent) => {
@@ -208,4 +237,4 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
     );
 };
 
-export default ContenedorBajos;
+export default React.memo(ContenedorBajos);

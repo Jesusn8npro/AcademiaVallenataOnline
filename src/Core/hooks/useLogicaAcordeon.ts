@@ -12,6 +12,10 @@ import {
 import { useAcordeonHardware } from './LogicaAcordeon/useAcordeonHardware';
 import { useAcordeonPersistencia } from './LogicaAcordeon/useAcordeonPersistencia';
 import { useAcordeonSamples } from './LogicaAcordeon/useAcordeonSamples';
+import {
+    botonesActivosStore,
+    useBotonesActivosSnapshot,
+} from '../../Paginas/SimuladorApp/store/botonesActivosStore';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
@@ -25,7 +29,17 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [listaInstrumentos, setListaInstrumentos] = useState<any[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
 
-    const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
+    // `botonesActivos` ahora vive en un store externo. Este hook expone el
+    // snapshot vía useSyncExternalStore para los consumidores que lo necesiten,
+    // pero las escrituras (setBoton/removeBoton) NO disparan re-render del
+    // árbol — solo notifican a quien esté suscrito al id afectado.
+    const botonesActivos = useBotonesActivosSnapshot();
+    const setBotonesActivos = useCallback((next: Record<string, any> | ((prev: Record<string, any>) => Record<string, any>)) => {
+        const nuevo = typeof next === 'function'
+            ? (next as (p: Record<string, any>) => Record<string, any>)(botonesActivosStore.getSnapshot())
+            : next;
+        botonesActivosStore.setSnapshot(nuevo);
+    }, []);
     const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
     const [modoAjuste, setModoAjuste] = useState(false);
     const [modoVista, setModoVista] = useState<ModoVista>('notas');
@@ -352,12 +366,12 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 instances = reproducirTono(id, tiempoProgramado, undefined, loop).instances;
             }
 
+            const valor = { instances, ...mapaBotonesActual.current[id] };
             if (silencioso) {
-                botonesActivosRef.current[id] = { instances, ...mapaBotonesActual.current[id] };
+                botonesActivosRef.current = { ...botonesActivosRef.current, [id]: valor };
             } else {
-                const newState = { ...botonesActivosRef.current, [id]: { instances, ...mapaBotonesActual.current[id] } };
-                botonesActivosRef.current = newState;
-                setBotonesActivos(newState);
+                botonesActivosStore.setBoton(id, valor);
+                botonesActivosRef.current = botonesActivosStore.getSnapshot();
             }
 
             if (!silencioso) onNotaPresionada?.({ idBoton: id, nombre: id });
@@ -367,12 +381,12 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             detenerTono(id, tiempoProgramado);
 
             if (silencioso) {
-                delete botonesActivosRef.current[id];
+                const sinId = { ...botonesActivosRef.current };
+                delete sinId[id];
+                botonesActivosRef.current = sinId;
             } else {
-                const newState = { ...botonesActivosRef.current };
-                delete newState[id];
-                botonesActivosRef.current = newState;
-                setBotonesActivos(newState);
+                botonesActivosStore.removeBoton(id);
+                botonesActivosRef.current = botonesActivosStore.getSnapshot();
             }
 
             if (!silencioso) onNotaLiberada?.({ idBoton: id, nombre: id });
@@ -385,7 +399,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             onNotaLiberada?.({ idBoton: id, nombre: id });
         });
         botonesActivosRef.current = {};
-        setBotonesActivos({});
+        botonesActivosStore.clear();
     }, [onNotaLiberada]);
 
     const ejecutarSwapDireccion = useCallback((nuevaDir: 'halar' | 'empujar') => {
@@ -440,7 +454,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
         if (huboCambio) {
             botonesActivosRef.current = next;
-            setBotonesActivos(next);
+            botonesActivosStore.setSnapshot(next);
         }
     }, [reproducirTono, onNotaLiberada, onNotaPresionada]);
 
