@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import './PasoResumenGuardar.css'
 import { supabase } from '../../servicios/clienteSupabase'
+import { notificarNuevoCurso, notificarNuevoTutorial } from '../../servicios/generador/_notificadores'
 
 interface Props {
   tipo: 'curso' | 'tutorial'
@@ -14,6 +15,8 @@ interface Props {
 export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, modoEdicion, idContenido, onGuardado }: Props) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
+  // Solo aplica al CREAR (no al editar). Default true: notifica a todos.
+  const [notificar, setNotificar] = useState(true)
 
   function formatearPrecio(precio?: string | number) { if (!precio) return 'Gratuito'; const num = typeof precio === 'string' ? parseFloat(precio) : precio; return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num as number) }
   function obtenerBadgeNivel(nivel: string) { const badges: any = { principiante: { texto: '🌱 Principiante', color: 'bg-green-100 text-green-800' }, intermedio: { texto: '📈 Intermedio', color: 'bg-yellow-100 text-yellow-800' }, avanzado: { texto: '🚀 Avanzado', color: 'bg-red-100 text-red-800' } }; return badges[nivel] || { texto: nivel, color: 'bg-gray-100 text-gray-800' } }
@@ -57,6 +60,28 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
       }
       if (supErr) throw supErr
       if (estructura.length > 0) { await guardarEstructura(data.id, estructura) }
+
+      // Notificar a TODOS los usuarios solo si es creacion nueva, esta publicado y el admin marco la opcion.
+      if (!modoEdicion && notificar && datosGenerales.estado === 'publicado' && instructorId) {
+        try {
+          if (tipo === 'tutorial') {
+            await notificarNuevoTutorial({
+              tutorial_id: data.id,
+              titulo_tutorial: datosGenerales.titulo,
+              descripcion_tutorial: datosGenerales.descripcion_corta || datosGenerales.descripcion || '',
+              creador_id: instructorId,
+            })
+          } else {
+            await notificarNuevoCurso({
+              curso_id: data.id,
+              titulo_curso: datosGenerales.titulo,
+              descripcion_curso: datosGenerales.descripcion_corta || datosGenerales.descripcion || '',
+              creador_id: instructorId,
+            })
+          }
+        } catch (_) { /* notificacion no bloquea el guardado */ }
+      }
+
       onGuardado({ ...datosParaGuardar, id: data.id })
     } catch (err: any) { setError(`Error al guardar el ${tipo}: ${err.message}`) } finally { setGuardando(false) }
   }
@@ -162,6 +187,27 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         )}
 
         {error && (<div className="error-mensaje"><span className="error-icono">❌</span>{error}</div>)}
+
+        {!modoEdicion && (
+          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 12, padding: '14px 16px', margin: '12px 0' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={notificar}
+                onChange={(e) => setNotificar(e.target.checked)}
+                style={{ width: 18, height: 18, marginTop: 2, accentColor: '#075e54', cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, color: '#0c4a6e', fontSize: 14 }}>
+                  🔔 Notificar a todos los usuarios
+                </div>
+                <div style={{ fontSize: 12.5, color: '#0369a1', marginTop: 2 }}>
+                  Si está marcado y el {tipo === 'curso' ? 'curso' : 'tutorial'} se publica, todos los usuarios recibirán una notificación con enlace directo. Desmarca para subir sin avisar.
+                </div>
+              </div>
+            </label>
+          </div>
+        )}
 
         <div className="acciones-resumen"><button className={`btn-guardar ${guardando ? 'guardando' : ''}`} onClick={manejarGuardado} disabled={guardando}>{guardando ? (<><div className="spinner"></div>Guardando...</>) : (<><span className="icono-btn">{modoEdicion ? '✏️' : '💾'}</span>{modoEdicion ? 'Actualizar' : 'Guardar'} {tipo === 'curso' ? 'Curso' : 'Tutorial'}</>)}</button></div>
       </div>

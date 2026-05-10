@@ -21,6 +21,9 @@ interface Props {
   usuarioActual: any
 }
 
+// Quita el cache-buster ?t=... para permitir cache HTTP del navegador.
+const URL_ESTABLE = (u?: string | null) => (u || '').split('?')[0]
+
 function tiempoCorto(iso?: string): string {
   if (!iso) return ''
   try {
@@ -177,7 +180,7 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
           </div>
         ) : filtrados.map((c) => {
           const partner = (c.miembros || []).find((m: any) => m.usuario_id !== usuarioId)
-          const avatar = partner?.usuario?.url_foto_perfil || c.imagen_url || '/images/default-user.png'
+          const avatar = URL_ESTABLE(partner?.usuario?.url_foto_perfil) || URL_ESTABLE(c.imagen_url) || '/images/default-user.png'
           const nombre = c.es_grupal ? (c.nombre || 'Grupo') : (partner?.usuario?.nombre_completo || c.nombre || 'Chat')
           const preview = c.ultimo_mensaje
             ? (c.ultimo_mensaje.usuario_id === usuarioId ? `Tú: ${c.ultimo_mensaje.contenido}` : c.ultimo_mensaje.contenido)
@@ -192,6 +195,7 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
               onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, chat: c }) }}
             >
               <img className="msg_chat_avatar" src={avatar} alt={nombre}
+                loading="eager" decoding="async"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }} />
               <div className="msg_chat_body">
                 <div className="msg_chat_row">
