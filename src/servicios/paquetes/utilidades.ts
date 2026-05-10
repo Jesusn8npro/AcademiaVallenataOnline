@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin } from './_cliente';
 import type { PaqueteTutorial, ResultadoOperacion, TutorialResumen } from '../../tipos/paquetes';
+import { formatearPrecioCOP } from '../../utilidades/formatadores';
 
 export function validarPaquete(paquete: Partial<PaqueteTutorial>): { valido: boolean; errores: string[] } {
     const errores: string[] = [];
@@ -30,13 +31,7 @@ export function validarPaquete(paquete: Partial<PaqueteTutorial>): { valido: boo
     };
 }
 
-export function formatearPrecio(precio: number): string {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(precio);
-}
+export const formatearPrecio = formatearPrecioCOP;
 
 export function calcularPorcentajeDescuento(precioNormal: number, precioRebajado: number): number {
     if (precioNormal <= 0 || precioRebajado >= precioNormal) return 0;

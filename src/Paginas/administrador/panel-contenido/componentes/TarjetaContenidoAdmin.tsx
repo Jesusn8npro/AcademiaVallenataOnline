@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
+import { formatearPrecioCOP as formatearMoneda } from '../../../../utilidades/formatadores';
 import type { Contenido } from './useMostradorCursosTutoriales';
 
 interface Props {
@@ -19,7 +20,6 @@ const obtenerBadgeEstado = (e: string) => badgeEstado[e] || 'mostrador-badge-def
 const obtenerBadgeNivel = (n: string) => badgeNivel[n] || 'mostrador-badge-default';
 const obtenerImagenPorDefecto = (tipo: string) => tipo === 'curso' ? 'mostrador-gradient-curso' : 'mostrador-gradient-tutorial';
 const formatearFecha = (fecha: string) => fecha ? new Date(fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-const formatearMoneda = (valor: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valor);
 
 const TarjetaContenidoAdmin = ({ item, modoVista, procesandoAccion, itemProcesando, onEditar, onVer, onEliminar, onAbrirInscripciones }: Props) => {
     const [hovered, setHovered] = useState(false);
