@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { RotateCw } from 'lucide-react';
-import { motion, useMotionValue } from 'framer-motion';
+import { useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
@@ -20,6 +20,7 @@ import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
 import OverlaysNavegacion from './Componentes/OverlaysNavegacion';
 import ModalesBarraSimulador from './Componentes/ModalesBarraSimulador';
 import BotonModoFoco from './Componentes/BotonModoFoco';
+import DiapasonAcordeon from './Componentes/DiapasonAcordeon';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -31,11 +32,6 @@ import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
 import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
 
 import './SimuladorApp.css';
-
-const MAPA_CIFRADO: Record<string, string> = {
-    'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
-    'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
-};
 
 const SimuladorApp: React.FC = () => {
     const [juegoActivo, setJuegoActivo] = useState<ConfigCancion | null>(null);
@@ -170,21 +166,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             activo ? cached.pito.classList.add('nota-activa') : cached.pito.classList.remove('nota-activa');
         }
     }, []);
-
-    const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
-        if (!notaObj) return '';
-
-        let nombre = notaObj.nombre || '';
-        const partes = nombre.split(' ');
-        let notaBase = partes[0];
-        const octava = partes[1] || '';
-
-        if (modo === 'cifrado') {
-            notaBase = MAPA_CIFRADO[notaBase] || notaBase;
-        }
-
-        return mostrarOctavas ? `${notaBase}${octava}` : notaBase;
-    };
 
     // Hook de loops/pistas: el audio vive aqui (no en el modal) para que
     // siga sonando aunque el modal se cierre. La barra de herramientas usa
@@ -464,29 +445,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // 60s + toast invitando a Plus (gatillo de venta).
     const { modoFoco, setModoFoco, toastUpgradeVisible, setToastUpgradeVisible } = useModoFoco(esPremium);
 
-    const renderHilera = (fila: any[]) => {
-        const p: Record<string, any> = {};
-        fila?.forEach(n => {
-            const pos = n.id.split('-').slice(0, 2).join('-');
-            if (!p[pos]) p[pos] = { halar: null, empujar: null };
-            n.id.includes('halar') ? p[pos].halar = n : p[pos].empujar = n;
-        });
-
-        return Object.entries(p).sort((a, b) => parseInt(a[0].split('-')[1]) - parseInt(b[0].split('-')[1])).map(([pos, n]) => {
-            const labelHalar = formatearNombreNota(n.halar, config.modoVista, config.mostrarOctavas);
-            const labelEmpujar = formatearNombreNota(n.empujar, config.modoVista, config.mostrarOctavas);
-            const esDoble = config.vistaDoble;
-            const esHalar = logica.direccion === 'halar';
-
-            return (
-                <div key={pos} className={`pito-boton ${esDoble ? 'vista-doble' : ''}`} data-pos={pos}>
-                    {(esDoble || esHalar) && <span className="nota-etiqueta label-halar">{labelHalar}</span>}
-                    {(esDoble || !esHalar) && <span className="nota-etiqueta label-empujar">{labelEmpujar}</span>}
-                </div>
-            );
-        });
-    };
-
     return (
         <div className={`simulador-app-root modo-${logica.direccion} ${replay.enReproduccion ? 'reproduciendo' : ''}`}>
             <ContenedorBajos
@@ -533,13 +491,15 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         }}
                     />
 
-                    <div className="diapason-marco" style={{ touchAction: 'manipulation' }}>
-                        <motion.div ref={trenRef} className="tren-botones-deslizable" style={{ x, touchAction: 'manipulation' }}>
-                            <div className="hilera-pitos hilera-adentro">{renderHilera(logica.configTonalidad?.terceraFila)}</div>
-                            <div className="hilera-pitos hilera-medio">{renderHilera(logica.configTonalidad?.segundaFila)}</div>
-                            <div className="hilera-pitos hilera-afuera">{renderHilera(logica.configTonalidad?.primeraFila)}</div>
-                        </motion.div>
-                    </div>
+                    <DiapasonAcordeon
+                        trenRef={trenRef}
+                        x={x}
+                        configTonalidad={logica.configTonalidad}
+                        direccion={logica.direccion}
+                        modoVista={config.modoVista}
+                        mostrarOctavas={config.mostrarOctavas}
+                        vistaDoble={config.vistaDoble}
+                    />
                 </div>
             </div>
 
