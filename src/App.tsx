@@ -80,7 +80,6 @@ import PaginaGrabadorV2 from './Paginas/AcordeonProMax/GrabadorV2/PaginaGrabador
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
-import FuelleAcordeon from './Paginas/FuelleAcordeon/FuelleAcordeon';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -164,7 +163,6 @@ const AppContent = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/fuelle-acordeon" element={<FuelleAcordeon />} />
         <Route path="/eventos" element={<Eventos />} />
         <Route path="/eventos/:slug" element={<DetalleEvento />} />
         <Route path="/paquetes" element={<Paquetes />} />

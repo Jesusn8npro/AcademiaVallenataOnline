@@ -695,9 +695,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             } else {
                 setReplayConMetronomo(false);
             }
-            console.log('[Replay] metadata leida:', meta);
-            console.log('[Replay] audio_fondo_url:', audioFondoUrl, '| velocidad:', meta.pista_velocidad, '| offset:', meta.pista_offset_segundos);
-            console.log('[Replay] metronomo:', metMeta);
             if (audioFondoUrl) {
                 const volumenGuardado = typeof meta.pista_volumen === 'number' ? meta.pista_volumen : 0.85;
                 const velocidadGuardada = typeof meta.pista_velocidad === 'number' ? meta.pista_velocidad : 1.0;

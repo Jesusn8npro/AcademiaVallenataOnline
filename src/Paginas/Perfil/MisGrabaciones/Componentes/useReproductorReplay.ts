@@ -55,18 +55,6 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
         return Math.max(0, Math.floor(primerTick - previewTicks));
     }, [cancionReplay, grabacion, bpmPistaOriginal]);
 
-    // Diagnóstico: logueo lo que leí para que el usuario pueda inspeccionar en devtools.
-    useEffect(() => {
-        if (!grabacion) return;
-        // eslint-disable-next-line no-console
-        console.log('[ReplayHero] grabación abierta:', {
-            id: grabacion.id,
-            titulo: grabacion.titulo,
-            tickInicialReplay,
-            seccionTickInicio: (grabacion.metadata as any)?.seccion_tick_inicio,
-            primerTickSecuencia: grabacion.secuencia_grabada?.[0]?.tick,
-        });
-    }, [grabacion, tickInicialReplay]);
 
     const totalTicksCalculados = useMemo(() => {
         if (!grabacion?.secuencia_grabada?.length) return 0;
