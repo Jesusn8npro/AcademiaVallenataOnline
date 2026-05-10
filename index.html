@@ -16,8 +16,7 @@
   <meta name="apple-mobile-web-app-title" content="Academia Vallenata">
   <link rel="apple-touch-icon" href="/iconos-pwa/icon-192x192.svg">
 
-  <!-- PWA Manifest + Theme -->
-  <link rel="manifest" href="/manifest.json">
+  <!-- PWA Manifest + Theme — el manifest lo inyecta vite-plugin-pwa -->
   <meta name="theme-color" content="#8b5cf6">
 
   <!-- Google tag (gtag.js) -->
@@ -84,13 +83,6 @@
     })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').catch(function () { /* ignorar fallo silencioso */ });
-      });
-    }
-  </script>
 </body>
 
 </html>
