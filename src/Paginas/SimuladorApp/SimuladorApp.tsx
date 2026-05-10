@@ -17,7 +17,7 @@ import GaleriaAcordeones from './Componentes/GaleriaAcordeones';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
-const PanelEfectosSimulador = lazy(() => import('./Componentes/PanelEfectosSimulador'));
+import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
@@ -660,66 +660,21 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
             <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
 
-            {modales.efectos && (
-                <div className="peas-modal-overlay" onClick={() => toggleModal('efectos')}>
-                    <div className="peas-modal-contenido" onClick={(e) => e.stopPropagation()}>
-                        <Suspense fallback={null}>
-                        <PanelEfectosSimulador
-                            reverbActivo={efectos.reverbActivo}
-                            reverbIntensidad={efectos.reverbIntensidad}
-                            reverbPreset={efectos.reverbPreset}
-                            onCambiarReverbActivo={efectos.setReverbActivo}
-                            onCambiarReverbIntensidad={efectos.setReverbIntensidad}
-                            onCambiarReverbPreset={efectos.setReverbPreset}
-                            ecoActivo={efectos.ecoActivo}
-                            ecoIntensidad={efectos.ecoIntensidad}
-                            ecoTiempo={efectos.ecoTiempo}
-                            onCambiarEcoActivo={efectos.setEcoActivo}
-                            onCambiarEcoIntensidad={efectos.setEcoIntensidad}
-                            onCambiarEcoTiempo={efectos.setEcoTiempo}
-                            distorsActivo={efectos.distorsActivo}
-                            distorsIntensidad={efectos.distorsIntensidad}
-                            distorsPreset={efectos.distorsPreset}
-                            onCambiarDistorsActivo={efectos.setDistorsActivo}
-                            onCambiarDistorsIntensidad={efectos.setDistorsIntensidad}
-                            onCambiarDistorsPreset={efectos.setDistorsPreset}
-                            graves={efectos.graves}
-                            medios={efectos.medios}
-                            agudos={efectos.agudos}
-                            onCambiarGraves={efectos.setGraves}
-                            onCambiarMedios={efectos.setMedios}
-                            onCambiarAgudos={efectos.setAgudos}
-                            volumenTeclado={efectos.volumenTeclado}
-                            volumenBajos={efectos.volumenBajos}
-                            volumenLoops={Math.round(loops.volumen * 100)}
-                            volumenMetronomo={Math.round(metronomoVivo.volumen * 100)}
-                            onCambiarVolumenTeclado={efectos.setVolumenTeclado}
-                            onCambiarVolumenBajos={efectos.setVolumenBajos}
-                            onCambiarVolumenLoops={(v) => loops.setVolumen(v / 100)}
-                            onCambiarVolumenMetronomo={(v) => metronomoVivo.setVolumen(v / 100)}
-                            panTeclado={efectos.panTeclado}
-                            panBajos={efectos.panBajos}
-                            panLoops={efectos.panLoops}
-                            panMetronomo={efectos.panMetronomo}
-                            onCambiarPanTeclado={efectos.setPanTeclado}
-                            onCambiarPanBajos={efectos.setPanBajos}
-                            onCambiarPanLoops={efectos.setPanLoops}
-                            onCambiarPanMetronomo={efectos.setPanMetronomo}
-                            onPreviewTecladoIniciar={previewTecladoIniciar}
-                            onPreviewTecladoDetener={previewTecladoDetener}
-                            onPreviewBajosIniciar={previewBajosIniciar}
-                            onPreviewBajosDetener={previewBajosDetener}
-                            onPreviewLoopsIniciar={previewLoopsIniciar}
-                            onPreviewLoopsDetener={previewLoopsDetener}
-                            onPreviewMetronomoIniciar={previewMetronomoIniciar}
-                            onPreviewMetronomoDetener={previewMetronomoDetener}
-                            onCerrar={() => toggleModal('efectos')}
-                            onRestaurar={efectos.restaurarEfectos}
-                        />
-                        </Suspense>
-                    </div>
-                </div>
-            )}
+            <PanelEfectosOverlay
+                visible={modales.efectos}
+                efectos={efectos}
+                loops={loops}
+                metronomoVivo={metronomoVivo}
+                onCerrar={() => toggleModal('efectos')}
+                onPreviewTecladoIniciar={previewTecladoIniciar}
+                onPreviewTecladoDetener={previewTecladoDetener}
+                onPreviewBajosIniciar={previewBajosIniciar}
+                onPreviewBajosDetener={previewBajosDetener}
+                onPreviewLoopsIniciar={previewLoopsIniciar}
+                onPreviewLoopsDetener={previewLoopsDetener}
+                onPreviewMetronomoIniciar={previewMetronomoIniciar}
+                onPreviewMetronomoDetener={previewMetronomoDetener}
+            />
 
             <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
 
