@@ -16,6 +16,10 @@ function hora(iso: string) {
     } catch { return '' }
 }
 
+// Quita el cache-buster ?t=... heredado de cuando el usuario subió la foto, así
+// el navegador puede usar su cache HTTP (la URL es siempre la misma).
+const URL_ESTABLE = (u?: string | null) => (u || '').split('?')[0]
+
 const ICONO_LEIDO = (
     <svg viewBox="0 0 16 11" preserveAspectRatio="xMidYMid meet">
         <path fill="#53bdeb" d="M11.071 0.653a.6.6 0 0 1 .849.024l.825.886a.6.6 0 0 1-.024.849L4.846 9.823a.6.6 0 0 1-.849-.024L.823 6.398a.6.6 0 0 1 .024-.849l.825-.768a.6.6 0 0 1 .849.024l2.236 2.4 6.314-6.552z" />
@@ -38,9 +42,11 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
         <div className={`bm_group ${tipo} ${esPrimero ? 'is-first' : ''}`} onDoubleClick={onResponder}>
             {!mensaje.es_mio && (esUltimo ? (
                 <img
-                    src={mensaje.usuario?.url_foto_perfil || '/images/default-user.png'}
+                    src={URL_ESTABLE(mensaje.usuario?.url_foto_perfil) || '/images/default-user.png'}
                     alt="avatar"
                     className="bm_avatar"
+                    loading="eager"
+                    decoding="async"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }}
                 />
             ) : <div className="bm_avatar_spacer" />)}

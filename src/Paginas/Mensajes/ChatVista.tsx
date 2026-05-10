@@ -10,6 +10,9 @@ interface Props {
   onRegresar?: () => void
 }
 
+// Quita el cache-buster ?t=... para permitir cache HTTP del navegador.
+const URL_ESTABLE = (u?: string | null) => (u || '').split('?')[0]
+
 function fechaSeparador(iso: string): string {
   try {
     const d = new Date(iso)
@@ -43,7 +46,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
     const partner = (chat.miembros || []).find((m: any) => m.usuario_id !== usuarioActual.id)
     return {
       nombre: partner?.usuario?.nombre_completo || 'Usuario',
-      avatar: partner?.usuario?.url_foto_perfil || '/images/default-user.png',
+      avatar: URL_ESTABLE(partner?.usuario?.url_foto_perfil) || '/images/default-user.png',
       estado: partner?.usuario?.en_linea ? 'En línea' : 'Desconectado',
       enLinea: !!partner?.usuario?.en_linea,
     }
@@ -114,6 +117,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
           {otro && (
             <>
               <img src={otro.avatar} alt={otro.nombre} className="msg_chat_header_avatar"
+                loading="eager" decoding="async"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }} />
               <div>
                 <div className="msg_chat_header_name">{otro.nombre}</div>

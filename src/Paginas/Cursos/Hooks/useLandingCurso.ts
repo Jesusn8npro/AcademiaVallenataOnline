@@ -42,11 +42,14 @@ export function useLandingCurso() {
             const esCurso = window.location.pathname.includes('/cursos/');
             const esTutorial = window.location.pathname.includes('/tutoriales/');
 
+            // UUID detection: las notificaciones llegan con id en lugar de slug.
+            const esUUID = !!slug && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
             if (esCurso) {
-                const { data: curso, error: errorCurso } = await supabase
+                let { data: curso, error: errorCurso } = await supabase
                     .from('cursos')
                     .select('*')
-                    .eq('slug', slug)
+                    .eq(esUUID ? 'id' : 'slug', slug)
                     .single();
 
                 if (curso && !errorCurso) {
@@ -85,6 +88,22 @@ export function useLandingCurso() {
             }
 
             if (esTutorial) {
+                // Si la URL trae UUID (notificaciones), buscar directo por id (rapido).
+                if (esUUID) {
+                    const { data: tutorial } = await supabase
+                        .from('tutoriales').select('*').eq('id', slug).maybeSingle();
+                    if (tutorial) {
+                        const { data: partes } = await supabase
+                            .from('partes_tutorial')
+                            .select('id, titulo, descripcion, orden, slug')
+                            .eq('tutorial_id', tutorial.id)
+                            .order('orden');
+                        setContenido({ ...tutorial, tipo: 'tutorial', modulos_preview: partes || [] });
+                        setCargando(false);
+                        return;
+                    }
+                }
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { data: tutoriales, error: errorTutoriales } = await supabase
                     .from('tutoriales')
