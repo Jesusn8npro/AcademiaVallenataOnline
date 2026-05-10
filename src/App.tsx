@@ -68,6 +68,7 @@ import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos
 import ValidacionesAdmin from './Paginas/administrador/Validaciones/ValidacionesAdmin';
 import PaginaEjemplo3D from './Paginas/Ejemplos3d1';
 import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
+import AcordeonDiapason3D from './Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D';
 
 // import HomeProMax from './Paginas/AcordeonProMax/HomeProMax'; (line neighbor)
 import HomeProMax from './Paginas/AcordeonProMax/Pantallas/HomeProMax';
@@ -213,6 +214,7 @@ const AppContent = () => {
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
+        <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/acordeon-pro-max" element={<HomeProMax />} />
