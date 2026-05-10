@@ -100,16 +100,24 @@ export function usePestanaPagos() {
                 .select(`
                     id, monto, estado, created_at, metodo_pago, referencia_pago, moneda,
                     usuario_id,
-                    perfiles:usuario_id(nombre, apellido, correo_electronico),
                     paquete_id,
                     paquetes_tutoriales:paquete_id(titulo)
                 `)
                 .order('created_at', { ascending: false }).limit(20)
 
+            const usuarioIds = Array.from(new Set(((transacciones || []) as any[]).map((t: any) => t.usuario_id).filter(Boolean)));
+            let perfilesMap: Record<string, any> = {};
+            if (usuarioIds.length > 0) {
+                const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: usuarioIds });
+                if (Array.isArray(perfiles)) {
+                    perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { nombre: p.nombre, apellido: p.apellido, correo_electronico: p.correo_electronico }]));
+                }
+            }
+
             setTransaccionesRecientes(transacciones?.map((t: any) => ({
                 id: t.id,
-                usuario_nombre: t.perfiles ? `${t.perfiles.nombre} ${t.perfiles.apellido}` : 'Usuario desconocido',
-                usuario_email: t.perfiles?.correo_electronico || 'No disponible',
+                usuario_nombre: perfilesMap[t.usuario_id] ? `${perfilesMap[t.usuario_id].nombre} ${perfilesMap[t.usuario_id].apellido}` : 'Usuario desconocido',
+                usuario_email: perfilesMap[t.usuario_id]?.correo_electronico || 'No disponible',
                 monto: parseFloat(t.monto) || 0,
                 estado: t.estado,
                 fecha_transaccion: t.created_at,

@@ -22,10 +22,7 @@ export const servicioSeguridad = {
             // Simularemos la lógica básica consultando logs recientes
             const { data: logs } = await supabase
                 .from('geolocalizacion_usuarios')
-                .select(`
-          usuario_id, ip, pais, created_at,
-          perfiles:usuario_id (nombre, apellido, email)
-        `)
+                .select(`usuario_id, ip, pais, created_at`)
                 .order('created_at', { ascending: false })
                 .limit(100);
 
@@ -36,6 +33,15 @@ export const servicioSeguridad = {
                 mapUsuarios[log.usuario_id].push(log);
             });
 
+            const userIds = Object.keys(mapUsuarios);
+            let perfilesMap: Record<string, any> = {};
+            if (userIds.length > 0) {
+                const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: userIds });
+                if (Array.isArray(perfiles)) {
+                    perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { nombre: p.nombre, apellido: p.apellido, email: p.correo_electronico }]));
+                }
+            }
+
             const cuentasCompartidas: any[] = [];
 
             Object.entries(mapUsuarios).forEach(([userId, accesos]) => {
@@ -44,7 +50,7 @@ export const servicioSeguridad = {
 
                 if (uniqueIPs > 3 || uniquePaises > 2) {
                     cuentasCompartidas.push({
-                        usuario: accesos[0].perfiles,
+                        usuario: perfilesMap[userId] || null,
                         nivel_riesgo: uniquePaises > 2 ? 'CRITICO' : 'ALTO',
                         ubicaciones_simultaneas: uniqueIPs,
                         paises_diferentes: uniquePaises,
@@ -64,10 +70,7 @@ export const servicioSeguridad = {
         try {
             const { data: logs } = await supabase
                 .from('geolocalizacion_usuarios')
-                .select(`
-            usuario_id, latitud, longitud, created_at, ciudad, pais,
-            perfiles:usuario_id (nombre, apellido, email)
-        `)
+                .select(`usuario_id, latitud, longitud, created_at, ciudad, pais`)
                 .order('created_at', { ascending: false })
                 .limit(200); // Analizar últimos 200 accesos
 
@@ -76,6 +79,15 @@ export const servicioSeguridad = {
                 if (!mapUsuarios[log.usuario_id]) mapUsuarios[log.usuario_id] = [];
                 mapUsuarios[log.usuario_id].push(log);
             });
+
+            const userIds = Object.keys(mapUsuarios);
+            let perfilesMap: Record<string, any> = {};
+            if (userIds.length > 0) {
+                const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: userIds });
+                if (Array.isArray(perfiles)) {
+                    perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { nombre: p.nombre, apellido: p.apellido, email: p.correo_electronico }]));
+                }
+            }
 
             const cambiosSospechosos: any[] = [];
 
@@ -96,7 +108,7 @@ export const servicioSeguridad = {
 
                         if (velocidad > 900) { // Más rápido que un avión comercial (aprox)
                             cambiosSospechosos.push({
-                                usuario: actual.perfiles,
+                                usuario: perfilesMap[userId] || null,
                                 nivel_riesgo: 'ALTO',
                                 ubicacion_anterior: `${anterior.ciudad}, ${anterior.pais}`,
                                 ubicacion_actual: `${actual.ciudad}, ${actual.pais}`,

@@ -28,7 +28,7 @@ export default function ChatPage() {
         const { data: auth } = await supabase.auth.getUser()
         if (!auth.user) { setError('No autenticado'); setCargando(false); return }
 
-        const { data: perfil } = await supabase.from('perfiles').select('*').eq('id', auth.user.id).single()
+        const { data: perfil } = await supabase.rpc('obtener_mi_perfil_completo')
         if (activo) setUsuarioActual(perfil || { id: auth.user.id, email: auth.user.email })
 
         const { data, error } = await supabase

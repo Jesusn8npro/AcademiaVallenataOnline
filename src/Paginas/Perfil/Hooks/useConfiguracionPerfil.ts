@@ -40,7 +40,7 @@ export function useConfiguracionPerfil() {
         try {
             setCargando(true);
             const { data: perfilData, error: errorPerfil } = await supabase
-                .from('perfiles').select('*').eq('id', usuario.id).single();
+                .rpc('obtener_mi_perfil_completo');
             if (errorPerfil) throw errorPerfil;
 
             if (perfilData?.suscripcion && perfilData.suscripcion !== 'free') {

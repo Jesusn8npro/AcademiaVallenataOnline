@@ -40,7 +40,7 @@ export function useModalVisorImagenPerfil({
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: perfil } = await supabase
-          .from('perfiles').select('*').eq('id', user.id).single()
+          .rpc('obtener_mi_perfil_completo')
         setUsuarioActual({
           id: user.id,
           nombre: perfil?.nombre_completo || user.email?.split('@')[0] || 'Usuario',

@@ -52,18 +52,28 @@ export default function ValidacionesAdmin() {
         .from('validaciones_tutorial')
         .select(`
           *,
-          tutoriales ( titulo ),
-          perfiles!validaciones_tutorial_usuario_id_fkey ( nombre, apellido, email )
+          tutoriales ( titulo )
         `)
         .order('created_at', { ascending: false });
-        
+
       if (filtroEstado !== 'todas') {
         query = query.eq('estado', filtroEstado);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      setValidaciones((data as unknown) as Validacion[]);
+
+      const usuarioIds = Array.from(new Set(((data || []) as any[]).map((v: any) => v.usuario_id).filter(Boolean)));
+      let perfilesMap: Record<string, any> = {};
+      if (usuarioIds.length > 0) {
+        const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: usuarioIds });
+        if (Array.isArray(perfiles)) {
+          perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { nombre: p.nombre, apellido: p.apellido, email: p.correo_electronico }]));
+        }
+      }
+
+      const enriquecidas = ((data || []) as any[]).map((v: any) => ({ ...v, perfiles: perfilesMap[v.usuario_id] || null }));
+      setValidaciones((enriquecidas as unknown) as Validacion[]);
     } catch {
       // error no fatal — tabla vacía
     } finally {

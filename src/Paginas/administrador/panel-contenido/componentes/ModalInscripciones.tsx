@@ -62,19 +62,24 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
                 .select(`
                     id,
                     usuario_id,
-                    fecha_inscripcion,
-                    perfiles:usuario_id (
-                        id,
-                        nombre_completo,
-                        correo_electronico,
-                        url_foto_perfil
-                    )
+                    fecha_inscripcion
                 `)
                 .eq(foreignKey, itemId)
                 .order('fecha_inscripcion', { ascending: false });
 
             if (error) throw error;
-            setInscritos(data as any || []);
+
+            const usuarioIds = Array.from(new Set(((data || []) as any[]).map((i: any) => i.usuario_id).filter(Boolean)));
+            let perfilesMap: Record<string, any> = {};
+            if (usuarioIds.length > 0) {
+                const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: usuarioIds });
+                if (Array.isArray(perfiles)) {
+                    perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { id: p.id, nombre_completo: p.nombre_completo, correo_electronico: p.correo_electronico, url_foto_perfil: p.url_foto_perfil }]));
+                }
+            }
+
+            const enriquecidos = ((data || []) as any[]).map((i: any) => ({ ...i, perfiles: perfilesMap[i.usuario_id] || null }));
+            setInscritos(enriquecidos as any);
         } catch {
             // error no fatal
         } finally {

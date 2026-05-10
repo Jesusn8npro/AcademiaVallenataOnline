@@ -114,11 +114,6 @@ export async function obtenerPagoPorReferencia(refPayco: string): Promise<Result
             .from('pagos_epayco')
             .select(`
                 *,
-                perfiles:usuario_id (
-                    nombre,
-                    apellido,
-                    correo_electronico
-                ),
                 cursos:curso_id (
                     titulo
                 ),
@@ -142,7 +137,27 @@ export async function obtenerPagoPorReferencia(refPayco: string): Promise<Result
             return { success: false, error: 'Pago no encontrado' };
         }
 
-        return { success: true, data };
+        // Cargar perfil del pago: admin si lo es, propio si es el dueno del pago
+        let perfilUsuario: any = null;
+        if (data.usuario_id) {
+            const adminRes = await supabase.rpc('admin_obtener_perfil_completo', { p_id: data.usuario_id });
+            if (adminRes.data) {
+                perfilUsuario = adminRes.data;
+            } else {
+                const propio = await supabase.rpc('obtener_mi_perfil_completo');
+                if (propio.data && (propio.data as any).id === data.usuario_id) {
+                    perfilUsuario = propio.data;
+                }
+            }
+        }
+        const dataConPerfil: any = {
+            ...data,
+            perfiles: perfilUsuario
+                ? { nombre: perfilUsuario.nombre, apellido: perfilUsuario.apellido, correo_electronico: perfilUsuario.correo_electronico }
+                : null,
+        };
+
+        return { success: true, data: dataConPerfil };
 
     } catch (error) {
         return {

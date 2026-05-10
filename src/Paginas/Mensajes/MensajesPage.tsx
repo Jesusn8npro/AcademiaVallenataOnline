@@ -16,7 +16,7 @@ export default function MensajesPage() {
       ; (async () => {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user || !activo) return
-        const { data } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
+        const { data } = await supabase.rpc('obtener_mi_perfil_completo')
         if (!activo) return
         setUsuarioActual(data)
       })()

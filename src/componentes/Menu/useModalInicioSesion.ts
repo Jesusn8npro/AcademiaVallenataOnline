@@ -122,10 +122,7 @@ export function useModalInicioSesion({ abierto, onCerrar }: UseModalInicioSesion
       }
 
       const { data: perfilData, error: perfilError } = await supabase
-        .from('perfiles')
-        .select('id, nombre, apellido, rol, correo_electronico')
-        .eq('id', data.user.id)
-        .single();
+        .rpc('obtener_mi_perfil_completo');
 
       if (perfilError) {
         // continue with basic auth data

@@ -78,10 +78,21 @@ export function usePagos() {
             if (filtroEstado !== 'todos') pagosFiltrados = pagosFiltrados.filter((p: Pago) => p.estado === filtroEstado);
             if (buscarRef.trim()) pagosFiltrados = pagosFiltrados.filter((p: Pago) => p.ref_payco?.toLowerCase().includes(buscarRef.trim().toLowerCase()));
 
+            const usuarioIds = Array.from(new Set(pagosFiltrados.map((p: Pago) => p.usuario_id).filter(Boolean)));
+            let perfilesMap: Record<string, any> = {};
+            if (usuarioIds.length > 0) {
+                try {
+                    const { data: perfiles } = await supabase.rpc('admin_listar_perfiles_con_pii', { p_ids: usuarioIds });
+                    if (Array.isArray(perfiles)) {
+                        perfilesMap = Object.fromEntries(perfiles.map((p: any) => [p.id, { nombre: p.nombre, apellido: p.apellido, correo_electronico: p.correo_electronico }]));
+                    }
+                } catch {}
+            }
+
             const pagosEnriquecidos = [];
             for (const pago of pagosFiltrados) {
                 const pe: any = { ...pago };
-                if (pago.usuario_id) { try { const { data } = await supabase.from('perfiles').select('nombre, apellido, correo_electronico').eq('id', pago.usuario_id).single(); if (data) pe.perfiles = data; } catch {} }
+                if (pago.usuario_id && perfilesMap[pago.usuario_id]) pe.perfiles = perfilesMap[pago.usuario_id];
                 if (pago.curso_id) { try { const { data } = await supabase.from('cursos').select('titulo').eq('id', pago.curso_id).single(); if (data) pe.cursos = data; } catch {} }
                 if (pago.tutorial_id) { try { const { data } = await supabase.from('tutoriales').select('titulo').eq('id', pago.tutorial_id).single(); if (data) pe.tutoriales = data; } catch {} }
                 pagosEnriquecidos.push(pe);
