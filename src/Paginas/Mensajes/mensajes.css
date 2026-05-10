@@ -18,15 +18,20 @@
   --mv-shadow: 0 4px 12px rgba(11, 20, 26, .15);
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Layout ----------
+   Se fija al espacio disponible bajo el header del sitio (70px) y a la
+   derecha del sidebar admin (280px). En mobile se reajusta. Esto evita
+   problemas de calc(100vh) y herencias de padding del proyecto. */
 .msg_layout {
+  position: fixed;
+  top: 70px;
+  left: 280px;
+  right: 0;
+  bottom: 0;
   display: flex;
-  height: calc(100vh - 70px);
-  width: 100%;
   background: #d1d7db;
-  overflow: hidden;
-  position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  z-index: 1;
 }
 
 .msg_sidebar {
@@ -53,8 +58,7 @@
   z-index: 1;
 }
 
-/* En /mensajes: eliminar padding-bottom global del body y override del padding del main */
-body.en-mensajes { padding-bottom: 0 !important; overflow: hidden !important; }
+/* Override del padding-bottom global que aplica MenuInferiorResponsivo a TODO main */
 body main.msg_view,
 body.con-sidebar main.msg_view { padding: 0 !important; }
 
@@ -424,34 +428,24 @@ body.con-sidebar main.msg_view { padding: 0 !important; }
    Cuando hay chat: chat full-screen, ocultar menus globales.
    ============================================================ */
 @media (max-width: 900px) {
-  .msg_layout { height: calc(100dvh - 70px); }
+  /* Mobile: sin sidebar admin a la izquierda, con menu inferior abajo */
+  .msg_layout { top: 70px; left: 0; bottom: 60px; }
 
   /* Sin chat: solo lista, ocupa todo */
   .msg_layout:not(.has-chat) .msg_view { display: none; }
   .msg_layout:not(.has-chat) .msg_sidebar { width: 100%; max-width: 100%; min-width: 0; border-right: none; }
 
-  /* Con chat: solo chat, ocupa todo (sidebar oculto) */
+  /* Con chat: solo chat, ocupa todo (sidebar de chats oculto) */
   .msg_layout.has-chat .msg_sidebar { display: none; }
   .msg_layout.has-chat .msg_view { width: 100%; }
 
   .msg_area { padding: 12px 4% 8px; }
 
-  /* MOBILE + CHAT ABIERTO: bloquea scroll del body, oculta menus globales */
-  body.modo-chat-abierto {
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    height: 100dvh !important;
-  }
+  /* MOBILE + CHAT ABIERTO: oculta menus globales del sitio, layout full inmersivo */
   body.modo-chat-abierto .nav-auth-container,
   body.modo-chat-abierto .menu-inferior-responsivo,
   body.modo-chat-abierto .sidebar-admin-moderno { display: none !important; }
-  body.modo-chat-abierto .msg_layout {
-    position: fixed;
-    inset: 0;
-    height: 100dvh;
-    width: 100vw;
-  }
+  body.modo-chat-abierto .msg_layout { top: 0; left: 0; right: 0; bottom: 0; }
 }
 
 @media (max-width: 640px) {
