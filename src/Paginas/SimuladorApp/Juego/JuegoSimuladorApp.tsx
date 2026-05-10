@@ -147,7 +147,6 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
         x,
         logica: logica || ({} as any),
         actualizarVisualBoton,
-        registrarEvento: () => {},
         trenRef,
         desactivarAudio: audioPitosGateado,
     });

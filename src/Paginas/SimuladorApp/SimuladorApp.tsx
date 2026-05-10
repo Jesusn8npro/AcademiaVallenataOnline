@@ -39,7 +39,6 @@ const ModalLoops = lazy(() => import('./Componentes/ModalLoops'));
 
 import './SimuladorApp.css';
 
-// Constante module-level: antes se reconstruia en cada llamada a formatearNombreNota.
 const MAPA_CIFRADO: Record<string, string> = {
     'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
     'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
@@ -252,7 +251,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
     const [bajosVisible, setBajosVisible] = useState(false);
     const [bpmMetronomo, setBpmMetronomo] = useState(80);
-    const [grabando, setGrabando] = useState(false);
     const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
 
     const x = useMotionValue(0);
@@ -286,11 +284,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     }, []);
 
-    // Contrato preservado para usePointerAcordeon. La secuencia real se
-    // captura en useGrabacionProMax via los onNotaPresionada/onNotaLiberada
-    // del logica; este callback ya no escribe a ningún lado (era dead code).
-    const registrarEvento = useCallback((_tipo: string, _data: any) => { }, []);
-
     const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
         if (!notaObj) return '';
 
@@ -309,7 +302,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // Estado de reproduccion inline. Lo declaramos arriba para que pueda
     // alimentar `desactivarAudio` (que se pasa a usePointerAcordeon).
     const [enReproduccion, setEnReproduccion] = useState(false);
-    const [errorReproduccion, setErrorReproduccion] = useState<string | null>(null);
     // Si la grabacion en curso de replay traia metronomo, prendemos/apagamos
     // metronomoReplay siguiendo el estado del reproductor.
     const [replayConMetronomo, setReplayConMetronomo] = useState(false);
@@ -437,7 +429,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         x,
         logica,
         actualizarVisualBoton,
-        registrarEvento,
         trenRef,
         desactivarAudio,
         obtenerRectsBloqueadores
@@ -581,14 +572,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
     const reproducirGrabacion = useCallback(async (id: string) => {
         try {
-            setErrorReproduccion(null);
             const g: any = await obtenerGrabacion(id);
-            if (!g) { setErrorReproduccion('Grabacion no encontrada.'); return; }
+            if (!g) return;
             const sec = g.secuencia_grabada || g.secuencia || [];
-            if (!Array.isArray(sec) || sec.length === 0) {
-                setErrorReproduccion('Esta grabacion no tiene notas.');
-                return;
-            }
+            if (!Array.isArray(sec) || sec.length === 0) return;
             // Capturamos la duracion real (en ms) de la grabacion para saber
             // cuando "termino" de verdad — no solo cuando suena la ultima nota.
             duracionReplayMsRef.current = typeof g.duracion_ms === 'number' && g.duracion_ms > 0 ? g.duracion_ms : null;
@@ -747,7 +734,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     return;
                 } catch (err: any) {
                     console.error('[Replay] audio_fondo Web Audio fallo:', err?.name, err?.message || err);
-                    setErrorReproduccion(`No se pudo cargar el audio de fondo: ${err?.message || err}`);
                     // Caemos al path sin audio para que las notas igual suenen.
                 }
             }
@@ -757,7 +743,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             reproductor.reproducirSecuencia(cancionFake);
             setEnReproduccion(true);
         } catch (e: any) {
-            setErrorReproduccion(e?.message || 'Error al cargar la grabacion.');
+            console.error('[Replay] error al cargar la grabacion:', e?.message || e);
         }
     }, [logica, reproductor, loops, detenerAudioFondoReplay]);
 
@@ -1074,10 +1060,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     };
 
-    // Mantener el estado legacy `grabando` en sync con el grabador real
-    // para que la barra de herramientas siga mostrando el indicador correcto.
-    useEffect(() => { setGrabando(grabacion.grabandoHero); }, [grabacion.grabandoHero]);
-
     // Popup inline con la lista de grabaciones (en lugar de navegar a /grabaciones).
     const [popupGrabacionesAbierto, setPopupGrabacionesAbierto] = useState(false);
     const abrirListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(true), []);
@@ -1201,7 +1183,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 >
                     <BarraHerramientas
                         logica={logica} x={x} escala={escala} setEscala={setEscala}
-                        modoVista={config.modoVista} grabando={grabando} toggleGrabacion={handleToggleGrabacion}
+                        modoVista={config.modoVista} grabando={grabacion.grabandoHero} toggleGrabacion={handleToggleGrabacion}
                         bpmMetronomo={bpmMetronomo} modalesVisibles={modales}
                         onToggleMenu={() => toggleModal('menu')} onToggleTonalidades={() => toggleModal('tonalidades')}
                         onToggleMetronomo={() => toggleModal('metronomo')} onToggleInstrumentos={() => toggleModal('instrumentos')}

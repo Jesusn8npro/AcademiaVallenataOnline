@@ -6,7 +6,6 @@ interface PointerLogicProps {
     x: MotionValue<number>;
     logica: any;
     actualizarVisualBoton: (pos: string, activo: boolean, esBajo: boolean) => void;
-    registrarEvento: (tipo: 'nota_on' | 'nota_off' | 'fuelle', data: any) => void;
     trenRef: React.RefObject<HTMLDivElement>;
     desactivarAudio?: boolean;
     // Lista de rects (en coords de viewport) que ocluyen el hit-test del
@@ -24,7 +23,7 @@ const IMAN_ENTRAR = 16;
 const IMAN_SALIR = 22;
 
 export const usePointerAcordeon = ({
-    x, logica, actualizarVisualBoton, registrarEvento, trenRef, desactivarAudio = false,
+    x, logica, actualizarVisualBoton, trenRef, desactivarAudio = false,
     obtenerRectsBloqueadores
 }: PointerLogicProps) => {
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
@@ -125,11 +124,9 @@ export const usePointerAcordeon = ({
                 if (data.pos) {
                     actualizarVisualBoton(data.pos, false, false);
                     const oldMId = data.musicalId;
-                    const oldPos = data.pos;
                     startTransition(() => {
                         logicaRef.current.actualizarBotonActivo(oldMId, 'remove', null, false);
                     });
-                    registrarEvento('nota_off', { id: oldMId, pos: oldPos });
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
@@ -140,7 +137,6 @@ export const usePointerAcordeon = ({
                     startTransition(() => {
                         logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
                     });
-                    registrarEvento('nota_on', { id: newMId, pos });
                 } else {
                     data.pos = '';
                     data.musicalId = '';
@@ -169,7 +165,6 @@ export const usePointerAcordeon = ({
                 startTransition(() => {
                     logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
                 });
-                registrarEvento('nota_on', { id: mId, pos });
             } else if (esAreaJuego) {
                 pointersMap.current.set(id, { pos: '', musicalId: '', ts });
             }
@@ -180,11 +175,9 @@ export const usePointerAcordeon = ({
             if (data?.pos) {
                 actualizarVisualBoton(data.pos, false, false);
                 const mId = data.musicalId;
-                const pos = data.pos;
                 startTransition(() => {
                     logicaRef.current.actualizarBotonActivo(mId, 'remove', null, false);
                 });
-                registrarEvento('nota_off', { id: mId, pos });
             }
             pointersMap.current.delete(id);
             if (pointersMap.current.size === 0) {
@@ -368,7 +361,7 @@ export const usePointerAcordeon = ({
                 document.removeEventListener('pointercancel', handlePointerUp, { capture: true });
             }
         };
-    }, [x, actualizarVisualBoton, registrarEvento, trenRef, actualizarGeometria]);
+    }, [x, actualizarVisualBoton, trenRef, actualizarGeometria]);
 
     const limpiarGeometria = useCallback(() => {
         rectsCache.current.clear();
