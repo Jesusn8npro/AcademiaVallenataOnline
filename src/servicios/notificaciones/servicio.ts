@@ -22,10 +22,13 @@ class NotificacionesService extends NotificacionesCRUDBase {
                 .channel(`notificaciones_${user.id}`)
                 .on(
                     'postgres_changes',
-                    { event: 'INSERT', schema: 'public', table: 'notificaciones' },
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'notificaciones',
+                        filter: `usuario_id=eq.${user.id}`
+                    },
                     (payload: any) => {
-                        if (payload.new.usuario_id !== user.id) return;
-
                         const nuevaNotificacion: Notificacion = {
                             id: payload.new.id,
                             usuario_id: payload.new.usuario_id,
