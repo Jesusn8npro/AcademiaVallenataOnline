@@ -27,3 +27,11 @@ dist-ssr
 # Deployment
 src/referencias_migracion
 .agent
+
+# Capacitor / Android (build artifacts)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.idea/
