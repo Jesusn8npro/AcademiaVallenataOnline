@@ -30,14 +30,15 @@ export const usePointerAcordeon = ({
     const pointersMap = useRef<Map<number, { pos: string; musicalId: string; ts: number }>>(new Map());
     const rectsCache = useRef<Map<string, { left: number; right: number; top: number; bottom: number }>>(new Map());
 
+    // Asignación directa en body: es un ref (no state), evita el useEffect.
     const logicaRef = useRef(logica);
-    useEffect(() => { logicaRef.current = logica; }, [logica]);
+    logicaRef.current = logica;
 
     const desactivarAudioRef = useRef(desactivarAudio);
-    useEffect(() => { desactivarAudioRef.current = desactivarAudio; }, [desactivarAudio]);
+    desactivarAudioRef.current = desactivarAudio;
 
     const rectsBloqueadoresRef = useRef(obtenerRectsBloqueadores);
-    useEffect(() => { rectsBloqueadoresRef.current = obtenerRectsBloqueadores; }, [obtenerRectsBloqueadores]);
+    rectsBloqueadoresRef.current = obtenerRectsBloqueadores;
 
     const actualizarGeometria = useCallback(() => {
         const tren = trenRef.current;

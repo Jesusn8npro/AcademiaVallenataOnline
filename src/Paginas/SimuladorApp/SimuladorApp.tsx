@@ -39,6 +39,12 @@ const ModalLoops = lazy(() => import('./Componentes/ModalLoops'));
 
 import './SimuladorApp.css';
 
+// Constante module-level: antes se reconstruia en cada llamada a formatearNombreNota.
+const MAPA_CIFRADO: Record<string, string> = {
+    'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
+    'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
+};
+
 const SimuladorApp: React.FC = () => {
     const [juegoActivo, setJuegoActivo] = useState<ConfigCancion | null>(null);
 
@@ -261,9 +267,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         vista: useRef(null),
         aprende: useRef(null)
     };
-    const secuenciaRef = useRef<any[]>([]);
-    const tiempoInicioRef = useRef<number>(0);
-
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
 
     const actualizarVisualBoton = useCallback((pos: string, activo: boolean, esBajo: boolean) => {
@@ -283,9 +286,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         }
     }, []);
 
-    const registrarEvento = useCallback((tipo: string, data: any) => {
-        if (grabando) secuenciaRef.current.push({ t: Date.now() - tiempoInicioRef.current, tipo, ...data });
-    }, [grabando]);
+    // Contrato preservado para usePointerAcordeon. La secuencia real se
+    // captura en useGrabacionProMax via los onNotaPresionada/onNotaLiberada
+    // del logica; este callback ya no escribe a ningún lado (era dead code).
+    const registrarEvento = useCallback((_tipo: string, _data: any) => { }, []);
 
     const formatearNombreNota = (notaObj: any, modo: string, mostrarOctavas: boolean) => {
         if (!notaObj) return '';
@@ -296,10 +300,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         const octava = partes[1] || '';
 
         if (modo === 'cifrado') {
-            const MAPA_CIFRADO: Record<string, string> = {
-                'Do': 'C', 'Do#': 'C#', 'Reb': 'Db', 'Re': 'D', 'Re#': 'D#', 'Mib': 'Eb', 'Mi': 'E',
-                'Fa': 'F', 'Fa#': 'F#', 'Solb': 'Gb', 'Sol': 'G', 'Sol#': 'G#', 'Lab': 'Ab', 'La': 'A', 'La#': 'A#', 'Sib': 'Bb', 'Si': 'B'
-            };
             notaBase = MAPA_CIFRADO[notaBase] || notaBase;
         }
 
@@ -463,22 +463,17 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         seccionRef: seccionRefGrab,
     });
 
-    // Sincronizar las refs estables que usaron los callbacks de useLogicaAcordeon
-    // arriba con las funciones reales del grabador. Sin esto los callbacks
-    // tendrian un no-op permanente.
-    useEffect(() => {
-        registrarPresionRef.current = grabacion.registrarPresionHero;
-        registrarLiberacionRef.current = grabacion.registrarLiberacionHero;
-    }, [grabacion.registrarPresionHero, grabacion.registrarLiberacionHero]);
-
-    useEffect(() => { direccionRefGrab.current = logica.direccion; }, [logica.direccion]);
-
-    // Sincronizar metadata para que el replay reconstruya la grabacion con
-    // la misma tonalidad/instrumento/vista que tenia el alumno al grabar.
-    useEffect(() => { grabacion.tonalidadGrabacionRef.current = logica.tonalidadSeleccionada; }, [logica.tonalidadSeleccionada, grabacion.tonalidadGrabacionRef]);
-    useEffect(() => { grabacion.modoVistaGrabacionRef.current = logica.modoVista; }, [logica.modoVista, grabacion.modoVistaGrabacionRef]);
-    useEffect(() => { grabacion.instrumentoGrabacionRef.current = logica.instrumentoId || null; }, [logica.instrumentoId, grabacion.instrumentoGrabacionRef]);
-    useEffect(() => { grabacion.timbreGrabacionRef.current = (logica.ajustes as any)?.timbre || null; }, [logica.ajustes, grabacion.timbreGrabacionRef]);
+    // Sincronizar refs en el body (asignacion directa). Antes eran 6 useEffect
+    // en cascada — pero todas estas son refs (no state) y el side-effect es
+    // idempotente, así que asignarlas durante el render es seguro y nos ahorra
+    // 6 ciclos de useEffect por cada render.
+    registrarPresionRef.current = grabacion.registrarPresionHero;
+    registrarLiberacionRef.current = grabacion.registrarLiberacionHero;
+    direccionRefGrab.current = logica.direccion;
+    grabacion.tonalidadGrabacionRef.current = logica.tonalidadSeleccionada;
+    grabacion.modoVistaGrabacionRef.current = logica.modoVista;
+    grabacion.instrumentoGrabacionRef.current = logica.instrumentoId || null;
+    grabacion.timbreGrabacionRef.current = (logica.ajustes as any)?.timbre || null;
 
     // ─── Reproductor inline para replay de grabaciones ────────────────────
     // Reusa la misma `logica` (acordeon visual). Cuando se reproduce una
@@ -566,8 +561,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // Ref siempre fresca a `logica` (que es un objeto que React recrea en
     // cada render). La usamos en reproducirGrabacion para chequear/esperar
     // a que tonalidad+samples se hayan aplicado tras el setTonalidadSeleccionada.
+    // Asignación directa en body (no useEffect): es un ref, no state, y nos
+    // ahorra un ciclo de useEffect en cada render.
     const logicaRef = useRef(logica);
-    useEffect(() => { logicaRef.current = logica; }, [logica]);
+    logicaRef.current = logica;
 
     // Detener el audio de fondo del replay (Web Audio).
     const detenerAudioFondoReplay = useCallback(() => {
