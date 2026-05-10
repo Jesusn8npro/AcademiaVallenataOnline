@@ -3,16 +3,13 @@ import { supabase } from '../../servicios/clienteSupabase';
 import { motorAudioPro } from '../audio/AudioEnginePro';
 import { encontrarMejorMuestra, type Muestra } from '../audio/UniversalSampler';
 import { mapaTeclas, tono } from '../acordeon/mapaTecladoYFrecuencias';
-import {
-    mapaTeclasBajos,
-    TONALIDADES,
-    cambiarFuelle
-} from '../acordeon/notasAcordeonDiatonico';
+import { mapaTeclasBajos, TONALIDADES } from '../acordeon/notasAcordeonDiatonico';
 import type { AjustesAcordeon, SonidoVirtual, ModoVista, AcordeonSimuladorProps } from '../acordeon/TiposAcordeon';
 import {
     NOMBRES_INGLES, SAMPLES_BRILLANTE_DEFAULT, SAMPLES_ARMONIZADO_DEFAULT,
     EXTRAER_NOTA_OCTAVA, VOL_PITOS, VOL_BAJOS, FADE_OUT
 } from './_utilidadesAcordeon';
+import { useAcordeonHardware } from './LogicaAcordeon/useAcordeonHardware';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
@@ -27,9 +24,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
     const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<any[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
-    const [midiActivado, setMidiActivado] = useState(false);
-    const [esp32Conectado, setEsp32Conectado] = useState(false);
-    const esp32PortRef = useRef<any>(null);
     const [usuarioId, setUsuarioId] = useState<string | null>(null);
     const [samplesPitos, setSamplesPitos] = useState<string[]>(SAMPLES_BRILLANTE_DEFAULT);
     const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
@@ -598,56 +592,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         }
     }, [reproducirTono, onNotaLiberada, onNotaPresionada]);
 
-    const manejarEventoTeclado = useCallback((e: KeyboardEvent | React.KeyboardEvent, esPresionada: boolean) => {
-        if (deshabilitarRef.current) return;
-
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-
-        const tecla = e.key.toLowerCase();
-
-        if (tecla === cambiarFuelle) {
-            const nuevaDireccion = esPresionada ? 'empujar' : 'halar';
-            if (nuevaDireccion !== direccionRef.current) {
-                ejecutarSwapDireccion(nuevaDireccion);
-            }
-            return;
-        }
-
-        const d = mapaTeclas[tecla] || mapaTeclasBajos[tecla];
-        if (!d) return;
-        const esBajo = !!mapaTeclasBajos[tecla];
-        const id = `${d.fila}-${d.columna}-${direccionRef.current}${esBajo ? '-bajo' : ''}`;
-
-        if (esPresionada && !e.repeat) {
-            if (modoAjuste) setBotonSeleccionado(id);
-
-            const fastData = teclasFastMapRef.current[tecla];
-            if (fastData) {
-                const dir = direccionRef.current;
-                const rawRutas = dir === 'halar' ? fastData.rutasHalar : fastData.rutasEmpujar;
-                const userPitch = dir === 'halar' ? fastData.userPitchHalar : fastData.userPitchEmpujar;
-                const vol = fastData.esBajo ? VOL_BAJOS : VOL_PITOS;
-
-                const instanciasFast = rawRutas.map((rRaw: string) => {
-                    let r = rRaw; let pBase = 0;
-                    if (rRaw.startsWith('pitch:')) {
-                        const parts = rRaw.replace('pitch:', '').split('|');
-                        pBase = parseInt(parts[0]); r = parts[1];
-                    }
-                    const gPitch = ajustesRef.current.pitchGlobal || 0;
-                    return motorAudioPro.reproducir(r, instrumentoId, vol, gPitch + userPitch + pBase);
-                }).filter(Boolean);
-
-                actualizarBotonActivo(id, 'add', instanciasFast);
-            } else {
-                actualizarBotonActivo(id, 'add');
-            }
-        } else if (!esPresionada) {
-            actualizarBotonActivo(id, 'remove');
-        }
-    }, [actualizarBotonActivo, reproducirTono, detenerTono, modoAjuste, botonSeleccionado, ejecutarSwapDireccion, cambiarFuelle]);
-
     useEffect(() => {
         if (skipNextSwapRef.current) {
             skipNextSwapRef.current = false;
@@ -675,17 +619,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             window.removeEventListener('keydown', handleInteraction);
         };
     }, []);
-
-    useEffect(() => {
-        const hKD = (e: KeyboardEvent) => manejarEventoTeclado(e, true);
-        const hKU = (e: KeyboardEvent) => manejarEventoTeclado(e, false);
-        window.addEventListener('keydown', hKD);
-        window.addEventListener('keyup', hKU);
-        return () => {
-            window.removeEventListener('keydown', hKD);
-            window.removeEventListener('keyup', hKU);
-        };
-    }, [manejarEventoTeclado]);
 
     useEffect(() => {
         const mappingKey = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
@@ -784,173 +717,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         return () => clearTimeout(timer);
     }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId, muestrasLocalesDB]);
 
-    // Web Serial API: conexión directa al ESP32 (sin Hairless ni loopMIDI).
-    const conectarESP32 = useCallback(async () => {
-        if (!(navigator as any).serial) {
-            return;
-        }
-        try {
-            const port = await (navigator as any).serial.requestPort();
-            await port.open({ baudRate: 115200 });
-            esp32PortRef.current = port;
-            setEsp32Conectado(true);
-
-            const decoder = new TextDecoderStream();
-            port.readable.pipeTo(decoder.writable);
-            const reader = decoder.readable.getReader();
-
-            const activeTimeouts: Record<string, any> = {};
-            let partialLine = "";
-
-            const readLoop = async () => {
-                try {
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-
-                        const lines = (partialLine + value).split("\n");
-                        partialLine = lines.pop() || "";
-
-                        let huboCambio = false;
-
-                        for (const line of lines) {
-                            const trimmed = line.trim();
-                            if (!trimmed) continue;
-
-
-                            const parts = trimmed.split(",");
-                            if (parts.length < 2) continue;
-
-                            const tipo = parts[0];
-                            const val = parts[1];
-                            const estadoStr = parts[2];
-
-                            if (tipo === "F_US" || tipo === "F_SL" || tipo === "FUELLE") {
-                                // F_US/F_SL respetan la opción de UI; "FUELLE" viejo pasa libre.
-                                if ((tipo === "F_US" && tipoFuelleActivoRef.current !== 'US') ||
-                                    (tipo === "F_SL" && tipoFuelleActivoRef.current !== 'SL')) {
-                                    continue;
-                                }
-
-                                const nuevaDir = val === "ABRIR" ? "halar" : "empujar";
-                                if (nuevaDir !== direccionRef.current) {
-                                    const prev = { ...botonesActivosRef.current };
-                                    const next: Record<string, any> = {};
-
-                                    Object.keys(prev).forEach(oldId => {
-                                        const parts = oldId.split('-');
-                                        if (parts.length < 3) return;
-                                        const esBajo = oldId.includes('bajo');
-                                        const newId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
-                                        if (newId !== oldId) {
-                                            detenerTono(oldId);
-                                            const { instances } = reproducirTono(newId);
-                                            if (instances?.length) next[newId] = { instances, ...mapaBotonesActual.current[newId] };
-                                        } else next[oldId] = prev[oldId];
-                                    });
-
-                                    hardwareMapRef.current.forEach((logicalId, physicalKey) => {
-                                        const parts = logicalId.split('-');
-                                        if (parts.length >= 3) {
-                                            const esBajo = logicalId.includes('bajo');
-                                            const newLogicalId = `${parts[0]}-${parts[1]}-${nuevaDir}${esBajo ? '-bajo' : ''}`;
-                                            hardwareMapRef.current.set(physicalKey, newLogicalId);
-                                        }
-                                    });
-
-                                    direccionRef.current = nuevaDir;
-                                    botonesActivosRef.current = next;
-                                    setDireccion(nuevaDir);
-                                    huboCambio = true;
-                                }
-                            } else if (["H1", "H2", "BA"].includes(tipo)) {
-                                const idx = parseInt(val);
-                                const physicalKey = `${tipo}-${idx}`;
-                                let note = 0;
-
-                                if (tipo === "H1") note = (idx < 6) ? 48 + (5 - idx) : 60 + (idx - 6);
-                                else if (tipo === "H2") note = (idx >= 11) ? 54 + (15 - idx) : 71 + (10 - idx);
-                                else if (tipo === "BA") note = (idx <= 11) ? 30 + idx : (idx === 12 ? 81 : 0);
-
-                                if (note === 0) continue;
-
-                                if (estadoStr !== undefined) {
-                                    const isOn = estadoStr === "1";
-
-                                    if (isOn) {
-                                        let idBoton: string | null = null;
-                                        if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
-                                        else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
-                                        else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
-
-                                        if (note >= 30 && note <= 41) {
-                                            const map: Record<number, string> = {
-                                                30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1',
-                                                36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1'
-                                            };
-                                            const base = map[note];
-                                            if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
-                                        } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
-
-                                        if (idBoton) {
-                                            hardwareMapRef.current.set(physicalKey, idBoton);
-                                            actualizarBotonActivo(idBoton, 'add', null, true);
-                                            huboCambio = true;
-                                        }
-                                    } else {
-                                        // Soltar: recuperamos el ID actualizado del ref (puede haber cambiado por swap de fuelle).
-                                        const logicalId = hardwareMapRef.current.get(physicalKey);
-                                        if (logicalId) {
-                                            actualizarBotonActivo(logicalId, 'remove', null, true);
-                                            hardwareMapRef.current.delete(physicalKey);
-                                            huboCambio = true;
-                                        }
-                                    }
-                                } else {
-                                    // Modo compatibilidad: hardware viejo manda pulsos sin estado on/off.
-                                    let idBoton: string | null = null;
-                                    if (note >= 60 && note <= 70) idBoton = `1-${note - 59}-${direccionRef.current}`;
-                                    else if (note >= 48 && note <= 59) idBoton = `2-${note - 47}-${direccionRef.current}`;
-                                    else if (note >= 71 && note <= 82) idBoton = `3-${note - 70}-${direccionRef.current}`;
-
-                                    if (note >= 30 && note <= 41) {
-                                        const base = { 30: '2-6', 31: '2-5', 32: '2-4', 33: '2-3', 34: '1-2', 35: '1-1', 36: '1-6', 37: '1-5', 38: '1-4', 39: '1-3', 40: '2-2', 41: '2-1' }[note];
-                                        if (base) idBoton = `${base}-${direccionRef.current}-bajo`;
-                                    } else if (note === 81) idBoton = `3-11-${direccionRef.current}`;
-
-                                    if (idBoton) {
-                                        if (activeTimeouts[idBoton]) {
-                                            clearTimeout(activeTimeouts[idBoton]);
-                                        } else {
-                                            actualizarBotonActivo(idBoton, 'add', null, true);
-                                            huboCambio = true;
-                                        }
-
-                                        const currentId = idBoton;
-                                        activeTimeouts[idBoton] = setTimeout(() => {
-                                            actualizarBotonActivo(currentId, 'remove');
-                                            delete activeTimeouts[currentId];
-                                        }, 400);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Sync único por paquete serial.
-                        if (huboCambio) setBotonesActivos({ ...botonesActivosRef.current });
-                    }
-                } catch (err) {
-                    setEsp32Conectado(false);
-                } finally {
-                    reader.releaseLock();
-                }
-            };
-
-            readLoop();
-        } catch (err) {
-            setEsp32Conectado(false);
-        }
-    }, [actualizarBotonActivo, limpiarTodasLasNotas]);
+    // Hardware: ESP32 (Web Serial) + teclado físico. Extraído a useAcordeonHardware.
+    const { midiActivado, esp32Conectado, conectarESP32 } = useAcordeonHardware({
+        botonesActivosRef, direccionRef, hardwareMapRef, deshabilitarRef, tipoFuelleActivoRef,
+        mapaBotonesActualRef: mapaBotonesActual, ajustesRef, teclasFastMapRef,
+        modoAjuste, setDireccion, setBotonesActivos, setBotonSeleccionado,
+        actualizarBotonActivo, ejecutarSwapDireccion, reproducirTono, detenerTono,
+        instrumentoId,
+    });
 
     const guardarAjustes = async () => {
         if (!usuarioId) return;
