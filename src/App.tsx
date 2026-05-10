@@ -80,7 +80,6 @@ import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
 import FuelleAcordeon from './Paginas/FuelleAcordeon/FuelleAcordeon';
-import AcordeonDiapason3D from './Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -214,7 +213,6 @@ const AppContent = () => {
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
-        <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/acordeon-pro-max" element={<HomeProMax />} />
