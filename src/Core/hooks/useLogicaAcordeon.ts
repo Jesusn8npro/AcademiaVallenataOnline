@@ -10,6 +10,7 @@ import {
     EXTRAER_NOTA_OCTAVA, VOL_PITOS, VOL_BAJOS, FADE_OUT
 } from './_utilidadesAcordeon';
 import { useAcordeonHardware } from './LogicaAcordeon/useAcordeonHardware';
+import { useAcordeonPersistencia } from './LogicaAcordeon/useAcordeonPersistencia';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
@@ -24,7 +25,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
     const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<any[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
-    const [usuarioId, setUsuarioId] = useState<string | null>(null);
     const [samplesPitos, setSamplesPitos] = useState<string[]>(SAMPLES_BRILLANTE_DEFAULT);
     const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
     const [samplesArmonizado, setSamplesArmonizado] = useState<string[]>(SAMPLES_ARMONIZADO_DEFAULT);
@@ -37,13 +37,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const [botonSeleccionado, setBotonSeleccionado] = useState<string | null>(null);
     const [pestanaActiva, setPestanaActiva] = useState<'diseno' | 'sonido'>('diseno');
     const [tonalidadSeleccionada, setTonalidadSeleccionada] = useState<string>('F-Bb-Eb');
-    const [listaTonalidades, setListaTonalidades] = useState<string[]>([]);
-    const [nombresTonalidades, setNombresTonalidades] = useState<Record<string, string>>({});
     const [sonidosVirtuales, setSonidosVirtuales] = useState<SonidoVirtual[]>([]);
     const [tipoFuelleActivo, setTipoFuelleActivo] = useState<'US' | 'SL'>('US');
-
-    const [disenoCargado, setDisenoCargado] = useState(false);
-    const isInitialLoad = useRef(true);
 
     // Lazy initializer: lee el "Master Mirror" de localStorage para render inmediato sin esperar Supabase.
     const [ajustes, setAjustes] = useState<AjustesAcordeon>(() => {
@@ -194,66 +189,18 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         setDireccion(d);
     }, []);
 
-    useEffect(() => {
-        const checkUserAndLoad = async () => {
-            setCargandoCloud(true);
-            try {
-                const { data: instData } = await (supabase.from('sim_instrumentos').select('*') as any);
-                if (instData) setListaInstrumentos(instData);
-
-                const { data: userData } = await supabase.auth.getUser();
-                const user = userData.user;
-                if (user) {
-                    setUsuarioId(user.id);
-                    const { data: ajustesData } = await (supabase
-                        .from('sim_ajustes_usuario')
-                        .select('*')
-                        .eq('usuario_id', user.id)
-                        .maybeSingle() as any);
-
-                    if (ajustesData) {
-                        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id as string);
-                        if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados as SonidoVirtual[]);
-
-                        if (ajustesData.ajustes_visuales) {
-                            setAjustes(prev => ({ ...prev, ...(ajustesData.ajustes_visuales as any) }));
-                        }
-
-                        if (ajustesData.tonalidades_configuradas) {
-                            const configs = ajustesData.tonalidades_configuradas as any;
-                            const nombres: Record<string, string> = {};
-                            Object.entries(configs).forEach(([key, val]: [string, any]) => {
-                                if (val?.nombrePersonalizado) {
-                                    const id = key.replace('ajustes_acordeon_vPRO_', '');
-                                    nombres[id] = val.nombrePersonalizado;
-                                }
-                            });
-                            setNombresTonalidades(nombres);
-                        }
-
-                        if (ajustesData.lista_tonalidades_activa && Array.isArray(ajustesData.lista_tonalidades_activa) && ajustesData.lista_tonalidades_activa.length > 0) {
-                            setListaTonalidades(ajustesData.lista_tonalidades_activa as string[]);
-                        } else {
-                            setListaTonalidades(Object.keys(TONALIDADES));
-                        }
-
-                        if (ajustesData.tonalidad_activa) {
-                            setTonalidadSeleccionada(ajustesData.tonalidad_activa as string);
-                        }
-                    } else {
-                        setListaTonalidades(Object.keys(TONALIDADES));
-                    }
-                } else {
-                    setListaTonalidades(Object.keys(TONALIDADES));
-                }
-            } catch (error) {
-                setListaTonalidades(Object.keys(TONALIDADES));
-            } finally {
-                setCargandoCloud(false);
-            }
-        };
-        checkUserAndLoad();
-    }, []);
+    // Persistencia Supabase: usuario, ajustes, tonalidades, sonidos virtuales.
+    const {
+        usuarioId, listaTonalidades, setListaTonalidades, nombresTonalidades,
+        disenoCargado, isInitialLoad,
+        guardarAjustes, resetearAjustes, guardarNuevoSonidoVirtual,
+        actualizarNombreTonalidad, eliminarTonalidad,
+    } = useAcordeonPersistencia({
+        ajustes, setAjustes, ajustesRef,
+        tonalidadSeleccionada, setTonalidadSeleccionada,
+        instrumentoId, setInstrumentoId, setListaInstrumentos, setCargandoCloud,
+        setSonidosVirtuales, sonidosVirtuales,
+    });
 
     useEffect(() => {
         const cargarMuestras = async () => {
@@ -621,51 +568,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     }, []);
 
     useEffect(() => {
-        const mappingKey = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
-
-        const cargarTodo = async () => {
-            if (usuarioId === null) return;
-            try {
-                const { data } = await supabase
-                    .from('sim_ajustes_usuario')
-                    .select('ajustes_visuales, tonalidades_configuradas, instrumento_id')
-                    .eq('usuario_id', usuarioId)
-                    .maybeSingle();
-
-                const disenoGlobalNube = (data as any)?.ajustes_visuales || {};
-                const rawConfigMusical = (data as any)?.tonalidades_configuradas?.[mappingKey] || {};
-
-                const configMusical: Partial<AjustesAcordeon> = {
-                    mapeoPersonalizado: rawConfigMusical.mapeoPersonalizado,
-                    pitchPersonalizado: rawConfigMusical.pitchPersonalizado,
-                    pitchGlobal: rawConfigMusical.pitchGlobal,
-                    bancoId: rawConfigMusical.bancoId,
-                    timbre: rawConfigMusical.timbre,
-                };
-
-                // Priorizamos lo que el usuario ya tiene en pantalla; sólo aplicamos diseño de la nube en carga inicial
-                // o si el acordeón está en su posición default (evita "salto asqueroso" si el usuario ya lo movió).
-                const ajustesFinales: AjustesAcordeon = { ...ajustesRef.current, ...configMusical };
-                if (isInitialLoad.current || (ajustesRef.current.x === '50%' && ajustesRef.current.y === '50%')) {
-                    Object.assign(ajustesFinales, disenoGlobalNube);
-                }
-
-                // Corrige valor "maldito" 53.5% que aparecía esporádicamente desde la nube.
-                if (ajustesFinales.x === '53.5%') ajustesFinales.x = '50%';
-
-                setAjustes(ajustesFinales);
-                ajustesRef.current = ajustesFinales;
-                setDisenoCargado(true);
-                isInitialLoad.current = false;
-
-                if ((data as any)?.instrumento_id) setInstrumentoId((data as any).instrumento_id);
-            } catch (e) { }
-        };
-
-        cargarTodo();
-    }, [tonalidadSeleccionada, usuarioId]);
-
-    useEffect(() => {
         // Vaciamos solo el mapa de rutas rápidas; NO limpiamos el banco de audio para no forzar redescargas en cada cambio.
         soundsPerKeyRef.current = {};
 
@@ -725,206 +627,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         actualizarBotonActivo, ejecutarSwapDireccion, reproducirTono, detenerTono,
         instrumentoId,
     });
-
-    const guardarAjustes = async () => {
-        if (!usuarioId) return;
-
-        const key = `ajustes_acordeon_vPRO_${tonalidadSeleccionada}`;
-        const cur = ajustesRef.current;
-
-        const disenoGlobal = {
-            x: cur.x, y: cur.y, tamano: cur.tamano,
-            pitosBotonTamano: cur.pitosBotonTamano, pitosFuenteTamano: cur.pitosFuenteTamano,
-            bajosBotonTamano: cur.bajosBotonTamano, bajosFuenteTamano: cur.bajosFuenteTamano,
-            teclasLeft: cur.teclasLeft, teclasTop: cur.teclasTop,
-            bajosLeft: cur.bajosLeft, bajosTop: cur.bajosTop
-        };
-
-        const configMusical = {
-            mapeoPersonalizado: cur.mapeoPersonalizado,
-            pitchPersonalizado: cur.pitchPersonalizado,
-            pitchGlobal: cur.pitchGlobal,
-            bancoId: cur.bancoId,
-            timbre: cur.timbre || 'Brillante',
-        };
-
-        try {
-            const { data } = await supabase
-                .from('sim_ajustes_usuario')
-                .select('tonalidades_configuradas')
-                .eq('usuario_id', usuarioId)
-                .maybeSingle() as any;
-
-            const nuevasTonalidades = {
-                ...((data as any)?.tonalidades_configuradas || {}),
-                [key]: configMusical
-            };
-
-            const { error } = await (supabase.from('sim_ajustes_usuario').upsert({
-                usuario_id: usuarioId,
-                tonalidad_activa: tonalidadSeleccionada,
-                instrumento_id: instrumentoId,
-                ajustes_visuales: disenoGlobal,
-                tonalidades_configuradas: nuevasTonalidades,
-                updated_at: new Date().toISOString()
-            } as any) as any);
-
-            if (error) throw error;
-
-            // Espejo en localStorage del diseño visual: permite carga inmediata sin esperar a Supabase.
-            localStorage.setItem('SIM_VISUAL_MASTER_V11', JSON.stringify({
-                tamano: ajustes.tamano,
-                x: ajustes.x,
-                y: ajustes.y,
-                pitosBotonTamano: ajustes.pitosBotonTamano,
-                pitosFuenteTamano: ajustes.pitosFuenteTamano,
-                bajosBotonTamano: ajustes.bajosBotonTamano,
-                bajosFuenteTamano: ajustes.bajosFuenteTamano,
-                teclasLeft: ajustes.teclasLeft,
-                teclasTop: ajustes.teclasTop,
-                bajosLeft: ajustes.bajosLeft,
-                bajosTop: ajustes.bajosTop
-            }));
-        } catch (e) { }
-    };
-
-    const resetearAjustes = () => {
-        localStorage.removeItem('SIM_VISUAL_MASTER_V11');
-        setAjustes({
-            tamano: '88vh', x: '50%', y: '50%',
-            pitosBotonTamano: '4.4vh', pitosFuenteTamano: '1.6vh',
-            bajosBotonTamano: '4.2vh', bajosFuenteTamano: '1.3vh',
-            teclasLeft: '5.05%', teclasTop: '13%',
-            bajosLeft: '82.5%', bajosTop: '28%',
-            mapeoPersonalizado: {}, pitchPersonalizado: {}, pitchGlobal: 0,
-            bancoId: 'acordeon'
-        });
-    };
-
-    const guardarNuevoSonidoVirtual = async (nombre: string, rutaBase: string, pitch: number, tipo: 'Bajos' | 'Brillante' | 'Armonizado') => {
-        const nuevo: SonidoVirtual = { id: `custom_${Date.now()}`, nombre, rutaBase, pitch, tipo };
-        const nuevaLista = [nuevo, ...sonidosVirtuales];
-        setSonidosVirtuales(nuevaLista);
-
-        // Nube (Única fuente de verdad persistente)
-        if (usuarioId) {
-            await (supabase.from('sim_ajustes_usuario').upsert({
-                usuario_id: usuarioId,
-                sonidos_personalizados: nuevaLista,
-                updated_at: new Date().toISOString()
-            } as any) as any);
-        }
-
-        return nuevo;
-    };
-
-    const actualizarNombreTonalidad = async (tonalidadId: string, nuevoNombre: string) => {
-        setNombresTonalidades(prev => ({ ...prev, [tonalidadId]: nuevoNombre }));
-
-        if (usuarioId) {
-            try {
-                const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
-                const { data } = await supabase
-                    .from('sim_ajustes_usuario')
-                    .select('tonalidades_configuradas')
-                    .eq('usuario_id', usuarioId)
-                    .maybeSingle() as any;
-
-                const nuevasConfigs = {
-                    ...(data?.tonalidades_configuradas || {}),
-                    [key]: {
-                        ...(data?.tonalidades_configuradas?.[key] || {}),
-                        nombrePersonalizado: nuevoNombre
-                    }
-                };
-
-                await ((supabase.from('sim_ajustes_usuario') as any).update({
-                    tonalidades_configuradas: nuevasConfigs,
-                    updated_at: new Date().toISOString()
-                } as any).eq('usuario_id', usuarioId) as any);
-            } catch (e) { }
-        }
-    };
-
-    useEffect(() => {
-        if (!usuarioId || isInitialLoad.current || listaTonalidades.length === 0) return;
-        // 1.5s debounce: permite reordenar varias veces antes de pegarle a Supabase.
-        const timer = setTimeout(async () => {
-            await ((supabase.from('sim_ajustes_usuario') as any).update({
-                lista_tonalidades_activa: listaTonalidades,
-                updated_at: new Date().toISOString()
-            } as any).eq('usuario_id', usuarioId) as any);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [listaTonalidades, usuarioId]);
-
-    useEffect(() => {
-        const persistir = async () => {
-            if (!usuarioId || listaTonalidades.length === 0) return;
-
-            try {
-                const { data } = await supabase
-                    .from('sim_ajustes_usuario')
-                    .select('tonalidades_configuradas')
-                    .eq('usuario_id', usuarioId)
-                    .maybeSingle() as any;
-
-                const configuracionesActuales = (data as any)?.tonalidades_configuradas || {};
-                const siguientesConfiguraciones: Record<string, any> = { ...configuracionesActuales };
-
-                listaTonalidades.forEach(tonalidadId => {
-                    const key = `ajustes_acordeon_vPRO_${tonalidadId}`;
-                    siguientesConfiguraciones[key] = {
-                        ...(configuracionesActuales[key] || {}),
-                        nombrePersonalizado: nombresTonalidades[tonalidadId] || null
-                    };
-                });
-
-                const { error } = await supabase
-                    .from('sim_ajustes_usuario')
-                    .upsert({
-                        usuario_id: usuarioId,
-                        tonalidades_configuradas: siguientesConfiguraciones,
-                        lista_tonalidades_activa: listaTonalidades,
-                        updated_at: new Date().toISOString()
-                    } as any, { onConflict: 'usuario_id' }) as any;
-            } catch (error) { }
-        };
-        persistir();
-    }, [nombresTonalidades, listaTonalidades, usuarioId]);
-
-    const eliminarTonalidad = async (tonalidad: string) => {
-        if (listaTonalidades.length <= 1) return;
-        const nueva = listaTonalidades.filter(t => t !== tonalidad);
-
-        setListaTonalidades(nueva);
-
-        if (tonalidad === tonalidadSeleccionada) {
-            setTonalidadSeleccionada(nueva[0]);
-        }
-
-        if (usuarioId) {
-            try {
-                const key = `ajustes_acordeon_vPRO_${tonalidad}`;
-
-                const { data } = await (supabase
-                    .from('sim_ajustes_usuario')
-                    .select('tonalidades_configuradas')
-                    .eq('usuario_id', usuarioId)
-                    .maybeSingle() as any);
-
-                const nuevasConfigs = { ...((data as any)?.tonalidades_configuradas || {}) };
-                delete nuevasConfigs[key];
-
-                await ((supabase.from('sim_ajustes_usuario') as any).update({
-                    tonalidades_configuradas: nuevasConfigs,
-                    lista_tonalidades_activa: nueva,
-                    updated_at: new Date().toISOString()
-                } as any).eq('usuario_id', usuarioId) as any);
-            } catch (e) { }
-        }
-    };
 
     useEffect(() => { soundsPerKeyRef.current = {}; }, [instrumentoId]);
 
