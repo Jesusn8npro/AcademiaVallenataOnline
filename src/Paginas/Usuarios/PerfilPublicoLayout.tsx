@@ -50,7 +50,7 @@ export default function PerfilPublicoLayout() {
     try {
       const { data: usuarioExacto } = await supabase
         .from('perfiles')
-        .select('id,nombre,apellido,nombre_completo,nombre_usuario,correo_electronico,url_foto_perfil,portada_url,posicion_img_portada,biografia,ciudad,pais,whatsapp,fecha_creacion,rol,suscripcion')
+        .select('id,nombre,apellido,nombre_completo,nombre_usuario,url_foto_perfil,portada_url,posicion_img_portada,biografia,ciudad,pais,fecha_creacion,rol,suscripcion')
         .eq('nombre_usuario', slug)
         .maybeSingle()
 
@@ -59,7 +59,7 @@ export default function PerfilPublicoLayout() {
       if (!usuario) {
         const { data: todos } = await supabase
           .from('perfiles')
-          .select('id,nombre,apellido,nombre_completo,nombre_usuario,correo_electronico,url_foto_perfil,portada_url,posicion_img_portada,biografia,ciudad,pais,whatsapp,fecha_creacion,rol,suscripcion')
+          .select('id,nombre,apellido,nombre_completo,nombre_usuario,url_foto_perfil,portada_url,posicion_img_portada,biografia,ciudad,pais,fecha_creacion,rol,suscripcion')
 
         const lista = Array.isArray(todos) ? todos as PerfilPublico[] : []
         usuario = lista.find(u => {

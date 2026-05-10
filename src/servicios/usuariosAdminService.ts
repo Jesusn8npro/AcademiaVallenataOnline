@@ -22,16 +22,7 @@ export interface EstadisticasUsuarios {
 }
 
 export async function cargarUsuarios(mostrarEliminados = false): Promise<UsuarioAdmin[]> {
-  let query = supabase
-    .from('perfiles')
-    .select('id,nombre,apellido,nombre_completo,correo_electronico,url_foto_perfil,ciudad,pais,rol,suscripcion,fecha_creacion,eliminado')
-    .order('fecha_creacion', { ascending: false });
-
-  if (!mostrarEliminados) {
-    query = query.or('eliminado.eq.false,eliminado.is.null');
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc('admin_listar_todos_perfiles', { p_mostrar_eliminados: mostrarEliminados });
 
   if (error) {
     throw error;

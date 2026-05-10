@@ -168,12 +168,10 @@ class LeadsService {
         return 0;
       }
 
-      // Verificar cuáles emails ya tienen cuenta
+      // Verificar cuáles emails ya tienen cuenta (RPC admin con SECURITY DEFINER)
       const emails = leadsNoConvertidos.map((lead: any) => lead.email.toLowerCase());
       const { data: perfilesExistentes, error: errorPerfiles } = await supabase
-        .from('perfiles')
-        .select('id, correo_electronico')
-        .in('correo_electronico', emails);
+        .rpc('admin_buscar_perfiles_por_emails', { p_emails: emails });
 
       if (errorPerfiles) {
         return 0;
