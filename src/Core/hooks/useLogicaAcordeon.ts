@@ -11,6 +11,7 @@ import {
 } from './_utilidadesAcordeon';
 import { useAcordeonHardware } from './LogicaAcordeon/useAcordeonHardware';
 import { useAcordeonPersistencia } from './LogicaAcordeon/useAcordeonPersistencia';
+import { useAcordeonSamples } from './LogicaAcordeon/useAcordeonSamples';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     const {
@@ -22,12 +23,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69');
     const [listaInstrumentos, setListaInstrumentos] = useState<any[]>([]);
-    const [muestrasDB, setMuestrasDB] = useState<any[]>([]);
-    const [muestrasLocalesDB, setMuestrasLocalesDB] = useState<any[]>([]);
     const [cargandoCloud, setCargandoCloud] = useState(false);
-    const [samplesPitos, setSamplesPitos] = useState<string[]>(SAMPLES_BRILLANTE_DEFAULT);
-    const [samplesBajos, setSamplesBajos] = useState<string[]>([]);
-    const [samplesArmonizado, setSamplesArmonizado] = useState<string[]>(SAMPLES_ARMONIZADO_DEFAULT);
 
     const [botonesActivos, setBotonesActivos] = useState<Record<string, any>>({});
     const [direccion, setDireccion] = useState<'halar' | 'empujar'>(direccionProp);
@@ -69,84 +65,6 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         } catch (e) { }
         return defaults;
     });
-
-    // Ref espejo de muestrasLocalesDB: evita stale closure en obtenerRutasAudio al cambiar timbre.
-    const muestrasLocalesDBRef = useRef<Muestra[]>([]);
-    const cargarMuestrasLocales = useCallback(async (manual = false) => {
-        try {
-            const res = await fetch('/muestrasLocales.json?t=' + Date.now());
-            const data = await res.json();
-            // No sobreescribir defaults hardcodeados si el JSON viene vacío.
-            if (data.pitos?.length > 0) setSamplesPitos(data.pitos);
-            if (data.bajos?.length > 0) setSamplesBajos(data.bajos);
-            if (data.armonizado?.length > 0) setSamplesArmonizado(data.armonizado);
-            else setSamplesBajos(data.bajos || []);
-            if (manual) motorAudioPro.limpiarBanco(instrumentoId);
-        } catch (e) { }
-    }, [instrumentoId]);
-
-    useEffect(() => { cargarMuestrasLocales(); }, [cargarMuestrasLocales]);
-
-    // Reconstruye Muestra[] del banco local cada vez que cambia timbre o lista de muestras.
-    useEffect(() => {
-        const mLocales: Muestra[] = [];
-        // Leer de ajustes.timbre (reactivo), NO de ajustesRef.current — la ref puede estar stale dentro de un useEffect.
-        const timbreActivo = ajustes.timbre || 'Brillante';
-        const carpetaPitos = timbreActivo === 'Armonizado' ? 'ArmonizadoPro' : 'Brillante';
-        const listaActivePitos = timbreActivo === 'Armonizado' ? samplesArmonizado : samplesPitos;
-
-        // Pitos: formato esperado {Nota}-{Octava}-cm.mp3
-        listaActivePitos.forEach(file => {
-            const parts = file.split('-');
-            if (parts.length >= 2) {
-                mLocales.push({
-                    nota: parts[0],
-                    octava: parseInt(parts[1]) || 4,
-                    url_audio: `/audio/Muestras_Cromaticas/${carpetaPitos}/${file}`
-                });
-            }
-        });
-
-        // Bajos: formato Bajo{Nota}[-2][(acorde)]-cm.mp3
-        samplesBajos.forEach(file => {
-            let clean = file.replace('Bajo', '').replace('-cm.mp3', '');
-            let octava = 3;
-            let esAcorde = false;
-            let cualidad: 'mayor' | 'menor' = 'mayor';
-
-            if (clean.includes('(acorde)')) {
-                esAcorde = true;
-                clean = clean.replace('(acorde)', '');
-            }
-
-            if (clean.includes('-2')) {
-                octava = 2;
-                clean = clean.replace('-2', '');
-            }
-
-            if (clean.endsWith('m') && clean.length > 1 && !clean.endsWith('bm')) {
-                cualidad = 'menor';
-                clean = clean.substring(0, clean.length - 1);
-            }
-
-            mLocales.push({
-                nota: clean,
-                octava,
-                url_audio: `/audio/Muestras_Cromaticas/Bajos/${file}`,
-                tipo_bajo: esAcorde ? 'acorde' : 'nota',
-                cualidad: esAcorde ? cualidad : undefined
-            });
-        });
-
-        // Actualizar la ref SÍNCRONAMENTE antes de setState — evita que obtenerRutasAudio lea el DB viejo.
-        muestrasLocalesDBRef.current = mLocales;
-        setMuestrasLocalesDB(mLocales);
-
-        motorAudioPro.limpiarBanco(instrumentoId);
-        motorAudioPro.limpiarBanco('4e9f2a94-21c0-4029-872e-7cb1c314af69');
-        motorAudioPro.limpiarBanco('acordeon');
-        soundsPerKeyRef.current = {};
-    }, [samplesPitos, samplesArmonizado, samplesBajos, ajustes.timbre, instrumentoId]);
 
     useEffect(() => {
         const activarAudio = async () => {
@@ -202,28 +120,15 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         setSonidosVirtuales, sonidosVirtuales,
     });
 
-    useEffect(() => {
-        const cargarMuestras = async () => {
-            if (!instrumentoId) return;
-            setCargandoCloud(true);
-            try {
-                const { data, error } = await supabase
-                    .from('sim_muestras')
-                    .select('*')
-                    .eq('instrumento_id', instrumentoId) as any;
-
-                if (error) throw error;
-                setMuestrasDB(data || []);
-
-                motorAudioPro.limpiarBanco(instrumentoId);
-                soundsPerKeyRef.current = {};
-            } catch (e) {
-            } finally {
-                setCargandoCloud(false);
-            }
-        };
-        cargarMuestras();
-    }, [instrumentoId]);
+    // Samples: JSON local + Supabase + reconstruccion Muestra[]. Extraido a useAcordeonSamples.
+    const {
+        samplesPitos, samplesBajos, samplesArmonizado,
+        muestrasDB, muestrasLocalesDB, muestrasLocalesDBRef,
+        cargarMuestrasLocales,
+    } = useAcordeonSamples({
+        instrumentoId, timbreActivo: ajustes.timbre,
+        setCargandoCloud, soundsPerKeyRef,
+    });
 
     const obtenerOctava = (nombre: string, freq: number) => {
         const n = nombre.toLowerCase()
