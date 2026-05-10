@@ -1,68 +1,130 @@
 import React, { useEffect, useState } from 'react'
-import MensajesLayout from './MensajesLayout'
+import { useParams, useNavigate } from 'react-router-dom'
 import ListaChats from './ListaChats'
 import type { Chat } from './ListaChats'
 import ChatVista from './ChatVista'
 import { supabase } from '../../servicios/clienteSupabase'
-import './mensajes-v2.css'
+import './mensajes.css'
 
+/**
+ * Pagina unica para /mensajes y /mensajes/:chatId.
+ * - Sin chatId: layout completo (sidebar + empty state)
+ * - Con chatId en mobile: solo chat (sidebar oculto)
+ * - Con chatId en desktop: sidebar + chat
+ */
 export default function MensajesPage() {
-  const [chatSeleccionado, setChatSeleccionado] = useState<Chat | null>(null)
-  const [mostrarLista, setMostrarLista] = useState(true)
+  const { chatId } = useParams()
+  const navigate = useNavigate()
+  const [autenticado, setAutenticado] = useState<boolean | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<any>(null)
+  const [chatSeleccionado, setChatSeleccionado] = useState<Chat | null>(null)
+  const [chatCargado, setChatCargado] = useState<any>(null)
+  const [cargandoChat, setCargandoChat] = useState(false)
+  const [errorChat, setErrorChat] = useState('')
+  const esMobile = typeof window !== 'undefined' && window.innerWidth < 900
+  const [mostrarLista, setMostrarLista] = useState(!chatId || !esMobile)
 
+  // Auth + perfil
   useEffect(() => {
     let activo = true
-      ; (async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user || !activo) return
-        const { data } = await supabase.rpc('obtener_mi_perfil_completo')
-        if (!activo) return
-        setUsuarioActual(data)
-      })()
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!activo) return
+      if (!user) { setAutenticado(false); window.location.href = '/auth/login'; return }
+      setAutenticado(true)
+      const { data: perfil } = await supabase.rpc('obtener_mi_perfil_completo')
+      if (activo) setUsuarioActual(perfil || { id: user.id })
+    })()
     return () => { activo = false }
   }, [])
 
+  // Si la URL trae chatId, cargar el chat directamente (sin pasar por la lista)
+  useEffect(() => {
+    if (!chatId || !usuarioActual) return
+    let activo = true
+    ;(async () => {
+      setCargandoChat(true); setErrorChat('')
+      const { data, error } = await supabase
+        .from('chats')
+        .select(`*, miembros_chat(*, usuario:perfiles!miembros_chat_usuario_id_fkey(nombre_completo,url_foto_perfil,nombre_usuario,rol))`)
+        .eq('id', chatId)
+        .eq('activo', true)
+        .single()
+      if (!activo) return
+      if (error || !data) { setErrorChat('No se pudo cargar el chat'); setCargandoChat(false); return }
+      const esMiembro = (data.miembros_chat || []).some(
+        (m: any) => m.usuario_id === usuarioActual.id && m.estado_miembro === 'activo'
+      )
+      if (!esMiembro) { setErrorChat('No tienes acceso a este chat'); setCargandoChat(false); return }
+      setChatCargado({ ...data, miembros: data.miembros_chat })
+      setChatSeleccionado({ id: data.id } as Chat)
+      setCargandoChat(false)
+      if (esMobile) setMostrarLista(false)
+    })()
+    return () => { activo = false }
+  }, [chatId, usuarioActual?.id])
+
   function seleccionar(chat: Chat) {
     setChatSeleccionado(chat)
+    setChatCargado(chat)
+    navigate(`/mensajes/${chat.id}`)
     if (window.innerWidth < 900) setMostrarLista(false)
   }
 
   function volverALista() {
     setMostrarLista(true)
     setChatSeleccionado(null)
+    setChatCargado(null)
+    navigate('/mensajes')
+  }
+
+  if (autenticado === null) {
+    return <div className="msg_loading" style={{ height: '60vh' }}><div className="msg_spinner" /></div>
   }
 
   return (
-    <MensajesLayout>
-      <div className="msg_layout_container">
-        <div className={`msg_sidebar_container ${mostrarLista ? 'msg_visible' : 'msg_hidden'}`}>
-          <ListaChats
-            chatSeleccionado={chatSeleccionado?.id || null}
-            onSeleccionarChat={seleccionar}
-            usuarioActual={usuarioActual}
-          />
-        </div>
-        <div className="msg_view_container">
-          {chatSeleccionado ? (
-            <ChatVista chat={chatSeleccionado} onRegresar={volverALista} usuarioActual={usuarioActual} />
-          ) : (
-            <div className="msg_empty_state">
-              <div className="msg_empty_icon">💬</div>
-              <h2 className="msg_empty_title">Tus mensajes</h2>
-              <p className="msg_empty_subtitle">
-                Selecciona un chat de la lista para comenzar a conversar,
-                o crea uno nuevo para conectarte con otros miembros de la Academia Vallenata.
-              </p>
-              <div className="msg_empty_features">
-                <div>🛡️ <span>Chats privados y grupales</span></div>
-                <div>⚡ <span>Mensajes en tiempo real</span></div>
-                <div>😊 <span>Reacciones y emojis</span></div>
-              </div>
+    <div className="msg_layout">
+      <aside className={`msg_sidebar ${mostrarLista ? '' : 'is-hidden'}`}>
+        <ListaChats
+          chatSeleccionado={chatSeleccionado?.id || null}
+          onSeleccionarChat={seleccionar}
+          usuarioActual={usuarioActual}
+        />
+      </aside>
+
+      <main className="msg_view">
+        {cargandoChat ? (
+          <div className="msg_loading" style={{ height: '100%' }}>
+            <div className="msg_spinner" />
+            <p>Cargando chat...</p>
+          </div>
+        ) : errorChat ? (
+          <div className="msg_empty">
+            <div className="msg_empty_icon" style={{ background: 'linear-gradient(135deg,#fca5a5,#dc2626)' }}>⚠️</div>
+            <h2 className="msg_empty_title">{errorChat}</h2>
+            <p className="msg_empty_sub">Lo sentimos, ocurrió un problema al cargar este chat.</p>
+            <button onClick={volverALista} className="msg_sb_new" style={{ width: 'auto', padding: '10px 18px', borderRadius: 8, fontSize: '.92rem' }}>
+              Volver a Mensajes
+            </button>
+          </div>
+        ) : chatCargado ? (
+          <ChatVista chat={chatCargado} usuarioActual={usuarioActual} onRegresar={volverALista} />
+        ) : (
+          <div className="msg_empty">
+            <div className="msg_empty_icon">💬</div>
+            <h2 className="msg_empty_title">Tus mensajes</h2>
+            <p className="msg_empty_sub">
+              Selecciona un chat para empezar, o crea uno nuevo
+              para conectarte con la Academia Vallenata.
+            </p>
+            <div className="msg_empty_features">
+              <div>🛡️ Chats privados y grupales</div>
+              <div>⚡ Mensajes en tiempo real</div>
+              <div>😊 Reacciones y emojis</div>
             </div>
-          )}
-        </div>
-      </div>
-    </MensajesLayout>
+          </div>
+        )}
+      </main>
+    </div>
   )
 }

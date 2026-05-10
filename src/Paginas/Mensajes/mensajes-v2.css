@@ -1,7 +1,0 @@
-/* ============================================================
-   MENSAJES — Entry point modular
-   Importa: layout (vars + container), sidebar (lista), chat (vista)
-   ============================================================ */
-@import './mensajes-layout.css';
-@import './mensajes-sidebar.css';
-@import './mensajes-chat.css';

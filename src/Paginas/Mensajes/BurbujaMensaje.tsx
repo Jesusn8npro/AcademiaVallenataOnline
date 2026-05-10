@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React from 'react'
 import type { Mensaje } from '../../servicios/mensajeriaService'
-import './BurbujaMensaje.css'
 
 interface Props {
     mensaje: Mensaje
@@ -10,72 +9,58 @@ interface Props {
     onResponder?: () => void
 }
 
-function formatearHora(iso: string): string {
+function hora(iso: string) {
     try {
         const d = new Date(iso)
-        const h = d.getHours()
-        const m = d.getMinutes()
-        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-    } catch {
-        return ''
-    }
+        return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    } catch { return '' }
 }
 
-export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguiente, chatEsGrupal, onResponder }: Props) {
-    const [, setMostrarAcciones] = useState(false)
+const ICONO_LEIDO = (
+    <svg viewBox="0 0 16 11" preserveAspectRatio="xMidYMid meet">
+        <path fill="#53bdeb" d="M11.071 0.653a.6.6 0 0 1 .849.024l.825.886a.6.6 0 0 1-.024.849L4.846 9.823a.6.6 0 0 1-.849-.024L.823 6.398a.6.6 0 0 1 .024-.849l.825-.768a.6.6 0 0 1 .849.024l2.236 2.4 6.314-6.552z" />
+        <path fill="#53bdeb" d="M15.146 0.653a.6.6 0 0 1 .849.024l.825.886a.6.6 0 0 1-.024.849L8.921 9.823a.6.6 0 0 1-.849-.024L7.247 8.91a.6.6 0 0 1 .024-.849l.012-.011 6.628-6.876a.6.6 0 0 1 .849-.024l.387.503z" />
+    </svg>
+)
 
+const ICONO_ENVIADO = (
+    <svg viewBox="0 0 16 11" preserveAspectRatio="xMidYMid meet">
+        <path fill="#8696a0" d="M11.071 0.653a.6.6 0 0 1 .849.024l.825.886a.6.6 0 0 1-.024.849L4.846 9.823a.6.6 0 0 1-.849-.024L.823 6.398a.6.6 0 0 1 .024-.849l.825-.768a.6.6 0 0 1 .849.024l2.236 2.4 6.314-6.552z" />
+    </svg>
+)
+
+export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguiente, chatEsGrupal, onResponder }: Props) {
     const esPrimero = !mensajeAnterior || mensajeAnterior.usuario_id !== mensaje.usuario_id
     const esUltimo = !mensajeSiguiente || mensajeSiguiente.usuario_id !== mensaje.usuario_id
+    const tipo = mensaje.es_mio ? 'is-own' : 'is-other'
 
     return (
-        <div
-            className={`bm-group ${mensaje.es_mio ? 'bm-own' : 'bm-other'} ${esPrimero ? 'bm-first' : ''}`}
-            onMouseEnter={() => setMostrarAcciones(true)}
-            onMouseLeave={() => setMostrarAcciones(false)}
-            onDoubleClick={onResponder}
-        >
-            {!mensaje.es_mio && (
-                <div className="bm-avatar-container">
-                    {esUltimo ? (
-                        <img
-                            src={mensaje.usuario?.url_foto_perfil || '/images/default-user.png'}
-                            alt="avatar"
-                            className="bm-avatar-img"
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }}
-                        />
-                    ) : (
-                        <div className="bm-avatar-spacer" />
-                    )}
-                </div>
-            )}
+        <div className={`bm_group ${tipo} ${esPrimero ? 'is-first' : ''}`} onDoubleClick={onResponder}>
+            {!mensaje.es_mio && (esUltimo ? (
+                <img
+                    src={mensaje.usuario?.url_foto_perfil || '/images/default-user.png'}
+                    alt="avatar"
+                    className="bm_avatar"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }}
+                />
+            ) : <div className="bm_avatar_spacer" />)}
 
-            <div className="bm-content-wrapper">
+            <div className="bm_content">
                 {!mensaje.es_mio && chatEsGrupal && esPrimero && (
-                    <span className="bm-username">
-                        {mensaje.usuario?.nombre_completo || 'Usuario'}
-                    </span>
+                    <span className="bm_username">{mensaje.usuario?.nombre_completo || 'Usuario'}</span>
                 )}
 
-                <div className="bm-bubble">
-                    {mensaje.tipo === 'imagen' && mensaje.url_media ? (
-                        <img src={mensaje.url_media} alt="adjunto" />
-                    ) : null}
-                    <span>{mensaje.contenido}</span>
+                <div className="bm_bubble">
+                    {mensaje.tipo === 'imagen' && mensaje.url_media && (
+                        <img src={mensaje.url_media} alt="adjunto" className="bm_img" />
+                    )}
+                    <span className="bm_text">{mensaje.contenido}</span>
 
-                    <div className="bm-meta">
-                        <span className="bm-time">{formatearHora(mensaje.creado_en)}</span>
+                    <div className="bm_meta">
+                        <span className="bm_time">{hora(mensaje.creado_en)}</span>
                         {mensaje.es_mio && (
-                            <span className="bm-checks" title={mensaje.leido ? 'Leído' : 'Enviado'}>
-                                {mensaje.leido ? (
-                                    <svg viewBox="0 0 16 11" preserveAspectRatio="xMidYMid meet" version="1.1">
-                                        <path fill="#53bdeb" d="M11.071 0.653a0.6 0.6 0 0 1 0.849 0.024l0.825 0.886a0.6 0.6 0 0 1-0.024 0.849L4.846 9.823a0.6 0.6 0 0 1-0.849-0.024L0.823 6.398a0.6 0.6 0 0 1 0.024-0.849l0.825-0.768a0.6 0.6 0 0 1 0.849 0.024l2.236 2.4 6.314-6.552z" />
-                                        <path fill="#53bdeb" d="M15.146 0.653a0.6 0.6 0 0 1 0.849 0.024l0.825 0.886a0.6 0.6 0 0 1-0.024 0.849L8.921 9.823a0.6 0.6 0 0 1-0.849-0.024L7.247 8.91a0.6 0.6 0 0 1 0.024-0.849l0.012-0.011 6.628-6.876a0.6 0.6 0 0 1 0.849-0.024l0.387 0.503z" />
-                                    </svg>
-                                ) : (
-                                    <svg viewBox="0 0 16 11" preserveAspectRatio="xMidYMid meet">
-                                        <path fill="#8696a0" d="M11.071 0.653a0.6 0.6 0 0 1 0.849 0.024l0.825 0.886a0.6 0.6 0 0 1-0.024 0.849L4.846 9.823a0.6 0.6 0 0 1-0.849-0.024L0.823 6.398a0.6 0.6 0 0 1 0.024-0.849l0.825-0.768a0.6 0.6 0 0 1 0.849 0.024l2.236 2.4 6.314-6.552z" />
-                                    </svg>
-                                )}
+                            <span className="bm_checks" title={mensaje.leido ? 'Leído' : 'Enviado'}>
+                                {mensaje.leido ? ICONO_LEIDO : ICONO_ENVIADO}
                             </span>
                         )}
                     </div>

@@ -26,7 +26,6 @@ import ContenidoTutorial from './Paginas/Tutoriales/ContenidoTutorial'
 import ClaseTutorial from './Paginas/Tutoriales/ClaseTutorial'
 import ComunidadPage from './Paginas/Comunidad/ComunidadPage'
 import MensajesPage from './Paginas/Mensajes/MensajesPage'
-import ChatPage from './Paginas/Mensajes/ChatPage'
 import PanelEstudiante from './Paginas/PanelEstudiante/PanelEstudiante'
 import RankingPage from './Paginas/Ranking/RankingPage'
 import CursoAcordeonDesdeCero from './Paginas/Cursos/CursoAcordeonDesdeCero'
@@ -81,6 +80,7 @@ import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
 import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
 import FuelleAcordeon from './Paginas/FuelleAcordeon/FuelleAcordeon';
+import AcordeonDiapason3D from './Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D';
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
@@ -201,7 +201,7 @@ const AppContent = () => {
           <Route path="/tutoriales/:slug/contenido" element={<ContenidoTutorial />} />
           <Route path="/tutoriales/:slug/clase/:claseSlug" element={<ClaseTutorial />} />
           <Route path="/mensajes" element={<MensajesPage />} />
-          <Route path="/mensajes/:chatId" element={<ChatPage />} />
+          <Route path="/mensajes/:chatId" element={<MensajesPage />} />
           <Route path="/comunidad" element={<ComunidadPage />} />
           <Route path="/ranking" element={<RankingPage />} />
         </Route>
@@ -214,6 +214,7 @@ const AppContent = () => {
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
+        <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/acordeon-pro-max" element={<HomeProMax />} />
