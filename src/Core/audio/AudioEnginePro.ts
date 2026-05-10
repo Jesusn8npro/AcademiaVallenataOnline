@@ -1208,16 +1208,6 @@ export class MotorAudioPro {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try { await this.contexto.resume(); } catch (_) { }
         }
-        // Log de latencia para diagnostico en mobile (solo se imprime una vez).
-        if (!(this as any)._latenciaLogueada) {
-            (this as any)._latenciaLogueada = true;
-            try {
-                const ctx: any = this.contexto;
-                const baseMs = (ctx.baseLatency || 0) * 1000;
-                const outputMs = (ctx.outputLatency || 0) * 1000;
-                console.log(`[motorAudioPro] sampleRate=${ctx.sampleRate}Hz | baseLatency=${baseMs.toFixed(1)}ms | outputLatency=${outputMs.toFixed(1)}ms | state=${ctx.state}`);
-            } catch (_) { }
-        }
     }
 
     obtenerBanco(id: string, nombre: string): BancoSonido {
