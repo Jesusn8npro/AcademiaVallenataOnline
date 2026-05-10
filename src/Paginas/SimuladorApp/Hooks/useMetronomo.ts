@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
+import { pulsoMetronomoStore } from '../store/pulsoMetronomoStore';
 
 type SonidoEfecto = 'Electrónico' | 'Madera' | 'Aplausos' | 'Campana 1' | 'Campana 2' | 'Tono' | 'Silencioso' | 'Baqueta';
 
@@ -11,7 +12,10 @@ export const useMetronomo = (bpmInicial: number) => {
     const [volumen, setVolumen] = useState(0.5);
     const [pan, setPan] = useState(0); // -1..1 balance L/R stereo
     const [sonidoEfecto, setSonidoEfecto] = useState<SonidoEfecto>('Baqueta');
-    const [pulsoActual, setPulsoActual] = useState(0);
+    // `pulsoActual` vive en un store externo (pulsoMetronomoStore): el scheduler
+    // escribia 1-4 Hz via setState y re-renderizaba SimuladorApp.tsx entero.
+    // Ahora se escribe al store y solo PanelMetronomoInline (que lo lee via
+    // usePulsoMetronomo) se re-renderiza, y solo cuando el modal está abierto.
 
     const audioCtx = useRef<AudioContext | null>(null);
     const nextNoteTime = useRef(0);
@@ -93,7 +97,7 @@ export const useMetronomo = (bpmInicial: number) => {
             if (!isSubdivision) {
                 const beatInBar = Math.floor(pulseCount.current / subdivisionRef.current) % compasRef.current;
                 const delay = (nextNoteTime.current - audioCtx.current!.currentTime) * 1000;
-                setTimeout(() => setPulsoActual(beatInBar), Math.max(0, delay));
+                setTimeout(() => pulsoMetronomoStore.set(beatInBar), Math.max(0, delay));
             }
 
             nextNoteTime.current += secondsPerClick;
@@ -116,7 +120,7 @@ export const useMetronomo = (bpmInicial: number) => {
         }
         nextNoteTime.current = ctx.currentTime;
         pulseCount.current = 0;
-        setPulsoActual(0);
+        pulsoMetronomoStore.set(0);
         timerID.current = window.setInterval(scheduler, 25);
         setActivo(true);
     };
@@ -124,7 +128,7 @@ export const useMetronomo = (bpmInicial: number) => {
     const detener = () => {
         if (timerID.current) { clearInterval(timerID.current); timerID.current = null; }
         setActivo(false);
-        setPulsoActual(-1);
+        pulsoMetronomoStore.set(-1);
     };
 
     // Pan en vivo via StereoPannerNode (rampa 30ms para evitar zipper noise).
@@ -137,7 +141,7 @@ export const useMetronomo = (bpmInicial: number) => {
 
     return {
         activo, bpm, setBpm, compas, setCompas, subdivision, setSubdivision,
-        volumen, setVolumen, pan, setPan, sonidoEfecto, setSonidoEfecto, pulsoActual,
+        volumen, setVolumen, pan, setPan, sonidoEfecto, setSonidoEfecto,
         iniciar, detener
     };
 };
