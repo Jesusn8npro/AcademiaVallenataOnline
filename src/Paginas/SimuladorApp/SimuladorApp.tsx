@@ -11,6 +11,7 @@ import { useGrabacionProMax } from '../AcordeonProMax/Hooks/useGrabacionProMax';
 import { obtenerGrabacion } from '../../servicios/grabacionesHeroService';
 import { useReproductorLoops } from './Hooks/useReproductorLoops';
 import { useMetronomo } from './Hooks/useMetronomo';
+import { useEfectosAudio } from './Hooks/useEfectosAudio';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 const ModalGrabacionAdmin = lazy(() => import('./Componentes/ModalGrabacionAdmin'));
 import GaleriaAcordeones from './Componentes/GaleriaAcordeones';
@@ -130,47 +131,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     }, []);
 
     // ─── Panel de Efectos de Audio ──────────────────────────────────────────
-    // Estados controlados que mapean al motor de audio. Reverb arranca apagado
-    // por defecto (mantiene latencia mínima en Android: directBus activo).
-    const [reverbActivo, setReverbActivo] = useState(false);
-    const [reverbIntensidad, setReverbIntensidad] = useState(20);
-    const [reverbPreset, setReverbPreset] = useState<
-        | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
-        | 'sala_ensayo' | 'cuarto_grande' | 'club'
-        | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
-        | 'escenario_abierto' | 'canon' | 'bosque'
-        | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer'
-    >('cuarto_grande');
-    // Eco: intensidad 0..100 = wet+feedback; tiempo 0..100 mapea a 50..800ms.
-    const [ecoActivo, setEcoActivo] = useState(false);
-    const [ecoIntensidad, setEcoIntensidad] = useState(30);
-    const [ecoTiempo, setEcoTiempo] = useState(40);
-    // Distorsión: intensidad 0..100 = mezcla del path distorsionado;
-    // preset selecciona curva (tanh/hardclip/fuzz/etc) + EQ tonal pre/post.
-    const [distorsActivo, setDistorsActivo] = useState(false);
-    const [distorsIntensidad, setDistorsIntensidad] = useState(40);
-    const [distorsPreset, setDistorsPreset] = useState<
-        | 'tubo_calido' | 'tubo_cremoso' | 'vintage_drive' | 'lofi_tape'
-        | 'crunch_clasico' | 'overdrive_blues' | 'rock_70s'
-        | 'distorsion_dura' | 'heavy_metal' | 'thrash' | 'death_metal'
-        | 'fuzz_muff' | 'fuzz_tone' | 'octave_fuzz'
-        | 'bit_crusher' | 'megafono' | 'telefono' | 'wave_folder'
-    >('crunch_clasico');
-    const [graves, setGraves] = useState(0);
-    const [medios, setMedios] = useState(0);
-    const [agudos, setAgudos] = useState(0);
-    // Volúmenes y panning independientes para teclado y bajos. El motor tiene
-    // sub-buses busTeclado/busBajos cada uno con su GainNode + StereoPannerNode,
-    // así el slider TECLADO solo afecta pitos y BAJOS solo afecta el lado bajos.
-    const [volumenTeclado, setVolumenTeclado] = useState(85);
-    const [volumenBajos, setVolumenBajos] = useState(85);
-    // Pan stereo: -50 = izquierda, 0 = centro, 50 = derecha (UI). El motor
-    // recibe el rango -1..1 estándar de StereoPannerNode.
-    const [panTeclado, setPanTeclado] = useState(0);
-    const [panBajos, setPanBajos] = useState(0);
-    // Loops y metrónomo aún no tienen pan en su pipeline propio (placeholder UI).
-    const [panLoops, setPanLoops] = useState(0);
-    const [panMetronomo, setPanMetronomo] = useState(0);
+    // Estado controlado del panel + wiring al motor (reverb/eco/distorsion/EQ
+    // /sub-buses teclado/bajos). Toda la sincronizacion al motor vive dentro
+    // del hook; aqui solo conectamos los setters al PanelEfectosSimulador.
+    const efectos = useEfectosAudio();
 
     // Lista de pistas disponibles para usar como preview del slider LOOPS.
     // Buscamos "chande sabor" como default; si no, la primera disponible.
@@ -186,68 +150,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         );
         return chande || pistasDisponibles[0] || null;
     }, [pistasDisponibles]);
-
-    // Sincroniza Reverb con el motor: cuando el toggle está apagado mandamos 0
-    // (el motor se pasa al directBus sin filtros — latencia mínima en Android).
-    useEffect(() => {
-        const cantidad = reverbActivo ? reverbIntensidad / 100 : 0;
-        motorAudioPro.actualizarReverb(cantidad);
-    }, [reverbActivo, reverbIntensidad]);
-
-    // Cambiar preset regenera el impulse response del ConvolverNode → cambia
-    // la "personalidad" del espacio (cuarto vs vestíbulo vs escenario abierto).
-    useEffect(() => {
-        motorAudioPro.cargarPresetReverb(reverbPreset);
-    }, [reverbPreset]);
-
-    // Eco: cuando está apagado se manda intensidad=0 (silencia wet+feedback).
-    // Tiempo 0..100 UI → 50..800ms (cubre slap-back, delay clásico y dub).
-    useEffect(() => {
-        const intensidadFinal = ecoActivo ? ecoIntensidad / 100 : 0;
-        const tiempoSeg = 0.05 + (ecoTiempo / 100) * 0.75;
-        motorAudioPro.actualizarEco(intensidadFinal, tiempoSeg);
-    }, [ecoActivo, ecoIntensidad, ecoTiempo]);
-
-    // Distorsión: el preset define curva + EQ; el knob controla wet mix.
-    useEffect(() => {
-        const intensidadFinal = distorsActivo ? distorsIntensidad / 100 : 0;
-        motorAudioPro.actualizarDistorsion(intensidadFinal);
-    }, [distorsActivo, distorsIntensidad]);
-
-    useEffect(() => {
-        motorAudioPro.cargarPresetDistorsion(distorsPreset);
-    }, [distorsPreset]);
-
-    useEffect(() => {
-        motorAudioPro.actualizarEQ(graves, medios, agudos);
-    }, [graves, medios, agudos]);
-
-    // Sub-buses con volumen + pan independientes (TECLADO y BAJOS).
-    useEffect(() => {
-        motorAudioPro.setVolumenBusTeclado(volumenTeclado / 100);
-    }, [volumenTeclado]);
-    useEffect(() => {
-        motorAudioPro.setVolumenBusBajos(volumenBajos / 100);
-    }, [volumenBajos]);
-    useEffect(() => {
-        motorAudioPro.setPanTeclado(panTeclado / 50);
-    }, [panTeclado]);
-    useEffect(() => {
-        motorAudioPro.setPanBajos(panBajos / 50);
-    }, [panBajos]);
-
-    const restaurarEfectos = useCallback(() => {
-        setReverbActivo(false);
-        setReverbIntensidad(20);
-        setEcoActivo(false);
-        setEcoIntensidad(30);
-        setEcoTiempo(40);
-        setDistorsActivo(false);
-        setDistorsIntensidad(40);
-        setGraves(0);
-        setMedios(0);
-        setAgudos(0);
-    }, []);
 
     const [bajosVisible, setBajosVisible] = useState(false);
     const [bpmMetronomo, setBpmMetronomo] = useState(80);
@@ -321,11 +223,11 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     // Pan de loops y metrónomo (van por sus propios StereoPannerNode dentro
     // del hook respectivo, no por el motor principal).
     useEffect(() => {
-        loops.setPan(panLoops / 50);
-    }, [panLoops, loops]);
+        loops.setPan(efectos.panLoops / 50);
+    }, [efectos.panLoops, loops]);
     useEffect(() => {
-        metronomoVivo.setPan(panMetronomo / 50);
-    }, [panMetronomo, metronomoVivo]);
+        metronomoVivo.setPan(efectos.panMetronomo / 50);
+    }, [efectos.panMetronomo, metronomoVivo]);
 
     // ─── Previews del Panel de Efectos ──────────────────────────────────────
     // Tocan un sonido mientras el alumno mantiene presionado un slider de
@@ -1309,46 +1211,46 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                     <div className="peas-modal-contenido" onClick={(e) => e.stopPropagation()}>
                         <Suspense fallback={null}>
                         <PanelEfectosSimulador
-                            reverbActivo={reverbActivo}
-                            reverbIntensidad={reverbIntensidad}
-                            reverbPreset={reverbPreset}
-                            onCambiarReverbActivo={setReverbActivo}
-                            onCambiarReverbIntensidad={setReverbIntensidad}
-                            onCambiarReverbPreset={setReverbPreset}
-                            ecoActivo={ecoActivo}
-                            ecoIntensidad={ecoIntensidad}
-                            ecoTiempo={ecoTiempo}
-                            onCambiarEcoActivo={setEcoActivo}
-                            onCambiarEcoIntensidad={setEcoIntensidad}
-                            onCambiarEcoTiempo={setEcoTiempo}
-                            distorsActivo={distorsActivo}
-                            distorsIntensidad={distorsIntensidad}
-                            distorsPreset={distorsPreset}
-                            onCambiarDistorsActivo={setDistorsActivo}
-                            onCambiarDistorsIntensidad={setDistorsIntensidad}
-                            onCambiarDistorsPreset={setDistorsPreset}
-                            graves={graves}
-                            medios={medios}
-                            agudos={agudos}
-                            onCambiarGraves={setGraves}
-                            onCambiarMedios={setMedios}
-                            onCambiarAgudos={setAgudos}
-                            volumenTeclado={volumenTeclado}
-                            volumenBajos={volumenBajos}
+                            reverbActivo={efectos.reverbActivo}
+                            reverbIntensidad={efectos.reverbIntensidad}
+                            reverbPreset={efectos.reverbPreset}
+                            onCambiarReverbActivo={efectos.setReverbActivo}
+                            onCambiarReverbIntensidad={efectos.setReverbIntensidad}
+                            onCambiarReverbPreset={efectos.setReverbPreset}
+                            ecoActivo={efectos.ecoActivo}
+                            ecoIntensidad={efectos.ecoIntensidad}
+                            ecoTiempo={efectos.ecoTiempo}
+                            onCambiarEcoActivo={efectos.setEcoActivo}
+                            onCambiarEcoIntensidad={efectos.setEcoIntensidad}
+                            onCambiarEcoTiempo={efectos.setEcoTiempo}
+                            distorsActivo={efectos.distorsActivo}
+                            distorsIntensidad={efectos.distorsIntensidad}
+                            distorsPreset={efectos.distorsPreset}
+                            onCambiarDistorsActivo={efectos.setDistorsActivo}
+                            onCambiarDistorsIntensidad={efectos.setDistorsIntensidad}
+                            onCambiarDistorsPreset={efectos.setDistorsPreset}
+                            graves={efectos.graves}
+                            medios={efectos.medios}
+                            agudos={efectos.agudos}
+                            onCambiarGraves={efectos.setGraves}
+                            onCambiarMedios={efectos.setMedios}
+                            onCambiarAgudos={efectos.setAgudos}
+                            volumenTeclado={efectos.volumenTeclado}
+                            volumenBajos={efectos.volumenBajos}
                             volumenLoops={Math.round(loops.volumen * 100)}
                             volumenMetronomo={Math.round(metronomoVivo.volumen * 100)}
-                            onCambiarVolumenTeclado={setVolumenTeclado}
-                            onCambiarVolumenBajos={setVolumenBajos}
+                            onCambiarVolumenTeclado={efectos.setVolumenTeclado}
+                            onCambiarVolumenBajos={efectos.setVolumenBajos}
                             onCambiarVolumenLoops={(v) => loops.setVolumen(v / 100)}
                             onCambiarVolumenMetronomo={(v) => metronomoVivo.setVolumen(v / 100)}
-                            panTeclado={panTeclado}
-                            panBajos={panBajos}
-                            panLoops={panLoops}
-                            panMetronomo={panMetronomo}
-                            onCambiarPanTeclado={setPanTeclado}
-                            onCambiarPanBajos={setPanBajos}
-                            onCambiarPanLoops={setPanLoops}
-                            onCambiarPanMetronomo={setPanMetronomo}
+                            panTeclado={efectos.panTeclado}
+                            panBajos={efectos.panBajos}
+                            panLoops={efectos.panLoops}
+                            panMetronomo={efectos.panMetronomo}
+                            onCambiarPanTeclado={efectos.setPanTeclado}
+                            onCambiarPanBajos={efectos.setPanBajos}
+                            onCambiarPanLoops={efectos.setPanLoops}
+                            onCambiarPanMetronomo={efectos.setPanMetronomo}
                             onPreviewTecladoIniciar={previewTecladoIniciar}
                             onPreviewTecladoDetener={previewTecladoDetener}
                             onPreviewBajosIniciar={previewBajosIniciar}
@@ -1358,7 +1260,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                             onPreviewMetronomoIniciar={previewMetronomoIniciar}
                             onPreviewMetronomoDetener={previewMetronomoDetener}
                             onCerrar={() => toggleModal('efectos')}
-                            onRestaurar={restaurarEfectos}
+                            onRestaurar={efectos.restaurarEfectos}
                         />
                         </Suspense>
                     </div>
