@@ -13,30 +13,21 @@ import { useReplaySimulador } from './Hooks/useReplaySimulador';
 import { useGrabacionSimulador } from './Hooks/useGrabacionSimulador';
 import ModalGuardarSimulador from './Componentes/ModalGuardarSimulador';
 const ModalGrabacionAdmin = lazy(() => import('./Componentes/ModalGrabacionAdmin'));
-import GaleriaAcordeones from './Componentes/GaleriaAcordeones';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
 import OverlaysNavegacion from './Componentes/OverlaysNavegacion';
+import ModalesBarraSimulador from './Componentes/ModalesBarraSimulador';
 import { listarPistasPracticaLibre } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../AcordeonProMax/PracticaLibre/TiposPracticaLibre';
 
 import BarraHerramientas from './Componentes/BarraHerramientas/BarraHerramientas';
 import ContenedorBajos from './Componentes/ContenedorBajos';
-
-import MenuOpciones from './Componentes/BarraHerramientas/MenuOpciones';
-import ModalContacto from './Componentes/BarraHerramientas/ModalContacto';
-import ModalTonalidades from './Componentes/BarraHerramientas/ModalTonalidades';
-import ModalVista from './Componentes/BarraHerramientas/ModalVista';
-import ModalMetronomo from './Componentes/BarraHerramientas/ModalMetronomo';
-import ModalInstrumentos from './Componentes/BarraHerramientas/ModalInstrumentos';
-const PantallaAprende = lazy(() => import('./Juego/Pantallas/PantallaAprende'));
 import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
 const JuegoSimuladorApp = lazy(() => import('./Juego/JuegoSimuladorApp'));
 import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
 import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
-const ModalLoops = lazy(() => import('./Componentes/ModalLoops'));
 
 import './SimuladorApp.css';
 
@@ -610,56 +601,26 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 </div>
             </div>
 
-            <MenuOpciones
-                visible={modales.menu}
-                onCerrar={() => toggleModal('menu')}
-                botonRef={refsModales.menu as any}
-                onAbrirContacto={() => toggleModal('contacto')}
+            <ModalesBarraSimulador
+                modales={modales}
+                onToggleModal={toggleModal}
+                refsModales={refsModales as any}
+                logica={logica}
+                config={config}
+                setConfig={setConfig}
+                bpmMetronomo={bpmMetronomo}
+                setBpmMetronomo={setBpmMetronomo}
+                metronomoVivo={metronomoVivo}
+                loops={loops}
+                grabandoHero={grabacion.grabandoHero}
+                galeriaAbierta={galeriaAbierta}
+                onCerrarGaleria={() => setGaleriaAbierta(false)}
                 onAbrirGaleria={() => setGaleriaAbierta(true)}
-            />
-
-            <GaleriaAcordeones
-                visible={galeriaAbierta}
-                temaActivoId={temaAcordeonId}
+                temaAcordeonId={temaAcordeonId}
+                seleccionarTema={seleccionarTema}
                 esPremium={esPremium}
-                onCerrar={() => setGaleriaAbierta(false)}
-                onSeleccionar={seleccionarTema}
+                onIniciarJuego={onIniciarJuego}
             />
-
-            <ModalTonalidades visible={modales.tonalidades} onCerrar={() => toggleModal('tonalidades')} tonalidadSeleccionada={logica.tonalidadSeleccionada} onSeleccionarTonalidad={logica.setTonalidadSeleccionada} listaTonalidades={logica.listaTonalidades} botonRef={refsModales.tonalidades as any} />
-
-            <ModalVista
-                visible={modales.vista}
-                onCerrar={() => toggleModal('vista')}
-                modoVista={config.modoVista}
-                setModoVista={(v) => setConfig(c => ({ ...c, modoVista: v }))}
-                mostrarOctavas={config.mostrarOctavas}
-                setMostrarOctavas={(v) => setConfig(c => ({ ...c, mostrarOctavas: v }))}
-                vistaDoble={config.vistaDoble}
-                setVistaDoble={(v) => setConfig(c => ({ ...c, vistaDoble: v }))}
-                botonRef={refsModales.vista as any}
-            />
-
-            <ModalMetronomo visible={modales.metronomo} onCerrar={() => toggleModal('metronomo')} bpm={bpmMetronomo} setBpm={setBpmMetronomo} met={metronomoVivo} />
-
-            <Suspense fallback={null}>
-                <ModalLoops
-                    visible={modales.loops}
-                    onCerrar={() => toggleModal('loops')}
-                    pistaActivaId={loops.pistaActiva?.id || null}
-                    volumen={loops.volumen}
-                    velocidad={loops.velocidad}
-                    onVolumenChange={loops.setVolumen}
-                    onVelocidadChange={loops.setVelocidad}
-                    onSeleccionarPista={loops.reproducir}
-                    velocidadBloqueada={grabacion.grabandoHero}
-                    errorReproduccion={loops.errorReproduccion}
-                    pistasListas={loops.pistasListas}
-                    onPrecargarPistas={loops.precargarPistas}
-                />
-            </Suspense>
-
-            <ModalInstrumentos visible={modales.instrumentos} onCerrar={() => toggleModal('instrumentos')} listaInstrumentos={logica.listaInstrumentos} instrumentoId={logica.instrumentoId} onSeleccionarInstrumento={logica.setInstrumentoId} cargando={logica.cargandoCloud} botonRef={refsModales.instrumentos as any} />
 
             <PanelEfectosOverlay
                 visible={modales.efectos}
@@ -676,21 +637,6 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onPreviewMetronomoIniciar={previewMetronomoIniciar}
                 onPreviewMetronomoDetener={previewMetronomoDetener}
             />
-
-            <ModalContacto visible={modales.contacto} onCerrar={() => toggleModal('contacto')} />
-
-            {modales.aprende && (
-                <Suspense fallback={null}>
-                    <PantallaAprende
-                        visible={modales.aprende}
-                        onCerrar={() => toggleModal('aprende')}
-                        tonalidadActual={logica.tonalidadSeleccionada}
-                        onEmpezarCancion={(config: ConfigCancion) => {
-                            onIniciarJuego(config);
-                        }}
-                    />
-                </Suspense>
-            )}
 
             {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
 
