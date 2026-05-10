@@ -32,10 +32,6 @@ export type MensajePrueba = {
   id: number;
 };
 
-function convertirDireccionAFuelle(direccion: 'halar' | 'empujar'): DireccionFuelle {
-  return direccion === 'halar' ? 'abriendo' : 'cerrando';
-}
-
 export function useLogicaProMax() {
   const { usuario } = useUsuario();
   const [estadoJuego, setEstadoJuego] = useState<EstadoJuego>('seleccion');
@@ -85,16 +81,12 @@ export function useLogicaProMax() {
   const tickActualRef = useRef<number>(0);
   const notasImpactadasRef = useRef<Set<string>>(new Set());
   const posicionUltimoGolpeRef = useRef<{ x: number; y: number } | null>(null);
-  // Reproductor de la pista de fondo. Migrado de HTMLAudioElement a ReproductorMP3 para usar
-  // el MISMO clock (AudioContext) que las notas → cero drift. Igual al motor que usa GrabadorV2.
-  // ReproductorMP3 emula la API de HTMLAudio (currentTime, paused, readyState, play, pause,
-  // addEventListener para 'playing'/'seeked'/'pause') así que el resto del código no cambia.
+  // Reproductor de la pista de fondo (ReproductorMP3 emula API HTMLAudio, comparte AudioContext con las notas → cero drift).
   const audioFondoRef = useRef<AudioFondoPlayer | null>(null);
   const bpmOriginalRef = useRef<number>(120);
   const _onBeatCallbackRef = useRef<((beatIndex: number) => void) | undefined>(undefined);
   const direccionAlumnoRef = useRef<'halar' | 'empujar'>('halar');
   const _reproductoActionsRef = useRef({ alternarPausa: () => { }, buscarTick: (_t: number) => { } });
-  const totalTicksRef = useRef(0);
   const [loopAB, setLoopAB] = useState<{ start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean }>(
     { start: 0, end: 0, activo: false, hasStart: false, hasEnd: false }
   );
@@ -156,7 +148,8 @@ export function useLogicaProMax() {
   const _golpeHandlerRef = useRef<(idBoton: string) => void>(() => { });
 
   const _onNotaPresionadaEstable = useCallback((data: { idBoton: string }) => {
-    registrarPresionHero(data.idBoton, convertirDireccionAFuelle(direccionAlumnoRef.current));
+    const fuelle: DireccionFuelle = direccionAlumnoRef.current === 'halar' ? 'abriendo' : 'cerrando';
+    registrarPresionHero(data.idBoton, fuelle);
     _golpeHandlerRef.current(data.idBoton);
   }, [registrarPresionHero]);
 
@@ -227,15 +220,8 @@ export function useLogicaProMax() {
     audioFondoRef.current.currentTime = tiempoSegundos;
   }, []);
 
-  // Callback externo para consumidores fuera del Simulador (ej: useEstudioAdmin) que no tienen cancionSeleccionada.
-  const _onBeatExternoRef = useRef<((beatIndex: number) => void) | null>(null);
-  const setOnBeatExterno = useCallback((cb: ((beatIndex: number) => void) | null) => {
-    _onBeatExternoRef.current = cb;
-  }, []);
-
   const _onBeatEstable = useCallback((beatIndex: number) => {
     _onBeatCallbackRef.current?.(beatIndex);
-    _onBeatExternoRef.current?.(beatIndex);
   }, []);
 
   useEffect(() => {
@@ -274,7 +260,6 @@ export function useLogicaProMax() {
   );
 
   useEffect(() => { tickActualRef.current = reproductor.tickActual; }, [reproductor.tickActual]);
-  useEffect(() => { totalTicksRef.current = reproductor.totalTicks; }, [reproductor.totalTicks]);
   useEffect(() => {
     _reproductoActionsRef.current.alternarPausa = reproductor.alternarPausa;
     _reproductoActionsRef.current.buscarTick = reproductor.buscarTick;
@@ -382,9 +367,8 @@ export function useLogicaProMax() {
 
       if (modo === 'synthesia' || (modo === 'maestro_solo' && modoGuiadoRef.current)) {
         const UMBRAL_ACORDE = 15;
-        const UMBRAL_ANTICIPACION = 0;
 
-        if (tickActual >= (nota.tick - UMBRAL_ANTICIPACION) && notasEsperandoRef.current.length === 0) {
+        if (tickActual >= nota.tick && notasEsperandoRef.current.length === 0) {
           const grupoNotas = cancionSeleccionada.secuencia.filter(n =>
             Math.abs(n.tick - nota.tick) <= UMBRAL_ACORDE &&
             n.tick >= rangoMin && n.tick <= rangoMax &&
@@ -600,13 +584,7 @@ export function useLogicaProMax() {
   const iniciarJuego = useCallback(async (cancion: CancionHeroConTonalidad, saltarConteo: boolean = false, modoPracticaForzado?: ModoPractica) => {
     await motorAudioPro.activarContexto();
 
-    // Espera a que el bank de samples del acordeon tenga buffers reales antes de
-    // arrancar el RAF. Sin esto, la primera reproduccion tras montar JuegoSimuladorApp
-    // dispara las notas mientras el bank esta vacio — los efectos de useLogicaAcordeon
-    // limpian y recargan el bank en cadena (samples default → JSON local → instrumento
-    // de la nube), y motorAudioPro.reproducir devuelve null silenciosamente. Por eso
-    // sin reiniciar no se escucha el acordeon. Reintentamos cargas si vienen rutas
-    // disponibles, y poll como fallback hasta 2s.
+    // Espera bank de samples (≤2s) — sin esto, primera reproducción tras montar dispara notas con bank vacío.
     try {
       const bancoId = logica.instrumentoId || 'acordeon';
       const idsUnicos = new Set<string>();
@@ -618,8 +596,7 @@ export function useLogicaProMax() {
       while (Date.now() - inicio < TIMEOUT_MS) {
         const banco = (motorAudioPro as any).bancos?.get?.(bancoId);
         if (banco && banco.muestras && banco.muestras.size > 0) {
-          // El bank ya tiene muestras: intentamos cargar las que faltan para esta cancion
-          // (idempotente). Si obtenerRutasAudio devuelve algo, esto cierra los huecos.
+          // Bank listo: cargar las muestras que falten para esta cancion (idempotente).
           const cargas: Promise<void>[] = [];
           idsUnicos.forEach(id => {
             const rutas = logica.obtenerRutasAudio?.(id) || [];
@@ -664,9 +641,7 @@ export function useLogicaProMax() {
     const rangoTicks = seccion ? { inicio: seccion.tickInicio, fin: seccion.tickFin } : null;
     const offsetSegundos = seccion ? (seccion.tickInicio / resolucion) * (60 / bpmOriginal) : 0;
 
-    // Lead-in para secciones NO-intro: el MP3 arranca unos segundos antes del tickInicio para que el alumno
-    // escuche un poquito de la melodía y acomode los dedos. La SECUENCIA de notas NO arranca durante el
-    // lead-in — esperamos a que audio.currentTime cruce offsetSegundos y ahí soltamos las notas + el reloj.
+    // Lead-in para secciones no-intro: MP3 arranca 3s antes del tickInicio. La secuencia de notas se suelta junto.
     const LEADIN_SEGUNDOS_SECCION = 3;
     const tieneLeadIn = !!(seccion && offsetSegundos > 0);
     const offsetSegundosAudio = tieneLeadIn
@@ -675,18 +650,7 @@ export function useLogicaProMax() {
 
     const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
 
-    // ⭐ MIGRACIÓN A AudioBufferSourceNode (mismo motor que GrabadorV2).
-    // Antes usábamos `new Audio()` (HTMLAudio) que tiene dos problemas: (a) `currentTime` jitter
-    // de 16-50ms, (b) latencia de decoder variable 50-500ms entre play() y primer sample real.
-    // Esto generaba el desfase persistente que sufrías en secciones no-intro: el RAF de notas
-    // se alineaba a `audio.currentTime` (que iba adelantado del sonido real) → notas adelantadas.
-    //
-    // `ReproductorMP3` (AudioBufferSourceNode) NO tiene esos problemas: descarga + decodifica
-    // upfront, `currentTime` se calcula desde AudioContext.currentTime continuo, y comparte el
-    // MISMO clock que las notas → cero drift. Es exactamente lo que GrabadorV2 ya usa.
-    // En modo Maestro el alumno baja BPM con el slider y necesita preservesPitch.
-    // En todos los otros modos el BPM no cambia → AudioBufferSourceNode da
-    // sample-accurate sync sin tocar el tono (no hay rate change, no hay pitch shift).
+    // Modo Maestro baja BPM y necesita preservesPitch (HTMLAudio). Resto: AudioBufferSource (sample-accurate, mismo clock que notas).
     const audioPrecargado: AudioFondoPlayer | null = urlFondo
       ? (modoActual === 'maestro_solo'
           ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio)
@@ -698,10 +662,7 @@ export function useLogicaProMax() {
       audioFondoRef.current = audioPrecargado;
     }
 
-    // Carga upfront del buffer + seek a offsetSegundosAudio. ReproductorMP3.cargar descarga el
-    // archivo completo y lo decodifica en una pasada (~200-500ms para canciones de 4 min en
-    // red decente). Sin descarga progresiva → cero buffer underruns mid-playback → cero
-    // 'canplay' tras seek a zona sin buffer (el bug de la intro vs secciones).
+    // Carga upfront del buffer + seek (sin descarga progresiva → cero buffer underruns).
     const audioListo: Promise<void> = audioPrecargado
       ? (async () => {
           try {
@@ -737,16 +698,10 @@ export function useLogicaProMax() {
       let arrancado = false;
       let fallbackId: number | undefined;
 
-      // Soltar la secuencia: arrancar reproductor + setAudioSync. Se llama directamente cuando NO hay
-      // lead-in (intro / sin sección), o tras esperar que audio.currentTime cruce offsetSegundos cuando
-      // SÍ hay lead-in (sección no-intro).
+      // Suelta secuencia anclada al audio (tickInicio absoluto si hay rango, sino 0).
       const soltarSecuencia = () => {
         if (audioFondoRef.current !== audioPrecargado) return;
         if (modoActual === 'ninguno') {
-          // Anclar el grabador al audio + posición musical absoluta (tickInicio de la sección
-          // si la hay, sino 0). Sin esto los ticks capturados son RELATIVOS al inicio de
-          // grabación → el replay no podía saber la posición musical real. El audioElement
-          // permite que cada press se timestampee contra audio.currentTime → cero drift.
           iniciarCaptura('competencia', {
             tickInicio: rangoTicks?.inicio || 0,
             audioElement: audioPrecargado,
@@ -754,9 +709,6 @@ export function useLogicaProMax() {
           });
         }
         const targetTick = rangoTicks ? rangoTicks.inicio : 0;
-        // Con ReproductorMP3 ambos (audio y notas) viven en el MISMO AudioContext, así que
-        // comparten la misma outputLatency — no hace falta compensar aquí. `currentTime` del
-        // ReproductorMP3 ya es sample-accurate (calculado desde AudioContext.currentTime).
         const audioTickPos = Math.max(0, Math.floor(audioPrecargado.currentTime * factor));
         const tickInicialReal = rangoTicks
           ? audioTickPos
@@ -775,12 +727,8 @@ export function useLogicaProMax() {
         audioPrecargado.removeEventListener('playing', arrancarTickClock);
         // Si el usuario canceló/reinició antes de 'playing', audioFondoRef ya apunta a otro audio — no interferir.
         if (audioFondoRef.current !== audioPrecargado) return;
-
-        // Suelta el reproductor INMEDIATAMENTE — incluso durante el lead-in. tickActual empieza a avanzar
-        // desde la posición del audio (= offsetSegundos - leadIn), así PuenteNotas ve las notas próximas
-        // de la sección ya en vuelo, acercándose al alumno antes de que tengan que pisarse. El maestro NO
-        // dispara los tonos durante el lead-in (gate en useReproductorHero por rangoSeccion.inicio): solo
-        // se ven las notas acercándose, sin escucharlas — el alumno tiene 3s de "preview visual" puro.
+        // Suelta la secuencia incluso durante el lead-in: el alumno ve las notas acercándose 3s antes (preview visual).
+        // El maestro NO dispara tonos durante el lead-in (gate en useReproductorHero por rangoSeccion.inicio).
         soltarSecuencia();
       };
 
@@ -1022,7 +970,6 @@ export function useLogicaProMax() {
     seleccionarSeccion,
     progresoVersion,
     refrescarProgresoSecciones,
-    setOnBeatExterno,
     bpm,
     cambiarBpm,
     estadisticas,
