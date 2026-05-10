@@ -833,7 +833,6 @@ export class MotorAudioPro {
             // Slaps alternados L/R (ping-pong)
             let pos = preDelayLength + (ch === 0 ? slapSamples : Math.floor(slapSamples * 1.5));
             let amp = 0.7;
-            let count = 0;
             while (pos < totalLength && amp > 0.005) {
                 // Cada slap es un pulso corto con decay propio (~30ms).
                 for (let k = 0; k < 1500 && pos + k < totalLength; k++) {
@@ -841,7 +840,6 @@ export class MotorAudioPro {
                 }
                 pos += slapSamples * 2; // ping-pong: 2× separación entre slaps del mismo canal
                 amp *= 0.65;
-                count++;
             }
             // Cuerpo tenue debajo de los slaps (cola del túnel).
             let prev = 0;
