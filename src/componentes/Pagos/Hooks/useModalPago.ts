@@ -201,6 +201,7 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
             });
 
             handler.open({
+                external: 'true',
                 name: obtenerTitulo(contenido, tipoContenido),
                 description: obtenerTitulo(contenido, tipoContenido),
                 invoice: refPayco,
