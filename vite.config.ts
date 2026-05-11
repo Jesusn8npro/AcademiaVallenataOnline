@@ -41,8 +41,9 @@ export default defineConfig(({ mode }) => ({
           '**/*.gltf',
           '**/*.obj'
         ],
-        // El chunk `vendor` pesa ~3.3 MB; permitimos hasta 4 MB para que entre en precache.
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // El chunk `vendor` pesa ~4.2 MB (incluye three/@react-three tras
+        // unificar chunks para evitar TDZ circular). Permitimos 5 MB de margen.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
@@ -121,12 +122,15 @@ export default defineConfig(({ mode }) => ({
           // undefined", "X is not a function").
           //
           // Las reglas evalúan en orden — los scoped packages
-          // (@react-three, @splinetool, @supabase) van ANTES que los
-          // matchers genéricos de react para evitar capturas indebidas.
+          // (@supabase) van ANTES que los matchers genéricos de react
+          // para evitar capturas indebidas.
 
-          if (/[\\/]node_modules[\\/]@react-three[\\/]/.test(id)) return 'three-vendor';
-          if (/[\\/]node_modules[\\/]@splinetool[\\/]/.test(id)) return 'three-vendor';
-          if (/[\\/]node_modules[\\/]three[\\/]/.test(id)) return 'three-vendor';
+          // NOTA: three / @react-three / @splinetool quedan en `vendor`.
+          // Separarlos en `three-vendor` causaba ciclo
+          // "three-vendor -> vendor -> three-vendor" porque deps en
+          // vendor (framer-motion, meshline) tocan three. El ciclo
+          // producia TDZ en runtime ("Cannot access 'bp' before
+          // initialization") y pantalla blanca en produccion.
 
           if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) {
             return 'react-vendor';
