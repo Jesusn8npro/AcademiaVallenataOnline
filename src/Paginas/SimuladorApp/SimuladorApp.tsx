@@ -351,6 +351,25 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         return () => clearTimeout(id);
     }, [escala, limpiarGeometria]);
 
+    // Recalcular geometria cuando cambian sliders de tamano/posicion individuales (PestanaDiseno).
+    // Sin esto, al subir el tamano del boton via slider, los rects en rectsCache quedan en el
+    // valor anterior -> el hit-test marca posiciones imprecisas (el dedo "se ensucia" con
+    // botones contiguos). El listener de resize/orientation no se dispara con cambios CSS.
+    useEffect(() => {
+        const id = setTimeout(() => limpiarGeometria(), 250);
+        return () => clearTimeout(id);
+    }, [
+        logica.ajustes.pitosBotonTamano,
+        logica.ajustes.bajosBotonTamano,
+        logica.ajustes.teclasLeft,
+        logica.ajustes.teclasTop,
+        logica.ajustes.bajosLeft,
+        logica.ajustes.bajosTop,
+        logica.ajustes.x,
+        logica.ajustes.y,
+        limpiarGeometria,
+    ]);
+
     const toggleModal = (nombre: keyof typeof modales) => {
         setModales(prev => ({ menu: false, tonalidades: false, vista: false, metronomo: false, instrumentos: false, contacto: false, aprende: false, loops: false, efectos: false, [nombre]: !prev[nombre] }));
     };
