@@ -563,6 +563,8 @@
 }
 
 /* Diseño responsivo */
+
+/* 1400px-1600px: padding ligeramente reducido */
 @media (max-width: 1600px) {
   .mpub-barra-superior-negra {
     padding: 0px 2rem;
@@ -577,11 +579,55 @@
   }
 }
 
-@media (max-width: 1600px) {
+/* 1280px: zona-izquierda (redes sociales decorativas) se oculta para dar
+   espacio al menu principal. Los enlaces siguen visibles. */
+@media (max-width: 1280px) {
   .mpub-zona-izquierda {
     display: none !important;
   }
+  .mpub-zona-derecha {
+    width: 100%;
+  }
+  .mpub-menu-enlaces {
+    gap: 1.2rem;
+    padding: 0 1rem;
+  }
+  .mpub-enlace-nav {
+    padding: 10px 12px;
+    font-size: 0.98rem;
+  }
+  .mpub-enlace-texto {
+    font-size: 0.94rem;
+  }
+}
 
+/* 1100px: enlaces se compactan mas (font + gap mas chicos). El menu sigue
+   visible con todos los items, solo mas apretados. */
+@media (max-width: 1100px) {
+  .mpub-menu-enlaces {
+    gap: 0.6rem;
+    padding: 0 0.5rem;
+  }
+  .mpub-enlace-nav {
+    padding: 8px 10px;
+    font-size: 0.92rem;
+  }
+  .mpub-enlace-texto {
+    font-size: 0.88rem;
+  }
+  .mpub-icono-enlace-nav svg {
+    width: 18px;
+    height: 18px;
+  }
+  .mpub-contenedor-barra-principal {
+    gap: 0.5rem;
+  }
+}
+
+/* 1000px: ahora SI ocultamos enlaces y mostramos hamburguesa. Antes esto
+   pasaba a 1600px (demasiado pronto, hasta en monitores Full HD se veia
+   hamburguesa). */
+@media (max-width: 1000px) {
   .mpub-barra-superior-negra {
     padding: 0;
   }
