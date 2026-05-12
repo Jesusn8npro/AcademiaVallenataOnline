@@ -138,7 +138,7 @@ const SeccionOpciones: React.FC = () => {
                 )}
 
                 <div style={styles.imagenContenedor}>
-                  <img src={opcion.imagen} alt={opcion.titulo} style={styles.imagenOpcion} width="400" height="400" loading="lazy" decoding="async" />
+                  <img src={opcion.imagen} alt={opcion.titulo} style={styles.imagenOpcion} width="320" height="320" loading="lazy" decoding="async" />
                   <div style={styles.overlayImagen}></div>
                   <div style={styles.iconoOpcion}>{opcion.icono}</div>
                   {opcion.destacado && <div style={styles.brilloDestacado}></div>}
