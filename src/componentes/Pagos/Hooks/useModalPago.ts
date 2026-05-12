@@ -4,9 +4,10 @@ import { supabase } from '../../../servicios/clienteSupabase';
 import { crearRegistroPago } from '../../../servicios/pagoService';
 import {
     type ContenidoCompra, type DatosPago,
-    EPAYCO_RESPONSE_URL, EPAYCO_CONFIRMATION_URL, DATOS_INICIALES,
+    EPAYCO_RESPONSE_URL, DATOS_INICIALES,
     limpiarTelefono, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
-    generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario
+    generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario,
+    crearSesionEpayco
 } from './_utilidadesPago';
 export type { ContenidoCompra } from './_utilidadesPago';
 
@@ -19,8 +20,6 @@ interface Params {
 
 export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: Params) {
     const { usuario } = useUsuario();
-    const EPAYCO_PUBLIC_KEY = import.meta.env.VITE_EPAYCO_PUBLIC_KEY;
-
     const [pasoActual, setPasoActual] = useState(1);
     const [cargando, setCargando] = useState(false);
     const [procesandoPago, setProcesandoPago] = useState(false);
@@ -195,33 +194,30 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
 
             if (!(window as any).ePayco) throw new Error('Epayco no disponible');
 
-            const handler = (window as any).ePayco.checkout.configure({
-                key: EPAYCO_PUBLIC_KEY || '491d6a0b6e992cf924edd8d3d088aff1',
-                test: import.meta.env.VITE_EPAYCO_TEST_MODE === 'true',
+            // Flujo SDK v2: pedir sessionId al backend (Edge Function que usa
+            // PRIVATE_KEY) y pasarlo al SDK. external:false = modal onpage.
+            const sessionId = await crearSesionEpayco({
+                refPayco,
+                nombreProducto: obtenerTitulo(contenido, tipoContenido),
+                descripcion: `${obtenerLabelTipo(tipoContenido)}: ${obtenerTitulo(contenido, tipoContenido)}`,
+                total, base, iva,
+                nombre: datosPago.nombre,
+                apellido: datosPago.apellido,
+                email: datosPago.email,
+                telefono: limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
+                direccion: datosPago.direccion,
+                tipoDocumento: datosPago.tipo_documento,
+                numeroDocumento: datosPago.numero_documento,
+                ciudad: datosPago.ciudad,
+                pais: 'CO',
+                responseUrl: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
             });
 
-            handler.open({
-                external: 'true',
-                name: obtenerTitulo(contenido, tipoContenido),
-                description: obtenerTitulo(contenido, tipoContenido),
-                invoice: refPayco,
-                currency: 'cop',
-                amount: total.toString(),
-                tax_base: base.toString(),
-                tax: iva.toString(),
-                country: 'co',
-                lang: 'es',
-                name_billing: `${datosPago.nombre} ${datosPago.apellido}`,
-                address_billing: datosPago.direccion,
-                type_doc_billing: datosPago.tipo_documento,
-                mobilephone_billing: limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
-                number_doc_billing: datosPago.numero_documento,
-                email_billing: datosPago.email,
-                response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
-                url_response: `${EPAYCO_RESPONSE_URL}?invoice=${refPayco}`,
-                confirmation: EPAYCO_CONFIRMATION_URL,
-                method: 'GET',
+            const handler = (window as any).ePayco.checkout.configure({
+                sessionId,
+                external: false,
             });
+            handler.openNew();
 
             setMostrar(false);
             const t = setTimeout(() => { setMostrar(true); setError(''); setCargando(false); setProcesandoPago(false); }, 30000);
