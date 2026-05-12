@@ -7,6 +7,13 @@
   <link rel="preload" as="image" href="/images/Home/Banner-%20Academia%20vallenata%20ONLINE.jpg" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Supabase: backend principal — preconnect + dns-prefetch ahorra ~200-400ms DNS+TLS
+       en el primer fetch (auth, datos, storage). Cada milisegundo cuenta en LCP en mobile. -->
+  <link rel="preconnect" href="https://tbijzvtyyewhtwgakgka.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://tbijzvtyyewhtwgakgka.supabase.co">
+  <!-- Bunny CDN: videos de cursos. Preconnect para que el primer video cargue rapido. -->
+  <link rel="dns-prefetch" href="https://iframe.mediadelivery.net">
+  <link rel="dns-prefetch" href="https://video.bunnycdn.com">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
 
