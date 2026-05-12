@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect } from 'react'
 import Home from './Paginas/Inicio/Home'
 import Eventos from './Paginas/Eventos/Eventos';
 import DetalleEvento from './Paginas/Eventos/DetalleEvento';
@@ -18,12 +18,18 @@ import MiPerfil from './Paginas/Perfil/MiPerfil'
 import MisCursos from './Paginas/Perfil/MisCursos'
 import MisEventos from './Paginas/Perfil/MisEventos'
 import MisPublicaciones from './Paginas/Perfil/MisPublicaciones'
+import MisGrabaciones from './Paginas/Perfil/MisGrabaciones'
 import MisValidaciones from './Paginas/Perfil/MisValidaciones'
 import ConfiguracionPerfil from './Paginas/Perfil/ConfiguracionPerfil'
 import PerfilLayout from './Paginas/Perfil/PerfilLayout'
+import ContenidoTutorial from './Paginas/Tutoriales/ContenidoTutorial'
+import ClaseTutorial from './Paginas/Tutoriales/ClaseTutorial'
 import ComunidadPage from './Paginas/Comunidad/ComunidadPage'
+import MensajesPage from './Paginas/Mensajes/MensajesPage'
 import PanelEstudiante from './Paginas/PanelEstudiante/PanelEstudiante'
 import RankingPage from './Paginas/Ranking/RankingPage'
+import CursoAcordeonDesdeCero from './Paginas/Cursos/CursoAcordeonDesdeCero'
+import ClaseCurso from './Paginas/Cursos/ClaseCurso'
 import NuestraAcademia from './Paginas/NuestraAcademia/NuestraAcademia'
 import Contacto from './Paginas/Contacto/Contacto'
 import PagoError from './Paginas/Pagos/PagoError/PagoError'
@@ -38,51 +44,46 @@ import PerfilPublicoPage from './Paginas/Usuarios/PerfilPublicoPage'
 import ActividadUsuarioPage from './Paginas/Usuarios/ActividadUsuarioPage'
 import PublicacionesUsuarioPage from './Paginas/Usuarios/PublicacionesUsuarioPage'
 import GrabacionesUsuarioPage from './Paginas/Usuarios/GrabacionesUsuarioPage'
+import PanelContenido from './Paginas/administrador/PanelContenido';
+import PaquetesAdmin from './Paginas/administrador/paquetes/PaquetesAdmin'
+import CrearPaquete from './Paginas/administrador/paquetes/crear/CrearPaquete'
+import EditarPaquete from './Paginas/administrador/paquetes/editar/EditarPaquete'
+// import NotificacionesAdmin from './Paginas/administrador/notificaciones/NotificacionesAdmin'
+import EventosAdmin from './Paginas/administrador/eventos/EventosAdmin'
+import GestionUsuarios from './Paginas/administrador/Usuarios/GestionUsuarios'
+import Pagos from './Paginas/administrador/Pagos/Pagos'
+import AdminBlog from './Paginas/administrador/blog/AdminBlog'
+import CreadorArticulos from './Paginas/administrador/blog/CreadorArticulos'
+import CrearContenido from './Paginas/administrador/crear-contenido/CrearContenido'
 import BotonWhatsapp from './componentes/BotonWhatsapp/BotonWhatsapp'
 import ChatEnVivo from './componentes/chat/ChatEnVivo'
+import AdminChats from './Paginas/administrador/chats/AdminChats'
 import Notificaciones from './Paginas/Notificaciones/Notificaciones'
+import AdminNotificaciones from './Paginas/administrador/notificaciones/AdminNotificaciones'
 import Pagina404 from './Paginas/404/Pagina404'
+
+import SimuladorApp from './Paginas/SimuladorApp/SimuladorApp';
 import CierreSesion from './Paginas/CierreSesion/CierreSesion';
+import PanelDeObjetivos from './Paginas/administrador/Objetivos/PanelDeObjetivos';
+import ValidacionesAdmin from './Paginas/administrador/Validaciones/ValidacionesAdmin';
+import PaginaEjemplo3D from './Paginas/Ejemplos3d1';
+import PaginaEjemploAcordeon3D from './Paginas/Ejemplos3d2';
+import AcordeonDiapason3D from './Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D';
+
+// import HomeProMax from './Paginas/AcordeonProMax/HomeProMax'; (line neighbor)
+import HomeProMax from './Paginas/AcordeonProMax/Pantallas/HomeProMax';
+import ListaCancionesProMax from './Paginas/AcordeonProMax/Pantallas/ListaCancionesProMax';
+import ConfiguracionProMax from './Paginas/AcordeonProMax/Pantallas/ConfiguracionProMax';
+import AcordeonProMaxSimulador from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxSimulador';
+import AcordeonProMaxPrueba from './Paginas/AcordeonProMax/Pantallas/AcordeonProMaxPrueba';
+import PaginaGrabadorV2 from './Paginas/AcordeonProMax/GrabadorV2/PaginaGrabadorV2';
 import Footer from './componentes/Footer/Footer';
 import EmailCompletarWrapper from './componentes/Pagos/EmailCompletarWrapper'
-
-// Rutas pesadas o de uso esporadico: lazy-load para reducir el bundle inicial.
-// Admin completo, AcordeonProMax (three.js + audio engine), SimuladorApp, paginas 3D,
-// modulos de lectura intensiva (ClaseCurso/Tutorial), Mensajes, MisGrabaciones.
-const HomeProMax = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/HomeProMax'));
-const ListaCancionesProMax = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/ListaCancionesProMax'));
-const ConfiguracionProMax = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/ConfiguracionProMax'));
-const AcordeonProMaxSimulador = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/AcordeonProMaxSimulador'));
-const AcordeonProMaxPrueba = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/AcordeonProMaxPrueba'));
-const PaginaGrabadorV2 = lazy(() => import('./Paginas/AcordeonProMax/GrabadorV2/PaginaGrabadorV2'));
-const SimuladorApp = lazy(() => import('./Paginas/SimuladorApp/SimuladorApp'));
-const PaginaEjemplo3D = lazy(() => import('./Paginas/Ejemplos3d1'));
-const PaginaEjemploAcordeon3D = lazy(() => import('./Paginas/Ejemplos3d2'));
-const AcordeonDiapason3D = lazy(() => import('./Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D'));
-const ClaseTutorial = lazy(() => import('./Paginas/Tutoriales/ClaseTutorial'));
-const ContenidoTutorial = lazy(() => import('./Paginas/Tutoriales/ContenidoTutorial'));
-const ClaseCurso = lazy(() => import('./Paginas/Cursos/ClaseCurso'));
-const CursoAcordeonDesdeCero = lazy(() => import('./Paginas/Cursos/CursoAcordeonDesdeCero'));
-const MensajesPage = lazy(() => import('./Paginas/Mensajes/MensajesPage'));
-const MisGrabaciones = lazy(() => import('./Paginas/Perfil/MisGrabaciones'));
-const DashboardAdmin = lazy(() => import('./Paginas/administrador/Dashboard/DashboardAdmin'));
-const PanelContenido = lazy(() => import('./Paginas/administrador/PanelContenido'));
-const CrearContenido = lazy(() => import('./Paginas/administrador/crear-contenido/CrearContenido'));
-const PaquetesAdmin = lazy(() => import('./Paginas/administrador/paquetes/PaquetesAdmin'));
-const CrearPaquete = lazy(() => import('./Paginas/administrador/paquetes/crear/CrearPaquete'));
-const EditarPaquete = lazy(() => import('./Paginas/administrador/paquetes/editar/EditarPaquete'));
-const AdminNotificaciones = lazy(() => import('./Paginas/administrador/notificaciones/AdminNotificaciones'));
-const EventosAdmin = lazy(() => import('./Paginas/administrador/eventos/EventosAdmin'));
-const GestionUsuarios = lazy(() => import('./Paginas/administrador/Usuarios/GestionUsuarios'));
-const Pagos = lazy(() => import('./Paginas/administrador/Pagos/Pagos'));
-const AdminBlog = lazy(() => import('./Paginas/administrador/blog/AdminBlog'));
-const CreadorArticulos = lazy(() => import('./Paginas/administrador/blog/CreadorArticulos'));
-const AdminChats = lazy(() => import('./Paginas/administrador/chats/AdminChats'));
-const PanelDeObjetivos = lazy(() => import('./Paginas/administrador/Objetivos/PanelDeObjetivos'));
-const ValidacionesAdmin = lazy(() => import('./Paginas/administrador/Validaciones/ValidacionesAdmin'));
+import ProximamentePage from './Paginas/ProximamentePage/ProximamentePage'
 
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
+import DashboardAdmin from './Paginas/administrador/Dashboard/DashboardAdmin'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
 import { useSesionTracker } from './hooks/useSesionTracker'
 import { useBackButtonNativo } from './hooks/useBackButtonNativo'
@@ -93,7 +94,9 @@ const AppContent = () => {
   const { estaAutenticado, usuario } = useUsuario()
   const location = useLocation();
 
+  // Activar efectos globales de seguridad (Sonido manejado ahora por CursorPersonalizado y AudioManager)
   useSeguridadConsola();
+  // useEfectosSonido(); // Reemplazado por CursorPersonalizado + AudioManager
 
   // Back button hardware Android (no-op en web)
   useBackButtonNativo();
@@ -162,7 +165,6 @@ const AppContent = () => {
       {estaAutenticado && !esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && <MenuInferiorResponsivo />}
 
 
-      <Suspense fallback={<div className="route-suspense-fallback" aria-busy="true" />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/eventos" element={<Eventos />} />
@@ -247,7 +249,6 @@ const AppContent = () => {
         {/* Catch all - 404 */}
         <Route path="*" element={<Pagina404 />} />
       </Routes>
-      </Suspense>
       {!esModoLectura && !location.pathname.includes('/mensajes') && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         <>
           {!estaAutenticado && <ChatEnVivo />}

@@ -1,10 +1,16 @@
 // Registro del service worker generado por vite-plugin-pwa (Workbox).
-// Modo `autoUpdate`: la nueva version se aplica silenciosamente al recargar,
-// sin confirm() al usuario.
+// Modo `prompt`: cuando hay nueva version, preguntamos al usuario si recargar.
 import { registerSW } from 'virtual:pwa-register';
 
-registerSW({
-  immediate: true,
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm('Nueva version disponible. ¿Recargar ahora?')) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    // App lista para uso offline (SW activo y precache poblado)
+  },
   onRegisterError(error) {
     console.warn('[PWA] Error registrando service worker:', error);
   }

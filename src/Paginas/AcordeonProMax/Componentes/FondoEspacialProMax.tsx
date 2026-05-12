@@ -2,65 +2,43 @@ import React, { useEffect, useRef } from 'react';
 
 /**
  * FONDO ESPACIAL PRO MAX
- * Recrea el efecto de "PurpleSpace" de Rhythm+ Music Game.
- * Campo de estrellas en movimiento y degradado radial pulsante.
+ * Recrea exactamente el efecto de "PurpleSpace" de Rhythm+ Music Game.
+ * Consta de un campo de estrellas en movimiento y un degradado radial pulsante.
  */
-
-type Estrella = { x: number; y: number; z: number; vWeight: number };
-
-const BG_COLORS: ReadonlyArray<readonly [number, number, number]> = [
-  [27, 63, 171],
-  [10, 166, 201],
-  [169, 10, 201],
-];
-
-// 350 estrellas: visualmente equivalente a 700 (la cabeza humana no diferencia),
-// pero -50% trabajo CPU por frame en el render loop (60fps).
-const CANTIDAD_ESTRELLAS = 350;
-
-const crearEstrellas = (count: number): Estrella[] => {
-  const out: Estrella[] = new Array(count);
-  for (let i = 0; i < count; i++) {
-    out[i] = {
-      x: Math.random() * 1600 - 800,
-      y: Math.random() * 900 - 450,
-      z: Math.random() * 1000,
-      vWeight: Math.random(),
-    };
-  }
-  return out;
-};
-
-const moverColorFondo = (
-  current: [number, number, number],
-  nextIdx: number
-): number => {
-  const nextBg = BG_COLORS[nextIdx];
-  for (let i = 0; i < 3; i++) {
-    const diff = current[i] - nextBg[i];
-    if (Math.abs(diff) >= 0.5) current[i] += diff > 0 ? -0.2 : 0.2;
-    else current[i] = nextBg[i];
-  }
-  const llego =
-    Math.abs(current[0] - nextBg[0]) < 1 &&
-    Math.abs(current[1] - nextBg[1]) < 1 &&
-    Math.abs(current[2] - nextBg[2]) < 1;
-  return llego ? (nextIdx + 1) % BG_COLORS.length : nextIdx;
-};
-
 const FondoEspacialProMax: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef<any[]>([]);
+  const prevTimeRef = useRef<number>(0);
+  const currentBgRef = useRef<number[]>([27, 63, 171]);
+  const nextBgIdxRef = useRef<number>(1);
+  
+  const bgColors = [
+    [27, 63, 171],
+    [10, 166, 201],
+    [169, 10, 201],
+  ];
+
+  // Configuración de estrellas
+  const makeStars = (count: number) => {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      out.push({
+        x: Math.random() * 1600 - 800,
+        y: Math.random() * 900 - 450,
+        z: Math.random() * 1000,
+        vWeight: Math.random(),
+        color: 'white',
+      });
+    }
+    return out;
+  };
 
   useEffect(() => {
+    starsRef.current = makeStars(700);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const estrellas = crearEstrellas(CANTIDAD_ESTRELLAS);
-    const currentBg: [number, number, number] = [27, 63, 171];
-    let nextBgIdx = 1;
-    let prevTime = 0;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -70,17 +48,20 @@ const FondoEspacialProMax: React.FC = () => {
     window.addEventListener('resize', resize);
     resize();
 
-    let animationFrameId = 0;
+    let animationFrameId: number;
 
     const render = (time: number) => {
       const w = canvas.width;
       const h = canvas.height;
-
-      const v = 0.5 + Math.sin(time * 0.002) * 0.2;
-
+      
+      // Simular volumen pulsante (ya que estamos en el Home)
+      const v = 0.5 + Math.sin(time * 0.002) * 0.2; 
+      
+      // 1. Limpiar fondo con opacidad baja para rastro de estrellas
       ctx.fillStyle = 'rgba(10, 10, 44, 0.2)';
       ctx.fillRect(0, 0, w, h);
 
+      // 2. Dibujar Degradado Radial Pulsante (Lógica de Rhythm+)
       const centerX = w / 2;
       const centerY = h / 2;
       const outerRadius = Math.max(w, h);
@@ -88,22 +69,19 @@ const FondoEspacialProMax: React.FC = () => {
 
       const grd = ctx.createRadialGradient(centerX, centerY, 1, centerX, centerY, outerRadius);
       grd.addColorStop(blackColorStop, 'black');
-      grd.addColorStop(1, `rgba(${currentBg[0]}, ${currentBg[1]}, ${currentBg[2]}, ${Math.max(v - 0.25, 0.1)})`);
-
+      grd.addColorStop(1, `rgba(${currentBgRef.current[0]}, ${currentBgRef.current[1]}, ${currentBgRef.current[2]}, ${Math.max(v - 0.25, 0.1)})`);
+      
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, w, h);
 
-      if (!prevTime) prevTime = time;
-      const elapsed = time - prevTime;
-      prevTime = time;
+      // 3. Mover y Dibujar Estrellas
+      if (!prevTimeRef.current) prevTimeRef.current = time;
+      const elapsed = time - prevTimeRef.current;
+      prevTimeRef.current = time;
 
       const distance = elapsed * 0.02 + v;
-      const intensidadBase = Math.max(v * 2, 0.3) + 0.2;
-
-      // for-loop indexado: ~15% mas rapido que forEach en hot path (60fps × 350 estrellas).
-      const n = estrellas.length;
-      for (let i = 0; i < n; i++) {
-        const star = estrellas[i];
+      
+      starsRef.current.forEach(star => {
         star.z -= distance + distance * v * star.vWeight;
         if (star.z <= 1) star.z += 1000;
 
@@ -112,13 +90,34 @@ const FondoEspacialProMax: React.FC = () => {
 
         if (x >= 0 && x < w && y >= 0 && y < h) {
           const d = star.z / 1000.0;
-          const intensity = (1 - d * d) * intensidadBase;
+          const b = 1 - d * d;
+          const intensity = b * (Math.max(v * 2, 0.3) + 0.2);
+          
           ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.6})`;
           ctx.fillRect(x, y, 3, 3);
         }
-      }
+      });
 
-      nextBgIdx = moverColorFondo(currentBg, nextBgIdx);
+      // 4. Actualizar colores del degradado (transición suave)
+      const moveBgColor = () => {
+        const newVal = (from: number, to: number) => {
+          const delta = from - to > 0 ? -0.2 : 0.2;
+          return Math.abs(from - to) < 0.5 ? to : from + delta;
+        };
+        const nextBg = bgColors[nextBgIdxRef.current];
+        currentBgRef.current[0] = newVal(currentBgRef.current[0], nextBg[0]);
+        currentBgRef.current[1] = newVal(currentBgRef.current[1], nextBg[1]);
+        currentBgRef.current[2] = newVal(currentBgRef.current[2], nextBg[2]);
+
+        if (
+          Math.abs(currentBgRef.current[0] - nextBg[0]) < 1 &&
+          Math.abs(currentBgRef.current[1] - nextBg[1]) < 1 &&
+          Math.abs(currentBgRef.current[2] - nextBg[2]) < 1
+        ) {
+          nextBgIdxRef.current = (nextBgIdxRef.current + 1) % bgColors.length;
+        }
+      };
+      moveBgColor();
 
       animationFrameId = requestAnimationFrame(render);
     };
@@ -162,4 +161,4 @@ const FondoEspacialProMax: React.FC = () => {
   );
 };
 
-export default React.memo(FondoEspacialProMax);
+export default FondoEspacialProMax;
