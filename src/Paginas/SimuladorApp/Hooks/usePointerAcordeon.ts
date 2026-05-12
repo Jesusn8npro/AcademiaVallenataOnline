@@ -83,12 +83,17 @@ export const usePointerAcordeon = ({
         // coords aunque su tamano relativo no cambie.
         ro.observe(tren);
 
-        // Suscripcion al MotionValue 'x': el usuario puede arrastrar el acordeon horizontal
-        // (handle BOTONES en la barra de herramientas) lo que aplica transform: translateX al
-        // tren. ResizeObserver NO detecta transforms — solo cambios de tamano. Sin esta
-        // suscripcion el rectsCache queda con las coords pre-drag y el hit-test cae en pito
-        // equivocado. recalcThrottled aglutina los cambios del drag a 1 recalc por frame.
-        const unsubscribeMV = x.on('change', recalcThrottled);
+        // Suscripcion al MotionValue 'x' (drag horizontal del tren via handle BOTONES de la
+        // barra). Estrategia: VACIAR el cache inmediato cuando x cambia, y dejar que
+        // encontrarPosEnPunto recalcule lazy en el primer toque post-drag. No recalculamos
+        // aqui porque framer-motion aplica el transform asincronamente al DOM (puede ocurrir
+        // despues del rAF actual), asi getBoundingClientRect() leeria coords pre-paint y
+        // dejaria cache stale. Vaciar y recalcular en touchstart es O(1) + 1 recalc completo
+        // (~15ms en mobile low-end, aceptable como costo de la primera nota post-drag) y
+        // garantiza coords post-paint.
+        const unsubscribeMV = x.on('change', () => {
+            rectsCache.current.clear();
+        });
 
         const dentroDe = (cx: number, cy: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
@@ -109,6 +114,13 @@ export const usePointerAcordeon = ({
 
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
             if (enRectBloqueador(clientX, clientY)) return null;
+            // Cache vacio = se invalido recientemente (drag horizontal del tren, etc.).
+            // Recalcular lazy ANTES del hit-test garantiza coords post-paint despues del
+            // transform asincrono de framer-motion. Costo: ~15ms en Android low-end en
+            // primer toque post-drag, despues queda fresco hasta el siguiente cambio.
+            if (rectsCache.current.size === 0) {
+                actualizarGeometria();
+            }
             // Fast-path Android low-end: elementFromPoint cuesta 5-10ms; si el dedo
             // sigue dentro del rect del pito actual, retornar sin hit-test nativo.
             if (posActual) {
