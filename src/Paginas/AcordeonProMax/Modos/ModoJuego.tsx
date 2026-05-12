@@ -9,6 +9,11 @@ import type { CancionHeroConTonalidad, EstadisticasPartida, EfectoGolpe } from '
 import './ModoCompetitivo.css';
 import './ModoLibre.css';
 
+// Referencias estables: el Maestro es read-only (no responde a clicks). Pasar `() => {}` inline
+// crearia una funcion nueva en cada render y rompe React.memo en CuerpoAcordeon.
+const NOOP_SET_BOTON: (id: string) => void = () => {};
+const NOOP_ACTUALIZAR: (id: string, accion: 'add' | 'remove', inst?: any[] | null) => void = () => {};
+
 interface ModoJuegoProps {
   conPenalizacion: boolean;
   cancion: CancionHeroConTonalidad;
@@ -240,8 +245,8 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
               botonSeleccionado={null}
               modoVista={logica.modoVista}
               vistaDoble={false}
-              setBotonSeleccionado={() => {}}
-              actualizarBotonActivo={() => {}}
+              setBotonSeleccionado={NOOP_SET_BOTON}
+              actualizarBotonActivo={NOOP_ACTUALIZAR}
               listo={true}
             />
           )}
@@ -263,7 +268,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
               botonSeleccionado={null}
               modoVista={logica.modoVista}
               vistaDoble={false}
-              setBotonSeleccionado={() => {}}
+              setBotonSeleccionado={NOOP_SET_BOTON}
               actualizarBotonActivo={actualizarBotonActivo}
               listo={true}
             />

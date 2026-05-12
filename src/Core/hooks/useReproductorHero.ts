@@ -38,6 +38,11 @@ export const useReproductorHero = (
     // se inhibe para que el audio termine de estabilizarse antes de comparar. Sin esto, el resync
     // podía leer audio.currentTime stale tras un backward seek y "corregir" hacia un valor erróneo.
     const ultimoBuscarTickTimeRef = useRef<number>(-Infinity);
+    // Throttle del setTickActual: actualizamos UI a ~30fps. El tickRef sigue 60fps (sample-accurate
+    // para audio). Reduce re-renders de PuenteNotas + useEffects consumidores a la mitad.
+    // 30fps visual es perceptualmente equivalente a 60fps (cine = 24fps); no se ve "salto" en
+    // las notas. La detección de notas perdidas (ventana ~125ms) sigue con 3+ samples por ventana.
+    const ultimoTickActualUIRef = useRef<number>(0);
 
     // Fuente de audio externa (HTMLAudioElement o ReproductorMP3 — ambos tienen la misma API mínima:
     // currentTime, paused, readyState, playbackRate, addEventListener/removeEventListener para 'playing'/'pause'/'seeked').
@@ -319,7 +324,13 @@ export const useReproductorHero = (
             }
         });
 
-        setTickActual(Math.floor(tickRef.current));
+        // Throttle UI a ~30fps. tickRef sigue actualizado cada frame (audio sample-accurate);
+        // solo setTickActual es throttled. PuenteNotas y useEffects consumidores re-renderizan
+        // a 30Hz en vez de 60Hz → -50% trabajo React sin perdida visual perceptible.
+        if ((ahora - ultimoTickActualUIRef.current) > 0.033) {
+            setTickActual(Math.floor(tickRef.current));
+            ultimoTickActualUIRef.current = ahora;
+        }
 
         const rango = rangoSeccionRef.current;
         if (rango && !loopABRef.current.activo && tickRef.current > rango.fin) {
