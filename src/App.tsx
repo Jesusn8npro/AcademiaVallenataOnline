@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 // Home: eager (es el LCP candidate principal — debe estar en el critical path).
 import Home from './Paginas/Inicio/Home'
 // Menus / layouts / guards: eager (forman el chrome de la app que aparece en
@@ -106,6 +106,19 @@ const AppContent = () => {
   const { estaAutenticado, usuario } = useUsuario()
   const location = useLocation();
 
+  // CursorPersonalizado: NO se monta hasta que el usuario mueva el mouse por
+  // primera vez. Esto elimina el forced reflow ~440ms que genera al medir
+  // posiciones del cursor en el initial render. En dispositivos touch nunca
+  // se carga (no hay mousemove). Cero impacto en UX: el cursor custom solo
+  // tiene sentido cuando ya estas moviendo el mouse.
+  const [mouseDetectado, setMouseDetectado] = useState(false);
+  useEffect(() => {
+    if (mouseDetectado) return;
+    const handler = () => setMouseDetectado(true);
+    window.addEventListener('mousemove', handler, { once: true, passive: true });
+    return () => window.removeEventListener('mousemove', handler);
+  }, [mouseDetectado]);
+
   useSeguridadConsola();
 
   // Back button hardware Android (no-op en web)
@@ -173,7 +186,7 @@ const AppContent = () => {
 
   return (
     <>
-      {!location.pathname.startsWith('/simulador') && (
+      {mouseDetectado && !location.pathname.startsWith('/simulador') && (
         <Suspense fallback={null}>
           <CursorPersonalizado />
         </Suspense>
