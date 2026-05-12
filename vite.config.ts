@@ -61,7 +61,6 @@ export default defineConfig(({ mode }) => ({
           // ahorra ~1.2 MB en la instalacion del SW. Se sirven por runtimeCaching
           // cuando el usuario navega a Simulador/AcordeonProMax/3D.
           '**/static/viz-vendor*',
-          '**/static/charts-vendor*',
           '**/static/anim-vendor*',
           '**/static/utils-vendor*',
           '**/static/capacitor-vendor*'
@@ -76,7 +75,7 @@ export default defineConfig(({ mode }) => ({
           {
             // Chunks lazy excluidos del precache (viz/charts/anim).
             // StaleWhileRevalidate: la 1a vez = network, las siguientes = SW.
-            urlPattern: ({ url }) => /\/static\/(viz|charts|anim|utils|capacitor)-vendor.*\.js$/.test(url.pathname),
+            urlPattern: ({ url }) => /\/static\/(viz|anim|utils|capacitor)-vendor.*\.js$/.test(url.pathname),
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'lazy-vendor-cache',
@@ -151,7 +150,7 @@ export default defineConfig(({ mode }) => ({
     // Sin esto, el browser pre-descarga viz-vendor (~932KB), anim-vendor (~40KB),
     // charts-vendor (~213KB) al cargar Home — total ~1.2MB innecesarios en mobile 3G.
     modulePreload: {
-      resolveDependencies: (_filename, deps) => deps.filter(d => !/(viz|anim|charts|utils|capacitor)-vendor/.test(d))
+      resolveDependencies: (_filename, deps) => deps.filter(d => !/(viz|anim|utils|capacitor)-vendor/.test(d))
     },
     rollupOptions: {
       output: {
@@ -172,13 +171,22 @@ export default defineConfig(({ mode }) => ({
           // tocan three). Sin esto, deps como camera-controls/maath/three-mesh-bvh
           // caen en `vendor` y crean ciclo "vendor -> viz-vendor", forzando el
           // browser a descargar viz-vendor (~250KB gzip) al cargar Home.
-          if (/[\\/]node_modules[\\/](three|@react-three|@splinetool|meshline|camera-controls|maath|three-mesh-bvh|three-stdlib|troika-three-text|troika-three-utils|troika-worker-utils|@monogrid|stats-gl|stats\.js|suspend-react|detect-gpu|glsl-noise|tunnel-rat|hls\.js|@use-gesture|zustand|@mediapipe)[\\/]/.test(id)) {
+          // @dimforge/rapier3d-compat es la fisica 3D de @react-three/rapier:
+          // 2.1MB sin separar terminaba en `vendor` (eager) — bug critico.
+          if (/[\\/]node_modules[\\/](three|@react-three|@splinetool|meshline|camera-controls|maath|three-mesh-bvh|three-stdlib|troika-three-text|troika-three-utils|troika-worker-utils|@monogrid|stats-gl|stats\.js|suspend-react|detect-gpu|glsl-noise|tunnel-rat|hls\.js|@use-gesture|zustand|@mediapipe|@dimforge|webgl-sdf-generator|bidi-js)[\\/]/.test(id)) {
             return 'viz-vendor';
           }
 
-          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return 'anim-vendor';
+          // framer-motion + sus deps (motion-dom, motion-utils, es-toolkit usado
+          // por framer). Sin incluir motion-dom, ~284KB se filtraban a `vendor`.
+          if (/[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils|motion-dom|es-toolkit)[\\/]/.test(id)) {
+            return 'anim-vendor';
+          }
 
-          if (/[\\/]node_modules[\\/]recharts[\\/]/.test(id)) return 'charts-vendor';
+          // NOTA: recharts + d3 + redux NO se separan. Recharts usa Redux
+          // Toolkit internamente, y algun paquete eager (probablemente via
+          // helmet-async/i18next) tambien usa redux. Separarlos crea ciclo
+          // "vendor <-> charts-vendor" y TDZ en runtime. Quedan en vendor.
 
           // lucide-react se usa en 100+ archivos (mayoria lazy). Si queda en
           // `vendor`, Rollup mete todos los iconos posibles ahi por heuristica
@@ -195,6 +203,19 @@ export default defineConfig(({ mode }) => ({
           // @capacitor solo se ejecuta en build mobile (Capacitor.isNativePlatform).
           // En web siempre es no-op pero se descarga. Separarlo evita ~50KB en web.
           if (/[\\/]node_modules[\\/]@capacitor[\\/]/.test(id)) return 'capacitor-vendor';
+
+          // dompurify es ~550KB raw / ~60KB brotli. Lo carga eager (HeroHome lo
+          // usa), pero su chunk propio permite cache independiente y descarga
+          // paralela vs el vendor monolitico.
+          if (/[\\/]node_modules[\\/]dompurify[\\/]/.test(id)) return 'security-vendor';
+
+          // SEO + i18n complements (helmet-async, react-i18next).
+          // react-helmet-async se usa solo en pages publicas — paginas Home/Cursos lo necesitan.
+          if (/[\\/]node_modules[\\/]react-helmet-async[\\/]/.test(id)) return 'seo-vendor';
+
+          // workbox-window: usado SOLO para registrar el SW desde main.tsx.
+          // Es muy pequenio pero infla el vendor.
+          if (/[\\/]node_modules[\\/]workbox-window[\\/]/.test(id)) return 'sw-vendor';
 
           if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) {
             return 'react-vendor';

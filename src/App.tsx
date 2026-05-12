@@ -96,7 +96,10 @@ import { supabase } from './servicios/clienteSupabase'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
 import { useSesionTracker } from './hooks/useSesionTracker'
 import { useBackButtonNativo } from './hooks/useBackButtonNativo'
-import CursorPersonalizado from './componentes/ui/CursorPersonalizado/CursorPersonalizado'
+// CursorPersonalizado es decorativo (efectos custom de cursor). Lazy + idle:
+// no se necesita inmediatamente para el render del Hero, y libera ~10-15KB
+// del critical path mas su CSS.
+const CursorPersonalizado = lazy(() => import('./componentes/ui/CursorPersonalizado/CursorPersonalizado'))
 
 // Componente interno que tiene acceso al contexto de usuario
 const AppContent = () => {
@@ -170,7 +173,11 @@ const AppContent = () => {
 
   return (
     <>
-      {!location.pathname.startsWith('/simulador') && <CursorPersonalizado />}
+      {!location.pathname.startsWith('/simulador') && (
+        <Suspense fallback={null}>
+          <CursorPersonalizado />
+        </Suspense>
+      )}
       {/* Mostrar MenuPublico si NO está autenticado, MenuSuperiorAutenticado si SÍ está autenticado */}
       {!esModoLectura && !esLandingVenta && !esSimuladorApp && !esAcordeonProMax && !esRecuperarContrasena && (
         estaAutenticado ? (
