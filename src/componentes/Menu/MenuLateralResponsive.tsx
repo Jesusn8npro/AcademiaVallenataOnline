@@ -68,7 +68,7 @@ const MenuLateralResponsive: React.FC<MenuLateralResponsiveProps> = ({
           {tipoUsuario === 'publico' ? (
             <div className="menu-lateral-bienvenida">
               <div className="menu-lateral-logo" onClick={navegarDesdelogo}>
-                <img src="/logo academia vallenata.png" alt="Academia Vallenata" className="menu-lateral-logo-img" />
+                <img src="/logo-175.webp" alt="Academia Vallenata" className="menu-lateral-logo-img" width="175" height="113" loading="lazy" decoding="async" />
               </div>
               <div className="menu-lateral-texto">
                 <h3 className="menu-lateral-titulo">¡Bienvenido!</h3>

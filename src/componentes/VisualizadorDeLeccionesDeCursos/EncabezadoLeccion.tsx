@@ -93,7 +93,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
             </button>
           )}
           <a href="/" className="enlace-logo">
-            <img src="/logo academia vallenata.png" alt="Academia Vallenata" className="logo" />
+            <img src="/logo-175.webp" alt="Academia Vallenata" className="logo" width="175" height="113" loading="lazy" decoding="async" />
           </a>
 
           {esDesktop ? (

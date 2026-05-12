@@ -72,10 +72,14 @@ const RecuperarContrasena: React.FC = () => {
             <div className="recuperar-tarjeta">
                 <div className="recuperar-header">
                     <div className="logo-contenedor">
-                        <img 
-                            src="/logo academia vallenata.png" 
-                            alt="Logo Academia Vallenata" 
+                        <img
+                            src="/logo academia vallenata.webp"
+                            alt="Logo Academia Vallenata"
                             className="recuperar-logo"
+                            width="300"
+                            height="194"
+                            loading="lazy"
+                            decoding="async"
                         />
                     </div>
                     <h1 className="recuperar-titulo">Restablecer Contraseña</h1>

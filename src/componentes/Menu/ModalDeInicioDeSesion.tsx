@@ -42,7 +42,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
         <div style={styles.modalInicioSesion} onClick={detenerPropagacion}>
           <div style={styles.modalHeader}>
             <div style={styles.logoContainer}>
-              <img src="/logo academia vallenata.png" alt="Logo Academia Vallenata" style={styles.logoModal} />
+              <img src="/logo academia vallenata.webp" alt="Logo Academia Vallenata" style={styles.logoModal} width="300" height="194" loading="lazy" decoding="async" />
             </div>
             <button style={styles.botonCerrar} aria-label="Cerrar" onClick={cerrarModal}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

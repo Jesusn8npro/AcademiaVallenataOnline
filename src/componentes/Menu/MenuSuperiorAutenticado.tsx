@@ -40,7 +40,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                 <div className="nav-auth-left">
                     <div className="nav-auth-logo">
                         <a href={esAdmin ? '/panel-administracion' : '/panel-estudiante'}>
-                            <img src="/logo academia vallenata.png" alt="Logo Academia" className="nav-auth-logo-img" />
+                            <img src="/logo-175.webp" alt="Logo Academia" className="nav-auth-logo-img" width="175" height="113" fetchPriority="high" decoding="async" />
                         </a>
                     </div>
                     <button className="nav-auth-hamburger" onClick={toggleMenuLateral} aria-label="Menú">

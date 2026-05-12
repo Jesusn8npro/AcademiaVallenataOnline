@@ -3,8 +3,12 @@
 
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/webp" href="/logo%20academia%20vallenata.webp" />
   <link rel="icon" type="image/png" href="/logo%20academia%20vallenata.png" />
-  <link rel="preload" as="image" href="/images/Home/Banner-%20Academia%20vallenata%20ONLINE.jpg" fetchpriority="high">
+  <!-- NO preload del Banner Hero: el LCP medido por Lighthouse es el H1 (texto),
+       no una imagen. Preloadear el banner desperdicia ancho de banda critico
+       sin acelerar el LCP real. -->
+  <link rel="preload" as="image" href="/logo-175.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Supabase: backend principal — preconnect + dns-prefetch ahorra ~200-400ms DNS+TLS
@@ -52,6 +56,34 @@
   <title>Academia Vallenata Online - Aprende Acordeón desde Cero</title>
   <meta name="description"
     content="La Academia #1 de Acordeón Vallenato online. Simulador gaming único, comunidad de estudiantes y cursos desde cero a avanzado." />
+
+  <!-- Speculation Rules: prerender de rutas mas visitadas tras ~200ms de hover.
+       Chromium-based (Chrome/Edge/Opera) lo soporta y da navegacion instantanea.
+       Otros navegadores lo ignoran (safe). `eagerness: moderate` = solo en hover
+       sostenido (no link visto), evita prerender wasteful. -->
+  <script type="speculationrules">
+  {
+    "prerender": [{
+      "where": { "href_matches": "/cursos*" },
+      "eagerness": "moderate"
+    }, {
+      "where": { "href_matches": "/contacto" },
+      "eagerness": "moderate"
+    }, {
+      "where": { "href_matches": "/paquetes*" },
+      "eagerness": "moderate"
+    }, {
+      "where": { "href_matches": "/nuestra-academia" },
+      "eagerness": "moderate"
+    }, {
+      "where": { "href_matches": "/blog*" },
+      "eagerness": "moderate"
+    }, {
+      "where": { "href_matches": "/eventos*" },
+      "eagerness": "moderate"
+    }]
+  }
+  </script>
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">

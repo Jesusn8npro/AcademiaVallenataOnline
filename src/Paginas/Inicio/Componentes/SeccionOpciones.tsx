@@ -7,10 +7,10 @@ import { opcionesStyles as styles } from './SeccionOpciones.styles';
 // Antes el componente usaba strings tipo "/images/Clusters .../Cursos-De-Acordeon.jpg" que
 // apuntan a /public/, pero las imágenes nunca estuvieron en public/ → los <img> daban 404
 // y se veía el placeholder gris de la card. Las imágenes viven en src/assets/images/.
-import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.jpg';
-import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.jpg';
-import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.jpg';
-import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.jpg';
+import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.webp';
+import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.webp';
+import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.webp';
+import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.webp';
 
 const GRADIENTS: Record<string, string> = {
   'from-blue-500 to-purple-600': 'linear-gradient(135deg, #3b82f6, #9333ea)',
@@ -138,7 +138,7 @@ const SeccionOpciones: React.FC = () => {
                 )}
 
                 <div style={styles.imagenContenedor}>
-                  <img src={opcion.imagen} alt={opcion.titulo} style={styles.imagenOpcion} />
+                  <img src={opcion.imagen} alt={opcion.titulo} style={styles.imagenOpcion} width="400" height="400" loading="lazy" decoding="async" />
                   <div style={styles.overlayImagen}></div>
                   <div style={styles.iconoOpcion}>{opcion.icono}</div>
                   {opcion.destacado && <div style={styles.brilloDestacado}></div>}
