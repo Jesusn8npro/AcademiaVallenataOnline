@@ -62,7 +62,12 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
             if (sessionError || !session?.user) {
+                // Si no hay sesion valida, limpiar localStorage para evitar carga
+                // optimista falsa en proximas visitas (causaba errores 401 en
+                // useSesionTracker porque `estaAutenticado` retornaba true
+                // sin tener token Supabase valido).
                 setUsuario(null)
+                localStorage.removeItem('usuario_actual')
                 setInicializado(true)
                 return
             }
@@ -155,12 +160,23 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         if (authInitialized.current) return
         authInitialized.current = true
 
-        // 1. Carga optimista del Storage
+        // 1. Carga optimista del Storage. SOLO si Supabase tiene el token de
+        //    auth en localStorage; de lo contrario, dejamos usuario=null y
+        //    esperamos a cargarUsuario(). Esto evita que useSesionTracker y
+        //    queries autenticadas disparen con usuario fantasma cuando la
+        //    sesion Supabase expiro pero el cache `usuario_actual` quedo
+        //    huerfano (causaba 400 refresh_token + 401 sesiones_usuario).
         try {
             const cached = localStorage.getItem('usuario_actual')
-            if (cached) {
+            const tieneTokenSupabase = Object.keys(localStorage).some(
+                k => k.startsWith('sb-') && k.includes('-auth-token')
+            )
+            if (cached && tieneTokenSupabase) {
                 setUsuarioState(JSON.parse(cached))
                 setInicializado(true)
+            } else if (cached && !tieneTokenSupabase) {
+                // Cache huerfano: limpiar
+                localStorage.removeItem('usuario_actual')
             }
         } catch (e) { }
 
