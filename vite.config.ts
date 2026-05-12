@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       // Registramos el SW manualmente desde src/registerSW.ts
       injectRegister: null,
       includeAssets: ['offline.html', 'favicon.png', 'iconos-pwa/*.svg'],
@@ -17,7 +17,10 @@ export default defineConfig(({ mode }) => ({
         short_name: 'Academia Vallenata',
         description: 'Aprende acordeón vallenato online con la mejor academia virtual',
         start_url: '/',
-        display: 'standalone',
+        // display: 'browser' evita que Chrome ofrezca "Instalar/Abrir en aplicación"
+        // en la omnibox. La APP nativa se distribuye via Capacitor (APK), no via PWA.
+        // El service worker sigue activo para cache offline.
+        display: 'browser',
         orientation: 'landscape',
         theme_color: '#8b5cf6',
         background_color: '#1f2937',
