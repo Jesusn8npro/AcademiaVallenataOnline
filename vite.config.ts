@@ -32,9 +32,12 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallback: '/offline.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
-        globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,webp,svg,ico,woff,woff2}'],
-        // Excluir assets pesados del precache; se sirven por runtimeCaching.
-        // Audio (mp3) y modelos3d quedan fuera del precache porque pesan demasiado.
+        // Precache SOLO el app shell (JS/CSS/HTML + iconos + fuentes). Las imagenes
+        // (banners, fotos de cursos, etc.) NO van al precache porque inflarian la
+        // instalacion inicial del SW a 13+ MB. Se sirven por runtimeCaching (CacheFirst
+        // 30 dias) — primera visita las descarga, las siguientes desde el SW.
+        globPatterns: ['**/*.{js,css,html,woff,woff2,ico}', '**/iconos-pwa/**'],
+        // Defensa adicional: si algun bundle iberico se cuela, igual lo ignoramos.
         globIgnores: [
           '**/audio/**',
           '**/modelos3d/**',
