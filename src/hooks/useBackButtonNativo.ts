@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { useNavigate } from 'react-router-dom';
+import { esNativo } from '../utilidades/plataforma';
 
 /**
  * Hook que conecta el boton "back" hardware de Android al historial de la app.
  * - Si hay historial: navigate(-1)
  * - Si no: cierra la app
- * No-op en web.
+ * No-op en web. Sin import estatico de @capacitor/core (ahorro 7KB en web).
  */
 export function useBackButtonNativo() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    if (!esNativo()) return;
 
     let listenerHandle: { remove: () => void } | null = null;
     let cancelled = false;

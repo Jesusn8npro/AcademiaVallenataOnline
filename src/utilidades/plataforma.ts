@@ -1,12 +1,16 @@
 // Helpers de plataforma — detectan Capacitor y exponen utilidades nativas.
 // Todos los helpers de runtime son no-op en web para no engordar el bundle web.
+//
+// IMPORTANT: NO importar @capacitor/core estaticamente — eso jala 7KB al
+// critical path web aunque siempre returna false. Capacitor inyecta
+// `window.Capacitor` antes que el JS app cargue, por eso lo leemos directo.
 
-import { Capacitor } from '@capacitor/core';
+const cap = () => (typeof window !== 'undefined' ? (window as any).Capacitor : null);
 
-export const esNativo = () => Capacitor.isNativePlatform();
-export const esAndroid = () => Capacitor.getPlatform() === 'android';
-export const esIOS = () => Capacitor.getPlatform() === 'ios';
-export const esWeb = () => Capacitor.getPlatform() === 'web';
+export const esNativo = () => !!cap()?.isNativePlatform?.();
+export const esAndroid = () => cap()?.getPlatform?.() === 'android';
+export const esIOS = () => cap()?.getPlatform?.() === 'ios';
+export const esWeb = () => !esNativo();
 
 // Vibracion ligera (toques, confirmaciones suaves)
 export async function vibracionLeve() {

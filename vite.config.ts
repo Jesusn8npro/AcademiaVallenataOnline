@@ -62,8 +62,7 @@ export default defineConfig(({ mode }) => ({
           // cuando el usuario navega a Simulador/AcordeonProMax/3D.
           '**/static/viz-vendor*',
           '**/static/anim-vendor*',
-          '**/static/utils-vendor*',
-          '**/static/capacitor-vendor*'
+          '**/static/utils-vendor*'
         ],
         // Runtime cache para los chunks lazy excluidos del precache.
         // Primera vez = network, siguientes = SW (offline-capable).
@@ -75,7 +74,7 @@ export default defineConfig(({ mode }) => ({
           {
             // Chunks lazy excluidos del precache (viz/charts/anim).
             // StaleWhileRevalidate: la 1a vez = network, las siguientes = SW.
-            urlPattern: ({ url }) => /\/static\/(viz|anim|utils|capacitor)-vendor.*\.js$/.test(url.pathname),
+            urlPattern: ({ url }) => /\/static\/(viz|anim|utils)-vendor.*\.js$/.test(url.pathname),
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'lazy-vendor-cache',
@@ -150,7 +149,7 @@ export default defineConfig(({ mode }) => ({
     // Sin esto, el browser pre-descarga viz-vendor (~932KB), anim-vendor (~40KB),
     // charts-vendor (~213KB) al cargar Home — total ~1.2MB innecesarios en mobile 3G.
     modulePreload: {
-      resolveDependencies: (_filename, deps) => deps.filter(d => !/(viz|anim|utils|capacitor)-vendor/.test(d))
+      resolveDependencies: (_filename, deps) => deps.filter(d => !/(viz|anim|utils)-vendor/.test(d))
     },
     rollupOptions: {
       output: {
@@ -200,9 +199,14 @@ export default defineConfig(({ mode }) => ({
             return 'utils-vendor';
           }
 
-          // @capacitor solo se ejecuta en build mobile (Capacitor.isNativePlatform).
-          // En web siempre es no-op pero se descarga. Separarlo evita ~50KB en web.
-          if (/[\\/]node_modules[\\/]@capacitor[\\/]/.test(id)) return 'capacitor-vendor';
+          // @capacitor: NO se separa en chunk dedicado. Tras refactor de
+          // main.tsx + plataforma.ts + useBackButtonNativo (todos via dynamic
+          // import), ningun archivo eager importa @capacitor. Dejar la regla
+          // forzaba a Rollup a meter `__vitePreload` (helper Vite) en el
+          // chunk capacitor-vendor, obligando al index entry a descargarlo
+          // siempre (1.1s en mobile 3G). Sin la regla, __vitePreload cae en
+          // vendor/index naturalmente y los plugins Capacitor (status-bar,
+          // splash-screen, app, haptics) van a chunks lazy on-demand.
 
           // dompurify es ~550KB raw / ~60KB brotli. Lo carga eager (HeroHome lo
           // usa), pero su chunk propio permite cache independiente y descarga
