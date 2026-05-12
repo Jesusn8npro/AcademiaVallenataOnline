@@ -118,7 +118,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
           <a href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
-            <img src="/logo academia vallenata.png" alt="Logo Academia Vallenata" />
+            <img src="/logo-175.webp" alt="Logo Academia Vallenata" width="175" height="113" fetchPriority="high" decoding="async" />
           </a>
 
           {/* Menú de navegación */}
@@ -238,7 +238,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
 
             <div className="mpub-encabezado-menu">
               <a href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
-                <img src="/logo academia vallenata.png" alt="Academia Vallenata" className="mpub-logo-menu" />
+                <img src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width="175" height="113" loading="lazy" decoding="async" />
               </a>
               <p className="mpub-descripcion-menu">
                 {t('menu.descripcion')}

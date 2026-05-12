@@ -1,12 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { beasties } from 'vite-plugin-beasties';
 import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
+    // Inline critical CSS necesario para el render inicial + defer del resto.
+    // Mata el render-blocking de index.css (~80KB gzip / 2.5s en mobile 3G).
+    // No corre en build de Capacitor (la app nativa no necesita esto).
+    ...(mode !== 'capacitor' ? [beasties({
+      options: {
+        preload: 'swap',
+        pruneSource: false,
+        inlineFonts: true
+      }
+    })] : []),
     VitePWA({
       registerType: 'autoUpdate',
       // Registramos el SW manualmente desde src/registerSW.ts
@@ -45,13 +56,34 @@ export default defineConfig(({ mode }) => ({
           '**/*.wav',
           '**/*.glb',
           '**/*.gltf',
-          '**/*.obj'
+          '**/*.obj',
+          // Chunks pesados que SOLO se usan en rutas lazy. Excluirlos del precache
+          // ahorra ~1.2 MB en la instalacion del SW. Se sirven por runtimeCaching
+          // cuando el usuario navega a Simulador/AcordeonProMax/3D.
+          '**/static/viz-vendor*',
+          '**/static/charts-vendor*',
+          '**/static/anim-vendor*',
+          '**/static/utils-vendor*',
+          '**/static/capacitor-vendor*'
         ],
+        // Runtime cache para los chunks lazy excluidos del precache.
+        // Primera vez = network, siguientes = SW (offline-capable).
         // El chunk `vendor` pesa ~4.2 MB (incluye three/@react-three tras
         // unificar chunks para evitar TDZ circular). Permitimos 5 MB de margen.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            // Chunks lazy excluidos del precache (viz/charts/anim).
+            // StaleWhileRevalidate: la 1a vez = network, las siguientes = SW.
+            urlPattern: ({ url }) => /\/static\/(viz|charts|anim|utils|capacitor)-vendor.*\.js$/.test(url.pathname),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'lazy-vendor-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/audio/'),
             handler: 'CacheFirst',
@@ -115,28 +147,54 @@ export default defineConfig(({ mode }) => ({
     reportCompressedSize: false,
     chunkSizeWarningLimit: 2000,
     assetsDir: 'static',
+    // Filtra <link rel="modulepreload"> de chunks que SOLO se usan en rutas lazy.
+    // Sin esto, el browser pre-descarga viz-vendor (~932KB), anim-vendor (~40KB),
+    // charts-vendor (~213KB) al cargar Home — total ~1.2MB innecesarios en mobile 3G.
+    modulePreload: {
+      resolveDependencies: (_filename, deps) => deps.filter(d => !/(viz|anim|charts|utils|capacitor)-vendor/.test(d))
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
 
-          // Solo se separan en chunks dedicados los paquetes GRANDES y
-          // BIEN AISLADOS. Paquetes con deps tejidas con utilidades
-          // compartidas (recharts, framer-motion, react-player) se dejan
-          // en `vendor` para evitar circular chunks que rompen la
-          // inicialización en runtime ("Cannot set properties of
-          // undefined", "X is not a function").
-          //
           // Las reglas evalúan en orden — los scoped packages
           // (@supabase) van ANTES que los matchers genéricos de react
           // para evitar capturas indebidas.
+          //
+          // viz-vendor agrupa three + @react-three + @splinetool +
+          // meshline porque meshline `import * as THREE from 'three'` —
+          // separarlos crea ciclo "viz -> vendor -> viz" y TDZ en runtime.
+          // framer-motion y recharts NO importan three (verificado), van
+          // en chunks independientes y solo se descargan en rutas lazy.
 
-          // NOTA: three / @react-three / @splinetool quedan en `vendor`.
-          // Separarlos en `three-vendor` causaba ciclo
-          // "three-vendor -> vendor -> three-vendor" porque deps en
-          // vendor (framer-motion, meshline) tocan three. El ciclo
-          // producia TDZ en runtime ("Cannot access 'bp' before
-          // initialization") y pantalla blanca en produccion.
+          // viz-vendor incluye three + ecosystem (drei + sus deps transitivas que
+          // tocan three). Sin esto, deps como camera-controls/maath/three-mesh-bvh
+          // caen en `vendor` y crean ciclo "vendor -> viz-vendor", forzando el
+          // browser a descargar viz-vendor (~250KB gzip) al cargar Home.
+          if (/[\\/]node_modules[\\/](three|@react-three|@splinetool|meshline|camera-controls|maath|three-mesh-bvh|three-stdlib|troika-three-text|troika-three-utils|troika-worker-utils|@monogrid|stats-gl|stats\.js|suspend-react|detect-gpu|glsl-noise|tunnel-rat|hls\.js|@use-gesture|zustand|@mediapipe)[\\/]/.test(id)) {
+            return 'viz-vendor';
+          }
+
+          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return 'anim-vendor';
+
+          if (/[\\/]node_modules[\\/]recharts[\\/]/.test(id)) return 'charts-vendor';
+
+          // lucide-react se usa en 100+ archivos (mayoria lazy). Si queda en
+          // `vendor`, Rollup mete todos los iconos posibles ahi por heuristica
+          // de shared chunks (~70KB extra en el critical path). Separarlo lo
+          // hace lazy: solo se carga cuando algun componente renderiza un icono.
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'icons-vendor';
+
+          // Paquetes grandes que solo se usan en rutas/features lazy.
+          // Sacarlos de `vendor` reduce el critical path en mobile 3G.
+          if (/[\\/]node_modules[\\/](howler|react-dropzone|react-international-phone|date-fns)[\\/]/.test(id)) {
+            return 'utils-vendor';
+          }
+
+          // @capacitor solo se ejecuta en build mobile (Capacitor.isNativePlatform).
+          // En web siempre es no-op pero se descarga. Separarlo evita ~50KB en web.
+          if (/[\\/]node_modules[\\/]@capacitor[\\/]/.test(id)) return 'capacitor-vendor';
 
           if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) {
             return 'react-vendor';

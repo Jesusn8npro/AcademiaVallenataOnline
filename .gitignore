@@ -28,6 +28,10 @@ dist-ssr
 src/referencias_migracion
 .agent
 
+# Lighthouse outputs (generados localmente)
+lh-*.json
+lh-*.html
+
 # Capacitor / Android (build artifacts)
 android/app/build/
 android/build/

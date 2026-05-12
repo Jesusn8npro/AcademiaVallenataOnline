@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
         {/* Sección Superior: Logo y Frase */}
         <div className="avo-footer-branding">
           <div className="avo-footer-logo">
-            <img src="/logo academia vallenata.png" alt="Academia Vallenata Online Logo" />
+            <img src="/logo academia vallenata.webp" alt="Academia Vallenata Online Logo" width="300" height="194" loading="lazy" decoding="async" />
           </div>
           <p className="avo-footer-phrase">
             "Aprende desde cualquier lugar, conecta con la música de tus raíces 🇨🇴"
