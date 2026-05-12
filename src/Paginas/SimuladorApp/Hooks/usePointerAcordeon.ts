@@ -114,36 +114,35 @@ export const usePointerAcordeon = ({
 
         const encontrarPosEnPunto = (clientX: number, clientY: number, posActual?: string | null): string | null => {
             if (enRectBloqueador(clientX, clientY)) return null;
-            // Cache vacio = se invalido recientemente (drag horizontal del tren, etc.).
-            // Recalcular lazy ANTES del hit-test garantiza coords post-paint despues del
-            // transform asincrono de framer-motion. Costo: ~15ms en Android low-end en
-            // primer toque post-drag, despues queda fresco hasta el siguiente cambio.
-            if (rectsCache.current.size === 0) {
-                actualizarGeometria();
-            }
-            // Fast-path Android low-end: elementFromPoint cuesta 5-10ms; si el dedo
-            // sigue dentro del rect del pito actual, retornar sin hit-test nativo.
+
+            // Fast-path: si el dedo sigue sobre el rect del pito anterior (caso comun
+            // durante touchmove cuando NO hay drag/scale/movimiento), usar cache. Si el
+            // cache se vacio (ej. drag horizontal del tren), recalcular antes.
             if (posActual) {
+                if (rectsCache.current.size === 0) actualizarGeometria();
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, 0)) return posActual;
             }
-            // Match exacto sobre rectsCache antes de elementFromPoint: en
-            // touchstart sin posActual, evita los 5-10ms del hit-test nativo
-            // cuando el dedo cae claramente dentro de un pito conocido.
-            for (const [pos, r] of rectsCache.current.entries()) {
-                if (dentroDe(clientX, clientY, r, 0)) return pos;
-            }
+
+            // FUENTE DE VERDAD: elementFromPoint. Siempre refleja la posicion visual
+            // REAL del DOM (incluye transforms, position absolute, scroll). El rectsCache
+            // puede estar stale tras drag del tren, sliders de teclasLeft/teclasTop, swap
+            // halar/empujar, animaciones, etc. — por eso preferimos elementFromPoint como
+            // primary y degradamos al cache solo si DOM no devuelve un pito (gaps).
+            // Costo ~5-10ms en Android low-end por touchstart/cambio de pito. Aceptable
+            // porque el dedo "estable sobre mismo pito" usa el fast-path de arriba.
             const target = document.elementFromPoint(clientX, clientY);
             if (target) {
                 const pito = (target as HTMLElement).closest('.pito-boton[data-pos]') as HTMLElement | null;
                 if (pito?.dataset.pos) return pito.dataset.pos;
             }
-            // Histeresis: aun dentro del rect expandido del pito anterior.
+
+            // Fallback 1: histeresis al pito anterior (dedo justo afuera).
             if (posActual) {
                 const rActual = rectsCache.current.get(posActual);
                 if (rActual && dentroDe(clientX, clientY, rActual, IMAN_SALIR)) return posActual;
             }
-            // Iman al pito mas cercano si caimos en gap.
+            // Fallback 2: iman al pito mas cercano si caimos en gap entre pitos.
             for (const [pos, r] of rectsCache.current.entries()) {
                 if (dentroDe(clientX, clientY, r, IMAN_ENTRAR)) return pos;
             }
