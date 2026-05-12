@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { sanitizarHTML } from '../../../utilidades/sanitizar';
 import './HeroHome.css';
@@ -10,11 +10,10 @@ interface HeroHomeProps {
 
 const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    setVisible(true);
-  }, []);
+  // NO usar useState(false) + useEffect(setVisible(true)) aqui — causaba
+  // forced reflow ~350ms en mobile: primer render sin contenido, useEffect
+  // mete contenido, browser recalcula layout. Renderizamos siempre, las
+  // animaciones flyIn las hace CSS al montar (gratis, sin layout thrash).
 
   const irAlCursoEstrella = () => {
     window.location.href = '/curso-acordeon-desde-cero';
@@ -26,18 +25,15 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
         <div style={styles.particles}></div>
       </div>
 
-      <div style={styles.heroBackground}>
-        <img
-          src="/images/Home/Banner- Academia vallenata ONLINE.jpg"
-          alt={t('hero.etiqueta')}
-          style={styles.heroBgImage}
-          fetchPriority="high"
-        />
-      </div>
+      {/*
+        Banner Hero deshabilitado: el archivo /images/Home/Banner-...jpg
+        NO existe en public/, daba 404 en cada carga + DOM mutate al fallback.
+        Si quieres re-habilitarlo: copiar el archivo a public/images/Home/
+        o (mejor) importarlo como modulo Vite desde src/assets/images/Home/
+      */}
 
       <div style={styles.heroContent}>
-        {visible && (
-          <>
+        <>
             <div
               style={{
                 ...styles.credibilidadBadge,
@@ -101,8 +97,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
                 </div>
               </div>
             </div>
-          </>
-        )}
+        </>
       </div>
 
       <div style={styles.scrollIndicator}>

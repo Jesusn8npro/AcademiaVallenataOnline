@@ -176,9 +176,12 @@ export default defineConfig(({ mode }) => ({
             return 'viz-vendor';
           }
 
-          // framer-motion + sus deps (motion-dom, motion-utils, es-toolkit usado
-          // por framer). Sin incluir motion-dom, ~284KB se filtraban a `vendor`.
-          if (/[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils|motion-dom|es-toolkit)[\\/]/.test(id)) {
+          // framer-motion + motion-dom/utils. NO incluir es-toolkit aqui:
+          // recharts (eager via vendor) tambien usa es-toolkit, y compartirlo
+          // con anim-vendor crea import "vendor -> anim-vendor" forzando
+          // a descargar framer-motion (~50KB Brotli) en el critical path
+          // aunque solo se use en rutas lazy. es-toolkit queda en vendor.
+          if (/[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/.test(id)) {
             return 'anim-vendor';
           }
 
