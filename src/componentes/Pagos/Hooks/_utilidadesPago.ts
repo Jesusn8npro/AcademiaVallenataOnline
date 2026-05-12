@@ -73,13 +73,18 @@ export function generarRefPaycoReal(tipoContenido: string, contenidoId: string |
     return `${prefijo}-${(idSanitizado || 'ITEM').substring(0, maxId)}-${timestamp}-${random}`.substring(0, 32);
 }
 
+// SDK v2 de Epayco. El viejo (checkout.js) abre iframe a new-checkout.epayco.co
+// que envia X-Frame-Options: DENY -> modal vacio. El v2 usa sessionId server-side
+// y soporta modal onpage real (external:false).
+const EPAYCO_SDK_URL = 'https://checkout.epayco.co/checkout-v2.js';
+
 export function loadEpaycoScript(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        if ((window as any).ePayco && document.querySelector('script[src="https://checkout.epayco.co/checkout.js"]')) {
+        if ((window as any).ePayco && document.querySelector(`script[src="${EPAYCO_SDK_URL}"]`)) {
             resolve(true); return;
         }
         const script = document.createElement('script');
-        script.src = 'https://checkout.epayco.co/checkout.js';
+        script.src = EPAYCO_SDK_URL;
         script.async = true;
         script.onload = () => {
             if ((window as any).ePayco) resolve(true);
@@ -88,6 +93,50 @@ export function loadEpaycoScript(): Promise<boolean> {
         script.onerror = () => reject(new Error('Error cargando ePayco'));
         document.head.appendChild(script);
     });
+}
+
+// Llama a la Edge Function epayco-crear-sesion para obtener un sessionId
+// server-side (usando PRIVATE_KEY que vive solo en Supabase). El SDK v2
+// luego consume ese sessionId con .configure({sessionId, external:false}).
+export interface CrearSesionEpaycoDatos {
+    refPayco: string;
+    nombreProducto: string;
+    descripcion?: string;
+    total: number;
+    base: number;
+    iva: number;
+    nombre: string;
+    apellido?: string;
+    email: string;
+    telefono: string;
+    direccion?: string;
+    tipoDocumento: string;
+    numeroDocumento: string;
+    ciudad?: string;
+    pais?: string;
+    responseUrl: string;
+}
+
+export async function crearSesionEpayco(datos: CrearSesionEpaycoDatos): Promise<string> {
+    const { data: sesion } = await supabase.auth.getSession();
+    const token = sesion?.session?.access_token;
+    if (!token) throw new Error('Usuario no autenticado');
+
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const response = await fetch(`${baseUrl}/functions/v1/epayco-crear-sesion`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(datos),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result?.sessionId) {
+        throw new Error(result?.error || `Error creando sesion Epayco (${response.status})`);
+    }
+    return result.sessionId;
 }
 
 export async function guardarPerfilUsuario(usuarioId: string, datosPago: DatosPago): Promise<void> {
