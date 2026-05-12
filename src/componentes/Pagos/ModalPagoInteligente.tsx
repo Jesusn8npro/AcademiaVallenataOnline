@@ -1,3 +1,7 @@
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 import { useModalPago } from './Hooks/useModalPago';
 import type { ContenidoCompra } from './Hooks/useModalPago';
 import './ModalPagoInteligente.css';
@@ -17,6 +21,9 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         validarEmail, validarTelefono, validarDocumento, validarPassword,
         handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido });
+
+    const [mostrarPassword, setMostrarPassword] = useState(false);
+    const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
 
     if (!mostrar) return null;
 
@@ -103,12 +110,21 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                                             onChange={e => { setDatosPago({ ...datosPago, email: e.target.value }); validarEmail(e.target.value); }} />
                                         {erroresValidacion.email && <p className="mpi-error-text">{erroresValidacion.email}</p>}
                                     </div>
-                                    <div>
-                                        <input type="tel"
-                                            className={`mpi-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}
-                                            placeholder="+57 300 123 4567"
+                                    <div className="mpi-phone-wrapper">
+                                        <PhoneInput
+                                            defaultCountry="co"
                                             value={datosPago.telefono}
-                                            onChange={e => { setDatosPago({ ...datosPago, telefono: e.target.value }); validarTelefono(e.target.value); }} />
+                                            onChange={(phone) => {
+                                                setDatosPago({ ...datosPago, telefono: phone });
+                                                validarTelefono(phone);
+                                            }}
+                                            inputClassName={`mpi-input mpi-phone-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}
+                                            countrySelectorStyleProps={{
+                                                buttonClassName: 'mpi-phone-country-btn',
+                                                dropdownStyleProps: { className: 'mpi-phone-dropdown' },
+                                            }}
+                                            placeholder="300 123 4567"
+                                        />
                                         {erroresValidacion.telefono && <p className="mpi-error-text">{erroresValidacion.telefono}</p>}
                                     </div>
                                 </div>
@@ -162,17 +178,33 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                                     <h4 className="mpi-section-title" style={{ color: '#86efac' }}>🔐 Crear tu Cuenta</h4>
                                     <div className="mpi-grid-2">
                                         <div>
-                                            <input type="password"
-                                                className={`mpi-input ${erroresValidacion.password ? 'mpi-input-error' : ''}`}
-                                                placeholder="Contraseña (min. 8)"
-                                                value={datosPago.password}
-                                                onChange={e => { setDatosPago({ ...datosPago, password: e.target.value }); validarPassword(e.target.value); }} />
+                                            <div className="mpi-password-wrapper">
+                                                <input type={mostrarPassword ? 'text' : 'password'}
+                                                    className={`mpi-input mpi-input-password ${erroresValidacion.password ? 'mpi-input-error' : ''}`}
+                                                    placeholder="Contraseña (min. 8)"
+                                                    value={datosPago.password}
+                                                    onChange={e => { setDatosPago({ ...datosPago, password: e.target.value }); validarPassword(e.target.value); }} />
+                                                <button type="button" className="mpi-password-toggle"
+                                                    onClick={() => setMostrarPassword(v => !v)}
+                                                    aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                                    {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                             {erroresValidacion.password && <p className="mpi-error-text">{erroresValidacion.password}</p>}
                                         </div>
                                         <div>
-                                            <input type="password" className="mpi-input" placeholder="Confirmar contraseña"
-                                                value={datosPago.confirmarPassword}
-                                                onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })} />
+                                            <div className="mpi-password-wrapper">
+                                                <input type={mostrarConfirmarPassword ? 'text' : 'password'}
+                                                    className="mpi-input mpi-input-password"
+                                                    placeholder="Confirmar contraseña"
+                                                    value={datosPago.confirmarPassword}
+                                                    onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })} />
+                                                <button type="button" className="mpi-password-toggle"
+                                                    onClick={() => setMostrarConfirmarPassword(v => !v)}
+                                                    aria-label={mostrarConfirmarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                                    {mostrarConfirmarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

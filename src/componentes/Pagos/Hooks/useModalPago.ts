@@ -7,7 +7,7 @@ import {
     EPAYCO_RESPONSE_URL, DATOS_INICIALES,
     limpiarTelefono, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario,
-    crearSesionEpayco
+    crearSesionEpayco, parsearTelefonoE164
 } from './_utilidadesPago';
 export type { ContenidoCompra } from './_utilidadesPago';
 
@@ -194,6 +194,12 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
 
             if (!(window as any).ePayco) throw new Error('Epayco no disponible');
 
+            // El PhoneInput devuelve el numero en E.164 (+XX...). Separamos el
+            // codigo de pais para enviarlo dinamico al SDK (no hardcodear +57).
+            const { callingCode, numero } = parsearTelefonoE164(
+                datosPago.telefono || datosPago.whatsapp
+            );
+
             // Flujo SDK v2: pedir sessionId al backend (Edge Function que usa
             // PRIVATE_KEY) y pasarlo al SDK. external:false = modal onpage.
             const sessionId = await crearSesionEpayco({
@@ -204,7 +210,8 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
                 nombre: datosPago.nombre,
                 apellido: datosPago.apellido,
                 email: datosPago.email,
-                telefono: limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
+                telefono: numero || limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
+                callingCode,
                 direccion: datosPago.direccion,
                 tipoDocumento: datosPago.tipo_documento,
                 numeroDocumento: datosPago.numero_documento,

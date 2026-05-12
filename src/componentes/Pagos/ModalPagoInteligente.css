@@ -333,3 +333,108 @@
         grid-column: auto;
     }
 }
+
+/* ============================================
+   PhoneInput internacional (react-international-phone)
+   Override de variables de la libreria para que respete el tema dark.
+   ============================================ */
+.mpi-phone-wrapper {
+    --react-international-phone-height: 36px;
+    --react-international-phone-background-color: #111827;
+    --react-international-phone-text-color: #ffffff;
+    --react-international-phone-border-color: #4b5563;
+    --react-international-phone-border-radius: 0.375rem;
+    --react-international-phone-selected-dropdown-item-background-color: #1f2937;
+    --react-international-phone-country-selector-background-color-hover: #1f2937;
+    --react-international-phone-dropdown-item-background-color: #111827;
+    --react-international-phone-dropdown-item-text-color: #ffffff;
+    --react-international-phone-dropdown-item-dial-code-color: #9ca3af;
+    --react-international-phone-disabled-background-color: #1f2937;
+    --react-international-phone-flag-width: 22px;
+    --react-international-phone-flag-height: 16px;
+    --react-international-phone-font-size: 0.875rem;
+}
+
+.mpi-phone-wrapper .react-international-phone-input-container {
+    width: 100%;
+}
+
+.mpi-phone-wrapper .react-international-phone-input {
+    width: 100%;
+    background-color: #111827;
+    color: #ffffff;
+    border: 1px solid #4b5563;
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.mpi-phone-wrapper .react-international-phone-input:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 1px #a855f7;
+}
+
+.mpi-phone-wrapper .react-international-phone-country-selector-button {
+    background-color: #111827;
+    border: 1px solid #4b5563;
+    border-right: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding: 0 0.5rem;
+}
+
+.mpi-phone-wrapper .react-international-phone-country-selector-button:hover {
+    background-color: #1f2937;
+}
+
+.mpi-phone-wrapper .react-international-phone-country-selector-dropdown {
+    background-color: #111827;
+    border: 1px solid #4b5563;
+    color: #ffffff;
+    max-height: 280px;
+}
+
+.mpi-phone-wrapper .react-international-phone-country-selector-dropdown__list-item:hover,
+.mpi-phone-wrapper .react-international-phone-country-selector-dropdown__list-item--focused,
+.mpi-phone-wrapper .react-international-phone-country-selector-dropdown__list-item--selected {
+    background-color: #1f2937;
+}
+
+/* ============================================
+   Toggle ojito para inputs de password
+   ============================================ */
+.mpi-password-wrapper {
+    position: relative;
+}
+
+.mpi-input-password {
+    padding-right: 2.5rem;
+}
+
+.mpi-password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+}
+
+.mpi-password-toggle:hover {
+    color: #ffffff;
+}
+
+.mpi-password-toggle:focus {
+    outline: none;
+    color: #a855f7;
+}
