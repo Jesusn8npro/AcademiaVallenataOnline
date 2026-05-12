@@ -15,12 +15,20 @@ interface ModalPagoInteligenteProps {
 
 const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso' }: ModalPagoInteligenteProps) => {
     const {
-        usuario, pasoActual, setPasoActual, cargando, procesandoPago,
+        usuario, pasoActual, setPasoActual, pasoMax, cargando, procesandoPago,
         error, pagoExitoso, usuarioEstaRegistrado,
         datosPago, setDatosPago, erroresValidacion,
         validarEmail, validarTelefono, validarDocumento, validarPassword,
         handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido });
+
+    const TITULOS_PASO: Record<number, string> = {
+        1: usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra',
+        2: 'Datos Personales',
+        3: 'Identificación y Facturación',
+        4: 'Crear tu Cuenta',
+    };
+    const esUltimoPaso = pasoActual === pasoMax;
 
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
@@ -37,15 +45,20 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                 </button>
 
                 <div className="mpi-modal-body">
-                    {pasoActual !== 4 && (
-                        <h2 className="mpi-title">
-                            {pasoActual === 1
-                                ? (usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra')
-                                : 'Datos de Facturación'}
-                        </h2>
+                    {!cargando && !pagoExitoso && (
+                        <>
+                            <h2 className="mpi-title">{TITULOS_PASO[pasoActual]}</h2>
+                            <div className="mpi-stepper" role="progressbar" aria-valuenow={pasoActual} aria-valuemin={1} aria-valuemax={pasoMax}>
+                                {Array.from({ length: pasoMax }, (_, i) => i + 1).map((n) => (
+                                    <span key={n} className={`mpi-step-dot ${n === pasoActual ? 'is-active' : n < pasoActual ? 'is-done' : ''}`}>
+                                        {n < pasoActual ? '✓' : n}
+                                    </span>
+                                ))}
+                            </div>
+                        </>
                     )}
 
-                    {contenido && pasoActual !== 4 && (
+                    {contenido && !cargando && !pagoExitoso && (
                         <div className="mpi-product-summary">
                             <div className="mpi-summary-flex">
                                 <div>
@@ -83,132 +96,123 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                             <div className="text-center">
                                 <div className="mpi-alert mpi-alert-info">
                                     <p>🆕 Crear tu cuenta es fácil y rápido</p>
-                                    <p style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Completa tus datos y tendrás acceso inmediato</p>
+                                    <p style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Completa tus datos en 3 pasos cortos</p>
                                 </div>
                             </div>
                         )
                     )}
 
                     {pasoActual === 2 && (
-                        <div className="space-y-4">
-                            <div className="mpi-form-section">
-                                <h4 className="mpi-section-title">👤 Datos Personales</h4>
-                                <div className="mpi-grid-2">
-                                    <input type="text" className="mpi-input" placeholder="Nombres"
-                                        value={datosPago.nombre}
-                                        onChange={e => setDatosPago({ ...datosPago, nombre: e.target.value })} />
-                                    <input type="text" className="mpi-input" placeholder="Apellidos"
-                                        value={datosPago.apellido}
-                                        onChange={e => setDatosPago({ ...datosPago, apellido: e.target.value })} />
-                                </div>
-                                <div className="mpi-grid-2" style={{ marginTop: '0.5rem' }}>
-                                    <div>
-                                        <input type="email"
-                                            className={`mpi-input ${erroresValidacion.email ? 'mpi-input-error' : ''}`}
-                                            placeholder="tu@email.com"
-                                            value={datosPago.email}
-                                            onChange={e => { setDatosPago({ ...datosPago, email: e.target.value }); validarEmail(e.target.value); }} />
-                                        {erroresValidacion.email && <p className="mpi-error-text">{erroresValidacion.email}</p>}
-                                    </div>
-                                    <div className="mpi-phone-wrapper">
-                                        <PhoneInput
-                                            defaultCountry="co"
-                                            value={datosPago.telefono}
-                                            onChange={(phone) => {
-                                                setDatosPago({ ...datosPago, telefono: phone });
-                                                validarTelefono(phone);
-                                            }}
-                                            inputClassName={`mpi-input mpi-phone-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}
-                                            countrySelectorStyleProps={{
-                                                buttonClassName: 'mpi-phone-country-btn',
-                                                dropdownStyleProps: { className: 'mpi-phone-dropdown' },
-                                            }}
-                                            placeholder="300 123 4567"
-                                        />
-                                        {erroresValidacion.telefono && <p className="mpi-error-text">{erroresValidacion.telefono}</p>}
-                                    </div>
+                        <div className="mpi-form-section">
+                            <div className="mpi-grid-2">
+                                <input type="text" className="mpi-input" placeholder="Nombres"
+                                    value={datosPago.nombre}
+                                    onChange={e => setDatosPago({ ...datosPago, nombre: e.target.value })} />
+                                <input type="text" className="mpi-input" placeholder="Apellidos"
+                                    value={datosPago.apellido}
+                                    onChange={e => setDatosPago({ ...datosPago, apellido: e.target.value })} />
+                            </div>
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <input type="email"
+                                    className={`mpi-input ${erroresValidacion.email ? 'mpi-input-error' : ''}`}
+                                    placeholder="tu@email.com"
+                                    value={datosPago.email}
+                                    onChange={e => { setDatosPago({ ...datosPago, email: e.target.value }); validarEmail(e.target.value); }} />
+                                {erroresValidacion.email && <p className="mpi-error-text">{erroresValidacion.email}</p>}
+                            </div>
+                            <div className="mpi-phone-wrapper" style={{ marginTop: '0.5rem' }}>
+                                <PhoneInput
+                                    defaultCountry="co"
+                                    value={datosPago.telefono}
+                                    onChange={(phone) => {
+                                        setDatosPago({ ...datosPago, telefono: phone });
+                                        validarTelefono(phone);
+                                    }}
+                                    inputClassName={`mpi-input mpi-phone-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}
+                                    countrySelectorStyleProps={{
+                                        buttonClassName: 'mpi-phone-country-btn',
+                                        dropdownStyleProps: { className: 'mpi-phone-dropdown' },
+                                    }}
+                                    placeholder="300 123 4567"
+                                />
+                                {erroresValidacion.telefono && <p className="mpi-error-text">{erroresValidacion.telefono}</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {pasoActual === 3 && (
+                        <div className="mpi-form-section">
+                            <div className="mpi-grid-3">
+                                <select className="mpi-input" value={datosPago.tipo_documento}
+                                    onChange={e => setDatosPago({ ...datosPago, tipo_documento: e.target.value })}>
+                                    <option value="CC">CC</option>
+                                    <option value="CE">CE</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                    <option value="NIT">NIT</option>
+                                </select>
+                                <div className="mpi-col-span-2">
+                                    <input type="text"
+                                        className={`mpi-input ${erroresValidacion.documento ? 'mpi-input-error' : ''}`}
+                                        placeholder="Número de documento"
+                                        value={datosPago.numero_documento}
+                                        onChange={e => { setDatosPago({ ...datosPago, numero_documento: e.target.value }); validarDocumento(e.target.value, datosPago.tipo_documento); }} />
+                                    {erroresValidacion.documento && <p className="mpi-error-text">{erroresValidacion.documento}</p>}
                                 </div>
                             </div>
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <input type="text" className="mpi-input" placeholder="Dirección completa"
+                                    value={datosPago.direccion}
+                                    onChange={e => setDatosPago({ ...datosPago, direccion: e.target.value })} />
+                            </div>
+                            <div className="mpi-grid-3" style={{ marginTop: '0.5rem' }}>
+                                <input type="text" className="mpi-input" placeholder="Ciudad"
+                                    value={datosPago.ciudad}
+                                    onChange={e => setDatosPago({ ...datosPago, ciudad: e.target.value })} />
+                                <select className="mpi-input" value={datosPago.pais}
+                                    onChange={e => setDatosPago({ ...datosPago, pais: e.target.value })}>
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Mexico">México</option>
+                                    <option value="USA">USA</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                                <input type="text" className="mpi-input" placeholder="Cod. Postal"
+                                    value={datosPago.codigo_postal}
+                                    onChange={e => setDatosPago({ ...datosPago, codigo_postal: e.target.value })} />
+                            </div>
+                        </div>
+                    )}
 
-                            <div className="mpi-form-section">
-                                <h4 className="mpi-section-title">📄 Identificación y Facturación</h4>
-                                <div className="mpi-grid-3">
-                                    <div>
-                                        <select className="mpi-input" value={datosPago.tipo_documento}
-                                            onChange={e => setDatosPago({ ...datosPago, tipo_documento: e.target.value })}>
-                                            <option value="CC">CC</option>
-                                            <option value="CE">CE</option>
-                                            <option value="Pasaporte">Pasaporte</option>
-                                            <option value="NIT">NIT</option>
-                                        </select>
-                                    </div>
-                                    <div className="mpi-col-span-2">
-                                        <input type="text"
-                                            className={`mpi-input ${erroresValidacion.documento ? 'mpi-input-error' : ''}`}
-                                            placeholder="Número de documento"
-                                            value={datosPago.numero_documento}
-                                            onChange={e => { setDatosPago({ ...datosPago, numero_documento: e.target.value }); validarDocumento(e.target.value, datosPago.tipo_documento); }} />
-                                        {erroresValidacion.documento && <p className="mpi-error-text">{erroresValidacion.documento}</p>}
-                                    </div>
+                    {pasoActual === 4 && (
+                        <div className="mpi-form-section" style={{ borderColor: 'rgba(34, 197, 94, 0.5)' }}>
+                            <div>
+                                <div className="mpi-password-wrapper">
+                                    <input type={mostrarPassword ? 'text' : 'password'}
+                                        className={`mpi-input mpi-input-password ${erroresValidacion.password ? 'mpi-input-error' : ''}`}
+                                        placeholder="Contraseña (min. 8)"
+                                        value={datosPago.password}
+                                        onChange={e => { setDatosPago({ ...datosPago, password: e.target.value }); validarPassword(e.target.value); }} />
+                                    <button type="button" className="mpi-password-toggle"
+                                        onClick={() => setMostrarPassword(v => !v)}
+                                        aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                        {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
-                                <div style={{ marginTop: '0.5rem' }}>
-                                    <input type="text" className="mpi-input" placeholder="Dirección completa"
-                                        value={datosPago.direccion}
-                                        onChange={e => setDatosPago({ ...datosPago, direccion: e.target.value })} />
-                                </div>
-                                <div className="mpi-grid-3" style={{ marginTop: '0.5rem' }}>
-                                    <input type="text" className="mpi-input" placeholder="Ciudad"
-                                        value={datosPago.ciudad}
-                                        onChange={e => setDatosPago({ ...datosPago, ciudad: e.target.value })} />
-                                    <select className="mpi-input" value={datosPago.pais}
-                                        onChange={e => setDatosPago({ ...datosPago, pais: e.target.value })}>
-                                        <option value="Colombia">Colombia</option>
-                                        <option value="Mexico">México</option>
-                                        <option value="USA">USA</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                    <input type="text" className="mpi-input" placeholder="Cod. Postal"
-                                        value={datosPago.codigo_postal}
-                                        onChange={e => setDatosPago({ ...datosPago, codigo_postal: e.target.value })} />
+                                {erroresValidacion.password && <p className="mpi-error-text">{erroresValidacion.password}</p>}
+                            </div>
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <div className="mpi-password-wrapper">
+                                    <input type={mostrarConfirmarPassword ? 'text' : 'password'}
+                                        className="mpi-input mpi-input-password"
+                                        placeholder="Confirmar contraseña"
+                                        value={datosPago.confirmarPassword}
+                                        onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })} />
+                                <button type="button" className="mpi-password-toggle"
+                                    onClick={() => setMostrarConfirmarPassword(v => !v)}
+                                    aria-label={mostrarConfirmarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                                    {mostrarConfirmarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                                 </div>
                             </div>
-
-                            {!usuarioEstaRegistrado && (
-                                <div className="mpi-alert mpi-alert-success mpi-form-section" style={{ borderColor: 'rgba(34, 197, 94, 0.5)' }}>
-                                    <h4 className="mpi-section-title" style={{ color: '#86efac' }}>🔐 Crear tu Cuenta</h4>
-                                    <div className="mpi-grid-2">
-                                        <div>
-                                            <div className="mpi-password-wrapper">
-                                                <input type={mostrarPassword ? 'text' : 'password'}
-                                                    className={`mpi-input mpi-input-password ${erroresValidacion.password ? 'mpi-input-error' : ''}`}
-                                                    placeholder="Contraseña (min. 8)"
-                                                    value={datosPago.password}
-                                                    onChange={e => { setDatosPago({ ...datosPago, password: e.target.value }); validarPassword(e.target.value); }} />
-                                                <button type="button" className="mpi-password-toggle"
-                                                    onClick={() => setMostrarPassword(v => !v)}
-                                                    aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
-                                                    {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
-                                            </div>
-                                            {erroresValidacion.password && <p className="mpi-error-text">{erroresValidacion.password}</p>}
-                                        </div>
-                                        <div>
-                                            <div className="mpi-password-wrapper">
-                                                <input type={mostrarConfirmarPassword ? 'text' : 'password'}
-                                                    className="mpi-input mpi-input-password"
-                                                    placeholder="Confirmar contraseña"
-                                                    value={datosPago.confirmarPassword}
-                                                    onChange={e => setDatosPago({ ...datosPago, confirmarPassword: e.target.value })} />
-                                                <button type="button" className="mpi-password-toggle"
-                                                    onClick={() => setMostrarConfirmarPassword(v => !v)}
-                                                    aria-label={mostrarConfirmarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
-                                                    {mostrarConfirmarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -238,8 +242,8 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
 
                 {!cargando && !pagoExitoso && (
                     <div className="mpi-footer">
-                        {pasoActual === 2
-                            ? <button className="mpi-btn-back" onClick={() => setPasoActual(1)}>&larr; Atrás</button>
+                        {pasoActual > 1
+                            ? <button className="mpi-btn-back" onClick={() => setPasoActual(pasoActual - 1)}>&larr; Atrás</button>
                             : <div />}
                         <button
                             className="mpi-btn-primary"
@@ -248,9 +252,9 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                         >
                             {procesandoPago
                                 ? 'Procesando...'
-                                : pasoActual === 1
+                                : esUltimoPaso
                                     ? `💳 Pagar $${obtenerPrecio(contenido).toLocaleString('es-CO')}`
-                                    : '💳 Procesar Pago'}
+                                    : 'Continuar →'}
                         </button>
                     </div>
                 )}
