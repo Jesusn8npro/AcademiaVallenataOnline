@@ -61,6 +61,28 @@ export const usePointerAcordeon = ({
         window.addEventListener('orientationchange', forzarRecalculo);
         requestAnimationFrame(actualizarGeometria);
 
+        // ResizeObserver: invalida cache de rects automaticamente cuando CUALQUIER pito
+        // cambia tamano o posicion. Captura casos que los listeners de resize/orientation
+        // se pierden: animaciones framer-motion, swap halar/empujar (cambia disposicion de
+        // notas), transforms de la barra de herramientas en modo foco, scroll del contenedor.
+        // Sin esto, el rectsCache se desincronizaba con el tiempo de uso -> el dedo cae en
+        // pito X pero hit-test devuelve X+1. El reset es throttled via requestAnimationFrame
+        // dentro de actualizarGeometria, asi no hay costo por batch de cambios simultaneos.
+        let rafPendienteRO = 0;
+        const recalcThrottled = () => {
+            if (rafPendienteRO) return;
+            rafPendienteRO = requestAnimationFrame(() => {
+                rafPendienteRO = 0;
+                actualizarGeometria();
+            });
+        };
+        const ro = new ResizeObserver(recalcThrottled);
+        tren.querySelectorAll('.pito-boton').forEach(el => ro.observe(el));
+        // Tambien observamos el contenedor padre del tren: si el padre cambia altura/ancho
+        // (ej. barra de herramientas se mueve en modo foco), los pitos cambian de viewport
+        // coords aunque su tamano relativo no cambie.
+        ro.observe(tren);
+
         const dentroDe = (cx: number, cy: number, r: { left: number; right: number; top: number; bottom: number }, iman: number) =>
             cx >= r.left - iman && cx <= r.right + iman && cy >= r.top - iman && cy <= r.bottom + iman;
 
@@ -343,6 +365,8 @@ export const usePointerAcordeon = ({
         return () => {
             window.removeEventListener('resize', forzarRecalculo);
             window.removeEventListener('orientationchange', forzarRecalculo);
+            ro.disconnect();
+            if (rafPendienteRO) cancelAnimationFrame(rafPendienteRO);
             window.clearInterval(watchdogId);
             document.removeEventListener('visibilitychange', onVisibility);
             window.removeEventListener('blur', limpiarTodo);
@@ -378,5 +402,9 @@ export const usePointerAcordeon = ({
                 pointersMap.current.set(pId, { pos: data.pos, musicalId: `${data.pos}-${nuevaDireccion}`, ts: ahora });
             }
         });
+        // Defensa adicional: el swap halar/empujar cambia la disposicion de notas en los pitos.
+        // El ResizeObserver puede no detectarlo si solo cambia CSS class sin tamano. Invalidamos
+        // explicitamente para que el proximo touch use rects refrescados.
+        limpiarGeometria();
     }};
 };

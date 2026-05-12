@@ -540,8 +540,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     const iOSUnlockRef = useRef(false);
     const setFuelleVirtual = useCallback((activo: boolean) => {
-        if (!activo) return;
+        // Bug fix: activarContexto se ejecuta SIEMPRE (sea activo true o false), no solo
+        // cuando hay un dedo en bajos. Antes, al levantar el ultimo dedo, setFuelleVirtual(false)
+        // retornaba sin hacer nada -> AudioContext quedaba suspended -> los pitos NO sonaban
+        // hasta que el usuario VOLVIERA a tocar bajos. Sintoma: "los pitos solo funcionan si
+        // tengo un dedo en bajos". Ahora el contexto se mantiene activo siempre que haya
+        // interaccion, sin importar la zona.
         motorAudioPro.activarContexto();
+        if (!activo) return;
         // Unlock iOS: reproduce un buffer vacío de 1 muestra para pasar la sesión de "ambient" (silenciable) a "playback".
         if (!iOSUnlockRef.current) {
             iOSUnlockRef.current = true;
