@@ -87,7 +87,8 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
     };
 
     const validarTelefono = (telefono: string) => {
-        const ok = /^\d{7,15}$/.test(telefono.replace(/[\s\-\(\)]/g, ''));
+        // Acepta formato E.164 (+573001234567): quita +, espacios, guiones, parentesis.
+        const ok = /^\d{7,15}$/.test(telefono.replace(/[\s\-\(\)+]/g, ''));
         setErroresValidacion(prev => ({ ...prev, telefono: telefono && !ok ? 'Teléfono debe tener 7-15 dígitos' : '' }));
     };
 
@@ -238,18 +239,42 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
         }
     };
 
+    // Wizard de pasos. 1=intro+producto, 2=datos personales, 3=facturacion,
+    // 4=contrasena (solo si NO esta registrado). El ultimo dispara procesarPago.
+    const pasoMax = usuarioEstaRegistrado ? 3 : 4;
+
     const handleSiguiente = () => {
-        if (pasoActual === 1) {
-            if (!usuarioEstaRegistrado || !datosPago.numero_documento || !datosPago.direccion) setPasoActual(2);
-            else procesarPago();
-        } else if (pasoActual === 2 && validarDatosPago()) {
-            procesarPago();
+        if (pasoActual === 1) { setPasoActual(2); return; }
+
+        if (pasoActual === 2) {
+            if (!datosPago.nombre || !datosPago.email || !datosPago.telefono) {
+                setError('Completa nombre, email y telefono'); return;
+            }
+            if (erroresValidacion.email || erroresValidacion.telefono) {
+                setError('Corrige los errores marcados'); return;
+            }
+            setError(''); setPasoActual(3); return;
         }
+
+        if (pasoActual === 3) {
+            if (!datosPago.numero_documento || !datosPago.direccion || !datosPago.ciudad) {
+                setError('Completa documento, direccion y ciudad'); return;
+            }
+            if (erroresValidacion.documento) {
+                setError('Corrige el documento'); return;
+            }
+            setError('');
+            if (pasoMax === 3) procesarPago();
+            else setPasoActual(4);
+            return;
+        }
+
+        if (pasoActual === 4 && validarDatosPago()) procesarPago();
     };
 
     return {
         usuario,
-        pasoActual, setPasoActual,
+        pasoActual, setPasoActual, pasoMax,
         cargando, procesandoPago, error, pagoExitoso,
         usuarioEstaRegistrado,
         datosPago, setDatosPago,
