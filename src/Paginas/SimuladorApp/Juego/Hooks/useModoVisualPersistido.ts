@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 
-export type ModoVisual = 'cayendo' | 'boxed' | 'boxed-libre' | 'guia' | 'foco' | 'carril';
+export type ModoVisual = 'highway' | 'cayendo' | 'boxed' | 'boxed-libre' | 'guia' | 'foco' | 'carril';
 
 const STORAGE_KEY = 'simulador_modo_visual';
 
 const MENSAJES: Record<ModoVisual, string> = {
-    cayendo:       'Modo Libre · las notas caen sobre los pitos',
+    highway:       'Modo Highway · pista con carriles tipo Guitar Hero',
+    cayendo:       'Modo Libre clásico · las notas caen sobre los pitos',
     boxed:         'Modo Synthesia · la canción se pausa en cada nota',
     'boxed-libre': 'Modo Libre Pro · cajita arriba sin pausar la canción',
     guia:          'Modo Guía · te dice ABRIENDO o CERRANDO',
@@ -13,14 +14,16 @@ const MENSAJES: Record<ModoVisual, string> = {
     carril:        'Modo Carril · el fondo cambia con el fuelle',
 };
 
-const VALIDOS: ModoVisual[] = ['cayendo', 'boxed', 'boxed-libre', 'guia', 'foco', 'carril'];
+const VALIDOS: ModoVisual[] = ['highway', 'cayendo', 'boxed', 'boxed-libre', 'guia', 'foco', 'carril'];
 
 export const useModoVisualPersistido = () => {
     const [modoVisual, setModoVisual] = useState<ModoVisual>(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY) as ModoVisual | null;
-            return saved && VALIDOS.includes(saved) ? saved : 'cayendo';
-        } catch { return 'cayendo'; }
+            // Highway es el nuevo default — la pista con carriles es la vista
+            // mas legible y se recomienda como punto de partida.
+            return saved && VALIDOS.includes(saved) ? saved : 'highway';
+        } catch { return 'highway'; }
     });
     const [toast, setToast] = useState<string>('');
 
