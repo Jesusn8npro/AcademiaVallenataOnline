@@ -9,6 +9,7 @@ import HeaderJuegoSimulador from './Piezas/HeaderJuegoSimulador';
 import PantallaResultadosSimulador from './Pantallas/PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './Pantallas/PantallaGameOverSimulador';
 import ModoVistaLibre from './ModosVista/ModoVistaLibre';
+import PistaNotasHighway from './ModosVista/PistaNotasHighway';
 import PistaNotasBoxed from './ModosVista/PistaNotasBoxed';
 import PistaNotasGuia from './ModosVista/PistaNotasGuia';
 import PistaNotasFoco from './ModosVista/PistaNotasFoco';
@@ -321,6 +322,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     verNotas,
                 };
                 switch (modoVisual) {
+                    case 'highway': return <PistaNotasHighway {...propsPista} />;
                     case 'boxed':
                     case 'boxed-libre': return <PistaNotasBoxed {...propsPista} />;
                     case 'guia':   return <PistaNotasGuia {...propsPista} />;
