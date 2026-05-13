@@ -160,27 +160,23 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
     // top=0 (entrada arriba) a top=altoPista (zona de impacto abajo).
     const altoPista = pistaRef.current?.getBoundingClientRect().height ?? 0;
 
-    // SOLO mostrar las proximas N notas (no las impactadas). En canciones
-    // densas (rafagas) renderizar todas crea "avalancha visual" — el alumno
-    // no sabe a cual mirar. Limitar a las mas cercanas al impacto + asignar
-    // rank por proximidad da JERARQUIA VISUAL CLARA: el ojo siempre encuentra
-    // la mas grande como "la siguiente a pisar".
+    // ESTRATEGIA SIMPLE: solo la nota INMINENTE (la que se debe pisar AHORA)
+    // tiene tamano + glow + dorado. TODAS las demas (no importa si son la 2da,
+    // 3ra o 6ta proxima) se muestran del MISMO tamano base, chiquitas y
+    // atenuadas. Asi el alumno no necesita procesar "esta es mas grande que
+    // aquella" — solo ve 1 nota destacada y entiende: "esa es la que toca".
+    //
+    // Antes intentamos jerarquia por rank (escala 1.5x, 1.15x, 0.95x, 0.78x...)
+    // pero las notas cambiaban de tamano al avanzar el progreso → confusion.
     const MAX_NOTAS_VISIBLES = 6;
 
     // Ordenar DESC por progreso (mas cerca del impacto primero).
-    // Las impactadas se mantienen visibles brevemente para el burst.
     const notasActivas = notas.filter(n => n.impactada || n.progreso > 0.05);
     const notasOrdenadasDesc = [...notasActivas].sort((a, b) => b.progreso - a.progreso);
-
-    // Asignar rank: 0 = mas inminente (mayor progreso), 1 = siguiente, etc.
-    // Impactadas no entran al ranking — siempre visibles a full opacidad/escala.
     const notasNoImpactadas = notasOrdenadasDesc.filter(n => !n.impactada).slice(0, MAX_NOTAS_VISIBLES);
-    const rankPorId = new Map<string, number>();
-    notasNoImpactadas.forEach((n, idx) => rankPorId.set(n.id, idx));
 
-    // INMINENTE: todas las notas con rank=0 + las que esten en el mismo tick
-    // (acordes). Definida por: misma proximidad temporal que la primera (margen
-    // 0.04 de progreso) y progreso > 0.7 (zona de impacto).
+    // INMINENTE: la primera (y acordes simultaneos con misma proximidad).
+    // Condicion: progreso > 0.7 (zona de impacto) + en margen 0.04 de la primera.
     const idsInminente = new Set<string>();
     const primera = notasNoImpactadas[0];
     if (primera && primera.progreso > 0.7) {
@@ -191,15 +187,13 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
     }
     const hayInminente = idsInminente.size > 0;
 
-    // Notas finalmente visibles: las impactadas (burst) + las top N no-impactadas.
+    // Notas finalmente visibles: impactadas (burst) + top N no-impactadas.
     const notasParaRender = [
         ...notasActivas.filter(n => n.impactada),
         ...notasNoImpactadas,
     ];
-    // Ordenar ASC por progreso para z-stacking (las cercanas al impacto arriba).
     notasParaRender.sort((a, b) => a.progreso - b.progreso);
 
-    // Construir set de targetX inminentes para resaltar los carriles activos.
     const carrilesInminentes = new Set<number>();
     for (const n of notasParaRender) {
         if (idsInminente.has(n.id)) carrilesInminentes.add(Math.round(n.targetX));
@@ -225,37 +219,29 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
             {notasParaRender.map((n) => {
                 const noteY = n.progreso * altoPista;
                 const esInminente = idsInminente.has(n.id);
-                const rank = rankPorId.get(n.id) ?? 0;
                 const tieneCola = n.duracion > 30 && !n.impactada;
                 const tailTopY = n.progresoFinal * altoPista;
                 const tailBottomY = Math.min(noteY, altoPista);
                 const tailHeight = Math.max(0, tailBottomY - tailTopY);
 
-                // Opacidad por rank: la rank 0 (inminente o cercana) full,
-                // y las siguientes se atenuan progresivamente. Asi el ojo
-                // distingue claramente "esta primero, esta despues...".
-                const opacidadPorRank = n.impactada
+                // Regla simple: dos estados visuales, no mas.
+                //   - INMINENTE: grande (1.45x) + opacidad 1.0 + halo dorado.
+                //   - Cualquier otra (impactada / lejana / proxima): tamano
+                //     base CONSTANTE (0.68x) + opacidad 0.55. No importa
+                //     cuanto falta — todas iguales.
+                // Asi el alumno ve EXACTAMENTE una cosa destacada en pantalla
+                // y sabe instantaneamente que es lo que toca.
+                const opacidadFinal = n.impactada
                     ? 1
                     : esInminente
                         ? 1
-                        : rank === 0 ? 0.95
-                        : rank === 1 ? 0.7
-                        : rank === 2 ? 0.5
-                        : rank === 3 ? 0.35
-                        : 0.22;
+                        : 0.55;
 
-                // Escala por rank: jerarquia visual fuerte. Inminente GIGANTE
-                // (1.5x), las siguientes decrecen. El ojo automaticamente va
-                // a la mas grande = "esta es la que debo pisar AHORA".
-                const escalaPorRank = n.impactada
+                const escalaFinal = n.impactada
                     ? 1.3
                     : esInminente
-                        ? 1.5
-                        : rank === 0 ? 1.15
-                        : rank === 1 ? 0.95
-                        : rank === 2 ? 0.78
-                        : rank === 3 ? 0.65
-                        : 0.55;
+                        ? 1.45
+                        : 0.68;
 
                 return (
                     <React.Fragment key={n.id}>
@@ -266,7 +252,7 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
                                     left: `${n.targetX}px`,
                                     top: `${tailTopY}px`,
                                     height: `${tailHeight}px`,
-                                    opacity: opacidadPorRank,
+                                    opacity: opacidadFinal,
                                 }}
                             />
                         )}
@@ -275,8 +261,8 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
                             style={{
                                 left: `${n.targetX}px`,
                                 top: `${noteY}px`,
-                                opacity: opacidadPorRank,
-                                transform: `translate(-50%, -50%) scale(${escalaPorRank})`,
+                                opacity: opacidadFinal,
+                                transform: `translate(-50%, -50%) scale(${escalaFinal})`,
                             }}
                         >
                             <span className="highway-nota-etiqueta">{n.etiqueta}</span>
