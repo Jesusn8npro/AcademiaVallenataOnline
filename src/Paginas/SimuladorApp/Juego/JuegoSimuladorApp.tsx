@@ -8,7 +8,6 @@ import BarraMaestroMobile from './Piezas/BarraMaestroMobile';
 import HeaderJuegoSimulador from './Piezas/HeaderJuegoSimulador';
 import PantallaResultadosSimulador from './Pantallas/PantallaResultadosSimulador';
 import PantallaGameOverSimulador from './Pantallas/PantallaGameOverSimulador';
-import ModoVistaLibre from './ModosVista/ModoVistaLibre';
 import PistaNotasHighway from './ModosVista/PistaNotasHighway';
 import PistaNotasBoxed from './ModosVista/PistaNotasBoxed';
 import PistaNotasGuia from './ModosVista/PistaNotasGuia';
@@ -328,8 +327,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     case 'guia':   return <PistaNotasGuia {...propsPista} />;
                     case 'foco':   return <PistaNotasFoco {...propsPista} />;
                     case 'carril': return <PistaNotasCarril {...propsPista} />;
-                    case 'cayendo':
-                    default:       return <ModoVistaLibre {...propsPista} />;
+                    // Modo 'cayendo' eliminado del selector — fallback al Highway.
+                    default:       return <PistaNotasHighway {...propsPista} />;
                 }
             })()}
 
