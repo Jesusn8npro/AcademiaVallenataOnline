@@ -134,11 +134,12 @@
 
 /* INMINENTE: nota proxima al impacto. Border blanco grueso + glow fuerte +
    pulso + anillo dorado externo (mismo color que el carril activo) para
-   reforzar visualmente "PISA AHORA". */
+   reforzar visualmente "PISA AHORA". La ESCALA viene del inline style del
+   JSX (que asigna 1.5x a inminente por rank), aqui solo controlamos el
+   pulso de filter — sin transform aqui, asi no compite con el inline. */
 .highway-nota.inminente {
     z-index: 3;
     border: 4px solid #fff;
-    transform: translate(-50%, -50%) scale(1.30);
     animation: highway-nota-pulso 0.85s ease-in-out infinite;
 }
 
@@ -183,15 +184,12 @@
         inset 0 -3px 6px rgba(0, 0, 0, 0.35);
 }
 
+/* Pulso solo via filter — la escala viene del inline style del JSX (rank).
+   Si pusieramos transform aqui, pisaria al inline y la jerarquia visual
+   por rank se perderia. */
 @keyframes highway-nota-pulso {
-    0%, 100% {
-        filter: brightness(1.05) saturate(1.1);
-        transform: translate(-50%, -50%) scale(1.30);
-    }
-    50% {
-        filter: brightness(1.35) saturate(1.4);
-        transform: translate(-50%, -50%) scale(1.38);
-    }
+    0%, 100% { filter: brightness(1.05) saturate(1.1); }
+    50%      { filter: brightness(1.4)  saturate(1.5); }
 }
 
 /* IMPACTADA: flash blanco rapido */
