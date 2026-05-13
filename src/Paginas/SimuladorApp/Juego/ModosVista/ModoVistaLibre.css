@@ -337,20 +337,24 @@
     color: #92400e;
 }
 
-/* PITO OBJETIVO — borde + halo conico rotando. Mask radial deja un agujero
-   central para que el botoncito blanco siga visible adentro. */
+/* PITO OBJETIVO — borde + halo conico rotando + anillo pulsante exterior.
+   Mask radial deja un agujero central para que el botoncito blanco siga
+   visible adentro. inset=-11px (antes -7px): la corona del halo es mas ancha
+   y se ve desde mas lejos. Add: anillo ::after que pulsa hacia afuera tipo
+   "radar/sonar" — efecto visual claro de "pisa aqui" sin tapar el boton. */
 .pito-boton.objetivo-halar {
-    border: 3px solid #3b82f6 !important;
+    border: 4px solid #3b82f6 !important;
     box-shadow:
-        0 0 8px rgba(59, 130, 246, 0.95),
-        inset 0 0 18px rgba(59, 130, 246, 0.45) !important;
+        0 0 14px rgba(59, 130, 246, 1),
+        0 0 28px rgba(59, 130, 246, 0.55),
+        inset 0 0 22px rgba(59, 130, 246, 0.55) !important;
     position: relative;
 }
 
 .pito-boton.objetivo-halar::before {
     content: '';
     position: absolute;
-    inset: -7px;
+    inset: -11px;
     border-radius: 50%;
     background: conic-gradient(from 0deg,
             transparent 0deg, transparent 20deg,
@@ -365,18 +369,33 @@
     z-index: 1;
 }
 
+/* Anillo pulsante exterior (efecto "sonar/radar"): un circulo translucido
+   que crece desde el borde hacia afuera y se desvanece. Se ve desde lejos
+   sin saturar — solo es un anillo que ondea, no rellena el espacio. */
+.pito-boton.objetivo-halar::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 3px solid rgba(96, 165, 250, 0.85);
+    pointer-events: none;
+    z-index: 0;
+    animation: pito-objetivo-sonar-azul 1.6s ease-out infinite;
+}
+
 .pito-boton.objetivo-empujar {
-    border: 3px solid #ef4444 !important;
+    border: 4px solid #ef4444 !important;
     box-shadow:
-        0 0 8px rgba(239, 68, 68, 0.95),
-        inset 0 0 18px rgba(239, 68, 68, 0.45) !important;
+        0 0 14px rgba(239, 68, 68, 1),
+        0 0 28px rgba(239, 68, 68, 0.55),
+        inset 0 0 22px rgba(239, 68, 68, 0.55) !important;
     position: relative;
 }
 
 .pito-boton.objetivo-empujar::before {
     content: '';
     position: absolute;
-    inset: -7px;
+    inset: -11px;
     border-radius: 50%;
     background: conic-gradient(from 0deg,
             transparent 0deg, transparent 20deg,
@@ -391,6 +410,17 @@
     z-index: 1;
 }
 
+.pito-boton.objetivo-empujar::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 3px solid rgba(248, 113, 113, 0.85);
+    pointer-events: none;
+    z-index: 0;
+    animation: pito-objetivo-sonar-rojo 1.6s ease-out infinite;
+}
+
 @keyframes pito-halo-rotando {
     from {
         transform: rotate(0deg);
@@ -398,6 +428,34 @@
 
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Sonar: el anillo crece desde inset:-4px hasta inset:-22px desvaneciendose.
+   Asi se "expande" hacia afuera y desaparece, tipo onda concentrica. */
+@keyframes pito-objetivo-sonar-azul {
+    0% {
+        inset: -4px;
+        opacity: 0.95;
+        border-color: rgba(96, 165, 250, 0.95);
+    }
+    100% {
+        inset: -22px;
+        opacity: 0;
+        border-color: rgba(96, 165, 250, 0);
+    }
+}
+
+@keyframes pito-objetivo-sonar-rojo {
+    0% {
+        inset: -4px;
+        opacity: 0.95;
+        border-color: rgba(248, 113, 113, 0.95);
+    }
+    100% {
+        inset: -22px;
+        opacity: 0;
+        border-color: rgba(248, 113, 113, 0);
     }
 }
 
