@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 
-export type ModoVisual = 'cayendo' | 'boxed' | 'guia' | 'foco' | 'carril';
+export type ModoVisual = 'cayendo' | 'boxed' | 'boxed-libre' | 'guia' | 'foco' | 'carril';
 
 const STORAGE_KEY = 'simulador_modo_visual';
 
 const MENSAJES: Record<ModoVisual, string> = {
-    cayendo: 'Modo Libre · las notas caen sobre los pitos',
-    boxed:   'Modo Synthesia · la canción se pausa en cada nota',
-    guia:    'Modo Guía · te dice ABRIENDO o CERRANDO',
-    foco:    'Modo Foco · solo la nota actual, sin distracciones',
-    carril:  'Modo Carril · el fondo cambia con el fuelle',
+    cayendo:       'Modo Libre · las notas caen sobre los pitos',
+    boxed:         'Modo Synthesia · la canción se pausa en cada nota',
+    'boxed-libre': 'Modo Libre Pro · cajita arriba sin pausar la canción',
+    guia:          'Modo Guía · te dice ABRIENDO o CERRANDO',
+    foco:          'Modo Foco · solo la nota actual, sin distracciones',
+    carril:        'Modo Carril · el fondo cambia con el fuelle',
 };
 
-const VALIDOS: ModoVisual[] = ['cayendo', 'boxed', 'guia', 'foco', 'carril'];
+const VALIDOS: ModoVisual[] = ['cayendo', 'boxed', 'boxed-libre', 'guia', 'foco', 'carril'];
 
 export const useModoVisualPersistido = () => {
     const [modoVisual, setModoVisual] = useState<ModoVisual>(() => {
