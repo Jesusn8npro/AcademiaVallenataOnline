@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, startTransition } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 
@@ -150,12 +150,14 @@ export const usePointerAcordeon = ({
         };
 
         // Procesa una posición individual del dedo (extraído para reusar entre touch/move/coalesced).
-        // Orden critico: actualizarVisualBoton PRIMERO (DOM directo, sincrono al
-        // touch event) y actualizarBotonActivo despues envuelto en startTransition
-        // (los setStates en cascada -> procesarGolpeAlumno -> notas/guia/maestro/
-        // mensaje/feedback/estado se marcan como non-urgent, React no los procesa
-        // hasta despues del paint del DOM directo). Esto da el feedback visual
-        // inmediato en Android low-end.
+        // Audio + visual: ambos SÍNCRONOS al touch event. Originalmente envolvíamos el
+        // audio en startTransition para que los setStates en cascada (notas/guia/maestro)
+        // no bloquearan el paint visual. PROBLEMA: startTransition difiere el motor de
+        // audio en 16-50ms en Android low-end y en iOS Safari bajo single-touch throttle
+        // -> sonaba con lag perceptible en ejecuciones rapidas. Ahora actualizamos audio
+        // de forma sincrona (el motor pinta a Web Audio scheduler, no a React) y dejamos
+        // que React procese los re-renders en su tick natural. El paint visual del DOM
+        // directo (actualizarVisualBoton via classList) sigue siendo lo primero.
         const procesarPunto = (id: number, clientX: number, clientY: number, ts: number) => {
             const data = pointersMap.current.get(id);
             if (!data) return;
@@ -163,10 +165,7 @@ export const usePointerAcordeon = ({
             if (pos !== data.pos) {
                 if (data.pos) {
                     actualizarVisualBoton(data.pos, false, false);
-                    const oldMId = data.musicalId;
-                    startTransition(() => {
-                        logicaRef.current.actualizarBotonActivo(oldMId, 'remove', null, false);
-                    });
+                    logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
                 }
                 if (pos) {
                     const newMId = `${pos}-${logicaRef.current.direccion}`;
@@ -174,9 +173,7 @@ export const usePointerAcordeon = ({
                     data.musicalId = newMId;
                     data.ts = ts;
                     actualizarVisualBoton(pos, true, false);
-                    startTransition(() => {
-                        logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
-                    });
+                    logicaRef.current.actualizarBotonActivo(newMId, 'add', null, false);
                 } else {
                     data.pos = '';
                     data.musicalId = '';
@@ -197,14 +194,12 @@ export const usePointerAcordeon = ({
             const esAreaJuego = !!(target.closest('.pito-boton') || esToqueFuelle || target.closest('.diapason-marco'));
 
             if (pos) {
-                // Visual primero (sincrono), motor con startTransition.
+                // Visual + audio sincronos. Ver comentario en procesarPunto.
                 actualizarVisualBoton(pos, true, false);
                 logicaRef.current.setFuelleVirtual?.(true);
                 const mId = `${pos}-${logicaRef.current.direccion}`;
                 pointersMap.current.set(id, { pos, musicalId: mId, ts });
-                startTransition(() => {
-                    logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
-                });
+                logicaRef.current.actualizarBotonActivo(mId, 'add', null, false);
             } else if (esAreaJuego) {
                 pointersMap.current.set(id, { pos: '', musicalId: '', ts });
             }
@@ -214,10 +209,7 @@ export const usePointerAcordeon = ({
             const data = pointersMap.current.get(id);
             if (data?.pos) {
                 actualizarVisualBoton(data.pos, false, false);
-                const mId = data.musicalId;
-                startTransition(() => {
-                    logicaRef.current.actualizarBotonActivo(mId, 'remove', null, false);
-                });
+                logicaRef.current.actualizarBotonActivo(data.musicalId, 'remove', null, false);
             }
             pointersMap.current.delete(id);
             if (pointersMap.current.size === 0) {

@@ -177,7 +177,12 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    touch-action: manipulation;
+    /* touch-action: none en el pito (no en el root). iOS Safari 13+ lo soporta
+       sobre elementos individuales aunque el root tenga "manipulation" — esto
+       desactiva pinch-zoom/scroll en la zona jugable y mata el single-finger
+       throttle de WebKit (#199803). Multi-touch llega a 60Hz aun sin dedo ancla.
+       Mismo patron que JuegoSimuladorApp.css aplica en modo juego. */
+    touch-action: none;
     outline: none;
     border: 3px solid #1a1a1a;
 }

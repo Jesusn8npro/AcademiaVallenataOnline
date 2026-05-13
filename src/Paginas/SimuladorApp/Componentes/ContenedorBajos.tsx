@@ -35,23 +35,32 @@ const BotonBajo: React.FC<BotonBajoProps> = React.memo(({
     const notaHalar = datosFila.find((x: any) => x.id === idHalar)?.nombre || '';
     const notaEmpujar = datosFila.find((x: any) => x.id === idEmpujar)?.nombre || '';
 
+    // NO usamos setPointerCapture: redirige todos los pointer events futuros del
+    // dedo a este boton, bloqueando que un slide al siguiente bajo lo active. En
+    // iOS Safari ademas interactua mal con touch events nativos del simulador y
+    // causa el bug "necesito mantener un dedo en bajos para que los pitos
+    // respondan" (WebKit #199803). Sin pointer capture, pointerleave en mobile
+    // dispara correctamente al salir del boton, y el sistema de touch events
+    // globales del hook usePointerAcordeon ya cubre multi-touch.
     return (
         <button
             data-pos={`${numFila}-${col}`}
+            data-bajo-id={idUnico}
             className={`boton-bajo-contenedor ${esActivo ? 'activo' : ''} ${vistaDoble ? 'vista-doble' : ''}`}
             onPointerDown={(e) => {
                 if (desactivarAudio) return;
-                e.preventDefault(); e.stopPropagation();
-                (e.target as HTMLElement).setPointerCapture(e.pointerId);
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
                 actualizarBotonActivo(idUnico, 'add', null, true);
             }}
             onPointerUp={(e) => {
-                e.preventDefault(); e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
                 actualizarBotonActivo(idUnico, 'remove', null, true);
             }}
             onPointerLeave={() => actualizarBotonActivo(idUnico, 'remove', null, true)}
             onPointerCancel={() => actualizarBotonActivo(idUnico, 'remove', null, true)}
-            style={{ touchAction: 'manipulation' }}
+            style={{ touchAction: 'none' }}
             title={bajo.nombre}
         >
             {!vistaDoble ? (
@@ -99,18 +108,36 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
     const currentXRef = useRef(0);
 
     // 🚀 LÓGICA DE DRAG
+    // En iOS Safari, pointerup puede no entregarse cuando el dedo levanta justo
+    // afuera del wrapper (WebKit lo trata como cancel implicito). Si dragingRef
+    // queda en true, el siguiente touchmove cualquiera mueve el contenedor solo
+    // ("el contenedor intenta desaparecer"). Liberamos en TODOS los terminadores
+    // de gesto: pointerup, pointercancel, touchend, touchcancel, blur,
+    // visibilitychange. Es defensivo pero barato — solo asigna a false.
     useEffect(() => {
         const handlePointerMove = (e: PointerEvent) => {
             if (!draggingRef.current) return;
             const delta = e.clientX - startXRef.current;
             x.set(currentXRef.current + delta);
         };
-        const handlePointerUp = () => { draggingRef.current = false; };
+        const finDrag = () => { draggingRef.current = false; };
+        const onVisibility = () => { if (document.visibilityState === 'hidden') finDrag(); };
+
         window.addEventListener('pointermove', handlePointerMove);
-        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointerup', finDrag);
+        window.addEventListener('pointercancel', finDrag);
+        window.addEventListener('touchend', finDrag);
+        window.addEventListener('touchcancel', finDrag);
+        window.addEventListener('blur', finDrag);
+        document.addEventListener('visibilitychange', onVisibility);
         return () => {
             window.removeEventListener('pointermove', handlePointerMove);
-            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointerup', finDrag);
+            window.removeEventListener('pointercancel', finDrag);
+            window.removeEventListener('touchend', finDrag);
+            window.removeEventListener('touchcancel', finDrag);
+            window.removeEventListener('blur', finDrag);
+            document.removeEventListener('visibilitychange', onVisibility);
         };
     }, [x]);
 
