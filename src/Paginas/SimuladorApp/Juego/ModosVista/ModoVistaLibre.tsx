@@ -194,15 +194,16 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                 // limpias, sin animacion de impacto.
                 const renderImpactada = !esModoMaestro && n.impactada;
                 const colaConsumida = n.duracion > 30 && n.progresoFinal >= n.progreso - 0.005;
-                // Rampa de opacidad por distancia al pito: lejos = casi invisible,
-                // llegando al punto de impacto = totalmente opaca. Curva CUADRATICA
-                // en lugar de lineal: las notas aparecen casi como fantasmas (0.05)
-                // y solo cobran color al acercarse al pito objetivo. Asi en acordes
-                // densos no se tapan los botones del acordeon — el alumno ve los
-                // pitos limpios y las notas "emergen" suavemente. Solo las inminentes
-                // (proximas a pisarse, idsInminente.has) llegan a opacidad 1.
+                // Rampa de opacidad por distancia al pito: las notas SE VEN como
+                // botones completos (no fantasmas) pero las lejanas son grises (sin
+                // color de fuelle) — esa es la pista visual de "viene en el futuro".
+                // Opacidad lineal 0.65→1.0: las lejanas siguen siendo claramente
+                // visibles como circulos, no como puntitos. La distincion entre
+                // "lejana" e "inminente" la hace el COLOR (gris vs rojo/azul), no la
+                // opacidad. Antes era una curva cuadratica 0.05→1.0 que las hacia
+                // casi invisibles y parecian puntos sueltos.
                 const rampa = Math.max(0, Math.min(1, n.progreso / 0.78));
-                const opacidadDistancia = 0.05 + Math.pow(rampa, 2) * 0.95;
+                const opacidadDistancia = 0.65 + rampa * 0.35;
                 const opacidad = renderImpactada
                     ? (colaConsumida ? Math.max(0, 1 - (n.progresoCrudo - 1.0) / 0.15) : 1)
                     : n.progresoCrudo > 1.05

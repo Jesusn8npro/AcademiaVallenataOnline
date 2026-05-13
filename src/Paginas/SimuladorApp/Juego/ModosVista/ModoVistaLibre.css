@@ -149,29 +149,30 @@
 }
 
 /* NOTAS LEJANAS — las que vienen pero todavia no son inminentes. NO usan el
-   color del fuelle (azul/rojo) — son GRISES translucidas. Asi el alumno
-   distingue de un vistazo: "lo gris es lo que viene en el futuro, lo rojo/azul
-   es lo que toco AHORA". Sin color de fuelle no compiten visualmente con las
-   inminentes y los acordes densos no se ven como una masa monocromatica. */
+   color del fuelle (azul/rojo) — son BOTONES BLANCO/HUESO definidos (no fantasmas).
+   La pista visual de "viene en el futuro" la da el COLOR (blanco vs rojo/azul),
+   no la transparencia. Asi se ven como BOTONES COMPLETOS cayendo y el alumno
+   sabe de un vistazo: "lo blanco es futuro, lo rojo/azul es AHORA". */
 .nota-cayendo.lejana {
-    border-color: rgba(255, 255, 255, 0.35);
+    border-color: rgba(60, 60, 60, 0.8);
     background:
-        linear-gradient(rgba(150, 150, 150, 0.45), rgba(80, 80, 80, 0.55)),
-        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85) 0%, rgba(200, 200, 200, 0.4) 100%),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(200, 200, 200, 0.55) 100%),
         url('https://acordeonvirtual.com/wp-content/uploads/acordium-prod-av-nov-24/img/blanca.JPG');
-    background-blend-mode: multiply, multiply, normal;
+    background-blend-mode: multiply, normal;
     background-size: cover;
     background-position: center;
     box-shadow:
-        inset 0px 2px 4px rgba(255, 255, 255, 0.7),
-        inset 0px -4px 10px rgba(0, 0, 0, 0.2),
-        0px 2px 6px rgba(0, 0, 0, 0.35);
+        inset 0px 2px 4px rgba(255, 255, 255, 0.95),
+        inset 0px -4px 10px rgba(0, 0, 0, 0.18),
+        0px 3px 6px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Etiqueta en notas lejanas: gris oscuro suave (no compite con las inminentes). */
+/* Etiqueta en notas lejanas: negro definido (mismo color que el label del pito
+   del acordeon). Asi se LEE la nota desde lejos. */
 .nota-cayendo.lejana .nota-etiqueta-cayendo {
-    color: rgba(40, 40, 40, 0.85);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    color: #1a1a1a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 /* INMINENTE: tinte saturado al maximo, borde grueso, glow fuerte y HALO. */
