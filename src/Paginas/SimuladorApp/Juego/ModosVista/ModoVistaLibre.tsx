@@ -243,7 +243,7 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                             />
                         )}
                         <div
-                            className={`nota-cayendo ${n.fuelle} ${renderImpactada ? 'impactada' : ''} ${n.esFallada ? 'fallada' : ''} ${esInminente ? 'inminente' : ''}`}
+                            className={`nota-cayendo ${esInminente || renderImpactada || n.esFallada ? n.fuelle : 'lejana'} ${renderImpactada ? 'impactada' : ''} ${n.esFallada ? 'fallada' : ''} ${esInminente ? 'inminente' : ''}`}
                             style={{
                                 left: `${n.targetX}px`,
                                 top: `${noteY}px`,
