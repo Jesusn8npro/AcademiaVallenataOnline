@@ -650,11 +650,19 @@ export function useLogicaProMax() {
 
     const urlFondo = (cancion as any).audio_fondo_url || cancion.audioFondoUrl;
 
-    // Modo Maestro baja BPM y necesita preservesPitch (HTMLAudio). Resto: AudioBufferSource (sample-accurate, mismo clock que notas).
+    // TODOS los modos usan ReproductorMP3 (AudioBufferSourceNode, sample-accurate,
+    // mismo AudioContext que las notas → cero drift). Antes el modo maestro usaba
+    // ReproductorMP3PreservaTono (HTMLAudio con preservesPitch) para mantener tono
+    // al bajar BPM, pero HTMLAudio tiene jitter 16-50ms en currentTime + cold-start
+    // 50-300ms entre play() y primer sample → notas y MP3 quedaban desincronizados.
+    // El commit 7f6e519 (chore: revertir a estado estable) removió la infra de
+    // "cebado del audio maestro" que compensaba ese jitter; sin esa infra, usar
+    // HTMLAudio en modo maestro causa desincronía perceptible. Volvemos a
+    // ReproductorMP3 (el mismo que usa /acordeon-pro-max/admin y modo competencia
+    // que funcionan perfecto). Trade-off conocido: el slider de BPM ahora cambia
+    // velocidad Y tono (igual que en modo competencia).
     const audioPrecargado: AudioFondoPlayer | null = urlFondo
-      ? (modoActual === 'maestro_solo'
-          ? new ReproductorMP3PreservaTono(motorAudioPro.contextoAudio)
-          : new ReproductorMP3(motorAudioPro.contextoAudio))
+      ? new ReproductorMP3(motorAudioPro.contextoAudio)
       : null;
     if (audioPrecargado) {
       audioPrecargado.volume = mp3Silenciado ? 0 : volumenMusica / 100;
