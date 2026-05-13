@@ -1206,7 +1206,27 @@ export class MotorAudioPro {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
             try { await this.contexto.resume(); } catch (_) { }
         }
+        // iOS Safari unlock: resume() solo NO basta para que AudioBufferSourceNode.start()
+        // produzca sonido. Hay que reproducir AL MENOS UN buffer durante un user gesture
+        // para que iOS marque el contexto como "unlocked". Sin esto, en iPhone real (no
+        // en desktop-responsive que solo emula viewport pero comparte la policy de macOS),
+        // las pistas MP3 del modo maestro no se escuchan. Es un patron documentado y de
+        // costo cero (1 sample silencioso). Idempotente: tras el primer unlock, reproducir
+        // el dummy buffer no tiene efecto observable. Si ya esta unlocked, set _unlocked
+        // skipea para no crear basura en cada gesture.
+        if (!this._unlockedIOS && this.contexto.state === 'running') {
+            try {
+                const buffer = this.contexto.createBuffer(1, 1, 22050);
+                const src = this.contexto.createBufferSource();
+                src.buffer = buffer;
+                src.connect(this.contexto.destination);
+                src.start(0);
+                this._unlockedIOS = true;
+            } catch (_) { /* unlock es opcional */ }
+        }
     }
+
+    private _unlockedIOS: boolean = false;
 
     obtenerBanco(id: string, nombre: string): BancoSonido {
         if (!this.bancos.has(id)) {
