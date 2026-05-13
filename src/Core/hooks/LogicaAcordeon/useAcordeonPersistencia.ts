@@ -72,7 +72,12 @@ export function useAcordeonPersistencia({
 
         if (!ajustesData) { setListaTonalidades(Object.keys(TONALIDADES)); return; }
 
-        if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id as string);
+        // NO sobreescribir instrumento_id desde Supabase: requirement del usuario es
+        // que SIEMPRE arranque en el acordeon original al cargar la pagina, aunque
+        // haya elegido otro instrumento (ej. guitarra) en sesion anterior. La
+        // eleccion del usuario se respeta DURANTE la sesion (setInstrumentoId desde
+        // el modal) pero al recargar vuelve al default del useState (acordeon).
+        // if (ajustesData.instrumento_id) setInstrumentoId(ajustesData.instrumento_id as string);
         if (ajustesData.sonidos_personalizados) setSonidosVirtuales(ajustesData.sonidos_personalizados as SonidoVirtual[]);
         if (ajustesData.ajustes_visuales) setAjustes(prev => ({ ...prev, ...(ajustesData.ajustes_visuales as any) }));
 
@@ -141,7 +146,8 @@ export function useAcordeonPersistencia({
         setDisenoCargado(true);
         isInitialLoad.current = false;
 
-        if ((data as any)?.instrumento_id) setInstrumentoId((data as any).instrumento_id);
+        // Mismo motivo que el primer useEffect: NO sobreescribir desde Supabase.
+        // if ((data as any)?.instrumento_id) setInstrumentoId((data as any).instrumento_id);
       } catch (_) { }
     })();
   }, [tonalidadSeleccionada, usuarioId]);
