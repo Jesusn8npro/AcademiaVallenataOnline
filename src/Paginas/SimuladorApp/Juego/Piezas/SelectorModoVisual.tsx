@@ -9,11 +9,12 @@ interface OpcionModo {
 }
 
 const OPCIONES: OpcionModo[] = [
-    { id: 'cayendo', titulo: 'Libre',     icono: '↓',  descripcion: 'Notas cayendo sobre los pitos' },
-    { id: 'boxed',   titulo: 'Synth',     icono: '☐',  descripcion: 'Cajita Synthesia, espera nota' },
-    { id: 'guia',    titulo: 'Guía',      icono: '✎',  descripcion: 'Texto ABRIENDO o CERRANDO' },
-    { id: 'foco',    titulo: 'Foco',      icono: '◉',  descripcion: 'Solo la nota actual, minimal' },
-    { id: 'carril',  titulo: 'Carril',    icono: '⇅',  descripcion: 'Fondo cambia con el fuelle' },
+    { id: 'cayendo',     titulo: 'Libre',     icono: '↓',  descripcion: 'Notas cayendo sobre los pitos' },
+    { id: 'boxed',       titulo: 'Synth',     icono: '☐',  descripcion: 'Cajita Synthesia, espera nota' },
+    { id: 'boxed-libre', titulo: 'Libre Pro', icono: '⇣',  descripcion: 'Cajita arriba, canción no pausa' },
+    { id: 'guia',        titulo: 'Guía',      icono: '✎',  descripcion: 'Texto ABRIENDO o CERRANDO' },
+    { id: 'foco',        titulo: 'Foco',      icono: '◉',  descripcion: 'Solo la nota actual, minimal' },
+    { id: 'carril',      titulo: 'Carril',    icono: '⇅',  descripcion: 'Fondo cambia con el fuelle' },
 ];
 
 interface Props {

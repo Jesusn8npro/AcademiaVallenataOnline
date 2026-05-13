@@ -78,6 +78,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
 
         // Modo boxed fuerza synthesia (la cancion espera en cada nota; la
         // nota se enclava cortada en el borde inferior de la cajita).
+        // boxed-libre usa la misma vista de cajita PERO el modoPractica del
+        // config (sin pausar) — asi se ve la cajita con notas avanzando continuo.
         const modoPM = modoVisual === 'boxed' ? 'synthesia' : MAPA_MODO[config.modo];
         hero.setModoPractica(modoPM);
         hero.setMaestroSuena(config.guiaAudio);
@@ -319,7 +321,8 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     verNotas,
                 };
                 switch (modoVisual) {
-                    case 'boxed':  return <PistaNotasBoxed {...propsPista} />;
+                    case 'boxed':
+                    case 'boxed-libre': return <PistaNotasBoxed {...propsPista} />;
                     case 'guia':   return <PistaNotasGuia {...propsPista} />;
                     case 'foco':   return <PistaNotasFoco {...propsPista} />;
                     case 'carril': return <PistaNotasCarril {...propsPista} />;
