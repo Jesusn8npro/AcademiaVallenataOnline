@@ -15,6 +15,10 @@
     justify-content: center;
     align-items: center;
     transition: all 0.2s ease-out;
+    /* Zona del fuelle: touch-action: none deshabilita scroll/pinch y permite
+       multi-touch fluido. Sin esto, en iOS el dedo aqui actuaba como "ancla"
+       (acelerando los pitos) pero sin el flag, retiraba el ancla = throttle. */
+    touch-action: none;
 }
 
 .img-bajos-fondo {
@@ -61,8 +65,15 @@
     z-index: 1500;
     gap: 12px;
     pointer-events: none;
-    touch-action: manipulation;
+    /* Wrapper: touch-action: none para que el panel de bajos no sufra el
+       throttle iOS single-finger. Cada boton interno tambien lo declara
+       inline para reforzar. */
+    touch-action: none;
     will-change: transform;
+}
+
+.boton-bajo-contenedor {
+    touch-action: none;
 }
 
 .contenedor-bajos-principal {
