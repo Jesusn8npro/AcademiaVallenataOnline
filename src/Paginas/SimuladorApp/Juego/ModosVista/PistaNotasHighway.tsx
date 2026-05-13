@@ -175,16 +175,27 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
     }
     const hayInminente = idsInminente.size > 0;
 
+    // Construir set de targetX inminentes para resaltar los carriles activos.
+    const carrilesInminentes = new Set<number>();
+    for (const n of notasOrdenadas) {
+        if (idsInminente.has(n.id)) carrilesInminentes.add(Math.round(n.targetX));
+    }
+
     return (
         <div ref={pistaRef} className="pista-notas-highway" aria-hidden="true">
-            {/* Carriles verticales tenues — guias visuales para mapear nota -> pito */}
-            {carrilesUnicos.map((c) => (
-                <div
-                    key={`lane-${c.dataPos}`}
-                    className="highway-carril"
-                    style={{ left: `${c.targetX}px` }}
-                />
-            ))}
+            {/* Carriles verticales tenues — guias visuales para mapear nota -> pito.
+                Los carriles cuyo pito corresponde a una nota INMINENTE se iluminan
+                para guiar el ojo del alumno hacia donde debe pisar. */}
+            {carrilesUnicos.map((c) => {
+                const esActivo = carrilesInminentes.has(Math.round(c.targetX));
+                return (
+                    <div
+                        key={`lane-${c.dataPos}`}
+                        className={`highway-carril ${esActivo ? 'activo' : ''}`}
+                        style={{ left: `${c.targetX}px` }}
+                    />
+                );
+            })}
 
             {/* Notas cayendo por su carril */}
             {notasOrdenadas.map((n) => {
@@ -231,17 +242,22 @@ const PistaNotasHighway: React.FC<PistaNotasHighwayProps> = ({
             })}
 
             {/* Base — indicadores fijos abajo de cada carril con el nombre del pito.
-                Linea visual que conecta el final del carril con el pito real abajo. */}
+                Linea visual que conecta el final del carril con el pito real abajo.
+                Los carriles INMINENTES tienen su badge agrandado + glow + flecha. */}
             <div className="highway-base">
-                {carrilesUnicos.map((c) => (
-                    <div
-                        key={`base-${c.dataPos}`}
-                        className="highway-base-marca"
-                        style={{ left: `${c.targetX}px` }}
-                    >
-                        <span className="highway-base-etiqueta">{c.etiqueta}</span>
-                    </div>
-                ))}
+                {carrilesUnicos.map((c) => {
+                    const esActivo = carrilesInminentes.has(Math.round(c.targetX));
+                    return (
+                        <div
+                            key={`base-${c.dataPos}`}
+                            className={`highway-base-marca ${esActivo ? 'activo' : ''}`}
+                            style={{ left: `${c.targetX}px` }}
+                        >
+                            {esActivo && <span className="highway-base-flecha">▼</span>}
+                            <span className="highway-base-etiqueta">{c.etiqueta}</span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
