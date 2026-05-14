@@ -8,13 +8,15 @@ interface OpcionModo {
     descripcion: string;
 }
 
+// 'highway' y 'carril' OCULTOS del dropdown — los componentes siguen
+// funcionales en el codigo (PistaNotasHighway.tsx, PistaNotasCarril.tsx) y
+// pueden re-habilitarse agregando la entrada aqui. Por ahora el usuario
+// solo quiere ver: Synth, Libre Pro, Foco, Guia.
 const OPCIONES: OpcionModo[] = [
-    { id: 'highway',     titulo: 'Highway',   icono: '▥',  descripcion: 'Pista con carriles tipo Guitar Hero' },
-    { id: 'boxed',       titulo: 'Synth',     icono: '☐',  descripcion: 'Cajita Synthesia, espera nota' },
     { id: 'boxed-libre', titulo: 'Libre Pro', icono: '⇣',  descripcion: 'Cajita arriba, canción no pausa' },
-    { id: 'guia',        titulo: 'Guía',      icono: '✎',  descripcion: 'Texto ABRIENDO o CERRANDO' },
+    { id: 'boxed',       titulo: 'Synth',     icono: '☐',  descripcion: 'Cajita Synthesia, espera nota' },
+    { id: 'guia',        titulo: 'Guía',      icono: '✎',  descripcion: 'Notas + banner ABRE/CIERRA' },
     { id: 'foco',        titulo: 'Foco',      icono: '◉',  descripcion: 'Solo la nota actual, minimal' },
-    { id: 'carril',      titulo: 'Carril',    icono: '⇅',  descripcion: 'Fondo cambia con el fuelle' },
 ];
 
 interface Props {

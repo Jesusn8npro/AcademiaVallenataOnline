@@ -327,8 +327,10 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
                     case 'guia':   return <PistaNotasGuia {...propsPista} />;
                     case 'foco':   return <PistaNotasFoco {...propsPista} />;
                     case 'carril': return <PistaNotasCarril {...propsPista} />;
-                    // Modo 'cayendo' eliminado del selector — fallback al Highway.
-                    default:       return <PistaNotasHighway {...propsPista} />;
+                    // Default actual: 'boxed-libre' (Libre Pro). Modos cayendo /
+                    // highway / carril ocultos del dropdown pero accesibles si
+                    // el codigo los referencia (componentes intactos).
+                    default:       return <PistaNotasBoxed {...propsPista} />;
                 }
             })()}
 

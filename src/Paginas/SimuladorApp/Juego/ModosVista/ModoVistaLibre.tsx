@@ -194,16 +194,15 @@ const ModoVistaLibre: React.FC<ModoVistaLibreProps> = ({
                 // limpias, sin animacion de impacto.
                 const renderImpactada = !esModoMaestro && n.impactada;
                 const colaConsumida = n.duracion > 30 && n.progresoFinal >= n.progreso - 0.005;
-                // Rampa de opacidad por distancia al pito: las notas SE VEN como
-                // botones completos (no fantasmas) pero las lejanas son grises (sin
-                // color de fuelle) — esa es la pista visual de "viene en el futuro".
-                // Opacidad lineal 0.65→1.0: las lejanas siguen siendo claramente
-                // visibles como circulos, no como puntitos. La distincion entre
-                // "lejana" e "inminente" la hace el COLOR (gris vs rojo/azul), no la
-                // opacidad. Antes era una curva cuadratica 0.05→1.0 que las hacia
-                // casi invisibles y parecian puntos sueltos.
+                // Rampa de opacidad por distancia al pito: 0.20 lejos → 1.0 cerca.
+                // Antes era 0.65→1.0 pero el usuario reporto que con canciones
+                // densas las notas lejanas llenaban la pantalla. Con 0.20 las
+                // lejanas son apenas visibles (siluetas tenues) y la inminente
+                // destaca claramente. Las notas siguen viendose como botones
+                // completos (no puntitos) gracias al tamano constante; lo que
+                // cambia es solo la transparencia.
                 const rampa = Math.max(0, Math.min(1, n.progreso / 0.78));
-                const opacidadDistancia = 0.65 + rampa * 0.35;
+                const opacidadDistancia = 0.20 + rampa * 0.80;
                 const opacidad = renderImpactada
                     ? (colaConsumida ? Math.max(0, 1 - (n.progresoCrudo - 1.0) / 0.15) : 1)
                     : n.progresoCrudo > 1.05

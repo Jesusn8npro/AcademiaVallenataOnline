@@ -24,13 +24,16 @@ export const useModoVisualPersistido = () => {
     const [modoVisual, setModoVisual] = useState<ModoVisual>(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY) as string | null;
-            // Migracion: usuarios con 'cayendo' guardado pasan a 'highway'.
-            if (saved === 'cayendo') {
-                try { localStorage.setItem(STORAGE_KEY, 'highway'); } catch { /* noop */ }
-                return 'highway';
+            // Migracion: modos ocultos del dropdown (cayendo, highway, carril)
+            // pasan al default boxed-libre. Asi nadie queda atascado en un modo
+            // que no puede cambiar desde el selector.
+            const OCULTOS = ['cayendo', 'highway', 'carril'];
+            if (saved && OCULTOS.includes(saved)) {
+                try { localStorage.setItem(STORAGE_KEY, 'boxed-libre'); } catch { /* noop */ }
+                return 'boxed-libre';
             }
-            return saved && VALIDOS.includes(saved as ModoVisual) ? (saved as ModoVisual) : 'highway';
-        } catch { return 'highway'; }
+            return saved && VALIDOS.includes(saved as ModoVisual) ? (saved as ModoVisual) : 'boxed-libre';
+        } catch { return 'boxed-libre'; }
     });
     const [toast, setToast] = useState<string>('');
 
