@@ -13,9 +13,14 @@ interface Props {
     tickActual: number;
     notasImpactadas: Set<string>;
     rangoSeccion?: { inicio: number; fin: number } | null;
+    modoPractica?: string;
+    /** Toggle "Ver Notas": en modo Guia siempre lo forzamos a true para que
+     *  el alumno principiante vea el nombre del pito (Si, Re, Fa...) en cada
+     *  nota cayendo. Si la prop viene definida la respetamos. */
+    verNotas?: boolean;
 }
 
-const PistaNotasGuia: React.FC<Props> = ({ cancion, tickActual, notasImpactadas, rangoSeccion }) => {
+const PistaNotasGuia: React.FC<Props> = ({ cancion, tickActual, notasImpactadas, rangoSeccion, modoPractica, verNotas }) => {
     // Calcula el fuelle de la nota mas proxima al impacto (no impactada,
     // dentro del rango visible). El banner lo lee.
     const fuelleInminente = useMemo<'abriendo' | 'cerrando' | null>(() => {
@@ -46,6 +51,8 @@ const PistaNotasGuia: React.FC<Props> = ({ cancion, tickActual, notasImpactadas,
                 tickActual={tickActual}
                 notasImpactadas={notasImpactadas}
                 rangoSeccion={rangoSeccion}
+                modoPractica={modoPractica}
+                verNotas={verNotas !== false}
             />
             {fuelleInminente && (
                 <div className={`guia-banner ${fuelleInminente}`} aria-hidden="true">
