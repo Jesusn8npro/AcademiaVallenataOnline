@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useReproductorLecciones } from './useReproductorLecciones';
 import { useVideoFirmado } from '../../hooks/useVideoFirmado';
 import './ReproductorLecciones.css';
@@ -105,18 +105,6 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     tipo
   });
 
-  const [velocidad, setVelocidad] = useState(1);
-  const esBunnyActivo = esBunnyFirmado || (!usarFirmado && esBunny);
-
-  function cambiarVelocidad(v: number) {
-    setVelocidad(v);
-    const iframe = elementoIframeRef.current;
-    if (!iframe?.contentWindow) return;
-    // Bunny Stream acepta este formato de postMessage para la velocidad
-    try { iframe.contentWindow.postMessage({ method: 'setPlaybackSpeed', value: v }, '*'); } catch { /* noop */ }
-    try { iframe.contentWindow.postMessage({ type: 'setSpeed', speed: v }, '*'); } catch { /* noop */ }
-  }
-
   // Para URLs firmadas de Bunny: agrega params que evitan precarga agresiva
   // (preload=false reduce ~10MB hasta que el usuario presione play).
   // Para YouTube: transforma /watch?v= a /embed/ porque YouTube bloquea
@@ -137,7 +125,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     if (firmado.plataforma === 'bunny') {
       const sep = firmado.url.includes('?') ? '&' : '?';
       const autoplay = tiempoInicial > 0 ? 'true' : 'false';
-      let url = `${firmado.url}${sep}autoplay=${autoplay}&preload=false&responsive=true&speed=true`;
+      let url = `${firmado.url}${sep}autoplay=${autoplay}&preload=false&responsive=true`;
       if (tiempoInicial > 0) url += `&t=${tiempoInicial}`;
       return url;
     }
@@ -307,24 +295,6 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         )}
       </div>
 
-      {esBunnyActivo && (
-        <div className="barra-velocidad">
-          <span className="vel-etiqueta">Velocidad</span>
-          <div className="vel-pastillas">
-            {([0.5, 0.75, 1, 1.25, 1.5, 2] as const).map(v => (
-              <button
-                key={v}
-                className={`vel-btn${velocidad === v ? ' vel-activa' : ''}`}
-                onClick={() => cambiarVelocidad(v)}
-                aria-label={`Velocidad ${v}x`}
-              >
-                {v === 1 ? '1× Normal' : `${v}×`}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="barra-navegacion">
         <button className="boton-nav anterior" onClick={navegarAnterior} disabled={!leccionAnterior}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -342,10 +312,10 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              <span>Completada ✓</span>
+              <span>Completada</span>
             </>
           ) : (
-            <span>Marcar completada</span>
+            <span>Marcar como completada</span>
           )}
         </button>
 
