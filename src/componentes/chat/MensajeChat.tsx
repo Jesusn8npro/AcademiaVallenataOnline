@@ -12,7 +12,6 @@ type Segmento =
   | { tipo: 'imagen'; url: string }
 
 const ES_IMAGEN = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i
-// Captura [label](url) — url relativa (/ruta) o absoluta (https://...)
 const REGEX_LINK = /\[([^\]]+)\]\(((?:https?:\/\/|\/)[^)]+)\)/g
 
 function parsear(texto: string): Segmento[] {
@@ -22,9 +21,7 @@ function parsear(texto: string): Segmento[] {
   REGEX_LINK.lastIndex = 0
 
   while ((m = REGEX_LINK.exec(texto)) !== null) {
-    if (m.index > cursor) {
-      segs.push({ tipo: 'texto', valor: texto.slice(cursor, m.index) })
-    }
+    if (m.index > cursor) segs.push({ tipo: 'texto', valor: texto.slice(cursor, m.index) })
     const url = m[2]
     if (ES_IMAGEN.test(url)) {
       segs.push({ tipo: 'imagen', url })
@@ -34,10 +31,28 @@ function parsear(texto: string): Segmento[] {
     cursor = m.index + m[0].length
   }
 
-  if (cursor < texto.length) {
-    segs.push({ tipo: 'texto', valor: texto.slice(cursor) })
-  }
+  if (cursor < texto.length) segs.push({ tipo: 'texto', valor: texto.slice(cursor) })
   return segs
+}
+
+function limpiarTexto(t: string): string {
+  return t
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+function iconoBtn(url: string): string {
+  if (url.includes('/tutoriales')) return '🎵'
+  if (url.includes('/paquetes'))   return '📦'
+  if (url.includes('/registro') || url.includes('/login')) return '🎓'
+  if (url.includes('/blog'))       return '📖'
+  if (url.includes('/simulador'))  return '🎹'
+  if (url.includes('/comunidad'))  return '👥'
+  if (url.includes('/eventos'))    return '🎤'
+  if (url.includes('/cursos') || url.includes('/tutoriales-de-acordeon')) return '🎶'
+  return '→'
 }
 
 export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props) {
@@ -45,51 +60,57 @@ export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props)
 
   const segmentos = parsear(texto)
 
-  // Sin links ni imágenes — render simple (limpiando asteriscos igual)
-  if (segmentos.length === 1 && segmentos[0].tipo === 'texto') {
-    const limpio = texto.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1')
-    return <span>{limpio}</span>
+  // Separar en tres grupos: texto, links, imágenes
+  const textoParts: string[] = []
+  const links: Array<{ label: string; url: string }> = []
+  const imagenes: string[] = []
+
+  for (const seg of segmentos) {
+    if (seg.tipo === 'texto')  textoParts.push(seg.valor)
+    if (seg.tipo === 'link')   links.push({ label: seg.label, url: seg.url })
+    if (seg.tipo === 'imagen') imagenes.push(seg.url)
   }
 
+  const textoFinal = limpiarTexto(textoParts.join(' '))
+
   return (
-    <span>
-      {segmentos.map((seg, i) => {
-        if (seg.tipo === 'texto') {
-          const limpio = seg.valor
-            .replace(/\*\*([^*]+)\*\*/g, '$1')
-            .replace(/\*([^*]+)\*/g, '$1')
-          return <span key={i}>{limpio}</span>
-        }
+    <div className="academia-msg-inner">
+      {textoFinal && <p className="academia-msg-text">{textoFinal}</p>}
 
-        if (seg.tipo === 'imagen') {
-          return (
-            <div key={i} className="academia-chat-img-container">
-              <img
-                src={seg.url}
-                alt=""
-                className="academia-chat-img"
-                onClick={() => onImageClick(seg.url)}
-                onError={(e: any) => { e.target.style.display = 'none' }}
-                onLoad={onImageLoad}
-              />
-            </div>
-          )
-        }
+      {imagenes.map((url, i) => (
+        <div key={i} className="academia-chat-img-container">
+          <img
+            src={url}
+            alt=""
+            className="academia-chat-img"
+            onClick={() => onImageClick(url)}
+            onError={(e: any) => { e.target.style.display = 'none' }}
+            onLoad={onImageLoad}
+          />
+        </div>
+      ))}
 
-        // Link → botón navegación
-        const esExterno = seg.url.startsWith('http')
-        return (
-          <a
-            key={i}
-            href={seg.url}
-            target={esExterno ? '_blank' : '_self'}
-            rel={esExterno ? 'noopener noreferrer' : undefined}
-            className="academia-link-btn"
-          >
-            {seg.label} →
-          </a>
-        )
-      })}
-    </span>
+      {links.length > 0 && (
+        <div className="academia-btns-group">
+          {links.map((link, i) => {
+            const esExterno = link.url.startsWith('http')
+            const icono = iconoBtn(link.url)
+            return (
+              <a
+                key={i}
+                href={link.url}
+                target={esExterno ? '_blank' : '_self'}
+                rel={esExterno ? 'noopener noreferrer' : undefined}
+                className="academia-link-btn"
+              >
+                <span className="academia-btn-icono">{icono}</span>
+                <span className="academia-btn-label">{link.label}</span>
+                <span className="academia-btn-arrow">→</span>
+              </a>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
