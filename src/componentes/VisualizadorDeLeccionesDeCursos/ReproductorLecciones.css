@@ -152,13 +152,68 @@
   }
 }
 
+/* ── Barra de velocidad ─────────────────────────────── */
+.barra-velocidad {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #111;
+  border-top: 1px solid #222;
+}
+
+.vel-etiqueta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vel-pastillas {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.vel-btn {
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.vel-btn:hover {
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.vel-btn.vel-activa {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+}
+
+/* ── Barra de navegación ────────────────────────────── */
 .barra-navegacion {
   display: grid;
   grid-template-columns: 1fr 1.5fr 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  background: #1a1a1a;
-  border-top: 1px solid #333;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: #131313;
+  border-top: 1px solid #222;
 }
 
 .boton-nav,
@@ -166,42 +221,49 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 8px;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  min-height: 44px;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  min-height: 42px;
+  letter-spacing: 0.01em;
 }
 
 .boton-nav {
-  background: #2a2a2a;
-  color: #ffffff;
+  background: #1e1e1e;
+  color: #ccc;
+  border-color: #2a2a2a;
 }
 
 .boton-nav:hover:not(:disabled) {
-  background: #3a3a3a;
-  transform: translateY(-2px);
+  background: #252525;
+  border-color: #444;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .boton-nav:disabled {
-  opacity: 0.5;
+  opacity: 0.35;
   cursor: not-allowed;
-  transform: none;
 }
 
 .boton-completar {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
   font-weight: 600;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
 }
 
 .boton-completar:hover:not(:disabled) {
-  background: #43A047;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35);
 }
 
 .boton-completar:disabled {
@@ -210,11 +272,13 @@
 }
 
 .boton-completar.completada {
-  background: #1E88E5;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .boton-completar.completada:hover:not(:disabled) {
-  background: #1976D2;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
 }
 
 .texto-corto {
@@ -222,46 +286,41 @@
 }
 
 @media (max-width: 768px) {
+  .barra-velocidad {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .barra-velocidad::-webkit-scrollbar { display: none; }
+
+  .vel-btn { font-size: 0.72rem; padding: 0.25rem 0.55rem; }
+
   .barra-navegacion {
     grid-template-columns: 1fr 1.2fr 1fr;
     gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.65rem 0.75rem;
   }
 
   .boton-nav,
   .boton-completar {
-    padding: 0.5rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.78rem;
     min-height: 40px;
   }
 
-  .texto-completo {
-    display: none;
-  }
-
-  .texto-corto {
-    display: inline;
-  }
-
-  .boton-completar {
-    font-size: 0.75rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .texto-completo { display: none; }
+  .texto-corto { display: inline; }
 }
 
 @media (max-width: 480px) {
+  .vel-etiqueta { display: none; }
+
   .barra-navegacion {
     grid-template-columns: 1fr 1.5fr 1fr;
     padding: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .boton-completar {
-    font-size: 0.7rem;
-  }
-
-  .boton-nav {
-    font-size: 0.7rem;
-  }
+  .boton-completar, .boton-nav { font-size: 0.72rem; }
 }
