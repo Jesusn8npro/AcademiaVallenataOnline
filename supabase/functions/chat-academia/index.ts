@@ -253,17 +253,18 @@ Deno.serve(async (req: Request) => {
       "=== INSTRUCCIONES ===",
       promptExtra,
       "",
-      "=== REGLAS CRITICAS (violarlas es un error grave) ===",
-      "1. FORMATO: texto limpio, sin asteriscos (*), sin guiones como bullet, sin markdown de ningun tipo. Solo texto plano y links.",
-      "2. LINKS: SOLO [Texto del boton](/ruta). JAMAS escribas https:// ni URLs completas. El texto del boton debe ser descriptivo (el titulo del tutorial, no 'Ver tutorial').",
-      "3. BUSQUEDA OBLIGATORIA: cuando el usuario mencione una cancion o artista, llama buscar_tutorial ANTES de responder. Si no encuentra resultados, dilo honestamente y sugiere [Ver todos los tutoriales](/tutoriales-de-acordeon). NUNCA digas que no existe si no has buscado primero.",
-      "4. COHERENCIA: si ya buscaste y encontraste un tutorial, NO digas que no lo tienes. Si no lo encontraste, dilo una vez y ofrece alternativas.",
-      "5. Para listar tutoriales por nivel usa listar_tutoriales. Para paquetes usa buscar_paquete. Para blog usa buscar_blog. Para progreso del estudiante usa ver_progreso_estudiante.",
-      "6. NO puedes crear cuentas. Para registro diriges a [Crear cuenta gratis](/registro).",
-      "7. NO repitas preguntas sobre datos que ya estan en 'YA SE SABE DE ESTE VISITANTE'.",
-      "8. OBJECIONES: cuando el usuario exprese una duda, objecion o preocupacion ('es caro', 'no tengo tiempo', 'no se si puedo', 'tengo X problema'), guardala en notas_adicionales via actualizar_lead. Esto es CLAVE para el seguimiento.",
-      "9. Nunca inventes precios. Usa solo los que retornen las herramientas.",
-      "10. Termina siempre con una pregunta o accion concreta para seguir la conversion."
+      "=== REGLAS CRITICAS ===",
+      "1. RESPUESTAS CORTAS: maximo 2 oraciones de texto + 1 emoji relevante al inicio o al final. Directo al punto, sin rodeos.",
+      "2. FORMATO: texto limpio. CERO asteriscos, CERO guiones, CERO markdown. Solo texto plano seguido de botones.",
+      "3. LINKS: SOLO [Titulo descriptivo](/ruta). JAMAS https:// ni URLs completas. El boton debe decir el nombre real (ej: [Nostalgia - Binomio de Oro](/tutoriales/id)), nunca 'aqui' ni 'ver mas'.",
+      "4. BUSQUEDA OBLIGATORIA: ante cualquier mencion de cancion o artista, llama buscar_tutorial PRIMERO. Si no hay resultado, dilo brevemente y ofrece [Ver todos los tutoriales](/tutoriales-de-acordeon).",
+      "5. COHERENCIA: si encontraste el tutorial, no digas que no lo tienes.",
+      "6. USA LAS HERRAMIENTAS: listar_tutoriales para explorar, buscar_paquete para bundles, buscar_blog para consejos, ver_progreso_estudiante para el avance del estudiante.",
+      "7. NO puedes crear cuentas. Para eso: [Crear cuenta gratis](/registro).",
+      "8. NO repitas preguntas sobre datos que ya estan en 'YA SE SABE'.",
+      "9. OBJECIONES: si el usuario dice 'es caro', 'no tengo tiempo', 'no se si puedo' u otra duda, guardala en notas_adicionales con actualizar_lead.",
+      "10. PERSONALIZACION: si sabes el nombre del usuario, usalo. Si sabes su nivel, adapta la recomendacion.",
+      "11. Nunca inventes precios. Termina siempre con 1 pregunta concreta."
     ].filter(s => s !== null && s !== undefined).join("\n")
 
     // ── Bucle OpenAI ──────────────────────────────────────────────────────

@@ -505,28 +505,78 @@
     justify-content: center;
 }
 
-/* ── Link buttons dentro de mensajes del bot ── */
+/* ── Contenedor de texto del mensaje ── */
+.academia-msg-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.academia-msg-text {
+  margin: 0;
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+/* ── Grupo de botones (siempre debajo del texto) ── */
+.academia-btns-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── Link buttons premium ── */
 .academia-link-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  margin: 6px 4px 2px 0;
-  padding: 7px 14px;
-  background: var(--academia-chat-gradient);
+  gap: 10px;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, #ff6600 0%, #ff3d00 100%);
   color: white !important;
-  border-radius: 20px;
-  font-size: 0.82rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none !important;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3);
-  white-space: nowrap;
+  transition: all 0.22s ease;
+  box-shadow: 0 3px 12px rgba(255, 80, 0, 0.35);
+  border: 1px solid rgba(255,255,255,0.15);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .academia-link-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 102, 0, 0.45);
-  filter: brightness(1.05);
+  box-shadow: 0 6px 20px rgba(255, 80, 0, 0.5);
+  background: linear-gradient(135deg, #ff7722 0%, #ff5500 100%);
+}
+
+.academia-link-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 80, 0, 0.3);
+}
+
+.academia-btn-icono {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.academia-btn-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.academia-btn-arrow {
+  font-size: 1rem;
+  opacity: 0.85;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.academia-link-btn:hover .academia-btn-arrow {
+  transform: translateX(3px);
 }
 
 /* ── Animación ring del botón flotante ── */
