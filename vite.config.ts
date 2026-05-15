@@ -92,13 +92,12 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
+            // Los modelos 3D (.glb) NO se cachean: siempre red. Antes era
+            // CacheFirst y servia GLB viejos tras re-exportar (los cambios no
+            // se veian). NetworkOnly garantiza que siempre se vea la version
+            // mas reciente. (Sin offline para el 3D, aceptable.)
             urlPattern: ({ url }) => url.pathname.startsWith('/modelos3d/'),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'modelos3d-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
+            handler: 'NetworkOnly'
           },
           {
             urlPattern: ({ request }) => request.destination === 'image',

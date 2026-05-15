@@ -69,6 +69,7 @@ const SimuladorApp = lazy(() => import('./Paginas/SimuladorApp/SimuladorApp'));
 const PaginaEjemplo3D = lazy(() => import('./Paginas/Ejemplos3d1'));
 const PaginaEjemploAcordeon3D = lazy(() => import('./Paginas/Ejemplos3d2'));
 const AcordeonDiapason3D = lazy(() => import('./Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D'));
+const AcordeonFuncionalV1 = lazy(() => import('./Paginas/AcordeonProMax/Pruebas3D/AcordeonFuncionalV1'));
 const ClaseTutorial = lazy(() => import('./Paginas/Tutoriales/ClaseTutorial'));
 const ContenidoTutorial = lazy(() => import('./Paginas/Tutoriales/ContenidoTutorial'));
 const ClaseCurso = lazy(() => import('./Paginas/Cursos/ClaseCurso'));
@@ -267,6 +268,7 @@ const AppContent = () => {
         <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
         <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
         <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
+        <Route path="/acordeon-funcional-v1" element={<AcordeonFuncionalV1 />} />
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/acordeon-pro-max" element={<HomeProMax />} />
