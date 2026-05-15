@@ -9,3 +9,12 @@ registerSW({
     console.warn('[PWA] Error registrando service worker:', error);
   }
 });
+
+// Cuando el nuevo SW toma control (después de skipWaiting + clients.claim),
+// recargamos la página para que el nuevo bundle se aplique. Sin esto los
+// alumnos ven pantalla blanca y necesitan Ctrl+Shift+R tras cada deploy.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}

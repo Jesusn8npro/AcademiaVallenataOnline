@@ -43,6 +43,8 @@
 
 .logo {
   height: 35px;
+  width: auto;
+  object-fit: contain;
   margin-right: 6px;
 }
 
@@ -567,8 +569,8 @@ body.modo-inmersivo {
   }
 
   .logo {
-    height: 45px;
-    max-width: 45px;
+    height: 32px;
+    width: auto;
     margin-right: 8px;
   }
 
@@ -661,8 +663,8 @@ body.modo-inmersivo {
   }
 
   .logo {
-    height: 56px;
-    max-width: 56px;
+    height: 28px;
+    width: auto;
     margin-right: 2px;
   }
 
@@ -695,8 +697,8 @@ body.modo-inmersivo {
   }
 
   .logo {
-    height: 44px;
-    max-width: 44px;
+    height: 26px;
+    width: auto;
     margin-right: 2px;
   }
 

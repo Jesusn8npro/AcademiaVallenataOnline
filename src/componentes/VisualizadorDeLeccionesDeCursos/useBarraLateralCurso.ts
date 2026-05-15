@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function generarSlug(texto: string = ''): string {
@@ -90,9 +90,9 @@ export function useBarraLateralCurso({
     const moduloSlug = modulo?.slug || (modulo?.titulo ? generarSlug(modulo.titulo) : '');
     const leccionSlug = leccion?.slug || (leccion?.titulo ? generarSlug(leccion.titulo) : '');
     if (tipo === 'curso' && cursoSlug && moduloSlug && leccionSlug) {
-      navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`);
+      startTransition(() => navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`));
     } else if (tipo === 'tutorial' && cursoSlug && leccionSlug) {
-      navigate(`/tutoriales/${cursoSlug}/clase/${leccionSlug}`);
+      startTransition(() => navigate(`/tutoriales/${cursoSlug}/clase/${leccionSlug}`));
     }
   }
 
