@@ -19,40 +19,38 @@ function parsear(texto: string): Segmento[] {
   let cursor = 0
   let m: RegExpExecArray | null
   REGEX_LINK.lastIndex = 0
-
   while ((m = REGEX_LINK.exec(texto)) !== null) {
     if (m.index > cursor) segs.push({ tipo: 'texto', valor: texto.slice(cursor, m.index) })
     const url = m[2]
-    if (ES_IMAGEN.test(url)) {
-      segs.push({ tipo: 'imagen', url })
-    } else {
-      segs.push({ tipo: 'link', label: m[1], url })
-    }
+    ES_IMAGEN.test(url)
+      ? segs.push({ tipo: 'imagen', url })
+      : segs.push({ tipo: 'link', label: m[1], url })
     cursor = m.index + m[0].length
   }
-
   if (cursor < texto.length) segs.push({ tipo: 'texto', valor: texto.slice(cursor) })
   return segs
 }
 
 function limpiarTexto(t: string): string {
   return t
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')   // quita **negrita**
+    .replace(/\*([^*]+)\*/g, '$1')        // quita *italic*
+    .replace(/\s*->\s*/g, ' ')            // quita flechas ->
+    .replace(/^\s*\d+\.\s+/gm, '')        // quita numeración "1. "
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
 
 function iconoBtn(url: string): string {
-  if (url.includes('/tutoriales')) return '🎵'
-  if (url.includes('/paquetes'))   return '📦'
+  if (url.includes('/tutoriales'))                         return '🎵'
+  if (url.includes('/paquetes'))                           return '📦'
   if (url.includes('/registro') || url.includes('/login')) return '🎓'
-  if (url.includes('/blog'))       return '📖'
-  if (url.includes('/simulador'))  return '🎹'
-  if (url.includes('/comunidad'))  return '👥'
-  if (url.includes('/eventos'))    return '🎤'
+  if (url.includes('/blog'))                               return '📖'
+  if (url.includes('/simulador'))                          return '🎹'
+  if (url.includes('/comunidad'))                          return '👥'
+  if (url.includes('/eventos'))                            return '🎤'
   if (url.includes('/cursos') || url.includes('/tutoriales-de-acordeon')) return '🎶'
-  return '→'
+  return '✨'
 }
 
 export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props) {
@@ -60,57 +58,51 @@ export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props)
 
   const segmentos = parsear(texto)
 
-  // Separar en tres grupos: texto, links, imágenes
-  const textoParts: string[] = []
-  const links: Array<{ label: string; url: string }> = []
-  const imagenes: string[] = []
-
-  for (const seg of segmentos) {
-    if (seg.tipo === 'texto')  textoParts.push(seg.valor)
-    if (seg.tipo === 'link')   links.push({ label: seg.label, url: seg.url })
-    if (seg.tipo === 'imagen') imagenes.push(seg.url)
+  // Caso simple: solo texto, sin links ni imágenes
+  if (segmentos.every(s => s.tipo === 'texto')) {
+    return <span className="academia-msg-text">{limpiarTexto(texto)}</span>
   }
 
-  const textoFinal = limpiarTexto(textoParts.join(' '))
-
   return (
-    <div className="academia-msg-inner">
-      {textoFinal && <p className="academia-msg-text">{textoFinal}</p>}
+    <span className="academia-msg-inner">
+      {segmentos.map((seg, i) => {
+        if (seg.tipo === 'texto') {
+          const limpio = limpiarTexto(seg.valor)
+          return limpio ? <span key={i} className="academia-msg-text">{limpio}</span> : null
+        }
 
-      {imagenes.map((url, i) => (
-        <div key={i} className="academia-chat-img-container">
-          <img
-            src={url}
-            alt=""
-            className="academia-chat-img"
-            onClick={() => onImageClick(url)}
-            onError={(e: any) => { e.target.style.display = 'none' }}
-            onLoad={onImageLoad}
-          />
-        </div>
-      ))}
+        if (seg.tipo === 'imagen') {
+          return (
+            <div key={i} className="academia-chat-img-container">
+              <img
+                src={seg.url}
+                alt=""
+                className="academia-chat-img"
+                onClick={() => onImageClick(seg.url)}
+                onError={(e: any) => { e.target.style.display = 'none' }}
+                onLoad={onImageLoad}
+              />
+            </div>
+          )
+        }
 
-      {links.length > 0 && (
-        <div className="academia-btns-group">
-          {links.map((link, i) => {
-            const esExterno = link.url.startsWith('http')
-            const icono = iconoBtn(link.url)
-            return (
-              <a
-                key={i}
-                href={link.url}
-                target={esExterno ? '_blank' : '_self'}
-                rel={esExterno ? 'noopener noreferrer' : undefined}
-                className="academia-link-btn"
-              >
-                <span className="academia-btn-icono">{icono}</span>
-                <span className="academia-btn-label">{link.label}</span>
-                <span className="academia-btn-arrow">→</span>
-              </a>
-            )
-          })}
-        </div>
-      )}
-    </div>
+        // Link → pill inline
+        const esExterno = seg.url.startsWith('http')
+        const icono = iconoBtn(seg.url)
+        return (
+          <a
+            key={i}
+            href={seg.url}
+            target={esExterno ? '_blank' : '_self'}
+            rel={esExterno ? 'noopener noreferrer' : undefined}
+            className="academia-link-btn"
+          >
+            <span className="academia-btn-icono">{icono}</span>
+            <span className="academia-btn-label">{seg.label}</span>
+            <span className="academia-btn-arrow">→</span>
+          </a>
+        )
+      })}
+    </span>
   )
 }
