@@ -6,109 +6,90 @@ interface Props {
   onImageLoad: () => void
 }
 
-const esUrlImagen = (url: string) => {
-  if (!url || typeof url !== 'string') return false
-  const patronesImagen = [
-    /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i,
-    /\/image\//i,
-    /cloudinary\.com/i,
-    /imgur\.com/i,
-    /unsplash\.com/i,
-    /supabase\.co.*storage/i
-  ]
-  return patronesImagen.some(patron => patron.test(url))
-}
+type Segmento =
+  | { tipo: 'texto';  valor: string }
+  | { tipo: 'link';   label: string; url: string }
+  | { tipo: 'imagen'; url: string }
 
-const extraerUrls = (texto: string) => {
-  if (!texto) return []
-  const urls = texto.match(/(https?:\/\/[^\s]+)/g) || []
-  return urls.map(url => ({
-    url: url.replace(/[.,;!?)\]}]+$/, ''),
-    esImagen: esUrlImagen(url)
-  }))
-}
+const ES_IMAGEN = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i
+// Captura [label](url) — url relativa (/ruta) o absoluta (https://...)
+const REGEX_LINK = /\[([^\]]+)\]\(((?:https?:\/\/|\/)[^)]+)\)/g
 
-const limpiarTextoDescriptivo = (texto: string) => {
-  if (!texto) return texto
-  const patronesDescriptivos = [
-    /\*\*Imagen Principal\*\*:?\s*/gi,
-    /\*\*Imagen Secundaria \d+\*\*:?\s*/gi,
-    /\d+\.\s*\*\*Imagen Secundaria \d+\*\*:?\s*/gi,
-    /¡Detalle\s*/gi,
-    /Te muestro las fotos:?\s*/gi,
-    /Aquí tienes las imágenes:?\s*/gi,
-    /\)\s*$/g
-  ]
-  let textoLimpio = texto
-  patronesDescriptivos.forEach(patron => { textoLimpio = textoLimpio.replace(patron, '') })
-  return textoLimpio.trim()
+function parsear(texto: string): Segmento[] {
+  const segs: Segmento[] = []
+  let cursor = 0
+  let m: RegExpExecArray | null
+  REGEX_LINK.lastIndex = 0
+
+  while ((m = REGEX_LINK.exec(texto)) !== null) {
+    if (m.index > cursor) {
+      segs.push({ tipo: 'texto', valor: texto.slice(cursor, m.index) })
+    }
+    const url = m[2]
+    if (ES_IMAGEN.test(url)) {
+      segs.push({ tipo: 'imagen', url })
+    } else {
+      segs.push({ tipo: 'link', label: m[1], url })
+    }
+    cursor = m.index + m[0].length
+  }
+
+  if (cursor < texto.length) {
+    segs.push({ tipo: 'texto', valor: texto.slice(cursor) })
+  }
+  return segs
 }
 
 export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props) {
   if (!texto) return null
 
-  const textoLimpio = limpiarTextoDescriptivo(texto)
-  const urls = extraerUrls(textoLimpio)
-  const urlsImagen = urls.filter(u => u.esImagen)
+  const segmentos = parsear(texto)
 
-  if (urlsImagen.length === 0) return <span>{textoLimpio}</span>
-
-  const soloImagenes = urlsImagen.length > 0 &&
-    textoLimpio.split(/\s+/).every(palabra =>
-      urlsImagen.some(u => palabra.includes(u.url)) || palabra.trim() === ''
-    )
-
-  if (soloImagenes) {
-    return (
-      <div>
-        {urlsImagen.map((urlInfo, index) => (
-          <div key={index} className="academia-chat-img-container">
-            <img
-              src={urlInfo.url}
-              alt=""
-              className="academia-chat-img"
-              onClick={() => onImageClick(urlInfo.url)}
-              onError={(e: any) => e.target.style.display = 'none'}
-              onLoad={onImageLoad}
-            />
-          </div>
-        ))}
-      </div>
-    )
+  // Sin links ni imágenes — render simple (limpiando asteriscos igual)
+  if (segmentos.length === 1 && segmentos[0].tipo === 'texto') {
+    const limpio = texto.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1')
+    return <span>{limpio}</span>
   }
 
-  let contenido = textoLimpio
-  const elementos: JSX.Element[] = []
+  return (
+    <span>
+      {segmentos.map((seg, i) => {
+        if (seg.tipo === 'texto') {
+          const limpio = seg.valor
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\*([^*]+)\*/g, '$1')
+          return <span key={i}>{limpio}</span>
+        }
 
-  urlsImagen.forEach((urlInfo, index) => {
-    contenido = contenido.replace(urlInfo.url, `__IMAGEN_${index}__`)
-  })
+        if (seg.tipo === 'imagen') {
+          return (
+            <div key={i} className="academia-chat-img-container">
+              <img
+                src={seg.url}
+                alt=""
+                className="academia-chat-img"
+                onClick={() => onImageClick(seg.url)}
+                onError={(e: any) => { e.target.style.display = 'none' }}
+                onLoad={onImageLoad}
+              />
+            </div>
+          )
+        }
 
-  const partes = contenido.split(/(__IMAGEN_\d+__)/g)
-
-  partes.forEach((parte, index) => {
-    const matchImagen = parte.match(/^__IMAGEN_(\d+)__$/)
-    if (matchImagen) {
-      const indiceImagen = parseInt(matchImagen[1])
-      const urlImagen = urlsImagen[indiceImagen]?.url
-      if (urlImagen) {
-        elementos.push(
-          <div key={index} className="academia-chat-img-container">
-            <img
-              src={urlImagen}
-              alt=""
-              className="academia-chat-img"
-              onClick={() => onImageClick(urlImagen)}
-              onError={(e: any) => e.target.style.display = 'none'}
-              onLoad={onImageLoad}
-            />
-          </div>
+        // Link → botón navegación
+        const esExterno = seg.url.startsWith('http')
+        return (
+          <a
+            key={i}
+            href={seg.url}
+            target={esExterno ? '_blank' : '_self'}
+            rel={esExterno ? 'noopener noreferrer' : undefined}
+            className="academia-link-btn"
+          >
+            {seg.label} →
+          </a>
         )
-      }
-    } else if (parte.trim() && !urlsImagen.some(u => parte.includes(u.url))) {
-      elementos.push(<span key={index}>{parte}</span>)
-    }
-  })
-
-  return elementos.length > 0 ? <>{elementos}</> : <span>{textoLimpio}</span>
+      })}
+    </span>
+  )
 }

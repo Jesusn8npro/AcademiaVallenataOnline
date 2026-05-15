@@ -19,6 +19,7 @@ export default function ChatEnVivo() {
     chatAbierto, mensajes, nuevoMensaje, setNuevoMensaje,
     escribiendo, contadorNoLeidos, imagenPopup, setImagenPopup,
     datosUsuario, setDatosUsuario, mostrarModalDatos, setMostrarModalDatos,
+    ringActivo,
     contenedorMensajesRef, inputMensajeRef,
     manejarEnvio, manejarDatosModal, toggleChat
   } = useChatEnVivo()
@@ -27,7 +28,7 @@ export default function ChatEnVivo() {
     <>
       <div className={`academia-widget-chat ${chatAbierto ? 'academia-open' : ''}`}>
         {!chatAbierto && (
-          <button onClick={toggleChat} className="academia-chat-toggle" aria-label="Abrir chat">
+          <button onClick={toggleChat} className={`academia-chat-toggle${ringActivo ? ' academia-chat-toggle--ring' : ''}`} aria-label="Abrir chat">
             <MessageCircle size={30} />
             {contadorNoLeidos > 0 && (
               <span className="academia-chat-badge">{contadorNoLeidos > 9 ? '9+' : contadorNoLeidos}</span>
