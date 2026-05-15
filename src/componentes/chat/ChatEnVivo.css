@@ -505,78 +505,72 @@
     justify-content: center;
 }
 
-/* ── Contenedor de texto del mensaje ── */
+/* ── Contenedor inline del mensaje ── */
 .academia-msg-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: inline;
+  line-height: 2;
 }
 
 .academia-msg-text {
-  margin: 0;
-  line-height: 1.55;
-  font-size: 0.92rem;
+  line-height: 1.6;
+  font-size: 0.91rem;
 }
 
-/* ── Grupo de botones (siempre debajo del texto) ── */
-.academia-btns-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-/* ── Link buttons premium ── */
+/* ── Link buttons — pills inline en el texto ── */
 .academia-link-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  background: linear-gradient(135deg, #ff6600 0%, #ff3d00 100%);
+  gap: 5px;
+  padding: 5px 13px 5px 9px;
+  margin: 3px 3px 3px 2px;
+  background: linear-gradient(135deg, #ff6200 0%, #e63600 100%);
   color: white !important;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-weight: 600;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-decoration: none !important;
-  transition: all 0.22s ease;
-  box-shadow: 0 3px 12px rgba(255, 80, 0, 0.35);
-  border: 1px solid rgba(255,255,255,0.15);
-  width: 100%;
-  box-sizing: border-box;
+  vertical-align: middle;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(230, 80, 0, 0.32);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  white-space: nowrap;
+  max-width: 260px;
 }
 
 .academia-link-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 80, 0, 0.5);
-  background: linear-gradient(135deg, #ff7722 0%, #ff5500 100%);
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(230, 80, 0, 0.5);
+  background: linear-gradient(135deg, #ff7520 0%, #ff4400 100%);
+  color: white !important;
 }
 
 .academia-link-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(255, 80, 0, 0.3);
+  transform: scale(0.98);
 }
 
 .academia-btn-icono {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .academia-btn-label {
-  flex: 1;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .academia-btn-arrow {
-  font-size: 1rem;
-  opacity: 0.85;
+  font-size: 0.8rem;
+  opacity: 0.9;
   flex-shrink: 0;
-  transition: transform 0.2s;
+  transition: transform 0.18s;
 }
 
 .academia-link-btn:hover .academia-btn-arrow {
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 
 /* ── Animación ring del botón flotante ── */
