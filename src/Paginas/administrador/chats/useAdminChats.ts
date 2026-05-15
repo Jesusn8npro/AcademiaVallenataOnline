@@ -48,7 +48,7 @@ export function useAdminChats() {
     const cargarLeads = async () => {
         try {
             setLoading(true);
-            const { data, error } = await clienteSupabase.from('leads_chats_anonimos').select('*').order('created_at', { ascending: false });
+            const { data, error } = await clienteSupabase.from('leads_chat_anonimos').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             setLeads(data || []);
             calcularEstadisticas(data || []);

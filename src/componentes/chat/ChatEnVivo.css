@@ -505,7 +505,53 @@
     justify-content: center;
 }
 
-/* Mobile */
+/* ── Link buttons dentro de mensajes del bot ── */
+.academia-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 4px 2px 0;
+  padding: 7px 14px;
+  background: var(--academia-chat-gradient);
+  color: white !important;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3);
+  white-space: nowrap;
+}
+
+.academia-link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 102, 0, 0.45);
+  filter: brightness(1.05);
+}
+
+/* ── Animación ring del botón flotante ── */
+@keyframes academiaRing {
+  0%  { transform: rotate(0deg)   scale(1.0); }
+  10% { transform: rotate(-12deg) scale(1.12); }
+  20% { transform: rotate(12deg)  scale(1.12); }
+  30% { transform: rotate(-10deg) scale(1.12); }
+  40% { transform: rotate(10deg)  scale(1.12); }
+  50% { transform: rotate(-6deg)  scale(1.08); }
+  60% { transform: rotate(6deg)   scale(1.08); }
+  70% { transform: rotate(0deg)   scale(1.05); }
+  100%{ transform: rotate(0deg)   scale(1.0);  }
+}
+
+@keyframes academiaGlow {
+  0%, 100% { box-shadow: 0 6px 20px rgba(255, 102, 0, 0.3); }
+  50%       { box-shadow: 0 6px 35px rgba(255, 102, 0, 0.7); }
+}
+
+.academia-chat-toggle--ring {
+  animation: academiaRing 0.7s ease-in-out, academiaGlow 1.5s ease-in-out infinite;
+}
+
+/* ── Mobile */
 @media (max-width: 768px) {
     .academia-widget-chat.academia-open {
         inset: 0;
