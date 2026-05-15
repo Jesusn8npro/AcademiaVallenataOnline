@@ -183,15 +183,14 @@ aside {
 }
 
 /* ── 9. Suspense fallback de rutas lazy ───────────────
-   Evita el "flash blanco" cuando React esta descargando el chunk de
-   una ruta lazy. Pinta un fondo coherente con el body (no blanco abrupto)
-   + spinner sutil centrado. CSS inlined por Beasties = cero overhead. */
+   Fondo transparente para heredar el color del body (oscuro en clases,
+   claro en landing). Evita el flash blanco en paginas oscuras. */
 .route-suspense-fallback {
   min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f8f6 0%, #ffffff 100%);
+  background: transparent;
 }
 .route-suspense-fallback::after {
   content: "";
@@ -207,17 +206,5 @@ aside {
 }
 @media (prefers-reduced-motion: reduce) {
   .route-suspense-fallback::after { animation: none; }
-}
-
-/* ── 10. View Transitions API ────────────────────────
-   Cross-fade automatico entre cambios de DOM (ej. cambio de ruta SPA).
-   En Chromium-based browsers (Chrome/Edge/Opera) anima el swap.
-   Otros navegadores ignoran la regla = sin penalizacion. Sin JS extra. */
-@view-transition {
-  navigation: auto;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.18s;
 }
 

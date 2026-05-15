@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 
@@ -158,12 +158,12 @@ export function useEncabezadoLeccion({
     if (!destino) return;
     if (tipo === 'clase') {
       const claseSlug = destino.slug || generarSlugBase(destino.titulo);
-      navigate(`/tutoriales/${cursoSlug}/clase/${claseSlug}`);
+      startTransition(() => navigate(`/tutoriales/${cursoSlug}/clase/${claseSlug}`));
     } else {
       const moduloSlug = destino.modulo?.slug || generarSlugBase(destino.modulo?.titulo || '');
       const leccionSlug = destino.slug || generarSlugBase(destino.titulo);
       if (cursoSlug && moduloSlug && leccionSlug) {
-        navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`);
+        startTransition(() => navigate(`/cursos/${cursoSlug}/${moduloSlug}/${leccionSlug}`));
       }
     }
   }
