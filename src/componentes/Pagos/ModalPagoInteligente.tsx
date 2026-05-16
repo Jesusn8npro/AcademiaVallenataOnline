@@ -4,6 +4,7 @@ import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import { useModalPago } from './Hooks/useModalPago';
 import type { ContenidoCompra } from './Hooks/useModalPago';
+import { InputCupon } from './InputCupon';
 import './ModalPagoInteligente.css';
 
 interface ModalPagoInteligenteProps {
@@ -20,7 +21,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         datosPago, setDatosPago, erroresValidacion,
         validarEmail, validarTelefono, validarDocumento, validarPassword,
         handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
-    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido });
+    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride: precioConDescuento ?? undefined });
 
     const TITULOS_PASO: Record<number, string> = {
         1: usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra',
@@ -32,6 +33,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
 
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
+    const [precioConDescuento, setPrecioConDescuento] = useState<number | null>(null);
 
     if (!mostrar) return null;
 
@@ -72,10 +74,28 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="mpi-product-price">${obtenerPrecio(contenido).toLocaleString('es-CO')}</p>
+                                    <p className="mpi-product-price">
+                                    {precioConDescuento !== null ? (
+                                        <>
+                                            <span style={{ textDecoration: 'line-through', opacity: 0.45, fontSize: '0.75em', marginRight: 6 }}>${obtenerPrecio(contenido).toLocaleString('es-CO')}</span>
+                                            ${precioConDescuento.toLocaleString('es-CO')}
+                                        </>
+                                    ) : `$${obtenerPrecio(contenido).toLocaleString('es-CO')}`}
+                                </p>
                                     <p className="mpi-currency">COP</p>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {contenido && !cargando && !pagoExitoso && pasoActual === 1 && (
+                        <div style={{ padding: '0 0 12px' }}>
+                            <InputCupon
+                                monto={obtenerPrecio(contenido)}
+                                usuarioId={usuario?.id}
+                                onAplicar={(precioFinal) => setPrecioConDescuento(precioFinal)}
+                                onLimpiar={() => setPrecioConDescuento(null)}
+                            />
                         </div>
                     )}
 

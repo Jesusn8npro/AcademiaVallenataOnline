@@ -90,6 +90,7 @@ const CreadorArticulos = lazy(() => import('./Paginas/administrador/blog/Creador
 const AdminChats = lazy(() => import('./Paginas/administrador/chats/AdminChats'));
 const PanelDeObjetivos = lazy(() => import('./Paginas/administrador/Objetivos/PanelDeObjetivos'));
 const ValidacionesAdmin = lazy(() => import('./Paginas/administrador/Validaciones/ValidacionesAdmin'));
+const CuponesAdmin = lazy(() => import('./Paginas/administrador/cupones/CuponesAdmin'));
 
 import { ErrorBoundary } from './componentes/ErrorBoundary'
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
@@ -295,6 +296,7 @@ const AppContent = () => {
           <Route path="/administrador/chats" element={<AdminChats />} />
           <Route path="/administrador/objetivos" element={<PanelDeObjetivos />} />
           <Route path="/administrador/validaciones" element={<ValidacionesAdmin />} />
+          <Route path="/administrador/cupones" element={<CuponesAdmin />} />
         </Route>
         <Route path="/notificaciones" element={<Notificaciones />} />
         {/* Catch all - 404 */}

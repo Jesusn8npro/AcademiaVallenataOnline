@@ -185,7 +185,23 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
 
         // 3. Listener de cambios
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            if (event === 'SIGNED_IN') {
+                if (session?.user) {
+                    cargarUsuario()
+                    const creadoHace = Date.now() - new Date(session.user.created_at).getTime()
+                    if (creadoHace < 60000) {
+                        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enviar-email`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+                            body: JSON.stringify({
+                                tipo: 'bienvenida',
+                                destinatario: session.user.email,
+                                nombre: session.user.user_metadata?.nombre || session.user.email?.split('@')[0] || 'Estudiante'
+                            })
+                        }).catch(() => {})
+                    }
+                }
+            } else if (event === 'TOKEN_REFRESHED') {
                 if (session?.user) cargarUsuario()
             } else if (event === 'SIGNED_OUT') {
                 setUsuario(null)

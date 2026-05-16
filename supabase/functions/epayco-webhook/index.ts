@@ -156,7 +156,7 @@ Deno.serve(async (request) => {
         fecha_transaccion: new Date().toISOString(),
       })
       .eq("ref_payco", xRefPayco)
-      .select("id, ref_payco, estado")
+      .select("id, ref_payco, estado, email, nombre, nombre_producto, valor")
       .maybeSingle();
 
     if (error) {
@@ -173,6 +173,26 @@ Deno.serve(async (request) => {
         { success: false, error: "Pago no encontrado" },
         404,
       );
+    }
+
+    if (estado === "aceptada" && data.email) {
+      const emailUrl = `${supabaseUrl}/functions/v1/enviar-email`;
+      fetch(emailUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseServiceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tipo: "pago_exitoso",
+          destinatario: data.email,
+          nombre: data.nombre || "Estudiante",
+          extra: {
+            curso: data.nombre_producto || "",
+            monto: data.valor ? `$${Number(data.valor).toLocaleString("es-CO")} COP` : "",
+          },
+        }),
+      }).catch(() => {});
     }
 
     return jsonResponse({ success: true }, 200);
