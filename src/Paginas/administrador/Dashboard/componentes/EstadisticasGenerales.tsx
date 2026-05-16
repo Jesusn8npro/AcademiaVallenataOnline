@@ -45,8 +45,6 @@ const EstadisticasGenerales: React.FC<Props> = ({ datos }) => {
         return '$' + monto.toFixed(0);
     };
 
-    // Simular crecimiento (para demo)
-    const obtenerCrecimiento = () => Math.floor(Math.random() * 20) + 5;
 
     const handleVerContenido = (tipo: string) => {
         // Navegación específica según la pestaña deseada en el futuro, por ahora al panel general
@@ -87,7 +85,7 @@ const EstadisticasGenerales: React.FC<Props> = ({ datos }) => {
                         <div className="etiqueta-metrica">Total Estudiantes</div>
                         <div className="indicador-crecimiento positivo">
                             <i className="fas fa-arrow-up"></i>
-                            +{obtenerCrecimiento()}% este mes
+                            +{datos.inscripcionesRecientes} este mes
                         </div>
                     </div>
                     <div className="icono-click">

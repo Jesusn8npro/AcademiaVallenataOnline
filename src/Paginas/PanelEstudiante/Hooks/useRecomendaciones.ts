@@ -34,7 +34,7 @@ export function useRecomendaciones() {
                     slug: generateSlug(c.titulo || 'curso-acordeon'), nivel: c.nivel || 'principiante',
                     categoria: c.categoria || 'Vallenato', precio_normal: c.precio_normal || 0,
                     precio_rebajado: c.precio_rebajado || null, tipo: 'curso',
-                    rating: (4.2 + Math.random() * 0.8).toFixed(1), estudiantes: `${Math.floor(Math.random() * 2000) + 100}+`, razon: obtenerRazon()
+                    rating: '4.8', estudiantes: c.estudiantes_inscritos ? `${c.estudiantes_inscritos}+` : '50+', razon: obtenerRazon()
                 }));
 
                 const tutorialesFormateados = (tutorialesData || []).map((t: any) => ({
@@ -43,7 +43,7 @@ export function useRecomendaciones() {
                     slug: generateSlug(t.titulo || 'tutorial-vallenato'), nivel: t.nivel || 'principiante',
                     categoria: t.categoria || 'Vallenato', artista: t.artista || 'Artista Desconocido',
                     precio_normal: t.precio_normal || 0, precio_rebajado: t.precio_rebajado || null, tipo: 'tutorial',
-                    rating: (4.2 + Math.random() * 0.8).toFixed(1), estudiantes: `${Math.floor(Math.random() * 1500) + 50}+`, razon: obtenerRazon()
+                    rating: '4.8', estudiantes: t.estudiantes_inscritos ? `${t.estudiantes_inscritos}+` : '50+', razon: obtenerRazon()
                 }));
 
                 const reales = [...cursosFormateados, ...tutorialesFormateados].sort(() => Math.random() - 0.5);
