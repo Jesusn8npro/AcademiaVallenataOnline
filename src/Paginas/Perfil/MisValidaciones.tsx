@@ -214,10 +214,12 @@ export default function MisValidaciones() {
 
               <div className="modal-envio-instruccion">
                 <strong>¿Cómo subir tu video?</strong>
-                <ul>
-                  <li><strong>Google Drive:</strong> Sube tu video a Drive, haz clic derecho, selecciona "Compartir" y cambia el acceso a <b>"Cualquier persona con el enlace"</b>. Copia el enlace y pégalo arriba.</li>
-                  <li><strong>YouTube:</strong> Sube tu video y configúralo como <b>"Oculto"</b> (No listado) o "Público". Copia el enlace de compartir.</li>
-                </ul>
+                <ol>
+                  <li>Graba tu video tocando la ejecución del tutorial.</li>
+                  <li>Súbelo a <strong>YouTube</strong> (como Oculto o Público) o a <strong>Google Drive</strong> (compartido como "Cualquier persona con el enlace").</li>
+                  <li>Copia el enlace y pégalo en el campo de arriba.</li>
+                  <li>Haz clic en <strong>Enviar para Revisión</strong>.</li>
+                </ol>
                 <span className="instruccion-alerta">⚠️ Si el enlace es Privado, el profesor no podrá evaluarlo.</span>
               </div>
 

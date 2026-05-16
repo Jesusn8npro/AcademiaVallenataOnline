@@ -1,7 +1,3 @@
-/* InfoPestanaPerfil.css — Rediseño profesional, totalmente responsivo
-   Patrón: campos con label flotante visual, focus animado, secciones acordeón con
-   acento al estar activas, grid auto-balanceado por sección. */
-
 :root {
     --ipp-color-primario: #4f46e5;
     --ipp-color-secundario: #6d28d9;
@@ -124,8 +120,6 @@
 
 /* ============== Grid de campos ============== */
 
-/* Grid auto-balanceado: filas con N fields se reparten en N cols, sin huecos.
-   minmax(min(260px, 100%)) hace responsive automático sin media queries extra. */
 .ipp-grid-form {
     display: grid;
     gap: 1.1rem 1rem;
@@ -165,9 +159,6 @@
     width: 100%;
 }
 
-/* Cuando el campo es un hijo directo del stack (típicamente Biografía o filas que ocupan
-   un row entero), forzamos full-width para que el textarea/input no se quede en
-   `auto`/min-content por algún ancestor que no esté pasando bien la regla de stretch. */
 .ipp-stack-secciones > .ipp-campo,
 .ipp-stack-secciones > .ipp-fila-grid {
     width: 100% !important;
@@ -250,7 +241,6 @@
     line-height: 1.5;
 }
 
-/* Selects custom — flecha SVG embedida, sin la del browser */
 select.ipp-input-principal,
 .ipp-select-indicativo {
     appearance: none;
@@ -267,7 +257,6 @@ select.ipp-input-principal:focus,
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* Date input — color del icono + cursor pointer */
 input[type="date"].ipp-input-principal {
     cursor: pointer;
     color-scheme: light;
@@ -382,7 +371,6 @@ input[type="date"].ipp-input-principal:hover::-webkit-calendar-picker-indicator 
 
 /* ============== Responsive ============== */
 
-/* Tablet: pasa a 2 cols (auto a 1 con el media de mobile abajo) */
 @media (max-width: 1024px) {
     .ipp-grid-3-columnas,
     .ipp-fila-3 {
@@ -393,7 +381,6 @@ input[type="date"].ipp-input-principal:hover::-webkit-calendar-picker-indicator 
     }
 }
 
-/* Mobile: 1 col absoluta */
 @media (max-width: 640px) {
     .ipp-formulario-perfil {
         padding: 1.1rem;

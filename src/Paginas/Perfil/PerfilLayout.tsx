@@ -3,13 +3,13 @@ import ProteccionAutenticacion from '../../guards/ProteccionAutenticacion'
 import { PerfilProvider, usePerfilStore } from '../../stores/perfilStore'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
-import SkeletonEncabezadoPerfil from '../../componentes/Skeletons/SkeletonEncabezadoPerfil'
-import '../../componentes/Skeletons/SkeletonBase.css'
+import { useUsuario } from '../../contextos/UsuarioContext'
 import './perfil-layout.css'
 import { Outlet } from 'react-router-dom'
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
-  const { perfil, stats, cargando, inicializado, cargarDatosPerfil, forzarInicializacion } = usePerfilStore()
+  const { perfil, stats, cargarDatosPerfil, forzarInicializacion, inicializado } = usePerfilStore()
+  const { usuario } = useUsuario()
   const [modalAbierto, setModalAbierto] = useState(false)
 
   useEffect(() => {
@@ -22,30 +22,27 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(safetyTimer)
   }, [])
 
-  function onModalStateChange(abierto: boolean) { setModalAbierto(abierto) }
-
-  const mostrarCarga = !inicializado || (cargando && !perfil)
+  // Mostrar encabezado inmediatamente con datos del contexto,
+  // se actualiza solo cuando el store termina de cargar
+  const nombreCompleto = perfil?.nombre_completo || usuario?.nombre || ''
+  const urlAvatar = perfil?.url_foto_perfil || usuario?.url_foto_perfil
+  const userId = perfil?.id || usuario?.id
 
   return (
     <div className="layout-perfil-fijo" translate="no">
       <div className="perfil-layout-header-wrapper">
-        {mostrarCarga ? (
-          <SkeletonEncabezadoPerfil />
-        ) : perfil ? (
+        {userId ? (
           <EncabezadoPerfil
-            nombreCompleto={perfil.nombre_completo}
-            urlAvatar={perfil.url_foto_perfil}
-            urlPortada={perfil.portada_url}
-            posicionPortadaY={Number(perfil.posicion_img_portada || 50)}
-            userId={perfil.id}
+            nombreCompleto={nombreCompleto}
+            urlAvatar={urlAvatar}
+            urlPortada={perfil?.portada_url}
+            posicionPortadaY={Number(perfil?.posicion_img_portada || 50)}
+            userId={userId}
             stats={stats}
-            onModalStateChange={onModalStateChange}
+            onModalStateChange={(abierto) => setModalAbierto(abierto)}
           />
         ) : (
-          <div className="encabezado-error">
-            <p>Falló la carga</p>
-            <button className="btn-reintentar" onClick={() => cargarDatosPerfil(true)}>Reintentar</button>
-          </div>
+          <div className="encabezado-cargando" />
         )}
       </div>
 
@@ -54,14 +51,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="contenido-dinamico">
-        {perfil || inicializado ? (
-          <div className="perfil-content-actual">{children}</div>
-        ) : (
-          <div className="contenido-cargando" style={{ padding: '2rem', width: '100%' }}>
-            <div className="skeleton-box" style={{ height: '40px', width: '300px', marginBottom: '2rem', borderRadius: '8px' }} />
-            <div className="skeleton-box" style={{ height: '200px', width: '100%', borderRadius: '12px' }} />
-          </div>
-        )}
+        <div className="perfil-content-actual">{children}</div>
       </div>
     </div>
   )

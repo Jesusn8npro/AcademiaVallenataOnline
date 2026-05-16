@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas privadas / admin
+Disallow: /administrador/
+Disallow: /acordeon-pro-max/
+Disallow: /simulador-app/
+Disallow: /panel-estudiante/
+Disallow: /mis-cursos/
+Disallow: /mis-eventos/
+Disallow: /mis-validaciones/
+Disallow: /publicaciones/
+Disallow: /grabaciones/
+Disallow: /configuracion/
+Disallow: /mensajes/
+Disallow: /pago-exitoso/
+Disallow: /pago-error/
+Disallow: /sesion-cerrada/
+Disallow: /ejemplo-3d/
+Disallow: /v-pro-3d/
+Disallow: /acordeon-3d-test/
+Disallow: /acordeon-funcional-v1/
+
+# Sitemap
+Sitemap: https://academiavallenata.online/sitemap.xml

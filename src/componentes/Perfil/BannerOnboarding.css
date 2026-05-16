@@ -1,0 +1,102 @@
+.bo-banner {
+  position: relative;
+  background: linear-gradient(135deg, #f0f7e8 0%, #ffffff 100%);
+  border-left: 4px solid #3B6D11;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 1.5rem;
+}
+
+.bo-cerrar {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.bo-cerrar:hover {
+  color: #111827;
+}
+
+.bo-encabezado {
+  margin-bottom: 12px;
+  padding-right: 28px;
+}
+
+.bo-titulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.bo-barra-fondo {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.bo-barra-progreso {
+  height: 100%;
+  background: #3B6D11;
+  border-radius: 9999px;
+  animation: bo-crecer 0.6s ease-out both;
+}
+
+@keyframes bo-crecer {
+  from { width: 0% !important; }
+}
+
+.bo-lista-faltantes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bo-item-faltante {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bo-campo-nombre {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.bo-btn-completar {
+  background: none;
+  border: 1px solid #3B6D11;
+  color: #3B6D11;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bo-btn-completar:hover {
+  background: #3B6D11;
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .bo-item-faltante {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

@@ -47,7 +47,6 @@ const ModalLoops: React.FC<Props> = ({
             .then((datos) => { if (!cancelado) setPistas(datos || []); })
             .catch((err) => {
                 if (cancelado) return;
-                console.error('[ModalLoops] error cargando pistas:', err);
                 setError('No se pudieron cargar las pistas.');
             })
             .finally(() => { if (!cancelado) setCargando(false); });

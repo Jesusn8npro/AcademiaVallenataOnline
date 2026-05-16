@@ -15,6 +15,7 @@ export default function ContenidoTutorial() {
   const [proximaClase, setProximaClase] = useState<any>(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
     cargarTutorial()
@@ -32,6 +33,23 @@ export default function ContenidoTutorial() {
       document.body.classList.remove('tutorial-premium-view-active');
     }
   }, [slug])
+
+  async function compartirProgreso() {
+    const url = `${window.location.origin}/tutoriales/${slug}/contenido`
+    const porcentaje = estadisticasProgreso.porcentaje
+    const nombreTutorial = tutorial?.titulo || 'un tutorial'
+    const texto = porcentaje >= 100
+      ? `¡Completé el tutorial "${nombreTutorial}" en Academia Vallenata Online! 🎹🎵`
+      : `Llevo un ${porcentaje}% del tutorial "${nombreTutorial}" en Academia Vallenata Online 🎹`
+
+    if (navigator.share) {
+      await navigator.share({ title: nombreTutorial, text: texto, url })
+    } else {
+      await navigator.clipboard.writeText(`${texto}\n${url}`)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    }
+  }
 
   async function cargarTutorial() {
     if (!slug) return
@@ -162,7 +180,13 @@ export default function ContenidoTutorial() {
           <div className="tp-contenido-principal">
             <div className="tp-columna-izquierda">
               <div className="tp-seccion-card">
-                <h2>Tu Progreso</h2>
+                <div className="tp-progreso-header">
+                  <h2>Tu Progreso</h2>
+                  <button className="ct-btn-compartir" onClick={compartirProgreso}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    {copiado ? '¡Enlace copiado!' : 'Compartir progreso'}
+                  </button>
+                </div>
                 <BarraProgresoAvanzada estadisticasProgreso={estadisticasProgreso} tipoContenido="tutorial" />
               </div>
 

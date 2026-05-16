@@ -2,12 +2,12 @@ import { useRanking } from './useRanking';
 import './ranking.css';
 
 const categorias = [
-    { id: 'general', nombre: 'General', descripcion: 'Ranking global de la academia', icono: '🏆' },
-    { id: 'simulador', nombre: 'Simulador', descripcion: 'Mejores en el simulador de acordeón', icono: '🎮' },
-    { id: 'cursos', nombre: 'Cursos', descripcion: 'Progreso en cursos y tutoriales', icono: '📚' },
-    { id: 'precision', nombre: 'Precisión', descripcion: 'Mejor precisión en interpretación', icono: '🎯' },
-    { id: 'constancia', nombre: 'Constancia', descripcion: 'Usuarios más constantes', icono: '🔥' },
-    { id: 'comunidad', nombre: 'Comunidad', descripcion: 'Participación en la comunidad', icono: '👥' }
+    { id: 'general', nombre: 'General', descripcion: 'Puntuación total combinada de todas las actividades', icono: '🏆' },
+    { id: 'simulador', nombre: 'Simulador', descripcion: 'Puntos ganados en el AcordeonProMax y el SimuladorApp', icono: '🎮' },
+    { id: 'cursos', nombre: 'Cursos', descripcion: 'Progreso y completitud de cursos y tutoriales', icono: '📚' },
+    { id: 'precision', nombre: 'Precisión', descripcion: 'Porcentaje de notas correctas en el simulador', icono: '🎯' },
+    { id: 'constancia', nombre: 'Constancia', descripcion: 'Racha de días seguidos practicando', icono: '🔥' },
+    { id: 'comunidad', nombre: 'Comunidad', descripcion: 'Participación en el feed, comentarios y publicaciones', icono: '👥' }
 ];
 
 const obtenerColorPosicion = (posicion: number): string => {
@@ -130,6 +130,12 @@ export default function Ranking() {
                         <div className="error-container">
                             <p>{error}</p>
                             <button onClick={cargarRanking} className="retry-btn">Reintentar</button>
+                        </div>
+                    ) : rankingMostrado.length === 0 ? (
+                        <div className="page-ranking-loader">
+                            <p>
+                                {`Nadie ha sumado puntos en ${categorias.find(c => c.id === categoriaActiva)?.nombre ?? categoriaActiva} todavía. ¡Sé el primero!`}
+                            </p>
                         </div>
                     ) : (
                         <>

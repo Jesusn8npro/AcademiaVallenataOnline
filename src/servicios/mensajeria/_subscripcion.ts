@@ -19,6 +19,7 @@ export async function suscribirseAChat(
     callbacks: {
         onNuevoMensaje?: (mensaje: any) => void;
         onConexionCambiada?: (estado: string) => void;
+        onPresenceCambiada?: (escribiendo: { usuario_id: string; typing: boolean }[]) => void;
     }
 ): Promise<void> {
     try {
@@ -30,7 +31,7 @@ export async function suscribirseAChat(
         const channelName = `bidirectional_chat_${chatId}_${userId}_${Date.now()}`;
 
         const channel = supabase
-            .channel(channelName)
+            .channel(channelName, { config: { presence: { key: userId } } })
             .on('system', { event: 'connected' }, () => {})
             .on(
                 'postgres_changes',
@@ -48,6 +49,14 @@ export async function suscribirseAChat(
                     }
                 }
             )
+            .on('presence', { event: 'sync' }, () => {
+                if (!callbacks.onPresenceCambiada) return;
+                const state = channel.presenceState<{ typing: boolean; user_id: string }>();
+                const escribiendo = Object.values(state).flatMap(presences =>
+                    presences.map(p => ({ usuario_id: p.user_id, typing: !!p.typing }))
+                ).filter(p => p.usuario_id !== userId);
+                callbacks.onPresenceCambiada(escribiendo);
+            })
             .subscribe((status: any) => {
                 switch (status) {
                     case 'TIMED_OUT':
@@ -67,6 +76,14 @@ export async function suscribirseAChat(
             callbacks.onConexionCambiada('ERROR');
         }
     }
+}
+
+export async function trackTyping(chatId: string, userId: string, typing: boolean): Promise<void> {
+    const channel = channels.get(chatId);
+    if (!channel) return;
+    try {
+        await channel.track({ typing, user_id: userId });
+    } catch (_) {}
 }
 
 export async function desuscribirseDeChat(chatId: string): Promise<void> {

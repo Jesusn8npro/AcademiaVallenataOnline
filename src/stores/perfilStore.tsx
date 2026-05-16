@@ -59,23 +59,20 @@ function crearPerfilStore() {
   const unsubscribe = subscribe(state => currentStore = state);
 
   // Función interna para cargar estadísticas
-  async function cargarEstadisticasInternas(userId: string): Promise<StatsData> {
+  async function cargarEstadisticasInternas(userId: string, experienciaUsuario = 0): Promise<StatsData> {
     try {
       const [publicacionesResult, cursosResult, tutorialesResult, rankingResult] = await Promise.all([
         supabase.from('comunidad_publicaciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
         supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
         supabase.from('progreso_tutorial').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).eq('completado', true),
-        supabase.from('perfiles').select('id').order('created_at', { ascending: false })
+        supabase.from('perfiles').select('*', { count: 'exact', head: true }).gt('experiencia_total', experienciaUsuario)
       ]);
-
-      const posicionRanking = rankingResult.data ?
-        rankingResult.data.findIndex((p: any) => p.id === userId) + 1 : 0;
 
       return {
         publicaciones: publicacionesResult.count || 0,
         cursos: cursosResult.count || 0,
         tutoriales: tutorialesResult.count || 0,
-        ranking: posicionRanking || 0
+        ranking: (rankingResult.count || 0) + 1
       };
     } catch (error) {
       return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
@@ -114,26 +111,20 @@ function crearPerfilStore() {
 
 
         // Obtener datos del perfil desde Supabase
-        const { data: perfilData, error: perfilError } = await supabase
+        const { data: perfilData } = await supabase
           .from('perfiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (perfilError && perfilError.code !== 'PGRST116') {
-          // En lugar de throw, continuar con datos básicos
-        }
-
-
-        // Cargar estadísticas (con timeout para evitar bloqueos)
+        // Cargar estadísticas con experiencia del usuario para calcular ranking eficientemente
         let statsResult = { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
         try {
-          const statsPromise = cargarEstadisticasInternas(user.id);
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout')), 10000) // 10 segundos timeout
-          );
-          statsResult = await Promise.race([statsPromise, timeoutPromise]) as StatsData;
-        } catch (error) {
+          statsResult = await Promise.race([
+            cargarEstadisticasInternas(user.id, perfilData?.experiencia_total || 0),
+            new Promise<StatsData>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
+          ]);
+        } catch {
         }
 
         const perfilCompleto: PerfilData = perfilData || {
@@ -175,27 +166,8 @@ function crearPerfilStore() {
       }
     },
 
-    async cargarEstadisticasComunidad(userId: string): Promise<StatsData> {
-      try {
-        const [publicacionesResult, cursosResult, tutorialesResult, rankingResult] = await Promise.all([
-          supabase.from('comunidad_publicaciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
-          supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
-          supabase.from('progreso_tutorial').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).eq('completado', true),
-          supabase.from('perfiles').select('id').order('created_at', { ascending: false })
-        ]);
-
-        const posicionRanking = rankingResult.data ?
-          rankingResult.data.findIndex((p: any) => p.id === userId) + 1 : 0;
-
-        return {
-          publicaciones: publicacionesResult.count || 0,
-          cursos: cursosResult.count || 0,
-          tutoriales: tutorialesResult.count || 0,
-          ranking: posicionRanking || 0
-        };
-      } catch (error) {
-        return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
-      }
+    async cargarEstadisticasComunidad(userId: string, experienciaUsuario = 0): Promise<StatsData> {
+      return cargarEstadisticasInternas(userId, experienciaUsuario);
     },
 
     actualizarPerfil(nuevoPerfil: Partial<PerfilData>) {

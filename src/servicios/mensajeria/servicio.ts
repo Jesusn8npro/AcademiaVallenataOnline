@@ -6,7 +6,8 @@ import {
     desuscribirseDeTodosLosChats,
     buscarUsuarios,
     obtenerEstadisticasMensajeria,
-    eliminarChat
+    eliminarChat,
+    trackTyping
 } from './_subscripcion';
 
 export const mensajeriaService = {
@@ -21,7 +22,8 @@ export const mensajeriaService = {
     desuscribirseDeTodosLosChats,
     buscarUsuarios,
     obtenerEstadisticas: obtenerEstadisticasMensajeria,
-    eliminarChat
+    eliminarChat,
+    trackTyping
 };
 
 export default mensajeriaService;

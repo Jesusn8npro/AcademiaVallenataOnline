@@ -17,27 +17,18 @@ function aleatorioRating(): string {
 export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rating: string; estudiantes: string })[]; error?: string }> {
   try {
 
-    // Promesa de carga de datos
+    // Promesa de carga de datos — cursos y tutoriales en paralelo
     const loadData = async () => {
-      // Cargar cursos primero
-      const { data: cursosData, error: cursosError } = await supabaseAnonimo
-        .from('cursos')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [cursosResult, tutsResult] = await Promise.all([
+        supabaseAnonimo.from('cursos').select('*').order('created_at', { ascending: false }),
+        supabaseAnonimo.from('tutoriales').select('*').order('created_at', { ascending: false })
+      ]);
 
-
-      // Cargar tutoriales
-      const { data: tutsData, error: tutsError } = await supabaseAnonimo
-        .from('tutoriales')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-
-      if (cursosError && tutsError) {
-        throw new Error(`Error: Cursos (${cursosError.message}), Tutoriales (${tutsError.message})`);
+      if (cursosResult.error && tutsResult.error) {
+        throw new Error(`Error: Cursos (${cursosResult.error.message}), Tutoriales (${tutsResult.error.message})`);
       }
 
-      return { cursosData, tutsData };
+      return { cursosData: cursosResult.data, tutsData: tutsResult.data };
     };
 
     // Race entre carga y timeout de 10 segundos

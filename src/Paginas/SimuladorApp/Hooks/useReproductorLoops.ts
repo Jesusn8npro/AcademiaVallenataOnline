@@ -84,9 +84,7 @@ export function useReproductorLoops() {
                     next.add(url);
                     return next;
                 });
-            } catch (e: any) {
-                console.error('[Loops] precarga fallo:', url, e?.name, e?.message || e);
-            } finally {
+            } catch { /* precarga silenciosa */ } finally {
                 descargandoMap.current.delete(url);
             }
         })();
@@ -140,7 +138,7 @@ export function useReproductorLoops() {
 
         // Resume del contexto fire-and-forget (el gesto del click cuenta).
         if (ctx.state === 'suspended') {
-            ctx.resume().catch((e) => console.warn('[Loops] resume fallo:', e));
+            ctx.resume().catch(() => {});
         }
 
         // GainNode + StereoPannerNode persistentes (los reusamos entre pistas).
@@ -170,10 +168,10 @@ export function useReproductorLoops() {
             startTimeRef.current = ctx.currentTime;
             sourceRef.current = source;
         } catch (e: any) {
-            const name = e?.name || 'Error';
-            const message = e?.message || 'No se pudo iniciar la pista.';
-            console.error('[Loops] source.start fallo:', name, message, e);
-            setErrorReproduccion({ name, message });
+            setErrorReproduccion({
+                name: e?.name || 'Error',
+                message: e?.message || 'No se pudo iniciar la pista.',
+            });
             return;
         }
 

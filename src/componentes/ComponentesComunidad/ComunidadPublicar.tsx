@@ -223,14 +223,6 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                   <button
                     type="button"
                     className="comunidad-publicar-btn-herramienta"
-                    onClick={() => {}}
-                  >
-                    📊
-                  </button>
-
-                  <button
-                    type="button"
-                    className="comunidad-publicar-btn-herramienta"
                     ref={emojiBtnRef}
                     onClick={() => togglePicker('emoji')}
                   >

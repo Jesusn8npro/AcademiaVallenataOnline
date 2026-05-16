@@ -194,9 +194,7 @@ export const useReplaySimulador = ({
                         );
                     }
                 }
-            } catch (e) {
-                console.warn('[Replay] precarga manual de samples fallo:', e);
-            }
+            } catch { /* precarga manual fallo — las notas igual se reproduciran */ }
 
             // Audio de fondo: si la grabacion guardo una pista, la cargamos
             // con el OFFSET correcto (la posicion en que estaba el loop cuando
@@ -268,8 +266,7 @@ export const useReplaySimulador = ({
                     reproductor.reproducirSecuencia(cancionFake);
                     setEnReproduccion(true);
                     return;
-                } catch (err: any) {
-                    console.error('[Replay] audio_fondo Web Audio fallo:', err?.name, err?.message || err);
+                } catch {
                     // Caemos al path sin audio para que las notas igual suenen.
                 }
             }
@@ -278,9 +275,7 @@ export const useReplaySimulador = ({
             replayStartTimeRef.current = performance.now();
             reproductor.reproducirSecuencia(cancionFake);
             setEnReproduccion(true);
-        } catch (e: any) {
-            console.error('[Replay] error al cargar la grabacion:', e?.message || e);
-        }
+        } catch { /* error al cargar grabacion */ }
     }, [logica, reproductor, loops, metronomoVivo, metronomoReplay, detenerAudioFondoReplay]);
 
     const detenerReproduccion = useCallback(() => {

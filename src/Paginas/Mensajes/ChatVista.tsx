@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mensajeriaService } from '../../servicios/mensajeriaService'
 import type { Mensaje } from '../../servicios/mensajeriaService'
 import BurbujaMensaje from './BurbujaMensaje'
@@ -33,7 +33,41 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
   const [respuesta, setRespuesta] = useState<Mensaje | null>(null)
   const [conexion, setConexion] = useState('SUBSCRIBED')
   const [errorEnvio, setErrorEnvio] = useState('')
+  const [escribiendo, setEscribiendo] = useState<{ usuario_id: string; typing: boolean }[]>([])
   const fin = useRef<HTMLDivElement>(null)
+  const areaRef = useRef<HTMLDivElement>(null)
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const estaAlFondo = useCallback(() => {
+    const el = areaRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }, [])
+
+  const scrollAlFondo = useCallback((forzar = false) => {
+    if (forzar || estaAlFondo()) {
+      setTimeout(() => fin.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+    }
+  }, [estaAlFondo])
+
+  const nombreEscribiendo = useMemo(() => {
+    const activos = escribiendo.filter(p => p.typing)
+    if (activos.length === 0) return null
+    const partner = (chat.miembros || []).find((m: any) => m.usuario_id === activos[0].usuario_id)
+    const nombre = partner?.usuario?.nombre_completo?.split(' ')[0] || 'Alguien'
+    return nombre
+  }, [escribiendo, chat.miembros])
+
+  const onTyping = useCallback((escribiendo: boolean) => {
+    if (!usuarioActual?.id) return
+    mensajeriaService.trackTyping(chat.id, usuarioActual.id, escribiendo)
+    if (escribiendo) {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+      typingTimerRef.current = setTimeout(() => {
+        mensajeriaService.trackTyping(chat.id, usuarioActual.id, false)
+      }, 1000)
+    }
+  }, [chat.id, usuarioActual?.id])
 
   const otro = useMemo(() => {
     if (!chat || !usuarioActual) return null
@@ -70,14 +104,13 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
       if (!activo) return
       if (error) setError(error); else setMensajes(msgs || [])
       setCargando(false)
-      setTimeout(() => fin.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+      scrollAlFondo(true)
     }
     cargar()
 
     mensajeriaService.suscribirseAChat(chat.id, {
       onNuevoMensaje: (raw: any) => {
         if (!activo) return
-        // Hidratar usuario (avatar, nombre) desde el chat ya cargado
         const usuarioInfo = miembrosPorId.get(raw.usuario_id) || raw.usuario || null
         const mensaje: Mensaje = {
           ...raw,
@@ -87,24 +120,30 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
           leido_por_mi: raw.usuario_id === usuarioActual?.id,
         }
         setMensajes(prev => prev.some(m => m.id === mensaje.id) ? prev : [...prev, mensaje])
-        setTimeout(() => fin.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+        scrollAlFondo()
       },
-      onConexionCambiada: (s: string) => { if (activo) setConexion(s) }
+      onConexionCambiada: (s: string) => { if (activo) setConexion(s) },
+      onPresenceCambiada: (presences) => { if (activo) setEscribiendo(presences) }
     })
 
     mensajeriaService.marcarMensajesComoLeidos(chat.id).catch(() => {})
 
-    return () => { activo = false; mensajeriaService.desuscribirseDeChat(chat.id).catch(() => {}) }
-  }, [chat.id, usuarioActual?.id, miembrosPorId])
+    return () => {
+      activo = false
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+      mensajeriaService.desuscribirseDeChat(chat.id).catch(() => {})
+    }
+  }, [chat.id, usuarioActual?.id, miembrosPorId, scrollAlFondo])
 
   const enviar = async (contenido: string) => {
     setErrorEnvio('')
+    mensajeriaService.trackTyping(chat.id, usuarioActual?.id, false)
     const { mensaje, error } = await mensajeriaService.enviarMensaje({ chat_id: chat.id, contenido })
     if (error) { setErrorEnvio(error); return }
     if (mensaje) {
       const opt: Mensaje = { ...(mensaje as any), es_mio: true, reacciones: [], lecturas: [], leido_por_mi: true }
       setMensajes(prev => prev.some(m => m.id === opt.id) ? prev : [...prev, opt])
-      setTimeout(() => fin.current?.scrollIntoView({ behavior: 'smooth' }), 80)
+      scrollAlFondo(true)
     }
     setRespuesta(null)
   }
@@ -150,7 +189,7 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
         </div>
       </header>
 
-      <div className="msg_area">
+      <div className="msg_area" ref={areaRef}>
         {cargando ? (
           <div className="msg_loading"><div className="msg_spinner" /><p>Cargando mensajes...</p></div>
         ) : error ? (
@@ -188,8 +227,15 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
             <button className="msg_reply_close" onClick={() => setRespuesta(null)} aria-label="Cancelar respuesta">✕</button>
           </div>
         )}
+        {nombreEscribiendo && (
+          <div className="msg_typing">
+            <span className="msg_typing_name">{nombreEscribiendo}</span>
+            <span> está escribiendo</span>
+            <span className="msg_typing_dots"><span /><span /><span /></span>
+          </div>
+        )}
         {errorEnvio && <div className="msg_send_error">{errorEnvio}</div>}
-        <EntradaMensaje onEnviar={enviar} />
+        <EntradaMensaje onEnviar={enviar} onTyping={onTyping} />
       </div>
     </div>
   )

@@ -28,9 +28,9 @@ export default function GridMisCursos({ inscripciones, isLoading, error }: Props
   if (!inscripciones.length) {
     return (
       <div className="estado-vacio" style={styles.estado}>
-        <h3 style={{ margin: 0 }}>¡Aún no tienes cursos!</h3>
-        <p style={styles.estadoTexto}>Explora nuestro catálogo y encuentra el curso perfecto para ti</p>
-        <a href="/cursos" style={styles.btnExplorar}>Explorar Cursos →</a>
+        <h3 style={{ margin: 0 }}>Aún no tienes cursos inscritos</h3>
+        <p style={styles.estadoTexto}>¡Explora el catálogo y empieza hoy!</p>
+        <a href="/tutoriales-de-acordeon" style={styles.btnExplorar}>Ver tutoriales →</a>
       </div>
     )
   }

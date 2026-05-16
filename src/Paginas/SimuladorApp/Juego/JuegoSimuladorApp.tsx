@@ -100,9 +100,7 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }
             hero.seleccionarSeccion(null);
         }
 
-        Promise.resolve(hero.iniciarJuego(config.cancion, false, modoPM)).catch((err: any) => {
-            console.error('[JuegoSimuladorApp] iniciarJuego fallo:', err);
-        });
+        Promise.resolve(hero.iniciarJuego(config.cancion, false, modoPM)).catch(() => {});
     // modoVisual al primer init solamente; cambios posteriores los maneja el useEffect de abajo.
     // disenoCargado se incluye para que el effect se reactive cuando la nube termine.
     // eslint-disable-next-line react-hooks/exhaustive-deps

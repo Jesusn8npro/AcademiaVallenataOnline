@@ -32,6 +32,7 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
     { label: 'Publicaciones', icon: iconos.publicaciones, route: '/publicaciones' },
     { label: 'Grabaciones', icon: iconos.grabaciones, route: '/grabaciones' },
     { label: 'Validaciones', icon: iconos.validaciones, route: '/mis-validaciones' },
+    { label: '❤️ Guardados', icon: '', route: '/mi-perfil/favoritos' },
     { label: 'Configuración', icon: iconos.configuracion, route: '/configuracion' }
   ]
   let indiceActivo = pestañas.findIndex(p => p.route === location.pathname)

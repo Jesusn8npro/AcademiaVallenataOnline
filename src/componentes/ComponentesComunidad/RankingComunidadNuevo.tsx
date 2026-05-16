@@ -4,9 +4,9 @@ import './RankingComunidadNuevo.css';
 
 const RankingComunidadNuevo: React.FC = () => {
   const {
-    rankingData, isLoading, isLoadingMore, error, filtroTipo,
+    rankingData, isLoading, isLoadingMore, error,
     datosUsuarioActual, hasMore, loaderRef,
-    cambiarFiltro, cargarRanking,
+    cargarRanking,
     obtenerEmojiPosicion, obtenerClasePosicion,
   } = useRankingComunidad();
 

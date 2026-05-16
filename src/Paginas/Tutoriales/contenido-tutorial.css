@@ -228,3 +228,37 @@ body {
 .boton-volver:hover {
     background-color: #ea580c;
 }
+
+/* === BOTÓN COMPARTIR EN CLASE COMPLETADA === */
+.ct-clase-completada-acciones {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px 0;
+}
+
+.ct-btn-compartir {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1.5px solid #3B6D11;
+    color: #3B6D11;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.ct-btn-compartir:hover {
+    background: #3B6D11;
+    color: #ffffff;
+}
+
+.ct-btn-compartir svg {
+    flex-shrink: 0;
+}
+
+}
