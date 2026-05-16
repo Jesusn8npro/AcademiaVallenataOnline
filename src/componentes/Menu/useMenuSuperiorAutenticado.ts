@@ -50,6 +50,17 @@ export function useMenuSuperiorAutenticado({ onCerrarSesion }: Props) {
     setCerrandoSesion(false)
   }
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setMostrarModalBusqueda(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   const abrirModalBusqueda = () => setMostrarModalBusqueda(true)
   const cerrarModalBusqueda = () => setMostrarModalBusqueda(false)
   const toggleMenuLateral = () => setMostrarMenuLateral(v => !v)

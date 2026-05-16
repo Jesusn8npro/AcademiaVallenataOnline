@@ -26,10 +26,7 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
         if (datos.tutorial_id && !tutorialIdValido) identificadoresOriginales.tutorial_id_original = datos.tutorial_id;
         if (datos.paquete_id && !paqueteIdValido) identificadoresOriginales.paquete_id_original = datos.paquete_id;
         if (datos.membresia_id && !membresiaIdValido) identificadoresOriginales.membresia_id_original = datos.membresia_id;
-        if (Object.keys(identificadoresOriginales).length > 0) {
-            // eslint-disable-next-line no-console
-            console.warn('[crearRegistroPago] identificadores no-UUID recibidos, se guardan en datos_adicionales:', identificadoresOriginales);
-        }
+        // identificadoresOriginales se conservan en datos_adicionales (ver abajo)
 
         const registroPago = {
             usuario_id: datos.usuario_id,

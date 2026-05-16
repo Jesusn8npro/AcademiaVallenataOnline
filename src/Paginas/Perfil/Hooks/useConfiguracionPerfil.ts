@@ -32,6 +32,9 @@ export function useConfiguracionPerfil() {
         ciudad: '',
         fecha_creacion: ''
     });
+    const [editandoCuenta, setEditandoCuenta] = useState(false);
+    const [datosEditados, setDatosEditados] = useState({ nombre_completo: '', correo_electronico: '', whatsapp: '', ciudad: '' });
+    const [guardandoCuenta, setGuardandoCuenta] = useState(false);
 
     useEffect(() => { cargarDatosUsuario(); }, [usuario]);
 
@@ -39,20 +42,22 @@ export function useConfiguracionPerfil() {
         if (!usuario?.id) return;
         try {
             setCargando(true);
-            const { data: perfilData, error: errorPerfil } = await supabase
-                .rpc('obtener_mi_perfil_completo');
-            if (errorPerfil) throw errorPerfil;
+            const [perfilResult, pagosResult] = await Promise.all([
+                supabase.rpc('obtener_mi_perfil_completo'),
+                supabase.from('pagos_epayco').select('*').eq('usuario_id', usuario.id)
+                    .eq('estado', 'Aceptada').order('created_at', { ascending: false }).limit(3)
+            ]);
+
+            const perfilData = perfilResult.data;
+            if (perfilResult.error) throw perfilResult.error;
+
+            setHistorialPagos(pagosResult.data || []);
 
             if (perfilData?.suscripcion && perfilData.suscripcion !== 'free') {
                 const { data: membresia } = await supabase
                     .from('membresias').select('*').eq('nombre', perfilData.suscripcion).single();
                 setMembresiaActual(membresia);
             }
-
-            const { data: pagos } = await supabase
-                .from('pagos_epayco').select('*').eq('usuario_id', usuario.id)
-                .eq('estado', 'Aceptada').order('created_at', { ascending: false }).limit(3);
-            setHistorialPagos(pagos || []);
 
             setConfiguraciones({
                 notificaciones_email: perfilData.notificaciones_email ?? true,
@@ -129,6 +134,54 @@ export function useConfiguracionPerfil() {
         }
     }
 
+    function iniciarEdicionCuenta() {
+        setDatosEditados({
+            nombre_completo: datosPersonales.nombre_completo,
+            correo_electronico: datosPersonales.correo_electronico,
+            whatsapp: datosPersonales.whatsapp,
+            ciudad: datosPersonales.ciudad
+        });
+        setEditandoCuenta(true);
+    }
+
+    async function guardarDatosPersonales() {
+        if (!usuario?.id) return;
+        setGuardandoCuenta(true);
+        try {
+            const partes = datosEditados.nombre_completo.trim().split(' ');
+            const nombre = partes[0] || '';
+            const apellido = partes.slice(1).join(' ');
+
+            await supabase.from('perfiles').update({
+                nombre_completo: datosEditados.nombre_completo,
+                nombre,
+                apellido,
+                whatsapp: datosEditados.whatsapp,
+                ciudad: datosEditados.ciudad
+            }).eq('id', usuario.id);
+
+            if (datosEditados.correo_electronico !== datosPersonales.correo_electronico) {
+                await supabase.auth.updateUser({ email: datosEditados.correo_electronico });
+                setMensaje('Datos guardados. Revisa tu nuevo correo para confirmar el cambio.');
+            } else {
+                setMensaje('¡Datos personales actualizados exitosamente!');
+            }
+
+            setDatosPersonales(prev => ({ ...prev, ...datosEditados }));
+            actualizarPerfil({ nombre_completo: datosEditados.nombre_completo, nombre, apellido, whatsapp: datosEditados.whatsapp, ciudad: datosEditados.ciudad });
+            setEditandoCuenta(false);
+        } catch (error: any) {
+            setMensaje('Error al guardar: ' + error.message);
+        } finally {
+            setGuardandoCuenta(false);
+            setTimeout(() => setMensaje(''), 4000);
+        }
+    }
+
+    function cancelarEdicionCuenta() {
+        setEditandoCuenta(false);
+    }
+
     function cancelarRecuperacion() {
         setMostrarFormularioContrasena(false);
         setMensajeRecuperar('');
@@ -149,6 +202,8 @@ export function useConfiguracionPerfil() {
         cargandoRecuperar, mensajeRecuperar,
         confirmacionEliminar, setConfirmacionEliminar,
         datosPersonales,
+        editandoCuenta, datosEditados, setDatosEditados, guardandoCuenta,
+        iniciarEdicionCuenta, guardarDatosPersonales, cancelarEdicionCuenta,
         guardarConfiguracion, enviarRecuperacionContrasena, cancelarRecuperacion, eliminarCuenta, cerrarSesion
     };
 }

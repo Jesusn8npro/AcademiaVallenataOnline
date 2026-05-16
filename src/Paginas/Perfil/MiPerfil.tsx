@@ -4,18 +4,10 @@ import UltimosArticulosBlog from '../../componentes/Perfil/UltimosArticulosBlog'
 import { usePerfilStore } from '../../stores/perfilStore'
 import ExperienciaPerfil from '../../componentes/Perfil/ExperienciaPerfil'
 import MonedasPerfil from '../../componentes/Perfil/MonedasPerfil'
+import BannerOnboarding from '../../componentes/Perfil/BannerOnboarding'
 
 export default function MiPerfil() {
-  const { perfil, cargando, actualizarPerfil } = usePerfilStore()
-
-  if (cargando && !perfil) {
-    return (
-      <div className="estado-carga" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', gap: '1.5rem' }}>
-        <div className="spinner-carga" style={{ width: 50, height: 50, border: '4px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ color: '#64748b', fontWeight: 500 }}>Cargando información...</p>
-      </div>
-    )
-  }
+  const { perfil, actualizarPerfil } = usePerfilStore()
 
   const perfilVisualizar = perfil || {
     id: '',
@@ -28,6 +20,7 @@ export default function MiPerfil() {
 
   return (
     <div className="contenido-mi-perfil">
+      {perfil && <BannerOnboarding perfil={perfil} />}
       <div className="layout-info-perfil">
         <div className="columna-formulario-principal" style={{ minWidth: 0 }}>
           <InfoPestanaPerfil perfil={perfilVisualizar as any} onActualizar={actualizarPerfil} />

@@ -1,11 +1,13 @@
 .contenido-configuracion {
-    padding: 32px 24px !important;
-    max-width: 1000px !important;
-    margin: 0 auto !important;
-    background: #f8f8f6 !important;
-    min-height: calc(100vh - 200px) !important;
     width: 100% !important;
     box-sizing: border-box !important;
+}
+
+.cp-inner {
+    padding: 32px 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .estado-carga { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 4rem 2rem }
@@ -21,15 +23,15 @@
 
 @keyframes spin { to { transform: rotate(360deg) } }
 
-.header {
-    margin-bottom: 32px !important;
+.cp-cabecera {
+    margin-bottom: 32px;
     text-align: left;
-    padding: 0 0 24px 0 !important;
+    padding: 0 0 24px 0;
     border-bottom: 2px solid #3B6D11;
 }
 
-.header h1 { font-size: 32px; font-weight: 800; color: #1a1a1a; margin: 0 0 12px 0; letter-spacing: -.5px }
-.header p { color: #666; font-size: 15px; margin: 0 }
+.cp-cabecera h1 { font-size: 32px; font-weight: 800; color: #1a1a1a; margin: 0 0 12px 0; letter-spacing: -.5px }
+.cp-cabecera p { color: #666; font-size: 15px; margin: 0 }
 
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 32px }
 
@@ -129,8 +131,9 @@
 .desc { font-size: .85rem; color: #6b7280; display: block }
 
 .formulario { background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb }
-.formulario h4 { margin: 0 0 8px 0; color: #1a1a1a; font-size: 14px; font-weight: 600 }
+.formulario h4 { margin: 0 0 12px 0; color: #1a1a1a; font-size: 14px; font-weight: 600 }
 .formulario p { color: #666; margin: 0 0 16px 0; font-size: 13px }
+.formulario label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px }
 
 .formulario input {
     width: 100%;

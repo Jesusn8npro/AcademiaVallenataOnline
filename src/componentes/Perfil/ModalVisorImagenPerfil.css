@@ -1,9 +1,3 @@
-/* ===================================
-   VISOR DE IMAGEN DE PERFIL - CSS
-   Nombres únicos para evitar conflictos
-   =================================== */
-
-/* OVERLAY - Fondo oscuro */
 .visor-imagen-overlay {
     position: fixed;
     top: 0;
@@ -18,7 +12,6 @@
     padding: 20px;
 }
 
-/* CONTAINER - Contenedor principal del modal */
 .visor-imagen-container {
     position: relative;
     max-width: 1200px;
@@ -31,7 +24,6 @@
     display: flex;
 }
 
-/* BOTÓN CERRAR */
 .visor-imagen-btn-cerrar {
     position: absolute;
     top: 15px;
@@ -54,7 +46,6 @@
     background: rgba(0, 0, 0, 0.8);
 }
 
-/* CONTENT - Contenedor de imagen y panel */
 .visor-imagen-content {
     display: flex;
     width: 100%;
@@ -62,7 +53,6 @@
     max-height: 700px;
 }
 
-/* ÁREA DE IMAGEN */
 .visor-imagen-area {
     flex: 1.5;
     background: #000;
@@ -79,7 +69,6 @@
     object-fit: contain;
 }
 
-/* Botones de navegación */
 .visor-imagen-nav {
     position: absolute;
     top: 50%;
@@ -121,7 +110,6 @@
     right: 20px;
 }
 
-/* Indicador de posición */
 .visor-imagen-indicador {
     position: absolute;
     bottom: 20px;
@@ -136,7 +124,6 @@
     z-index: 10;
 }
 
-/* PANEL DE INTERACCIONES */
 .visor-imagen-panel {
     flex: 1;
     background: white;
@@ -336,7 +323,6 @@
     text-decoration: underline;
 }
 
-/* Respuestas */
 .visor-imagen-respuesta {
     display: flex;
     gap: 10px;
@@ -497,13 +483,7 @@
     font-size: 0.9rem;
 }
 
-/* ===================================
-   RESPONSIVE - MOBILE FULL SCREEN
-   =================================== */
-
 @media (max-width: 900px) {
-
-    /* Overlay ocupa toda la pantalla */
     .visor-imagen-overlay {
         padding: 0 !important;
         background: black !important;
@@ -511,7 +491,6 @@
         justify-content: stretch;
     }
 
-    /* Container fijo en toda la pantalla */
     .visor-imagen-container {
         position: fixed !important;
         top: 0 !important;
@@ -530,7 +509,6 @@
         flex-direction: column !important;
     }
 
-    /* Botón cerrar visible */
     .visor-imagen-btn-cerrar {
         top: 15px;
         right: 15px;
@@ -541,7 +519,6 @@
         z-index: 10002 !important;
     }
 
-    /* Content ocupa todo */
     .visor-imagen-content {
         flex: 1;
         display: flex;
@@ -551,7 +528,6 @@
         max-height: none;
     }
 
-    /* Área de imagen */
     .visor-imagen-area {
         width: 100%;
         height: 60vh;
@@ -560,7 +536,6 @@
         flex: none;
     }
 
-    /* Panel de interacciones */
     .visor-imagen-panel {
         flex: 1;
         width: 100%;
@@ -571,7 +546,6 @@
         overflow: hidden;
     }
 
-    /* Reordenar elementos con flexbox order */
     .visor-imagen-acciones {
         order: 1;
         padding: 12px 16px;

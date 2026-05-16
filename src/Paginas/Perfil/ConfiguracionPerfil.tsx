@@ -13,11 +13,14 @@ export default function ConfiguracionPerfil() {
         cargandoRecuperar, mensajeRecuperar,
         confirmacionEliminar, setConfirmacionEliminar,
         datosPersonales,
+        editandoCuenta, datosEditados, setDatosEditados, guardandoCuenta,
+        iniciarEdicionCuenta, guardarDatosPersonales, cancelarEdicionCuenta,
         guardarConfiguracion, enviarRecuperacionContrasena, cancelarRecuperacion, eliminarCuenta, cerrarSesion
     } = useConfiguracionPerfil();
 
     return (
         <div className="contenido-configuracion">
+          <div className="cp-inner">
             {cargando ? (
                 <div className="estado-carga">
                     <div className="spinner"></div>
@@ -25,41 +28,85 @@ export default function ConfiguracionPerfil() {
                 </div>
             ) : (
                 <>
-                    <div className="header">
+                    <div className="cp-cabecera">
                         <h1>⚙️ Configuración</h1>
                         <p>Administra tu cuenta y preferencias</p>
                     </div>
 
                     <div className="grid">
                         <div className="seccion">
-                            <h2>👤 Mi cuenta</h2>
-                            <div className="info">
-                                <div className="campo">
-                                    <span>Nombre:</span>
-                                    <span>{datosPersonales.nombre_completo || 'No especificado'}</span>
+                            <h2>👤 Cuenta</h2>
+                            {!editandoCuenta ? (
+                                <>
+                                    <div className="info">
+                                        <div className="campo">
+                                            <span>Nombre:</span>
+                                            <span>{datosPersonales.nombre_completo || 'No especificado'}</span>
+                                        </div>
+                                        <div className="campo">
+                                            <span>Email:</span>
+                                            <span>{datosPersonales.correo_electronico || 'No especificado'}</span>
+                                        </div>
+                                        <div className="campo">
+                                            <span>WhatsApp:</span>
+                                            <span>{datosPersonales.whatsapp || 'No especificado'}</span>
+                                        </div>
+                                        <div className="campo">
+                                            <span>Ubicación:</span>
+                                            <span>{datosPersonales.ciudad || 'No especificado'}</span>
+                                        </div>
+                                        <div className="campo">
+                                            <span>Miembro desde:</span>
+                                            <span>{datosPersonales.fecha_creacion}</span>
+                                        </div>
+                                    </div>
+                                    <button className="boton-secundario" onClick={iniciarEdicionCuenta}>✏️ Editar datos</button>
+                                </>
+                            ) : (
+                                <div className="formulario">
+                                    <h4>Editar datos personales</h4>
+                                    <label>Nombre completo</label>
+                                    <input
+                                        type="text"
+                                        value={datosEditados.nombre_completo}
+                                        onChange={e => setDatosEditados({ ...datosEditados, nombre_completo: e.target.value })}
+                                        placeholder="Tu nombre completo"
+                                    />
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        value={datosEditados.correo_electronico}
+                                        onChange={e => setDatosEditados({ ...datosEditados, correo_electronico: e.target.value })}
+                                        placeholder="tu@correo.com"
+                                    />
+                                    <label>WhatsApp</label>
+                                    <input
+                                        type="text"
+                                        value={datosEditados.whatsapp}
+                                        onChange={e => setDatosEditados({ ...datosEditados, whatsapp: e.target.value })}
+                                        placeholder="+57 300 000 0000"
+                                    />
+                                    <label>Ciudad / País</label>
+                                    <input
+                                        type="text"
+                                        value={datosEditados.ciudad}
+                                        onChange={e => setDatosEditados({ ...datosEditados, ciudad: e.target.value })}
+                                        placeholder="Tu ciudad"
+                                    />
+                                    <div className="botones" style={{ marginTop: '1rem' }}>
+                                        <button className="boton-principal" onClick={guardarDatosPersonales} disabled={guardandoCuenta}>
+                                            {guardandoCuenta ? 'Guardando...' : '💾 Guardar'}
+                                        </button>
+                                        <button className="boton-cancelar" onClick={cancelarEdicionCuenta} disabled={guardandoCuenta}>
+                                            Cancelar
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="campo">
-                                    <span>Email:</span>
-                                    <span>{datosPersonales.correo_electronico || 'No especificado'}</span>
-                                </div>
-                                <div className="campo">
-                                    <span>WhatsApp:</span>
-                                    <span>{datosPersonales.whatsapp || 'No especificado'}</span>
-                                </div>
-                                <div className="campo">
-                                    <span>Ubicación:</span>
-                                    <span>{datosPersonales.ciudad || 'No especificado'}</span>
-                                </div>
-                                <div className="campo">
-                                    <span>Miembro desde:</span>
-                                    <span>{datosPersonales.fecha_creacion}</span>
-                                </div>
-                            </div>
-                            <a href="/mi-perfil" className="boton-secundario">✏️ Editar información</a>
+                            )}
                         </div>
 
                         <div className="seccion">
-                            <h2>💎 Mi membresía</h2>
+                            <h2>💎 Mi Plan</h2>
                             {membresiaActual ? (
                                 <div className="tarjeta-membresia" style={{ borderColor: membresiaActual.color_hex }}>
                                     <div className="icono" style={{ background: membresiaActual.color_hex }}>
@@ -103,7 +150,7 @@ export default function ConfiguracionPerfil() {
                         )}
 
                         <div className="seccion">
-                            <h2>🔔 Notificaciones</h2>
+                            <h2>🔒 Privacidad</h2>
                             <div className="opciones">
                                 <label className="toggle-opcion">
                                     <input
@@ -130,12 +177,7 @@ export default function ConfiguracionPerfil() {
                                         <span className="desc">Notificaciones en tiempo real</span>
                                     </div>
                                 </label>
-                            </div>
-                        </div>
 
-                        <div className="seccion">
-                            <h2>🔒 Privacidad</h2>
-                            <div className="opciones">
                                 <label className="toggle-opcion">
                                     <input
                                         type="checkbox"
@@ -183,14 +225,10 @@ export default function ConfiguracionPerfil() {
                                         )}
                                     </div>
                                 )}
-                            </div>
-                        </div>
-
-                        <div className="seccion">
-                            <h2>⚙️ Acciones</h2>
-                            <div className="acciones">
-                                <button className="boton-warning" onClick={cerrarSesion}>🚪 Cerrar sesión</button>
-                                <button className="boton-danger" onClick={() => setMostrarModalEliminar(true)}>🗑️ Eliminar cuenta</button>
+                                <div className="acciones">
+                                    <button className="boton-warning" onClick={cerrarSesion}>🚪 Cerrar sesión</button>
+                                    <button className="boton-danger" onClick={() => setMostrarModalEliminar(true)}>🗑️ Eliminar cuenta</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -216,6 +254,7 @@ export default function ConfiguracionPerfil() {
                 onCerrar={() => setMostrarModalEliminar(false)}
                 onEliminar={eliminarCuenta}
             />
+          </div>
         </div>
     );
 }

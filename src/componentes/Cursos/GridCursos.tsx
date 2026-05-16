@@ -2,6 +2,7 @@ import React from 'react'
 import './GridCursos.css'
 import { generarSlug } from '../../utilidades/slug'
 import { useNavigate } from 'react-router-dom'
+import { useFavoritos } from '../../hooks/useFavoritos'
 
 interface Item {
   id: string
@@ -48,6 +49,7 @@ function acortarTexto(texto?: string, maxLength = 100) {
 
 export default function GridCursos({ items, cargando, error, paginaActual, itemsPorPagina, totalItems, onPaginaChange }: Props) {
   const navigate = useNavigate()
+  const { toggleFavorito, esFavorito } = useFavoritos()
   const totalPaginas = Math.ceil(totalItems / itemsPorPagina)
   const inicioRango = (paginaActual - 1) * itemsPorPagina + 1
   const finRango = Math.min(paginaActual * itemsPorPagina, totalItems)
@@ -146,6 +148,16 @@ export default function GridCursos({ items, cargando, error, paginaActual, items
                       className="gc-card-image"
                       loading="lazy"
                     />
+
+                    <button
+                      className={`gc-btn-favorito${esFavorito(item.id) ? ' activo' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); toggleFavorito(item.id, item.tipo) }}
+                      aria-label={esFavorito(item.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill={esFavorito(item.id) ? '#e53e3e' : 'none'} stroke={esFavorito(item.id) ? '#e53e3e' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      </svg>
+                    </button>
 
                     <div className={`gc-badge-tipo ${item.tipo}`}>
                       {item.tipo === 'curso' ? '🎓 CURSO' : '🎵 TUTORIAL'}

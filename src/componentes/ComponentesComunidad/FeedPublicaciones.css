@@ -585,15 +585,6 @@
   }
 }
 
-.feed-publicaciones-icono-accion {
-  font-size: 16px;
-}
-
-.feed-publicaciones-texto-accion {
-  font-size: 14px;
-  font-weight: 500;
-}
-
 .feed-publicaciones-seccion-comentarios {
   padding: 16px 20px;
   background: #f9fafb;
@@ -713,11 +704,6 @@
     gap: 12px;
   }
 
-  .feed-publicaciones-accion-btn {
-    padding: 6px 8px;
-    font-size: 13px;
-  }
-
   .feed-publicaciones-seccion-comentarios {
     padding: 12px 16px;
   }
@@ -760,20 +746,6 @@
     gap: 8px;
   }
 
-  .feed-publicaciones-accion-btn {
-    padding: 4px 6px;
-    font-size: 12px;
-    gap: 4px;
-  }
-
-  .feed-publicaciones-icono-accion {
-    font-size: 14px;
-  }
-
-  .feed-publicaciones-texto-accion {
-    font-size: 12px;
-  }
-
   .feed-publicaciones-seccion-comentarios {
     padding: 10px 12px;
   }
@@ -802,16 +774,7 @@
     max-height: 250px;
   }
 
-  .feed-publicaciones-input-comentario-contenedor {
-    padding: 6px 12px;
-  }
-
   .feed-publicaciones-input-comentario {
     font-size: 13px;
-  }
-
-  .feed-publicaciones-btn-enviar-comentario {
-    padding: 4px 8px;
-    font-size: 11px;
   }
 }

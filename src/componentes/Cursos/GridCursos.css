@@ -535,3 +535,35 @@
         width: 100%;
     }
 }
+
+/* BOTÓN FAVORITO */
+.gc-btn-favorito {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+    z-index: 4;
+    background: rgba(0, 0, 0, 0.45);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    backdrop-filter: blur(4px);
+}
+
+.gc-btn-favorito:hover {
+    background: rgba(0, 0, 0, 0.65);
+    transform: scale(1.1);
+}
+
+.gc-btn-favorito.activo {
+    background: rgba(229, 62, 62, 0.15);
+}
+
+.gc-btn-favorito.activo:hover {
+    background: rgba(229, 62, 62, 0.3);
+}

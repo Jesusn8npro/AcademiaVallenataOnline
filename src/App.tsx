@@ -66,8 +66,6 @@ const AcordeonProMaxSimulador = lazy(() => import('./Paginas/AcordeonProMax/Pant
 const AcordeonProMaxPrueba = lazy(() => import('./Paginas/AcordeonProMax/Pantallas/AcordeonProMaxPrueba'));
 const PaginaGrabadorV2 = lazy(() => import('./Paginas/AcordeonProMax/GrabadorV2/PaginaGrabadorV2'));
 const SimuladorApp = lazy(() => import('./Paginas/SimuladorApp/SimuladorApp'));
-const PaginaEjemplo3D = lazy(() => import('./Paginas/Ejemplos3d1'));
-const PaginaEjemploAcordeon3D = lazy(() => import('./Paginas/Ejemplos3d2'));
 const AcordeonDiapason3D = lazy(() => import('./Paginas/AcordeonProMax/Pruebas3D/AcordeonDiapason3D'));
 const AcordeonFuncionalV1 = lazy(() => import('./Paginas/AcordeonProMax/Pruebas3D/AcordeonFuncionalV1'));
 const ClaseTutorial = lazy(() => import('./Paginas/Tutoriales/ClaseTutorial'));
@@ -76,6 +74,7 @@ const ClaseCurso = lazy(() => import('./Paginas/Cursos/ClaseCurso'));
 const CursoAcordeonDesdeCero = lazy(() => import('./Paginas/Cursos/CursoAcordeonDesdeCero'));
 const MensajesPage = lazy(() => import('./Paginas/Mensajes/MensajesPage'));
 const MisGrabaciones = lazy(() => import('./Paginas/Perfil/MisGrabaciones'));
+const MisFavoritos = lazy(() => import('./Paginas/Perfil/MisFavoritos'));
 const DashboardAdmin = lazy(() => import('./Paginas/administrador/Dashboard/DashboardAdmin'));
 const PanelContenido = lazy(() => import('./Paginas/administrador/PanelContenido'));
 const CrearContenido = lazy(() => import('./Paginas/administrador/crear-contenido/CrearContenido'));
@@ -249,6 +248,7 @@ const AppContent = () => {
             <Route path="/publicaciones" element={<MisPublicaciones />} />
             <Route path="/grabaciones" element={<MisGrabaciones />} />
             <Route path="/mis-validaciones" element={<MisValidaciones />} />
+            <Route path="/mi-perfil/favoritos" element={<MisFavoritos />} />
             <Route path="/configuracion" element={<ConfiguracionPerfil />} />
           </Route>
           <Route path="/tutoriales/:slug/contenido" element={<ContenidoTutorial />} />
@@ -265,10 +265,6 @@ const AppContent = () => {
         <Route path="/privacidad" element={<Privacidad />} />
         <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
         <Route path="/sesion-cerrada" element={<CierreSesion />} />
-        <Route path="/ejemplo-3d" element={<PaginaEjemplo3D />} />
-        <Route path="/v-pro-3d" element={<PaginaEjemploAcordeon3D />} />
-        <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
-        <Route path="/acordeon-funcional-v1" element={<AcordeonFuncionalV1 />} />
         {/* Admin Routes wrapped in ProteccionAdmin */}
         <Route element={<ProteccionAdmin />}>
           <Route path="/acordeon-pro-max" element={<HomeProMax />} />
@@ -278,6 +274,8 @@ const AppContent = () => {
           <Route path="/acordeon-pro-max/admin" element={<PaginaGrabadorV2 />} />
           <Route path="/acordeon-pro-max/prueba" element={<AcordeonProMaxPrueba />} />
           <Route path="/acordeon-pro-max/configuracion" element={<ConfiguracionProMax />} />
+          <Route path="/acordeon-3d-test" element={<AcordeonDiapason3D />} />
+          <Route path="/acordeon-funcional-v1" element={<AcordeonFuncionalV1 />} />
           <Route path="/simulador-app" element={<SimuladorApp />} />
           <Route path="/administrador" element={<DashboardAdmin />} />
           <Route path="/administrador/contenido" element={<PanelContenido />} />

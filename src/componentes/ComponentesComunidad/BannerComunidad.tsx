@@ -8,7 +8,7 @@ const BannerComunidad: React.FC = () => {
         <div className="banner-comunidad-texto">
           <h1 className="banner-comunidad-titulo">🎵 Comunidad de Acordeonistas</h1>
           <p className="banner-comunidad-subtitulo">
-            Comparte tus grabaciones, conecta con otros músicos y aprende juntos
+            Comparte tus grabaciones, hace preguntas, sube tus avances y conecta con los estudiantes que aprenden contigo.
           </p>
           <div className="banner-comunidad-caracteristicas">
             <div className="banner-comunidad-elemento">

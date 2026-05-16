@@ -72,9 +72,9 @@ export default function MisPublicaciones() {
                     ) : publicaciones.length === 0 ? (
                         <div className="estado-vacio">
                             <div className="icono-vacio">📝</div>
-                            <h3>No has publicado nada aún</h3>
-                            <p>¡Comparte algo con la comunidad para empezar!</p>
-                            <a href="/comunidad" className="boton-accion">Ir a Comunidad</a>
+                            <h3>Aún no tienes publicaciones</h3>
+                            <p>¡Comparte tu progreso con la comunidad!</p>
+                            <a href="/comunidad" className="boton-accion">Ir a la comunidad</a>
                         </div>
                     ) : (
                         <div className="feed-publicaciones">

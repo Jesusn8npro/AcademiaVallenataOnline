@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 
 interface Props {
     onEnviar: (contenido: string) => void
+    onTyping?: (escribiendo: boolean) => void
     disabled?: boolean
 }
 
@@ -12,7 +13,7 @@ const EMOJIS = [
     '👏', '🙌', '🤝', '🤙', '☝️', '👌', '✌️', '🤘',
 ]
 
-export default function EntradaMensaje({ onEnviar, disabled }: Props) {
+export default function EntradaMensaje({ onEnviar, onTyping, disabled }: Props) {
     const [contenido, setContenido] = useState('')
     const [mostrarEmojis, setMostrarEmojis] = useState(false)
     const [enviando, setEnviando] = useState(false)
@@ -67,7 +68,7 @@ export default function EntradaMensaje({ onEnviar, disabled }: Props) {
                     <textarea
                         ref={ref}
                         value={contenido}
-                        onChange={e => setContenido(e.target.value)}
+                        onChange={e => { setContenido(e.target.value); onTyping?.(true) }}
                         onKeyDown={onKey}
                         placeholder="Escribe un mensaje..."
                         className="em_textarea"

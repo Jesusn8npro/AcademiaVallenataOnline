@@ -1,0 +1,147 @@
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  z-index: 1000;
+}
+
+.bg-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bg-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bg-input-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.bg-input {
+  flex: 1;
+  height: 48px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #111827;
+  background: transparent;
+}
+
+.bg-input::placeholder {
+  color: #9ca3af;
+}
+
+.bg-spinner {
+  animation: bg-spin 0.8s linear infinite;
+  color: #3B6D11;
+  flex-shrink: 0;
+}
+
+@keyframes bg-spin {
+  to { transform: rotate(360deg); }
+}
+
+.bg-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.bg-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.bg-no-results {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.bg-no-results strong {
+  color: #111827;
+}
+
+.bg-group {
+  padding: 12px 0;
+}
+
+.bg-group + .bg-group {
+  border-top: 1px solid #f3f4f6;
+}
+
+.bg-group-title {
+  padding: 4px 20px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.bg-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.bg-item:hover {
+  background: #f0f7ea;
+  color: #3B6D11;
+}
+
+.bg-item-titulo {
+  font-weight: 500;
+  display: block;
+  color: inherit;
+}
+
+.bg-item-desc {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .bg-overlay {
+    padding-top: 0;
+    align-items: flex-end;
+  }
+
+  .bg-modal {
+    border-radius: 16px 16px 0 0;
+    max-height: 80vh;
+  }
+}

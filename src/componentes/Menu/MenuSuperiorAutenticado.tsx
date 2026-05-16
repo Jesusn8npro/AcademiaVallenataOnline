@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import ModalBusqueda from '../Busqueda/ModalBusqueda';
+import BusquedaGlobal from '../BusquedaGlobal/BusquedaGlobal';
 import MenuLateralResponsive from './MenuLateralResponsive';
-import NotificacionesDropdown from '../Notificaciones/NotificacionesDropdown';
+import NotificacionesPanel from '../Notificaciones/NotificacionesPanel';
 import NavCentralAutenticado from './NavCentralAutenticado';
 import { useMenuSuperiorAutenticado } from './useMenuSuperiorAutenticado';
+import { useNotificaciones } from '../../hooks/useNotificaciones';
 import './MenuSuperiorAutenticado.css';
 
 const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size: 'medium' | 'large' }> = ({ src, alt, size }) => {
@@ -26,13 +27,14 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
         usuario, nombre, esAdmin,
         mostrarMenu, setMostrarMenu,
         mostrarNotificaciones, setMostrarNotificaciones,
-        conteoNotificaciones, setConteoNotificaciones,
         mostrarModalBusqueda, mostrarMenuLateral,
         cerrandoSesion,
-        menuUsuarioRef, notificacionesRef, notificacionesMobileRef, dropdownRef,
+        menuUsuarioRef, notificacionesRef, notificacionesMobileRef,
         cerrarSesion, abrirModalBusqueda, cerrarModalBusqueda,
         toggleMenuLateral, cerrarMenuLateral, cerrarMenuUsuario
     } = useMenuSuperiorAutenticado({ onCerrarSesion });
+
+    const { noLeidas } = useNotificaciones();
 
     return (
         <>
@@ -73,15 +75,10 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                                     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                                 </svg>
-                                {conteoNotificaciones > 0 && <span className="nav-auth-badge-num">{conteoNotificaciones}</span>}
+                                {noLeidas > 0 && <span className="nav-auth-badge-num">{noLeidas}</span>}
                             </button>
                             {mostrarNotificaciones && (
-                                <div ref={dropdownRef}>
-                                    <NotificacionesDropdown
-                                        onCerrar={() => setMostrarNotificaciones(false)}
-                                        onNotificacionLeida={() => { if (conteoNotificaciones > 0) setConteoNotificaciones(c => c - 1) }}
-                                    />
-                                </div>
+                                <NotificacionesPanel onCerrar={() => setMostrarNotificaciones(false)} />
                             )}
                         </div>
                     </div>
@@ -97,15 +94,10 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                             </svg>
-                            {conteoNotificaciones > 0 && <span className="nav-auth-badge-num-mobile">{conteoNotificaciones}</span>}
+                            {noLeidas > 0 && <span className="nav-auth-badge-num-mobile">{noLeidas}</span>}
                         </button>
                         {mostrarNotificaciones && (
-                            <div ref={dropdownRef}>
-                                <NotificacionesDropdown
-                                    onCerrar={() => setMostrarNotificaciones(false)}
-                                    onNotificacionLeida={() => { if (conteoNotificaciones > 0) setConteoNotificaciones(c => c - 1) }}
-                                />
-                            </div>
+                            <NotificacionesPanel onCerrar={() => setMostrarNotificaciones(false)} />
                         )}
                     </div>
 
@@ -202,7 +194,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
             </nav>
 
             {mostrarModalBusqueda && (
-                <ModalBusqueda abierto={mostrarModalBusqueda} onCerrar={cerrarModalBusqueda} />
+                <BusquedaGlobal abierto={mostrarModalBusqueda} onCerrar={cerrarModalBusqueda} />
             )}
 
             <MenuLateralResponsive
