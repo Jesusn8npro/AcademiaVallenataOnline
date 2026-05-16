@@ -15,6 +15,10 @@ interface ModalPagoInteligenteProps {
 }
 
 const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso' }: ModalPagoInteligenteProps) => {
+    const [mostrarPassword, setMostrarPassword] = useState(false);
+    const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
+    const [precioConDescuento, setPrecioConDescuento] = useState<number | null>(null);
+
     const {
         usuario, pasoActual, setPasoActual, pasoMax, cargando, procesandoPago,
         error, pagoExitoso, usuarioEstaRegistrado,
@@ -30,10 +34,6 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         4: 'Crear tu Cuenta',
     };
     const esUltimoPaso = pasoActual === pasoMax;
-
-    const [mostrarPassword, setMostrarPassword] = useState(false);
-    const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
-    const [precioConDescuento, setPrecioConDescuento] = useState<number | null>(null);
 
     if (!mostrar) return null;
 
