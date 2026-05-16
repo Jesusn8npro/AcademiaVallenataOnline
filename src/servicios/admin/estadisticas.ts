@@ -36,7 +36,7 @@ export async function cargarEstadisticasCursos(): Promise<EstadisticasCursos> {
         publicados: cursos?.filter((c: any) => c.es_publico).length || 0,
         estudiantes: cursos?.reduce((sum: number, c: any) => sum + (c.estudiantes_inscritos || 0), 0) || 0,
         completados: progresoLecciones?.filter((p: any) => p.completado).length || 0,
-        rating: 4.7
+        rating: 0
     };
 }
 
@@ -81,8 +81,8 @@ export async function cargarEstadisticasTutoriales(): Promise<EstadisticasTutori
         total: tutoriales?.length || 0,
         completados: progreso?.filter((p: any) => p.completado).length || 0,
         progreso: progreso?.length || 0,
-        tiempo_promedio: 45,
-        satisfaccion: 92
+        tiempo_promedio: 0,
+        satisfaccion: 0
     };
 }
 
@@ -92,7 +92,7 @@ export async function cargarEstadisticasEventos(): Promise<EstadisticasEventos> 
     return {
         proximos: eventos?.filter((e: any) => new Date(e.fecha_evento) > ahora && e.estado !== 'cancelado').length || 0,
         pasados: eventos?.filter((e: any) => new Date(e.fecha_evento) < ahora && e.estado === 'finalizado').length || 0,
-        participantes: 150,
+        participantes: 0,
         cancelados: eventos?.filter((e: any) => e.estado === 'cancelado').length || 0
     };
 }
@@ -103,7 +103,7 @@ export async function cargarEstadisticasNotificaciones(): Promise<EstadisticasNo
         enviadas: notificaciones?.filter((n: any) => n.estado === 'enviada').length || 0,
         pendientes: notificaciones?.filter((n: any) => n.estado === 'pendiente').length || 0,
         abiertas: notificaciones?.filter((n: any) => n.visto === true).length || 0,
-        clicks: 85
+        clicks: 0
     };
 }
 

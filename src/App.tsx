@@ -91,6 +91,7 @@ const AdminChats = lazy(() => import('./Paginas/administrador/chats/AdminChats')
 const PanelDeObjetivos = lazy(() => import('./Paginas/administrador/Objetivos/PanelDeObjetivos'));
 const ValidacionesAdmin = lazy(() => import('./Paginas/administrador/Validaciones/ValidacionesAdmin'));
 
+import { ErrorBoundary } from './componentes/ErrorBoundary'
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
 import { supabase } from './servicios/clienteSupabase'
 import { useSeguridadConsola } from './hooks/useSeguridadConsola'
@@ -319,11 +320,13 @@ const AppContent = () => {
 
 function App() {
   return (
-    <UsuarioProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </UsuarioProvider>
+    <ErrorBoundary>
+      <UsuarioProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </UsuarioProvider>
+    </ErrorBoundary>
   )
 }
 
