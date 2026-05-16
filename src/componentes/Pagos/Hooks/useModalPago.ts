@@ -16,9 +16,10 @@ interface Params {
     setMostrar: (v: boolean) => void;
     contenido: ContenidoCompra | null;
     tipoContenido: 'curso' | 'tutorial' | 'paquete' | 'membresia';
+    precioOverride?: number;
 }
 
-export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: Params) {
+export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride }: Params) {
     const { usuario } = useUsuario();
     const [pasoActual, setPasoActual] = useState(1);
     const [cargando, setCargando] = useState(false);
@@ -164,7 +165,7 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido }: 
 
             await loadEpaycoScript();
 
-            const precio = obtenerPrecio(contenido, tipoContenido);
+            const precio = precioOverride ?? obtenerPrecio(contenido, tipoContenido);
             if (precio <= 0) { setPagoExitoso(true); setCargando(false); setProcesandoPago(false); return; }
 
             const refPayco = generarRefPaycoReal(tipoContenido, contenido?.id);
