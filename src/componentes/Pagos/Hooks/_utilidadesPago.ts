@@ -17,6 +17,7 @@ export interface DatosPago {
     email: string;
     telefono: string;
     whatsapp: string;
+    callingCode: string;
     tipo_documento: string;
     numero_documento: string;
     direccion: string;
@@ -34,7 +35,7 @@ export const EPAYCO_RESPONSE_URL = 'https://academiavallenataonline.com/pago-exi
 export const EPAYCO_CONFIRMATION_URL = 'https://tbijzvtyyewhtwgakgka.supabase.co/functions/v1/epayco-webhook';
 
 export const DATOS_INICIALES: DatosPago = {
-    nombre: '', apellido: '', email: '', telefono: '', whatsapp: '',
+    nombre: '', apellido: '', email: '', telefono: '', whatsapp: '', callingCode: '+57',
     tipo_documento: 'CC', numero_documento: '', direccion: '',
     ciudad: '', pais: 'Colombia', codigo_postal: '', password: '', confirmarPassword: '',
 };
@@ -121,10 +122,10 @@ export interface CrearSesionEpaycoDatos {
 // Separa un telefono en formato E.164 ("+523001234567") en codigo de pais
 // y numero local. Si no es E.164 (no empieza con +), asume Colombia.
 export function parsearTelefonoE164(e164: string): { callingCode: string; numero: string } {
-    if (!e164) return { callingCode: '57', numero: '' };
+    if (!e164) return { callingCode: '+57', numero: '' };
     const match = e164.match(/^\+(\d{1,4})(\d{6,})$/);
-    if (match) return { callingCode: match[1], numero: match[2] };
-    return { callingCode: '57', numero: e164.replace(/\D/g, '') };
+    if (match) return { callingCode: '+' + match[1], numero: match[2] };
+    return { callingCode: '+57', numero: e164.replace(/\D/g, '') };
 }
 
 export async function crearSesionEpayco(datos: CrearSesionEpaycoDatos): Promise<string> {

@@ -58,6 +58,26 @@ export default function SidebarNavAdmin({ esRutaActiva, colapsado, estadisticasA
           {!colapsado && <span className="sidebar-admin-nav-text">Pagos</span>}
         </a>
 
+        <a href="/administrador/cupones" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador/cupones') ? 'sidebar-admin-destacado' : ''}`}>
+          <div className="sidebar-admin-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          </div>
+          {!colapsado && <span className="sidebar-admin-nav-text">Cupones</span>}
+        </a>
+
+        <a href="/administrador/emails" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador/emails') ? 'sidebar-admin-destacado' : ''}`}>
+          <div className="sidebar-admin-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+          </div>
+          {!colapsado && <span className="sidebar-admin-nav-text">Emails & Recordatorios</span>}
+        </a>
+
         <a href="/administrador/notificaciones" className={`sidebar-admin-nav-item ${esRutaActiva('/administrador/notificaciones') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -189,20 +209,6 @@ export default function SidebarNavAdmin({ esRutaActiva, colapsado, estadisticasA
             <>
               <span className="sidebar-admin-nav-text">Acordeon Pro Max</span>
               <div className="sidebar-admin-nav-badge sidebar-admin-badge-nuevo">PRO</div>
-            </>
-          )}
-        </a>
-
-        <a href="/simulador-app" className={`sidebar-admin-nav-item ${esRutaActiva('/simulador-app') ? 'sidebar-admin-destacado' : ''}`}>
-          <div className="sidebar-admin-nav-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
-            </svg>
-          </div>
-          {!colapsado && (
-            <>
-              <span className="sidebar-admin-nav-text">Simulador App</span>
-              <div className="sidebar-admin-nav-badge sidebar-admin-badge-nuevo">MÓVIL</div>
             </>
           )}
         </a>

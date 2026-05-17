@@ -91,6 +91,7 @@ const AdminChats = lazy(() => import('./Paginas/administrador/chats/AdminChats')
 const PanelDeObjetivos = lazy(() => import('./Paginas/administrador/Objetivos/PanelDeObjetivos'));
 const ValidacionesAdmin = lazy(() => import('./Paginas/administrador/Validaciones/ValidacionesAdmin'));
 const CuponesAdmin = lazy(() => import('./Paginas/administrador/cupones/CuponesAdmin'));
+const EmailsAdmin = lazy(() => import('./Paginas/administrador/emails/EmailsAdmin'));
 
 import { ErrorBoundary } from './componentes/ErrorBoundary'
 import { UsuarioProvider, useUsuario } from './contextos/UsuarioContext'
@@ -250,6 +251,7 @@ const AppContent = () => {
             <Route path="/publicaciones" element={<MisPublicaciones />} />
             <Route path="/grabaciones" element={<MisGrabaciones />} />
             <Route path="/mis-validaciones" element={<MisValidaciones />} />
+            <Route path="/mis-evaluaciones" element={<MisValidaciones />} />
             <Route path="/mi-perfil/favoritos" element={<MisFavoritos />} />
             <Route path="/configuracion" element={<ConfiguracionPerfil />} />
           </Route>
@@ -297,6 +299,7 @@ const AppContent = () => {
           <Route path="/administrador/objetivos" element={<PanelDeObjetivos />} />
           <Route path="/administrador/validaciones" element={<ValidacionesAdmin />} />
           <Route path="/administrador/cupones" element={<CuponesAdmin />} />
+          <Route path="/administrador/emails" element={<EmailsAdmin />} />
         </Route>
         <Route path="/notificaciones" element={<Notificaciones />} />
         {/* Catch all - 404 */}

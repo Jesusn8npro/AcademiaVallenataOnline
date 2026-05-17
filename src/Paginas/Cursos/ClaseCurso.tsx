@@ -8,6 +8,7 @@ import BarraLateralCurso from '../../componentes/VisualizadorDeLeccionesDeCursos
 import PanelAcordeonEnClase from '../../componentes/VisualizadorDeLeccionesDeCursos/PanelAcordeonEnClase'
 import PestañasLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/PestañasLeccion'
 import SkeletonClase from '../../componentes/Skeletons/SkeletonClase'
+import FormularioEvaluacion from '../../componentes/Tutoriales/FormularioEvaluacion'
 import '../Tutoriales/contenido-tutorial.css' // Reutilizamos los estilos de pantalla completa
 
 export default function ClaseCurso() {
@@ -103,7 +104,7 @@ export default function ClaseCurso() {
                 .select(`
                     id, titulo, orden,
                     lecciones (
-                        id, titulo, video_url, orden
+                        id, titulo, video_url, orden, tipo_contenido, monedas_recompensa
                     )
                 `)
                 .eq('curso_id', cursoData.id)
@@ -286,6 +287,13 @@ export default function ClaseCurso() {
             />
             <div className="contenedor-clase">
                 <div className={`area-video ${!mostrarSidebar ? 'modo-enfoque' : ''}`}>
+                    {leccion.tipo_contenido === 'evaluacion' ? (
+                        <FormularioEvaluacion
+                            parteId={leccion.id}
+                            tutorialId={curso.id}
+                            monedasRecompensa={leccion.monedas_recompensa ?? 5}
+                        />
+                    ) : (
                     <ReproductorLecciones
                         leccionAnterior={prevLeccion}
                         leccionSiguiente={nextLeccion}
@@ -301,6 +309,7 @@ export default function ClaseCurso() {
                         tiempoInicial={tiempoInicialVideo}
                         onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
                     />
+                    )}
                     <div className="tutorial-scroll-container">
                         <PestañasLeccion
                             leccionId={leccion.id}

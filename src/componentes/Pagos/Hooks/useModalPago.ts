@@ -7,7 +7,7 @@ import {
     EPAYCO_RESPONSE_URL, DATOS_INICIALES,
     limpiarTelefono, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario,
-    crearSesionEpayco, parsearTelefonoE164
+    crearSesionEpayco
 } from './_utilidadesPago';
 export type { ContenidoCompra } from './_utilidadesPago';
 
@@ -196,11 +196,10 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
 
             if (!(window as any).ePayco) throw new Error('Epayco no disponible');
 
-            // El PhoneInput devuelve el numero en E.164 (+XX...). Separamos el
-            // codigo de pais para enviarlo dinamico al SDK (no hardcodear +57).
-            const { callingCode, numero } = parsearTelefonoE164(
-                datosPago.telefono || datosPago.whatsapp
-            );
+            // callingCode viene del meta del PhoneInput (country.dialCode) — evita
+            // el bug de parsear greedy en E.164.
+            const callingCode = datosPago.callingCode || '+57';
+            const numero = limpiarTelefono(datosPago.telefono || datosPago.whatsapp);
 
             // Flujo SDK v2: pedir sessionId al backend (Edge Function que usa
             // PRIVATE_KEY) y pasarlo al SDK. external:false = modal onpage.

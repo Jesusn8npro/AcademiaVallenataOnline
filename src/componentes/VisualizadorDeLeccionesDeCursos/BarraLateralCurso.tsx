@@ -108,73 +108,86 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
                         role="button"
                         aria-label={`Ir a la lección ${leccion.titulo}`}
                       >
-                        <div className="blc-lesson-thumbnail">
-                          {leccion.video_url ? (
-                            leccion.video_url.includes('youtube.com') || leccion.video_url.includes('youtu.be') ? (
-                              <img
-                                src={obtenerMiniatura(leccion.video_url)}
-                                alt={leccion.titulo}
-                                loading="lazy"
-                                onError={(e) => {
-                                  const imgElement = e.currentTarget as HTMLImageElement
-                                  if (imgElement) {
-                                    imgElement.onerror = null
-                                    imgElement.src = 'https://academiavallenataonline.com/wp-content/uploads/2023/06/placeholder-video.jpg'
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="blc-part-type-container">
-                                <div className="blc-part-type">
-                                  <span className="blc-type-text">{leccion.tipo_parte || 'Clase'}</span>
-                                  <span className="blc-title-text">{leccion.titulo}</span>
-                                </div>
-                              </div>
-                            )
-                          ) : (
-                            <div className="blc-thumbnail-placeholder">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="23 7 16 12 23 17 23 7" />
-                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                              </svg>
+                        {leccion.tipo_contenido === 'evaluacion' ? (
+                          /* ── Evaluación Final ── */
+                          <>
+                            <div className="blc-evaluacion-thumbnail">
+                              <span style={{ fontSize: 22 }}>🎯</span>
                             </div>
-                          )}
-
-                          <div className="blc-play-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none">
-                              <polygon points="5 3 19 12 5 21 5 3" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        <div className="blc-lesson-info">
-                          <div className="blc-lesson-title">{leccion.titulo}</div>
-
-                          <div className="blc-lesson-status">
-                            {esLeccionCompletada(leccion.id) ? (
-                              <div className="blc-status-completed">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                                <span>Completada</span>
+                            <div className="blc-lesson-info">
+                              <div className="blc-lesson-title" style={{ color: '#c4b5fd' }}>{leccion.titulo}</div>
+                              <div className="blc-lesson-status">
+                                {esLeccionCompletada(leccion.id) ? (
+                                  <div className="blc-status-completed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg><span>Aprobada ✅</span></div>
+                                ) : (
+                                  <div className="blc-status-evaluacion"><span>Evaluación Final</span></div>
+                                )}
                               </div>
-                            ) : (typeof progreso[leccion.id] === 'number' && (progreso[leccion.id] as number) > 0) ? (
-                              <div className="blc-status-progress">
-                                <div className="blc-progress-bar">
-                                  <div className="blc-progress-fill" style={{ width: `${progreso[leccion.id]}%` }}></div>
+                            </div>
+                          </>
+                        ) : (
+                          /* ── Clase normal ── */
+                          <>
+                            <div className="blc-lesson-thumbnail">
+                              {leccion.video_url ? (
+                                leccion.video_url.includes('youtube.com') || leccion.video_url.includes('youtu.be') ? (
+                                  <img
+                                    src={obtenerMiniatura(leccion.video_url)}
+                                    alt={leccion.titulo}
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      const imgElement = e.currentTarget as HTMLImageElement
+                                      if (imgElement) {
+                                        imgElement.onerror = null
+                                        imgElement.src = 'https://academiavallenataonline.com/wp-content/uploads/2023/06/placeholder-video.jpg'
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="blc-part-type-container">
+                                    <div className="blc-part-type">
+                                      <span className="blc-type-text">{leccion.tipo_parte || 'Clase'}</span>
+                                      <span className="blc-title-text">{leccion.titulo}</span>
+                                    </div>
+                                  </div>
+                                )
+                              ) : (
+                                <div className="blc-thumbnail-placeholder">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="23 7 16 12 23 17 23 7" />
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                  </svg>
                                 </div>
-                                <span>{Math.round(progreso[leccion.id] as number)}%</span>
-                              </div>
-                            ) : (
-                              <div className="blc-status-pending">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              )}
+                              <div className="blc-play-icon">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none">
                                   <polygon points="5 3 19 12 5 21 5 3" />
                                 </svg>
-                                <span>Pendiente</span>
                               </div>
-                            )}
-                          </div>
-                        </div>
+                            </div>
+                            <div className="blc-lesson-info">
+                              <div className="blc-lesson-title">{leccion.titulo}</div>
+                              <div className="blc-lesson-status">
+                                {esLeccionCompletada(leccion.id) ? (
+                                  <div className="blc-status-completed">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span>Completada</span>
+                                  </div>
+                                ) : (typeof progreso[leccion.id] === 'number' && (progreso[leccion.id] as number) > 0) ? (
+                                  <div className="blc-status-progress">
+                                    <div className="blc-progress-bar"><div className="blc-progress-fill" style={{ width: `${progreso[leccion.id]}%` }}></div></div>
+                                    <span>{Math.round(progreso[leccion.id] as number)}%</span>
+                                  </div>
+                                ) : (
+                                  <div className="blc-status-pending">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                    <span>Pendiente</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   ) : (

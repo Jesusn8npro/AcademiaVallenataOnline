@@ -40,7 +40,7 @@ export type EstadoPago = 'aceptada' | 'pendiente' | 'rechazada' | 'fallida' | 'n
 export function usePagoExitoso() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { usuario, setUsuario } = useUsuario();
+    const { usuario } = useUsuario();
 
     const [datosPago, setDatosPago] = useState<DatosPago | null>(null);
     const [datosUsuarioNuevo, setDatosUsuarioNuevo] = useState<DatosUsuarioNuevo | null>(null);
@@ -86,6 +86,27 @@ export function usePagoExitoso() {
                 const pagoEnBD = data as PagoEnBD;
                 setEstadoPago(pagoEnBD.estado);
 
+                // Fix #7: si el webhook no llegó pero ePayco ya puso los params en la URL, forzar verificación
+                if (pagoEnBD.estado === 'pendiente') {
+                    const xCodResponse   = searchParams.get('x_cod_response') || '';
+                    const xTransactionId = searchParams.get('x_transaction_id') || '';
+                    const xAmount        = searchParams.get('x_amount') || '';
+                    const xCurrencyCode  = searchParams.get('x_currency_code') || '';
+                    const xSignature     = searchParams.get('x_signature') || '';
+                    if (xCodResponse === '1' && xTransactionId && xAmount && xCurrencyCode && xSignature) {
+                        supabaseAnonimo.functions.invoke('verificar-pago-epayco', {
+                            body: {
+                                x_ref_payco: refPayco,
+                                x_cod_response: xCodResponse,
+                                x_transaction_id: xTransactionId,
+                                x_amount: xAmount,
+                                x_currency_code: xCurrencyCode,
+                                x_signature: xSignature,
+                            },
+                        }).catch(() => {});
+                    }
+                }
+
                 const nuevosDatosPago: DatosPago = {
                     referencia: refPayco,
                     respuesta:
@@ -125,22 +146,17 @@ export function usePagoExitoso() {
                     setCargandoDatos(false);
                 }, pagoEnBD.estado === 'aceptada' ? 3000 : 2000);
 
-                let loginTimer: ReturnType<typeof setTimeout> | null = null;
-                if (pagoEnBD.estado === 'aceptada' && nuevosDatosPago.emailCliente) {
-                    loginTimer = setTimeout(() => {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        setUsuario({
-                            id: 'user-' + Date.now(),
-                            nombre: nuevosDatosPago.nombreCliente || 'Usuario Nuevo',
-                            email: nuevosDatosPago.emailCliente,
-                            rol: 'estudiante',
-                        } as any);
-                    }, 5000);
+                // Auto-redirect al panel cuando el pago es aceptado
+                let redirectTimer: ReturnType<typeof setTimeout> | null = null;
+                if (pagoEnBD.estado === 'aceptada') {
+                    redirectTimer = setTimeout(() => {
+                        navigate('/panel-estudiante');
+                    }, 6000);
                 }
 
                 return () => {
                     clearTimeout(animTimer);
-                    if (loginTimer) clearTimeout(loginTimer);
+                    if (redirectTimer) clearTimeout(redirectTimer);
                 };
             } catch {
                 setErrorCarga('Error procesando la información del pago.');

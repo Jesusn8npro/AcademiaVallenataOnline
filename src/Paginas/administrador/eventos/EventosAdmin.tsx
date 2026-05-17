@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEventosAdmin } from './useEventosAdmin';
 import FormularioCrearEvento from './FormularioCrearEvento';
+import { supabase } from '../../../servicios/clienteSupabase';
 import './EventosAdmin.css';
 
 const EventosAdmin: React.FC = () => {
@@ -12,6 +13,24 @@ const EventosAdmin: React.FC = () => {
         handleInputChange, formatearFecha, formatearPrecio
     } = useEventosAdmin();
 
+    const [enviandoRecordatorio, setEnviandoRecordatorio] = useState<string | null>(null);
+    const [msgRecordatorio, setMsgRecordatorio] = useState('');
+
+    const enviarRecordatorio = async (eventoId: string, titulo: string) => {
+        setEnviandoRecordatorio(eventoId);
+        setMsgRecordatorio('');
+        const { data, error: err } = await supabase.functions.invoke('recordatorio-evento', {
+            body: { evento_id: eventoId, tipo: 'recordatorio' },
+        });
+        if (err || data?.error) {
+            setMsgRecordatorio(`❌ Error al enviar recordatorio para "${titulo}"`);
+        } else {
+            setMsgRecordatorio(`✅ Recordatorio enviado a ${data.enviados} inscritos de "${titulo}"`);
+        }
+        setEnviandoRecordatorio(null);
+        setTimeout(() => setMsgRecordatorio(''), 6000);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,6 +41,12 @@ const EventosAdmin: React.FC = () => {
 
                 {error && (
                     <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">{error}</div>
+                )}
+
+                {msgRecordatorio && (
+                    <div style={{ marginBottom: 16, padding: '10px 16px', borderRadius: 8, background: msgRecordatorio.startsWith('✅') ? '#d1fae5' : '#fee2e2', color: msgRecordatorio.startsWith('✅') ? '#065f46' : '#b91c1c', fontWeight: 600, fontSize: 14 }}>
+                        {msgRecordatorio}
+                    </div>
                 )}
 
                 {confirmarEliminarId && (
@@ -84,6 +109,7 @@ const EventosAdmin: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inscritos</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Recordatorio</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -123,6 +149,19 @@ const EventosAdmin: React.FC = () => {
                                                         </svg>
                                                     </button>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => enviarRecordatorio(evento.id, evento.titulo)}
+                                                    disabled={enviandoRecordatorio === evento.id}
+                                                    title="Enviar recordatorio a todos los inscritos"
+                                                    style={{ padding: '5px 12px', background: enviandoRecordatorio === evento.id ? '#c4b5fd' : '#7c3aed', color: 'white', border: 'none', borderRadius: 6, cursor: enviandoRecordatorio === evento.id ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                                >
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                                    </svg>
+                                                    {enviandoRecordatorio === evento.id ? 'Enviando…' : 'Recordatorio'}
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
