@@ -5,7 +5,7 @@
   "comment": "cache-bust-v14",
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "node scripts/sync-samples.cjs && vite",
