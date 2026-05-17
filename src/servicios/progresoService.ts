@@ -72,10 +72,58 @@ export async function actualizarProgresoLeccion(leccionId: string, completada: b
         return { error: { message: resultado.error.message, detail: resultado.error, payload } };
       }
     }
+    // Si se marcó como completada, verificar si el curso entero quedó al 100%
+    if (completada) {
+      verificarCompletadoCurso(leccionId, user.id).catch(() => {})
+    }
+
     return { data: resultado?.data, error: resultado?.error };
   } catch (err) {
     return { error: { message: 'Error inesperado al actualizar progreso de la lección', detail: err } };
   }
+}
+
+async function verificarCompletadoCurso(leccionId: string, _userId: string) {
+  const { data: leccion } = await supabase
+    .from('lecciones')
+    .select('modulo_id, modulos:modulo_id (curso_id, cursos:curso_id (titulo))')
+    .eq('id', leccionId)
+    .single()
+
+  const cursoId = (leccion?.modulos as any)?.curso_id
+  if (!cursoId) return
+
+  const { data: progreso } = await obtenerProgresoCurso(cursoId)
+  if (!progreso) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) return
+
+  // Fix #6: sincronizar inscripciones.porcentaje_completado en cada progreso
+  await supabase
+    .from('inscripciones')
+    .update({
+      porcentaje_completado: progreso.progreso,
+      completado: progreso.progreso >= 100,
+      progreso: progreso.partes_completadas,
+      ultima_actividad: new Date().toISOString(),
+    })
+    .eq('usuario_id', user.id)
+    .eq('curso_id', cursoId)
+
+  if (progreso.progreso < 100) return
+
+  if (!user.email) return
+  const tituloCurso = (leccion?.modulos as any)?.cursos?.titulo || ''
+
+  await supabase.functions.invoke('enviar-email', {
+    body: {
+      tipo: 'tutorial_completado',
+      destinatario: user.email,
+      nombre: user.user_metadata?.nombre || user.email.split('@')[0] || '',
+      extra: { tutorial: tituloCurso, tipo_contenido: 'curso' },
+    },
+  })
 }
 
 /**

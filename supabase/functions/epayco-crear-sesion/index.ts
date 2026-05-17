@@ -183,7 +183,7 @@ Deno.serve(async (request: Request) => {
         address: body.direccion || "",
         typeDoc: body.tipoDocumento,
         numberDoc: body.numeroDocumento,
-        callingCode: body.callingCode || "57",
+        callingCode: body.callingCode || "+57",
         mobilePhone: body.telefono,
       },
     };

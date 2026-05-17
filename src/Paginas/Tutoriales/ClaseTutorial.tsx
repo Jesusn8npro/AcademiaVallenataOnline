@@ -8,6 +8,7 @@ import BarraLateralCurso from '../../componentes/VisualizadorDeLeccionesDeCursos
 import PanelAcordeonEnClase from '../../componentes/VisualizadorDeLeccionesDeCursos/PanelAcordeonEnClase'
 import PestañasLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/PestañasLeccion'
 import SkeletonClase from '../../componentes/Skeletons/SkeletonClase'
+import FormularioEvaluacion from '../../componentes/Tutoriales/FormularioEvaluacion'
 import './contenido-tutorial.css'
 
 export default function ClaseTutorial() {
@@ -82,7 +83,7 @@ export default function ClaseTutorial() {
 
       const { data: partes, error: errP } = await supabase
         .from('partes_tutorial')
-        .select('id, titulo, slug, video_url, orden, descripcion')
+        .select('id, titulo, slug, video_url, orden, descripcion, tipo_contenido, monedas_recompensa')
         .eq('tutorial_id', tut.id)
         .order('orden', { ascending: true })
 
@@ -167,42 +168,15 @@ export default function ClaseTutorial() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !tutorial || !clase) return
-      const { data: existente } = await supabase
-        .from('progreso_tutorial')
-        .select('id')
-        .eq('usuario_id', user.id)
-        .eq('parte_tutorial_id', clase.id)
-        .maybeSingle()
-
-      if (existente) {
-        const { error: errUpd } = await supabase
-          .from('progreso_tutorial')
-          .update({
-            completado: true,
-            fecha_actualizacion: new Date().toISOString()
-          })
-          .eq('id', existente.id)
-        if (errUpd) setErrorCompletar(errUpd.message)
-        else {
-          setCompletada(true)
-          setProgresoMap(prev => ({ ...prev, [clase.id]: true }))
-        }
-      } else {
-        const { error: errIns } = await supabase
-          .from('progreso_tutorial')
-          .insert({
-            usuario_id: user.id,
-            tutorial_id: tutorial.id,
-            parte_tutorial_id: clase.id,
-            completado: true,
-            fecha_inicio: new Date().toISOString(),
-            fecha_actualizacion: new Date().toISOString()
-          })
-        if (errIns) setErrorCompletar(errIns.message)
-        else {
-          setCompletada(true)
-          setProgresoMap(prev => ({ ...prev, [clase.id]: true }))
-        }
+      const { error } = await supabase.rpc('marcar_parte_completada', {
+        p_usuario_id: user.id,
+        p_tutorial_id: tutorial.id,
+        p_parte_id: clase.id,
+      })
+      if (error) setErrorCompletar(error.message)
+      else {
+        setCompletada(true)
+        setProgresoMap(prev => ({ ...prev, [clase.id]: true }))
       }
     } catch (e: any) {
       setErrorCompletar(e.message)
@@ -235,6 +209,13 @@ export default function ClaseTutorial() {
       />
       <div className="contenedor-clase">
         <div className="area-video">
+          {clase.tipo_contenido === 'evaluacion' ? (
+            <FormularioEvaluacion
+              parteId={clase.id}
+              tutorialId={tutorial.id}
+              monedasRecompensa={clase.monedas_recompensa ?? 10}
+            />
+          ) : (
           <ReproductorLecciones
             leccionAnterior={claseAnterior}
             leccionSiguiente={claseSiguiente}
@@ -250,7 +231,8 @@ export default function ClaseTutorial() {
             tiempoInicial={tiempoInicialVideo}
             onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
           />
-          {completada && (
+          )}
+          {clase.tipo_contenido !== 'evaluacion' && completada && (
             <div className="ct-clase-completada-acciones">
               <button className="ct-btn-compartir" onClick={compartirClase}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>

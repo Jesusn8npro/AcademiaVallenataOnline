@@ -17,6 +17,10 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
   const [error, setError] = useState('')
   // Solo aplica al CREAR (no al editar). Default true: notifica a todos.
   const [notificar, setNotificar] = useState(true)
+  // Solo aplica al EDITAR
+  const [notificarInscritos, setNotificarInscritos] = useState(false)
+  const [enviarEmailInscritos, setEnviarEmailInscritos] = useState(false)
+  const [descripcionCambio, setDescripcionCambio] = useState('')
 
   function formatearPrecio(precio?: string | number) { if (!precio) return 'Gratuito'; const num = typeof precio === 'string' ? parseFloat(precio) : precio; return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(num as number) }
   function obtenerBadgeNivel(nivel: string) { const badges: any = { principiante: { texto: '🌱 Principiante', color: 'bg-green-100 text-green-800' }, intermedio: { texto: '📈 Intermedio', color: 'bg-yellow-100 text-yellow-800' }, avanzado: { texto: '🚀 Avanzado', color: 'bg-red-100 text-red-800' } }; return badges[nivel] || { texto: nivel, color: 'bg-gray-100 text-gray-800' } }
@@ -60,6 +64,19 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
       }
       if (supErr) throw supErr
       if (estructura.length > 0) { await guardarEstructura(data.id, estructura) }
+
+      // Notificar a inscritos cuando es una edición y el admin lo indicó
+      if (modoEdicion && notificarInscritos && data.id) {
+        supabase.functions.invoke('notificar-actualizacion', {
+          body: {
+            tipo,
+            contenido_id: data.id,
+            titulo: datosGenerales.titulo,
+            descripcion_cambio: descripcionCambio.trim() || undefined,
+            enviar_email: enviarEmailInscritos,
+          },
+        }).catch(() => {})
+      }
 
       // Notificar a TODOS los usuarios solo si es creacion nueva, esta publicado y el admin marco la opcion.
       if (!modoEdicion && notificar && datosGenerales.estado === 'publicado' && instructorId) {
@@ -206,6 +223,52 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
                 </div>
               </div>
             </label>
+          </div>
+        )}
+
+        {modoEdicion && (
+          <div style={{ background: '#1a0a2e', border: '1px solid #4c1d95', borderRadius: 12, padding: '16px 18px', margin: '12px 0' }}>
+            <div style={{ fontWeight: 700, color: '#c4b5fd', fontSize: 14, marginBottom: 12 }}>
+              📢 Notificar a estudiantes inscritos
+            </div>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={notificarInscritos}
+                onChange={(e) => setNotificarInscritos(e.target.checked)}
+                style={{ width: 17, height: 17, marginTop: 2, accentColor: '#7c3aed', cursor: 'pointer' }}
+              />
+              <div style={{ fontSize: 13, color: '#e9d5ff' }}>
+                Enviar notificación en plataforma a todos los inscritos en este {tipo}
+              </div>
+            </label>
+
+            {notificarInscritos && (
+              <>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={enviarEmailInscritos}
+                    onChange={(e) => setEnviarEmailInscritos(e.target.checked)}
+                    style={{ width: 17, height: 17, marginTop: 2, accentColor: '#7c3aed', cursor: 'pointer' }}
+                  />
+                  <div style={{ fontSize: 13, color: '#e9d5ff' }}>
+                    Enviar también por email
+                  </div>
+                </label>
+                <textarea
+                  value={descripcionCambio}
+                  onChange={(e) => setDescripcionCambio(e.target.value)}
+                  placeholder={`Describe brevemente qué cambiaste (opcional). Ej: "Agregamos 2 nuevas lecciones de práctica"`}
+                  rows={2}
+                  style={{
+                    width: '100%', padding: '8px 12px', background: '#0f0520',
+                    border: '1px solid #4c1d95', borderRadius: 8, color: 'white',
+                    fontSize: 13, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+                  }}
+                />
+              </>
+            )}
           </div>
         )}
 

@@ -144,8 +144,9 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                                 <PhoneInput
                                     defaultCountry="co"
                                     value={datosPago.telefono}
-                                    onChange={(phone) => {
-                                        setDatosPago({ ...datosPago, telefono: phone });
+                                    onChange={(phone, meta) => {
+                                        const dialCode = (meta as any)?.country?.dialCode;
+                                        setDatosPago({ ...datosPago, telefono: phone, callingCode: dialCode ? '+' + dialCode : '+57' });
                                         validarTelefono(phone);
                                     }}
                                     inputClassName={`mpi-input mpi-phone-input ${erroresValidacion.telefono ? 'mpi-input-error' : ''}`}

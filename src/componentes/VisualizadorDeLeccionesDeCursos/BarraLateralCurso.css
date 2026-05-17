@@ -422,3 +422,33 @@
         margin-bottom: 6px !important;
     }
 }
+
+/* ── Evaluación Final en sidebar ──────────────────────────────── */
+.blc-evaluacion-thumbnail {
+    width: 70px;
+    min-width: 70px;
+    height: 56px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(167,139,250,0.3);
+}
+.blc-status-evaluacion {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #a78bfa;
+}
+.blc-lesson-item:has(.blc-evaluacion-thumbnail) {
+    border-left: 3px solid #7c3aed !important;
+    background: rgba(124,58,237,0.05) !important;
+}
+.blc-lesson-item:has(.blc-evaluacion-thumbnail):hover {
+    background: rgba(124,58,237,0.12) !important;
+}
+

@@ -10,8 +10,14 @@ export async function inscribirseEnEvento(eventoId: string, usuarioId: string): 
             });
 
         if (error) return false;
+
+        // Enviar email de confirmación al usuario (fire-and-forget)
+        supabase.functions.invoke('recordatorio-evento', {
+            body: { evento_id: eventoId, usuario_id: usuarioId, tipo: 'confirmacion' },
+        }).catch(() => {});
+
         return true;
-    } catch (error) {
+    } catch {
         return false;
     }
 }
@@ -27,7 +33,7 @@ export async function verificarInscripcion(eventoId: string, usuarioId: string):
 
         if (error && error.code !== 'PGRST116') return false;
         return !!data;
-    } catch (error) {
+    } catch {
         return false;
     }
 }

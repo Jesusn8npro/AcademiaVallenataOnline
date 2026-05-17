@@ -62,10 +62,53 @@ export async function actualizarProgresoTutorial(parteId: string, completada: bo
         return { error: { message: resultado.error.message, detail: resultado.error, payload } };
       }
     }
+    // Si se marcó como completada, verificar si el tutorial entero quedó al 100%
+    if (completada && tutorialId) {
+      verificarCompletadoTutorial(tutorialId, user.id).catch(() => {})
+    }
+
     return { data: resultado?.data, error: resultado?.error };
   } catch (err) {
     return { error: { message: 'Error inesperado al actualizar progreso', detail: err } };
   }
+}
+
+async function verificarCompletadoTutorial(tutorialId: string, _userId: string) {
+  const { data: progreso } = await obtenerProgresoTutorial(tutorialId)
+  if (!progreso) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) return
+
+  // Fix #6: sincronizar inscripciones.porcentaje_completado en cada progreso
+  await supabase
+    .from('inscripciones')
+    .update({
+      porcentaje_completado: progreso.progreso,
+      completado: progreso.progreso >= 100,
+      progreso: progreso.partes_completadas,
+      ultima_actividad: new Date().toISOString(),
+    })
+    .eq('usuario_id', user.id)
+    .eq('tutorial_id', tutorialId)
+
+  if (progreso.progreso < 100) return
+
+  if (!user.email) return
+  const { data: tutorial } = await supabase
+    .from('tutoriales')
+    .select('titulo')
+    .eq('id', tutorialId)
+    .single()
+
+  await supabase.functions.invoke('enviar-email', {
+    body: {
+      tipo: 'tutorial_completado',
+      destinatario: user.email,
+      nombre: user.user_metadata?.nombre || user.email.split('@')[0] || '',
+      extra: { tutorial: tutorial?.titulo || '', tipo_contenido: 'tutorial' },
+    },
+  })
 }
 
 /**
