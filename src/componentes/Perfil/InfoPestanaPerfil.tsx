@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react'
 import { useInfoPestanaPerfil, paisesComunes } from './useInfoPestanaPerfil'
 import type { Perfil } from './useInfoPestanaPerfil'

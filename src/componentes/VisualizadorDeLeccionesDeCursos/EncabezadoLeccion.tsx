@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react'
 import './EncabezadoLeccion.css'
 import BarraProgresoGeneral from './BarraProgresoGeneral'

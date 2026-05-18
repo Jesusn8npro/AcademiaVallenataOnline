@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import ComunidadService from '../../../servicios/comunidadService';
 import type { PublicacionComunidad } from '../../../servicios/comunidadService';

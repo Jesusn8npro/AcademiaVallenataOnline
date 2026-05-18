@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import ModalBusqueda from '../../componentes/Busqueda/ModalBusqueda';
 import { useParticulasFlotantes } from './Hooks/useParticulasFlotantes';
 import './Pagina404.css';

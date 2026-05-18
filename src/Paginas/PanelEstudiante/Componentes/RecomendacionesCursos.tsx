@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useRecomendaciones } from '../Hooks/useRecomendaciones';
 import './RecomendacionesCursos.css';

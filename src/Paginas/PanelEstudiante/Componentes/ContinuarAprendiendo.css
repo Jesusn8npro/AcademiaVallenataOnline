@@ -460,14 +460,14 @@
     gap: 12px;
 }
 
-.academia-usuario-info :global(.academia-avatar) {
+.academia-usuario-info .academia-avatar {
     width: 50px !important;
     height: 50px !important;
     border: 3px solid rgba(255, 255, 255, 0.3) !important;
     transition: all 0.3s ease !important;
 }
 
-.academia-usuario-info :global(.academia-avatar:hover) {
+.academia-usuario-info .academia-avatar:hover {
     border-color: rgba(255, 255, 255, 0.7) !important;
     transform: scale(1.05) !important;
     box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2) !important;

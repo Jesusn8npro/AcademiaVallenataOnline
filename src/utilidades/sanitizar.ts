@@ -21,8 +21,14 @@ const FORBID_TAGS = ['script','iframe','object','embed','form','input','button',
 const FORBID_ATTR = ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','style'];
 const URI_REGEXP = /^(?:(?:https?|mailto|tel|ftp):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
 
+// SSR: DOMPurify requiere `window`. En el render de servidor no existe, así
+// que devolvemos el HTML tal cual (contenido propio de la BD) y el cliente lo
+// re-sanitiza al hidratar. Antes con Vite siempre había window (app client-only).
+const hayDOM = typeof window !== 'undefined';
+
 export function sanitizarHTML(html: string): string {
   if (!html || typeof html !== 'string') return '';
+  if (!hayDOM) return html;
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: TAGS_PERMITIDOS,
     ALLOWED_ATTR: ATRIBUTOS_PERMITIDOS,
@@ -36,6 +42,7 @@ export function sanitizarHTML(html: string): string {
 export function sanitizarTextoConSaltos(texto: string): string {
   if (!texto || typeof texto !== 'string') return '';
   const conBr = texto.replace(/\n/g, '<br>');
+  if (!hayDOM) return conBr;
   return DOMPurify.sanitize(conBr, {
     ALLOWED_TAGS: ['br'],
     ALLOWED_ATTR: []

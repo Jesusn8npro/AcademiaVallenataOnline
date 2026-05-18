@@ -28,7 +28,7 @@
     animation: mnc-scale-in 0.2s ease-out;
 }
 
-:global(.dark) .mnc-container {
+.dark .mnc-container {
     background-color: #1f2937;
     border: 1px solid #374151;
 }
@@ -43,7 +43,7 @@
     background-color: #ffffff;
 }
 
-:global(.dark) .mnc-header {
+.dark .mnc-header {
     background-color: #1f2937;
     border-color: #374151;
 }
@@ -64,7 +64,7 @@
     justify-content: center;
 }
 
-:global(.dark) .mnc-icon-box {
+.dark .mnc-icon-box {
     background-color: rgba(30, 58, 138, 0.3);
     color: #60a5fa;
 }
@@ -76,7 +76,7 @@
     margin: 0;
 }
 
-:global(.dark) .mnc-title {
+.dark .mnc-title {
     color: #f9fafb;
 }
 
@@ -98,7 +98,7 @@
     color: #4b5563;
 }
 
-:global(.dark) .mnc-close-btn:hover {
+.dark .mnc-close-btn:hover {
     background-color: #374151;
     color: #e5e7eb;
 }
@@ -121,7 +121,7 @@
     border: 1px solid #f3f4f6;
 }
 
-:global(.dark) .mnc-group-toggle {
+.dark .mnc-group-toggle {
     background-color: rgba(55, 65, 81, 0.5);
     border-color: #374151;
 }
@@ -169,7 +169,7 @@
     font-size: 0.95rem;
 }
 
-:global(.dark) .mnc-toggle-text {
+.dark .mnc-toggle-text {
     color: #e5e7eb;
 }
 
@@ -186,7 +186,7 @@
     color: #374151;
 }
 
-:global(.dark) .mnc-label {
+.dark .mnc-label {
     color: #d1d5db;
 }
 
@@ -202,7 +202,7 @@
     transition: all 0.2s;
 }
 
-:global(.dark) .mnc-input {
+.dark .mnc-input {
     background-color: #374151;
     border-color: #4b5563;
     color: #f9fafb;
@@ -214,7 +214,7 @@
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-:global(.dark) .mnc-input:focus {
+.dark .mnc-input:focus {
     background-color: #1f2937;
 }
 
@@ -257,7 +257,7 @@
     font-weight: 500;
 }
 
-:global(.dark) .mnc-chip {
+.dark .mnc-chip {
     background-color: rgba(30, 58, 138, 0.3);
     border-color: rgba(30, 58, 138, 0.5);
     color: #93c5fd;
@@ -304,7 +304,7 @@
     border-color: #e5e7eb;
 }
 
-:global(.dark) .mnc-user-item:hover {
+.dark .mnc-user-item:hover {
     background-color: rgba(55, 65, 81, 0.6);
     border-color: #4b5563;
 }
@@ -317,7 +317,7 @@
     border: 1px solid #e5e7eb;
 }
 
-:global(.dark) .mnc-avatar {
+.dark .mnc-avatar {
     border-color: #4b5563;
 }
 
@@ -333,7 +333,7 @@
     margin-bottom: 2px;
 }
 
-:global(.dark) .mnc-user-name {
+.dark .mnc-user-name {
     color: #f3f4f6;
 }
 
@@ -342,7 +342,7 @@
     color: #6b7280;
 }
 
-:global(.dark) .mnc-user-handle {
+.dark .mnc-user-handle {
     color: #9ca3af;
 }
 
@@ -375,7 +375,7 @@
     gap: 12px;
 }
 
-:global(.dark) .mnc-footer {
+.dark .mnc-footer {
     background-color: rgba(31, 41, 55, 0.5);
     border-color: #374151;
 }
@@ -400,11 +400,11 @@
     color: #111827;
 }
 
-:global(.dark) .mnc-btn-cancel {
+.dark .mnc-btn-cancel {
     color: #d1d5db;
 }
 
-:global(.dark) .mnc-btn-cancel:hover {
+.dark .mnc-btn-cancel:hover {
     background-color: #374151;
     color: #f9fafb;
 }

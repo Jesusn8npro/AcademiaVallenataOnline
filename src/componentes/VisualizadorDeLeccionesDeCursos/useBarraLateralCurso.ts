@@ -1,5 +1,5 @@
 import { useState, useEffect, startTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 
 function generarSlug(texto: string = ''): string {
   return texto

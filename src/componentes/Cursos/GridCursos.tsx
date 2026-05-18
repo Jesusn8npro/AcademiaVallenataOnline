@@ -1,7 +1,9 @@
+'use client';
+
 import React from 'react'
 import './GridCursos.css'
 import { generarSlug } from '../../utilidades/slug'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@/compat/router'
 import { useFavoritos } from '../../hooks/useFavoritos'
 
 interface Item {

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { useLogicaProMax } from './useLogicaProMax';
 

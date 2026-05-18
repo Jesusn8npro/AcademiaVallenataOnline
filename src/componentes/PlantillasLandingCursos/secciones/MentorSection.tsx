@@ -1,3 +1,5 @@
+'use client';
+
 // Imports de imágenes desde src/assets — las rutas /images/... apuntaban a public/
 // donde estos archivos nunca existieron, dando 404. PEOR: el onError fallback también
 // usaba un path /images/Home/... también roto → loop infinito de re-asignar src + 404

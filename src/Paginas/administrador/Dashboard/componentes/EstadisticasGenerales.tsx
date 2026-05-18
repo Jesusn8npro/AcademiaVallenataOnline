@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import './EstadisticasGenerales.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 
 interface DatosEstadisticas {
     totalUsuarios: number;

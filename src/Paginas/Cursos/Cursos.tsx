@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react'
 import './Cursos.css'
 import HeroCursos from '../../componentes/Cursos/HeroCursos'

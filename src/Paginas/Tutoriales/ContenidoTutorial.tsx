@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import BarraProgresoAvanzada from '../../componentes/Tutoriales/BarraProgresoAvanzada'
 import TutorialClases from '../../componentes/Tutoriales/TutorialClases'

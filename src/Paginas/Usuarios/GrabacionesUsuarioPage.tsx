@@ -1,5 +1,7 @@
+'use client';
+
 import { useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext } from '@/compat/router';
 import VistaGrabacionesHero from '../Perfil/MisGrabaciones/VistaGrabacionesHero';
 
 interface PerfilPublico {

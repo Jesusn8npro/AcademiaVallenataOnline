@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import ModalReplayGrabacionHero from '../../Paginas/Perfil/MisGrabaciones/Componentes/ModalReplayGrabacionHero';
 import { useFeedPublicacion } from './Hooks/useFeedPublicacion';

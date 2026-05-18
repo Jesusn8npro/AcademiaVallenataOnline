@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from '@/compat/router'
 import { generarSlug } from '../../utilidades/slug'
 
 interface Parte { id: string; titulo: string; slug?: string; tipo_contenido?: string }

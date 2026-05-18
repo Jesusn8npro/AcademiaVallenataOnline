@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { actividadService } from '../../../servicios/actividadService';
 import EstadisticasGenerales from './componentes/EstadisticasGenerales';

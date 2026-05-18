@@ -1,3 +1,5 @@
+'use client';
+
 import { useCupon } from '../../hooks/useCupon'
 
 interface Props {

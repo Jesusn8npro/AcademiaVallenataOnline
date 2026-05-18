@@ -1,6 +1,8 @@
+'use client';
+
 import { createPortal } from 'react-dom';
 import { Disc3, Globe, Lock, Radio, RefreshCcw, Share2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/compat/router';
 import ModalReplayGrabacionHero, { type GrabacionReplayHero } from './Componentes/ModalReplayGrabacionHero';
 import { obtenerSubtituloGrabacion, obtenerMetaGrabacion, obtenerTextoBadge } from './utilsGrabaciones';
 import { useVistaGrabaciones } from './useVistaGrabaciones';

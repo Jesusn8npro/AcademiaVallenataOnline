@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react'
 import ProteccionAutenticacion from '../../guards/ProteccionAutenticacion'
 import { PerfilProvider, usePerfilStore } from '../../stores/perfilStore'
@@ -5,7 +7,7 @@ import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import './perfil-layout.css'
-import { Outlet } from 'react-router-dom'
+import { Outlet } from '@/compat/router'
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const { perfil, stats, cargarDatosPerfil, forzarInicializacion, inicializado } = usePerfilStore()

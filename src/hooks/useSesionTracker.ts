@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '@/compat/router';
 import { supabase } from '../servicios/clienteSupabase';
 
 export const useSesionTracker = (usuarioId: string | null) => {

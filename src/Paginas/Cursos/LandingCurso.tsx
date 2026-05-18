@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import SkeletonLanding from '../../componentes/Skeletons/SkeletonLanding';
 import { useLandingCurso } from './Hooks/useLandingCurso';

@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@/compat/router';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import { eventosService } from '../../servicios/eventosService';
 

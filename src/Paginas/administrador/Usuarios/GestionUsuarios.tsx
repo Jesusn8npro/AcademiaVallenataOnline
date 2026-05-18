@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import DetalleUsuario from './Componentes/DetalleUsuario';
 import CrearUsuario from './Componentes/CrearUsuario';

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useRankingComunidad } from './Hooks/useRankingComunidad';
 import './RankingComunidadNuevo.css';

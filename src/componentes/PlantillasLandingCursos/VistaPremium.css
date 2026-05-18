@@ -4,39 +4,39 @@
    ======================================== */
 
 /* Fondo negro de la página premium (siempre que la vista esté montada) */
-:global(body.vista-premium-activa) {
+body.vista-premium-activa {
     background-color: #000 !important;
 }
 
 /* MODO INMERSIVO: solo cuando hay banner de oferta activo
    Oculta menú superior, sidebar, footer, etc. para que el banner fixed
    no choque con la navegación. Sin oferta activa, todo se renderiza normal. */
-:global(body.vista-premium-banner-activo) {
+body.vista-premium-banner-activo {
     margin: 0 !important;
     padding: 0 !important;
     padding-top: 0 !important;
     padding-left: 0 !important;
 }
 
-:global(body.vista-premium-banner-activo.con-sidebar),
-:global(body.vista-premium-banner-activo.con-sidebar-colapsado) {
+body.vista-premium-banner-activo.con-sidebar,
+body.vista-premium-banner-activo.con-sidebar-colapsado {
     padding-left: 0 !important;
 }
 
-:global(.vista-premium-banner-activo) :global(footer),
-:global(.vista-premium-banner-activo) :global(nav),
-:global(.vista-premium-banner-activo) :global(header),
-:global(.vista-premium-banner-activo) :global(.sidebar),
-:global(.vista-premium-banner-activo) :global(.sidebar-admin-moderno),
-:global(.vista-premium-banner-activo) :global(.menu-inferior-responsivo),
-:global(.vista-premium-banner-activo) :global(.menu-superior-autenticado),
-:global(.vista-premium-banner-activo) :global(.nav-publico-container),
-:global(.vista-premium-banner-activo) :global([class*="menu"]),
-:global(.vista-premium-banner-activo) :global([class*="Menu"]),
-:global(.vista-premium-banner-activo) :global([class*="nav"]),
-:global(.vista-premium-banner-activo) :global([class*="Nav"]),
-:global(.vista-premium-banner-activo) :global([class*="sidebar"]),
-:global(.vista-premium-banner-activo) :global([class*="Sidebar"]) {
+.vista-premium-banner-activo footer,
+.vista-premium-banner-activo nav,
+.vista-premium-banner-activo header,
+.vista-premium-banner-activo .sidebar,
+.vista-premium-banner-activo .sidebar-admin-moderno,
+.vista-premium-banner-activo .menu-inferior-responsivo,
+.vista-premium-banner-activo .menu-superior-autenticado,
+.vista-premium-banner-activo .nav-publico-container,
+.vista-premium-banner-activo [class*="menu"],
+.vista-premium-banner-activo [class*="Menu"],
+.vista-premium-banner-activo [class*="nav"],
+.vista-premium-banner-activo [class*="Nav"],
+.vista-premium-banner-activo [class*="sidebar"],
+.vista-premium-banner-activo [class*="Sidebar"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -45,15 +45,15 @@
     left: -9999px !important;
 }
 
-:global(body.vista-premium-banner-activo) :global(.sidebar-admin-moderno),
-:global(body.vista-premium-banner-activo) :global(aside),
-:global(body.vista-premium-banner-activo) :global([role="navigation"]),
-:global(body.vista-premium-banner-activo) :global(#sidebar),
-:global(body.vista-premium-banner-activo) :global(#menu),
-:global(body.vista-premium-banner-activo) :global(#nav),
-:global(body.vista-premium-banner-activo) :global(.nav-auth-container),
-:global(body.vista-premium-banner-activo) :global(.nav-publico-container),
-:global(body.vista-premium-banner-activo) nav {
+body.vista-premium-banner-activo .sidebar-admin-moderno,
+body.vista-premium-banner-activo aside,
+body.vista-premium-banner-activo [role="navigation"],
+body.vista-premium-banner-activo #sidebar,
+body.vista-premium-banner-activo #menu,
+body.vista-premium-banner-activo #nav,
+body.vista-premium-banner-activo .nav-auth-container,
+body.vista-premium-banner-activo .nav-publico-container,
+body.vista-premium-banner-activo nav {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -65,17 +65,17 @@
     top: -99999px !important;
 }
 
-:global(body.vista-premium-banner-activo)> :global(*:not(#root)) {
+body.vista-premium-banner-activo> *:not(#root) {
     display: none !important;
 }
 
-:global(body.vista-premium-banner-activo) :global(#root)> :global(*:not(.vista-premium-container)) {
+body.vista-premium-banner-activo #root> *:not(.vista-premium-container) {
     display: none !important;
 }
 
-:global(body.vista-premium-banner-activo) :global(main),
-:global(body.vista-premium-banner-activo) :global(#root),
-:global(body.vista-premium-banner-activo) :global(.app) {
+body.vista-premium-banner-activo main,
+body.vista-premium-banner-activo #root,
+body.vista-premium-banner-activo .app {
     margin-left: 0 !important;
     padding-left: 0 !important;
     width: 100% !important;

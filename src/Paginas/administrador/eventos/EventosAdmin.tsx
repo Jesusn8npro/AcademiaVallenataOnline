@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useEventosAdmin } from './useEventosAdmin';
 import FormularioCrearEvento from './FormularioCrearEvento';

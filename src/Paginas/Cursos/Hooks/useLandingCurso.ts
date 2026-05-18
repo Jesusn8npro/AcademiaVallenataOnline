@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { generarSlug } from '../../../utilidades/slug';
 import { useUsuario } from '../../../contextos/UsuarioContext';

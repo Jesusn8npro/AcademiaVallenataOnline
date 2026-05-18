@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from '@/compat/router';
 import { vibracionLeve } from '../../../utilidades/plataforma';
 import './PagoError.css';
 

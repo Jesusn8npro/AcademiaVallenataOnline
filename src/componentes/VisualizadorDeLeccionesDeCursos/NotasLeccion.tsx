@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react'
 import './NotasLeccion.css'
 import { supabase } from '../../servicios/clienteSupabase'

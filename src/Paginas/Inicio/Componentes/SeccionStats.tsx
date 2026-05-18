@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import './SeccionStats.css';
 import { statsStyles as styles } from './SeccionStats.styles';

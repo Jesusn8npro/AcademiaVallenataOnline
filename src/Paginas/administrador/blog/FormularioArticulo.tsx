@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Save, Eye, ArrowLeft, Loader } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/compat/router';
 import UploaderImagenesArticulo from './Componentes/UploaderImagenesArticulo';
 import EditorJsonArticulo from './Componentes/EditorJsonArticulo';
 import { useFormularioArticulo, type ArticuloForm } from './useFormularioArticulo';

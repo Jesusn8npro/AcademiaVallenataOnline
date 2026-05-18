@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { AlertCircle } from 'lucide-react';
 
 import CuerpoAcordeonBase from '../../../Core/componentes/CuerpoAcordeon';

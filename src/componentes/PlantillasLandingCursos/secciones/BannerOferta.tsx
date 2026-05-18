@@ -1,3 +1,5 @@
+'use client';
+
 interface Props {
     tiempoRestante: { dias: number; horas: number; minutos: number; segundos: number };
     descuento: number;

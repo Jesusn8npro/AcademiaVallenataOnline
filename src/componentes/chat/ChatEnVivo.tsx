@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react'
 import { X, Send, MessageCircle, Bot } from 'lucide-react'
 import { useChatEnVivo } from './useChatEnVivo'

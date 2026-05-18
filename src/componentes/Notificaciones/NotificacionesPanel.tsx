@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { useNotificaciones } from '../../hooks/useNotificaciones';
 import { notificacionesService } from '../../servicios/notificacionesService';
 import './NotificacionesPanel.css';

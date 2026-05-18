@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import {
     Gamepad2, Crown, GraduationCap, Trophy, Users, Smartphone, ArrowRight,
 } from 'lucide-react';

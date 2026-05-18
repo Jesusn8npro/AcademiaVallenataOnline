@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import { scoresHeroService } from '../../servicios/scoresHeroService';
 import { supabase } from '../../servicios/clienteSupabase';

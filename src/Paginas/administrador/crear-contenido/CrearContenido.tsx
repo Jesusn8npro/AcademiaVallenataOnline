@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import WizardContenido from '../../../componentes/CrearContenido/WizardContenido';
 import { supabase } from '../../../servicios/clienteSupabase';
 import './CrearContenido.css';

@@ -1,3 +1,5 @@
+'use client';
+
 import MostradorCursosTutoriales from './panel-contenido/componentes/MostradorCursosTutoriales';
 import SidebarResumenAdmin from './panel-contenido/componentes/SidebarResumenAdmin';
 import { usePanelContenido } from './panel-contenido/usePanelContenido';

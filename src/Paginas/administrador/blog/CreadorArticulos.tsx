@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../servicios/clienteSupabase';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from '@/compat/router';
 import { PenTool, Sparkles } from 'lucide-react';
 import FormularioArticulo from './FormularioArticulo';
 import CrearArticuloIA from './Componentes/CrearArticuloIA';

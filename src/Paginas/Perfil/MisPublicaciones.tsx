@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import { useUsuario } from '../../contextos/UsuarioContext'

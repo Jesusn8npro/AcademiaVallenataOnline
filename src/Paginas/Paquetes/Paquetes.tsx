@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { formatearPrecio } from '../../servicios/paquetesService';
 import { usePaquetes } from './Hooks/usePaquetes';

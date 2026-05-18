@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { usePagos, formatearValor } from './usePagos';
 import ContenidoPagos from './ContenidoPagos';

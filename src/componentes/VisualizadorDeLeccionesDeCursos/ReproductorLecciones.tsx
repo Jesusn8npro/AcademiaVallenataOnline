@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect } from 'react';
 import { useReproductorLecciones } from './useReproductorLecciones';
 import { useVideoFirmado } from '../../hooks/useVideoFirmado';
