@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import { useEffect, useState } from 'react'
 import { useOutletContext } from '@/compat/router'
@@ -41,7 +42,7 @@ export default function PublicacionesUsuarioPage() {
       ) : error ? (
         <div className="estado-error"><div className="error-icono">⚠️</div><h3>Error al cargar publicaciones</h3><p>{error}</p><button className="btn-reintentar" onClick={cargarPublicaciones}>Reintentar</button></div>
       ) : publicaciones.length === 0 ? (
-        <div className="estado-vacio"><div className="vacio-icono">📝</div><h3>Sin publicaciones aún</h3><p>Este usuario no ha compartido publicaciones todavía.</p><div className="vacio-acciones"><a href="/comunidad" className="btn-comunidad">Explorar la Comunidad</a></div><div className="vacio-decoracion"><span>🎵</span><span>📚</span><span>🎶</span></div></div>
+        <div className="estado-vacio"><div className="vacio-icono">📝</div><h3>Sin publicaciones aún</h3><p>Este usuario no ha compartido publicaciones todavía.</p><div className="vacio-acciones"><Link href="/comunidad" className="btn-comunidad">Explorar la Comunidad</Link></div><div className="vacio-decoracion"><span>🎵</span><span>📚</span><span>🎶</span></div></div>
       ) : (
         <div className="seccion">
           <div className="seccion-header"><h2>📝 Publicaciones</h2><div className="estadisticas-publicaciones"><span className="contador-publicaciones">{publicaciones.length} publicaciones</span></div></div>

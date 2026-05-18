@@ -1,3 +1,4 @@
+import { Link } from '@/compat/router';
 import React from 'react'
 import { useUsuario } from '../contextos/UsuarioContext'
 
@@ -24,7 +25,7 @@ export default function ProteccionAutenticacion({ titulo = '🔒 PERFIL RESTRING
       <div style={{ maxWidth: 700, margin: '2rem auto', background: '#fff', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
         <h2 style={{ marginTop: 0 }}>{titulo}</h2>
         <p>{mensajePrincipal}</p>
-        <a href="/" style={{ display: 'inline-block', marginTop: '1rem', background: '#2563eb', color: '#fff', padding: '0.75rem 1rem', borderRadius: 8, textDecoration: 'none' }}>Ir al inicio</a>
+        <Link href="/" style={{ display: 'inline-block', marginTop: '1rem', background: '#2563eb', color: '#fff', padding: '0.75rem 1rem', borderRadius: 8, textDecoration: 'none' }}>Ir al inicio</Link>
       </div>
     )
   }

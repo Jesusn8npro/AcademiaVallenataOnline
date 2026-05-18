@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import { useState, useEffect } from 'react'
 import { usePerfilStore } from '../../stores/perfilStore'
@@ -158,9 +159,9 @@ export default function MisEventos() {
                                 filtroActivo === 'proximos' ? 'Los eventos que reserves aparecerán aquí' :
                                     'Aquí verás tu historial de eventos'}
                         </p>
-                        <a href="/eventos" className="me-btn-explorar">
+                        <Link href="/eventos" className="me-btn-explorar">
                             🌟 Explorar Eventos
-                        </a>
+                        </Link>
                     </div>
                 ) : (
                     <div className="me-lista-eventos">

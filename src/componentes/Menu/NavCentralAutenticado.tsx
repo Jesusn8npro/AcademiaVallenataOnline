@@ -1,3 +1,4 @@
+import { Link } from '@/compat/router';
 import React from 'react'
 
 interface Props {
@@ -9,7 +10,7 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
     <div className="nav-auth-center">
       {esAdmin ? (
         <>
-          <a href="/panel-administracion" className="nav-auth-link">
+          <Link href="/panel-administracion" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" />
@@ -17,8 +18,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Panel Admin</span>
-          </a>
-          <a href="/administrador/crear-contenido" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/crear-contenido" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
@@ -26,8 +27,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Crear Contenido</span>
-          </a>
-          <a href="/administrador/usuarios" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/usuarios" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <circle cx="12" cy="7" r="4" />
@@ -35,8 +36,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Usuarios</span>
-          </a>
-          <a href="/administrador/pagos" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/pagos" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="2" y="7" width="20" height="13" rx="2" />
@@ -44,8 +45,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Pagos</span>
-          </a>
-          <a href="/administrador/paquetes" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/paquetes" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -53,8 +54,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Paquetes</span>
-          </a>
-          <a href="/administrador/eventos" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/eventos" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -62,8 +63,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Eventos</span>
-          </a>
-          <a href="/administrador/blog" className="nav-auth-link">
+          </Link>
+          <Link href="/administrador/blog" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -71,8 +72,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Blog</span>
-          </a>
-          <a href="/simulador-gaming" className="nav-auth-link">
+          </Link>
+          <Link href="/simulador-gaming" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3" /><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
@@ -81,16 +82,16 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Simulador</span>
-          </a>
-          <a href="/acordeon-pro-max" className="nav-auth-link">
+          </Link>
+          <Link href="/acordeon-pro-max" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </span>
             <span>Acordeon Pro Max</span>
-          </a>
-          <a href="/simulador-app" className="nav-auth-link">
+          </Link>
+          <Link href="/simulador-app" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
@@ -98,19 +99,19 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Simulador App</span>
-          </a>
-          <a href="/mensajes" className="nav-auth-link">
+          </Link>
+          <Link href="/mensajes" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </span>
             <span>Mensajes</span>
-          </a>
+          </Link>
         </>
       ) : (
         <>
-          <a href="/panel-estudiante" className="nav-auth-link">
+          <Link href="/panel-estudiante" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -118,8 +119,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Mi Panel</span>
-          </a>
-          <a href="/cursos" className="nav-auth-link">
+          </Link>
+          <Link href="/cursos" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="2" y="7" width="20" height="13" rx="2" />
@@ -127,8 +128,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Cursos</span>
-          </a>
-          <a href="/comunidad" className="nav-auth-link">
+          </Link>
+          <Link href="/comunidad" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -136,8 +137,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Comunidad</span>
-          </a>
-          <a href="/ranking" className="nav-auth-link">
+          </Link>
+          <Link href="/ranking" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
@@ -148,8 +149,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Ranking</span>
-          </a>
-          <a href="/eventos" className="nav-auth-link">
+          </Link>
+          <Link href="/eventos" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -157,8 +158,8 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Eventos</span>
-          </a>
-          <a href="/blog" className="nav-auth-link">
+          </Link>
+          <Link href="/blog" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -166,15 +167,15 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
               </svg>
             </span>
             <span>Blog</span>
-          </a>
-          <a href="/mensajes" className="nav-auth-link">
+          </Link>
+          <Link href="/mensajes" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </span>
             <span>Mensajes</span>
-          </a>
+          </Link>
         </>
       )}
     </div>

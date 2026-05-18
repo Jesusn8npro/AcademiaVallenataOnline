@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React from 'react';
 import { useMenuPublico } from './useMenuPublico';
@@ -119,13 +120,13 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
       <div className={`mpub-barra-principal-navegacion ${isSticky ? 'mpub-sticky' : ''}`}>
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
-          <a href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
+          <Link href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
             <img src="/logo-175.webp" alt="Logo Academia Vallenata" width="175" height="113" fetchPriority="high" decoding="async" />
-          </a>
+          </Link>
 
           {/* Menú de navegación */}
           <nav className="mpub-menu-enlaces">
-            <a href="/" className="mpub-enlace-nav">
+            <Link href="/" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <path d="M3 12L12 3l9 9" />
@@ -134,8 +135,8 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.inicio')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
-            <a href="/blog" className="mpub-enlace-nav">
+            </Link>
+            <Link href="/blog" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -144,8 +145,8 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.blog')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
-            <a href="/tutoriales-de-acordeon" className="mpub-enlace-nav">
+            </Link>
+            <Link href="/tutoriales-de-acordeon" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <rect x="2" y="7" width="20" height="13" rx="2" />
@@ -154,16 +155,16 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.tutoriales', 'Tutoriales')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
-            <a href="/curso-acordeon-desde-cero" className="mpub-enlace-nav mpub-enlace-cta-aprende">
+            </Link>
+            <Link href="/curso-acordeon-desde-cero" className="mpub-enlace-nav mpub-enlace-cta-aprende">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z" />
                 </svg>
               </span>
               <span className="mpub-enlace-texto">APRENDE DESDE 0</span>
-            </a>
-            <a href="/paquetes" className="mpub-enlace-nav">
+            </Link>
+            <Link href="/paquetes" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -172,11 +173,11 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.paquetes')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
+            </Link>
             {/* "Eventos" oculto para no autenticados / no-admin: la página todavía no está
                 terminada. Se restaura para todos cuando esté lista. */}
             {usuario?.rol === 'admin' && (
-              <a href="/eventos" className="mpub-enlace-nav">
+              <Link href="/eventos" className="mpub-enlace-nav">
                 <span className="mpub-icono-enlace-nav">
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                     <rect x="3" y="5" width="18" height="16" rx="2" />
@@ -185,9 +186,9 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
                 </span>
                 <span className="mpub-enlace-texto">{t('menu.eventos')}</span>
                 <div className="mpub-enlace-underline"></div>
-              </a>
+              </Link>
             )}
-            <a href="/nuestra-academia" className="mpub-enlace-nav">
+            <Link href="/nuestra-academia" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <path d="M12 3l9 6-9 6-9-6 9-6z" />
@@ -196,8 +197,8 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.nuestraAcademia')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
-            <a href="/contacto" className="mpub-enlace-nav">
+            </Link>
+            <Link href="/contacto" className="mpub-enlace-nav">
               <span className="mpub-icono-enlace-nav">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">
                   <path d="M22 16.92V21a1 1 0 0 1-1.09 1A19 19 0 0 1 2 4.09 1 1 0 0 1 3 3h4.09a1 1 0 0 1 1 .75l1 4a1 1 0 0 1-.29 1L7.21 10.21a16 16 0 0 0 6.58 6.58l1.46-1.59a1 1 0 0 1 1-.29l4 1a1 1 0 0 1 .75 1Z" />
@@ -205,7 +206,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               </span>
               <span className="mpub-enlace-texto">{t('menu.contacto', 'Contacto')}</span>
               <div className="mpub-enlace-underline"></div>
-            </a>
+            </Link>
           </nav>
 
           {/* Botones de acción */}
@@ -239,9 +240,9 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
             </button>
 
             <div className="mpub-encabezado-menu">
-              <a href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
+              <Link href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
                 <img src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width="175" height="113" loading="lazy" decoding="async" />
-              </a>
+              </Link>
               <p className="mpub-descripcion-menu">
                 {t('menu.descripcion')}
               </p>

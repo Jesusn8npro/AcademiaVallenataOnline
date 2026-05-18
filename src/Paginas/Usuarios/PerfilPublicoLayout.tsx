@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -134,7 +135,7 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
       {cargando ? (
         <div className="loading-container"><div className="spinner" /><p>Cargando perfil...</p></div>
       ) : error ? (
-        <div className="error-carga"><h1>Usuario no encontrado</h1><p>{error}</p><a href="/comunidad" className="btn-volver">Volver a la Comunidad</a></div>
+        <div className="error-carga"><h1>Usuario no encontrado</h1><p>{error}</p><Link href="/comunidad" className="btn-volver">Volver a la Comunidad</Link></div>
       ) : usuarioPublico ? (
         <>
           <div className="encabezado-fijo">

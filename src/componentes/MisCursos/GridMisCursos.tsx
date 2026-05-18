@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React from 'react'
 import TarjetaCurso from './TarjetaCurso'
@@ -32,7 +33,7 @@ export default function GridMisCursos({ inscripciones, isLoading, error }: Props
       <div className="estado-vacio" style={styles.estado}>
         <h3 style={{ margin: 0 }}>Aún no tienes cursos inscritos</h3>
         <p style={styles.estadoTexto}>¡Explora el catálogo y empieza hoy!</p>
-        <a href="/tutoriales-de-acordeon" style={styles.btnExplorar}>Ver tutoriales →</a>
+        <Link href="/tutoriales-de-acordeon" style={styles.btnExplorar}>Ver tutoriales →</Link>
       </div>
     )
   }
