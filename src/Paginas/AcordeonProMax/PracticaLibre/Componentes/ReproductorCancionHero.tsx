@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Play, Pause, Square, X, Layers } from 'lucide-react';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import { ReproductorMP3 } from '../../../../Core/audio/ReproductorMP3';
+import { formatearTiempoTicks, parsearArrayJSON as parsear } from '../../../../utilidades/formatadores';
 
 /**
  * Reproductor STANDALONE para canciones hero en Práctica Libre del estudiante.
@@ -33,24 +34,6 @@ interface ReproductorCancionHeroProps {
   seccionInicial?: any;
   onCerrar: () => void;
 }
-
-const formatearTiempoTicks = (ticks: number, bpm: number, resolucion = 192) => {
-  const seg = (ticks / resolucion) * (60 / Math.max(1, bpm));
-  if (!isFinite(seg) || seg < 0) return '0:00';
-  const m = Math.floor(seg / 60);
-  const s = Math.floor(seg % 60);
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
-};
-
-const parsear = (raw: any): any[] => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'string') {
-    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
-    catch { return []; }
-  }
-  return [];
-};
 
 const PALETA_SECCIONES = [
   { bg: 'rgba(34, 197, 94, 0.15)', borde: '#22c55e' },

@@ -89,3 +89,39 @@ export function formatearPrecioCOP(precio: number): string {
         minimumFractionDigits: 0,
     }).format(precio);
 }
+
+// =====================================================================
+// TIEMPO POR TICKS (canciones / acordeon)
+// =====================================================================
+
+/**
+ * Convierte ticks de cancion a "m:ss" segun bpm y resolucion (PPQ).
+ * Resolucion por defecto 192. Devuelve "0:00" si el calculo no es finito
+ * o negativo (entrada invalida) — comportamiento seguro para la UI.
+ */
+export function formatearTiempoTicks(ticks: number, bpm: number, resolucion = 192): string {
+    const seg = (ticks / resolucion) * (60 / Math.max(1, bpm));
+    if (!isFinite(seg) || seg < 0) return '0:00';
+    const m = Math.floor(seg / 60);
+    const s = Math.floor(seg % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+// =====================================================================
+// PARSEO JSON
+// =====================================================================
+
+/**
+ * Normaliza un valor que puede ser un array, un string JSON de array, o
+ * nulo, a un array. Si no es parseable o no es array, devuelve [].
+ * Usado para columnas JSON de Supabase (secciones, notas, etc.).
+ */
+export function parsearArrayJSON(raw: any): any[] {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+        try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
+        catch { return []; }
+    }
+    return [];
+}
