@@ -75,7 +75,7 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
                 className="feed-publicaciones-avatar"
                 width={48}
                 height={48}
-                unoptimized={!url_foto_perfil}
+                unoptimized={false}
               />
             </div>
             <div className="feed-publicaciones-indicador-estado"></div>
@@ -247,7 +247,7 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
                 className="feed-publicaciones-avatar-usuario-actual"
                 width={32}
                 height={32}
-                unoptimized={!!usuario}
+                unoptimized={false}
               />
             </div>
             <div className="feed-publicaciones-contenedor-input-comentario">

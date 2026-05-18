@@ -15,6 +15,9 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: '**.b-cdn.net' },
       { protocol: 'https', hostname: 'iframe.mediadelivery.net' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'ui-avatars.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
     ],
   },
   // Tree-shaking de iconos (lucide-react se usa en 100+ archivos): solo
