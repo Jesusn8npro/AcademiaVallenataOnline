@@ -8,6 +8,11 @@ const nextConfig = {
   // Imágenes remotas (Supabase Storage, Bunny CDN, etc.) sin optimización
   // por ahora para no romper ningún <img> existente.
   images: { unoptimized: true },
+  // Tree-shaking de iconos (lucide-react se usa en 100+ archivos): solo
+  // entran al bundle los iconos realmente usados.
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
 }
 
 export default nextConfig
