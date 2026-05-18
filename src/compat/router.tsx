@@ -43,17 +43,23 @@ export function useNavigate() {
 }
 
 // ── useLocation ───────────────────────────────────────────────────────────
+// IMPORTANTE: el objeto retornado se MEMOIZA. Si se creara nuevo en cada
+// render, cualquier useEffect con [location] en deps se re-ejecutaria en
+// CADA render (bug grave: recargaba canciones/datos en bucle).
 export function useLocation() {
   const pathname = usePathname()
   const sp = useNextSearchParams()
   const search = sp?.toString() ? `?${sp.toString()}` : ''
-  return {
-    pathname: pathname || '/',
-    search,
-    hash: typeof window !== 'undefined' ? window.location.hash : '',
-    state: null as unknown,
-    key: 'default',
-  }
+  return React.useMemo(
+    () => ({
+      pathname: pathname || '/',
+      search,
+      hash: typeof window !== 'undefined' ? window.location.hash : '',
+      state: null as unknown,
+      key: 'default',
+    }),
+    [pathname, search],
+  )
 }
 
 // ── useParams ─────────────────────────────────────────────────────────────
@@ -77,7 +83,12 @@ export function useSearchParams(): [
   const router = useRouter()
   const pathname = usePathname()
   const sp = useNextSearchParams()
-  const current = new URLSearchParams(sp?.toString() || '')
+  const qs = sp?.toString() || ''
+  // MEMOIZADO por la query real. Sin esto se creaba un URLSearchParams nuevo
+  // en cada render => useEffect con [searchParams] en deps se re-ejecutaba en
+  // CADA render (bug: recargaba la cancion en bucle, reaparecia el modal,
+  // no se podia seleccionar parte). Ahora solo cambia si la query cambia.
+  const current = React.useMemo(() => new URLSearchParams(qs), [qs])
   const setSearchParams = React.useCallback(
     (
       next: URLSearchParams | Record<string, string> | string,
