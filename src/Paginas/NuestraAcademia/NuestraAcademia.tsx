@@ -6,15 +6,22 @@ import './nuestra-academia.css'
 // Imports de imágenes desde src/assets — Vite las bundlea con hash. Antes el componente
 // usaba paths como "/images/NuestraAcademia/..." apuntando a public/, pero esos archivos
 // nunca estuvieron en public/ → todas las imágenes daban 404.
-import imgMaestroJesus from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg'
-import imgClasesVirtuales from '../../assets/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg'
-import imgCursosAcordeon from '../../assets/images/NuestraAcademia/Cursos-de-acordeon.jpg'
-import imgClasesPersonalizadas from '../../assets/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg'
-import imgOrlandoFelipe from '../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg'
-import imgBienvenida from '../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg'
-import imgBanner from '../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg'
-import imgAcordeonProMax from '../../assets/images/Acordeon PRO MAX.webp'
-
+import imgMaestroJesus__img from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+const imgMaestroJesus = (((imgMaestroJesus__img) as any)?.src ?? (imgMaestroJesus__img)) as string;
+import imgClasesVirtuales__img from '../../assets/images/NuestraAcademia/Clases-de-acordeon-virtuales.jpg';
+const imgClasesVirtuales = (((imgClasesVirtuales__img) as any)?.src ?? (imgClasesVirtuales__img)) as string;
+import imgCursosAcordeon__img from '../../assets/images/NuestraAcademia/Cursos-de-acordeon.jpg';
+const imgCursosAcordeon = (((imgCursosAcordeon__img) as any)?.src ?? (imgCursosAcordeon__img)) as string;
+import imgClasesPersonalizadas__img from '../../assets/images/NuestraAcademia/Clases-Personalizadas-de-acordeón.jpg';
+const imgClasesPersonalizadas = (((imgClasesPersonalizadas__img) as any)?.src ?? (imgClasesPersonalizadas__img)) as string;
+import imgOrlandoFelipe__img from '../../assets/images/NuestraAcademia/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
+const imgOrlandoFelipe = (((imgOrlandoFelipe__img) as any)?.src ?? (imgOrlandoFelipe__img)) as string;
+import imgBienvenida__img from '../../assets/images/NuestraAcademia/Bienvenido--Academia-Vallenata-ONLINE.jpg';
+const imgBienvenida = (((imgBienvenida__img) as any)?.src ?? (imgBienvenida__img)) as string;
+import imgBanner__img from '../../assets/images/NuestraAcademia/Jesus-Gonzalez--BANNER.jpg';
+const imgBanner = (((imgBanner__img) as any)?.src ?? (imgBanner__img)) as string;
+import imgAcordeonProMax__img from '../../assets/images/Acordeon PRO MAX.webp';
+const imgAcordeonProMax = (((imgAcordeonProMax__img) as any)?.src ?? (imgAcordeonProMax__img)) as string;
 const testimonios = [
   { nombre: 'Carlos Mendoza', ciudad: 'Valledupar, Cesar', tiempo: '6 meses', texto: 'El simulador es increíble, siento que tengo al maestro Jesús aquí conmigo. Jamás pensé aprender tan rápido.', nivel: 'Principiante a Intermedio' },
   { nombre: 'María González', ciudad: 'Barranquilla, Atlántico', tiempo: '1 año', texto: 'La metodología es única. En un año ya toco canciones completas y mi familia no lo puede creer.', nivel: 'Avanzada' },

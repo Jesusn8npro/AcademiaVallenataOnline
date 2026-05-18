@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { ChevronUp, MoveHorizontal } from 'lucide-react';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
-import imagenBajosDefault from '../Parte restante Bajos.jpg';
+import imagenBajosDefault__img from '../Parte restante Bajos.jpg';
+const imagenBajosDefault = (((imagenBajosDefault__img) as any)?.src ?? (imagenBajosDefault__img)) as string;
 import { useBotonActivo } from '../store/botonesActivosStore';
 import './ContenedorBajos.css';
 

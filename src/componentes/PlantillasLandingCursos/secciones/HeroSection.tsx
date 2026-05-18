@@ -1,10 +1,12 @@
 'use client';
 
 import type { Contenido } from '../../../Paginas/Cursos/tipos';
-import imgJesusAvatar from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
-import imgCursosAvatar from '../../../assets/images/Home/Cursos-Acordeon.jpg';
-import imgFallbackHero from '../../../assets/images/Home/Aprende a tocar el acordeon con los mejores cursos.jpg';
-
+import imgJesusAvatar__img from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
+const imgJesusAvatar = (((imgJesusAvatar__img) as any)?.src ?? (imgJesusAvatar__img)) as string;
+import imgCursosAvatar__img from '../../../assets/images/Home/Cursos-Acordeon.jpg';
+const imgCursosAvatar = (((imgCursosAvatar__img) as any)?.src ?? (imgCursosAvatar__img)) as string;
+import imgFallbackHero__img from '../../../assets/images/Home/Aprende a tocar el acordeon con los mejores cursos.jpg';
+const imgFallbackHero = (((imgFallbackHero__img) as any)?.src ?? (imgFallbackHero__img)) as string;
 interface Props {
     contenido: Contenido;
     estaInscrito: boolean;

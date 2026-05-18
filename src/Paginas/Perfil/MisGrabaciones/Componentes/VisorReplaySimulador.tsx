@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import marcoSimuladorApp from '../../../../assets/Marco acordeon simulador app.webp';
+import marcoSimuladorApp__img from '../../../../assets/Marco acordeon simulador app.webp';
+const marcoSimuladorApp = (((marcoSimuladorApp__img) as any)?.src ?? (marcoSimuladorApp__img)) as string;
 import './VisorReplaySimulador.css';
 
 /**

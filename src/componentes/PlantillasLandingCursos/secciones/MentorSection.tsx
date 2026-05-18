@@ -4,9 +4,10 @@
 // donde estos archivos nunca existieron, dando 404. PEOR: el onError fallback también
 // usaba un path /images/Home/... también roto → loop infinito de re-asignar src + 404
 // → 13.000+ requests + saturación del Service Worker + Epayco no podía cargar.
-import imgMaestroOficial from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
-import imgMaestroFallback from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
-
+import imgMaestroOficial__img from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+const imgMaestroOficial = (((imgMaestroOficial__img) as any)?.src ?? (imgMaestroOficial__img)) as string;
+import imgMaestroFallback__img from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
+const imgMaestroFallback = (((imgMaestroFallback__img) as any)?.src ?? (imgMaestroFallback__img)) as string;
 interface Props {
     cargando: boolean;
     onComprar: () => void;

@@ -3,12 +3,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import BannerOfertaCurso from './BannerOfertaCurso'
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'
-import imgHeroBanner from '../../assets/images/Jesus-Gonzalez--BANNER.jpg'
-import imgMaestroSolucion from '../../assets/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg'
-import imgArtistasFamosos from '../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg'
-import imgMetodosPago from '../../assets/images/Metodos-de-pago.jpg'
-import imgTestimonio from '../../assets/images/Testimonio-Alumno-Academia-Vallenata-ONLINE.jpg'
-import imgFallback from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg'
+import imgHeroBanner__img from '../../assets/images/Jesus-Gonzalez--BANNER.jpg';
+const imgHeroBanner = (((imgHeroBanner__img) as any)?.src ?? (imgHeroBanner__img)) as string;
+import imgMaestroSolucion__img from '../../assets/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg';
+const imgMaestroSolucion = (((imgMaestroSolucion__img) as any)?.src ?? (imgMaestroSolucion__img)) as string;
+import imgArtistasFamosos__img from '../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
+const imgArtistasFamosos = (((imgArtistasFamosos__img) as any)?.src ?? (imgArtistasFamosos__img)) as string;
+import imgMetodosPago__img from '../../assets/images/Metodos-de-pago.jpg';
+const imgMetodosPago = (((imgMetodosPago__img) as any)?.src ?? (imgMetodosPago__img)) as string;
+import imgTestimonio__img from '../../assets/images/Testimonio-Alumno-Academia-Vallenata-ONLINE.jpg';
+const imgTestimonio = (((imgTestimonio__img) as any)?.src ?? (imgTestimonio__img)) as string;
+import imgFallback__img from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+const imgFallback = (((imgFallback__img) as any)?.src ?? (imgFallback__img)) as string;
 import './CursoAcordeonDesdeCero.css'
 
 const cursoAcordeon = {

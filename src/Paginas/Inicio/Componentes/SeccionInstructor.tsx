@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import FotoMaestro from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+import FotoMaestro__img from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
+const FotoMaestro = (((FotoMaestro__img) as any)?.src ?? (FotoMaestro__img)) as string;
 import './SeccionInstructor.css';
 import { instructorStyles as styles } from './SeccionInstructor.styles';
 
