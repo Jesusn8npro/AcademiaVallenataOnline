@@ -1,25 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Sliders } from 'lucide-react';
 import './PanelEfectosSimulador.css';
+// Tipos canónicos (fuente única en el motor de audio). import type =>
+// se borra en build, cero coste runtime, no arrastra AudioEnginePro.
+import type { PresetReverbId, PresetDistorsionId } from '@/Core/audio/AudioEnginePro';
 
-// Versión compacta del PanelEfectosAudio para SimuladorApp. Misma lógica y
-// mismas props que el panel grande de Práctica Libre, pero con un layout más
-// denso (knobs 38px, faders 80px) que cabe en un modal flotante de ~560px sin
-// cubrir todo el simulador. Clases `peas-*` aisladas del CSS del panel grande.
-
-type PresetReverbId =
-    | 'habitacion' | 'estudio' | 'cuarto_mediano' | 'garaje'
-    | 'sala_ensayo' | 'cuarto_grande' | 'club'
-    | 'vestibulo_mediano' | 'iglesia' | 'vestibulo_grande' | 'catedral' | 'cueva' | 'arena'
-    | 'escenario_abierto' | 'canon' | 'bosque'
-    | 'tunel' | 'cabina' | 'plate' | 'spring' | 'tape_vintage' | 'shimmer';
-
-type PresetDistorsionId =
-    | 'tubo_calido' | 'tubo_cremoso' | 'vintage_drive' | 'lofi_tape'
-    | 'crunch_clasico' | 'overdrive_blues' | 'rock_70s'
-    | 'distorsion_dura' | 'heavy_metal' | 'thrash' | 'death_metal'
-    | 'fuzz_muff' | 'fuzz_tone' | 'octave_fuzz'
-    | 'bit_crusher' | 'megafono' | 'telefono' | 'wave_folder';
+// Versión compacta para SimuladorApp y también para Práctica Libre (escritorio).
+// Misma lógica/props; layout denso (knobs 38px, faders 80px) en modal ~560px.
+// Clases `peas-*` aisladas.
 
 interface PanelEfectosSimuladorProps {
     reverbActivo: boolean;
