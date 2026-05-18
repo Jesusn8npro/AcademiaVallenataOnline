@@ -28,17 +28,6 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
   const location = useLocation()
   const pathname = location.pathname
 
-  const [mouseDetectado, setMouseDetectado] = useState(false)
-  useEffect(() => {
-    if (mouseDetectado) return
-    const handler = () => setMouseDetectado(true)
-    window.addEventListener('mousemove', handler, { once: true, passive: true })
-    return () => window.removeEventListener('mousemove', handler)
-  }, [mouseDetectado])
-
-  useSeguridadConsola()
-  useSesionTracker(usuario?.id || null)
-
   const esClaseTutorial = pathname.includes('/tutoriales/') && pathname.includes('/clase/')
   const esClaseCurso =
     pathname.startsWith('/cursos/') && pathname.split('/').filter(Boolean).length >= 4
@@ -57,6 +46,17 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     esSimuladorApp ||
     esAcordeonProMax ||
     esRecuperarContrasena
+
+  const [mouseDetectado, setMouseDetectado] = useState(false)
+  useEffect(() => {
+    if (mouseDetectado) return
+    const handler = () => setMouseDetectado(true)
+    window.addEventListener('mousemove', handler, { once: true, passive: true })
+    return () => window.removeEventListener('mousemove', handler)
+  }, [mouseDetectado])
+
+  useSeguridadConsola({ pausarVigilancia: esInmersivo })
+  useSesionTracker(usuario?.id || null)
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut()
