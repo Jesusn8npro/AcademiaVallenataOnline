@@ -17,6 +17,9 @@ dist-ssr
 next-env.d.ts
 out
 
+# Logs de deploy con secretos (no subir nunca)
+ERRORES_EASYPANEL.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
