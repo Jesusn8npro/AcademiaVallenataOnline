@@ -5,7 +5,9 @@ import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibr
 import SeccionPLSonido from './SeccionPLSonido';
 import SeccionPLPistas, { type ModoGrabacionPL } from './SeccionPLPistas';
 import SeccionPLEfectos from './SeccionPLEfectos';
-import PanelEfectosAudio from '../../../../componentes/Efectos/PanelEfectosAudio';
+// Panel de efectos unificado: el de SimuladorApp se usa tambien en escritorio
+// (antes habia un PanelEfectosAudio ~85% duplicado). Misma logica y props.
+import PanelEfectosSimulador from '@/Paginas/SimuladorApp/Componentes/PanelEfectosSimulador';
 import SeccionPLLibreria from './SeccionPLLibreria';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
@@ -144,7 +146,7 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
       )}
 
       {seccionActiva === 'efectos' && (
-        <PanelEfectosAudio
+        <PanelEfectosSimulador
           reverbActivo={preferencias.efectos.reverb > 0}
           reverbIntensidad={preferencias.efectos.reverb}
           reverbPreset={preferencias.efectos.reverbPreset}
