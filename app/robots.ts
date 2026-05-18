@@ -21,8 +21,6 @@ export default function robots(): MetadataRoute.Robots {
         '/pago-exitoso/',
         '/pago-error/',
         '/sesion-cerrada/',
-        '/acordeon-3d-test/',
-        '/acordeon-funcional-v1/',
       ],
     },
     sitemap: 'https://academiavallenata.online/sitemap.xml',
