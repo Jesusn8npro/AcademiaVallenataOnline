@@ -138,7 +138,6 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
                                     src={obtenerMiniatura(leccion.video_url)}
                                     alt={leccion.titulo}
                                     fill
-                                    unoptimized
                                     style={{ objectFit: 'cover' }}
                                     onError={(e) => {
                                       const imgElement = e.currentTarget as HTMLImageElement
