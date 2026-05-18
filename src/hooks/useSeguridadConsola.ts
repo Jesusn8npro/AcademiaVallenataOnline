@@ -73,7 +73,7 @@ const mostrarMensajeDetente = () => {
     }
 };
 
-export const inicializarSeguridadConsola = () => {
+export const inicializarSeguridadConsola = (conIntervalos = true) => {
     // @ts-ignore
     if ((process.env.NODE_ENV !== 'production')) return;
     if ((window as any).__permitirDevTools) return;
@@ -93,7 +93,7 @@ export const inicializarSeguridadConsola = () => {
     console.groupEnd = funcionVacia;
 
     mostrarMensajeDetente();
-    if (!mensajeIntervalId) {
+    if (conIntervalos && !mensajeIntervalId) {
         mensajeIntervalId = setInterval(mostrarMensajeDetente, 5000);
     }
 };
@@ -134,7 +134,7 @@ const keyDownHandler = (e: any) => {
     }
 };
 
-export const bloquearDevTools = () => {
+export const bloquearDevTools = (conIntervalos = true) => {
     // @ts-ignore
     if ((process.env.NODE_ENV !== 'production')) return;
     if ((window as any).__permitirDevTools) return;
@@ -157,26 +157,32 @@ export const bloquearDevTools = () => {
             }
         };
 
-        if (!devToolsIntervalId) {
+        if (conIntervalos && !devToolsIntervalId) {
             devToolsIntervalId = setInterval(detectarDevTools, 500); // 500ms para no saturar
         }
     } catch (e) { }
 };
 
-export const useSeguridadConsola = () => {
+export const useSeguridadConsola = (opciones?: { pausarVigilancia?: boolean }) => {
     const { usuario, inicializado } = useUsuario();
+    const pausarVigilancia = opciones?.pausarVigilancia ?? false;
 
     useEffect(() => {
         // @ts-ignore
         if ((process.env.NODE_ENV !== 'production')) return; // EN DESARROLLO NO HACE NADA
 
-        // Lanzar advertencia inmediata para todos en producción
-        inicializarSeguridadConsola();
-        bloquearDevTools();
+        // En rutas inmersivas (simulador) mantenemos la consola bloqueada y los
+        // atajos de DevTools deshabilitados, pero SIN los setInterval periódicos
+        // (5s mensaje + 500ms lectura de layout) que causan micro-trabas en el
+        // hilo principal durante la ejecución musical.
+        const conIntervalos = !pausarVigilancia;
+
+        inicializarSeguridadConsola(conIntervalos);
+        bloquearDevTools(conIntervalos);
 
         // Si el usuario es administrador, restaurar la consola después
         if (inicializado && usuario?.rol === 'admin') {
             restaurarConsola();
         }
-    }, [usuario, inicializado]);
+    }, [usuario, inicializado, pausarVigilancia]);
 };
