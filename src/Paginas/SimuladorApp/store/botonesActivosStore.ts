@@ -125,3 +125,24 @@ export const useBotonesActivosSnapshot = (): Snapshot => {
         botonesActivosStore.getSnapshot,
     );
 };
+
+// Snapshot vacío estable + no-op: cuando un consumidor NO necesita el snapshot
+// global (ej. SimuladorApp, que pinta pitos por DOM directo y bajos por
+// suscripción por-id), pasa activo=false y este hook NUNCA dispara re-render
+// (referencia estable). Respeta las Reglas de Hooks: el hook se llama siempre.
+const SNAPSHOT_VACIO: Snapshot = {};
+const subscribeNoop = () => () => {};
+const getSnapshotVacio = () => SNAPSHOT_VACIO;
+
+/**
+ * Variante condicional de useBotonesActivosSnapshot. Con activo=false no se
+ * suscribe al store y devuelve siempre el mismo objeto vacío → cero re-renders
+ * por press/release. Con activo=true es idéntico a useBotonesActivosSnapshot.
+ */
+export const useBotonesActivosSnapshotCond = (activo: boolean): Snapshot => {
+    return useSyncExternalStore(
+        activo ? botonesActivosStore.subscribe : subscribeNoop,
+        activo ? botonesActivosStore.getSnapshot : getSnapshotVacio,
+        activo ? botonesActivosStore.getSnapshot : getSnapshotVacio,
+    );
+};

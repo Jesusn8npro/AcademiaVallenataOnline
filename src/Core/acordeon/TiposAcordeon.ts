@@ -40,6 +40,10 @@ export interface AcordeonSimuladorProps {
     imagenFondo?: string;
     onNotaPresionada?: (data: { idBoton: string; nombre: string }) => void;
     onNotaLiberada?: (data: { idBoton: string; nombre: string }) => void;
+    // Por defecto true (Pro Max, replays, clases dependen del snapshot reactivo).
+    // SimuladorApp lo pasa false: no consume logica.botonesActivos (pitos por DOM
+    // directo, bajos por useBotonActivo), así evita el re-render global por tecla.
+    suscribirBotonesGlobal?: boolean;
 }
 
 export interface AcordeonSimuladorHandle {
