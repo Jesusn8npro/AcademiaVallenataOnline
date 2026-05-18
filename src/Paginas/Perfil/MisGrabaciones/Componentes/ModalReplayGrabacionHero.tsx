@@ -1,6 +1,8 @@
+'use client';
+
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { ExternalLink, Monitor, Music2, Pause, Play, RotateCcw, Smartphone, X } from 'lucide-react';
 import CuerpoAcordeon from '../../../../Core/componentes/CuerpoAcordeon';
 import { useLogicaAcordeon } from '../../../../Core/hooks/useLogicaAcordeon';

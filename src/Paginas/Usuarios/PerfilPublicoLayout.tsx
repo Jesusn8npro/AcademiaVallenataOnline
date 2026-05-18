@@ -1,5 +1,8 @@
+'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, Outlet } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { useParams, OutletContext } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
@@ -33,8 +36,9 @@ interface StatsPerfil {
   ranking: number
 }
 
-export default function PerfilPublicoLayout() {
-  const { slug = '' } = useParams()
+export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug?: string; children?: ReactNode } = {}) {
+  const params = useParams()
+  const slug = slugProp ?? params.slug ?? ''
   const [usuarioPublico, setUsuarioPublico] = useState<PerfilPublico | null>(null)
   const [stats, setStats] = useState<StatsPerfil>({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 })
   const [cargando, setCargando] = useState(true)
@@ -154,7 +158,9 @@ export default function PerfilPublicoLayout() {
             <PestanasPerfil modalAbierto={modalAbierto} modoPublico={true} slugUsuario={slug} />
           </div>
           <div className="contenido-dinamico">
-            <Outlet context={{ usuarioPublico, stats }} />
+            <OutletContext.Provider value={{ usuarioPublico, stats }}>
+              {children}
+            </OutletContext.Provider>
           </div>
         </>
       ) : null}

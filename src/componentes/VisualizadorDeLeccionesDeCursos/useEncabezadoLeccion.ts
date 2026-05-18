@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, startTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { supabase } from '../../servicios/clienteSupabase';
 
 type TipoContenido = 'leccion' | 'clase';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import VistaGrabacionesHero from './VistaGrabacionesHero';
 

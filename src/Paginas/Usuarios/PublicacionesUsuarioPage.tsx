@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import FeedPublicaciones from '../../componentes/ComponentesComunidad/FeedPublicaciones'
 import './publicaciones-usuario.css'

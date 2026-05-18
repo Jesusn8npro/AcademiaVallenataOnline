@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react'
 import './PasoResumenGuardar.css'
 import { supabase } from '../../servicios/clienteSupabase'

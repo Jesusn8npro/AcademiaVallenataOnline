@@ -1,3 +1,5 @@
+'use client';
+
 import InfoPestanaPerfil from '../../componentes/Perfil/InfoPestanaPerfil'
 import PorcentajePerfil from '../../componentes/Perfil/PorcentajePerfil'
 import UltimosArticulosBlog from '../../componentes/Perfil/UltimosArticulosBlog'

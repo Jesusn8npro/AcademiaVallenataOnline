@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { obtenerPaquetesPublicados, buscarPaquetes, type PaqueteTutorial } from '../../../servicios/paquetesService';
 
 interface Stats {

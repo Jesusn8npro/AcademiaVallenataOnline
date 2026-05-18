@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import { useFavoritos } from '../../hooks/useFavoritos'
 import { generarSlug } from '../../utilidades/slug'

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react'
 import BannerOfertaCurso from './BannerOfertaCurso'
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'

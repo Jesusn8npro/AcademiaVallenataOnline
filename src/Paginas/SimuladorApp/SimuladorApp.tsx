@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { RotateCw } from 'lucide-react';
 import { useMotionValue } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from '@/compat/router';
 
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
 import { motorAudioPro } from '../../Core/audio/AudioEnginePro';

@@ -1,3 +1,5 @@
+'use client';
+
 import type { Contenido } from '../../../Paginas/Cursos/tipos';
 import imgJesusAvatar from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
 import imgCursosAvatar from '../../../assets/images/Home/Cursos-Acordeon.jpg';

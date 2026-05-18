@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { useContinuarAprendiendo, formatearUltimaActividad } from '../Hooks/useContinuarAprendiendo';
 import Avatar from './Avatar';

@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useMemo, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import './actividad-usuario.css'
 

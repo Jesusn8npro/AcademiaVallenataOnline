@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useRef, useState } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import imgPortadaDefault from '../../assets/images/perfil-portada/Imagen de portada.webp'

@@ -1,3 +1,5 @@
+'use client';
+
 import { useRanking } from './useRanking';
 import './ranking.css';
 

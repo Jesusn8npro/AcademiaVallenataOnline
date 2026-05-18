@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { busquedaService, type ResultadosBusqueda } from '../../servicios/busquedaService';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 

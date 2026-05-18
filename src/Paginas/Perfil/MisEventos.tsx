@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { eventosService, type EventoCompleto } from '../../servicios/eventosService'

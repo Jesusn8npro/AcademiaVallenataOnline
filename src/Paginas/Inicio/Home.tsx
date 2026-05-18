@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect } from 'react';
 import HeroHome from './Componentes/HeroHome';
 import SeccionOpciones from './Componentes/SeccionOpciones';

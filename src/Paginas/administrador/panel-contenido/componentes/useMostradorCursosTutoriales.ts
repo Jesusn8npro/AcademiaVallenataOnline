@@ -1,5 +1,7 @@
+'use client';
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../../servicios/clienteSupabase';
 
 export interface Contenido {

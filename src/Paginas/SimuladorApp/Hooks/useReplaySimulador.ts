@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+// Tipo estructural compatible con el `navigate` de @/compat/router
+// (sustituye a NavigateFunction de react-router-dom tras la migración).
+type NavigateFunction = (to: string | number, options?: { replace?: boolean; state?: unknown }) => void;
 
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
 import { useReproductorHero } from '../../../Core/hooks/useReproductorHero';

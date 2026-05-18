@@ -1,5 +1,7 @@
-﻿import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿'use client';
+
+import React, { useState } from 'react';
+import { useNavigate } from '@/compat/router';
 import FormularioPaquete from '../../../../componentes/paquetes/FormularioPaquete';
 import type { PaqueteTutorial } from '../../../../servicios/paquetesService';
 import './CrearPaquete.css';

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import HeaderHero from '../Componentes/HeaderHero';
 import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';

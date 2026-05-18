@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import './MenuLateralResponsive.css';
 import MenuPublicoNav from './MenuPublicoNav';
 import MenuEstudianteNav from './MenuEstudianteNav';

@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import type { DatosVista } from '../../Paginas/Cursos/LandingCurso';
 import './VistaPremium.css';
 import ModalPagoInteligente from '../Pagos/ModalPagoInteligente';

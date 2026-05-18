@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useModalInicioSesion, paises } from './useModalInicioSesion';
 import { getModalInicioSesionStyles } from './getModalInicioSesionStyles';

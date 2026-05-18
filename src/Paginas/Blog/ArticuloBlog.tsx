@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from '@/compat/router';
 import { Clock } from 'lucide-react';
 import './ArticuloBlog.css';
 import SidebarDerechaBlog from '../../componentes/Blog/SidebarDerechaBlog';
@@ -98,8 +100,9 @@ const BannerCtaBlog = () => (
     </div>
 );
 
-export default function ArticuloBlog() {
-    const { slug } = useParams();
+export default function ArticuloBlog({ slug: slugProp }: { slug?: string } = {}) {
+    const params = useParams();
+    const slug = slugProp ?? params.slug;
     const [articuloData, setArticuloData] = useState<ArticuloData | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);

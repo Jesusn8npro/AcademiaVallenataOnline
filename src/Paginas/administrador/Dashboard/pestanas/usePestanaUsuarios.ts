@@ -1,6 +1,8 @@
+'use client';
+
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../servicios/clienteSupabase'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@/compat/router'
 
 interface EstadisticasUsuarios {
     totalUsuarios: number

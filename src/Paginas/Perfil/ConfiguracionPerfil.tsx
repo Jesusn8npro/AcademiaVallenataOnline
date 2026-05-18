@@ -1,3 +1,5 @@
+'use client';
+
 import { useConfiguracionPerfil } from './Hooks/useConfiguracionPerfil';
 import { formatearPrecio, formatearFecha } from './utils/formatadores';
 import ModalEliminarCuenta from './ModalEliminarCuenta';

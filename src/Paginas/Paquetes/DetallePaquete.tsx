@@ -1,6 +1,7 @@
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@/compat/router';
 import { obtenerPaquetePorSlug, obtenerTutorialesPaquete, formatearPrecio, type PaqueteTutorial } from '../../servicios/paquetesService';
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente';
 import './DetallePaquete.css';

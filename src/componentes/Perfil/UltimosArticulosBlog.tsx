@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react'
 import { supabase, supabaseAnonimo } from '../../servicios/clienteSupabase'
 import './UltimosArticulosBlog.css'

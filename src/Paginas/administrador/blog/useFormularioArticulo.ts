@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import type { ImagenArticulo } from './Componentes/UploaderImagenesArticulo';
 import type { SeccionArticulo, CtaItem } from './Componentes/EditorJsonArticulo';

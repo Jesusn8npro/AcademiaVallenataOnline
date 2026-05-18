@@ -1,3 +1,5 @@
+'use client';
+
 import type { Contenido } from '../../../Paginas/Cursos/tipos';
 
 interface Props {

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useRef, useState } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import imgAvatarDefault from '../../assets/images/perfil-portada/Imagen perfil 1.jpg'

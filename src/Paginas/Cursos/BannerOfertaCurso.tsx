@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@/compat/router'
 
 const STORAGE_KEY = 'cadc_oferta_inicio'
 const DURACION_HORAS = 48

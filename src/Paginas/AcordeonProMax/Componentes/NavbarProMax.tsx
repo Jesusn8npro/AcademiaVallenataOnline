@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import './NavbarProMax.css';
 import { Howl } from 'howler';
@@ -14,7 +16,7 @@ import {
   UserCircle,
   ShieldCheck
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/compat/router';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { usePerfilStore } from '../../../stores/perfilStore';
 

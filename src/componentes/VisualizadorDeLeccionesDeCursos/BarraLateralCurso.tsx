@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react'
 import './BarraLateralCurso.css'
 import { useBarraLateralCurso } from './useBarraLateralCurso'

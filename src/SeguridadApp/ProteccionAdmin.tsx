@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from '@/compat/router';
 import { useUsuario } from '../contextos/UsuarioContext';
 import './ProteccionRuta.css'; // Reusing the same CSS file for consistency
 

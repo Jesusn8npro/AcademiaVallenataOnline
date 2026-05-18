@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import BusquedaGlobal from '../BusquedaGlobal/BusquedaGlobal';
 import MenuLateralResponsive from './MenuLateralResponsive';

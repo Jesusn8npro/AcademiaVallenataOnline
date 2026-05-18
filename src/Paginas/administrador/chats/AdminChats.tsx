@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Search, RefreshCw, MessageSquare, Clock, CheckCircle, ChevronLeft, ChevronRight, X, Settings } from 'lucide-react';
 import { useAdminChats, type Mensaje } from './useAdminChats';

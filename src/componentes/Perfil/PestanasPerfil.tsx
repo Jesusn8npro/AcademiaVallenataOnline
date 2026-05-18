@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useEffect, useRef, useState } from 'react'
 import './pestanas-perfil.css'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from '@/compat/router'
 import { sanitizarHTML } from '../../utilidades/sanitizar'
 
 interface Props { modalAbierto?: boolean; modoPublico?: boolean; slugUsuario?: string | null }

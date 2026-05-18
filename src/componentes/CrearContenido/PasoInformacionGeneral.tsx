@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useRef, useState, useEffect } from 'react'
 import './PasoInformacionGeneral.css'
 import GestorLista from './GestorLista'

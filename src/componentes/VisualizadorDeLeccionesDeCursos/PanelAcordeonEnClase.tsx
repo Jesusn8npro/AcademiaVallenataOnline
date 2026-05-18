@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
 import CuerpoAcordeon from '../../Core/componentes/CuerpoAcordeon';

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect } from 'react';
 import ProteccionAutenticacion from '../../guards/ProteccionAutenticacion';
 import ContinuarAprendiendo from './Componentes/ContinuarAprendiendo';

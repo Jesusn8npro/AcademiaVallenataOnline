@@ -1,5 +1,7 @@
+'use client';
+
 import { useMemo } from 'react'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext } from '@/compat/router'
 import './perfil-publico.css'
 
 interface PerfilPublico {

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import BannerComunidad from '../../componentes/ComponentesComunidad/BannerComunidad';
 import ComunidadPublicar from '../../componentes/ComponentesComunidad/ComunidadPublicar';

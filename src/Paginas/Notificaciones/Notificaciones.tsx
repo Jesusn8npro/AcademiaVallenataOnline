@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useNotificaciones, categorias, obtenerDescripcionCategoria } from './useNotificaciones';
 import ItemNotificacion from './ItemNotificacion';
