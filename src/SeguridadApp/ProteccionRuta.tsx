@@ -34,17 +34,11 @@ const ProteccionRuta: React.FC<ProteccionRutaProps> = ({
         }
     }, [inicializado, usuario, navigate, location]);
 
-    if (!inicializado) {
-        return (
-            <div className="auth-verificacion">
-                <div className="spinner"></div>
-                <h2>Verificando sesión...</h2>
-                <p>Comprobando tu acceso</p>
-            </div>
-        );
-    }
-
-    if (usuario) {
+    // OPTIMISTA: mientras la sesion no se resuelve (no inicializado) o si ya
+    // hay usuario, renderizamos el contenido YA — sin pantalla bloqueante
+    // "Verificando sesion". Los datos estan protegidos por RLS en el servidor;
+    // el contenido y la verificacion cargan en paralelo (sin espera muerta).
+    if (!inicializado || usuario) {
         return children ? <>{children}</> : <Outlet />;
     }
 
