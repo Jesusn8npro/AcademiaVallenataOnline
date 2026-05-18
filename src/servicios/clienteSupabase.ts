@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Variables de entorno para Supabase (Cargadas desde .env por Vite)
-const URL_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const LLAVE_ANON_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Variables de entorno para Supabase. Fallback inerte para que el BUILD no
+// reviente ("supabaseUrl is required") si la env falta o está mal escrita;
+// en runtime con las env correctas funciona normal.
+const URL_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const LLAVE_ANON_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('[Supabase] Falta NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY. Revisa las variables de entorno (¿typo NEXT_PUBLIC_SUPABASE_URLL?).');
+}
 
 // Garantizar singleton para evitar múltiples instancias
 let instanciaSupabase: ReturnType<typeof createClient> | undefined;
