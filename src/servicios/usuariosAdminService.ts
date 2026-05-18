@@ -51,7 +51,7 @@ export async function eliminarUsuario(id: string): Promise<{ success: boolean; e
     // Llamar Edge Function para eliminar usuario completamente
     // (tanto de perfiles como de auth.users)
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eliminar-usuario`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/eliminar-usuario`,
       {
         method: 'POST',
         headers: {

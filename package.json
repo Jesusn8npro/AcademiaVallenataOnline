@@ -8,13 +8,12 @@
     "node": ">=18"
   },
   "scripts": {
-    "dev": "node scripts/sync-samples.cjs && vite",
+    "dev": "node scripts/sync-samples.cjs && next dev",
     "sync": "node scripts/sync-samples.cjs",
-    "build": "node scripts/sync-samples.cjs && npx vite build",
-    "build:capacitor": "node scripts/sync-samples.cjs && npx vite build --mode capacitor",
-    "type-check": "tsc -b",
-    "lint": "eslint .",
-    "preview": "serve -s dist -l tcp://0.0.0.0:${PORT:-80}"
+    "build": "node scripts/sync-samples.cjs && next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit",
+    "lint": "next lint"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
@@ -46,6 +45,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.561.0",
     "meshline": "^3.3.1",
+    "next": "^16.2.6",
     "postcss": "^8.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -66,6 +66,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.19",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

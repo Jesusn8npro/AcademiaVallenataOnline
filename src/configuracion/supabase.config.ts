@@ -1,9 +1,9 @@
 export const SUPABASE_CONFIG = {
-  url: import.meta.env.VITE_SUPABASE_URL || '',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+  url: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 };
 
 export const APP_CONFIG = {
-  baseUrl: import.meta.env.VITE_APP_URL || 'https://academiavallenataonline.com',
-  environment: import.meta.env.NODE_ENV || 'development'
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://academiavallenataonline.com',
+  environment: process.env.NODE_ENV || 'development'
 };

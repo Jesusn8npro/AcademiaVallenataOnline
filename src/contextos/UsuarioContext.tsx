@@ -190,9 +190,9 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                     cargarUsuario()
                     const creadoHace = Date.now() - new Date(session.user.created_at).getTime()
                     if (creadoHace < 60000) {
-                        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enviar-email`, {
+                        fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/enviar-email`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
                             body: JSON.stringify({
                                 tipo: 'bienvenida',
                                 destinatario: session.user.email,

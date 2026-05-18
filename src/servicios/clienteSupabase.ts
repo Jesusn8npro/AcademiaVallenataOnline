@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Variables de entorno para Supabase (Cargadas desde .env por Vite)
-const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL;
-const LLAVE_ANON_SUPABASE = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const URL_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const LLAVE_ANON_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Garantizar singleton para evitar múltiples instancias
 let instanciaSupabase: ReturnType<typeof createClient> | undefined;

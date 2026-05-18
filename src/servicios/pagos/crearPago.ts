@@ -106,7 +106,7 @@ export async function crearPago(datosEntrada: {
             return resultadoRegistro;
         }
 
-        const baseUrl = import.meta.env.VITE_BASE_URL || 'https://academiavallenataonline.com';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://academiavallenataonline.com';
         const responseUrl = `${baseUrl}/pago-exitoso`;
         const confirmationUrl = `${baseUrl}/api/pagos/confirmar`;
 
@@ -165,9 +165,9 @@ export async function crearPago(datosEntrada: {
 
         const datosFinales = {
             ...epaycoData,
-            key: import.meta.env.VITE_EPAYCO_PUBLIC_KEY || 'a04d60e2e678d5bd89a58d26f3413fdb',
-            test: String(import.meta.env.VITE_EPAYCO_TEST_MODE !== 'false'),
-            customer_id: import.meta.env.VITE_EPAYCO_CUSTOMER_ID || '508441'
+            key: process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY || 'a04d60e2e678d5bd89a58d26f3413fdb',
+            test: String(process.env.NEXT_PUBLIC_EPAYCO_TEST_MODE !== 'false'),
+            customer_id: process.env.NEXT_PUBLIC_EPAYCO_CUSTOMER_ID || '508441'
         };
 
         return {

@@ -174,7 +174,7 @@ export function usePagos() {
                 return;
             }
             totales = pagosPendientes.length;
-            const epaycoPublicKey = import.meta.env.VITE_EPAYCO_PUBLIC_KEY;
+            const epaycoPublicKey = process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY;
             for (const pago of pagosPendientes) {
                 try {
                     const response = await fetch(`https://secure.epayco.co/validation/v1/reference/${pago.ref_payco}`, { method: 'GET', headers: { 'Authorization': `Bearer ${epaycoPublicKey}`, 'Content-Type': 'application/json' } });
