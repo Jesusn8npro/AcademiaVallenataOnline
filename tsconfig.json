@@ -1,7 +1,105 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "$lib/services/*": [
+        "src/servicios/*"
+      ],
+      "$lib/utils/*": [
+        "src/utilidades/*"
+      ],
+      "$lib/supabase/*": [
+        "src/servicios/*"
+      ],
+      "$lib/stores/*": [
+        "src/stores/*"
+      ],
+      "$lib/types/*": [
+        "src/tipos/*"
+      ],
+      "$lib/*": [
+        "src/*"
+      ],
+      "$lib": [
+        "src"
+      ],
+      "$servicios/*": [
+        "src/servicios/*"
+      ],
+      "$servicios": [
+        "src/servicios"
+      ],
+      "$componentes/*": [
+        "src/componentes/*"
+      ],
+      "$componentes": [
+        "src/componentes"
+      ],
+      "$Paginas/*": [
+        "src/Paginas/*"
+      ],
+      "$Paginas": [
+        "src/Paginas"
+      ],
+      "$utilidades/*": [
+        "src/utilidades/*"
+      ],
+      "$utilidades": [
+        "src/utilidades"
+      ],
+      "$stores/*": [
+        "src/stores/*"
+      ],
+      "$stores": [
+        "src/stores"
+      ]
+    },
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "src",
+    "app",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".next"
   ]
 }

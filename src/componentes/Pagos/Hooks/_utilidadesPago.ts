@@ -133,7 +133,7 @@ export async function crearSesionEpayco(datos: CrearSesionEpaycoDatos): Promise<
     const token = sesion?.session?.access_token;
     if (!token) throw new Error('Usuario no autenticado');
 
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const response = await fetch(`${baseUrl}/functions/v1/epayco-crear-sesion`, {
         method: 'POST',
         headers: {

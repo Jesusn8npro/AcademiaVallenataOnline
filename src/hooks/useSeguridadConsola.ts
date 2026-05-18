@@ -2,7 +2,7 @@
  * SISTEMA DE SEGURIDAD DE CONSOLA - VERSIÓN FINAL ESTABLE Y PERMISIVA PARA ADMINS
  * 
  * Protege los datos en producción:
- * 1. Usa import.meta.env.DEV para detección 100% confiable en Vite (En Localhost NO hace nada).
+ * 1. Usa (process.env.NODE_ENV !== 'production') para detección 100% confiable en Vite (En Localhost NO hace nada).
  * 2. En producción, deshabilita logs y bloquea DevTools a los usuarios.
  * 3. Permite el uso completo de la consola a los administradores.
  * 4. Muestra un mensaje gigante anti-SelfXSS.
@@ -75,7 +75,7 @@ const mostrarMensajeDetente = () => {
 
 export const inicializarSeguridadConsola = () => {
     // @ts-ignore
-    if (import.meta.env.DEV) return;
+    if ((process.env.NODE_ENV !== 'production')) return;
     if ((window as any).__permitirDevTools) return;
 
     // EN PRODUCCIÓN: Deshabilitar TODA la consola para no-admins
@@ -136,7 +136,7 @@ const keyDownHandler = (e: any) => {
 
 export const bloquearDevTools = () => {
     // @ts-ignore
-    if (import.meta.env.DEV) return;
+    if ((process.env.NODE_ENV !== 'production')) return;
     if ((window as any).__permitirDevTools) return;
 
     try {
@@ -168,7 +168,7 @@ export const useSeguridadConsola = () => {
 
     useEffect(() => {
         // @ts-ignore
-        if (import.meta.env.DEV) return; // EN DESARROLLO NO HACE NADA
+        if ((process.env.NODE_ENV !== 'production')) return; // EN DESARROLLO NO HACE NADA
 
         // Lanzar advertencia inmediata para todos en producción
         inicializarSeguridadConsola();
