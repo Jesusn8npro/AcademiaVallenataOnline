@@ -168,9 +168,15 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         //    huerfano (causaba 400 refresh_token + 401 sesiones_usuario).
         try {
             const cached = localStorage.getItem('usuario_actual')
-            const tieneTokenSupabase = Object.keys(localStorage).some(
-                k => k.startsWith('sb-') && k.includes('-auth-token')
-            )
+            // El cliente Supabase usa storageKey: 'supabase.auth.token' (NO la
+            // clave por defecto sb-<ref>-auth-token). Hay que detectar ESA
+            // clave o jamas se reconoce la sesion: sin fast-path, flash de
+            // "Verificando permisos" y borrado erroneo del cache => expulsion.
+            const tieneTokenSupabase =
+                !!localStorage.getItem('supabase.auth.token') ||
+                Object.keys(localStorage).some(
+                    k => k.startsWith('sb-') && k.includes('-auth-token')
+                )
             if (cached && tieneTokenSupabase) {
                 setUsuarioState(JSON.parse(cached))
                 setInicializado(true)
