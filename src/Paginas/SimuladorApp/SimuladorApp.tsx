@@ -81,7 +81,11 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             const pos = data.idBoton.split('-').slice(0, 2).join('-');
             actualizarVisualBoton(pos, false, esBajo);
             registrarLiberacionRef.current(data.idBoton);
-        }
+        },
+        // SimuladorApp no consume logica.botonesActivos: pitos por DOM directo
+        // (onNotaPresionada→actualizarVisualBoton), bajos por useBotonActivo
+        // (por-id). Evita el re-render global del árbol en cada tecla.
+        suscribirBotonesGlobal: false
     });
 
     const [escala, setEscala] = useState(1.0);

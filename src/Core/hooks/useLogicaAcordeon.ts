@@ -14,7 +14,7 @@ import { useAcordeonPersistencia } from './LogicaAcordeon/useAcordeonPersistenci
 import { useAcordeonSamples } from './LogicaAcordeon/useAcordeonSamples';
 import {
     botonesActivosStore,
-    useBotonesActivosSnapshot,
+    useBotonesActivosSnapshotCond,
 } from '../../Paginas/SimuladorApp/store/botonesActivosStore';
 
 export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
@@ -22,7 +22,8 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         direccion: direccionProp = 'halar',
         deshabilitarInteraccion = false,
         onNotaPresionada,
-        onNotaLiberada
+        onNotaLiberada,
+        suscribirBotonesGlobal = true
     } = props;
 
     const [instrumentoId, setInstrumentoId] = useState<string>('4e9f2a94-21c0-4029-872e-7cb1c314af69');
@@ -33,7 +34,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     // snapshot vía useSyncExternalStore para los consumidores que lo necesiten,
     // pero las escrituras (setBoton/removeBoton) NO disparan re-render del
     // árbol — solo notifican a quien esté suscrito al id afectado.
-    const botonesActivos = useBotonesActivosSnapshot();
+    const botonesActivos = useBotonesActivosSnapshotCond(suscribirBotonesGlobal);
     const setBotonesActivos = useCallback((next: Record<string, any> | ((prev: Record<string, any>) => Record<string, any>)) => {
         const nuevo = typeof next === 'function'
             ? (next as (p: Record<string, any>) => Record<string, any>)(botonesActivosStore.getSnapshot())
@@ -474,7 +475,12 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
 
     useEffect(() => { deshabilitarRef.current = deshabilitarInteraccion; }, [deshabilitarInteraccion]);
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
-    useEffect(() => { botonesActivosRef.current = botonesActivos; }, [botonesActivos]);
+    // Solo sincroniza el ref desde el snapshot reactivo cuando la suscripción
+    // global está activa. Con suscribirBotonesGlobal=false el ref se mantiene
+    // imperativamente en actualizarBotonActivo (no sobrescribir con el vacío).
+    useEffect(() => {
+        if (suscribirBotonesGlobal) botonesActivosRef.current = botonesActivos;
+    }, [botonesActivos, suscribirBotonesGlobal]);
     useEffect(() => { if (direccionProp !== direccion) setDireccion(direccionProp); }, [direccionProp]);
 
     // (Listener de gesto-para-activar-audio fusionado arriba — antes había dos
