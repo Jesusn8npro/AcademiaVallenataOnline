@@ -11,9 +11,15 @@ function detectarInicioReal(buffer: AudioBuffer): number {
     return 0;
 }
 
-export async function cargarSonidoEnBanco(banco: BancoSonido, idSonido: string, url: string, contexto: AudioContext): Promise<void> {
-    if (banco.muestras.has(idSonido)) return;
+// Deduplicación de cargas EN VUELO. Sin esto, si el efecto de carga se
+// re-ejecuta (cambio de tonalidad/instrumento/slider) antes de que termine
+// la descarga+decode, el MISMO sonido se vuelve a descargar y decodificar en
+// paralelo N veces => tormenta de decodeAudioData en el hilo principal =
+// trabas. Con esto, una carga en curso se reutiliza (misma Promise) y nunca
+// se decodifica dos veces el mismo sample.
+const cargasEnVuelo = new Map<string, Promise<void>>();
 
+async function _cargar(banco: BancoSonido, idSonido: string, url: string, contexto: AudioContext): Promise<void> {
     try {
         const cacheName = 'sim-audios-v3';
         let audioData: ArrayBuffer | null = null;
@@ -44,4 +50,18 @@ export async function cargarSonidoEnBanco(banco: BancoSonido, idSonido: string, 
         banco.muestras.set(idSonido, audioBuffer);
         banco.offsets.set(idSonido, offset);
     } catch { /* ignorar errores de carga individual */ }
+}
+
+export async function cargarSonidoEnBanco(banco: BancoSonido, idSonido: string, url: string, contexto: AudioContext): Promise<void> {
+    if (banco.muestras.has(idSonido)) return;
+
+    const clave = `${banco.id}::${idSonido}`;
+    const enVuelo = cargasEnVuelo.get(clave);
+    if (enVuelo) return enVuelo;
+
+    const promesa = _cargar(banco, idSonido, url, contexto).finally(() => {
+        cargasEnVuelo.delete(clave);
+    });
+    cargasEnVuelo.set(clave, promesa);
+    return promesa;
 }
