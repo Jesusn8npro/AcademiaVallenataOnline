@@ -1,5 +1,6 @@
 import { Link } from '@/compat/router';
 import React from 'react';
+import Image from 'next/image';
 import './Footer.css';
 
 const Footer: React.FC = () => {
@@ -11,7 +12,7 @@ const Footer: React.FC = () => {
         {/* Sección Superior: Logo y Frase */}
         <div className="avo-footer-branding">
           <div className="avo-footer-logo">
-            <img src="/logo academia vallenata.webp" alt="Academia Vallenata Online Logo" width="300" height="194" loading="lazy" decoding="async" />
+            <Image src="/logo academia vallenata.webp" alt="Academia Vallenata Online Logo" width={300} height={194} />
           </div>
           <p className="avo-footer-phrase">
             "Aprende desde cualquier lugar, conecta con la música de tus raíces 🇨🇴"

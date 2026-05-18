@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Contenido } from '../../../Paginas/Cursos/tipos';
 import imgJesusAvatar__img from '../../../assets/images/Home/Jesus-Gonzalez--Profesor-de-acordeon.jpg';
 const imgJesusAvatar = (((imgJesusAvatar__img) as any)?.src ?? (imgJesusAvatar__img)) as string;
@@ -52,8 +53,8 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                         </span>
                         <div className="vista-premium-estudiantes-container">
                             <div className="vista-premium-avatares">
-                                <img className="vista-premium-avatar" src={imgJesusAvatar} alt="Estudiante" />
-                                <img className="vista-premium-avatar" src={imgCursosAvatar} alt="Estudiante" />
+                                <Image className="vista-premium-avatar" src={imgJesusAvatar} alt="Estudiante" width={24} height={24} style={{ borderRadius: '9999px' }} />
+                                <Image className="vista-premium-avatar" src={imgCursosAvatar} alt="Estudiante" width={24} height={24} style={{ borderRadius: '9999px' }} />
                             </div>
                             <span className="vista-premium-estudiantes-texto">+{contenido.estudiantes_inscritos || '300'} estudiantes</span>
                         </div>
@@ -138,12 +139,12 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                 <div className="vista-premium-hero-derecha">
                     <div className="vista-premium-video-card">
                         <div className="vista-premium-video-preview">
-                            <img
+                            <Image
                                 src={contenido.imagen_url || IMG_FALLBACK}
                                 alt={contenido.titulo || 'Imagen del curso'}
                                 className="vista-premium-video-imagen"
-                                // Guard anti-loop: si IMG_FALLBACK también falla, dataset.fallbackApplied
-                                // queda en true → onError no vuelve a setear src → no se re-dispara infinito.
+                                fill
+                                style={{ objectFit: 'cover' }}
                                 onError={(e) => {
                                     const img = e.target as HTMLImageElement;
                                     if (img.dataset.fallbackApplied === 'true') return;

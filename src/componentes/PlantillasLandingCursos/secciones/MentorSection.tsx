@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 // Imports de imágenes desde src/assets — las rutas /images/... apuntaban a public/
 // donde estos archivos nunca existieron, dando 404. PEOR: el onError fallback también
 // usaba un path /images/Home/... también roto → loop infinito de re-asignar src + 404
@@ -26,13 +27,12 @@ const MentorSection = ({ cargando, onComprar }: Props) => (
                 <div className="vista-premium-mentor-imagen-container">
                     <div className="vista-premium-mentor-imagen-fondo" />
                     <div className="vista-premium-mentor-imagen-wrapper">
-                        <img
+                        <Image
                             src={imgMaestroOficial}
                             alt="Jesús González - Maestro de Acordeón"
                             className="vista-premium-mentor-imagen"
-                            // Guard anti-loop: si el fallback también falla, dataset.fallbackApplied
-                            // queda en true y el handler no vuelve a tocar src → onError no se
-                            // re-dispara infinitamente.
+                            width={500}
+                            height={600}
                             onError={(e) => {
                                 const img = e.target as HTMLImageElement;
                                 if (img.dataset.fallbackApplied === 'true') return;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import ModalReplayGrabacionHero from '../../Paginas/Perfil/MisGrabaciones/Componentes/ModalReplayGrabacionHero';
 import { useFeedPublicacion } from './Hooks/useFeedPublicacion';
 import type { Usuario } from '../../Paginas/Comunidad/tipos';
@@ -68,10 +69,13 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
         <div className="feed-publicaciones-info-usuario">
           <div className="feed-publicaciones-contenedor-avatar">
             <div className="feed-publicaciones-contenedor-boton-avatar">
-              <img
+              <Image
                 src={url_foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario_nombre)}&background=667eea&color=fff`}
                 alt={usuario_nombre}
                 className="feed-publicaciones-avatar"
+                width={48}
+                height={48}
+                unoptimized={!url_foto_perfil}
               />
             </div>
             <div className="feed-publicaciones-indicador-estado"></div>
@@ -237,10 +241,13 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
         <div className="feed-publicaciones-seccion-comentarios">
           <div className="feed-publicaciones-formulario-comentario">
             <div className="feed-publicaciones-contenedor-avatar-usuario">
-              <img
-                src={usuario ? `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=667eea&color=fff` : ''}
+              <Image
+                src={usuario ? `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=667eea&color=fff` : '/images/perfil-portada/Imagen perfil 1.jpg'}
                 alt="Tu avatar"
                 className="feed-publicaciones-avatar-usuario-actual"
+                width={32}
+                height={32}
+                unoptimized={!!usuario}
               />
             </div>
             <div className="feed-publicaciones-contenedor-input-comentario">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabaseAnonimo } from '../../servicios/clienteSupabase'
 import { useNavigate } from '@/compat/router'
+import Image from 'next/image'
 
 interface ContenidoSidebar {
   id: string
@@ -158,7 +159,7 @@ const SidebarDerechaBlog: React.FC = () => {
               {contenidos.map(c => (
                 <div key={c.id} style={s.contenidoItem}>
                   {c.imagen_url ? (
-                    <img src={c.imagen_url} alt={c.titulo} style={s.img} />
+                    <Image src={c.imagen_url} alt={c.titulo} width={54} height={54} style={{ borderRadius: 8, objectFit: 'cover', flexShrink: 0, background: '#e2e8f0' }} />
                   ) : (
                     <div style={{ ...s.img, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                       {c.tipo === 'curso' ? '🎓' : '🎵'}

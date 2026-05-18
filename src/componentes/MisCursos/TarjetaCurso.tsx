@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from '@/compat/router'
+import Image from 'next/image'
 import { supabase } from '../../servicios/clienteSupabase'
 import { generarSlug } from '../../utilidades/slug'
 
@@ -186,7 +187,7 @@ export default function TarjetaCurso({ inscripcion }: { inscripcion: any }) {
   return (
     <article className="tarjeta-curso" style={styles.card}>
       <div className="imagen-contenedor" style={styles.imgCont}>
-        <img src={imagen} alt={titulo} className="imagen-curso" style={styles.img} loading="lazy" />
+        <Image src={imagen} alt={titulo} className="imagen-curso" fill style={{ objectFit: 'cover', transition: 'transform 0.3s ease' }} />
         <div className={`badge-tipo ${esCurso ? 'curso' : 'tutorial'}`} style={{ ...styles.badgeTipo, ...(esCurso ? styles.badgeCurso : styles.badgeTutorial) }}>{tipoContenido}</div>
         {completado && (
           <div className="badge-completado" style={styles.badgeCompletado}>✔ Completado</div>

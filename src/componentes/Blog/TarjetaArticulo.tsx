@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useNavigate } from '@/compat/router'
+import Image from 'next/image'
 
 interface TarjetaArticuloProps {
   titulo?: string
@@ -63,7 +64,7 @@ const TarjetaArticulo: React.FC<TarjetaArticuloProps> = ({
     <>
       <article style={styles.tarjetaArticulo} onClick={irAlArticulo} onKeyDown={manejarKeyDown} tabIndex={0} role="button" aria-label={`Leer artículo: ${titulo}`} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)'; e.currentTarget.style.boxShadow = '0 20px 45px rgba(59,130,246,0.15), 0 8px 15px rgba(139,92,246,0.1)'; const imagen = e.currentTarget.querySelector('.imagen-fondo') as HTMLElement; if (imagen) imagen.style.transform = 'scale(1.1)'; const t = e.currentTarget.querySelector('.titulo') as HTMLElement; if (t) t.style.color = '#3b82f6' }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = '0 10px 35px rgba(0,0,0,0.05), 0 2px 10px rgba(0,0,0,0.05)'; const imagen = e.currentTarget.querySelector('.imagen-fondo') as HTMLElement; if (imagen) imagen.style.transform = 'scale(1)'; const t = e.currentTarget.querySelector('.titulo') as HTMLElement; if (t) t.style.color = '#1e293b' }}>
         <header style={styles.cabeceraTargeta}>
-          <img className="imagen-fondo" src={imagenFinal} alt={`Imagen para ${titulo}`} style={styles.imagenFondo} onLoad={() => setImagenCargada(true)} onError={manejarErrorImagen} loading="lazy" />
+          <Image className="imagen-fondo" src={imagenFinal} alt={`Imagen para ${titulo}`} fill unoptimized={imagenFinal.includes('unsplash.com')} style={{ objectFit: 'cover', transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)', opacity: imagenCargada ? 1 : 0, filter: imagenCargada ? 'blur(0)' : 'blur(10px)' }} onLoad={() => setImagenCargada(true)} onError={manejarErrorImagen} />
           <div style={styles.overlayGradiente} />
           <div style={styles.infoSuperpuesta}><span style={styles.etiqueta}><span>🏷️</span>{categoria}</span><span style={styles.etiqueta}><span>⏱️</span>{tiempo_lectura} min de lectura</span></div>
         </header>

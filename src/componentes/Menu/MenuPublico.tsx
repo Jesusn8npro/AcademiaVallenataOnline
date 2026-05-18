@@ -2,6 +2,7 @@
 import { Link } from '@/compat/router';
 
 import React from 'react';
+import Image from 'next/image';
 import { useMenuPublico } from './useMenuPublico';
 import ModalBusqueda from '../Busqueda/ModalBusqueda';
 import ModalDeInicioDeSesion from './ModalDeInicioDeSesion';
@@ -121,7 +122,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
           <Link href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
-            <img src="/logo-175.webp" alt="Logo Academia Vallenata" width="175" height="113" fetchPriority="high" decoding="async" />
+            <Image src="/logo-175.webp" alt="Logo Academia Vallenata" width={175} height={113} priority />
           </Link>
 
           {/* Menú de navegación */}
@@ -241,7 +242,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
 
             <div className="mpub-encabezado-menu">
               <Link href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
-                <img src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width="175" height="113" loading="lazy" decoding="async" />
+                <Image src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width={175} height={113} />
               </Link>
               <p className="mpub-descripcion-menu">
                 {t('menu.descripcion')}
@@ -280,7 +281,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
               ) : articulosBlog.length > 0 ? (
                 articulosBlog.map((articulo) => (
                   <article key={articulo.id} className="mpub-articulo-item">
-                    <img src={articulo.imagen_url} alt="Artículo" className="mpub-imagen-articulo" />
+                    <Image src={articulo.imagen_url} alt="Artículo" className="mpub-imagen-articulo" width={60} height={60} style={{ objectFit: 'cover' }} />
                     <div className="mpub-contenido-articulo">
                       <span className="mpub-fecha-articulo">{formatearFecha(articulo.creado_en)}</span>
                       <h4 className="mpub-titulo-articulo">{articulo.titulo}</h4>

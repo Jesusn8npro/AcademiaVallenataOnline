@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react'
+import Image from 'next/image'
 import './GridCursos.css'
 import { generarSlug } from '../../utilidades/slug'
 import { useNavigate } from '@/compat/router'
@@ -144,11 +145,12 @@ export default function GridCursos({ items, cargando, error, paginaActual, items
                   onKeyDown={(e) => e.key === 'Enter' && verContenido(item)}
                 >
                   <div className="gc-image-container">
-                    <img
+                    <Image
                       src={item.imagen_url || '/images/default-curso.jpg'}
                       alt={item.titulo}
                       className="gc-card-image"
-                      loading="lazy"
+                      fill
+                      style={{ objectFit: 'cover' }}
                     />
 
                     <button
