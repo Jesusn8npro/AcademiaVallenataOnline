@@ -1,6 +1,16 @@
 import '@/index.css'
 import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import { Providers } from './providers'
+
+// Inter self-hospedado por Next (antes se referenciaba en CSS pero NO se
+// cargaba => caía a fuente del sistema). display:swap evita FOIT.
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://academiavallenata.online'),
@@ -183,12 +193,10 @@ const swKillScript = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://tbijzvtyyewhtwgakgka.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://tbijzvtyyewhtwgakgka.supabase.co" />
         <link rel="dns-prefetch" href="https://iframe.mediadelivery.net" />
@@ -205,7 +213,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
-        <script dangerouslySetInnerHTML={{ __html: antiConsolaScript }} />
+        <Script id="anti-consola" strategy="lazyOnload">
+          {antiConsolaScript}
+        </Script>
       </body>
     </html>
   )
