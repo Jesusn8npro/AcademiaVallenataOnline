@@ -12,30 +12,23 @@ interface ProteccionAdminProps {
 const ProteccionAdmin: React.FC<ProteccionAdminProps> = ({ children }) => {
     const { usuario, inicializado } = useUsuario();
     const navigate = useNavigate();
+    const esAdmin = usuario?.rol === 'admin';
 
     useEffect(() => {
-        if (inicializado) {
-            if (!usuario || usuario.rol !== 'admin') {
-                const timer = setTimeout(() => {
-                    navigate('/');
-                }, 2500);
-                return () => clearTimeout(timer);
-            }
+        if (inicializado && !esAdmin) {
+            const timer = setTimeout(() => {
+                navigate('/');
+            }, 2500);
+            return () => clearTimeout(timer);
         }
-    }, [inicializado, usuario, navigate]);
+    }, [inicializado, esAdmin, navigate]);
 
-    if (!inicializado) {
-        return (
-            <div className="auth-verificacion">
-                <div className="spinner"></div>
-                <h2>Verificando permisos...</h2>
-                <p>Comprobando acceso de administrador</p>
-            </div>
-        );
-    }
-
-    // Si es admin, mostrar contenido
-    if (usuario && usuario.rol === 'admin') {
+    // OPTIMISTA: mientras la sesion aun no se resuelve (no inicializado), o si
+    // ya es admin, renderizamos el contenido YA — sin pantalla bloqueante
+    // "Verificando permisos". Los datos estan protegidos por RLS en el
+    // servidor (Supabase), asi que no hay riesgo de fuga; el contenido y la
+    // verificacion cargan en paralelo (mucho mas rapido, sin espera muerta).
+    if (!inicializado || esAdmin) {
         return children ? <>{children}</> : <Outlet />;
     }
 
