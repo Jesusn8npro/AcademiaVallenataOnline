@@ -1,3 +1,0 @@
-export type { EstadisticasUsuarios, EstadisticasCursos, EstadisticasVentas, EstadisticasBlog, EstadisticasComunidad, EstadisticasTutoriales, EstadisticasEventos, EstadisticasNotificaciones, EstadisticasCompletas } from './admin/_tipos';
-export { formatearNumero, formatearMoneda, calcularCrecimiento } from './admin/utilidades';
-export { cargarEstadisticasUsuarios, cargarEstadisticasCursos, cargarEstadisticasVentas, cargarEstadisticasBlog, cargarEstadisticasComunidad, cargarEstadisticasTutoriales, cargarEstadisticasEventos, cargarEstadisticasNotificaciones, cargarTodasLasEstadisticas } from './admin/estadisticas';
