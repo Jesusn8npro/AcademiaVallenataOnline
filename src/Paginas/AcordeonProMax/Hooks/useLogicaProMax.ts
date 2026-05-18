@@ -946,8 +946,6 @@ export function useLogicaProMax() {
     setEfectosVisuales([]);
     setCuenta(null);
     motorAudioPro.detenerTodo();
-    if (typeof (motorAudioPro as any).reset === 'function') (motorAudioPro as any).reset();
-    if (typeof (motorAudioPro as any).stop === 'function') (motorAudioPro as any).stop();
     reproductor.detenerReproduccion();
     reproductor.setLoopPoints(0, 0, false);
     actualizarLoopAB({ start: 0, end: 0, activo: false, hasStart: false, hasEnd: false });
