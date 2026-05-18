@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React, { useEffect, useMemo, useState } from 'react'
 import './WizardContenido.css'
@@ -179,7 +180,7 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
                   <span className="icono">➕</span>
                   Crear Otro {tipo === 'curso' ? 'Curso' : 'Tutorial'}
                 </button>
-                <a href="/administrador/panel-contenido" className="btn-panel"><span className="icono">📊</span>Ir al Panel</a>
+                <Link href="/administrador/panel-contenido" className="btn-panel"><span className="icono">📊</span>Ir al Panel</Link>
               </div>
             </div>
           </div>

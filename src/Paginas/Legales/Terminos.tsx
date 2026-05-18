@@ -1,3 +1,4 @@
+import { Link } from '@/compat/router';
 import './terminos.css'
 
 export default function Terminos() {
@@ -12,7 +13,7 @@ export default function Terminos() {
         <div className="terminos-content">
           <header className="terminos-header">
             <div className="breadcrumb">
-              <a href="/" className="breadcrumb-link">Inicio</a>
+              <Link href="/" className="breadcrumb-link">Inicio</Link>
               <span className="breadcrumb-separator">›</span>
               <span className="breadcrumb-current">Términos y Condiciones</span>
             </div>
@@ -287,18 +288,18 @@ export default function Terminos() {
           <aside className="enlaces-relacionados">
             <h3>Documentos Relacionados</h3>
             <div className="enlaces-grid">
-              <a href="/privacidad" className="enlace-documento">
+              <Link href="/privacidad" className="enlace-documento">
                 <span className="enlace-icono">🔒</span>
                 <span className="enlace-texto">Políticas de Privacidad</span>
-              </a>
-              <a href="/contacto" className="enlace-documento">
+              </Link>
+              <Link href="/contacto" className="enlace-documento">
                 <span className="enlace-icono">📞</span>
                 <span className="enlace-texto">Contacto</span>
-              </a>
-              <a href="/" className="enlace-documento">
+              </Link>
+              <Link href="/" className="enlace-documento">
                 <span className="enlace-icono">🏠</span>
                 <span className="enlace-texto">Volver al Inicio</span>
-              </a>
+              </Link>
             </div>
           </aside>
         </div>

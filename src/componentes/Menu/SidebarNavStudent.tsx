@@ -1,3 +1,4 @@
+import { Link } from '@/compat/router';
 import React from 'react';
 import type { ProgresoEstudiante } from './useSidebarAdmin';
 
@@ -13,7 +14,7 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
       <div className="sidebar-admin-nav-section">
         {!colapsado && <div className="sidebar-admin-section-title">Mi Aprendizaje</div>}
 
-        <a href="/panel-estudiante" className={`sidebar-admin-nav-item ${esRutaActiva('/panel-estudiante') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/panel-estudiante" className={`sidebar-admin-nav-item ${esRutaActiva('/panel-estudiante') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="7" height="9" /><rect x="14" y="3" width="7" height="5" />
@@ -21,9 +22,9 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Mi Panel</span>}
-        </a>
+        </Link>
 
-        <a href="/mis-cursos" className={`sidebar-admin-nav-item ${esRutaActiva('/mis-cursos') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/mis-cursos" className={`sidebar-admin-nav-item ${esRutaActiva('/mis-cursos') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -36,22 +37,22 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
               <div className="sidebar-admin-nav-badge sidebar-admin-badge-progreso">{progresoEstudiante.porcentajeProgreso}%</div>
             </>
           )}
-        </a>
+        </Link>
 
-        <a href="/cursos" className={`sidebar-admin-nav-item ${esRutaActiva('/cursos') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/cursos" className={`sidebar-admin-nav-item ${esRutaActiva('/cursos') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Cursos & Tutoriales</span>}
-        </a>
+        </Link>
       </div>
 
       <div className="sidebar-admin-nav-section">
         {!colapsado && <div className="sidebar-admin-section-title">Práctica</div>}
 
-        <a href="/comunidad" className={`sidebar-admin-nav-item ${esRutaActiva('/comunidad') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/comunidad" className={`sidebar-admin-nav-item ${esRutaActiva('/comunidad') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -64,18 +65,18 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
               <div className="sidebar-admin-nav-badge">{progresoEstudiante.miembrosComunidad}</div>
             </>
           )}
-        </a>
+        </Link>
 
-        <a href="/ranking" className={`sidebar-admin-nav-item ${esRutaActiva('/ranking') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/ranking" className={`sidebar-admin-nav-item ${esRutaActiva('/ranking') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M16 16v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10c0-1.1.9-2 2-2h2l3-3 3 3h2a2 2 0 0 1 2 2v4M8 12l2 2 4-4" />
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Ranking</span>}
-        </a>
+        </Link>
 
-        <a href="/eventos" className={`sidebar-admin-nav-item ${esRutaActiva('/eventos') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/eventos" className={`sidebar-admin-nav-item ${esRutaActiva('/eventos') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -83,31 +84,31 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Eventos</span>}
-        </a>
+        </Link>
 
-        <a href="/mensajes" className={`sidebar-admin-nav-item ${esRutaActiva('/mensajes') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/mensajes" className={`sidebar-admin-nav-item ${esRutaActiva('/mensajes') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Mensajes</span>}
-        </a>
+        </Link>
       </div>
 
       <div className="sidebar-admin-nav-section">
         {!colapsado && <div className="sidebar-admin-section-title">Configuración</div>}
 
-        <a href="/mi-perfil" className={`sidebar-admin-nav-item ${esRutaActiva('/mi-perfil') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/mi-perfil" className={`sidebar-admin-nav-item ${esRutaActiva('/mi-perfil') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Mi Perfil</span>}
-        </a>
+        </Link>
 
-        <a href="/configuracion" className={`sidebar-admin-nav-item ${esRutaActiva('/configuracion') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/configuracion" className={`sidebar-admin-nav-item ${esRutaActiva('/configuracion') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
@@ -115,9 +116,9 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Configuración</span>}
-        </a>
+        </Link>
 
-        <a href="/grabaciones" className={`sidebar-admin-nav-item ${esRutaActiva('/grabaciones') ? 'sidebar-admin-destacado' : ''}`}>
+        <Link href="/grabaciones" className={`sidebar-admin-nav-item ${esRutaActiva('/grabaciones') ? 'sidebar-admin-destacado' : ''}`}>
           <div className="sidebar-admin-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
@@ -126,7 +127,7 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
             </svg>
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Grabaciones</span>}
-        </a>
+        </Link>
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import { useConfiguracionPerfil } from './Hooks/useConfiguracionPerfil';
 import { formatearPrecio, formatearFecha } from './utils/formatadores';
@@ -129,9 +130,9 @@ export default function ConfiguracionPerfil() {
                                     </div>
                                 </div>
                             )}
-                            <a href="/membresias" className="boton-principal">
+                            <Link href="/membresias" className="boton-principal">
                                 {membresiaActual ? '🔄 Cambiar plan' : '⬆️ Mejorar plan'}
-                            </a>
+                            </Link>
                         </div>
 
                         {historialPagos.length > 0 && (

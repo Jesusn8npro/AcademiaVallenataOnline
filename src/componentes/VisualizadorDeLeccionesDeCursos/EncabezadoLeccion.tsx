@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React from 'react'
 import './EncabezadoLeccion.css'
@@ -94,9 +95,9 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
               </svg>
             </button>
           )}
-          <a href="/" className="enlace-logo">
+          <Link href="/" className="enlace-logo">
             <img src="/logo-175.webp" alt="Academia Vallenata" className="logo" width="175" height="113" loading="lazy" decoding="async" />
-          </a>
+          </Link>
 
           {esDesktop ? (
             <div className="info-curso">

@@ -1,3 +1,4 @@
+import { Link } from '@/compat/router';
 import React from 'react';
 import './Footer.css';
 
@@ -22,17 +23,17 @@ const Footer: React.FC = () => {
           <div className="avo-footer-column">
             <h4>Legales</h4>
             <ul>
-              <li><a href="/privacidad">Política de Privacidad</a></li>
-              <li><a href="/terminos">Términos de Servicio</a></li>
+              <li><Link href="/privacidad">Política de Privacidad</Link></li>
+              <li><Link href="/terminos">Términos de Servicio</Link></li>
             </ul>
           </div>
           
           <div className="avo-footer-column">
             <h4>Nuestra Academia</h4>
             <ul>
-              <li><a href="/nuestra-academia">Sobre Nosotros</a></li>
-              <li><a href="/contacto">Contacto</a></li>
-              <li><a href="/cursos">Cursos</a></li>
+              <li><Link href="/nuestra-academia">Sobre Nosotros</Link></li>
+              <li><Link href="/contacto">Contacto</Link></li>
+              <li><Link href="/cursos">Cursos</Link></li>
             </ul>
           </div>
 

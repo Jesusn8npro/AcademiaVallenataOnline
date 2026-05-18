@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React, { useEffect, useState } from 'react'
 import { useParams } from '@/compat/router'
@@ -151,14 +152,14 @@ export default function ContenidoTutorial() {
           <p>{error}</p>
           <div className="botones-error">
             <button className="tp-btn-reintentar" onClick={cargarTutorial}>Intentar de nuevo</button>
-            <a href="/tutoriales" className="tp-link-volver">Volver a Tutoriales</a>
+            <Link href="/tutoriales" className="tp-link-volver">Volver a Tutoriales</Link>
           </div>
         </div>
       ) : tutorial ? (
         <>
           <div className="tp-header-contenido">
             <div className="tp-breadcrumb">
-              <a href="/tutoriales">Tutoriales</a>
+              <Link href="/tutoriales">Tutoriales</Link>
               <span className="separador">/</span>
               <span className="actual">{tutorial.titulo}</span>
             </div>
@@ -204,7 +205,7 @@ export default function ContenidoTutorial() {
                   <div className="tp-seccion-card" style={{ textAlign: 'center' }}>
                     <h3>¡Felicidades! Has completado este tutorial</h3>
                     <p>Has terminado todas las clases disponibles.</p>
-                    <a href="/tutoriales" className="tp-btn-final">Ver Más Tutoriales</a>
+                    <Link href="/tutoriales" className="tp-btn-final">Ver Más Tutoriales</Link>
                   </div>
                 )}
               </div>

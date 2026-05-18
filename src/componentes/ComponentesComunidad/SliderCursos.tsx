@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/compat/router';
 
 import React from 'react';
 import { useSliderCursos } from './Hooks/useSliderCursos';
@@ -53,7 +54,7 @@ const SliderCursos: React.FC = () => {
         </div>
         <div className="slider-cursos-empty">
           <p>No tienes cursos inscritos aún.</p>
-          <a href="/cursos" className="slider-cursos-btn-explorar">Explorar cursos</a>
+          <Link href="/cursos" className="slider-cursos-btn-explorar">Explorar cursos</Link>
         </div>
       </div>
     );
