@@ -83,10 +83,18 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
             if (sessionError || !session?.user) {
-                // Si no hay sesion valida, limpiar localStorage para evitar carga
-                // optimista falsa en proximas visitas (causaba errores 401 en
-                // useSesionTracker porque `estaAutenticado` retornaba true
-                // sin tener token Supabase valido).
+                // getSession() puede dar null TRANSITORIO justo al cargar
+                // (el cliente Supabase aun esta rehidratando/refrescando el
+                // token). Si HAY token en storage, NO es logout: no borrar
+                // cache ni marcar deslogueado (eso causaba "te saca y te mete
+                // de nuevo"). onAuthStateChange (INITIAL_SESSION/SIGNED_IN/
+                // TOKEN_REFRESHED) reintentara cargarUsuario cuando rehidrate.
+                const hayToken = typeof window !== 'undefined' && (
+                    !!localStorage.getItem('supabase.auth.token') ||
+                    Object.keys(localStorage).some(k => k.startsWith('sb-') && k.includes('-auth-token'))
+                )
+                if (hayToken) return
+                // Sin token => logout real: limpiar y finalizar.
                 setUsuario(null)
                 localStorage.removeItem('usuario_actual')
                 setInicializado(true)
@@ -205,7 +213,9 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                         }).catch(() => {})
                     }
                 }
-            } else if (event === 'TOKEN_REFRESHED') {
+            } else if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                // INITIAL_SESSION: el cliente termino de rehidratar el token.
+                // Recupera la sesion si getSession() dio null transitorio antes.
                 if (session?.user) cargarUsuario()
             } else if (event === 'SIGNED_OUT') {
                 setUsuario(null)
