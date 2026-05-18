@@ -1,9 +1,3 @@
-import withBundleAnalyzer from '@next/bundle-analyzer';
-
-const withAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-});
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -30,4 +24,18 @@ const nextConfig = {
   },
 }
 
-export default withAnalyzer(nextConfig)
+// El analyzer es devDependency — solo se activa localmente con ANALYZE=true.
+// En producción el paquete no está instalado, así que se omite con gracia.
+let exportConfig = nextConfig;
+if (process.env.ANALYZE === 'true') {
+  try {
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: true });
+    exportConfig = withBundleAnalyzer(nextConfig);
+  } catch {
+    console.warn('⚠️  @next/bundle-analyzer no instalado — corriendo sin analyzer');
+  }
+}
+
+export default exportConfig;
