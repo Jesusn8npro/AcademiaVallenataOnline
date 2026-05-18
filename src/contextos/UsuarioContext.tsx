@@ -32,9 +32,30 @@ interface UsuarioContextType {
 
 const UsuarioContext = createContext<UsuarioContextType | null>(null)
 
+// Lee el usuario cacheado DURANTE el render inicial (no en useEffect) para
+// que el primer fotograma ya tenga la sesion => sin flash "Verificando
+// permisos". Guard SSR: en prerender no hay localStorage.
+function leerUsuarioCacheInicial(): Usuario | null {
+    if (typeof window === 'undefined') return null
+    try {
+        const cached = localStorage.getItem('usuario_actual')
+        if (!cached) return null
+        const tieneToken =
+            !!localStorage.getItem('supabase.auth.token') ||
+            Object.keys(localStorage).some(k => k.startsWith('sb-') && k.includes('-auth-token'))
+        if (tieneToken) return JSON.parse(cached) as Usuario
+        localStorage.removeItem('usuario_actual') // cache huerfano sin sesion
+        return null
+    } catch { return null }
+}
+
 export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
-    const [usuario, setUsuarioState] = useState<Usuario | null>(null)
-    const [inicializado, setInicializado] = useState(false)
+    const [estadoInicial] = useState(() => {
+        const u = leerUsuarioCacheInicial()
+        return { usuario: u, inicializado: u !== null }
+    })
+    const [usuario, setUsuarioState] = useState<Usuario | null>(estadoInicial.usuario)
+    const [inicializado, setInicializado] = useState(estadoInicial.inicializado)
     const authInitialized = useRef(false)
 
     const estaAutenticado = usuario !== null
@@ -160,33 +181,10 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         if (authInitialized.current) return
         authInitialized.current = true
 
-        // 1. Carga optimista del Storage. SOLO si Supabase tiene el token de
-        //    auth en localStorage; de lo contrario, dejamos usuario=null y
-        //    esperamos a cargarUsuario(). Esto evita que useSesionTracker y
-        //    queries autenticadas disparen con usuario fantasma cuando la
-        //    sesion Supabase expiro pero el cache `usuario_actual` quedo
-        //    huerfano (causaba 400 refresh_token + 401 sesiones_usuario).
-        try {
-            const cached = localStorage.getItem('usuario_actual')
-            // El cliente Supabase usa storageKey: 'supabase.auth.token' (NO la
-            // clave por defecto sb-<ref>-auth-token). Hay que detectar ESA
-            // clave o jamas se reconoce la sesion: sin fast-path, flash de
-            // "Verificando permisos" y borrado erroneo del cache => expulsion.
-            const tieneTokenSupabase =
-                !!localStorage.getItem('supabase.auth.token') ||
-                Object.keys(localStorage).some(
-                    k => k.startsWith('sb-') && k.includes('-auth-token')
-                )
-            if (cached && tieneTokenSupabase) {
-                setUsuarioState(JSON.parse(cached))
-                setInicializado(true)
-            } else if (cached && !tieneTokenSupabase) {
-                // Cache huerfano: limpiar
-                localStorage.removeItem('usuario_actual')
-            }
-        } catch (e) { }
+        // 1. La carga optimista del cache ya se hizo en el render inicial
+        //    (leerUsuarioCacheInicial en el useState lazy) => sin flash.
 
-        // 2. Carga real
+        // 2. Carga real (refresca sesion/perfil desde Supabase)
         cargarUsuario()
 
         // 3. Listener de cambios
