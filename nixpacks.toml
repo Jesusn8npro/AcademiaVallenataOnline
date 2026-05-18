@@ -12,6 +12,12 @@
     # Nixpacks detecte Deno por la carpeta supabase/functions).
     nixPkgs = ["nodejs_22", "python3", "pkg-config", "vips"]
 
+[phases.install]
+    # --include=dev: con NODE_ENV=production npm omite devDependencies, pero
+    # el build necesita @tailwindcss/forms, @tailwindcss/typography,
+    # typescript, sharp, terser, etc. (todas devDependencies).
+    cmds = ["npm install --include=dev --no-audit --no-fund"]
+
 [phases.build]
     cmds = ["npm run build"]
 
