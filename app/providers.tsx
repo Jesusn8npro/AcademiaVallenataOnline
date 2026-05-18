@@ -8,13 +8,15 @@ import '@/idiomas/configuracionIdiomas'
 import { ErrorBoundary } from '@/componentes/ErrorBoundary'
 import { UsuarioProvider } from '@/contextos/UsuarioContext'
 import ArmazonApp from '@/componentes/Layout/ArmazonApp'
-import Cargando from './_cargando'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <UsuarioProvider>
-        <Suspense fallback={<Cargando />}>
+        {/* fallback={null}: el Suspense global envuelve TODA la app; un
+            spinner aquí taparía toda la pantalla ante cualquier carga
+            interna (auth, lazy). Cada componente maneja su propia carga. */}
+        <Suspense fallback={null}>
           <ArmazonApp>{children}</ArmazonApp>
         </Suspense>
       </UsuarioProvider>
