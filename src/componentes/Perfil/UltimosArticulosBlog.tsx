@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import { supabase, supabaseAnonimo } from '../../servicios/clienteSupabase'
+import { useNavigate } from '@/compat/router'
 import './UltimosArticulosBlog.css'
 
 export default function UltimosArticulosBlog() {
+  const navegar = useNavigate()
   const [articulos, setArticulos] = useState<any[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +45,7 @@ export default function UltimosArticulosBlog() {
   }
 
   function irAlBlog() {
-    window.location.href = '/blog'
+    navegar('/blog')
   }
 
   function formatearFecha(fecha: string) {

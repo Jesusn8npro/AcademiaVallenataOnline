@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { sanitizarHTML } from '../../../utilidades/sanitizar';
 import './HeroHome.css';
 import { heroStyles as styles } from './HeroHome.styles';
+import { useNavigate } from '@/compat/router';
 
 interface HeroHomeProps {
   scrollToSection: (id: string) => void;
@@ -12,13 +13,14 @@ interface HeroHomeProps {
 
 const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
   const { t } = useTranslation();
+  const navegar = useNavigate();
   // NO usar useState(false) + useEffect(setVisible(true)) aqui — causaba
   // forced reflow ~350ms en mobile: primer render sin contenido, useEffect
   // mete contenido, browser recalcula layout. Renderizamos siempre, las
   // animaciones flyIn las hace CSS al montar (gratis, sin layout thrash).
 
   const irAlCursoEstrella = () => {
-    window.location.href = '/curso-acordeon-desde-cero';
+    navegar('/curso-acordeon-desde-cero');
   };
 
   return (
