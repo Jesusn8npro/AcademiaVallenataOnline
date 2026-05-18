@@ -1,9 +1,14 @@
 [variables]
     NODE_ENV = "production"
-    NODE_OPTIONS = "--max-old-space-size=3072"
+    NODE_OPTIONS = "--max-old-space-size=4096"
+    # Control oficial de Nixpacks para la version de Node (Next 16 exige >=20.9).
+    # Evita depender de que el snapshot de nixpkgs tenga el atributo nodejs_22.
+    NIXPACKS_NODE_VERSION = "22"
 
 [phases.setup]
-    nixPkgs = ["nodejs_22", "python3", "pkg-config", "vips"]
+    # Solo dependencias del sistema (sharp/vips, node-gyp). Node lo gestiona
+    # el proveedor Node de Nixpacks segun NIXPACKS_NODE_VERSION / .nvmrc.
+    aptPkgs = ["python3", "pkg-config", "libvips-dev"]
 
 [phases.build]
     cmds = ["npm run build"]
