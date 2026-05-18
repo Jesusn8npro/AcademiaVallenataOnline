@@ -535,7 +535,14 @@ export class MotorAudioPro {
             source.connect(gain);
             gain.connect(this.contexto.destination);
             source.start(0);
+            this._keepAliveSource = source;
         } catch (_) { }
+    }
+
+    private _reiniciarKeepAlive() {
+        try { this._keepAliveSource?.stop(); this._keepAliveSource?.disconnect(); } catch (_) { }
+        this._keepAliveSource = null;
+        this._iniciarKeepAlive();
     }
 
     private _inicializarPool() {
@@ -1204,7 +1211,11 @@ export class MotorAudioPro {
 
     async activarContexto() {
         if (this.contexto.state === 'suspended' || this.contexto.state === 'interrupted') {
-            try { await this.contexto.resume(); } catch (_) { }
+            try {
+                await this.contexto.resume();
+                this._unlockedIOS = false;
+                this._reiniciarKeepAlive();
+            } catch (_) { }
         }
         // iOS Safari unlock: resume() solo NO basta para que AudioBufferSourceNode.start()
         // produzca sonido. Hay que reproducir AL MENOS UN buffer durante un user gesture
@@ -1227,6 +1238,7 @@ export class MotorAudioPro {
     }
 
     private _unlockedIOS: boolean = false;
+    private _keepAliveSource: AudioBufferSourceNode | null = null;
 
     obtenerBanco(id: string, nombre: string): BancoSonido {
         if (!this.bancos.has(id)) {

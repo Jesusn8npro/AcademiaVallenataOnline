@@ -226,23 +226,22 @@ export const usePointerAcordeon = ({
         // en pitos). e.target es solo del primer toque; filtrar por e.target descarta
         // el evento entero. Iteramos cada changedTouch para no perder pitos cuando
         // hay un dedo en zona no-jugable simultaneamente.
-        const handleTouchStart = (e: TouchEvent) => {
+        const handleTouchStart = async (e: TouchEvent) => {
             if (desactivarAudioRef.current) return;
-            let huboRegistro = false;
+            const touchesValidos: Array<{id: number; target: HTMLElement; x: number; y: number}> = [];
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 const tTarget = t.target as HTMLElement;
                 if (!enAreaJuego(tTarget)) continue;
-                // Si el touch empieza sobre un rect bloqueador (panel FX), no
-                // se registra — evita activar pitos tapados por el panel.
                 if (enRectBloqueador(t.clientX, t.clientY)) continue;
-                if (!huboRegistro) {
-                    motorAudioPro.activarContexto();
-                    huboRegistro = true;
-                }
-                registrarInicio(t.identifier, tTarget, t.clientX, t.clientY, e.timeStamp);
+                touchesValidos.push({ id: t.identifier, target: tTarget, x: t.clientX, y: t.clientY });
             }
-            if (huboRegistro && e.cancelable) e.preventDefault();
+            if (touchesValidos.length === 0) return;
+            if (e.cancelable) e.preventDefault();
+            await motorAudioPro.activarContexto();
+            for (const touch of touchesValidos) {
+                registrarInicio(touch.id, touch.target, touch.x, touch.y, e.timeStamp);
+            }
         };
 
         // touchmove: procesar solo touches registrados en pointersMap. Permite que
@@ -265,14 +264,14 @@ export const usePointerAcordeon = ({
         };
 
         // ============== POINTER EVENTS (mouse desktop) ==============
-        const handlePointerDown = (e: PointerEvent) => {
+        const handlePointerDown = async (e: PointerEvent) => {
             if (e.pointerType === 'touch') return; // En táctil usamos touch events.
             if (desactivarAudioRef.current) return;
             // Click sobre el panel FX: ignora — los pitos tapados no deben sonar.
             if (enRectBloqueador(e.clientX, e.clientY)) return;
             const target = e.target as HTMLElement;
             if (enAreaJuego(target) && e.cancelable) e.preventDefault();
-            motorAudioPro.activarContexto();
+            await motorAudioPro.activarContexto();
             registrarInicio(e.pointerId, target, e.clientX, e.clientY, e.timeStamp);
         };
 
