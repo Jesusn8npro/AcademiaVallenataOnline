@@ -1,14 +1,16 @@
 [variables]
     NODE_ENV = "production"
     NODE_OPTIONS = "--max-old-space-size=4096"
-    # Control oficial de Nixpacks para la version de Node (Next 16 exige >=20.9).
-    # Evita depender de que el snapshot de nixpkgs tenga el atributo nodejs_22.
-    NIXPACKS_NODE_VERSION = "22"
 
 [phases.setup]
-    # Solo dependencias del sistema (sharp/vips, node-gyp). Node lo gestiona
-    # el proveedor Node de Nixpacks segun NIXPACKS_NODE_VERSION / .nvmrc.
-    aptPkgs = ["python3", "pkg-config", "libvips-dev"]
+    # El nixpkgs por defecto de Nixpacks/Easypanel es viejo: no tiene
+    # `nodejs_22` y su `nodejs_20` es 20.6.1 (Next 16 exige >=20.9).
+    # Fijamos un snapshot de nixpkgs que SÍ trae Node 22.13.1.
+    # (commit verificado, ver echobind.com/post/solving-nixpacks-node-version-issues)
+    nixpkgsArchive = "51ad838b03a05b1de6f9f2a0fffecee64a9788ee"
+    # Declarar nodejs_22 explícito mantiene el proveedor Node (evita que
+    # Nixpacks detecte Deno por la carpeta supabase/functions).
+    nixPkgs = ["nodejs_22", "python3", "pkg-config", "vips"]
 
 [phases.build]
     cmds = ["npm run build"]
