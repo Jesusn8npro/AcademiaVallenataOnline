@@ -2,6 +2,7 @@
 import { Link } from '@/compat/router';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import BusquedaGlobal from '../BusquedaGlobal/BusquedaGlobal';
 import MenuLateralResponsive from './MenuLateralResponsive';
 import NotificacionesPanel from '../Notificaciones/NotificacionesPanel';
@@ -15,8 +16,8 @@ const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size
     const imagenFinal = !src || imgError ? '/images/perfil-portada/Imagen perfil 1.jpg' : src;
     const tamaño = size === 'large' ? '50px' : '40px';
     return (
-        <div style={{ width: tamaño, height: tamaño, borderRadius: '50%', backgroundColor: '#f3f4f6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={imagenFinal} alt={alt} onError={() => setImgError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ width: tamaño, height: tamaño, borderRadius: '50%', backgroundColor: '#f3f4f6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <Image src={imagenFinal} alt={alt} fill onError={() => setImgError(true)} style={{ objectFit: 'cover' }} />
         </div>
     );
 };
@@ -45,7 +46,7 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                 <div className="nav-auth-left">
                     <div className="nav-auth-logo">
                         <a href={esAdmin ? '/panel-administracion' : '/panel-estudiante'}>
-                            <img src="/logo-175.webp" alt="Logo Academia" className="nav-auth-logo-img" width="175" height="113" fetchPriority="high" decoding="async" />
+                            <Image src="/logo-175.webp" alt="Logo Academia" className="nav-auth-logo-img" width={175} height={113} priority />
                         </a>
                     </div>
                     <button className="nav-auth-hamburger" onClick={toggleMenuLateral} aria-label="Menú">

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRankingComunidad } from './Hooks/useRankingComunidad';
 import './RankingComunidadNuevo.css';
 
@@ -56,7 +57,7 @@ const RankingComunidadNuevo: React.FC = () => {
 
               <div className="ranking-card-avatar">
                 {item.usuario?.url_foto_perfil ? (
-                  <img src={item.usuario.url_foto_perfil} alt={item.usuario?.nombre} />
+                  <Image src={item.usuario.url_foto_perfil} alt={item.usuario?.nombre || ''} fill style={{ objectFit: 'cover', borderRadius: '16px' }} />
                 ) : (
                   <div className="ranking-avatar-text">
                     {(item.usuario?.nombre || 'U').charAt(0)}

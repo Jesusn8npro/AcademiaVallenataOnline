@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react'
+import Image from 'next/image'
 import './BarraLateralCurso.css'
 import { useBarraLateralCurso } from './useBarraLateralCurso'
 import { prefetchVideoFirmado } from '../../hooks/useVideoFirmado'
@@ -133,10 +134,12 @@ const BarraLateralCurso: React.FC<BarraLateralCursoProps> = ({
                             <div className="blc-lesson-thumbnail">
                               {leccion.video_url ? (
                                 leccion.video_url.includes('youtube.com') || leccion.video_url.includes('youtu.be') ? (
-                                  <img
+                                  <Image
                                     src={obtenerMiniatura(leccion.video_url)}
                                     alt={leccion.titulo}
-                                    loading="lazy"
+                                    fill
+                                    unoptimized
+                                    style={{ objectFit: 'cover' }}
                                     onError={(e) => {
                                       const imgElement = e.currentTarget as HTMLImageElement
                                       if (imgElement) {
