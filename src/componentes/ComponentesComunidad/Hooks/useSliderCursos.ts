@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 
 interface Inscripcion {
@@ -39,6 +40,7 @@ interface Progreso {
 }
 
 export function useSliderCursos() {
+  const navegar = useNavigate();
   const [inscripciones, setInscripciones] = useState<Inscripcion[]>([]);
   const [progreso, setProgreso] = useState<Record<string, Progreso>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -224,7 +226,7 @@ export function useSliderCursos() {
     const esCurso = !!inscripcion.cursos;
     const contenido = esCurso ? inscripcion.cursos : inscripcion.tutoriales;
     if (!contenido) return;
-    window.location.href = esCurso ? `/cursos/${contenido.slug}` : `/tutoriales/${contenido.slug}`;
+    navegar(esCurso ? `/cursos/${contenido.slug}` : `/tutoriales/${contenido.slug}`);
   };
 
   return {

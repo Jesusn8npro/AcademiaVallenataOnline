@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react'
+import { useNavigate } from '@/compat/router'
 
 interface TarjetaArticuloProps {
   titulo?: string
@@ -19,6 +20,7 @@ const TarjetaArticulo: React.FC<TarjetaArticuloProps> = ({
   titulo = 'Título del artículo', resumen = 'Resumen breve del artículo.', contenido = '', autor = '', creado_en = '', imagen_url = '', slug = '', categoria = 'General', lecturas = 0, lectura_min
 }) => {
   const [imagenCargada, setImagenCargada] = useState(false)
+  const navegar = useNavigate()
   // Fallback estricto de autor
   const autorFinal = (!autor || autor.length > 20) ? 'Maestro Jesus Gonzalez' : autor;
 
@@ -31,7 +33,7 @@ const TarjetaArticulo: React.FC<TarjetaArticuloProps> = ({
   const resumenOptimizado = resumen && resumen.length > 120 ? resumen.slice(0, 120).replace(/\s+\S*$/, '...') : resumen
   const imagenFinal = imagen_url || 'https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=800&q=80'
   const lecturasFormateadas = lecturas > 1000 ? `${(lecturas / 1000).toFixed(1)}k` : lecturas
-  const irAlArticulo = () => { if (slug) window.location.href = `/blog/${slug}` }
+  const irAlArticulo = () => { if (slug) navegar(`/blog/${slug}`) }
   const manejarErrorImagen = (event: React.SyntheticEvent<HTMLImageElement>) => { (event.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=800&q=80' }
   const manejarKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') irAlArticulo() }
 

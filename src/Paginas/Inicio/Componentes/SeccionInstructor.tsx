@@ -5,9 +5,11 @@ import FotoMaestro__img from '../../../assets/images/Foto maestro oficial JESUS 
 const FotoMaestro = (((FotoMaestro__img) as any)?.src ?? (FotoMaestro__img)) as string;
 import './SeccionInstructor.css';
 import { instructorStyles as styles } from './SeccionInstructor.styles';
+import { useNavigate } from '@/compat/router';
 
 const SeccionInstructor: React.FC = () => {
   const [visible, setVisible] = useState(false);
+  const navegar = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -23,7 +25,7 @@ const SeccionInstructor: React.FC = () => {
   }, []);
 
   const irAlCurso = () => {
-    window.location.href = '/curso-acordeon-desde-cero';
+    navegar('/curso-acordeon-desde-cero');
   };
 
   return (

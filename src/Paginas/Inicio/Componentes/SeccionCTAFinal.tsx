@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import './SeccionCTAFinal.css';
 import { ctaFinalStyles as styles } from './SeccionCTAFinal.styles';
+import { useNavigate } from '@/compat/router';
 
 const SeccionCTAFinal: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [mensajeSimulador, setMensajeSimulador] = useState<string | null>(null);
+  const navegar = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -22,7 +24,7 @@ const SeccionCTAFinal: React.FC = () => {
   }, []);
 
   const irAlCursoEstrella = () => {
-    window.location.href = '/curso-acordeon-desde-cero';
+    navegar('/curso-acordeon-desde-cero');
   };
 
   const mostrarMensajeSimulador = () => {

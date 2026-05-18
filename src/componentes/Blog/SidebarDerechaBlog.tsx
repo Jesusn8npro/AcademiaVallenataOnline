@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabaseAnonimo } from '../../servicios/clienteSupabase'
+import { useNavigate } from '@/compat/router'
 
 interface ContenidoSidebar {
   id: string
@@ -14,6 +15,7 @@ interface ContenidoSidebar {
 }
 
 const SidebarDerechaBlog: React.FC = () => {
+  const navegar = useNavigate()
   const [email, setEmail] = useState('')
   const [nombre, setNombre] = useState('')
   const [estadoForm, setEstadoForm] = useState<'idle' | 'enviando' | 'ok' | 'duplicado' | 'error'>('idle')
@@ -180,7 +182,7 @@ const SidebarDerechaBlog: React.FC = () => {
               ))}
               <button
                 style={s.btnVerTodos}
-                onClick={() => { window.location.href = '/tutoriales' }}
+                onClick={() => { navegar('/tutoriales') }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#ede9fe' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc' }}
               >

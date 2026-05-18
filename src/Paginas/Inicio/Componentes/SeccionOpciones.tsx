@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import './SeccionOpciones.css';
 import { opcionesStyles as styles } from './SeccionOpciones.styles';
+import { useNavigate } from '@/compat/router';
 
 // Import explícito de las imágenes desde src/assets — Vite las bundlea con hash en el build.
 // Antes el componente usaba strings tipo "/images/Clusters .../Cursos-De-Acordeon.jpg" que
@@ -32,6 +33,7 @@ const getGradientStyle = (color: string) =>
 const SeccionOpciones: React.FC = () => {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(true);
+  const navegar = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -56,7 +58,7 @@ const SeccionOpciones: React.FC = () => {
       beneficios: t('seccionOpciones.opciones.cursos.beneficios', { returnObjects: true }) as string[],
       precio: t('seccionOpciones.opciones.cursos.precio'),
       destacado: false,
-      action: () => window.location.href = '/cursos'
+      action: () => navegar('/cursos')
     },
     {
       titulo: t('seccionOpciones.opciones.tutoriales.titulo'),
@@ -67,7 +69,7 @@ const SeccionOpciones: React.FC = () => {
       beneficios: t('seccionOpciones.opciones.tutoriales.beneficios', { returnObjects: true }) as string[],
       precio: t('seccionOpciones.opciones.tutoriales.precio'),
       destacado: false,
-      action: () => window.location.href = '/tutoriales'
+      action: () => navegar('/tutoriales')
     },
     {
       titulo: t('seccionOpciones.opciones.paquetes.titulo'),
@@ -78,7 +80,7 @@ const SeccionOpciones: React.FC = () => {
       beneficios: t('seccionOpciones.opciones.paquetes.beneficios', { returnObjects: true }) as string[],
       precio: t('seccionOpciones.opciones.paquetes.precio'),
       destacado: false,
-      action: () => window.location.href = '/paquetes'
+      action: () => navegar('/paquetes')
     },
     {
       titulo: t('seccionOpciones.opciones.clases.titulo'),
@@ -89,7 +91,7 @@ const SeccionOpciones: React.FC = () => {
       beneficios: t('seccionOpciones.opciones.clases.beneficios', { returnObjects: true }) as string[],
       precio: t('seccionOpciones.opciones.clases.precio'),
       destacado: false,
-      action: () => window.location.href = '/contacto'
+      action: () => navegar('/contacto')
     }
   ];
 
@@ -201,7 +203,7 @@ const SeccionOpciones: React.FC = () => {
                   components={{ 1: <strong style={{ color: '#fbbf24' }} /> }}
                 />
               </p>
-              <button style={styles.botonAsesoria} onClick={() => window.location.href = '/contacto'}>
+              <button style={styles.botonAsesoria} onClick={() => navegar('/contacto')}>
                 {t('seccionOpciones.asesoria.boton')}
               </button>
               <div style={styles.garantiaTexto}>
