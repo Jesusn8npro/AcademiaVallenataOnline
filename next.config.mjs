@@ -5,9 +5,18 @@ const nextConfig = {
   // catch-all. Ignoramos errores TS/ESLint preexistentes (~92k líneas) para
   // alcanzar el checkpoint funcional; se endurece en fases posteriores.
   typescript: { ignoreBuildErrors: true },
-  // Imágenes remotas (Supabase Storage, Bunny CDN, etc.) sin optimización
-  // por ahora para no romper ningún <img> existente.
-  images: { unoptimized: true },
+  // Optimización de imágenes activada. Los <img> existentes NO se ven
+  // afectados (Next solo procesa <Image/>); al migrar imágenes a next/image
+  // (logo, heros) se sirven en AVIF/WebP con tamaños responsive.
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'tbijzvtyyewhtwgakgka.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.b-cdn.net' },
+      { protocol: 'https', hostname: 'iframe.mediadelivery.net' },
+    ],
+  },
   // Tree-shaking de iconos (lucide-react se usa en 100+ archivos): solo
   // entran al bundle los iconos realmente usados.
   experimental: {
