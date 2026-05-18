@@ -103,6 +103,11 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
     useEffect(() => { ajustesRef.current = ajustes; }, [ajustes]);
 
     const botonesActivosRef = useRef<Record<string, any>>({});
+    // En el PRIMER montaje construimos el mapa de notas + arrancamos la
+    // precarga de samples de inmediato (sin esperar 80ms) para que no haya
+    // "ventana muerta" donde tocar no suena. En cambios posteriores (drag de
+    // sliders) mantenemos el debounce de 80ms para no reconstruir en bucle.
+    const primeraCargaAudioRef = useRef(true);
     const soundsPerKeyRef = useRef<Record<string, string[]>>({});
     const basePitchesRef = useRef<Record<string, number>>({});
     const teclasFastMapRef = useRef<Record<string, any>>({});
@@ -479,7 +484,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         // Vaciamos solo el mapa de rutas rápidas; NO limpiamos el banco de audio para no forzar redescargas en cada cambio.
         soundsPerKeyRef.current = {};
 
-        const timer = setTimeout(() => {
+        const construir = () => {
             const todosLosIds: string[] = [];
             Object.values(mapaBotonesActual.current).forEach((btn: any) => {
                 const baseId = btn.id.split('-')[0] + '-' + btn.id.split('-')[1];
@@ -522,8 +527,18 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
             Object.entries(mapaTeclas).forEach(([k, v]) => procesarTecla(k, v, false));
             Object.entries(mapaTeclasBajos).forEach(([k, v]) => procesarTecla(k, v, true));
             teclasFastMapRef.current = nuevoFastMap;
-        }, 80);
+        };
 
+        // Primer montaje: ejecutar YA (sin ventana muerta de 80ms; tocar
+        // suena al instante y los samples empiezan a cargar de inmediato).
+        if (primeraCargaAudioRef.current) {
+            primeraCargaAudioRef.current = false;
+            construir();
+            return;
+        }
+        // Cambios posteriores (drag de sliders): debounce 80ms para no
+        // reconstruir el fastMap en bucle durante el arrastre.
+        const timer = setTimeout(construir, 80);
         return () => clearTimeout(timer);
     }, [ajustes, tonalidadSeleccionada, obtenerRutasAudio, muestrasDB, instrumentoId, muestrasLocalesDB]);
 
