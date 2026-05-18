@@ -154,10 +154,38 @@ const antiConsolaScript = `
 })();
 `
 
+// Mata el Service Worker viejo de Vite/PWA que quedó registrado en los
+// navegadores de visitantes de la versión anterior. Ese SW servía un
+// index.html cacheado que apunta a chunks vendor-*.js inexistentes en
+// Next => 404 => "Algo salió mal". Se desregistra, limpia caches y
+// recarga UNA vez (guardado en sessionStorage para no hacer loop).
+const swKillScript = `
+(function () {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function (regs) {
+    if (!regs || !regs.length) return;
+    Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
+      var limpiar = (window.caches && caches.keys)
+        ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
+        : Promise.resolve();
+      limpiar.then(function () {
+        try {
+          if (!sessionStorage.getItem('__sw_purgado')) {
+            sessionStorage.setItem('__sw_purgado', '1');
+            location.reload();
+          }
+        } catch (e) { location.reload(); }
+      });
+    });
+  }).catch(function () {});
+})();
+`
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
