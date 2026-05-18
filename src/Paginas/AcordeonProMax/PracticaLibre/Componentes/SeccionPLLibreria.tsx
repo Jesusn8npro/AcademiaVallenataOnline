@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Music, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { useCancionesProMax } from '../../Hooks/useCancionesProMax';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
+import { formatearTiempoTicks, parsearArrayJSON as parsearSecciones } from '../../../../utilidades/formatadores';
 
 interface SeccionPLLibreriaProps {
   onSeleccionarCancion: (cancion: CancionHeroConTonalidad) => void;
@@ -18,23 +19,6 @@ const DIFICULTAD_COLOR: Record<string, string> = {
   BASICO: '#22c55e',
   INTERMEDIO: '#f59e0b',
   PROFESIONAL: '#ef4444',
-};
-
-const formatearTiempoTicks = (ticks: number, bpm: number, resolucion = 192) => {
-  const seg = (ticks / resolucion) * (60 / Math.max(1, bpm));
-  const m = Math.floor(seg / 60);
-  const s = Math.floor(seg % 60);
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
-};
-
-const parsearSecciones = (raw: any): any[] => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'string') {
-    try { const parsed = JSON.parse(raw); return Array.isArray(parsed) ? parsed : []; }
-    catch { return []; }
-  }
-  return [];
 };
 
 const SeccionPLLibreria: React.FC<SeccionPLLibreriaProps> = ({
