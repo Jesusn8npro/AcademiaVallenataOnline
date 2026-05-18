@@ -47,7 +47,7 @@ export function useModalInicioSesion({ abierto, onCerrar }: UseModalInicioSesion
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [mostrarContrasenaRegistro, setMostrarContrasenaRegistro] = useState(false);
   const [codigoPais, setCodigoPais] = useState('+57');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);

@@ -7,12 +7,15 @@ import { Suspense } from 'react'
 import '@/idiomas/configuracionIdiomas'
 import { ErrorBoundary } from '@/componentes/ErrorBoundary'
 import { UsuarioProvider } from '@/contextos/UsuarioContext'
+import ArmazonApp from '@/componentes/Layout/ArmazonApp'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <UsuarioProvider>
-        <Suspense fallback={null}>{children}</Suspense>
+        <Suspense fallback={null}>
+          <ArmazonApp>{children}</ArmazonApp>
+        </Suspense>
       </UsuarioProvider>
     </ErrorBoundary>
   )

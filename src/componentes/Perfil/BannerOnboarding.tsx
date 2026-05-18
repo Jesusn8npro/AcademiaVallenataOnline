@@ -31,7 +31,7 @@ function esValorReal(val: any) {
 
 export default function BannerOnboarding({ perfil }: { perfil: any }) {
   const storageKey = `banner_onboarding_descartado_${perfil?.id}`
-  const [descartado, setDescartado] = useState(() => !!localStorage.getItem(storageKey))
+  const [descartado, setDescartado] = useState(() => typeof window !== 'undefined' && !!localStorage.getItem(storageKey))
 
   const { completitud, faltantes } = useMemo(() => {
     let completitud = 0

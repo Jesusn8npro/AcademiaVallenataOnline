@@ -2,8 +2,8 @@
 
 import React, { useRef, useState } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
-import imgAvatarDefault from '../../assets/images/perfil-portada/Imagen perfil 1.jpg'
-
+import imgAvatarDefault__img from '../../assets/images/perfil-portada/Imagen perfil 1.jpg';
+const imgAvatarDefault = (((imgAvatarDefault__img) as any)?.src ?? (imgAvatarDefault__img)) as string;
 interface Props {
   urlFoto: string | null | undefined
   nombreUsuario: string

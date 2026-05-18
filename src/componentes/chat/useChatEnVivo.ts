@@ -3,6 +3,7 @@ import { useUsuario } from '../../contextos/UsuarioContext'
 import { supabase as clienteSupabase } from '../../servicios/clienteSupabase'
 
 const obtenerSessionId = (): string => {
+  if (typeof window === 'undefined') return ''
   let id = localStorage.getItem('chat_session_id')
   if (!id) {
     id = 'ac_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
@@ -42,8 +43,11 @@ function playRingSound() {
 export function useChatEnVivo() {
   const { usuario } = useUsuario()
 
-  const [chatAbierto, setChatAbierto] = useState(() => localStorage.getItem('chat_abierto_estado') === 'true')
+  const [chatAbierto, setChatAbierto] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('chat_abierto_estado') === 'true',
+  )
   const [mensajes, setMensajes] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return []
     try {
       const saved = localStorage.getItem('chat_historial_msgs')
       return saved ? JSON.parse(saved) : []

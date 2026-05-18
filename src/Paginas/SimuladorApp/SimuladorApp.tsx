@@ -138,7 +138,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
 
     const [bajosVisible, setBajosVisible] = useState(false);
     const [bpmMetronomo, setBpmMetronomo] = useState(80);
-    const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+    const [isLandscape, setIsLandscape] = useState(typeof window === 'undefined' ? true : window.innerWidth > window.innerHeight);
 
     const x = useMotionValue(0);
     const trenRef = useRef<HTMLDivElement>(null);

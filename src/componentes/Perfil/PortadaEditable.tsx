@@ -2,8 +2,8 @@
 
 import React, { useRef, useState } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
-import imgPortadaDefault from '../../assets/images/perfil-portada/Imagen de portada.webp'
-
+import imgPortadaDefault__img from '../../assets/images/perfil-portada/Imagen de portada.webp';
+const imgPortadaDefault = (((imgPortadaDefault__img) as any)?.src ?? (imgPortadaDefault__img)) as string;
 interface Props {
   urlPortada: string | null | undefined
   posicionPortadaY: number
