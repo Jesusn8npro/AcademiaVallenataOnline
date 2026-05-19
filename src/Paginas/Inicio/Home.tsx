@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import HeroHome from './Componentes/HeroHome';
-import SeccionOpciones from './Componentes/SeccionOpciones';
-import SeccionInstructor from './Componentes/SeccionInstructor';
-import SeccionStats from './Componentes/SeccionStats';
-import SeccionCTAFinal from './Componentes/SeccionCTAFinal';
 import SEO from '../../componentes/common/SEO';
+
+const SeccionOpciones = dynamic(() => import('./Componentes/SeccionOpciones'), { ssr: false });
+const SeccionInstructor = dynamic(() => import('./Componentes/SeccionInstructor'), { ssr: false });
+const SeccionStats = dynamic(() => import('./Componentes/SeccionStats'), { ssr: false });
+const SeccionCTAFinal = dynamic(() => import('./Componentes/SeccionCTAFinal'), { ssr: false });
 
 const Home: React.FC = () => {
   useEffect(() => {

@@ -122,7 +122,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
           <Link href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
-            <Image src="/logo-175.webp" alt="Logo Academia Vallenata" width={175} height={113} priority />
+            <Image src="/logo-175.webp" alt="Logo Academia Vallenata" width={175} height={113} priority quality={65} />
           </Link>
 
           {/* Menú de navegación */}
