@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import './PestanaCursos.css';
 import { usePestanaCursos, formatearFecha, formatearPrecio, type Usuario, type Inscripcion, type Paquete } from './usePestanaCursos';
 
@@ -66,7 +67,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario }) => {
                   {cursosInscritos.map((inscripcion: Inscripcion) => (
                     <div key={inscripcion.id} className="pestana-cursos-curso-item-compacto">
                       <div className="pestana-cursos-curso-imagen-mini">
-                        {inscripcion.curso && <img src={inscripcion.curso.imagen_url} alt={inscripcion.curso.titulo} />}
+                        {inscripcion.curso && <Image src={inscripcion.curso.imagen_url} alt={inscripcion.curso.titulo} width={56} height={56} style={{ objectFit: 'cover' }} />}
                       </div>
                       <div className="pestana-cursos-curso-info-mini">
                         <h4>{inscripcion.curso?.titulo || 'Curso sin título'}</h4>
@@ -162,7 +163,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario }) => {
                     <div className="pestana-cursos-grid-cursos-disponibles">
                       {cursosDisponiblesFiltrados.map((curso) => (
                         <div key={curso.id} className="pestana-cursos-curso-disponible">
-                          <div className="pestana-cursos-curso-imagen-mini"><img src={curso.imagen_url} alt={curso.titulo} /></div>
+                          <div className="pestana-cursos-curso-imagen-mini"><Image src={curso.imagen_url} alt={curso.titulo} width={56} height={56} style={{ objectFit: 'cover' }} /></div>
                           <div className="pestana-cursos-curso-info-mini">
                             <h5>{curso.titulo}</h5>
                             <p className="pestana-cursos-tipo">📚 Curso Completo</p>
@@ -186,7 +187,7 @@ const PestanaCursos: React.FC<Props> = ({ usuario }) => {
                     <div className="pestana-cursos-grid-cursos-disponibles">
                       {tutorialesPaginados.map((tutorial) => (
                         <div key={tutorial.id} className="pestana-cursos-curso-disponible">
-                          <div className="pestana-cursos-curso-imagen-mini"><img src={tutorial.imagen_url} alt={tutorial.titulo} /></div>
+                          <div className="pestana-cursos-curso-imagen-mini"><Image src={tutorial.imagen_url} alt={tutorial.titulo} width={56} height={56} style={{ objectFit: 'cover' }} /></div>
                           <div className="pestana-cursos-curso-info-mini">
                             <h5>{tutorial.titulo}</h5>
                             <p className="pestana-cursos-duracion">⏱️ {tutorial.duracion} min</p>

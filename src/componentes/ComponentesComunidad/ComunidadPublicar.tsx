@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useComunidadPublicar } from './Hooks/useComunidadPublicar';
 import type { Usuario } from '../../Paginas/Comunidad/tipos';
 import './ComunidadPublicar.css';
@@ -25,9 +26,11 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
       <div className="comunidad-publicar-contenedor">
         <div className="comunidad-publicar-header">
           <div className="comunidad-publicar-avatar-usuario">
-            <img
+            <Image
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'Usuario')}`}
               alt="Avatar"
+              width={40}
+              height={40}
               className="comunidad-publicar-avatar-img"
             />
           </div>
@@ -86,9 +89,11 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
             </div>
 
             <div className="comunidad-publicar-info-usuario">
-              <img
+              <Image
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'Usuario')}`}
                 alt="Avatar"
+                width={48}
+                height={48}
                 className="comunidad-publicar-avatar-usuario-grande"
               />
               <div className="comunidad-publicar-detalles-usuario">
@@ -102,6 +107,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
             <form className="comunidad-publicar-modal-formulario" onSubmit={(e) => { e.preventDefault(); publicar(); }}>
               {gifSeleccionado && (
                 <div className="comunidad-publicar-preview-gif">
+                  {/* TODO: migrar a <Image> — gifSeleccionado es de dominio externo (Tenor/Giphy) no listado en remotePatterns */}
                   <img src={gifSeleccionado} alt="GIF seleccionado" className="comunidad-publicar-imagen-gif" />
                   <button
                     type="button"
@@ -141,6 +147,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                       </label>
                     ) : (
                       <div className="comunidad-publicar-preview-archivo">
+                        {/* TODO: migrar a <Image> — fotoPreview puede ser blob: (URL.createObjectURL) */}
                         <img src={fotoPreview || ''} alt="Preview" className="comunidad-publicar-imagen-preview" />
                         <div className="comunidad-publicar-info-archivo">
                           <div className="comunidad-publicar-nombre-archivo">{fotoFile.name}</div>

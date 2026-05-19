@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import DetalleUsuario from './Componentes/DetalleUsuario';
 import CrearUsuario from './Componentes/CrearUsuario';
 import './GestionUsuarios.css';
@@ -188,7 +189,7 @@ const GestionUsuarios: React.FC = () => {
                         <td className="gestion-usuarios-celda-usuario">
                           <div className="gestion-usuarios-info-usuario" onClick={() => seleccionarUsuario(usuario)} style={{ cursor: 'pointer' }}>
                             {usuario.url_foto_perfil ? (
-                              <img src={usuario.url_foto_perfil} alt={usuario.nombre_completo} className="gestion-usuarios-avatar" />
+                              <Image src={usuario.url_foto_perfil} alt={usuario.nombre_completo} width={40} height={40} style={{ objectFit: 'cover' }} className="gestion-usuarios-avatar" />
                             ) : (
                               <div className="gestion-usuarios-avatar-placeholder">
                                 {usuario.nombre?.charAt(0) || ''}{usuario.apellido?.charAt(0) || ''}

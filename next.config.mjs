@@ -18,6 +18,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'ui-avatars.com' },
       { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'randomuser.me' },
     ],
   },
   // Tree-shaking de iconos (lucide-react se usa en 100+ archivos): solo

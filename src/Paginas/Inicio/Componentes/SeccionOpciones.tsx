@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
+import Image from 'next/image';
 import './SeccionOpciones.css';
 import { opcionesStyles as styles } from './SeccionOpciones.styles';
 import { useNavigate } from '@/compat/router';
@@ -10,14 +11,10 @@ import { useNavigate } from '@/compat/router';
 // Antes el componente usaba strings tipo "/images/Clusters .../Cursos-De-Acordeon.jpg" que
 // apuntan a /public/, pero las imágenes nunca estuvieron en public/ → los <img> daban 404
 // y se veía el placeholder gris de la card. Las imágenes viven en src/assets/images/.
-import imgCursos__img from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.webp';
-const imgCursos = (((imgCursos__img) as any)?.src ?? (imgCursos__img)) as string;
-import imgTutoriales__img from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.webp';
-const imgTutoriales = (((imgTutoriales__img) as any)?.src ?? (imgTutoriales__img)) as string;
-import imgPaquetes__img from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.webp';
-const imgPaquetes = (((imgPaquetes__img) as any)?.src ?? (imgPaquetes__img)) as string;
-import imgClases__img from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.webp';
-const imgClases = (((imgClases__img) as any)?.src ?? (imgClases__img)) as string;
+import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.webp';
+import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.webp';
+import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.webp';
+import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.webp';
 const GRADIENTS: Record<string, string> = {
   'from-blue-500 to-purple-600': 'linear-gradient(135deg, #3b82f6, #9333ea)',
   'from-purple-600 to-pink-600': 'linear-gradient(135deg, #9333ea, #dc2626)',
@@ -145,7 +142,7 @@ const SeccionOpciones: React.FC = () => {
                 )}
 
                 <div style={styles.imagenContenedor}>
-                  <img src={opcion.imagen} alt={opcion.titulo} style={styles.imagenOpcion} width="320" height="320" loading="lazy" decoding="async" />
+                  <Image src={opcion.imagen} alt={opcion.titulo} fill style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }} />
                   <div style={styles.overlayImagen}></div>
                   <div style={styles.iconoOpcion}>{opcion.icono}</div>
                   {opcion.destacado && <div style={styles.brilloDestacado}></div>}

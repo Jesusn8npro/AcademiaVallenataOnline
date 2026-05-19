@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import type { UsuarioAdmin } from '../../../../../servicios/usuariosAdminService';
 import './PestanaActividad.css';
 import { usePestanaActividad, formatearTiempo, formatearTiempoRelativo, formatearFecha } from './usePestanaActividad';
@@ -94,7 +95,7 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
               <div className="cursos-grid">
                 {datosActividad.cursosProgreso.map((curso, index) => (
                   <div key={index} className="curso-card">
-                    <img src={curso.imagen} alt={curso.nombre} className="curso-imagen" />
+                    <Image src={curso.imagen} alt={curso.nombre} width={80} height={56} style={{ objectFit: 'cover' }} className="curso-imagen" />
                     <div className="curso-info">
                       <h5>{curso.nombre}</h5>
                       <div className="progreso-bar">

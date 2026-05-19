@@ -1,4 +1,5 @@
 import React from 'react'
+import Image from 'next/image'
 import {
     Users, UserPlus, Zap, BookOpen, Clock, TrendingUp,
     Settings, User, UserX
@@ -91,7 +92,7 @@ const PestanaUsuarios: React.FC = () => {
                                     <div key={usuario.id} className="pu-user-card" onClick={() => irAUsuarioEspecifico(usuario.id)}>
                                         <div className="pu-user-avatar">
                                             {usuario.url_foto_perfil ? (
-                                                <img src={usuario.url_foto_perfil} alt={usuario.nombre} />
+                                                <Image src={usuario.url_foto_perfil} alt={usuario.nombre} width={40} height={40} style={{ objectFit: 'cover' }} />
                                             ) : (
                                                 <div className="pu-avatar-placeholder"><User size={20} /></div>
                                             )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { actualizarUsuario, eliminarUsuario } from '../../../../servicios/usuariosAdminService';
 import PestanaActividad from './pestanas/PestanaActividad';
 import PestanaGeolocalizacion from './pestanas/PestanaGeolocalizacion';
@@ -121,7 +122,7 @@ const DetalleUsuario: React.FC<Props> = ({ usuario, onCerrar, onUsuarioActualiza
         <div className="detalle-usuario-info-header">
           <div className="detalle-usuario-avatar-grande">
             {usuario.url_foto_perfil ? (
-              <img src={usuario.url_foto_perfil} alt={usuario.nombre_completo || ''} />
+              <Image src={usuario.url_foto_perfil} alt={usuario.nombre_completo || ''} width={80} height={80} style={{ objectFit: 'cover' }} />
             ) : (
               <div className="detalle-usuario-avatar-iniciales">
                 {obtenerIniciales(editando ? datosEditables.nombre : usuario.nombre, editando ? datosEditables.apellido : usuario.apellido)}
