@@ -173,7 +173,8 @@ export default function ChatVista({ chat, usuarioActual, onRegresar }: Props) {
           )}
           {otro && (
             <>
-              <img src={otro.avatar} alt={otro.nombre} className="msg_chat_header_avatar"
+              {/* <img> con fallback: migrar cuando tengamos placeholder de next/image */}
+            <img src={otro.avatar} alt={otro.nombre} className="msg_chat_header_avatar"
                 loading="eager" decoding="async"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }} />
               <div>

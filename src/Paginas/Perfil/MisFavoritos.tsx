@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useNavigate } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import { useFavoritos } from '../../hooks/useFavoritos'
@@ -130,7 +131,7 @@ function TarjetaFavorito({ item, onVer, onQuitar }: TarjetaProps) {
   return (
     <div className="mf-tarjeta" onClick={onVer} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onVer()}>
       <div className="mf-img-wrap">
-        <img src={item.imagen_url || '/images/default-curso.jpg'} alt={item.titulo} className="mf-img" loading="lazy" />
+        <Image src={item.imagen_url || '/images/default-curso.jpg'} alt={item.titulo} className="mf-img" fill style={{ objectFit: 'cover' }} />
         <span className={`mf-badge ${item.tipo}`}>
           {item.tipo === 'curso' ? '🎓 CURSO' : '🎵 TUTORIAL'}
         </span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useNavigate } from '@/compat/router';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { useContinuarAprendiendo, formatearUltimaActividad } from '../Hooks/useContinuarAprendiendo';
@@ -141,7 +142,7 @@ const ContinuarAprendiendo: React.FC = () => {
                         </div>
                         <div className="academia-contenido-derecho">
                             <div className="academia-imagen-contenedor">
-                                <img src={ultimaActividad.imagen || '/images/Home/academia-vallenata-1.jpg'} alt={ultimaActividad.titulo} className="academia-imagen-curso" />
+                                <Image src={ultimaActividad.imagen || '/images/Home/academia-vallenata-1.jpg'} alt={ultimaActividad.titulo} className="academia-imagen-curso" fill style={{ objectFit: 'cover' }} />
                                 <div className="academia-overlay-progreso">
                                     <div className="academia-progreso-circular">
                                         <div className="academia-circular-chart">

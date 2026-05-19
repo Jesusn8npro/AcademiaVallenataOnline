@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react'
+import Image from 'next/image'
 import './TarjetaInformacionCurso.css'
 
 interface TarjetaInformacionCursoProps {
@@ -64,7 +65,7 @@ const TarjetaInformacionCurso: React.FC<TarjetaInformacionCursoProps> = ({
         <div className="tarjeta-informacion-curso">
             <div className="encabezado-curso">
                 {imagen_url && (
-                    <img src={imagen_url} alt={titulo} className="imagen-curso" />
+                    <Image src={imagen_url} alt={titulo} className="imagen-curso" width={140} height={140} />
                 )}
                 <div className="info-basica">
                     <h2 className="titulo-curso">{titulo}</h2>
