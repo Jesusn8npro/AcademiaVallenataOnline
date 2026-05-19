@@ -3,6 +3,49 @@
   100% { transform: rotate(360deg); }
 }
 
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.blog-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.blog-skeleton-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.blog-skeleton-img {
+  height: 200px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.blog-skeleton-body {
+  padding: 1.25rem;
+}
+
+.blog-skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.blog-skeleton-title { height: 20px; width: 80%; margin-bottom: 0.75rem; }
+.blog-skeleton-sub { width: 100%; }
+.blog-skeleton-short { width: 60%; }
+
 @keyframes aparecerArriba {
   to { opacity: 1; transform: translateY(0); }
 }
