@@ -245,6 +245,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
               <div className="cadc-solucion-imagen-wrapper cadc-reveal" style={{ position: 'relative' }}>
                 <div className="cadc-solucion-glow" />
                 <div className="cadc-solucion-imagen">
+                  {/* TODO: migrar a next/image con fallback */}
                   <img src={imgMaestroSolucion} alt="Aprende a tocar acordeón desde cero" onError={onImgError} />
                 </div>
               </div>
@@ -295,6 +296,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
                 </p>
               </div>
               <div className="cadc-credibilidad-imagen cadc-reveal">
+                {/* TODO: migrar a next/image con fallback */}
                 <img src={imgArtistasFamosos} alt="Jesús González con Orlando Acosta y Felipe Peláez" onError={onImgError} />
               </div>
             </div>
@@ -360,6 +362,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
               </div>
 
               <div className="cadc-metodos">
+                {/* TODO: migrar a next/image con fallback */}
                 <img src={imgMetodosPago} alt="Métodos de pago" onError={onImgError} />
                 <p>💳 Paga seguro con tarjeta, PSE o efectivo</p>
               </div>

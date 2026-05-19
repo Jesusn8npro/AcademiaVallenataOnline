@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import type { Evento } from './useCalendarioEventos';
 import {
   formatearFechaLarga as formatearFecha,
@@ -37,7 +38,7 @@ const EventosDisplay: React.FC<EventosDisplayProps> = ({ eventos, vista, onNaveg
           <div key={evento.id} className="evt-cal-card" onClick={() => onNavegar(evento.slug)}>
             <div className="evt-cal-card-img-container">
               {evento.imagen_portada ? (
-                <img src={evento.imagen_portada} alt={evento.titulo} className="evt-cal-card-img" />
+                <Image src={evento.imagen_portada} alt={evento.titulo} className="evt-cal-card-img" width={320} height={200} />
               ) : (
                 <div className="evt-cal-card-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '4rem' }}>
@@ -94,8 +95,8 @@ const EventosDisplay: React.FC<EventosDisplayProps> = ({ eventos, vista, onNaveg
         <div key={evento.id} className="evt-cal-list-card" onClick={() => onNavegar(evento.slug)}>
           <div className="evt-cal-list-body">
             <div className="evt-cal-list-flex">
-              <div className="evt-cal-list-img">
-                {evento.imagen_portada && <img src={evento.imagen_portada} alt={evento.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              <div className="evt-cal-list-img" style={{ position: 'relative' }}>
+                {evento.imagen_portada && <Image src={evento.imagen_portada} alt={evento.titulo} fill style={{ objectFit: 'cover' }} />}
               </div>
               <div className="evt-cal-list-content">
                 <h3 className="evt-cal-card-title" style={{ fontSize: '1.25rem' }}>{evento.titulo}</h3>

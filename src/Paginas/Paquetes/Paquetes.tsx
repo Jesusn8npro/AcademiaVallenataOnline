@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { formatearPrecio } from '../../servicios/paquetesService';
 import { usePaquetes } from './Hooks/usePaquetes';
 import SEO from '../../componentes/common/SEO';
@@ -113,7 +114,7 @@ const Paquetes: React.FC = () => {
                             <article key={paquete.id} className="paq-main-package-card" onClick={() => verPaquete(paquete.slug)}>
                                 <div className="paq-main-card-image">
                                     {paquete.imagen_url ? (
-                                        <img src={paquete.imagen_url} alt={paquete.titulo} loading="lazy" />
+                                        <Image src={paquete.imagen_url} alt={paquete.titulo} width={320} height={200} />
                                     ) : (
                                         <div className="paq-main-placeholder">🎵</div>
                                     )}
