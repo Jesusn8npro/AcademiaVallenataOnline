@@ -17,6 +17,19 @@
     "analyze": "ANALYZE=true next build",
     "analyze:win": "cross-env ANALYZE=true next build"
   },
+  "browserslist": {
+    "production": [
+      "chrome >= 90",
+      "firefox >= 90",
+      "safari >= 14",
+      "edge >= 90"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
     "@capacitor/app": "^6.0.3",

@@ -197,11 +197,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />
-        <link rel="preconnect" href="https://tbijzvtyyewhtwgakgka.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://tbijzvtyyewhtwgakgka.supabase.co" />
         <link rel="dns-prefetch" href="https://iframe.mediadelivery.net" />
         <link rel="dns-prefetch" href="https://video.bunnycdn.com" />
-        <script dangerouslySetInnerHTML={{ __html: gaScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -215,6 +213,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>{children}</Providers>
         <Script id="anti-consola" strategy="lazyOnload">
           {antiConsolaScript}
+        </Script>
+        <Script id="google-analytics" strategy="afterInteractive">
+          {gaScript}
         </Script>
       </body>
     </html>
