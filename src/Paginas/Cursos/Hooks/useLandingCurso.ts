@@ -61,21 +61,25 @@ export function useLandingCurso() {
                         .eq('curso_id', curso.id)
                         .order('orden');
 
-                    const modulosConLecciones = await Promise.all((modulos || []).map(async (modulo) => {
-                        const { data: lecciones } = await supabase
-                            .from('lecciones')
-                            .select('id, titulo, orden')
-                            .eq('modulo_id', modulo.id)
-                            .order('orden');
+                    // Batch: una sola query para todas las lecciones (evita N+1)
+                    const moduloIds = (modulos || []).map((m: any) => m.id);
+                    const { data: todasLecciones } = moduloIds.length > 0
+                        ? await supabase.from('lecciones').select('id, titulo, orden, modulo_id').in('modulo_id', moduloIds).order('orden')
+                        : { data: [] as any[] };
 
-                        return {
-                            ...modulo,
-                            slug: generarSlug(modulo.titulo),
-                            lecciones: (lecciones || []).map(l => ({
-                                ...l,
-                                slug: generarSlug(l.titulo)
-                            })).sort((a, b) => a.orden - b.orden)
-                        };
+                    const leccPorModulo = ((todasLecciones || []) as any[]).reduce((acc: Record<string, any[]>, l: any) => {
+                        if (!acc[l.modulo_id]) acc[l.modulo_id] = [];
+                        acc[l.modulo_id].push(l);
+                        return acc;
+                    }, {});
+
+                    const modulosConLecciones = (modulos || []).map((modulo: any) => ({
+                        ...modulo,
+                        slug: generarSlug(modulo.titulo),
+                        lecciones: (leccPorModulo[modulo.id] || []).map((l: any) => ({
+                            ...l,
+                            slug: generarSlug(l.titulo)
+                        })).sort((a: any, b: any) => a.orden - b.orden)
                     }));
 
                     setContenido({
@@ -106,30 +110,27 @@ export function useLandingCurso() {
                     }
                 }
 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const { data: tutoriales, error: errorTutoriales } = await supabase
+                // Buscar por slug directo (evita cargar toda la tabla)
+                const { data: tutorial, error: errorTutoriales } = await supabase
                     .from('tutoriales')
-                    .select('*');
+                    .select('*')
+                    .eq('slug', slug)
+                    .maybeSingle();
 
-                if (tutoriales && !errorTutoriales) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const tutorial = tutoriales.find((t: any) => generarSlug(t.titulo) === slug);
+                if (tutorial && !errorTutoriales) {
+                    const { data: partes } = await supabase
+                        .from('partes_tutorial')
+                        .select('id, titulo, descripcion, orden, slug')
+                        .eq('tutorial_id', tutorial.id)
+                        .order('orden');
 
-                    if (tutorial) {
-                        const { data: partes } = await supabase
-                            .from('partes_tutorial')
-                            .select('id, titulo, descripcion, orden, slug')
-                            .eq('tutorial_id', tutorial.id)
-                            .order('orden');
-
-                        setContenido({
-                            ...tutorial,
-                            tipo: 'tutorial',
-                            modulos_preview: partes || []
-                        });
-                        setCargando(false);
-                        return;
-                    }
+                    setContenido({
+                        ...tutorial,
+                        tipo: 'tutorial',
+                        modulos_preview: partes || []
+                    });
+                    setCargando(false);
+                    return;
                 }
             }
 
