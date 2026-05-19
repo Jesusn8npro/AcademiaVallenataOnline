@@ -1,5 +1,5 @@
 import { Link } from '@/compat/router';
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useUsuario } from '../contextos/UsuarioContext'
 
 interface Props {
@@ -8,17 +8,21 @@ interface Props {
   children: React.ReactNode
 }
 
+const Spinner = () => (
+  <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+    <p style={{ color: '#6b7280' }}>Verificando sesión...</p>
+  </div>
+)
+
 export default function ProteccionAutenticacion({ titulo = '🔒 PERFIL RESTRINGIDO', mensajePrincipal = 'Tu perfil personal requiere que inicies sesión', children }: Props) {
   const { usuario, inicializado } = useUsuario()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
-  if (!inicializado) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
-        <p style={{ color: '#6b7280' }}>Verificando sesión...</p>
-      </div>
-    )
-  }
+  // Server y primer render cliente son idénticos (spinner) → sin hydration mismatch.
+  // Después del mount se evalúa el auth real.
+  if (!mounted || !inicializado) return <Spinner />
 
   if (!usuario) {
     return (
