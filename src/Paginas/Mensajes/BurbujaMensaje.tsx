@@ -40,6 +40,7 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
 
     return (
         <div className={`bm_group ${tipo} ${esPrimero ? 'is-first' : ''}`} onDoubleClick={onResponder}>
+            {/* <img> con fallback: migrar cuando tengamos placeholder de next/image */}
             {!mensaje.es_mio && (esUltimo ? (
                 <img
                     src={URL_ESTABLE(mensaje.usuario?.url_foto_perfil) || '/images/default-user.png'}
@@ -58,6 +59,7 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
 
                 <div className="bm_bubble">
                     {mensaje.tipo === 'imagen' && mensaje.url_media && (
+                        // TODO: migrar a <Image> cuando se defina el dominio de imágenes adjuntas del chat
                         <img src={mensaje.url_media} alt="adjunto" className="bm_img" />
                     )}
                     <span className="bm_text">{mensaje.contenido}</span>

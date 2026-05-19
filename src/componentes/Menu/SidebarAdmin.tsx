@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useNavigate } from '@/compat/router';
 import { useSidebarAdmin } from './useSidebarAdmin';
 import SidebarNavAdmin from './SidebarNavAdmin';
@@ -171,7 +172,7 @@ const SidebarAdmin = () => {
           <div className="sidebar-admin-avatar-container">
             <div className="sidebar-admin-avatar">
               {usuario?.url_foto_perfil ? (
-                <img src={usuario.url_foto_perfil} alt="Avatar" />
+                <Image src={usuario.url_foto_perfil} alt="Avatar" width={40} height={40} />
               ) : (
                 <div className="sidebar-admin-avatar-placeholder">{nombreUsuario.charAt(0).toUpperCase()}</div>
               )}
@@ -198,7 +199,7 @@ const SidebarAdmin = () => {
             <div className="sidebar-admin-perfil-header">
               <div className="sidebar-admin-avatar-header">
                 {usuario?.url_foto_perfil ? (
-                  <img src={usuario.url_foto_perfil} alt="Avatar" />
+                  <Image src={usuario.url_foto_perfil} alt="Avatar" width={48} height={48} />
                 ) : (
                   <div className="sidebar-admin-avatar-placeholder-large">{nombreUsuario.charAt(0).toUpperCase()}</div>
                 )}

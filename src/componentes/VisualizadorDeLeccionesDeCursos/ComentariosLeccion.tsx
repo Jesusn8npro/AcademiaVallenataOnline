@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react'
+import Image from 'next/image'
 import './ComentariosLeccion.css'
 import { useComentariosLeccion } from './useComentariosLeccion'
 import type { Comentario } from './useComentariosLeccion'
@@ -31,7 +32,7 @@ const ComentariosLeccion: React.FC<ComentariosLeccionProps> = ({
         return (
             <li key={comentario.id} className={`comentario-item ${nivel > 0 ? 'respuesta-item' : ''}`}>
                 <div className="comentario-header">
-                    <img src={obtenerAvatar(comentario)} alt="avatar" className="avatar" />
+                    <Image src={obtenerAvatar(comentario)} alt="avatar" className="avatar" width={40} height={40} />
                     <span className="nombre">{obtenerNombre(comentario)}</span>
                     <span className="fecha">{formatearFecha(comentario.fecha_creacion)}</span>
                 </div>
@@ -58,7 +59,7 @@ const ComentariosLeccion: React.FC<ComentariosLeccionProps> = ({
 
                 {mostrandoFormRespuesta[comentario.id] && usuarioActual && (
                     <div className="respuesta-form">
-                        <img src={obtenerAvatar({ perfiles: usuarioActual } as any)} alt="avatar" className="avatar-small" />
+                        <Image src={obtenerAvatar({ perfiles: usuarioActual } as any)} alt="avatar" className="avatar-small" width={32} height={32} />
                         <input
                             type="text"
                             placeholder="Escribe tu respuesta..."
@@ -118,10 +119,12 @@ const ComentariosLeccion: React.FC<ComentariosLeccionProps> = ({
 
             {usuarioActual && (
                 <form onSubmit={(e) => { e.preventDefault(); agregarComentario() }} className="comentario-form-bar">
-                    <img
+                    <Image
                         src={obtenerAvatar({ perfiles: usuarioActual } as any)}
                         alt="avatar"
                         className="comentario-form-avatar"
+                        width={40}
+                        height={40}
                     />
                     <input
                         className="comentario-form-input"
