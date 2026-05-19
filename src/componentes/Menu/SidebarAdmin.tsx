@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useNavigate } from '@/compat/router';
 import { useSidebarAdmin } from './useSidebarAdmin';
@@ -18,6 +18,7 @@ const SidebarAdmin = () => {
     esRutaActiva, alternarBarraLateral, alternarMenuPerfil,
     cerrarSesionCompleta, irAPerfil, irACursos, abrirModalBusqueda
   } = useSidebarAdmin();
+  const [avatarError, setAvatarError] = useState(false)
 
   return (
     <div className={`sidebar-admin-moderno ${colapsado ? 'sidebar-admin-colapsado' : ''}`}>
@@ -171,8 +172,8 @@ const SidebarAdmin = () => {
         >
           <div className="sidebar-admin-avatar-container">
             <div className="sidebar-admin-avatar">
-              {usuario?.url_foto_perfil ? (
-                <Image src={usuario.url_foto_perfil} alt="Avatar" width={40} height={40} />
+              {usuario?.url_foto_perfil && !avatarError ? (
+                <Image src={usuario.url_foto_perfil} alt="Avatar" width={40} height={40} onError={() => setAvatarError(true)} />
               ) : (
                 <div className="sidebar-admin-avatar-placeholder">{nombreUsuario.charAt(0).toUpperCase()}</div>
               )}
@@ -198,8 +199,8 @@ const SidebarAdmin = () => {
           <div className="sidebar-admin-menu-perfil" onClick={(e) => e.stopPropagation()}>
             <div className="sidebar-admin-perfil-header">
               <div className="sidebar-admin-avatar-header">
-                {usuario?.url_foto_perfil ? (
-                  <Image src={usuario.url_foto_perfil} alt="Avatar" width={48} height={48} />
+                {usuario?.url_foto_perfil && !avatarError ? (
+                  <Image src={usuario.url_foto_perfil} alt="Avatar" width={48} height={48} onError={() => setAvatarError(true)} />
                 ) : (
                   <div className="sidebar-admin-avatar-placeholder-large">{nombreUsuario.charAt(0).toUpperCase()}</div>
                 )}

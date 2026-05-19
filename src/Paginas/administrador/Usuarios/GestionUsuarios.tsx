@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import DetalleUsuario from './Componentes/DetalleUsuario';
 import CrearUsuario from './Componentes/CrearUsuario';
@@ -25,6 +25,7 @@ const GestionUsuarios: React.FC = () => {
     mostrarMenuContextual, ocultarMenuContextual,
     usuarios,
   } = useGestionUsuarios();
+  const [avatarErrores, setAvatarErrores] = useState<Set<string>>(new Set())
 
   return (
     <div className="gestion-usuarios-contenedor">
@@ -188,8 +189,15 @@ const GestionUsuarios: React.FC = () => {
                         </td>
                         <td className="gestion-usuarios-celda-usuario">
                           <div className="gestion-usuarios-info-usuario" onClick={() => seleccionarUsuario(usuario)} style={{ cursor: 'pointer' }}>
-                            {usuario.url_foto_perfil ? (
-                              <Image src={usuario.url_foto_perfil} alt={usuario.nombre_completo} width={40} height={40} style={{ objectFit: 'cover' }} className="gestion-usuarios-avatar" />
+                            {usuario.url_foto_perfil && !avatarErrores.has(usuario.id) ? (
+                              <Image
+                                src={usuario.url_foto_perfil}
+                                alt={usuario.nombre_completo}
+                                width={40} height={40}
+                                style={{ objectFit: 'cover' }}
+                                className="gestion-usuarios-avatar"
+                                onError={() => setAvatarErrores(prev => new Set([...prev, usuario.id]))}
+                              />
                             ) : (
                               <div className="gestion-usuarios-avatar-placeholder">
                                 {usuario.nombre?.charAt(0) || ''}{usuario.apellido?.charAt(0) || ''}

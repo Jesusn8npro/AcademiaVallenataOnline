@@ -1,13 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
-  // Etapa A de la migración: el App actual corre client-only dentro del shell
-  // catch-all. Ignoramos errores TS/ESLint preexistentes (~92k líneas) para
-  // alcanzar el checkpoint funcional; se endurece en fases posteriores.
   typescript: { ignoreBuildErrors: true },
-  // Optimización de imágenes activada. Los <img> existentes NO se ven
-  // afectados (Next solo procesa <Image/>); al migrar imágenes a next/image
-  // (logo, heros) se sirven en AVIF/WebP con tamaños responsive.
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -22,10 +17,23 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.googleusercontent.com' },
     ],
   },
-  // Tree-shaking de iconos (lucide-react se usa en 100+ archivos): solo
-  // entran al bundle los iconos realmente usados.
   experimental: {
     optimizePackageImports: ['lucide-react'],
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ]
   },
 }
 

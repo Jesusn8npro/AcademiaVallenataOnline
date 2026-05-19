@@ -5,6 +5,7 @@
 // En vez de <Routes> renderiza {children} (App Router de Next).
 
 import { useEffect, useState, lazy, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { useLocation } from '@/compat/router'
 import MenuPublico from '@/componentes/Menu/MenuPublico'
 import MenuSuperiorAutenticado from '@/componentes/Menu/MenuSuperiorAutenticado'
@@ -16,8 +17,8 @@ import { useSeguridadConsola } from '@/hooks/useSeguridadConsola'
 import { useSesionTracker } from '@/hooks/useSesionTracker'
 
 const EmailCompletarWrapper = lazy(() => import('@/componentes/Pagos/EmailCompletarWrapper'))
-const BotonWhatsapp = lazy(() => import('@/componentes/BotonWhatsapp/BotonWhatsapp'))
-const ChatEnVivo = lazy(() => import('@/componentes/chat/ChatEnVivo'))
+const BotonWhatsapp = dynamic(() => import('@/componentes/BotonWhatsapp/BotonWhatsapp'), { ssr: false })
+const ChatEnVivo = dynamic(() => import('@/componentes/chat/ChatEnVivo'), { ssr: false })
 const Footer = lazy(() => import('@/componentes/Footer/Footer'))
 const CursorPersonalizado = lazy(
   () => import('@/componentes/ui/CursorPersonalizado/CursorPersonalizado'),
@@ -46,6 +47,13 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     esSimuladorApp ||
     esAcordeonProMax ||
     esRecuperarContrasena
+
+  // Evita hydration mismatch: SSR nunca sabe si el usuario está autenticado
+  // (Supabase auth es client-only). Sin este guard, el servidor renderiza
+  // MenuPublico y el cliente intenta hidratar con MenuSuperiorAutenticado
+  // → estructuras DOM distintas → React crash.
+  const [clienteMontado, setClienteMontado] = useState(false)
+  useEffect(() => { setClienteMontado(true) }, [])
 
   const [mouseDetectado, setMouseDetectado] = useState(false)
   useEffect(() => {
@@ -84,32 +92,31 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
         </Suspense>
       )}
 
-      {!esInmersivo &&
-        (estaAutenticado ? (
-          <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
-        ) : (
-          <MenuPublico />
-        ))}
+      {!esInmersivo && (
+        clienteMontado && estaAutenticado
+          ? <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
+          : <MenuPublico />
+      )}
 
-      {estaAutenticado && !esInmersivo && (
+      {clienteMontado && estaAutenticado && !esInmersivo && (
         <Suspense fallback={null}>
           <EmailCompletarWrapper />
         </Suspense>
       )}
 
-      {estaAutenticado && !esInmersivo && <SidebarAdmin />}
-      {estaAutenticado && !esInmersivo && <MenuInferiorResponsivo />}
+      {clienteMontado && estaAutenticado && !esInmersivo && <SidebarAdmin />}
+      {clienteMontado && estaAutenticado && !esInmersivo && <MenuInferiorResponsivo />}
 
       {children}
 
       {!esInmersivo && !pathname.includes('/mensajes') && (
         <Suspense fallback={null}>
-          {!estaAutenticado && <ChatEnVivo />}
-          {!estaAutenticado && <BotonWhatsapp />}
+          {(!clienteMontado || !estaAutenticado) && <ChatEnVivo />}
+          {(!clienteMontado || !estaAutenticado) && <BotonWhatsapp />}
         </Suspense>
       )}
 
-      {!estaAutenticado && !esInmersivo && (
+      {(!clienteMontado || !estaAutenticado) && !esInmersivo && (
         <Suspense fallback={null}>
           <Footer />
         </Suspense>

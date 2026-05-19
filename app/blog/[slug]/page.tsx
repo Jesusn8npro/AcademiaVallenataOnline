@@ -86,5 +86,28 @@ export default async function ArticuloBlogPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  return <ArticuloBlog slug={slug} />
+  const articulo = await obtenerArticulo(slug)
+
+  const jsonLd = articulo
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: articulo.titulo,
+        description: articulo.resumen_breve || articulo.resumen_completo || '',
+        datePublished: articulo.fecha_publicacion,
+        author: { '@type': 'Person', name: articulo.autor || 'Academia Vallenata Online' },
+        publisher: { '@type': 'Organization', name: 'Academia Vallenata Online', url: BASE_URL },
+        url: `${BASE_URL}/blog/${slug}`,
+        ...(articulo.portada_url ? { image: articulo.portada_url } : {}),
+      }
+    : null
+
+  return (
+    <>
+      {jsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      <ArticuloBlog slug={slug} />
+    </>
+  )
 }

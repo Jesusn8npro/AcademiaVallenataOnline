@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap");
+/* Fuentes cargadas por next/font en app/layout.tsx — sin @import bloqueante */
 
 .promax-menu-contenedor {
   width: 100%;
@@ -7,7 +7,7 @@
   position: relative;
   overflow: hidden;
   color: white;
-  font-family: 'Raleway', sans-serif;
+  font-family: var(--font-raleway), sans-serif;
   display: flex;
   flex-direction: column;
 }
@@ -82,7 +82,7 @@
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.7);
-  font-family: 'Raleway', sans-serif;
+  font-family: var(--font-raleway), sans-serif;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -141,7 +141,7 @@
   color: white;
   width: 100%;
   outline: none;
-  font-family: 'Raleway', sans-serif;
+  font-family: var(--font-raleway), sans-serif;
   font-size: 0.85rem;
   padding: 0 5px;
 }
@@ -186,7 +186,7 @@
   padding: 14px 20px;
   background: rgba(255, 255, 255, 0.12);
   color: white;
-  font-family: 'Raleway', sans-serif;
+  font-family: var(--font-raleway), sans-serif;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
