@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 /**
  * FONDO ESPACIAL PRO MAX
@@ -133,19 +134,12 @@ const FondoEspacialProMax: React.FC = () => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: -1 }}>
-      {/* Imagen base */}
-      <img 
+      <Image
         src="/assets/purpleSpace.webp"
-        alt="espacio"
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          objectFit: 'cover',
-          opacity: 0.6,
-          // Animación de zoom lento
-          animation: 'zoomEspacial 30s ease-in-out infinite alternate'
-        }}
+        alt=""
+        fill
+        priority
+        style={{ objectFit: 'cover', opacity: 0.6, animation: 'zoomEspacial 30s ease-in-out infinite alternate' }}
       />
       <canvas 
         ref={canvasRef} 

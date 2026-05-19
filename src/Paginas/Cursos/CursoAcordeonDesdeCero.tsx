@@ -1,20 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react'
+import Image, { type StaticImageData } from 'next/image'
 import BannerOfertaCurso from './BannerOfertaCurso'
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'
-import imgHeroBanner__img from '../../assets/images/Jesus-Gonzalez--BANNER.jpg';
-const imgHeroBanner = (((imgHeroBanner__img) as any)?.src ?? (imgHeroBanner__img)) as string;
-import imgMaestroSolucion__img from '../../assets/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg';
-const imgMaestroSolucion = (((imgMaestroSolucion__img) as any)?.src ?? (imgMaestroSolucion__img)) as string;
-import imgArtistasFamosos__img from '../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
-const imgArtistasFamosos = (((imgArtistasFamosos__img) as any)?.src ?? (imgArtistasFamosos__img)) as string;
-import imgMetodosPago__img from '../../assets/images/Metodos-de-pago.jpg';
-const imgMetodosPago = (((imgMetodosPago__img) as any)?.src ?? (imgMetodosPago__img)) as string;
-import imgTestimonio__img from '../../assets/images/Testimonio-Alumno-Academia-Vallenata-ONLINE.jpg';
-const imgTestimonio = (((imgTestimonio__img) as any)?.src ?? (imgTestimonio__img)) as string;
-import imgFallback__img from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
-const imgFallback = (((imgFallback__img) as any)?.src ?? (imgFallback__img)) as string;
+import imgHeroBanner from '../../assets/images/Jesus-Gonzalez--BANNER.jpg'
+import imgMaestroSolucion from '../../assets/images/aprende-a-tocar-acordeon-desde-0--curso-definitivo.jpg'
+import imgArtistasFamosos from '../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg'
+import imgMetodosPago from '../../assets/images/Metodos-de-pago.jpg'
+import imgFallback from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg'
 import './CursoAcordeonDesdeCero.css'
 
 const cursoAcordeon = {
@@ -128,12 +122,9 @@ const CursoAcordeonDesdeCero: React.FC = () => {
 
   const comprarAhora = () => setMostrarModalPago(true)
 
-  const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget
-    if (img.dataset.fb === '1') return
-    img.dataset.fb = '1'
-    img.src = imgFallback
-  }
+  const [imgErrores, setImgErrores] = useState<Set<string>>(new Set())
+  const onImgError = (key: string) => setImgErrores(prev => new Set([...prev, key]))
+  const imgSrc = (key: string, src: StaticImageData) => imgErrores.has(key) ? imgFallback : src
 
   return (
     <>
@@ -149,7 +140,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
         {/* HERO */}
         <section
           className="cadc-hero"
-          style={{ ['--cadc-hero-bg' as string]: `url(${imgHeroBanner})` }}
+          style={{ ['--cadc-hero-bg' as string]: `url(${(imgHeroBanner as StaticImageData).src})` }}
         >
           <div className="cadc-container">
             <div className="cadc-hero-grid">
@@ -245,8 +236,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
               <div className="cadc-solucion-imagen-wrapper cadc-reveal" style={{ position: 'relative' }}>
                 <div className="cadc-solucion-glow" />
                 <div className="cadc-solucion-imagen">
-                  {/* TODO: migrar a next/image con fallback */}
-                  <img src={imgMaestroSolucion} alt="Aprende a tocar acordeón desde cero" onError={onImgError} />
+                  <Image src={imgSrc('maestro', imgMaestroSolucion)} alt="Aprende a tocar acordeón desde cero" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} onError={() => onImgError('maestro')} />
                 </div>
               </div>
 
@@ -296,8 +286,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
                 </p>
               </div>
               <div className="cadc-credibilidad-imagen cadc-reveal">
-                {/* TODO: migrar a next/image con fallback */}
-                <img src={imgArtistasFamosos} alt="Jesús González con Orlando Acosta y Felipe Peláez" onError={onImgError} />
+                <Image src={imgSrc('artistas', imgArtistasFamosos)} alt="Jesús González con Orlando Acosta y Felipe Peláez" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} onError={() => onImgError('artistas')} />
               </div>
             </div>
           </div>
@@ -362,8 +351,7 @@ const CursoAcordeonDesdeCero: React.FC = () => {
               </div>
 
               <div className="cadc-metodos">
-                {/* TODO: migrar a next/image con fallback */}
-                <img src={imgMetodosPago} alt="Métodos de pago" onError={onImgError} />
+                <Image src={imgSrc('pagos', imgMetodosPago)} alt="Métodos de pago aceptados" style={{ width: '100%', height: 'auto' }} onError={() => onImgError('pagos')} />
                 <p>💳 Paga seguro con tarjeta, PSE o efectivo</p>
               </div>
             </div>
@@ -391,8 +379,6 @@ const CursoAcordeonDesdeCero: React.FC = () => {
         />
       </div>
 
-      {/* Imagen oculta usada solo para precachear el testimonio si lo querés rotar a futuro */}
-      <img src={imgTestimonio} alt="" style={{ display: 'none' }} aria-hidden="true" />
     </>
   )
 }

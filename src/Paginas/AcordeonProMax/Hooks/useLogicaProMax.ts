@@ -24,6 +24,7 @@ import type { ResultadoGolpe } from '../TiposProMax';
 import { useSynthesiaProMax } from './useSynthesiaProMax';
 import { useScoringProMax } from './useScoringProMax';
 import { useGrabacionProMax } from './useGrabacionProMax';
+import { useLoopAB } from './useLoopAB';
 import type { Seccion } from '../tiposSecciones';
 
 export type MensajePrueba = {
@@ -45,6 +46,7 @@ export function useLogicaProMax() {
   const [bpm, setBpm] = useState(120);
   const [cuenta, setCuenta] = useState<number | null>(null);
   const conteoIntervalRef = useRef<any>(null);
+  const audioFadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [maestroSuena, setMaestroSuena] = useState(true);
   const maestroSuenaRef = useRef(true);
@@ -87,12 +89,6 @@ export function useLogicaProMax() {
   const _onBeatCallbackRef = useRef<((beatIndex: number) => void) | undefined>(undefined);
   const direccionAlumnoRef = useRef<'halar' | 'empujar'>('halar');
   const _reproductoActionsRef = useRef({ alternarPausa: () => { }, buscarTick: (_t: number) => { } });
-  const [loopAB, setLoopAB] = useState<{ start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean }>(
-    { start: 0, end: 0, activo: false, hasStart: false, hasEnd: false }
-  );
-  const loopABRef = useRef<{ start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean }>(
-    { start: 0, end: 0, activo: false, hasStart: false, hasEnd: false }
-  );
   const reproduccionFueIniciada = useRef(false);
 
   const synthesia = useSynthesiaProMax();
@@ -240,11 +236,6 @@ export function useLogicaProMax() {
     };
   }, [cancionSeleccionada]);
 
-  const actualizarLoopAB = useCallback((next: { start: number; end: number; activo: boolean; hasStart: boolean; hasEnd: boolean }) => {
-    loopABRef.current = next;
-    setLoopAB(next);
-  }, []);
-
   const _onLoopJumpAplicado = useCallback((startTick: number) => {
     sincronizarAudioFondoEnTick(startTick);
   }, [sincronizarAudioFondoEnTick]);
@@ -258,6 +249,17 @@ export function useLogicaProMax() {
     _onBeatEstable,
     _onLoopJumpAplicado
   );
+
+  const {
+    loopAB, loopABRef, actualizarLoopAB,
+    marcarLoopInicio, marcarLoopFin, alternarLoopAB,
+    limpiarLoopAB, actualizarLoopInicioTick, actualizarLoopFinTick,
+  } = useLoopAB({
+    tickActualRef,
+    setLoopPoints: reproductor.setLoopPoints,
+    buscarTick: reproductor.buscarTick,
+    sincronizarAudioFondoEnTick,
+  });
 
   useEffect(() => { tickActualRef.current = reproductor.tickActual; }, [reproductor.tickActual]);
   useEffect(() => {
@@ -491,11 +493,12 @@ export function useLogicaProMax() {
       reproductor.detenerReproduccion();
       const audio = audioFondoRef.current;
       if (audio) {
+        if (audioFadeIntervalRef.current) clearInterval(audioFadeIntervalRef.current);
         const pasos = 20; const volI = audio.volume; let p = 0;
-        const int = setInterval(() => {
+        audioFadeIntervalRef.current = setInterval(() => {
           p++;
           audio.volume = Math.max(0, volI * (1 - p / pasos));
-          if (p >= pasos) { clearInterval(int); audio.pause(); audioFondoRef.current = null; }
+          if (p >= pasos) { clearInterval(audioFadeIntervalRef.current!); audioFadeIntervalRef.current = null; audio.pause(); audioFondoRef.current = null; }
         }, 60);
       }
       setEstadoJuego('gameOver');
@@ -512,11 +515,12 @@ export function useLogicaProMax() {
       prepararGrabacionCompetencia();
       const audio = audioFondoRef.current;
       if (audio) {
+        if (audioFadeIntervalRef.current) clearInterval(audioFadeIntervalRef.current);
         const pasos = 30; const volI = audio.volume; let p = 0;
-        const int = setInterval(() => {
+        audioFadeIntervalRef.current = setInterval(() => {
           p++;
           audio.volume = Math.max(0, volI * (1 - p / pasos));
-          if (p >= pasos) { clearInterval(int); audio.pause(); audioFondoRef.current = null; }
+          if (p >= pasos) { clearInterval(audioFadeIntervalRef.current!); audioFadeIntervalRef.current = null; audio.pause(); audioFondoRef.current = null; }
         }, 50);
       }
       try { const sfx = new Audio('/audio/effects/success.mp3'); sfx.volume = 0.75; sfx.play().catch(() => { }); } catch (_) { }
@@ -534,6 +538,7 @@ export function useLogicaProMax() {
       }
       reproductor.detenerReproduccion();
       if (conteoIntervalRef.current) { clearInterval(conteoIntervalRef.current); conteoIntervalRef.current = null; }
+      if (audioFadeIntervalRef.current) { clearInterval(audioFadeIntervalRef.current); audioFadeIntervalRef.current = null; }
       motorAudioPro.detenerTodo();
     };
   }, [cancelarCapturaActiva, reproductor.detenerReproduccion]);
@@ -788,63 +793,6 @@ export function useLogicaProMax() {
     const cancion = cancionPreConfigRef.current || cancionSeleccionada;
     if (cancion) iniciarJuego(cancion, false, modoPractica);
   }, [cancionSeleccionada, iniciarJuego, modoPractica]);
-
-  const marcarLoopInicio = useCallback(() => {
-    const inicio = Math.max(0, Math.floor(tickActualRef.current));
-    reproductor.setLoopPoints(0, 0, false);
-    actualizarLoopAB({ start: inicio, end: 0, activo: false, hasStart: true, hasEnd: false });
-  }, [actualizarLoopAB, reproductor.setLoopPoints]);
-
-  const marcarLoopFin = useCallback(() => {
-    const finActual = Math.max(0, Math.floor(tickActualRef.current));
-    const previo = loopABRef.current;
-    const inicio = previo.hasStart ? previo.start : Math.max(0, finActual - 192);
-    const fin = Math.max(finActual, inicio + 48);
-    reproductor.setLoopPoints(inicio, fin, false);
-    actualizarLoopAB({ start: inicio, end: fin, activo: false, hasStart: true, hasEnd: true });
-  }, [actualizarLoopAB, reproductor.setLoopPoints]);
-
-  const alternarLoopAB = useCallback(() => {
-    const previo = loopABRef.current;
-    const rangoValido = previo.hasStart && previo.hasEnd && previo.end > previo.start + 24;
-    if (!rangoValido) return;
-    const siguiente = { ...previo, activo: !previo.activo };
-    reproductor.setLoopPoints(siguiente.start, siguiente.end, siguiente.activo);
-    actualizarLoopAB(siguiente);
-    if (siguiente.activo && (tickActualRef.current < siguiente.start || tickActualRef.current > siguiente.end)) {
-      reproductor.buscarTick(siguiente.start);
-      sincronizarAudioFondoEnTick(siguiente.start);
-    }
-  }, [actualizarLoopAB, reproductor.buscarTick, reproductor.setLoopPoints, sincronizarAudioFondoEnTick]);
-
-  const limpiarLoopAB = useCallback(() => {
-    reproductor.setLoopPoints(0, 0, false);
-    actualizarLoopAB({ start: 0, end: 0, activo: false, hasStart: false, hasEnd: false });
-  }, [actualizarLoopAB, reproductor.setLoopPoints]);
-
-  const actualizarLoopInicioTick = useCallback((startTick: number) => {
-    const previo = loopABRef.current;
-    const inicio = Math.max(0, Math.floor(startTick));
-    if (!previo.hasEnd) {
-      reproductor.setLoopPoints(0, 0, false);
-      actualizarLoopAB({ start: inicio, end: 0, activo: false, hasStart: true, hasEnd: false });
-      return;
-    }
-    const fin = Math.max(previo.end, inicio + 24);
-    const siguiente = { start: inicio, end: fin, activo: previo.activo && fin > inicio + 24, hasStart: true, hasEnd: true };
-    reproductor.setLoopPoints(siguiente.start, siguiente.end, siguiente.activo);
-    actualizarLoopAB(siguiente);
-  }, [actualizarLoopAB, reproductor.setLoopPoints]);
-
-  const actualizarLoopFinTick = useCallback((endTick: number) => {
-    const previo = loopABRef.current;
-    const fin = Math.max(0, Math.floor(endTick));
-    const inicioBase = previo.hasStart ? previo.start : Math.max(0, fin - 192);
-    const inicio = Math.min(inicioBase, Math.max(0, fin - 24));
-    const siguiente = { start: inicio, end: Math.max(fin, inicio + 24), activo: previo.activo && fin > inicio + 24, hasStart: true, hasEnd: true };
-    reproductor.setLoopPoints(siguiente.start, siguiente.end, siguiente.activo);
-    actualizarLoopAB(siguiente);
-  }, [actualizarLoopAB, reproductor.setLoopPoints]);
 
   const alternarPausaReproduccion = useCallback(() => {
     // Guard por `reproduciendo` (no por estadoJuego): EstudioAdmin queda en estadoJuego='seleccion' y un check
