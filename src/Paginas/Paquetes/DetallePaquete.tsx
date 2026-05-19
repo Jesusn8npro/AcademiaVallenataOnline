@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, useNavigate } from '@/compat/router';
 import { obtenerPaquetePorSlug, obtenerTutorialesPaquete, formatearPrecio, type PaqueteTutorial } from '../../servicios/paquetesService';
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente';
@@ -126,7 +127,7 @@ const DetallePaquete: React.FC = () => {
 
                     <div className="paq-det-hero-image">
                         {paquete.imagen_url ? (
-                            <img src={paquete.imagen_url} alt={paquete.titulo} loading="lazy" />
+                            <Image src={paquete.imagen_url} alt={paquete.titulo} width={320} height={200} />
                         ) : (
                             <div className="paq-det-placeholder">🎵</div>
                         )}

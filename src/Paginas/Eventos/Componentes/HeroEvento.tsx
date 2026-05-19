@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { formatearFechaLarga as formatearFecha, formatearHora } from '../../../utilidades/formatadores';
 
 interface HeroEventoProps {
@@ -37,8 +38,8 @@ const HeroEvento: React.FC<HeroEventoProps> = ({
 }) => (
   <div className="evt-det-hero">
     {(evento.imagen_banner || evento.imagen_portada) && (
-      <div className="evt-det-hero-bg">
-        <img src={evento.imagen_banner || evento.imagen_portada} alt={evento.titulo} className="evt-det-hero-img" />
+      <div className="evt-det-hero-bg" style={{ position: 'relative' }}>
+        <Image src={evento.imagen_banner || evento.imagen_portada} alt={evento.titulo} className="evt-det-hero-img" fill style={{ objectFit: 'cover' }} priority />
       </div>
     )}
     <div className="evt-det-hero-content">
