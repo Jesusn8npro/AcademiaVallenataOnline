@@ -1392,5 +1392,19 @@ export class MotorAudioPro {
     }
 }
 
-export const motorAudioPro = new MotorAudioPro();
-(window as any).motorAudioPro = motorAudioPro;
+let _motorAudioPro: MotorAudioPro | null = null;
+
+function getMotor(): MotorAudioPro {
+  if (!_motorAudioPro) {
+    _motorAudioPro = new MotorAudioPro();
+    (window as any).motorAudioPro = _motorAudioPro;
+  }
+  return _motorAudioPro;
+}
+
+// Proxy lazy: la instancia real se crea solo en el primer uso (browser).
+// Durante SSR el módulo se evalúa pero nadie llama métodos → window nunca se toca.
+export const motorAudioPro: MotorAudioPro = new Proxy({} as MotorAudioPro, {
+  get(_, prop) { return (getMotor() as any)[prop]; },
+  set(_, prop, value) { (getMotor() as any)[prop] = value; return true; },
+});
