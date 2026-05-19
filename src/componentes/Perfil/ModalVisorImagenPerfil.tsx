@@ -77,10 +77,10 @@ export default function ModalVisorImagenPerfil(props: Props) {
 
           <div className="visor-imagen-panel">
             <div className="visor-imagen-header">
-              {/* TODO: migrar a <Image> cuando randomuser.me esté en remotePatterns (dominio externo no listado) */}
-              <img
+              <Image
                 src={props.usuarioPropietario.avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                 alt="Avatar"
+                width={40} height={40}
                 className="visor-imagen-avatar"
               />
               <div className="visor-imagen-info">
@@ -129,10 +129,10 @@ export default function ModalVisorImagenPerfil(props: Props) {
                 <div className="visor-imagen-lista">
                   {comentariosPrincipales.map((comentario: Comentario) => (
                     <div key={comentario.id} className="visor-imagen-comentario">
-                      {/* TODO: migrar a <Image> cuando randomuser.me esté en remotePatterns (dominio externo no listado) */}
-                      <img
+                      <Image
                         src={comentario.usuario_avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                         alt="Avatar"
+                        width={32} height={32}
                         className="visor-imagen-comentario-avatar"
                       />
                       <div className="visor-imagen-comentario-contenido">
@@ -152,10 +152,10 @@ export default function ModalVisorImagenPerfil(props: Props) {
 
                         {obtenerRespuestas(comentario.id).map((respuesta: Comentario) => (
                           <div key={respuesta.id} className="visor-imagen-respuesta">
-                            {/* TODO: migrar a <Image> cuando randomuser.me esté en remotePatterns (dominio externo no listado) */}
-                            <img
+                            <Image
                               src={respuesta.usuario_avatar || 'https://randomuser.me/api/portraits/women/44.jpg'}
                               alt="Avatar"
+                              width={28} height={28}
                               className="avatar-respuesta"
                             />
                             <div className="visor-imagen-respuesta-contenido">
@@ -170,10 +170,10 @@ export default function ModalVisorImagenPerfil(props: Props) {
 
                         {respondiendo === comentario.id && (
                           <div className="visor-imagen-input-respuesta">
-                            {/* TODO: migrar a <Image> cuando randomuser.me esté en remotePatterns (dominio externo no listado) */}
-                            <img
+                            <Image
                               src={usuarioActual?.url_foto_perfil || 'https://randomuser.me/api/portraits/women/44.jpg'}
                               alt="Tu avatar"
+                              width={28} height={28}
                               className="avatar-respuesta"
                             />
                             <div className="visor-imagen-input-container-respuesta">
@@ -218,10 +218,10 @@ export default function ModalVisorImagenPerfil(props: Props) {
 
             {usuarioActual ? (
               <div className="visor-imagen-input-comentario">
-                {/* TODO: migrar a <Image> cuando randomuser.me esté en remotePatterns (dominio externo no listado) */}
-                <img
+                <Image
                   src={usuarioActual.url_foto_perfil || 'https://randomuser.me/api/portraits/women/44.jpg'}
                   alt="Tu avatar"
+                  width={32} height={32}
                   className="visor-imagen-input-avatar"
                 />
                 <div className="visor-imagen-input-container">
