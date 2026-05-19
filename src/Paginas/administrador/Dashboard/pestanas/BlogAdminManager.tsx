@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import './BlogAdminManager.css';
 import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
@@ -66,7 +67,7 @@ const BlogAdminManager = () => {
                         <div key={articulo.id} className="tarjeta-articulo">
                             <div className="imagen-articulo">
                                 {articulo.portada_url ? (
-                                    <img src={articulo.portada_url} alt={articulo.titulo} />
+                                    <Image src={articulo.portada_url} alt={articulo.titulo} fill style={{ objectFit: 'cover' }} />
                                 ) : (
                                     <div className="placeholder-imagen">
                                         <span style={{ fontSize: '2rem' }}>??</span>

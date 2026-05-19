@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import FotoMaestro__img from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
-const FotoMaestro = (((FotoMaestro__img) as any)?.src ?? (FotoMaestro__img)) as string;
+import Image from 'next/image';
+import FotoMaestro from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
 import './SeccionInstructor.css';
 import { instructorStyles as styles } from './SeccionInstructor.styles';
 import { useNavigate } from '@/compat/router';
@@ -51,11 +51,13 @@ const SeccionInstructor: React.FC = () => {
             <div className="lado-izquierdo" style={{ ...styles.ladoIzquierdo, animation: 'scaleIn 1s ease-out 0.3s both' }}>
               <div className="collage-maestro" style={styles.collageMaestro}>
                 <div className="foto-principal" style={styles.fotoPrincipal}>
-                  <img
+                  <Image
                     src={FotoMaestro}
                     alt="Maestro Jesús González"
                     className="img-maestro"
-                    style={styles.imgMaestro}
+                    width={600}
+                    height={700}
+                    style={{ width: '100%', height: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }}
                   />
                   <div style={styles.overlayProfesional}></div>
                 </div>

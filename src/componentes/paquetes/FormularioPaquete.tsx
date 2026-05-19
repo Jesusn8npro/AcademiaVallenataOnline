@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { generateSlug } from '../../utilidades/utilidadesSlug'
 import { supabase } from '../../servicios/clienteSupabase'
 import {
@@ -165,6 +166,7 @@ export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Pr
                 <button type="button" className="btn-upload">Seleccionar imagen</button>
               </div>
             </label>
+            {/* TODO: migrar a <Image> — preview puede ser blob: (URL.createObjectURL) */}
             {(preview || form.imagen_url) && (
               <div className="preview-img"><img src={preview || form.imagen_url} alt="Imagen paquete" /></div>
             )}
@@ -226,7 +228,7 @@ export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Pr
           <div className="grid-tutoriales">
             {tutorialesFiltrados.map(t => (
               <div key={t.id} className={`tutorial-card ${seleccionados.has(t.id) ? 'sel' : ''}`} onClick={() => toggleTutorial(t.id)}>
-                <div className="thumb">{t.imagen_url ? <img src={t.imagen_url} alt={t.titulo} /> : <div className="thumb-ph">🎵</div>}</div>
+                <div className="thumb">{t.imagen_url ? <Image src={t.imagen_url} alt={t.titulo} width={64} height={64} style={{ objectFit: 'cover' }} /> : <div className="thumb-ph">🎵</div>}</div>
                 <div className="t-info">
                   <div className="t-title">{t.titulo}</div>
                   <div className="t-meta">{t.categoria || ''} {t.nivel ? `• ${t.nivel}` : ''}</div>

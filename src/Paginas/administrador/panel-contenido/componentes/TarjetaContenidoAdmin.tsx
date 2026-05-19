@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { formatearPrecioCOP as formatearMoneda } from '../../../../utilidades/formatadores';
 import type { Contenido } from './useMostradorCursosTutoriales';
@@ -46,7 +47,7 @@ const TarjetaContenidoAdmin = ({ item, modoVista, procesandoAccion, itemProcesan
         <div className={`mostrador-tarjeta ${modoVista === 'lista' ? 'mostrador-vista-lista' : 'mostrador-vista-cuadricula'}`}>
             <div className="mostrador-contenedor-imagen">
                 {item.imagen_url ? (
-                    <img src={item.imagen_url} alt={item.titulo} className="mostrador-imagen-contenido" loading="lazy" />
+                    <Image src={item.imagen_url} alt={item.titulo} fill style={{ objectFit: 'cover' }} className="mostrador-imagen-contenido" />
                 ) : (
                     <div className={`mostrador-imagen-placeholder ${obtenerImagenPorDefecto(item.tipo)}`}>
                         <div className="mostrador-icono-placeholder">
