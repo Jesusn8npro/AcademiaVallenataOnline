@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import type { ResultadosBusqueda } from '../../servicios/busquedaService';
 
 interface Props {
@@ -30,7 +31,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
                 onClick={() => { reproducirSonido('resultado'); navigarAResultado(curso.url); }}
                 onMouseEnter={() => reproducirSonido('hover')}>
                 {curso.imagen ? (
-                  <img src={curso.imagen} alt={curso.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={curso.imagen} alt={curso.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-blue-500 to-blue-700">
                     <span className="academia-placeholder-icono">🎓</span>
@@ -62,7 +63,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
                 onClick={() => { reproducirSonido('resultado'); navigarAResultado(tutorial.url); }}
                 onMouseEnter={() => reproducirSonido('hover')}>
                 {tutorial.imagen ? (
-                  <img src={tutorial.imagen} alt={tutorial.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={tutorial.imagen} alt={tutorial.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-teal-500 to-teal-700">
                     <span className="academia-placeholder-icono">🎵</span>
@@ -94,7 +95,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
                 onClick={() => { reproducirSonido('resultado'); navigarAResultado(articulo.url); }}
                 onMouseEnter={() => reproducirSonido('hover')}>
                 {articulo.imagen ? (
-                  <img src={articulo.imagen} alt={articulo.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={articulo.imagen} alt={articulo.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-orange-500 to-orange-700">
                     <span className="academia-placeholder-icono">📖</span>
@@ -124,7 +125,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
             {resultados.usuarios.map((usuario, index) => (
               <button key={index} className="academia-tarjeta-resultado" onClick={() => navigarAResultado(usuario.url)}>
                 {usuario.imagen ? (
-                  <img src={usuario.imagen} alt={usuario.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={usuario.imagen} alt={usuario.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-purple-500 to-purple-700">
                     <span className="academia-placeholder-icono">👤</span>
@@ -156,7 +157,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
                 onClick={() => { reproducirSonido('resultado'); navigarAResultado(evento.url); }}
                 onMouseEnter={() => reproducirSonido('hover')}>
                 {evento.imagen ? (
-                  <img src={evento.imagen} alt={evento.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={evento.imagen} alt={evento.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-green-500 to-green-700">
                     <span className="academia-placeholder-icono">🎪</span>
@@ -186,7 +187,7 @@ export default function ResultadosBusqueda({ resultados, reproducirSonido, navig
             {resultados.paquetes.map((paquete, index) => (
               <button key={index} className="academia-tarjeta-resultado" onClick={() => navigarAResultado(paquete.url)}>
                 {paquete.imagen ? (
-                  <img src={paquete.imagen} alt={paquete.titulo} className="academia-resultado-imagen" loading="lazy" />
+                  <Image src={paquete.imagen} alt={paquete.titulo} className="academia-resultado-imagen" width={160} height={90} />
                 ) : (
                   <div className="academia-resultado-imagen-placeholder bg-gradient-to-r from-yellow-500 to-yellow-700">
                     <span className="academia-placeholder-icono">📦</span>

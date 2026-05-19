@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useModalInicioSesion, paises } from './useModalInicioSesion';
 import { getModalInicioSesionStyles } from './getModalInicioSesionStyles';
 import VistaLoginModal from './VistaLoginModal';
@@ -44,7 +45,7 @@ const ModalDeInicioDeSesion: React.FC<ModalDeInicioDeSesionProps> = ({ abierto, 
         <div style={styles.modalInicioSesion} onClick={detenerPropagacion}>
           <div style={styles.modalHeader}>
             <div style={styles.logoContainer}>
-              <img src="/logo academia vallenata.webp" alt="Logo Academia Vallenata" style={styles.logoModal} width="300" height="194" loading="lazy" decoding="async" />
+              <Image src="/logo academia vallenata.webp" alt="Logo Academia Vallenata" style={styles.logoModal} width={300} height={194} />
             </div>
             <button style={styles.botonCerrar} aria-label="Cerrar" onClick={cerrarModal}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

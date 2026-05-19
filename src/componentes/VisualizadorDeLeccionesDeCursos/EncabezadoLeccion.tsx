@@ -2,6 +2,7 @@
 import { Link } from '@/compat/router';
 
 import React from 'react'
+import Image from 'next/image'
 import './EncabezadoLeccion.css'
 import BarraProgresoGeneral from './BarraProgresoGeneral'
 import BarraLateralCurso from './BarraLateralCurso'
@@ -96,7 +97,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
             </button>
           )}
           <Link href="/" className="enlace-logo">
-            <img src="/logo-175.webp" alt="Academia Vallenata" className="logo" width="175" height="113" loading="lazy" decoding="async" />
+            <Image src="/logo-175.webp" alt="Academia Vallenata" className="logo" width={175} height={113} />
           </Link>
 
           {esDesktop ? (
