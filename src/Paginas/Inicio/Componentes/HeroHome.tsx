@@ -49,8 +49,8 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
 
             <div style={{ animation: 'flyInFromBottom 1s ease-out 0s' }}>
               <h1 style={styles.heroTitle}>
-                <span style={styles.tituloPrincipal}>{t('hero.tituloPrincipal')}</span>
-                <span style={styles.heroSubtitle}>{t('hero.subtitulo')}</span>
+                <span style={styles.tituloPrincipal}>{t('hero.tituloPrincipal') || 'Domina el Acordeón Vallenato'}</span>
+                <span style={styles.heroSubtitle}>{t('hero.subtitulo') || 'DESDE CASA - SIN INSTRUMENTO'}</span>
               </h1>
             </div>
 
