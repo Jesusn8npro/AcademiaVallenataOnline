@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, Link } from '@/compat/router';
 import { Clock } from 'lucide-react';
 import './ArticuloBlog.css';
@@ -63,7 +64,7 @@ const RenderizadorContenido = ({ secciones }: { secciones: ContenidoSeccion[] })
                     case 'imagen':
                         return (
                             <figure key={id} className="imagen-inline">
-                                <img src={seccion.url} alt={seccion.alt || 'Imagen del artículo'} loading="lazy" decoding="async" />
+                                <Image src={seccion.url!} alt={seccion.alt || 'Imagen del artículo'} width={800} height={450} />
                                 {seccion.caption && <figcaption>{seccion.caption}</figcaption>}
                             </figure>
                         );
@@ -195,7 +196,7 @@ export default function ArticuloBlog({ slug: slugProp }: { slug?: string } = {})
                         </header>
 
                         <div className="articulo-imagen">
-                            <img src={cabecera.portada} alt={cabecera.titulo} />
+                            <Image src={cabecera.portada} alt={cabecera.titulo} width={800} height={450} priority />
                         </div>
 
                         <div className="articulo-contenido">
