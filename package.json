@@ -12,6 +12,7 @@
     "sync": "node scripts/sync-samples.cjs",
     "build": "node scripts/sync-samples.cjs && next build",
     "start": "next start",
+    "preview": "next start",
     "type-check": "tsc --noEmit",
     "lint": "next lint",
     "analyze": "ANALYZE=true next build",
