@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRecomendaciones } from '../Hooks/useRecomendaciones';
 import './RecomendacionesCursos.css';
 
@@ -38,7 +39,7 @@ const RecomendacionesCursos: React.FC = () => {
                                     {recomendaciones.slice(0, mostrarMas ? 8 : 4).map((item, index) => (
                                         <div key={index} className="academia-curso-card" onClick={() => verContenido(item)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && verContenido(item)}>
                                             <div className="academia-curso-imagen-container">
-                                                <img src={item.imagen_url} alt={item.titulo} className="academia-curso-imagen" loading="lazy" />
+                                                <Image src={item.imagen_url} alt={item.titulo} className="academia-curso-imagen" fill style={{ objectFit: 'cover' }} />
                                                 <div className={`academia-tipo-badge ${item.tipo}`}>
                                                     {item.tipo === 'curso' ? '🎓 CURSO' : '🎵 TUTORIAL'}
                                                 </div>

@@ -194,6 +194,7 @@ export default function ListaChats({ chatSeleccionado, onSeleccionarChat, usuari
               onClick={() => onSeleccionarChat(c)}
               onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, chat: c }) }}
             >
+              {/* <img> con fallback: migrar cuando tengamos placeholder de next/image */}
               <img className="msg_chat_avatar" src={avatar} alt={nombre}
                 loading="eager" decoding="async"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }} />

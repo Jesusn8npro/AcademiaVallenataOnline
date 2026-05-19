@@ -2,6 +2,7 @@
 import { Link } from '@/compat/router';
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { usePerfilStore } from '../../stores/perfilStore'
 import { eventosService, type EventoCompleto } from '../../servicios/eventosService'
 import './MisEventos.css'
@@ -171,7 +172,7 @@ export default function MisEventos() {
                                 <div key={evento.id} className="me-tarjeta-evento">
                                     <div className="me-imagen-evento">
                                         {evento.imagen_portada ? (
-                                            <img src={evento.imagen_portada} alt={evento.titulo} />
+                                            <Image src={evento.imagen_portada} alt={evento.titulo} fill style={{ objectFit: 'cover' }} />
                                         ) : (
                                             <div className="me-placeholder-imagen">🎭</div>
                                         )}
