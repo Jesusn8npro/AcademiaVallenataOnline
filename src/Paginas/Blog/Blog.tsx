@@ -100,9 +100,17 @@ const Blog: React.FC = () => {
           style={{ ...styles.seccionArticulos, opacity: mostrarContenido ? 1 : 0, transform: mostrarContenido ? 'translateY(0)' : 'translateY(20px)' }}
           className="seccion-articulos">
           {cargando ? (
-            <div style={styles.estadoCarga} className="estado-carga">
-              <div style={styles.spinnerCarga} className="spinner-carga"></div>
-              <p style={{ color: '#64748b', fontSize: '1.1rem', fontWeight: 500 }}>Cargando los mejores artículos...</p>
+            <div className="blog-skeleton-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="blog-skeleton-card">
+                  <div className="blog-skeleton-img" />
+                  <div className="blog-skeleton-body">
+                    <div className="blog-skeleton-line blog-skeleton-title" />
+                    <div className="blog-skeleton-line blog-skeleton-sub" />
+                    <div className="blog-skeleton-line blog-skeleton-short" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div style={styles.estadoError} className="estado-error">

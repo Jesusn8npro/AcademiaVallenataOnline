@@ -9,14 +9,21 @@ import { generarSlug } from '../../utilidades/slug'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-type DatosContenido = { titulo?: string; descripcion?: string; imagen_url?: string }
+type DatosContenido = {
+  titulo?: string
+  descripcion?: string
+  imagen_url?: string
+  precio_normal?: number | null
+  precio_rebajado?: number | null
+  nivel?: string | null
+}
 
 async function buscarCurso(slug: string): Promise<DatosContenido | null> {
   try {
     const esUUID = UUID_RE.test(slug)
     const { data } = await supabaseAnonimo
       .from('cursos')
-      .select('titulo, descripcion, imagen_url')
+      .select('titulo, descripcion, imagen_url, precio_normal, precio_rebajado, nivel')
       .eq(esUUID ? 'id' : 'slug', slug)
       .maybeSingle()
     return (data as DatosContenido) || null
@@ -27,22 +34,23 @@ async function buscarCurso(slug: string): Promise<DatosContenido | null> {
 
 async function buscarTutorial(slug: string): Promise<DatosContenido | null> {
   try {
-    if (UUID_RE.test(slug)) {
-      const { data } = await supabaseAnonimo
-        .from('tutoriales')
-        .select('titulo, descripcion, imagen_url')
-        .eq('id', slug)
-        .maybeSingle()
-      if (data) return data as DatosContenido
-    }
-    const { data: todos } = await supabaseAnonimo
+    const esUUID = UUID_RE.test(slug)
+    const { data } = await supabaseAnonimo
       .from('tutoriales')
-      .select('titulo, descripcion, imagen_url')
-    const lista = (todos as DatosContenido[]) || []
-    return lista.find((t) => generarSlug(t.titulo || '') === slug) || null
+      .select('titulo, descripcion, imagen_url, precio_normal, precio_rebajado, nivel')
+      .eq(esUUID ? 'id' : 'slug', slug)
+      .maybeSingle()
+    return (data as DatosContenido) || null
   } catch {
     return null
   }
+}
+
+export async function buscarDatosJsonLd(
+  slug: string,
+  tipo: 'curso' | 'tutorial',
+): Promise<DatosContenido | null> {
+  return tipo === 'curso' ? buscarCurso(slug) : buscarTutorial(slug)
 }
 
 export async function metadataLanding(

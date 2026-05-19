@@ -156,21 +156,22 @@ const antiConsolaScript = `
 })();
 `
 
-// Mata el Service Worker viejo de Vite/PWA que quedó registrado en los
-// navegadores de visitantes de la versión anterior. Ese SW servía un
-// index.html cacheado que apunta a chunks vendor-*.js inexistentes en
-// Next => 404 => "Algo salió mal". Se desregistra, limpia caches y
-// recarga UNA vez (guardado en sessionStorage para no hacer loop).
+// Mata el Service Worker viejo de Vite/PWA UNA SOLA VEZ por navegador
+// (flag en localStorage). Las visitas siguientes omiten el bloque completo
+// para no interferir con el nuevo SW de Next registrado en sw.js.
 const swKillScript = `
 (function () {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  try { if (localStorage.getItem('__sw_next_ok')) return; } catch(e) {}
   navigator.serviceWorker.getRegistrations().then(function (regs) {
-    if (!regs || !regs.length) return;
+    var marcar = function() { try { localStorage.setItem('__sw_next_ok', '1'); } catch(e) {} };
+    if (!regs || !regs.length) { marcar(); return; }
     Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
       var limpiar = (window.caches && caches.keys)
         ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
         : Promise.resolve();
       limpiar.then(function () {
+        marcar();
         try {
           if (!sessionStorage.getItem('__sw_purgado')) {
             sessionStorage.setItem('__sw_purgado', '1');
@@ -179,8 +180,16 @@ const swKillScript = `
         } catch (e) { location.reload(); }
       });
     });
-  }).catch(function () {});
+  }).catch(function () { try { localStorage.setItem('__sw_next_ok', '1'); } catch(e) {} });
 })();
+`
+
+const swRegisterScript = `
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function() {});
+  });
+}
 `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -203,6 +212,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Script id="sw-register" strategy="afterInteractive">
+          {swRegisterScript}
+        </Script>
         <Script id="anti-consola" strategy="lazyOnload">
           {antiConsolaScript}
         </Script>
