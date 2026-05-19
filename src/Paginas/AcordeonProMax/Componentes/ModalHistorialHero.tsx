@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import dynamic from 'next/dynamic';
+
+const GraficoHistorial = dynamic(() => import('./GraficoHistorial'), {
+  ssr: false,
+  loading: () => <div style={{ height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>Cargando gráfico...</div>,
+})
 import { scoresHeroService } from '../../../servicios/scoresHeroService';
 import type { CancionHeroConTonalidad } from '../TiposProMax';
 import './ModalHistorialHero.css';
@@ -50,25 +55,7 @@ const ModalHistorialHero: React.FC<Props> = ({ cancion, usuarioId, onCerrar }) =
             <div className="hero-historial-chart">
               <h4>Evolución de Rendimiento</h4>
               {historial.length > 0 ? (
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={historial} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis 
-                      dataKey="created_at" 
-                      tickFormatter={(val) => new Date(val).toLocaleDateString()}
-                      stroke="#888" 
-                    />
-                    <YAxis yAxisId="left" stroke="#3b82f6" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#22c55e" />
-                    <Tooltip 
-                      labelFormatter={(val) => new Date(val).toLocaleString()}
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
-                      itemStyle={{ color: '#fff' }}
-                    />
-                    <Legend />
-                    <Line yAxisId="left" type="monotone" name="Puntuación" dataKey="puntuacion" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line yAxisId="right" type="monotone" name="Precisión (%)" dataKey="precision_porcentaje" stroke="#22c55e" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <GraficoHistorial historial={historial} />
               ) : (
                 <p className="hero-historial-empty">No hay datos suficientes para graficar.</p>
               )}

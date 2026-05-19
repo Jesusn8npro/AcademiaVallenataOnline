@@ -7,6 +7,21 @@ import type { Metadata } from 'next'
 import { supabaseAnonimo } from '@/servicios/clienteSupabase'
 import ArticuloBlog from '@/Paginas/Blog/ArticuloBlog'
 
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  try {
+    const { data } = await supabaseAnonimo
+      .from('blog_articulos')
+      .select('slug')
+      .eq('estado_publicacion', 'publicado')
+      .not('slug', 'is', null)
+    return (data || []).map(({ slug }: { slug: string }) => ({ slug }))
+  } catch {
+    return []
+  }
+}
+
 const BASE_URL = 'https://academiavallenata.online'
 
 async function obtenerArticulo(slug: string) {
