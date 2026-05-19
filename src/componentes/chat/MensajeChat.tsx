@@ -78,7 +78,7 @@ export default function MensajeChat({ texto, onImageClick, onImageLoad }: Props)
             <div key={i} className="academia-chat-img-container">
               <img
                 src={seg.url}
-                alt=""
+                alt="Imagen adjunta"
                 className="academia-chat-img"
                 onClick={() => onImageClick(seg.url)}
                 onError={(e: any) => { e.target.style.display = 'none' }}

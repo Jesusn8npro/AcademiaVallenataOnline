@@ -1,16 +1,13 @@
 import '@/index.css'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Montserrat, Nunito, Raleway } from 'next/font/google'
 import Script from 'next/script'
 import { Providers } from './providers'
 
-// Inter self-hospedado por Next (antes se referenciaba en CSS pero NO se
-// cargaba => caía a fuente del sistema). display:swap evita FOIT.
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' })
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['900'], display: 'swap', variable: '--font-montserrat' })
+const nunito = Nunito({ subsets: ['latin'], weight: ['400', '700'], display: 'swap', variable: '--font-nunito' })
+const raleway = Raleway({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap', variable: '--font-raleway' })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://academiavallenata.online'),
@@ -193,7 +190,7 @@ const swKillScript = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={`${inter.variable} ${montserrat.variable} ${nunito.variable} ${raleway.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />

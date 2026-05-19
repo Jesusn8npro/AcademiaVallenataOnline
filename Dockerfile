@@ -41,8 +41,10 @@ COPY package.json ./
 RUN npm install --no-audit --no-fund
 
 COPY . .
-RUN npm run build
+RUN npm run build && \
+    cp -r .next/static .next/standalone/.next/static && \
+    cp -r public .next/standalone/public
 
 ENV PORT=3000
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["node", ".next/standalone/server.js"]
