@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  typescript: { ignoreBuildErrors: true },
+  typescript: { ignoreBuildErrors: false },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -16,6 +16,14 @@ const nextConfig = {
       { protocol: 'https', hostname: 'img.youtube.com' },
       { protocol: 'https', hostname: 'randomuser.me' },
       { protocol: 'https', hostname: '**.googleusercontent.com' },
+      // Comunidad: GIFs y banderas de geolocalización
+      { protocol: 'https', hostname: 'media.tenor.com' },
+      { protocol: 'https', hostname: 'media1.tenor.com' },
+      { protocol: 'https', hostname: 'media2.tenor.com' },
+      { protocol: 'https', hostname: 'media3.tenor.com' },
+      { protocol: 'https', hostname: '**.giphy.com' },
+      { protocol: 'https', hostname: 'flagcdn.com' },
+      { protocol: 'https', hostname: '**.flagcdn.com' },
     ],
   },
   experimental: {
@@ -32,6 +40,26 @@ const nextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key: 'Content-Security-Policy',
+            // unsafe-inline: framer-motion + estilos dinámicos de Tailwind
+            // unsafe-eval: three.js compila shaders con eval (WebGL)
+            // img-src https: amplio: fotos de perfil de Google OAuth, Supabase, Unsplash, etc.
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "img-src 'self' data: blob: https:",
+              "media-src 'self' blob: https://*.supabase.co https://*.b-cdn.net",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com",
+              "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://iframe.mediadelivery.net",
+              "worker-src 'self' blob:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ]

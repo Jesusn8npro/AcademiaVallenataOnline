@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { FormEvent } from 'react';
 import { crearUsuario as crearUsuarioService } from '../../../../servicios/usuariosAdminService';
 
 export interface Usuario {
@@ -127,8 +127,8 @@ export function useCrearUsuario(onUsuarioCreado: (usuario: Usuario) => void) {
     }
   };
 
-  const manejarEntradaTexto = (event: ChangeEvent<HTMLInputElement>) => {
-    const target = event.target;
+  const manejarEntradaTexto = (event: FormEvent<HTMLInputElement>) => {
+    const target = event.target as HTMLInputElement;
     if (target.name && CAMPOS_TEXTO.includes(target.name)) {
       target.value = limpiarTexto(target.value);
     }

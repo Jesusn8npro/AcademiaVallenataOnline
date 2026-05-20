@@ -43,7 +43,7 @@ export function usePaquetes() {
                 const categoriasUnicas = Array.from(new Set(
                     listaPaquetes.map(p => p.categoria).filter((c): c is string => !!c && c.trim() !== '')
                 )).sort();
-                setCategorias(categoriasUnicas);
+                setCategorias(categoriasUnicas as string[]);
                 calcularEstadisticas(listaPaquetes);
             } else {
                 setError(resultado.error || 'Error cargando paquetes');

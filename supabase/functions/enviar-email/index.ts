@@ -239,15 +239,16 @@ function plantillaPagoAbandonado(nombre: string, extra: Record<string, string> =
   };
 }
 
+const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": SITE_URL,
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-    });
+    return new Response("ok", { headers: CORS_HEADERS });
   }
 
   if (!RESEND_API_KEY) {
@@ -331,24 +332,14 @@ Deno.serve(async (req) => {
 
     console.log(`✅ Email enviado id=${data.id} a=${destinatario}`);
 
-    const corsHeaders = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    };
-    return new Response(JSON.stringify({ ok: true, id: data.id }), { headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true, id: data.id }), {
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
   } catch (err: unknown) {
     console.error("❌ Error en enviar-email:", err);
     return new Response(
       JSON.stringify({ error: (err as Error).message || "Error desconocido" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-        },
-      },
+      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
 });

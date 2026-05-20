@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { eventosService } from '@/servicios/eventosServicio'
+import { eventosService } from '@/servicios/eventosService'
 import DetalleEvento from '@/Paginas/Eventos/DetalleEvento'
 
 export async function generateMetadata({

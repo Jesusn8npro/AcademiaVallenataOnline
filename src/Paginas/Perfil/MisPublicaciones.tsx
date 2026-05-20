@@ -99,7 +99,7 @@ export default function MisPublicaciones() {
                                     me_gusta={pub.me_gusta}
                                     total_comentarios={pub.total_comentarios}
                                     total_compartidos={pub.total_compartidos}
-                                    usuario={usuario}
+                                    usuario={usuario as any}
                                 />
                             ))}
                         </div>

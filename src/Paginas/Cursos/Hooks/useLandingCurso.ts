@@ -87,7 +87,7 @@ export function useLandingCurso() {
                         tipo: 'curso',
                         modulos: modulosConLecciones,
                         modulos_preview: modulosConLecciones
-                    });
+                    } as any);
                     setCargando(false);
                     return;
                 }
@@ -104,20 +104,22 @@ export function useLandingCurso() {
                             .select('id, titulo, descripcion, orden, slug')
                             .eq('tutorial_id', tutorial.id)
                             .order('orden');
-                        setContenido({ ...tutorial, tipo: 'tutorial', modulos_preview: partes || [] });
+                        setContenido({ ...tutorial, tipo: 'tutorial', modulos_preview: partes || [] } as any);
                         setCargando(false);
                         return;
                     }
                 }
 
-                // Buscar por slug directo (evita cargar toda la tabla)
-                const { data: tutorial, error: errorTutoriales } = await supabase
+                // tutoriales no tiene columna slug — buscar en todos por título generado
+                const { data: todosTutoriales } = await supabase
                     .from('tutoriales')
-                    .select('*')
-                    .eq('slug', slug)
-                    .maybeSingle();
+                    .select('*');
 
-                if (tutorial && !errorTutoriales) {
+                const tutorial = (todosTutoriales || []).find(
+                    (t: any) => generarSlug(t.titulo) === slug
+                );
+
+                if (tutorial) {
                     const { data: partes } = await supabase
                         .from('partes_tutorial')
                         .select('id, titulo, descripcion, orden, slug')
@@ -128,7 +130,7 @@ export function useLandingCurso() {
                         ...tutorial,
                         tipo: 'tutorial',
                         modulos_preview: partes || []
-                    });
+                    } as any);
                     setCargando(false);
                     return;
                 }

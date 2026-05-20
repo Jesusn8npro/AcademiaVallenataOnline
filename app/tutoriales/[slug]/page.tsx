@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { supabaseAnonimo } from '@/servicios/clienteSupabase'
 import LandingCurso from '@/Paginas/Cursos/LandingCurso'
 import { metadataLanding, buscarDatosJsonLd } from '@/Paginas/Cursos/metadataServidor'
+import { generarSlug } from '@/utilidades/slug'
 
 const BASE = 'https://academiavallenata.online'
 
@@ -11,9 +12,10 @@ export async function generateStaticParams() {
   try {
     const { data } = await supabaseAnonimo
       .from('tutoriales')
-      .select('slug')
-      .not('slug', 'is', null)
-    return (data || []).map(({ slug }: { slug: string }) => ({ slug }))
+      .select('id, titulo')
+    return (data || [])
+      .filter((t: any) => t.titulo)
+      .map((t: any) => ({ slug: generarSlug(t.titulo) }))
   } catch {
     return []
   }

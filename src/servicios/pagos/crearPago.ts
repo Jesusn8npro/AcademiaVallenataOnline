@@ -53,7 +53,7 @@ export async function crearPago(datosEntrada: {
             nombreProducto = tutorial.titulo;
             descripcion = `Tutorial: ${tutorial.titulo}`;
         } else if (paqueteId) {
-            const { data: paquete, error } = await supabase
+            const { data: paquete, error } = await (supabase as any)
                 .from('paquetes')
                 .select('id, titulo, precio_normal, precio_rebajado')
                 .eq('id', paqueteId)

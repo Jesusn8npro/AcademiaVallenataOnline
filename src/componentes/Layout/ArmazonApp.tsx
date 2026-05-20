@@ -4,7 +4,7 @@
 // Reemplaza lo que hacía <AppContent> dentro del antiguo src/App.tsx.
 // En vez de <Routes> renderiza {children} (App Router de Next).
 
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useLayoutEffect, useState, lazy, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { useLocation } from '@/compat/router'
 import MenuPublico from '@/componentes/Menu/MenuPublico'
@@ -25,7 +25,7 @@ const CursorPersonalizado = lazy(
 )
 
 export default function ArmazonApp({ children }: { children: React.ReactNode }) {
-  const { estaAutenticado, usuario } = useUsuario()
+  const { estaAutenticado, usuario, inicializado } = useUsuario()
   const location = useLocation()
   const pathname = location.pathname
 
@@ -48,12 +48,19 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     esAcordeonProMax ||
     esRecuperarContrasena
 
-  // Evita hydration mismatch: SSR nunca sabe si el usuario está autenticado
-  // (Supabase auth es client-only). Sin este guard, el servidor renderiza
-  // MenuPublico y el cliente intenta hidratar con MenuSuperiorAutenticado
-  // → estructuras DOM distintas → React crash.
+  // Evita hydration mismatch (SSR no conoce auth). useLayoutEffect dispara
+  // ANTES del primer paint del navegador → el usuario nunca ve el menú
+  // equivocado, a diferencia de useEffect que dispara DESPUÉS del paint.
   const [clienteMontado, setClienteMontado] = useState(false)
-  useEffect(() => { setClienteMontado(true) }, [])
+  useLayoutEffect(() => { setClienteMontado(true) }, [])
+
+  // Remueve el CSS que ocultaba el menú público (inyectado por authHideScript en layout.tsx)
+  // una vez que React conoce el estado de auth — antes del primer paint del navegador.
+  useLayoutEffect(() => {
+    if (inicializado) {
+      document.getElementById('__auth-hide-pub')?.remove()
+    }
+  }, [inicializado])
 
   const [mouseDetectado, setMouseDetectado] = useState(false)
   useEffect(() => {
@@ -93,7 +100,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
       )}
 
       {!esInmersivo && (
-        clienteMontado && estaAutenticado
+        clienteMontado && inicializado && estaAutenticado
           ? <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
           : <MenuPublico />
       )}

@@ -1,12 +1,10 @@
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { GrabacionReplayHero } from './Componentes/tiposReplay';
+import { formatearDuracionMs } from '../../../utilidades/formatadores';
 
 export function formatearDuracion(ms?: number | null) {
-    const totalSegundos = Math.max(0, Math.floor((ms || 0) / 1000));
-    const minutos = Math.floor(totalSegundos / 60);
-    const segundos = totalSegundos % 60;
-    return `${minutos}:${segundos.toString().padStart(2, '0')}`;
+    return formatearDuracionMs(ms);
 }
 
 export function formatearFechaRelativa(fecha?: string | null) {

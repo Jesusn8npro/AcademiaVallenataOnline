@@ -107,8 +107,8 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
             <form className="comunidad-publicar-modal-formulario" onSubmit={(e) => { e.preventDefault(); publicar(); }}>
               {gifSeleccionado && (
                 <div className="comunidad-publicar-preview-gif">
-                  {/* TODO: migrar a <Image> — gifSeleccionado es de dominio externo (Tenor/Giphy) no listado en remotePatterns */}
-                  <img src={gifSeleccionado} alt="GIF seleccionado" className="comunidad-publicar-imagen-gif" />
+                  {/* GIFs animados de Tenor/Giphy: dimensiones variables, img nativo correcto */}
+                  <img src={gifSeleccionado} alt="GIF seleccionado" className="comunidad-publicar-imagen-gif" loading="lazy" />
                   <button
                     type="button"
                     className="comunidad-publicar-btn-remover"
@@ -147,7 +147,7 @@ const ComunidadPublicar: React.FC<ComunidadPublicarProps> = ({ usuario, onPublic
                       </label>
                     ) : (
                       <div className="comunidad-publicar-preview-archivo">
-                        {/* TODO: migrar a <Image> — fotoPreview puede ser blob: (URL.createObjectURL) */}
+                        {/* blob: URLs no son compatibles con next/image — se usa img nativo */}
                         <img src={fotoPreview || ''} alt="Preview" className="comunidad-publicar-imagen-preview" />
                         <div className="comunidad-publicar-info-archivo">
                           <div className="comunidad-publicar-nombre-archivo">{fotoFile.name}</div>

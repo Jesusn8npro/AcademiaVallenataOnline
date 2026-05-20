@@ -124,10 +124,10 @@ export function useModalVisorImagenPerfil({
       const { data: likesData, error } = await supabase
         .from('usuario_imagenes_likes').select('*').eq('imagen_id', imagenId)
       if (error) throw error
-      const ls = likesData || []
-      setLikes(ls)
+      const ls = (likesData || []) as any[]
+      setLikes(ls as any)
       setTotalLikes(ls.length)
-      setYaLikee(usuarioActual ? ls.some((l: Like) => l.usuario_id === usuarioActual.id) : false)
+      setYaLikee(usuarioActual ? ls.some((l: any) => l.usuario_id === usuarioActual.id) : false)
     } catch {
       // error silenced; likes stay at 0
     } finally {

@@ -105,7 +105,7 @@ export default function ChatEnVivo() {
             <button className="academia-popup-close" onClick={() => setImagenPopup(null)} aria-label="Cerrar imagen">
               <X size={24} />
             </button>
-            {/* TODO: migrar a <Image> cuando se defina el dominio de imágenes adjuntas del chat */}
+            {/* url_media del chat puede ser de cualquier dominio — img nativo es correcto aquí */}
             <img src={imagenPopup} alt="Imagen ampliada" className="academia-popup-img" />
           </div>
         </div>

@@ -86,6 +86,14 @@ export default function ClaseTutorial() {
     document.body.classList.add('tutorial-pantalla-completa')
     return () => { document.body.classList.remove('tutorial-pantalla-completa') }
   }, [])
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUsuarioActual(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   useEffect(() => { cargarTutorial() }, [slug])
 
   async function cargarTutorial() {
@@ -118,8 +126,9 @@ export default function ClaseTutorial() {
       const lista = partes || []
       setClases(lista)
 
-      const { data: { user } } = await supabase.auth.getUser()
-      setUsuarioActual(user ?? null)
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
+      setUsuarioActual(user)
       if (user) {
         const { data: progAll } = await supabase
           .from('progreso_tutorial')

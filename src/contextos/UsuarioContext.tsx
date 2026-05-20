@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useLayoutEffect, type ReactNode, useCallback, useRef } from 'react'
 import { supabase } from '../servicios/clienteSupabase'
 
 interface Usuario {
@@ -50,13 +50,21 @@ function leerUsuarioCacheInicial(): Usuario | null {
 }
 
 export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
-    const [estadoInicial] = useState(() => {
-        const u = leerUsuarioCacheInicial()
-        return { usuario: u, inicializado: u !== null }
-    })
-    const [usuario, setUsuarioState] = useState<Usuario | null>(estadoInicial.usuario)
-    const [inicializado, setInicializado] = useState(estadoInicial.inicializado)
+    const [usuario, setUsuarioState] = useState<Usuario | null>(null)
+    const [inicializado, setInicializado] = useState(false)
     const authInitialized = useRef(false)
+
+    // Lee el cache del localStorage ANTES del primer paint del navegador.
+    // No puede hacerse en useState lazy porque en Next.js SSR ese código corre
+    // en el servidor (window === undefined) y React usa el resultado del servidor
+    // durante la hidratación, ignorando el localStorage del cliente.
+    useLayoutEffect(() => {
+        const u = leerUsuarioCacheInicial()
+        if (u) {
+            setUsuarioState(u)
+            setInicializado(true)
+        }
+    }, [])
 
     const estaAutenticado = usuario !== null
     const esAdmin = usuario?.rol === 'admin'
@@ -138,28 +146,27 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                 rol: user.user_metadata?.rol || rolCached
             }
 
-            try {
-                // Raza entre BD y Timeout
-                const { data: perfil, error: perfilError } = await Promise.race([fetchPerfil(), timeoutPromise])
+            // Setear inmediatamente con datos básicos: el menú autenticado
+            // aparece tan pronto como getSession() responde, sin esperar la BD.
+            setUsuario(usuarioBasico)
+            setInicializado(true)
 
+            // Enriquecer en segundo plano con el perfil completo de la BD
+            try {
+                const { data: perfil, error: perfilError } = await Promise.race([fetchPerfil(), timeoutPromise])
                 if (perfil && !perfilError) {
                     setUsuario({
-                        ...usuarioBasico, // Defaults
-                        ...perfil,       // Overrides de BD
-                        // Mapeo de campos legacy si es necesario
+                        ...usuarioBasico,
+                        ...perfil,
                         nombre: perfil.nombre || perfil.nombre_completo || usuarioBasico.nombre
                     })
-                } else {
-                    setUsuario(usuarioBasico) // Fallback seguro
                 }
-
             } catch (err) {
-                setUsuario(usuarioBasico) // Fallback seguro en caso de timeout
+                // usuarioBasico ya está activo, no hay nada que hacer
             }
 
         } catch (error) {
             setUsuario(null)
-        } finally {
             setInicializado(true)
         }
     }, [setUsuario])

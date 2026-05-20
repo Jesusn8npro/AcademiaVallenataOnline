@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { GamificacionServicio as GamificacionService } from '../../../servicios/gamificacionServicio';
-import { obtenerSlugUsuario } from '../../../utilidades/utilidadesSlug';
+import { obtenerSlugUsuario } from '../../../utilidades/slug';
 
 const blogPorDefecto = [
     { id: 1, titulo: '¿Cómo convertir tu talento musical en un negocio real?', creado_en: new Date().toISOString(), lecturas: 0 },

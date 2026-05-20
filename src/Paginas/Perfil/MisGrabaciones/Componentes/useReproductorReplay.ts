@@ -305,9 +305,9 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
 
         // Sin audio: simple, solo dispara la secuencia.
         if (!audio) {
-            reproductor.reproducirSecuencia(cancionReplay as any, {
+            (reproductor.reproducirSecuencia as any)(cancionReplay, {
                 tickInicialOverride: tickObjetivo,
-            } as any);
+            });
             return;
         }
 
@@ -340,9 +340,9 @@ export function useReproductorReplay({ abierta, grabacion, logica, reproductor, 
 
         // 4) Audio ya sonando → arrancar RAF: checkpointTime queda dentro del mismo microtask
         //    que el startContextTime del audio (sub-ms drift inicial).
-        reproductor.reproducirSecuencia(cancionReplay as any, {
+        (reproductor.reproducirSecuencia as any)(cancionReplay, {
             tickInicialOverride: tickObjetivo,
-        } as any);
+        });
 
         // 5) Cablear audio→RAF para drift correction continuo (los listeners 'seeked'/'playing'
         //    futuros recapturarán el checkpoint contra audio.currentTime real).

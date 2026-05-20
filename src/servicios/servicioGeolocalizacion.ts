@@ -1,7 +1,10 @@
 export type { DatosGeolocalizacion, ErrorGeolocalizacion } from './geolocalizacion/tipos';
+export { obtenerHistorialUsuario, obtenerEstadisticasUsuario, detectarRiesgo, colorRiesgo } from './geolocalizacion/historial';
+
 import { supabase } from './clienteSupabase';
 import { obtenerIpPublica, obtenerGeolocalizacion, limpiarCache } from './geolocalizacion/_api';
 import { guardarGeolocalizacion } from './geolocalizacion/guardar';
+import { obtenerHistorialUsuario, obtenerEstadisticasUsuario, detectarRiesgo, colorRiesgo } from './geolocalizacion/historial';
 
 async function rastreoCompleto(idUsuario?: string): Promise<boolean> {
     try {
@@ -21,10 +24,20 @@ async function rastreoCompleto(idUsuario?: string): Promise<boolean> {
     }
 }
 
+// Alias de compatibilidad con nombres del servicio anterior
+export const obtenerIPPublica = obtenerIpPublica;
+export const obtenerDatosGeolocalizacion = obtenerGeolocalizacion;
+export const guardarGeolocalizacionUsuario = (usuarioId: string, datos: any) =>
+    guardarGeolocalizacion(usuarioId, datos);
+
 export const servicioGeolocalizacion = {
     obtenerIpPublica,
     obtenerGeolocalizacion,
     guardarGeolocalizacion,
     rastreoCompleto,
-    limpiarCache
+    limpiarCache,
+    obtenerHistorialUsuario,
+    obtenerEstadisticasUsuario,
+    detectarRiesgo,
+    colorRiesgo,
 };

@@ -4,8 +4,9 @@
 // firma y procesa el pago igual que el webhook.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE_URL,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };

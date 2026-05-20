@@ -95,10 +95,8 @@ const ComentariosLeccion: React.FC<ComentariosLeccionProps> = ({
             <div className="comentarios-lista-box">
                 {cargando && comentariosPrincipales.length === 0 ? (
                     <p className="comentarios-loading">Cargando comentarios...</p>
-                ) : error ? (
-                    <p className="comentarios-error">{error}</p>
                 ) : comentariosPrincipales.length === 0 ? (
-                    <p className="comentarios-empty">No hay comentarios aún.</p>
+                    <p className="comentarios-empty">No hay comentarios aún. ¡Sé el primero!</p>
                 ) : (
                     <>
                         <ul className="comentarios-lista">
@@ -116,6 +114,15 @@ const ComentariosLeccion: React.FC<ComentariosLeccionProps> = ({
                     </>
                 )}
             </div>
+
+            {error && <p className="comentarios-error" style={{ margin: '0 1rem 0.5rem', fontSize: '0.85rem' }}>{error}</p>}
+
+            {!usuarioActual && (
+                <div className="comentario-login-aviso">
+                    <span>¿Quieres comentar?</span>
+                    <a href="/login" className="comentario-login-btn">Iniciar sesión</a>
+                </div>
+            )}
 
             {usuarioActual && (
                 <form onSubmit={(e) => { e.preventDefault(); agregarComentario() }} className="comentario-form-bar">

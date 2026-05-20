@@ -3,10 +3,12 @@ import type { GrabacionEstudianteHero } from './_tipos';
 import { TABLA_GRABACIONES_HERO, normalizarGrabacionHero, obtenerUsuarioAutenticado, obtenerPerfilBasicoUsuario } from './_internos';
 import { obtenerGrabacion } from './consultas';
 
+type TablaGrabaciones = 'grabaciones_estudiantes_hero';
+
 export async function actualizarTitulo(id: string, titulo: string, descripcion?: string | null) {
-    const tabla: any = supabase.from(TABLA_GRABACIONES_HERO as any);
-    const { data, error } = await tabla
-        .update({ titulo: titulo.trim(), descripcion: descripcion?.trim() || null })
+    const { data, error } = await supabase
+        .from(TABLA_GRABACIONES_HERO as TablaGrabaciones)
+        .update({ titulo: titulo.trim(), descripcion: descripcion?.trim() || null } as any)
         .eq('id', id)
         .select('*')
         .single();
@@ -17,7 +19,7 @@ export async function actualizarTitulo(id: string, titulo: string, descripcion?:
 
 export async function eliminarGrabacion(id: string) {
     const { error } = await supabase
-        .from(TABLA_GRABACIONES_HERO as any)
+        .from(TABLA_GRABACIONES_HERO as TablaGrabaciones)
         .delete()
         .eq('id', id);
     if (error) throw error;
@@ -40,12 +42,12 @@ export async function actualizarVisibilidadGrabacion(grabacionId: string, esPubl
         if (error) throw error;
     }
 
-    const tabla: any = supabase.from(TABLA_GRABACIONES_HERO as any);
-    const { data, error } = await tabla
+    const { data, error } = await supabase
+        .from(TABLA_GRABACIONES_HERO as TablaGrabaciones)
         .update({
             es_publica: esPublica,
             publicacion_id: esPublica ? grabacion.publicacion_id || null : null
-        })
+        } as any)
         .eq('id', grabacionId)
         .eq('usuario_id', usuario.id)
         .select('*')
@@ -76,9 +78,9 @@ export async function publicarGrabacionEnComunidad(grabacionId: string, datos: {
             return { publicacionId: grabacion.publicacion_id as string, grabacionId: grabacion.id, yaPublicada: true };
         }
 
-        const tablaLimpieza: any = supabase.from(TABLA_GRABACIONES_HERO as any);
-        const { error: errLimpieza } = await tablaLimpieza
-            .update({ publicacion_id: null })
+        const { error: errLimpieza } = await supabase
+            .from(TABLA_GRABACIONES_HERO as TablaGrabaciones)
+            .update({ publicacion_id: null } as any)
             .eq('id', grabacion.id)
             .eq('usuario_id', usuario.id);
         if (errLimpieza) throw errLimpieza;
@@ -120,10 +122,10 @@ export async function publicarGrabacionEnComunidad(grabacionId: string, datos: {
 
     if (errPub) throw errPub;
 
-    const tabla: any = supabase.from(TABLA_GRABACIONES_HERO as any);
     const pubId = (publicacion as any).id;
-    const { error: errGrab } = await tabla
-        .update({ es_publica: true, publicacion_id: pubId })
+    const { error: errGrab } = await supabase
+        .from(TABLA_GRABACIONES_HERO as TablaGrabaciones)
+        .update({ es_publica: true, publicacion_id: pubId } as any)
         .eq('id', grabacionId)
         .eq('usuario_id', usuario.id);
 

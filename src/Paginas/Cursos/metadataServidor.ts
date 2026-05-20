@@ -34,13 +34,20 @@ async function buscarCurso(slug: string): Promise<DatosContenido | null> {
 
 async function buscarTutorial(slug: string): Promise<DatosContenido | null> {
   try {
-    const esUUID = UUID_RE.test(slug)
-    const { data } = await supabaseAnonimo
+    if (UUID_RE.test(slug)) {
+      const { data } = await supabaseAnonimo
+        .from('tutoriales')
+        .select('titulo, descripcion, imagen_url, precio_normal, precio_rebajado, nivel')
+        .eq('id', slug)
+        .maybeSingle()
+      return (data as DatosContenido) || null
+    }
+    // tutoriales no tiene columna slug — buscar por título generado
+    const { data: todos } = await supabaseAnonimo
       .from('tutoriales')
       .select('titulo, descripcion, imagen_url, precio_normal, precio_rebajado, nivel')
-      .eq(esUUID ? 'id' : 'slug', slug)
-      .maybeSingle()
-    return (data as DatosContenido) || null
+    const encontrado = (todos || []).find((t: any) => generarSlug(t.titulo) === slug)
+    return (encontrado as DatosContenido) || null
   } catch {
     return null
   }

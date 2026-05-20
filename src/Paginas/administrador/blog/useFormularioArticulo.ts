@@ -122,10 +122,10 @@ export function useFormularioArticulo({ idArticulo, datosIniciales }: Opciones) 
 
             let errorSupabase;
             if (idArticulo) {
-                const { error } = await supabase.from('blog_articulos').update(payload).eq('id', idArticulo);
+                const { error } = await supabase.from('blog_articulos').update(payload as any).eq('id', idArticulo);
                 errorSupabase = error;
             } else {
-                const { error } = await supabase.from('blog_articulos').insert([payload]);
+                const { error } = await (supabase as any).from('blog_articulos').insert([payload]);
                 errorSupabase = error;
             }
             if (errorSupabase) throw errorSupabase;

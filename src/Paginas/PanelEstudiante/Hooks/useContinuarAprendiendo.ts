@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { useUsuario } from '../../../contextos/UsuarioContext';
+import { formatearUltimaActividad } from '../../../utilidades/formatadores';
 
 const mensajesMotivacionales = [
     "¡Tu pasión por el acordeón te llevará lejos! 🎵",
@@ -28,15 +29,7 @@ const generarSlug = (texto: string): string =>
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
 
-export function formatearUltimaActividad(fecha: Date): string {
-    const diff = Date.now() - fecha.getTime();
-    const horas = Math.floor(diff / (1000 * 60 * 60));
-    const dias = Math.floor(horas / 24);
-    if (horas < 1) return 'Hace menos de una hora';
-    if (horas < 24) return `Hace ${horas} hora${horas > 1 ? 's' : ''}`;
-    if (dias < 7) return `Hace ${dias} día${dias > 1 ? 's' : ''}`;
-    return fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-}
+export { formatearUltimaActividad };
 
 export function useContinuarAprendiendo() {
     const navigate = useNavigate();

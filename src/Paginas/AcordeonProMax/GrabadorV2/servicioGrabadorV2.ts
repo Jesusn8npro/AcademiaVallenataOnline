@@ -15,7 +15,7 @@ function normalizarSecuencia(raw: any): NotaHero[] {
       tick: Math.max(0, Math.floor(n.tick)),
       botonId: String(n.botonId),
       duracion: Math.max(1, Math.floor(n.duracion ?? 1)),
-      fuelle: n.fuelle === 'cerrando' ? 'cerrando' : 'abriendo',
+      fuelle: (n.fuelle === 'cerrando' ? 'cerrando' : 'abriendo') as 'cerrando' | 'abriendo',
     }))
     .sort((a, b) => a.tick - b.tick);
 }

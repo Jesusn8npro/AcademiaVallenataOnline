@@ -19,7 +19,7 @@ async function buscarChatPrivadoExistente(usuario1_id: string, usuario2_id: stri
             if (miembrosIds.length === 2 &&
                 miembrosIds.includes(usuario1_id) &&
                 miembrosIds.includes(usuario2_id)) {
-                return chat;
+                return chat as any as Chat;
             }
         }
 
@@ -199,7 +199,7 @@ export async function crearChat(datos: {
             return { chat: null, error: 'Error agregando miembros al chat' };
         }
 
-        await supabase.from('chats_configuracion').insert({
+        void supabase.from('chats_configuracion' as any).insert({
             chat_id: chatCreado.id,
             solo_admins_pueden_escribir: false,
             permitir_reacciones: true,
@@ -207,13 +207,13 @@ export async function crearChat(datos: {
             permitir_adjuntos: true,
             tamaño_maximo_archivo_mb: 10,
             tipos_archivo_permitidos: ['imagen', 'video', 'audio', 'documento']
-        });
+        } as any);
 
         if (datos.es_grupal) {
             await enviarMensajeSistema(chatCreado.id, `💫 ${datos.nombre} ha sido creado`);
         }
 
-        return { chat: chatCreado, error: null };
+        return { chat: chatCreado as any as Chat, error: null };
     } catch (err) {
         return { chat: null, error: 'Error inesperado' };
     }

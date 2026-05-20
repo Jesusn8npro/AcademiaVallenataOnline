@@ -96,7 +96,8 @@ export const actividadService = {
                     ultima_actividad,
                     created_at
                 `)
-                .not('ultima_actividad', 'is', null);
+                .not('ultima_actividad', 'is', null)
+                .limit(500);
 
             // 3. Combinar datos
             const usuariosMap = new Map();

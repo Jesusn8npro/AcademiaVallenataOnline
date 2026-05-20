@@ -35,9 +35,9 @@ function filtrarContenido(cursos: Contenido[], tutoriales: Contenido[], busqueda
             item.titulo?.toLowerCase().includes(q) ||
             item.descripcion?.toLowerCase().includes(q) ||
             item.descripcion_corta?.toLowerCase().includes(q) ||
-            item.artista?.toLowerCase().includes(q) ||
-            item.acordeonista?.toLowerCase().includes(q) ||
-            item.tonalidad?.toLowerCase().includes(q) ||
+            (item as any).artista?.toLowerCase().includes(q) ||
+            (item as any).acordeonista?.toLowerCase().includes(q) ||
+            (item as any).tonalidad?.toLowerCase().includes(q) ||
             item.categoria?.toLowerCase().includes(q) ||
             item.nivel?.toLowerCase().includes(q) ||
             item.estado?.toLowerCase().includes(q)

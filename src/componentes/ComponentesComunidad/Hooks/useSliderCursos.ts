@@ -84,7 +84,7 @@ export function useSliderCursos() {
             .from('cursos')
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, slug')
             .in('id', cursoIds);
-          cursosData = cursos || [];
+          cursosData = (cursos || []) as any;
         }
 
         let tutorialesData: Inscripcion['tutoriales'][] = [];
@@ -94,7 +94,7 @@ export function useSliderCursos() {
             .from('tutoriales')
             .select('id, titulo, descripcion, imagen_url, nivel, duracion_estimada, precio_normal, artista, acordeonista, tonalidad')
             .in('id', tutorialIds);
-          tutorialesData = tutoriales || [];
+          tutorialesData = (tutoriales || []) as any;
         }
 
         const combinadas: Inscripcion[] = [

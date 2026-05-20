@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
-import { generateSlug } from '../../../utilidades/utilidadesSlug';
+import { generateSlug } from '../../../utilidades/slug';
 
 const datosPorDefecto = [
     { id: 1, titulo: 'A TOCAR ACORDEÓN', descripcion: 'Curso completo desde cero hasta tu primera canción', imagen_url: '/images/Home/academia-vallenata-1.jpg', slug: 'a-tocar-acordeon', nivel: 'principiante', categoria: 'Vallenato', precio_normal: 0, precio_rebajado: null, tipo: 'curso', rating: '4.8', estudiantes: '500+', razon: 'Perfecto para empezar' },

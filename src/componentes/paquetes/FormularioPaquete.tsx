@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import { generateSlug } from '../../utilidades/utilidadesSlug'
+import { generateSlug } from '../../utilidades/slug'
 import { supabase } from '../../servicios/clienteSupabase'
 import {
   crearPaquete,
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Props) {
-  const [form, setForm] = useState<PaqueteTutorial>({ titulo: '', descripcion: '', descripcion_corta: '', categoria: 'Acordeón', nivel: '', precio_normal: 0, precio_rebajado: 0, imagen_url: '', estado: 'borrador', destacado: false })
+  const [form, setForm] = useState<PaqueteTutorial>({ titulo: '', descripcion: '', descripcion_corta: '', categoria: 'Acordeón', nivel: 'principiante', precio_normal: 0, precio_rebajado: 0, imagen_url: '', estado: 'borrador', destacado: false, tipo_acceso: 'gratuito' })
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
   const [archivo, setArchivo] = useState<File | null>(null)
@@ -166,7 +166,7 @@ export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Pr
                 <button type="button" className="btn-upload">Seleccionar imagen</button>
               </div>
             </label>
-            {/* TODO: migrar a <Image> — preview puede ser blob: (URL.createObjectURL) */}
+            {/* preview puede ser blob: (URL.createObjectURL) — img nativo es correcto aquí */}
             {(preview || form.imagen_url) && (
               <div className="preview-img"><img src={preview || form.imagen_url} alt="Imagen paquete" /></div>
             )}
@@ -182,7 +182,7 @@ export default function FormularioPaquete({ paqueteId, onGuardado, onError }: Pr
         <div className="card-body">
           <div className="grid3">
             <div className="field"><label>Categoría</label><input value={form.categoria || ''} onChange={e => cambiar('categoria', e.target.value)} placeholder="Ej: Acordeón" /></div>
-            <div className="field"><label>Nivel</label><input value={form.nivel || ''} onChange={e => cambiar('nivel', e.target.value)} placeholder="Ej: Principiante" /></div>
+            <div className="field"><label>Nivel</label><input value={form.nivel || ''} onChange={e => cambiar('nivel', e.target.value as any)} placeholder="Ej: Principiante" /></div>
             <div className="field"><label>Estado</label><select value={form.estado || 'borrador'} onChange={e => cambiar('estado', e.target.value as any)}><option value="borrador">Borrador</option><option value="publicado">Publicado</option><option value="archivado">Archivado</option></select></div>
           </div>
           <div className="field checkbox"><label><input type="checkbox" checked={!!form.destacado} onChange={e => cambiar('destacado', e.target.checked)} /> Destacado</label></div>

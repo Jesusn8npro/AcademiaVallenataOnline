@@ -111,7 +111,7 @@ const CrearContenido = () => {
         const { data: modulos, error: errorModulos } = await supabase
           .from('modulos')
           .select('*')
-          .eq('curso_id', idContenido)
+          .eq('curso_id', String(idContenido))
           .order('orden', { ascending: true });
 
         if (!errorModulos && modulos && modulos.length > 0) {
@@ -136,7 +136,7 @@ const CrearContenido = () => {
         const { data: partes, error: errorPartes } = await supabase
           .from('partes_tutorial')
           .select('*')
-          .eq('tutorial_id', idContenido)
+          .eq('tutorial_id', String(idContenido))
           .order('orden', { ascending: true });
         if (!errorPartes && partes) setEstructuraInicial(partes || []);
       }

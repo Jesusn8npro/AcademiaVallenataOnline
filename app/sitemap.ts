@@ -15,7 +15,7 @@ async function slugs(
   filtros?: (q: any) => any,
 ): Promise<MetadataRoute.Sitemap> {
   try {
-    let q = supabaseAnonimo.from(tabla).select('slug').not('slug', 'is', null)
+    let q = (supabaseAnonimo as any).from(tabla).select('slug').not('slug', 'is', null)
     if (filtros) q = filtros(q)
     const { data, error } = await q.limit(5000)
     if (error || !data) return []

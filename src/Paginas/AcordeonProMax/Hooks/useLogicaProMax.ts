@@ -916,6 +916,13 @@ export function useLogicaProMax() {
     setTimeout(() => iniciarJuego(cancion), 50);
   }, [cancelarCapturaActiva, iniciarJuego, limpiarEstadoGrabaciones, setEstadisticas, setEfectosVisuales]);
 
+  useEffect(() => {
+    return () => {
+      if (conteoIntervalRef.current) clearInterval(conteoIntervalRef.current);
+      if (audioFadeIntervalRef.current) clearInterval(audioFadeIntervalRef.current);
+    };
+  }, []);
+
   return {
     estadoJuego,
     setEstadoJuego,
@@ -954,7 +961,7 @@ export function useLogicaProMax() {
     totalTicks: reproductor.totalTicks,
     reproduciendo: reproductor.reproduciendo,
     pausado: reproductor.pausado,
-    secuencia: reproductor.secuencia,
+    secuencia: (reproductor as any).secuencia,
     secuenciaGrabacion,
     seleccionarCancion,
     confirmarYJugar,

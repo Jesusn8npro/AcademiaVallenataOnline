@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { eventosService } from '../../../servicios/eventosService';
-import type { EventoCompleto } from '../../../types/eventos';
+import type { EventoCompleto } from '../../../servicios/eventosService';
 
 const EVENTO_INICIAL = {
     titulo: '',

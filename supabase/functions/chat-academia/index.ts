@@ -2,10 +2,28 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
+const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
 const CORS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE_URL,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+}
+
+// 20 mensajes por minuto por sesión de chat
+const RATE_LIMIT_MAX = 20
+const RATE_LIMIT_WINDOW_MS = 60 * 1000
+
+async function checkRateLimit(sb: any, chatId: string): Promise<boolean> {
+  const key = `chat:${chatId}`
+  const { data } = await sb.from("rate_limit_buckets").select("count, window_start").eq("key", key).maybeSingle()
+  const now = new Date()
+  if (!data || (now.getTime() - new Date(data.window_start).getTime()) > RATE_LIMIT_WINDOW_MS) {
+    await sb.from("rate_limit_buckets").upsert({ key, count: 1, window_start: now.toISOString() }, { onConflict: "key" })
+    return true
+  }
+  if (data.count >= RATE_LIMIT_MAX) return false
+  await sb.from("rate_limit_buckets").update({ count: data.count + 1 }).eq("key", key)
+  return true
 }
 
 const HERRAMIENTAS = [
@@ -173,6 +191,13 @@ Deno.serve(async (req: Request) => {
     if (!chat_id || !mensaje?.trim()) {
       return new Response(JSON.stringify({ error: "chat_id y mensaje requeridos" }), {
         status: 400, headers: { ...CORS, "Content-Type": "application/json" }
+      })
+    }
+
+    const permitido = await checkRateLimit(sb, chat_id)
+    if (!permitido) {
+      return new Response(JSON.stringify({ respuesta: "Estás enviando mensajes muy rápido. Espera un momento e intenta de nuevo. 😊" }), {
+        status: 429, headers: { ...CORS, "Content-Type": "application/json" }
       })
     }
 

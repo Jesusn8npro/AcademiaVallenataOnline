@@ -3,7 +3,7 @@ import type { NotificacionGaming } from '../../tipos/gamificacion';
 
 export async function crearNotificacionGaming(usuarioId: string, notificacion: Partial<NotificacionGaming>): Promise<boolean> {
     try {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('notificaciones_gaming')
             .insert({
                 usuario_id: usuarioId,

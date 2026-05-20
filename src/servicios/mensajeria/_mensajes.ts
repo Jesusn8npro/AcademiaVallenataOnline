@@ -35,7 +35,7 @@ async function enviarNotificacionesMensaje(chatId: string, mensaje: any, autorId
         let nombreChat = chatInfo.nombre;
         if (!nombreChat && !chatInfo.es_grupal) {
             const otroMiembro = chatInfo.miembros_chat.find((m: any) => m.usuario_id !== autorId);
-            nombreChat = otroMiembro?.perfil?.nombre_completo || 'Chat';
+            nombreChat = otroMiembro?.usuario?.nombre_completo || 'Chat';
         }
 
         await crearNotificacion({
@@ -158,7 +158,7 @@ export async function enviarMensaje(datos: {
 
         await enviarNotificacionesMensaje(datos.chat_id, mensajeCreado, user.id);
 
-        return { mensaje: mensajeCreado, error: null };
+        return { mensaje: mensajeCreado as any as Mensaje, error: null };
     } catch (err) {
         return { mensaje: null, error: 'Error inesperado' };
     }
@@ -193,7 +193,7 @@ export async function toggleReaccion(mensajeId: string, reaccion: string): Promi
             return { exito: false, error: 'Usuario no autenticado' };
         }
 
-        const { data: reaccionExistente } = await supabase
+        const { data: reaccionExistente } = await (supabase as any)
             .from('mensajes_reacciones')
             .select('id')
             .eq('mensaje_id', mensajeId)
@@ -202,7 +202,7 @@ export async function toggleReaccion(mensajeId: string, reaccion: string): Promi
             .single();
 
         if (reaccionExistente) {
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('mensajes_reacciones')
                 .delete()
                 .eq('id', reaccionExistente.id);
@@ -211,7 +211,7 @@ export async function toggleReaccion(mensajeId: string, reaccion: string): Promi
                 return { exito: false, error: error.message };
             }
         } else {
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('mensajes_reacciones')
                 .insert({
                     mensaje_id: mensajeId,

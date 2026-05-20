@@ -10,14 +10,14 @@ function formatearEstudiantes(inscritos: number | undefined): string {
   return `${inscritos.toLocaleString()}+`
 }
 
-export async function obtenerCatalogo(): Promise<{ items: (ItemContenido & { rating: string; estudiantes: string })[]; error?: string }> {
+export async function obtenerCatalogo(): Promise<{ items: any[]; error?: string }> {
   try {
 
     // Promesa de carga de datos — cursos y tutoriales en paralelo
     const loadData = async () => {
       const [cursosResult, tutsResult] = await Promise.all([
-        supabaseAnonimo.from('cursos').select('*').order('created_at', { ascending: false }),
-        supabaseAnonimo.from('tutoriales').select('*').order('created_at', { ascending: false })
+        supabaseAnonimo.from('cursos').select('*').order('created_at', { ascending: false }).limit(200),
+        supabaseAnonimo.from('tutoriales').select('*').order('created_at', { ascending: false }).limit(200)
       ]);
 
       if (cursosResult.error && tutsResult.error) {
@@ -68,6 +68,7 @@ export async function obtenerCursosDisponibles(): Promise<{ success: boolean; da
       .select('*')
       .eq('estado', 'publicado')
       .order('titulo')
+      .limit(200)
 
     if (error) throw error
     return { success: true, data: data || [] }

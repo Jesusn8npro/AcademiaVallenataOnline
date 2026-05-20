@@ -56,18 +56,18 @@ export function usePestanaPagos() {
             const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
             const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0)
 
-            const { data: pagosExitosos } = await supabase
+            const { data: pagosExitosos } = await (supabase as any)
                 .from('pagos_epayco').select('monto, created_at').eq('estado', 'exitoso')
 
             const totalIngresos = pagosExitosos?.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0) || 0
             const transaccionesExitosas = pagosExitosos?.length || 0
 
-            const { data: pagosEsteMes } = await supabase
+            const { data: pagosEsteMes } = await (supabase as any)
                 .from('pagos_epayco').select('monto').eq('estado', 'exitoso')
                 .gte('created_at', inicioMes.toISOString())
             const ingresosEsteMes = pagosEsteMes?.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0) || 0
 
-            const { data: pagosMesAnterior } = await supabase
+            const { data: pagosMesAnterior } = await (supabase as any)
                 .from('pagos_epayco').select('monto').eq('estado', 'exitoso')
                 .gte('created_at', inicioMesAnterior.toISOString())
                 .lte('created_at', finMesAnterior.toISOString())
@@ -95,7 +95,7 @@ export function usePestanaPagos() {
 
     async function cargarTransaccionesRecientes() {
         try {
-            const { data: transacciones } = await supabase
+            const { data: transacciones } = await (supabase as any)
                 .from('pagos_epayco')
                 .select(`
                     id, monto, estado, created_at, metodo_pago, referencia_pago, moneda,
@@ -138,7 +138,7 @@ export function usePestanaPagos() {
                 const inicioMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1)
                 const finMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0)
 
-                const { data: pagosMes } = await supabase
+                const { data: pagosMes } = await (supabase as any)
                     .from('pagos_epayco').select('monto').eq('estado', 'exitoso')
                     .gte('created_at', inicioMes.toISOString()).lte('created_at', finMes.toISOString())
 
