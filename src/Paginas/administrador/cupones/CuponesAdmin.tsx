@@ -44,7 +44,8 @@ export default function CuponesAdmin() {
     setGuardando(true)
     setMsg('')
     const payload = { ...form, codigo: form.codigo.toUpperCase().trim() }
-    const { error } = await supabase.from('cupones').insert(payload)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from('cupones').insert(payload as any)
     if (error) { setMsg(error.message); setGuardando(false); return }
     setForm({ ...VACIO })
     setMsg('✅ Cupón creado')
