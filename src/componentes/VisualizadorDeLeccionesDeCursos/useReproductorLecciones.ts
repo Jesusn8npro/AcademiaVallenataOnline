@@ -6,13 +6,15 @@ interface ReproductorLeccionesProps {
   leccionSiguiente?: any;
   videoUrl?: string;
   tipo?: 'leccion' | 'clase';
+  onNavegar?: (leccion: any) => void;
 }
 
 export function useReproductorLecciones({
   videoUrl = '',
   leccionAnterior = null,
   leccionSiguiente = null,
-  tipo = 'leccion'
+  tipo = 'leccion',
+  onNavegar,
 }: ReproductorLeccionesProps) {
   const navigate = useNavigate();
   const [cargando, setCargando] = useState(true);
@@ -63,6 +65,7 @@ export function useReproductorLecciones({
 
   const navegar = (destino: any) => {
     if (!destino) return;
+    if (onNavegar) { onNavegar(destino); return; }
     const parentSlug = window.location.pathname.split('/')[2];
     const leccionSlug = destino.slug || destino.id;
     if (tipo === 'leccion') {

@@ -208,3 +208,9 @@ aside {
   .route-suspense-fallback::after { animation: none; }
 }
 
+@keyframes zoomEspacial {
+  from { transform: scale(1); }
+  to   { transform: scale(1.4); }
+}
+
+

@@ -15,6 +15,7 @@ import './contenido-tutorial.css'
 
 export default function ClaseTutorial() {
   const { slug = '', claseSlug = '' } = useParams()
+  const [claseActivaSlug, setClaseActivaSlug] = useState(claseSlug)
   const [tutorial, setTutorial] = useState<any>(null)
   const [clases, setClases] = useState<any[]>([])
   const [completada, setCompletada] = useState(false)
@@ -37,6 +38,26 @@ export default function ClaseTutorial() {
   const [searchParams] = useSearchParams()
   const tiempoInicialParam = searchParams.get('t')
   const tiempoInicialVideo = tiempoInicialParam ? Math.max(0, parseInt(tiempoInicialParam, 10) || 0) : 0
+
+  // Navegación client-side sin remount: actualiza estado + URL sin Next.js router.
+  // El popstate listener sincroniza el estado cuando el usuario usa back/forward.
+  useEffect(() => {
+    function onPopState() {
+      const parts = window.location.pathname.split('/')
+      const idx = parts.indexOf('clase')
+      if (idx !== -1 && parts[idx + 1]) setClaseActivaSlug(parts[idx + 1])
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  function cambiarClase(leccion: any) {
+    const nuevoSlug = leccion.slug || leccion.id || ''
+    if (!nuevoSlug) return
+    setClaseActivaSlug(nuevoSlug)
+    window.history.pushState(null, '', `/tutoriales/${slug}/clase/${nuevoSlug}`)
+    window.scrollTo(0, 0)
+  }
 
   // Al volver del simulador con ?t=N el navegador puede restaurar la posición
   // de scroll previa Y el iframe del video con autoplay puede pedir foco —
@@ -129,17 +150,17 @@ export default function ClaseTutorial() {
       try { return generarSlug(text || ''); } catch { return ''; }
     };
     return clases.find((p: any) =>
-      p.slug === claseSlug ||
-      safeGenerateSlug(p.titulo) === claseSlug ||
-      p.id === claseSlug
+      p.slug === claseActivaSlug ||
+      safeGenerateSlug(p.titulo) === claseActivaSlug ||
+      p.id === claseActivaSlug
     ) || clases[0]
-  }, [clases, claseSlug])
+  }, [clases, claseActivaSlug])
 
   useEffect(() => {
     if (clase) setCompletada(!!progresoMap[clase.id])
   }, [clase, progresoMap])
 
-  const estadisticasProgreso = useMemo(() => {
+const estadisticasProgreso = useMemo(() => {
     const total = clases.length
     const completadas = Object.values(progresoMap).filter(Boolean).length
     const porcentaje = total ? Math.round((completadas / total) * 100) : 0
@@ -208,51 +229,70 @@ export default function ClaseTutorial() {
         usuarioActual={null}
         leccionAnterior={claseAnterior}
         leccionSiguiente={claseSiguiente}
+        onCambiarClase={cambiarClase}
       />
       <div className="contenedor-clase">
         <div className="area-video">
           {clase.tipo_contenido === 'evaluacion' ? (
-            <FormularioEvaluacion
-              parteId={clase.id}
-              tutorialId={tutorial.id}
-              monedasRecompensa={clase.monedas_recompensa ?? 10}
-            />
+            <>
+              <div className="evaluacion-movil-nav">
+                <button
+                  type="button"
+                  className="evaluacion-movil-nav-btn"
+                  onClick={() => {
+                    const destino = claseAnterior || clases.find((c: any) => c.tipo_contenido !== 'evaluacion') || null
+                    if (destino) cambiarClase(destino)
+                  }}
+                >
+                  ← {claseAnterior ? claseAnterior.titulo : 'Ver clases'}
+                </button>
+              </div>
+              <FormularioEvaluacion
+                parteId={clase.id}
+                tutorialId={tutorial.id}
+                monedasRecompensa={clase.monedas_recompensa ?? 10}
+              />
+            </>
           ) : (
-          <ReproductorLecciones
-            leccionAnterior={claseAnterior}
-            leccionSiguiente={claseSiguiente}
-            parteId={clase.id}
-            thumbnailUrl={''}
-            titulo={clase.titulo}
-            tipo="clase"
-            completada={completada}
-            cargandoCompletar={cargandoCompletar}
-            marcarComoCompletada={marcarComoCompletada}
-            errorCompletar={errorCompletar}
-            autoplay={tiempoInicialVideo > 0}
-            tiempoInicial={tiempoInicialVideo}
-            onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
-          />
+            <>
+              <ReproductorLecciones
+                leccionAnterior={claseAnterior}
+                leccionSiguiente={claseSiguiente}
+                parteId={clase.id}
+                thumbnailUrl={''}
+                titulo={clase.titulo}
+                tipo="clase"
+                completada={completada}
+                cargandoCompletar={cargandoCompletar}
+                marcarComoCompletada={marcarComoCompletada}
+                errorCompletar={errorCompletar}
+                autoplay={tiempoInicialVideo > 0}
+                tiempoInicial={tiempoInicialVideo}
+                onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
+                onCambiarClase={cambiarClase}
+              />
+              {completada && (
+                <div className="ct-clase-completada-acciones">
+                  <button className="ct-btn-compartir" onClick={compartirClase}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    {copiado ? '¡Enlace copiado!' : 'Compartir progreso'}
+                  </button>
+                </div>
+              )}
+              <div className="tutorial-scroll-container">
+                <PestañasLeccion
+                  leccionId={clase.id}
+                  tipo="clase"
+                  curso={{ ...tutorial, clases_tutorial: clases }}
+                  clases={clases}
+                  progreso={progresoMap}
+                  mostrarSidebar={mostrarSidebar}
+                  usuarioActual={null}
+                  onCambiarLeccion={cambiarClase}
+                />
+              </div>
+            </>
           )}
-          {clase.tipo_contenido !== 'evaluacion' && completada && (
-            <div className="ct-clase-completada-acciones">
-              <button className="ct-btn-compartir" onClick={compartirClase}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                {copiado ? '¡Enlace copiado!' : 'Compartir progreso'}
-              </button>
-            </div>
-          )}
-          <div className="tutorial-scroll-container">
-            <PestañasLeccion
-              leccionId={clase.id}
-              tipo="clase"
-              curso={{ ...tutorial, clases_tutorial: clases }}
-              clases={clases}
-              progreso={progresoMap}
-              mostrarSidebar={mostrarSidebar}
-              usuarioActual={null}
-            />
-          </div>
         </div>
         <div className={`leccion-sidebar ${(mostrarSidebar || mostrarAcordeon) ? 'visible' : ''} ${mostrarAcordeon ? 'con-acordeon' : ''}`}>
           {mostrarAcordeon ? (
@@ -265,6 +305,7 @@ export default function ClaseTutorial() {
               progreso={progresoMap}
               tipo="tutorial"
               onCerrarSidebar={() => setMostrarSidebar(false)}
+              onIrAClase={cambiarClase}
             />
           )}
         </div>

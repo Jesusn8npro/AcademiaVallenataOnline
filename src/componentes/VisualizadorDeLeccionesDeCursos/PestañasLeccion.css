@@ -199,9 +199,9 @@
 /* Móvil (≤768px) */
 @media (max-width: 768px) {
     .leccion-contenido {
-        padding: 1rem 0 0 0 !important;
-        height: calc(100vh - 320px);
-        max-height: calc(100vh - 320px);
+        padding: 0 !important;
+        flex: 1;
+        min-height: 0;
     }
 }
 
@@ -250,7 +250,8 @@
     .contenido-pestaña {
         scrollbar-width: none;
         -ms-overflow-style: none;
-        height: calc(100vh - 450px);
+        flex: 1;
+        min-height: 0;
         overflow-y: auto !important;
     }
 
@@ -283,7 +284,8 @@
     .contenido-pestaña {
         scrollbar-width: none;
         -ms-overflow-style: none;
-        height: calc(100vh - 420px);
+        flex: 1;
+        min-height: 0;
         overflow-y: auto !important;
     }
 

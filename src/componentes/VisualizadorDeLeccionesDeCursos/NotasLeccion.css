@@ -1,131 +1,207 @@
-.notas-leccion {
-    padding: 1.5rem;
-    background: #fff;
-    border-radius: 12px;
+/* ── Wrapper principal ── */
+.notas-leccion-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
+  gap: 0.75rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.encabezado-notas {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e5e7eb;
+.notas-leccion-container h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+  flex-shrink: 0;
 }
 
-.encabezado-notas h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
+.notas-cargando {
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #94a3b8;
 }
 
-.ultimo-guardado {
-    font-size: 0.85rem;
-    color: #22c55e;
-    font-weight: 500;
+/* ── Grid ── */
+.notas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
 }
 
-/* Editor de notas */
-.editor-notas {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    line-height: 1.6;
-    resize: vertical;
-    transition: border-color 0.2s;
-    margin-bottom: 1rem;
+/* ── Área de edición ── */
+.notas-edicion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.editor-notas:focus {
-    outline: none;
-    border-color: #a855f7;
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+.notas-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 90px;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  color: #1e293b;
 }
 
-/* Acciones */
-.acciones-notas {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
+.notas-textarea:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
 }
 
-.btn-guardar-nota {
-    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-    color: #fff;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+.notas-btn {
+  align-self: flex-start;
+  padding: 0.55rem 1.25rem;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
 
-.btn-guardar-nota:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+.notas-btn:hover:not(:disabled) { opacity: 0.88; }
+.notas-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Mensajes ── */
+.notas-mensaje {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
-.btn-guardar-nota:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.notas-mensaje.exito {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
-.info-autoguardado {
-    font-size: 0.85rem;
-    color: #6b7280;
-    font-style: italic;
+.notas-mensaje.error {
+  background: #fff5f5;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
-/* Mensaje login */
-.mensaje-login-notas {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem 2rem;
-    text-align: center;
-    color: #9ca3af;
+/* ── Notas guardadas ── */
+.notas-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
 }
 
-.mensaje-login-notas svg {
-    margin-bottom: 1rem;
-    opacity: 0.5;
+.notas-preview-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.mensaje-login-notas p {
-    margin: 0;
-    font-size: 1rem;
-    color: #6b7280;
+.notas-preview-content {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  padding: 1rem 0;
+  text-align: center;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .notas-leccion {
-        padding: 1rem;
-    }
-
-    .encabezado-notas {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .acciones-notas {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .info-autoguardado {
-        text-align: center;
-    }
-
-    .editor-notas {
-        min-height: 200px;
-    }
+/* ── Lista de notas ── */
+.notas-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
+
+.nota-item {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.nota-contenido {
+  font-size: 0.9rem;
+  color: #1e293b;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.nota-fecha {
+  font-size: 0.76rem;
+  color: #a78bfa;
+}
+
+/* ── Textarea de edición ── */
+.notas-textarea-edit {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1.5px solid #c4b5fd;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.notas-textarea-edit:focus { border-color: #9333ea; }
+
+/* ── Acciones ── */
+.notas-acciones {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.notas-btn-accion {
+  padding: 0.35rem 0.75rem;
+  background: #a855f7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.notas-btn-accion:hover:not(:disabled) { opacity: 0.85; }
+.notas-btn-accion:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.notas-btn-cancelar {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.notas-btn-cancelar:hover:not(:disabled) { background: #cbd5e1; opacity: 1; }
+
+.notas-btn-eliminar {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.notas-btn-eliminar:hover:not(:disabled) { background: #fecaca; opacity: 1; }
