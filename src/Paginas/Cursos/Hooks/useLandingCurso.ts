@@ -189,7 +189,8 @@ export function useLandingCurso() {
                 : { usuario_id: usuario.id, tutorial_id: contenido.id, fecha_inscripcion: fechaInscripcion };
             const { error } = await supabase
                 .from('inscripciones')
-                .insert(insertData);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .insert(insertData as any);
             if (error) throw error;
             setEstaInscrito(true);
             verContenido();
