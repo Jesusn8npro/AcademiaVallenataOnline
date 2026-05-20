@@ -175,7 +175,7 @@ const PestanaActividad: React.FC<Props> = ({
                 {/* ACTIVIDAD TIEMPO REAL */}
                 <div className="seccion-tiempo-real">
                     <ActividadTiempoReal
-                        usuarios={actividadTiempoReal}
+                        usuarios={actividadTiempoReal as any}
                     />
                 </div>
 

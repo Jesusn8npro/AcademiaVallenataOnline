@@ -39,7 +39,7 @@ export class NotificacionesCRUDBase {
                 return { notificaciones: [], error: error.message };
             }
 
-            return { notificaciones: data || [], error: null };
+            return { notificaciones: (data || []) as any, error: null };
         } catch (err) {
             return { notificaciones: [], error: 'Error inesperado al obtener notificaciones' };
         }
@@ -224,7 +224,7 @@ export class NotificacionesCRUDBase {
                 return { preferencias: [], error: error.message };
             }
 
-            return { preferencias: data || [], error: null };
+            return { preferencias: (data || []) as any, error: null };
         } catch (err) {
             return { preferencias: [], error: 'Error inesperado' };
         }
@@ -238,7 +238,7 @@ export class NotificacionesCRUDBase {
             }
 
             for (const pref of preferencias) {
-                const { error } = await supabase
+                const { error } = await (supabase as any)
                     .from('notificaciones_preferencias')
                     .upsert({
                         ...pref,

@@ -60,9 +60,9 @@ export function useConfiguracionPerfil() {
             }
 
             setConfiguraciones({
-                notificaciones_email: perfilData.notificaciones_email ?? true,
-                notificaciones_push: perfilData.notificaciones_push ?? true,
-                publico_perfil: perfilData.publico_perfil ?? true
+                notificaciones_email: (perfilData as any).notificaciones_email ?? true,
+                notificaciones_push: (perfilData as any).notificaciones_push ?? true,
+                publico_perfil: (perfilData as any).publico_perfil ?? true
             });
 
             setDatosPersonales({
@@ -85,7 +85,7 @@ export function useConfiguracionPerfil() {
         if (!usuario?.id) return;
         setGuardando(true);
         try {
-            const { error } = await supabase.from('perfiles').update(configuraciones).eq('id', usuario.id);
+            const { error } = await supabase.from('perfiles').update(configuraciones as any).eq('id', usuario.id);
             if (error) throw error;
             setMensaje('¡Configuración guardada exitosamente!');
             actualizarPerfil(configuraciones);

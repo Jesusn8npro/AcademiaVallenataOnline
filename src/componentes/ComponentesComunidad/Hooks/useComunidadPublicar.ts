@@ -124,7 +124,7 @@ export function useComunidadPublicar(usuario: Usuario | null, onPublicar?: () =>
       else if (tipo === 'video' && url_media) insertData.url_video = url_media;
       else if (tipo === 'gif' && url_media) insertData.url_gif = url_media;
 
-      const { error } = await supabase.from('comunidad_publicaciones').insert([insertData]);
+      const { error } = await (supabase as any).from('comunidad_publicaciones').insert([insertData]);
       if (error) throw error;
 
       onPublicar?.();

@@ -40,11 +40,11 @@ export function useComentariosLeccion({ leccionId, usuarioActual, tipo = 'clase'
     setError('');
     const tabla = tipo === 'clase' ? 'comentarios_clases' : 'comentarios_lecciones';
     const campoId = tipo === 'clase' ? 'clase_id' : 'leccion_id';
-    const { data, error: err } = await supabase
+    const { data, error: err } = await (supabase as any)
       .from(tabla)
       .select(`id, contenido, fecha_creacion, usuario_id, respuesta_a, likes,
         perfiles:usuario_id (nombre_usuario, nombre_completo, url_foto_perfil)`)
-      .eq(campoId, leccionId)
+      .eq(campoId as any, leccionId)
       .order('fecha_creacion', { ascending: false });
     if (err) {
       setError(err.message || 'Error al cargar comentarios');

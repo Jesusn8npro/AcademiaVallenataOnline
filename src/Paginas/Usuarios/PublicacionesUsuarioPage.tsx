@@ -65,7 +65,7 @@ export default function PublicacionesUsuarioPage() {
                 me_gusta={(p as any).me_gusta || []}
                 total_comentarios={(p as any).total_comentarios || 0}
                 total_compartidos={(p as any).total_compartidos || 0}
-                usuario={{ id: usuarioPublico!.id, nombre: (usuarioPublico!.nombre || usuarioPublico!.nombre_completo || 'Usuario') as string }}
+                usuario={{ id: usuarioPublico!.id, nombre: (usuarioPublico!.nombre || (usuarioPublico! as any).nombre_completo || 'Usuario') as string, apellido: '', rol: 'usuario' } as any}
               />
             ))}
           </div>

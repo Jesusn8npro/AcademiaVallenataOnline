@@ -18,6 +18,7 @@ import '../Componentes/PantallaPreJuegoProMax.css';
 import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
 
 const IMG_ALUMNO = '/Acordeon PRO MAX.webp';
+const ModalMetronomoAny = ModalMetronomo as React.ComponentType<any>;
 
 const AcordeonProMaxSimulador: React.FC = () => {
   const {
@@ -257,10 +258,9 @@ const AcordeonProMaxSimulador: React.FC = () => {
         />
       )}
 
-      <ModalMetronomo
+      <ModalMetronomoAny
         visible={mostrarHeaderHero && metronomoVisible}
         onCerrar={() => setMetronomoVisible(false)}
-        botonRef={botonMetronomoRef}
         bpm={hero.bpm}
         setBpm={hero.cambiarBpm}
         forzarDetencion={false}

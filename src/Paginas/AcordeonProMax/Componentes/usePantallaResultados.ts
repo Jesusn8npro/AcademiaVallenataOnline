@@ -162,7 +162,7 @@ export function usePantallaResultados({
     // `guardarGrabacionPendiente` espera un objeto `datos` con .titulo y .descripcion
     // (lee `datos.titulo?.trim()`). Antes llamábamos con dos strings sueltos → datos.titulo
     // era undefined → error "Debes escribir un titulo." aunque el campo estuviera lleno.
-    await onGuardarGrabacion({ titulo: tituloLimpio, descripcion: descripcionGrabacion } as any);
+    await (onGuardarGrabacion as any)({ titulo: tituloLimpio, descripcion: descripcionGrabacion });
   };
 
   return {

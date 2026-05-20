@@ -40,7 +40,7 @@ export async function crearNotificacion(params: {
 
             destinatarios = usuarios
                 ?.filter(u => {
-                    if (params.solo_roles && !params.solo_roles.includes(u.rol)) {
+                    if (params.solo_roles && !params.solo_roles.includes(u.rol as any)) {
                         return false;
                     }
                     if (params.excluir_usuario && u.id === params.excluir_usuario) {

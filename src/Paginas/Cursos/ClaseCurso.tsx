@@ -123,7 +123,7 @@ export default function ClaseCurso() {
                 })).sort((a: any, b: any) => a.orden - b.orden)
             }));
 
-            cursoData.modulos = modulosProcesados;
+            (cursoData as any).modulos = modulosProcesados;
             setCurso(cursoData);
             setModulos(modulosProcesados);
         } catch (e: any) {

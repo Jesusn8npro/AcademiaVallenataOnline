@@ -1131,7 +1131,7 @@ export class MotorAudioPro {
 
     private _aplicarPresetDistorsion(p: PresetDistorsion) {
         if (!this.distNode) return;
-        this.distNode.curve = this._generarCurvaDistorsion(p);
+        this.distNode.curve = this._generarCurvaDistorsion(p) as Float32Array<ArrayBuffer>;
         // Pre-filter: si no hay freq definida, dejamos un allpass neutro.
         if (p.preFreq != null && p.preTipo) {
             this.distPreFilter.type = p.preTipo;

@@ -127,7 +127,7 @@ function crearPerfilStore() {
         } catch {
         }
 
-        const perfilCompleto: PerfilData = perfilData || {
+        const perfilCompleto: PerfilData = (perfilData as any) || {
           id: user.id,
           nombre: user.user_metadata?.first_name || '',
           apellido: user.user_metadata?.last_name || '',

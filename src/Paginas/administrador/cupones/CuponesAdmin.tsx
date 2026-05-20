@@ -34,7 +34,7 @@ export default function CuponesAdmin() {
   const cargar = async () => {
     setCargando(true)
     const { data } = await supabase.from('cupones').select('*').order('created_at', { ascending: false })
-    setCupones(data || [])
+    setCupones((data || []) as any)
     setCargando(false)
   }
 

@@ -140,7 +140,7 @@ const DashboardAdmin: React.FC = () => {
             inicioMes.setDate(1);
             inicioMes.setHours(0, 0, 0, 0);
 
-            const { data: pagos } = await supabase
+            const { data: pagos } = await (supabase as any)
                 .from('pagos_epayco')
                 .select('*')
                 .gte('created_at', inicioMes.toISOString());

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../../servicios/clienteSupabase';
 import type { UsuarioAdmin } from '../../../../../servicios/usuariosAdminService';
+import { formatearTiempoRelativo } from '../../../../../utilidades/formatadores';
 
 export interface DatosActividad {
   tiempoTotal: number;
@@ -36,14 +37,7 @@ export function formatearTiempo(minutos: number): string {
   return `${Math.floor(minutos / 60)}h ${minutos % 60}m`;
 }
 
-export function formatearTiempoRelativo(fecha: string | null): string {
-  if (!fecha) return 'Nunca';
-  const diferencia = Math.floor((Date.now() - new Date(fecha).getTime()) / (1000 * 60));
-  if (diferencia < 1) return 'Ahora mismo';
-  if (diferencia < 60) return `Hace ${diferencia}m`;
-  if (diferencia < 1440) return `Hace ${Math.floor(diferencia / 60)}h`;
-  return `Hace ${Math.floor(diferencia / 1440)}d`;
-}
+export { formatearTiempoRelativo };
 
 export function formatearFecha(fecha: string): string {
   return new Date(fecha).toLocaleDateString('es', {

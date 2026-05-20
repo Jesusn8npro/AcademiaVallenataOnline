@@ -22,8 +22,8 @@ export async function cambiarPasswordUsuario(usuarioId: string, nuevaPassword: s
     if (error) throw error
 
     // La función RPC devuelve un objeto con success y error/message
-    if (data && !data.success) {
-      throw new Error(data.error || 'Error desconocido al cambiar contraseña')
+    if (data && !(data as any).success) {
+      throw new Error((data as any).error || 'Error desconocido al cambiar contraseña')
     }
 
     return { success: true }

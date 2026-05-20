@@ -228,6 +228,7 @@ const ModoMaestroSolo: React.FC<ModoMaestroSoloProps> = ({
                             reproduciendo={reproduciendo}
                             pausado={pausado}
                             onAlternarPausa={alternarPausa}
+                            onDetener={() => {}}
                             tickActual={tickActual}
                             totalTicks={totalTicks}
                             onBuscarTick={buscarTick}

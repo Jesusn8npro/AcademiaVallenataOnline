@@ -8,7 +8,7 @@ import {
   obtenerEstadisticasUsuario,
   detectarRiesgo,
   colorRiesgo
-} from '../../../../../servicios/geolocalizacionService';
+} from '../../../../../servicios/servicioGeolocalizacion';
 import { supabase } from '../../../../../servicios/clienteSupabase';
 
 interface PestanaGeolocalizacionProps {

@@ -29,7 +29,7 @@ export async function calcularTiempoHistoricoRapido(usuarioId: string): Promise<
         const [leccionesResult, tutorialesResult, simuladorResult, sesionesResult] = await Promise.all([
             supabase.from('progreso_lecciones').select('tiempo_total').eq('usuario_id', usuarioId),
             supabase.from('progreso_tutorial').select('tiempo_visto').eq('usuario_id', usuarioId),
-            supabase.from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuarioId),
+            (supabase as any).from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuarioId),
             supabase.from('sesiones_usuario').select('tiempo_total_minutos').eq('usuario_id', usuarioId)
         ]);
 
@@ -102,7 +102,7 @@ export function useLogrosDesafios() {
                     GamificacionService.obtenerRanking('general', 50).catch(() => []),
                     supabase.from('progreso_lecciones').select('tiempo_total, porcentaje_completado, updated_at, estado').eq('usuario_id', usuario.id).gte('updated_at', fechaSQL),
                     supabase.from('progreso_tutorial').select('tiempo_visto, ultimo_acceso, completado').eq('usuario_id', usuario.id).gte('ultimo_acceso', fechaSQL),
-                    supabase.from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuario.id).gte('created_at', fechaSQL),
+                    (supabase as any).from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuario.id).gte('created_at', fechaSQL),
                     supabase.from('progreso_lecciones').select('updated_at').eq('usuario_id', usuario.id).gte('updated_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order('updated_at', { ascending: false }),
                     calcularTiempoHistoricoRapido(usuario.id),
                     calcularTiempoRealPlataforma(usuario.id)

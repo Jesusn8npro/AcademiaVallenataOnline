@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './_cliente';
-import { generateSlug } from '$lib/utilidades/utilidadesSlug';
+import { generateSlug } from '@/utilidades/slug';
 import type { PaqueteTutorial, PaqueteItem, ResultadoOperacion } from '../../tipos/paquetes';
 
 export async function crearPaquete(paquete: PaqueteTutorial): Promise<ResultadoOperacion> {

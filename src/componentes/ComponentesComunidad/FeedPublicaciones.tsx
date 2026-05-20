@@ -51,12 +51,18 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
 }) => {
   const {
     contadorComentarios, meGusta, cargandoMeGusta,
-    mostrarComentarios, enfoqueAutomaticoComentario, nuevoComentario,
+    mostrarComentarios, comentarios, cargandoLista,
+    enfoqueAutomaticoComentario, nuevoComentario,
     cargandoComentario, mostrarMenu, eliminando, grabacionHero,
     cargandoGrabacionHero, mostrarReplayHero, yaDioMeGusta, esDuenioOAdmin,
     pedirConfirmacionEliminar, errorEliminar,
-    setMostrarMenu, setMostrarReplayHero, setEnfoqueAutomaticoComentario, setNuevoComentario,
+    respondiendo, textoRespuesta, cargandoRespuesta,
+    setMostrarMenu, setMostrarReplayHero, setEnfoqueAutomaticoComentario,
+    setNuevoComentario, setTextoRespuesta,
     alternarMeGusta, alternarComentarios, enviarComentario,
+    enviarRespuesta, iniciarRespuesta, cancelarRespuesta,
+    alternarRespuestasComentario,
+    menuComentarioId, setMenuComentarioId, eliminarComentario,
     manejarEliminar, cancelarEliminar, ejecutarEliminar, formatearFecha,
   } = useFeedPublicacion({ id, me_gusta, total_comentarios, usuario_id, tipo, encuesta, usuario, onEliminar });
 
@@ -171,122 +177,283 @@ const FeedPublicaciones: React.FC<FeedPublicacionesProps> = ({
       />
 
       <div className="feed-publicaciones-barra-estadisticas">
-        <div className="feed-publicaciones-reacciones-info">
+        <div className="feed-pub-stat-izq">
           {meGusta.length > 0 && (
             <>
-              <div className="feed-publicaciones-iconos-reacciones">
-                <span className="feed-publicaciones-icono-reaccion">👍</span>
-              </div>
-              <span className="feed-publicaciones-contador-reacciones">{meGusta.length}</span>
-              <span className="feed-publicaciones-texto-reacciones">
-                {meGusta.length === 1 ? 'persona le gusta esto' : 'personas les gusta esto'}
-              </span>
+              <span className="feed-pub-stat-thumb">👍</span>
+              <span className="feed-pub-stat-num">{meGusta.length}</span>
             </>
           )}
         </div>
-        <div className="feed-publicaciones-estadisticas-derecha">
-          {total_comentarios > 0 && (
-            <button
-              className="feed-publicaciones-boton-contador-comentarios"
-              onClick={() => setMostrarComentarios(!mostrarComentarios)}
-            >
-              {total_comentarios} {total_comentarios === 1 ? 'comentario' : 'comentarios'}
+        <div className="feed-pub-stat-der">
+          {contadorComentarios > 0 && (
+            <button className="feed-publicaciones-boton-contador-comentarios" onClick={alternarComentarios}>
+              {contadorComentarios} {contadorComentarios === 1 ? 'comentario' : 'comentarios'}
             </button>
-          )}
-          {total_compartidos > 0 && (
-            <>
-              <span className="feed-publicaciones-separador-estadisticas">·</span>
-              <span className="feed-publicaciones-contador-compartidos">
-                {total_compartidos} {total_compartidos === 1 ? 'vez compartida' : 'veces compartida'}
-              </span>
-            </>
           )}
         </div>
       </div>
 
       <div className="feed-publicaciones-barra-acciones">
         <button
-          className={`feed-publicaciones-boton-accion ${yaDioMeGusta ? 'activo' : ''}`}
+          className={`feed-pub-btn-accion${yaDioMeGusta ? ' activo' : ''}`}
           onClick={alternarMeGusta}
           disabled={cargandoMeGusta}
           aria-label={yaDioMeGusta ? 'Quitar me gusta' : 'Me gusta'}
         >
-          <svg className="feed-publicaciones-icono-accion" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="feed-pub-btn-ico" viewBox="0 0 24 24" fill="currentColor">
             <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
           </svg>
-          <span className="feed-publicaciones-texto-accion">{yaDioMeGusta ? 'Te gusta' : 'Me gusta'}</span>
-          {cargandoMeGusta && <div className="feed-publicaciones-indicador-carga"></div>}
+          <span>{yaDioMeGusta ? 'Te gusta' : 'Me gusta'}</span>
+          {cargandoMeGusta && <div className="feed-publicaciones-indicador-carga" />}
         </button>
-
+        <div className="feed-pub-btn-sep" />
         <button
-          className="feed-publicaciones-boton-accion"
+          className="feed-pub-btn-accion"
           onClick={alternarComentarios}
           aria-label="Comentar publicación"
         >
-          <svg className="feed-publicaciones-icono-accion" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="feed-pub-btn-ico" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.89 2 2 2h14l4 4-.01-18z" />
           </svg>
-          <span className="feed-publicaciones-texto-accion">Comentar</span>
+          <span>Comentar</span>
         </button>
-
-        <button className="feed-publicaciones-boton-accion" aria-label="Compartir publicación">
-          <svg className="feed-publicaciones-icono-accion" viewBox="0 0 24 24" fill="currentColor">
+        <div className="feed-pub-btn-sep" />
+        <button className="feed-pub-btn-accion" aria-label="Compartir publicación">
+          <svg className="feed-pub-btn-ico" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
           </svg>
-          <span className="feed-publicaciones-texto-accion">Compartir</span>
+          <span>Compartir</span>
         </button>
       </div>
 
       {mostrarComentarios && (
         <div className="feed-publicaciones-seccion-comentarios">
-          <div className="feed-publicaciones-formulario-comentario">
-            <div className="feed-publicaciones-contenedor-avatar-usuario">
-              <Image
-                src={usuario ? `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nombre)}&background=667eea&color=fff` : '/images/perfil-portada/Imagen perfil 1.jpg'}
-                alt="Tu avatar"
-                className="feed-publicaciones-avatar-usuario-actual"
-                width={32}
-                height={32}
-                unoptimized={false}
-              />
+
+          {/* Lista de comentarios con respuestas */}
+          {cargandoLista ? (
+            <div className="feed-pub-coms-cargando">
+              <div className="feed-pub-coms-spinner" />
+              <span>Cargando comentarios...</span>
             </div>
+          ) : comentarios.length > 0 ? (
+            <div className="feed-pub-coms-lista">
+              {comentarios.map((com) => {
+                const avatarCom = com.usuario_avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(com.usuario_nombre || 'U')}&background=667eea&color=fff&size=64`;
+                const numRespuestas = com.respuestas?.length || 0;
+                const esDuenioCom = !!(usuario && usuario.id === com.usuario_id);
+                return (
+                  <div key={com.id} className="feed-pub-com-hilo">
+                    <div className="feed-pub-com-item">
+                      <Image src={avatarCom} alt={com.usuario_nombre || 'Usuario'}
+                        className="feed-pub-com-avatar" width={36} height={36}
+                        unoptimized={!!com.usuario_avatar} />
+                      <div className="feed-pub-com-cuerpo">
+                        <div className="feed-pub-com-burbuja-wrap">
+                          <div className="feed-pub-com-burbuja">
+                            <span className="feed-pub-com-autor">{com.usuario_nombre || 'Usuario'}</span>
+                            <p className="feed-pub-com-texto">{com.comentario || ''}</p>
+                          </div>
+                          {esDuenioCom && (
+                            <div className="feed-pub-com-menu-wrap">
+                              <button className="feed-pub-com-menu-dots"
+                                onClick={() => setMenuComentarioId(menuComentarioId === com.id ? null : com.id)}
+                                aria-label="Opciones del comentario">
+                                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                  <circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/>
+                                </svg>
+                              </button>
+                              {menuComentarioId === com.id && (
+                                <>
+                                  <div className="feed-pub-com-menu-overlay" onClick={() => setMenuComentarioId(null)} />
+                                  <div className="feed-pub-com-menu-dropdown">
+                                    <button className="feed-pub-com-menu-opcion eliminar"
+                                      onClick={() => eliminarComentario(com.id)}>
+                                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                      </svg>
+                                      Eliminar
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="feed-pub-com-acciones">
+                          {usuario && (
+                            <button className="feed-pub-com-btn-responder"
+                              onClick={() => respondiendo === com.id ? cancelarRespuesta() : iniciarRespuesta(com.id, com.usuario_nombre || 'Usuario')}>
+                              {respondiendo === com.id ? 'Cancelar' : 'Responder'}
+                            </button>
+                          )}
+                          <span className="feed-pub-com-sep">·</span>
+                          <time className="feed-pub-com-tiempo">{formatearFecha(com.fecha_creacion)}</time>
+                        </div>
+                      </div>
+                    </div>
+
+                    {respondiendo === com.id && (
+                      <div className="feed-pub-reply-form">
+                        <Image
+                          src={usuario?.url_foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'U')}&background=764ba2&color=fff&size=64`}
+                          alt="Tu avatar" className="feed-pub-com-avatar reply" width={28} height={28}
+                          unoptimized={!!usuario?.url_foto_perfil} />
+                        <div className="feed-pub-reply-input-wrap">
+                          <input
+                            type="text"
+                            className="feed-pub-reply-input"
+                            placeholder={`Responder a ${com.usuario_nombre || 'Usuario'}...`}
+                            value={textoRespuesta}
+                            onChange={(e) => setTextoRespuesta(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && enviarRespuesta(com.id)}
+                            autoFocus
+                            maxLength={500}
+                          />
+                          <button
+                            className={`feed-publicaciones-boton-enviar-comentario ${textoRespuesta.trim() ? 'activo' : ''}`}
+                            onClick={() => enviarRespuesta(com.id)}
+                            disabled={!textoRespuesta.trim() || cargandoRespuesta}
+                            aria-label="Enviar respuesta"
+                          >
+                            {cargandoRespuesta ? (
+                              <div className="feed-publicaciones-indicador-carga" />
+                            ) : (
+                              <svg className="feed-publicaciones-icono-enviar" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {numRespuestas > 0 && (
+                      <button className="feed-pub-coms-ver-respuestas"
+                        onClick={() => alternarRespuestasComentario(com.id)}>
+                        <span className="feed-pub-ver-linea" />
+                        {com.mostrarRespuestas
+                          ? 'Ocultar respuestas'
+                          : `Ver ${numRespuestas} ${numRespuestas === 1 ? 'respuesta' : 'respuestas'}`}
+                      </button>
+                    )}
+
+                    {com.mostrarRespuestas && numRespuestas > 0 && (
+                      <div className="feed-pub-coms-respuestas">
+                        {com.respuestas.map((rep: any) => {
+                          const avatarRep = rep.usuario_avatar ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(rep.usuario_nombre || 'U')}&background=764ba2&color=fff&size=64`;
+                          const esDuenioRep = !!(usuario && usuario.id === rep.usuario_id);
+                          return (
+                            <div key={rep.id} className="feed-pub-com-item respuesta">
+                              <Image src={avatarRep} alt={rep.usuario_nombre || 'Usuario'}
+                                className="feed-pub-com-avatar reply" width={28} height={28}
+                                unoptimized={!!rep.usuario_avatar} />
+                              <div className="feed-pub-com-cuerpo">
+                                <div className="feed-pub-com-burbuja-wrap">
+                                  <div className="feed-pub-com-burbuja reply">
+                                    <span className="feed-pub-com-autor">{rep.usuario_nombre || 'Usuario'}</span>
+                                    <p className="feed-pub-com-texto">{rep.comentario || ''}</p>
+                                  </div>
+                                  {esDuenioRep && (
+                                    <div className="feed-pub-com-menu-wrap">
+                                      <button className="feed-pub-com-menu-dots"
+                                        onClick={() => setMenuComentarioId(menuComentarioId === rep.id ? null : rep.id)}
+                                        aria-label="Opciones del comentario">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                          <circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/>
+                                        </svg>
+                                      </button>
+                                      {menuComentarioId === rep.id && (
+                                        <>
+                                          <div className="feed-pub-com-menu-overlay" onClick={() => setMenuComentarioId(null)} />
+                                          <div className="feed-pub-com-menu-dropdown">
+                                            <button className="feed-pub-com-menu-opcion eliminar"
+                                              onClick={() => eliminarComentario(rep.id, com.id)}>
+                                              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                              </svg>
+                                              Eliminar
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="feed-pub-com-acciones">
+                                  {usuario && (
+                                    <button className="feed-pub-com-btn-responder"
+                                      onClick={() => respondiendo === com.id ? cancelarRespuesta() : iniciarRespuesta(com.id, rep.usuario_nombre || 'Usuario')}>
+                                      Responder
+                                    </button>
+                                  )}
+                                  <span className="feed-pub-com-sep">·</span>
+                                  <time className="feed-pub-com-tiempo">{formatearFecha(rep.fecha_creacion)}</time>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="feed-pub-coms-vacio">
+              <span className="feed-pub-coms-vacio-emoji">💬</span>
+              <p>Sé el primero en comentar</p>
+            </div>
+          )}
+
+          {/* Formulario comentario nuevo */}
+          <div className="feed-publicaciones-formulario-comentario">
+            <Image
+              src={usuario?.url_foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario?.nombre || 'U')}&background=667eea&color=fff&size=64`}
+              alt="Tu avatar" className="feed-publicaciones-avatar-usuario-actual"
+              width={36} height={36} unoptimized={!!usuario?.url_foto_perfil} />
             <div className="feed-publicaciones-contenedor-input-comentario">
-              <div className="feed-publicaciones-input-wrapper">
-                <input
-                  type="text"
-                  placeholder="Escribe un comentario..."
-                  value={nuevoComentario}
-                  onChange={(e) => setNuevoComentario(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && enviarComentario()}
-                  className="feed-publicaciones-input-comentario"
-                  autoFocus={enfoqueAutomaticoComentario}
-                  onFocus={() => setEnfoqueAutomaticoComentario(false)}
-                  maxLength={500}
-                />
-                <div className="feed-publicaciones-contador-caracteres">
-                  {nuevoComentario.length}/500
-                </div>
-              </div>
+              <input
+                type="text"
+                placeholder={usuario ? 'Escribe un comentario...' : 'Inicia sesión para comentar'}
+                value={nuevoComentario}
+                onChange={(e) => setNuevoComentario(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && enviarComentario()}
+                className="feed-publicaciones-input-comentario"
+                autoFocus={enfoqueAutomaticoComentario}
+                onFocus={() => setEnfoqueAutomaticoComentario(false)}
+                maxLength={500}
+                disabled={!usuario}
+              />
               <button
-                className="feed-publicaciones-boton-enviar-comentario"
+                className={`feed-publicaciones-boton-enviar-comentario ${nuevoComentario.trim() ? 'activo' : ''}`}
                 onClick={enviarComentario}
-                disabled={!nuevoComentario.trim() || cargandoComentario}
+                disabled={!nuevoComentario.trim() || cargandoComentario || !usuario}
+                aria-label="Enviar comentario"
               >
-                <svg className="feed-publicaciones-icono-enviar" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-                {cargandoComentario ? 'Enviando...' : 'Enviar'}
+                {cargandoComentario ? (
+                  <div className="feed-publicaciones-indicador-carga" />
+                ) : (
+                  <svg className="feed-publicaciones-icono-enviar" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                  </svg>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <ModalReplayGrabacionHero
-        abierta={mostrarReplayHero}
-        grabacion={grabacionHero}
-        onCerrar={() => setMostrarReplayHero(false)}
-      />
+      {mostrarReplayHero && grabacionHero && (
+        <ModalReplayGrabacionHero
+          abierta={mostrarReplayHero}
+          grabacion={grabacionHero}
+          onCerrar={() => setMostrarReplayHero(false)}
+        />
+      )}
     </article>
   );
 };

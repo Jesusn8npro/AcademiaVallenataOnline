@@ -244,7 +244,7 @@ export function useGrabacionProMax({ bpm, cancionRef, estadisticasRef, modoPract
       // + ejecución del alumno sincronizados.
       const grabacion = await guardarGrabacion({
         cancion_id: pendiente.cancionId,
-        modo: pendiente.tipo,
+        modo: pendiente.tipo as any,
         titulo: tituloLimpio,
         descripcion: datos.descripcion?.trim() || '',
         secuencia_grabada: pendiente.secuencia,

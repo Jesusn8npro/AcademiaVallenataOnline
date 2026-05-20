@@ -187,7 +187,7 @@ export function usePagoExitoso() {
                     .single();
 
                 if (data && data.estado !== 'pendiente') {
-                    setEstadoPago(data.estado);
+                    setEstadoPago(data.estado as any);
                     setDatosPago(prev => prev ? { ...prev, ...data } : null);
                     clearInterval(polling);
                     return;

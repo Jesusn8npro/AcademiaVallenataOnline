@@ -73,7 +73,7 @@ export function useMenuPublico({ onCerrarSesion }: UseMenuPublicoProps) {
         .eq('estado', 'publicado')
         .order('creado_en', { ascending: false })
         .limit(4);
-      setArticulosBlog(error ? [] : data || []);
+      setArticulosBlog(error ? [] : (data || []) as any);
     } catch {
       setArticulosBlog([]);
     } finally {

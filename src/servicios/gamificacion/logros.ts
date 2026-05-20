@@ -3,7 +3,7 @@ import type { LogroSistema, LogroUsuario } from '../../tipos/gamificacion';
 
 export async function obtenerLogrosSistema(): Promise<LogroSistema[]> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from('logros_sistema')
             .select('*')
             .eq('activo', true)
@@ -14,7 +14,7 @@ export async function obtenerLogrosSistema(): Promise<LogroSistema[]> {
             return [];
         }
 
-        return data || [];
+        return (data || []) as LogroSistema[];
     } catch (error) {
         return [];
     }
@@ -22,7 +22,7 @@ export async function obtenerLogrosSistema(): Promise<LogroSistema[]> {
 
 export async function obtenerLogrosUsuario(usuarioId: string): Promise<LogroUsuario[]> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from('logros_usuario')
             .select(`
           *,
@@ -35,7 +35,7 @@ export async function obtenerLogrosUsuario(usuarioId: string): Promise<LogroUsua
             return [];
         }
 
-        return data || [];
+        return (data || []) as LogroUsuario[];
     } catch (error) {
         return [];
     }

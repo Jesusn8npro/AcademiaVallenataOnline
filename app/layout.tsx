@@ -156,6 +156,11 @@ const antiConsolaScript = `
 })();
 `
 
+// Oculta el menú público ANTES del primer paint si el usuario tiene sesión activa
+// en localStorage. Evita el "flash" del menú público para usuarios autenticados.
+// React lo remueve en useLayoutEffect cuando toma el control.
+const authHideScript = `(function(){try{var c=localStorage.getItem('usuario_actual');if(!c)return;var tk=!!localStorage.getItem('supabase.auth.token')||Object.keys(localStorage).some(function(k){return k.startsWith('sb-')&&k.includes('-auth-token');});if(!tk)return;var s=document.createElement('style');s.id='__auth-hide-pub';s.textContent='.mpub-barra-superior-negra,.mpub-barra-principal-navegacion{display:none!important}';document.head.appendChild(s);}catch(e){}})();`
+
 // Mata el Service Worker viejo de Vite/PWA UNA SOLA VEZ por navegador
 // (flag en localStorage). Las visitas siguientes omiten el bloque completo
 // para no interferir con el nuevo SW de Next registrado en sw.js.
@@ -196,6 +201,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={inter.variable}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: authHideScript }} />
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />
         <link rel="dns-prefetch" href="https://tbijzvtyyewhtwgakgka.supabase.co" />

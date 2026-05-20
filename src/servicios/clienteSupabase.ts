@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
 
 // Variables de entorno para Supabase. Fallback inerte para que el BUILD no
 // reviente ("supabaseUrl is required") si la env falta o está mal escrita;
@@ -11,7 +12,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 }
 
 // Garantizar singleton para evitar múltiples instancias
-let instanciaSupabase: ReturnType<typeof createClient> | undefined;
+let instanciaSupabase: ReturnType<typeof createClient<Database>> | undefined;
 
 // Uso de globalThis para compatibilidad universal y evitar re-instanciación
 const globalAny: any = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : {};
@@ -19,7 +20,7 @@ const globalAny: any = typeof globalThis !== 'undefined' ? globalThis : typeof w
 if (globalAny.__INSTANCIA_SUPABASE) {
     instanciaSupabase = globalAny.__INSTANCIA_SUPABASE;
 } else {
-    instanciaSupabase = createClient(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
+    instanciaSupabase = createClient<Database>(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
@@ -33,7 +34,7 @@ if (globalAny.__INSTANCIA_SUPABASE) {
 }
 
 // Cliente anónimo específico para consultas públicas (sin persistencia de sesión)
-export const supabaseAnonimo = createClient(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
+export const supabaseAnonimo = createClient<Database>(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
     auth: {
         persistSession: false,
         autoRefreshToken: false,

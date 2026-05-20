@@ -4,7 +4,7 @@ import type { ResultadoOperacion } from '../../tipos/pagos';
 
 export async function sincronizarEstadoConEpayco(refPayco: string): Promise<ResultadoOperacion> {
     try {
-        const { data: pagoLocal } = await supabase
+        const { data: pagoLocal } = await (supabase as any)
             .from('pagos_epayco')
             .select('*')
             .eq('ref_payco', refPayco)
@@ -66,7 +66,7 @@ export async function inscribirUsuarioDespuesDePago(
         const campoContenido = cursoId ? 'curso_id' : 'tutorial_id';
         const valorContenido = cursoId || tutorialId;
 
-        const { data: inscripcionExistente } = await supabase
+        const { data: inscripcionExistente } = await (supabase as any)
             .from(tablaInscripcion)
             .select('id')
             .eq('usuario_id', usuarioId)

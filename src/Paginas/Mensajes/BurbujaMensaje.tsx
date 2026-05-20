@@ -59,7 +59,7 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
 
                 <div className="bm_bubble">
                     {mensaje.tipo === 'imagen' && mensaje.url_media && (
-                        // TODO: migrar a <Image> cuando se defina el dominio de imágenes adjuntas del chat
+                        // url_media puede ser de cualquier dominio (adjuntos de chat) — img nativo correcto
                         <img src={mensaje.url_media} alt="adjunto" className="bm_img" />
                     )}
                     <span className="bm_text">{mensaje.contenido}</span>

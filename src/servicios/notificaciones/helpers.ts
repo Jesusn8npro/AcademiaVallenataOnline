@@ -23,28 +23,48 @@ export async function obtenerEstadisticasNotificaciones(): Promise<{ success: bo
 }
 
 export async function notificarNuevoCurso(titulo: string, descripcion?: string) {
-    await supabase.from('notificaciones').insert({ tipo: 'nuevo_curso', mensaje: descripcion || `Nuevo curso: ${titulo}`, prioridad: 'normal' });
-    return { success: true };
+    try {
+        const { error } = await supabase.from('notificaciones').insert({ tipo: 'nuevo_curso', mensaje: descripcion || `Nuevo curso: ${titulo}`, prioridad: 'normal' } as any);
+        if (error) throw error;
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function notificarNuevoTutorial(titulo: string, descripcion?: string) {
-    await supabase.from('notificaciones').insert({ tipo: 'nuevo_tutorial', mensaje: descripcion || `Nuevo tutorial: ${titulo}`, prioridad: 'normal' });
-    return { success: true };
+    try {
+        const { error } = await supabase.from('notificaciones').insert({ tipo: 'nuevo_tutorial', mensaje: descripcion || `Nuevo tutorial: ${titulo}`, prioridad: 'normal' } as any);
+        if (error) throw error;
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function notificarPagoAprobado(usuario_id: string, monto: number, curso_titulo?: string) {
-    await supabase.from('notificaciones').insert({
-        tipo: 'pago_aprobado',
-        mensaje: curso_titulo ? `Pago aprobado de ${monto} para ${curso_titulo}` : `Pago aprobado de ${monto}`,
-        usuario_id,
-        prioridad: 'alta'
-    });
-    return { success: true };
+    try {
+        const { error } = await supabase.from('notificaciones').insert({
+            tipo: 'pago_aprobado',
+            mensaje: curso_titulo ? `Pago aprobado de ${monto} para ${curso_titulo}` : `Pago aprobado de ${monto}`,
+            usuario_id,
+            prioridad: 'alta'
+        } as any);
+        if (error) throw error;
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function notificarPromocionEspecial(titulo: string, descripcion: string, codigo: string, fecha_limite: string) {
-    await supabase.from('notificaciones').insert({ tipo: 'promocion', mensaje: `${titulo}: ${descripcion}`, codigo, fecha_limite, prioridad: 'alta' });
-    return { success: true };
+    try {
+        const { error } = await supabase.from('notificaciones').insert({ tipo: 'promocion', mensaje: `${titulo}: ${descripcion}`, codigo, fecha_limite, prioridad: 'alta' } as any);
+        if (error) throw error;
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
 }
 
 export async function limpiarNotificacionesExpiradas() {
@@ -65,7 +85,7 @@ export async function notificarNuevoArticuloBlog(payload: {
             entidad_id: payload.articulo_id,
             usuario_id: payload.autor_id,
             prioridad: 'normal'
-        });
+        } as any);
         if (error) throw error;
         return { exito: true, notificaciones_creadas: 1 };
     } catch (e: any) {
@@ -104,7 +124,7 @@ export async function notificarNuevoMensaje(
             categoria: 'comunidad',
             icono: '💬',
             url_accion: `/mensajes/${chatId}`
-        });
+        } as any);
 
         if (errorInsert) {
             return { success: false, error: errorInsert };

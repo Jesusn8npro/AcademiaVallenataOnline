@@ -77,7 +77,7 @@ export function useAdminChats() {
             setMostrarModalChat(true);
             const { data, error } = await clienteSupabase.from('chats_envivo_academia').select('*').eq('session_id', lead.chat_id).order('created_at', { ascending: true });
             if (error) throw error;
-            setMensajesChat(data || []);
+            setMensajesChat((data || []) as any);
         } catch { /* error no fatal */ } finally {
             setCargandoChat(false);
         }

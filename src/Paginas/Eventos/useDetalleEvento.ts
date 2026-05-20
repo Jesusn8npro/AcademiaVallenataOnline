@@ -42,16 +42,14 @@ export function useDetalleEvento() {
 
   const cargarComentarios = async (eventoId: string) => {
     try {
-      // @ts-ignore
-      const resultado = await eventosService.obtenerComentariosEvento(eventoId);
+const resultado = await eventosService.obtenerComentariosEvento(eventoId);
       if (!resultado.error) setComentarios(resultado.comentarios || []);
     } catch { }
   };
 
   const cargarMateriales = async (eventoId: string) => {
     try {
-      // @ts-ignore
-      const resultado = await eventosService.obtenerMaterialesEvento(eventoId);
+const resultado = await eventosService.obtenerMaterialesEvento(eventoId);
       if (!resultado.error) setMateriales(resultado.materiales || []);
     } catch { }
   };
@@ -60,8 +58,7 @@ export function useDetalleEvento() {
     try {
       setCargando(true);
       setError('');
-      // @ts-ignore
-      const resultado = await eventosService.obtenerEventoPorSlug(slug);
+const resultado = await eventosService.obtenerEventoPorSlug(slug);
       if (resultado.error) { setError(resultado.error); return; }
       if (!resultado.evento) { setError('Evento no encontrado'); return; }
       setEvento(resultado.evento);
@@ -73,8 +70,7 @@ export function useDetalleEvento() {
   const verificarInscripcion = async () => {
     try {
       if (!usuario || !evento) return;
-      // @ts-ignore
-      const resultado = await eventosService.verificarInscripcion(evento.id, usuario.id);
+const resultado = await eventosService.verificarInscripcion(evento.id, usuario.id);
       if (!resultado.error) setInscrito(resultado.inscrito || false);
     } catch { }
   };
@@ -84,8 +80,7 @@ export function useDetalleEvento() {
     try {
       setProcesandoInscripcion(true);
       setError('');
-      // @ts-ignore
-      const resultado = await eventosService.inscribirseEvento(evento.id, usuario.id);
+const resultado = await eventosService.inscribirseEvento(evento.id, usuario.id);
       if (resultado.inscripcion) {
         setInscrito(true);
         setEvento((prev: any) => ({ ...prev, participantes_inscritos: (prev.participantes_inscritos || 0) + 1 }));
@@ -105,8 +100,7 @@ export function useDetalleEvento() {
     try {
       setProcesandoInscripcion(true);
       setError('');
-      // @ts-ignore
-      const resultado = await eventosService.cancelarInscripcion(evento.id, usuario.id);
+const resultado = await eventosService.cancelarInscripcion(evento.id, usuario.id);
       if (resultado.success) {
         setInscrito(false);
         setEvento((prev: any) => ({ ...prev, participantes_inscritos: Math.max((prev.participantes_inscritos || 0) - 1, 0) }));
@@ -122,8 +116,7 @@ export function useDetalleEvento() {
     if (!nuevoComentario.trim() || !usuario) return;
     try {
       setEnviandoComentario(true);
-      // @ts-ignore
-      const resultado = await eventosService.agregarComentario(evento.id, usuario.id, nuevoComentario.trim());
+const resultado = await eventosService.agregarComentario(evento.id, usuario.id, nuevoComentario.trim());
       if (resultado.error) { setMensajeComentario('Error al enviar el comentario: ' + resultado.error); return; }
       await cargarComentarios(evento.id);
       setNuevoComentario('');

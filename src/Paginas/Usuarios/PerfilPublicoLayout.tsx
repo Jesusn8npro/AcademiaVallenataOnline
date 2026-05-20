@@ -59,14 +59,14 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
         .eq('nombre_usuario', slug)
         .maybeSingle()
 
-      let usuario: PerfilPublico | null = usuarioExacto || null
+      let usuario: PerfilPublico | null = (usuarioExacto as unknown as PerfilPublico) || null
 
       if (!usuario) {
         const { data: todos } = await supabase
           .from('perfiles')
           .select('id,nombre,apellido,nombre_completo,nombre_usuario,url_foto_perfil,portada_url,posicion_img_portada,biografia,ciudad,pais,fecha_creacion,rol,suscripcion')
 
-        const lista = Array.isArray(todos) ? todos as PerfilPublico[] : []
+        const lista = Array.isArray(todos) ? todos as unknown as PerfilPublico[] : []
         usuario = lista.find(u => {
           const nc = (u.nombre_completo || `${u.nombre || ''} ${u.apellido || ''}`).trim()
           const s1 = generarSlug(nc)
@@ -159,7 +159,7 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
             <PestanasPerfil modalAbierto={modalAbierto} modoPublico={true} slugUsuario={slug} />
           </div>
           <div className="contenido-dinamico">
-            <OutletContext.Provider value={{ usuarioPublico, stats }}>
+            <OutletContext.Provider value={{ usuarioPublico, stats } as any}>
               {children}
             </OutletContext.Provider>
           </div>

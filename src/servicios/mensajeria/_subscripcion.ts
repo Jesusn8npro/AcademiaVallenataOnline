@@ -177,7 +177,7 @@ export async function eliminarChat(chatId: string): Promise<{ exito: boolean; er
             return { exito: false, error: 'Usuario no autenticado' };
         }
 
-        const { data, error } = await supabase.rpc('eliminar_chat_completo', {
+        const { data, error } = await (supabase as any).rpc('eliminar_chat_completo', {
             p_chat_id: chatId,
             p_usuario_id: user.id
         });

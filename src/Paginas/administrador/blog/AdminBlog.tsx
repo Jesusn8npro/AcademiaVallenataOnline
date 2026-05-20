@@ -27,7 +27,7 @@ const AdminBlog: React.FC = () => {
             if (error) {
                 setError('No se pudieron cargar los artículos. Inténtalo de nuevo más tarde.');
             } else {
-                setArticulos(data || []);
+                setArticulos((data || []) as any);
             }
         };
 

@@ -51,11 +51,11 @@ const RenderizadorContenido = ({ secciones }: { secciones: ContenidoSeccion[] })
     return (
         <>
             {secciones.map((seccion, index) => {
-                const id = seccion.titulo ? slugify(seccion.titulo) : `seccion-${index}`;
+                const id = (seccion as any).titulo ? slugify((seccion as any).titulo) : `seccion-${index}`;
 
                 switch (seccion.tipo) {
                     case 'encabezado':
-                        const Nivel = `h${seccion.nivel || 2}` as keyof JSX.IntrinsicElements;
+                        const Nivel = `h${seccion.nivel || 2}` as keyof React.JSX.IntrinsicElements;
                         return React.createElement(Nivel, { key: id, id, className: "bloque-titulo" }, seccion.contenido);
 
                     case 'parrafo':

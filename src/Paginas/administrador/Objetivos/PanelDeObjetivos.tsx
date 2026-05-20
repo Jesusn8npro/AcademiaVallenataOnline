@@ -207,7 +207,7 @@ const PanelDeObjetivos: React.FC = () => {
                 <ModalObjetivo
                     alCerrar={cerrarModal}
                     alGuardar={manejarGuardar}
-                    alEliminar={eliminarObjetivo}
+                    alEliminar={eliminarObjetivo as any}
                     objetivoExistente={objetivoEnEdicion}
                 />
             )}

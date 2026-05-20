@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
+import { generarSlug } from '../../utilidades/slug'
 import './BusquedaGlobal.css'
 
 interface Props {
@@ -70,7 +71,7 @@ const BusquedaGlobal: React.FC<Props> = ({ abierto, onCerrar }) => {
       const [{ data: tutoriales }, { data: cursos }, { data: perfiles }] = await Promise.all([
         supabase
           .from('tutoriales')
-          .select('id, titulo, descripcion, slug')
+          .select('id, titulo, descripcion')
           .or(`titulo.ilike.${patron},descripcion.ilike.${patron}`)
           .limit(5),
         supabase
@@ -78,17 +79,17 @@ const BusquedaGlobal: React.FC<Props> = ({ abierto, onCerrar }) => {
           .select('id, titulo, descripcion, slug')
           .or(`titulo.ilike.${patron},descripcion.ilike.${patron}`)
           .limit(5),
-        supabase
+        (supabase as any)
           .from('perfiles')
           .select('id, nombre_completo, nombre_usuario')
           .or(`nombre_completo.ilike.${patron},nombre_usuario.ilike.${patron}`)
-          .eq('publico_perfil', true)
+          .eq('publico_perfil' as any, true)
           .limit(3),
       ])
       setResultados({
-        tutoriales: tutoriales ?? [],
+        tutoriales: (tutoriales ?? []) as any,
         cursos: cursos ?? [],
-        perfiles: perfiles ?? [],
+        perfiles: (perfiles ?? []) as any,
       })
     } finally {
       setCargando(false)
@@ -148,7 +149,7 @@ const BusquedaGlobal: React.FC<Props> = ({ abierto, onCerrar }) => {
             <div className="bg-group">
               <div className="bg-group-title">🎵 Tutoriales</div>
               {resultados.tutoriales.map((item) => (
-                <button key={item.id} className="bg-item" onClick={() => irA(`/tutoriales/${item.slug}`)}>
+                <button key={item.id} className="bg-item" onClick={() => irA(`/tutoriales/${generarSlug(item.titulo || '')}`)}>
                   <span className="bg-item-titulo">{item.titulo}</span>
                   {item.descripcion && <span className="bg-item-desc">{item.descripcion}</span>}
                 </button>

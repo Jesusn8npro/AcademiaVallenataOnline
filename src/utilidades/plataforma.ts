@@ -1,9 +1,11 @@
 // Helpers de plataforma — detectan Capacitor y exponen utilidades nativas.
-// Todos los helpers de runtime son no-op en web para no engordar el bundle web.
+// Todos los helpers de runtime son no-op en web.
 //
-// IMPORTANT: NO importar @capacitor/core estaticamente — eso jala 7KB al
-// critical path web aunque siempre returna false. Capacitor inyecta
-// `window.Capacitor` antes que el JS app cargue, por eso lo leemos directo.
+// Capacitor inyecta `window.Capacitor` antes que el JS app cargue,
+// por eso lo leemos directo en lugar de importar @capacitor/core.
+// Las funciones de vibración son no-op en web (esNativo() === false siempre).
+// Para habilitar vibración nativa, reinstalar @capacitor/haptics y descomentar
+// los imports dinámicos dentro de vibracionLeve/vibracionMedia.
 
 const cap = () => (typeof window !== 'undefined' ? (window as any).Capacitor : null);
 
@@ -12,24 +14,18 @@ export const esAndroid = () => cap()?.getPlatform?.() === 'android';
 export const esIOS = () => cap()?.getPlatform?.() === 'ios';
 export const esWeb = () => !esNativo();
 
-// Vibracion ligera (toques, confirmaciones suaves)
+// Vibración ligera — no-op en web, activa en nativo con @capacitor/haptics
 export async function vibracionLeve() {
   if (!esNativo()) return;
-  try {
-    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
-    await Haptics.impact({ style: ImpactStyle.Light });
-  } catch {
-    // silencioso — no romper UX si el plugin falla
-  }
+  // Requiere: npm install @capacitor/haptics
+  // const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+  // await Haptics.impact({ style: ImpactStyle.Light });
 }
 
-// Vibracion media (acciones importantes: guardar, completar)
+// Vibración media — no-op en web, activa en nativo con @capacitor/haptics
 export async function vibracionMedia() {
   if (!esNativo()) return;
-  try {
-    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
-    await Haptics.impact({ style: ImpactStyle.Medium });
-  } catch {
-    // silencioso
-  }
+  // Requiere: npm install @capacitor/haptics
+  // const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+  // await Haptics.impact({ style: ImpactStyle.Medium });
 }

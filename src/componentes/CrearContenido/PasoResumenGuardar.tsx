@@ -58,7 +58,7 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
       const tabla = tipo === 'curso' ? 'cursos' : 'tutoriales'
       let data: any, supErr: any
       if (modoEdicion && idContenido) {
-        const res = await supabase.from(tabla).update(datosParaGuardar).eq('id', idContenido).select().single()
+        const res = await supabase.from(tabla).update(datosParaGuardar).eq('id', String(idContenido)).select().single()
         data = res.data; supErr = res.error
       } else {
         const res = await supabase.from(tabla).insert([datosParaGuardar]).select().single()

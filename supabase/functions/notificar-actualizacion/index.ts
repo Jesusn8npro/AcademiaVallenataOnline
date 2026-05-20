@@ -1,8 +1,9 @@
 // @ts-nocheck
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE_URL,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -14,12 +15,31 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+async function verificarAdmin(req: Request, supabaseUrl: string, serviceKey: string): Promise<{ ok: boolean; status?: number; error?: string }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return { ok: false, status: 401, error: "No autorizado" };
+  const token = authHeader.slice(7);
+  if (token === serviceKey) return { ok: true };
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const sbUser = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } });
+  const { data: { user }, error } = await sbUser.auth.getUser();
+  if (error || !user) return { ok: false, status: 401, error: "Token inválido" };
+  const sbAdmin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const { data: perfil } = await sbAdmin.from("perfiles").select("rol").eq("id", user.id).single();
+  if (perfil?.rol !== "admin") return { ok: false, status: 403, error: "Acceso denegado: se requiere rol admin" };
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const auth = await verificarAdmin(req, supabaseUrl, serviceKey);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+
   const supabase = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -36,7 +56,6 @@ Deno.serve(async (req) => {
       ? `/tutoriales-de-acordeon/${contenido_id}`
       : `/cursos/${contenido_id}`;
 
-    // Obtener todos los inscritos activos
     const { data: inscritos, error } = await supabase
       .from("inscripciones")
       .select("usuario_id, perfiles:usuario_id (nombre, correo_electronico)")
@@ -55,7 +74,6 @@ Deno.serve(async (req) => {
     const mensajeTexto = descripcion_cambio ||
       `El ${tipo} "${titulo}" que estás tomando fue actualizado con contenido nuevo.`;
 
-    // Insertar notificaciones en lote
     const notificaciones = inscritos.map((i: any) => ({
       usuario_id: i.usuario_id,
       tipo: "actualizacion_contenido",
@@ -74,7 +92,6 @@ Deno.serve(async (req) => {
 
     console.log(`✅ ${notificaciones.length} notificaciones insertadas para actualización de ${tipo} "${titulo}"`);
 
-    // Emails opcionales (fire-and-forget por cada inscrito)
     if (enviar_email) {
       for (const i of inscritos) {
         const perfil = (i as any).perfiles;
@@ -91,8 +108,7 @@ Deno.serve(async (req) => {
             nombre: perfil.nombre || "",
             extra: {
               asunto: `📢 Actualización en tu ${tipo}: ${titulo}`,
-              mensaje: mensajeTexto +
-                `\n\n¡Entra a la plataforma para ver las novedades!`,
+              mensaje: mensajeTexto + `\n\n¡Entra a la plataforma para ver las novedades!`,
             },
           }),
         }).catch(() => {});

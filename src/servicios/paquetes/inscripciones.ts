@@ -5,7 +5,7 @@ import type { ResultadoOperacion } from '../../tipos/paquetes';
 
 export async function obtenerProgresoUsuarioPaquetes(usuarioId: string): Promise<ResultadoOperacion> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from('vista_progreso_usuario_paquetes')
             .select('*')
             .eq('usuario_id', usuarioId)

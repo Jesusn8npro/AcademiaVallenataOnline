@@ -1,4 +1,4 @@
-import { supabase } from '../clienteSupabase';
+import { supabase, supabaseAnonimo } from '../clienteSupabase';
 import type { EventoCompleto, FiltrosEventos } from './_tipos';
 import { mapearEvento } from './_tipos';
 
@@ -127,5 +127,20 @@ export async function obtenerTiposEvento(): Promise<string[]> {
         return [...new Set(data.map((item: any) => item.tipo_evento).filter(Boolean))] as string[];
     } catch (error) {
         return [];
+    }
+}
+
+export async function obtenerEventoPorSlug(slug: string): Promise<{ evento: EventoCompleto | null; error?: string }> {
+    try {
+        const { data, error } = await supabaseAnonimo
+            .from('eventos')
+            .select('*')
+            .eq('slug', slug)
+            .eq('es_publico', true)
+            .single();
+        if (error) return { evento: null, error: error.message };
+        return { evento: data as EventoCompleto };
+    } catch (err: any) {
+        return { evento: null, error: err.message };
     }
 }

@@ -1,16 +1,14 @@
 import { supabase } from '../clienteSupabase';
-import { get } from '../../utilidades/tiendaReact';
-import { usuario } from '../UsuarioActivo/usuario';
 import type { PublicacionComunidad, ComentarioComunidad, NuevaPublicacion, NuevoComentario } from '../../tipos/comunidad';
 
 export async function crearPublicacion(nuevaPublicacion: NuevaPublicacion): Promise<PublicacionComunidad> {
-    const currentUser = get(usuario);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!currentUser) {
         throw new Error('Debes estar autenticado para crear una publicación');
     }
 
-    const { data: publicacion, error } = await supabase
+    const { data: publicacion, error } = await (supabase as any)
         .from('comunidad_publicaciones')
         .insert({
             contenido: nuevaPublicacion.contenido,
@@ -43,7 +41,7 @@ export async function crearPublicacion(nuevaPublicacion: NuevaPublicacion): Prom
         url_video: publicacion.url_video,
         url_gif: publicacion.url_gif,
         usuario_id: publicacion.usuario_id,
-        usuario_nombre: publicacion.usuario?.nombre_completo || publicacion.usuario_nombre || publicacion.usuario?.nombre || 'Usuario',
+        usuario_nombre: publicacion.usuario?.nombre || publicacion.usuario_nombre || 'Usuario',
         usuario_apellido: publicacion.usuario?.apellido || '',
         usuario_slug: publicacion.usuario?.nombre_usuario || '',
         url_foto_perfil: publicacion.usuario?.url_foto_perfil,
@@ -58,13 +56,13 @@ export async function crearPublicacion(nuevaPublicacion: NuevaPublicacion): Prom
 }
 
 export async function crearComentario(nuevoComentario: NuevoComentario): Promise<ComentarioComunidad> {
-    const currentUser = get(usuario);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!currentUser) {
         throw new Error('Debes estar autenticado para comentar');
     }
 
-    const { data: comentario, error } = await supabase
+    const { data: comentario, error } = await (supabase as any)
         .from('comunidad_comentarios')
         .insert({
             contenido: nuevoComentario.contenido,
@@ -88,7 +86,7 @@ export async function crearComentario(nuevoComentario: NuevoComentario): Promise
 
     return {
         id: comentario.id,
-        contenido: comentario.contenido,
+        contenido: comentario.contenido || comentario.comentario,
         fecha_creacion: comentario.fecha_creacion,
         usuario_id: comentario.usuario_id,
         usuario_nombre: comentario.usuario?.nombre || 'Usuario',
@@ -99,7 +97,7 @@ export async function crearComentario(nuevoComentario: NuevoComentario): Promise
 }
 
 export async function toggleLike(publicacionId: string): Promise<{ esLike: boolean; totalLikes: number }> {
-    const currentUser = get(usuario);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!currentUser) {
         throw new Error('Debes estar autenticado para dar like');
@@ -146,7 +144,7 @@ export async function toggleLike(publicacionId: string): Promise<{ esLike: boole
 }
 
 export async function eliminarPublicacion(publicacionId: string): Promise<void> {
-    const currentUser = get(usuario);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!currentUser) {
         throw new Error('Debes estar autenticado para eliminar');
@@ -187,7 +185,7 @@ export async function eliminarPublicacion(publicacionId: string): Promise<void> 
 }
 
 export async function eliminarComentario(comentarioId: string): Promise<void> {
-    const currentUser = get(usuario);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
 
     if (!currentUser) {
         throw new Error('Debes estar autenticado para eliminar');

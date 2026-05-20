@@ -1,52 +1,43 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from '@/compat/router';
-import { supabase } from '../../../servicios/clienteSupabase';
+import { useUsuario } from '@/contextos/UsuarioContext';
 import ComunidadService from '../../../servicios/comunidadService';
 import type { PublicacionComunidad } from '../../../servicios/comunidadService';
 import type { Usuario } from '../tipos';
 
 export function useComunidad() {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const { usuario: ctxUsuario, inicializado } = useUsuario();
+  const location = useLocation();
+
+  // Map context user (UsuarioContext type) → comunidad Usuario type
+  const usuario: Usuario | null = useMemo(() => {
+    if (!ctxUsuario) return null;
+    return {
+      id: ctxUsuario.id,
+      nombre: ctxUsuario.nombre || 'Usuario',
+      apellido: (ctxUsuario as any).apellido || '',
+      nombre_usuario: (ctxUsuario as any).nombre_usuario,
+      url_foto_perfil: ctxUsuario.url_foto_perfil,
+      rol: ctxUsuario.rol || 'usuario',
+      ...(ctxUsuario as any),
+    };
+  }, [ctxUsuario]);
+
+  // UsuarioContext already fetched the full profile from 'perfiles' table
+  const perfilCompleto = ctxUsuario as unknown as Record<string, unknown> | null;
+
   const [publicaciones, setPublicaciones] = useState<PublicacionComunidad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [perfilCompleto, setPerfilCompleto] = useState<Record<string, unknown> | null>(null);
   const [viendoUnica, setViendoUnica] = useState(false);
-  const location = useLocation();
 
-  useEffect(() => {
-    const cargarUsuario = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: perfil, error: perfilError } = await supabase
-          .from('perfiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (perfilError) return;
-
-        setUsuario({
-          id: user.id,
-          nombre: (perfil.nombre as string) || 'Usuario',
-          apellido: (perfil.apellido as string) || '',
-          nombre_usuario: perfil.nombre_usuario as string | undefined,
-          url_foto_perfil: perfil.url_foto_perfil as string | undefined,
-          rol: (perfil.rol as string) || 'usuario',
-          ...perfil,
-        });
-        setPerfilCompleto(perfil);
-      } catch {
-        // error de autenticación no es fatal; usuario queda en null
-      }
-    };
-
-    cargarUsuario();
-  }, []);
+  // Ref para el userId: evita recrear cargarPublicaciones cuando el perfil pasa
+  // de usuarioBasico → perfilCompleto (mismo id, diferente objeto), lo que
+  // causaba una doble carga visible en el feed.
+  const usuarioIdRef = useRef(ctxUsuario?.id);
+  useEffect(() => { usuarioIdRef.current = ctxUsuario?.id; }, [ctxUsuario?.id]);
 
   const cargarPublicaciones = useCallback(async (hash: string) => {
     try {
@@ -66,7 +57,7 @@ export function useComunidad() {
         }
       }
 
-      const datos = await ComunidadService.obtenerPublicaciones(0, 20);
+      const datos = await ComunidadService.obtenerPublicaciones(0, 20, usuarioIdRef.current);
       setPublicaciones(datos);
       setViendoUnica(false);
     } catch {
@@ -74,11 +65,12 @@ export function useComunidad() {
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, []); // estable: lee userId desde ref, no recrea al cambiar el perfil
 
   useEffect(() => {
+    if (!inicializado) return;
     cargarPublicaciones(location.hash);
-  }, [location.hash, cargarPublicaciones]);
+  }, [location.hash, cargarPublicaciones, inicializado]);
 
   const manejarNuevaPublicacion = useCallback(() => {
     window.location.hash = '';
