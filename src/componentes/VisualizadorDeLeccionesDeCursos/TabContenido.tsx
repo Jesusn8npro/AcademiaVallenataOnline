@@ -114,6 +114,12 @@ const TabContenido: React.FC<TabContenidoProps> = ({
     }
 
     function irALeccion(leccion: any) {
+        // En modo SPA (tutorial viewer), el callback actualiza estado sin recargar
+        if (modoSPA && onCambiarLeccion) {
+            onCambiarLeccion(leccion)
+            return
+        }
+
         const cursoSlug = curso?.slug || (curso?.titulo ? generarSlug(curso.titulo) : '')
         const leccionSlug = leccion?.slug || (leccion?.titulo ? generarSlug(leccion.titulo) : '')
         const moduloActual = modulosData[moduloActualIndex]

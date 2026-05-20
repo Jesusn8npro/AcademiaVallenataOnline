@@ -70,6 +70,7 @@ interface ReproductorLeccionesProps {
   autoplay?: boolean;
   tiempoInicial?: number;
   onTiempoActualizado?: (segundos: number) => void;
+  onCambiarClase?: (leccion: any) => void;
 }
 
 const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
@@ -85,6 +86,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   marcarComoCompletada = () => {},
   tiempoInicial = 0,
   onTiempoActualizado,
+  onCambiarClase,
 }) => {
   const usarFirmado = !!(parteId || leccionId);
   const firmado = useVideoFirmado(usarFirmado ? { parteId, leccionId } : {});
@@ -104,7 +106,8 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
     videoUrl: usarFirmado ? '' : videoUrl,
     leccionAnterior,
     leccionSiguiente,
-    tipo
+    tipo,
+    onNavegar: onCambiarClase,
   });
 
   // Para URLs firmadas de Bunny: agrega params que evitan precarga agresiva

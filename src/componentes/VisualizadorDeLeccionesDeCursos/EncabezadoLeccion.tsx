@@ -29,6 +29,7 @@ interface EncabezadoLeccionProps {
   usuarioActual?: any
   leccionAnterior?: any
   leccionSiguiente?: any
+  onCambiarClase?: (leccion: any) => void
 }
 
 const IconoAcordeon = ({ size = 18 }: { size?: number }) => (
@@ -59,7 +60,8 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
   estadisticasProgreso = { completadas: 0, total: 0, porcentaje: 0 },
   usuarioActual = null,
   leccionAnterior = null,
-  leccionSiguiente = null
+  leccionSiguiente = null,
+  onCambiarClase,
 }) => {
   const {
     esPantallaCompleta, desplazado, esDesktop,
@@ -68,7 +70,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
     modalAvancesAbierto, setModalAvancesAbierto,
     urlCurso, leccionActual, totalLecciones,
     alternarPantallaCompleta, compartir, cerrarSesion, navegarA, navegarLeccion,
-  } = useEncabezadoLeccion({ cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo })
+  } = useEncabezadoLeccion({ cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo, onNavegar: onCambiarClase })
 
   // Acordeón embebido en la clase: por ahora solo lo ven administradores mientras
   // afinamos la experiencia. Una vez listo se libera al resto de roles.
@@ -238,6 +240,7 @@ const EncabezadoLeccion: React.FC<EncabezadoLeccionProps> = ({
               progreso={progreso}
               tipo={tipo === 'leccion' ? 'curso' : 'tutorial'}
               onCerrarSidebar={() => setSidebarMovilAbierta(false)}
+              onIrAClase={onCambiarClase ? (leccion) => { onCambiarClase(leccion); setSidebarMovilAbierta(false); } : undefined}
             />
           </div>
         </div>

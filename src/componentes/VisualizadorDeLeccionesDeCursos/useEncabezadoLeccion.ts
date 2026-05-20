@@ -23,10 +23,11 @@ interface UseEncabezadoLeccionProps {
   curso: any;
   cursoTitulo: string;
   leccionTitulo: string;
+  onNavegar?: (leccion: any) => void;
 }
 
 export function useEncabezadoLeccion({
-  cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo,
+  cursoId, leccionId, tipo, curso, cursoTitulo, leccionTitulo, onNavegar,
 }: UseEncabezadoLeccionProps) {
   const navigate = useNavigate();
   const [esPantallaCompleta, setEsPantallaCompleta] = useState(false);
@@ -156,6 +157,10 @@ export function useEncabezadoLeccion({
 
   function navegarLeccion(destino: any) {
     if (!destino) return;
+    if (tipo === 'clase' && onNavegar) {
+      onNavegar(destino);
+      return;
+    }
     if (tipo === 'clase') {
       const claseSlug = destino.slug || generarSlugBase(destino.titulo);
       startTransition(() => navigate(`/tutoriales/${cursoSlug}/clase/${claseSlug}`));

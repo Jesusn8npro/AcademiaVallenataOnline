@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 
@@ -49,7 +51,13 @@ const moverColorFondo = (
   return llego ? (nextIdx + 1) % BG_COLORS.length : nextIdx;
 };
 
-const FondoEspacialProMax: React.FC = () => {
+interface FondoEspacialProMaxProps {
+  /** false (default): position fixed, cubre toda la pantalla (uso en ProMax).
+   *  true: position absolute, se contiene en el padre con position relative. */
+  contenedor?: boolean;
+}
+
+const FondoEspacialProMax: React.FC<FondoEspacialProMaxProps> = ({ contenedor = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -64,11 +72,22 @@ const FondoEspacialProMax: React.FC = () => {
     let prevTime = 0;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      if (contenedor && canvas.parentElement) {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      } else {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
     };
 
-    window.addEventListener('resize', resize);
+    let ro: ResizeObserver | undefined;
+    if (contenedor && canvas.parentElement) {
+      ro = new ResizeObserver(resize);
+      ro.observe(canvas.parentElement);
+    } else {
+      window.addEventListener('resize', resize);
+    }
     resize();
 
     let animationFrameId = 0;
@@ -127,13 +146,14 @@ const FondoEspacialProMax: React.FC = () => {
     animationFrameId = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('resize', resize);
+      if (ro) ro.disconnect();
+      else window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [contenedor]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: -1 }}>
+    <div style={{ position: contenedor ? 'absolute' : 'fixed', inset: 0, zIndex: contenedor ? 0 : -1 }}>
       <Image
         src="/assets/purpleSpace.webp"
         alt=""
@@ -141,17 +161,10 @@ const FondoEspacialProMax: React.FC = () => {
         priority
         style={{ objectFit: 'cover', opacity: 0.6, animation: 'zoomEspacial 30s ease-in-out infinite alternate' }}
       />
-      <canvas 
-        ref={canvasRef} 
+      <canvas
+        ref={canvasRef}
         style={{ position: 'absolute', inset: 0, opacity: 1 }}
       />
-      
-      <style>{`
-        @keyframes zoomEspacial {
-          from { transform: scale(1); }
-          to { transform: scale(1.4); }
-        }
-      `}</style>
     </div>
   );
 };

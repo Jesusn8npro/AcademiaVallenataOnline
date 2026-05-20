@@ -18,10 +18,11 @@ interface UseBarraLateralCursoProps {
   leccionActiva: string;
   progreso?: Record<string, number | boolean>;
   tipo?: 'curso' | 'tutorial';
+  onIrAClase?: (leccion: any) => void;
 }
 
 export function useBarraLateralCurso({
-  curso, leccionActiva, progreso = {}, tipo = 'curso',
+  curso, leccionActiva, progreso = {}, tipo = 'curso', onIrAClase,
 }: UseBarraLateralCursoProps) {
   const navigate = useNavigate();
   const [modulosExpandidos, setModulosExpandidos] = useState<Record<string, boolean>>({});
@@ -86,6 +87,10 @@ export function useBarraLateralCurso({
   }
 
   function irALeccion(modulo: any, leccion: any) {
+    if (tipo === 'tutorial' && onIrAClase) {
+      onIrAClase(leccion);
+      return;
+    }
     const cursoSlug = curso?.slug || (curso?.titulo ? generarSlug(curso.titulo) : '');
     const moduloSlug = modulo?.slug || (modulo?.titulo ? generarSlug(modulo.titulo) : '');
     const leccionSlug = leccion?.slug || (leccion?.titulo ? generarSlug(leccion.titulo) : '');
@@ -98,7 +103,7 @@ export function useBarraLateralCurso({
 
   function esLeccionCompletada(leccionId: string): boolean {
     const p = progreso[leccionId];
-    return p === true || p >= 90;
+    return p === true || (typeof p === 'number' && p >= 90);
   }
 
   function esLeccionActiva(leccion: any): boolean {
