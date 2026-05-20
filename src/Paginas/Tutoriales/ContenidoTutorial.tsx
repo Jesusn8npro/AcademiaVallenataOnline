@@ -1,5 +1,6 @@
 'use client';
 import { Link } from '@/compat/router';
+import Image from 'next/image'
 
 import { useEffect, useState } from 'react'
 import { useParams } from '@/compat/router'
@@ -164,8 +165,8 @@ export default function ContenidoTutorial() {
               <span className="actual">{tutorial.titulo}</span>
             </div>
             <div className="tp-info-principal">
-              <div className="tp-imagen-contenido">
-                <img src={tutorial.imagen_url || '/images/default-tutorial.jpg'} alt={tutorial.titulo} loading="lazy" />
+              <div className="tp-imagen-contenido" style={{ position: 'relative' }}>
+                <Image src={tutorial.imagen_url || '/images/default-tutorial.jpg'} alt={tutorial.titulo} fill style={{ objectFit: 'cover' }} />
                 <div className="tp-badge-tipo">Tutorial</div>
               </div>
               <div className="tp-detalles-contenido">

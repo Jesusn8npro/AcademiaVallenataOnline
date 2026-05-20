@@ -15,6 +15,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i.ytimg.com' },
       { protocol: 'https', hostname: 'img.youtube.com' },
       { protocol: 'https', hostname: 'randomuser.me' },
+      { protocol: 'https', hostname: 'api.dicebear.com' },
       { protocol: 'https', hostname: '**.googleusercontent.com' },
       // Comunidad: GIFs y banderas de geolocalización
       { protocol: 'https', hostname: 'media.tenor.com' },

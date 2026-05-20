@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { useDropzone } from 'react-dropzone';
 import { Upload, Trash2, Loader, AlertCircle } from 'lucide-react';
 import './UploaderImagenesArticulo.css';
@@ -112,8 +113,8 @@ const UploaderImagenesArticulo: React.FC<UploaderImagenesArticuloProps> = ({ onI
             <div className="lista-imagenes-container">
                 {imagenes.map((imagen) => (
                     <div key={imagen.id} className={`imagen-card ${imagen.estado || ''}`}>
-                        <div className="imagen-preview">
-                            <img src={imagen.url} alt={imagen.alt_text || 'preview'} />
+                        <div className="imagen-preview" style={{ position: 'relative' }}>
+                            <Image src={imagen.url} alt={imagen.alt_text || 'preview'} fill style={{ objectFit: 'cover' }} />
                             {imagen.estado === 'error' && <div className="imagen-overlay error"><AlertCircle /></div>}
                         </div>
                         <div className="imagen-detalles">

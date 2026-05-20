@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image'
 import { useRanking } from './useRanking';
 import './ranking.css';
 
@@ -157,9 +158,10 @@ export default function Ranking() {
                                         </div>
 
                                         <div className="pr-avatar-wrapper">
-                                            <img
+                                            <Image
                                                 src={usuario.perfiles?.url_foto_perfil || `https://api.dicebear.com/7.x/avataaars/svg?seed=${usuario.usuario_id}`}
-                                                alt={`Avatar de ${usuario.perfiles?.nombre}`}
+                                                alt={`Avatar de ${usuario.perfiles?.nombre ?? ''}`}
+                                                width={40} height={40}
                                             />
                                         </div>
 

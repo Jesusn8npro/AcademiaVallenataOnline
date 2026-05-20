@@ -1,4 +1,5 @@
 import * as React from 'react'
+import Image from 'next/image'
 import { ChevronRight } from 'lucide-react';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
@@ -110,8 +111,8 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
                   className={`estudio-practica-libre-modelo-row ${modeloActivo.id === modelo.id ? 'activo' : ''}`}
                   onClick={() => onSeleccionarModelo(modelo.id)}
                 >
-                  <div className="estudio-practica-libre-modelo-row-img">
-                    <img src={modelo.imagen} alt={modelo.nombre} />
+                  <div className="estudio-practica-libre-modelo-row-img" style={{ position: 'relative' }}>
+                    <Image src={modelo.imagen} alt={modelo.nombre} fill style={{ objectFit: 'cover' }} />
                   </div>
                   <div className="estudio-practica-libre-modelo-row-info">
                     <strong>{modelo.nombre}</strong>

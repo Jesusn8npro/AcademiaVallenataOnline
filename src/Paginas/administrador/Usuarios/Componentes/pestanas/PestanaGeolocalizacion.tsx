@@ -1,5 +1,6 @@
 ﻿import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import './PestanaGeolocalizacion.css';
 import {
   obtenerIPPublica,
@@ -178,7 +179,7 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
                 <div className="ugeo-location-details">
                   <div className="ugeo-detail-main">
                     {ubicacionActual?.bandera_url && (
-                      <img src={ubicacionActual.bandera_url} alt={ubicacionActual?.pais} width={48} height={36} />
+                      <Image src={ubicacionActual.bandera_url} alt={ubicacionActual?.pais ?? ''} width={48} height={36} />
                     )}
                     <div className="ugeo-place-data">
                       <div className="ugeo-place-name">
@@ -248,7 +249,7 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
                     <div className="ugeo-history-order">{idx + 1}</div>
                     <div className="ugeo-place-main">
                       {h.bandera_url && (
-                        <img src={h.bandera_url} alt={h.pais} width={32} height={24} />
+                        <Image src={h.bandera_url} alt={h.pais ?? ''} width={32} height={24} />
                       )}
                       <div className="ugeo-place-data">
                         <div className="ugeo-place-name">

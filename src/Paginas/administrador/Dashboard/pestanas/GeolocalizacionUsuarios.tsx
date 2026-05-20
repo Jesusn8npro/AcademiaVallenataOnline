@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import './GeolocalizacionUsuarios.css';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, MapPin } from 'lucide-react';
@@ -222,7 +223,7 @@ const GeolocalizacionUsuarios: React.FC = () => {
 
                                         <div className="ubicacion-geo">
                                             <div className="geo-principal">
-                                                <img src={ubicacion.bandera_url} alt={ubicacion.pais} className="bandera" />
+                                                <Image src={ubicacion.bandera_url} alt={ubicacion.pais ?? ''} width={24} height={18} className="bandera" />
                                                 <span className="ubicacion-texto">{ubicacion.ciudad}, {ubicacion.pais}</span>
                                             </div>
                                             <div className="geo-tiempo">
