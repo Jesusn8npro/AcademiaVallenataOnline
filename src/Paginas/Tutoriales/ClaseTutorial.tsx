@@ -33,6 +33,7 @@ export default function ClaseTutorial() {
 
   const [progresoMap, setProgresoMap] = useState<Record<string, boolean>>({})
   const [copiado, setCopiado] = useState(false)
+  const [usuarioActual, setUsuarioActual] = useState<any>(null)
 
   // Cuando el alumno vuelve del simulador con ?t=N, retomamos el video en ese segundo.
   const [searchParams] = useSearchParams()
@@ -118,6 +119,7 @@ export default function ClaseTutorial() {
       setClases(lista)
 
       const { data: { user } } = await supabase.auth.getUser()
+      setUsuarioActual(user ?? null)
       if (user) {
         const { data: progAll } = await supabase
           .from('progreso_tutorial')
@@ -226,7 +228,7 @@ const estadisticasProgreso = useMemo(() => {
         moduloActivo={''}
         progreso={progresoMap}
         estadisticasProgreso={estadisticasProgreso}
-        usuarioActual={null}
+        usuarioActual={usuarioActual}
         leccionAnterior={claseAnterior}
         leccionSiguiente={claseSiguiente}
         onCambiarClase={cambiarClase}
@@ -287,7 +289,7 @@ const estadisticasProgreso = useMemo(() => {
                   clases={clases}
                   progreso={progresoMap}
                   mostrarSidebar={mostrarSidebar}
-                  usuarioActual={null}
+                  usuarioActual={usuarioActual}
                   onCambiarLeccion={cambiarClase}
                 />
               </div>
