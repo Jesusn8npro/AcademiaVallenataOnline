@@ -183,10 +183,13 @@ export function useLandingCurso() {
         }
         if (!contenido) return;
         try {
-            const campo = contenido.tipo === 'curso' ? 'curso_id' : 'tutorial_id';
+            const fechaInscripcion = new Date().toISOString();
+            const insertData = contenido.tipo === 'curso'
+                ? { usuario_id: usuario.id, curso_id: contenido.id, fecha_inscripcion: fechaInscripcion }
+                : { usuario_id: usuario.id, tutorial_id: contenido.id, fecha_inscripcion: fechaInscripcion };
             const { error } = await supabase
                 .from('inscripciones')
-                .insert({ usuario_id: usuario.id, [campo]: contenido.id, fecha_inscripcion: new Date().toISOString() });
+                .insert(insertData);
             if (error) throw error;
             setEstaInscrito(true);
             verContenido();
