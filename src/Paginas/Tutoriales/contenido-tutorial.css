@@ -96,13 +96,11 @@ body {
         width: 100%;
     }
 
-    .contenido-detalle-tutorial {
+    .contenido-detalle-tutorial-legacy {
         height: 100dvh;
-        /* Dynamic viewport height para móviles */
         max-height: 100dvh;
         overflow: hidden;
         position: fixed;
-        /* Forzar posición fija */
         top: 0;
         left: 0;
         right: 0;
@@ -110,18 +108,22 @@ body {
     }
 
     .contenedor-clase {
+        flex: 1;
+        display: flex;
         overflow: hidden;
         min-height: 0;
     }
 
     .area-video {
-        height: 100%;
-        overflow: hidden !important;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
     }
 
     .area-video>.reproductor-container {
         flex: 0 0 auto;
-        /* No encoger ni crecer */
         z-index: 10;
     }
 
