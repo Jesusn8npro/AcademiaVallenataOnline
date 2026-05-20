@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { supabase } from '../../../../servicios/clienteSupabase';
 import './ModalInscripciones.css';
 
@@ -208,7 +209,7 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
                                     <div key={inscripcion.id} className="usuario-card">
                                         <div className="usuario-avatar">
                                             {inscripcion.perfiles.url_foto_perfil ? (
-                                                <img src={inscripcion.perfiles.url_foto_perfil} alt={inscripcion.perfiles.nombre_completo} />
+                                                <Image src={inscripcion.perfiles.url_foto_perfil} alt={inscripcion.perfiles.nombre_completo} width={36} height={36} />
                                             ) : (
                                                 <div className="avatar-placeholder">
                                                     {inscripcion.perfiles.nombre_completo.charAt(0)}
@@ -256,7 +257,7 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
                                     <div key={usuario.id} className="usuario-resultado">
                                         <div className="usuario-avatar mini">
                                             {usuario.url_foto_perfil ? (
-                                                <img src={usuario.url_foto_perfil} alt={usuario.nombre_completo} />
+                                                <Image src={usuario.url_foto_perfil} alt={usuario.nombre_completo} width={32} height={32} />
                                             ) : (
                                                 <div className="avatar-placeholder">
                                                     {usuario.nombre_completo.charAt(0)}

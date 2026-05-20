@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 import { mensajeriaService } from '../../servicios/mensajeriaService'
 import { X, Search, MessageSquare, UserPlus, Users } from 'lucide-react'
 import './ModalNuevoChat.css'
@@ -191,9 +192,10 @@ export default function ModalNuevoChat({ abierto, onCerrar, onCreado }: Props) {
                   onClick={() => agregarUsuario(u)}
                   className="mnc-user-item group"
                 >
-                  <img
+                  <Image
                     src={u.url_foto_perfil || '/images/default-curso.jpg'}
                     alt="avatar"
+                    width={40} height={40}
                     className="mnc-avatar"
                   />
                   <div className="mnc-user-info">

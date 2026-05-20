@@ -1,5 +1,6 @@
 'use client';
 import { Link } from '@/compat/router';
+import Image from 'next/image'
 
 import * as React from 'react'
 import { useSliderCursos } from './Hooks/useSliderCursos';
@@ -111,10 +112,11 @@ const SliderCursos: React.FC = () => {
               return (
                 <div key={inscripcion.id} className="slider-cursos-slide">
                   <div className="slider-cursos-card">
-                    <div className="slider-cursos-imagen-container">
-                      <img
+                    <div className="slider-cursos-imagen-container" style={{ position: 'relative' }}>
+                      <Image
                         src={inscripcion.cursos?.imagen_url || inscripcion.tutoriales?.imagen_url || '/images/default-curso.jpg'}
-                        alt={inscripcion.cursos?.titulo || inscripcion.tutoriales?.titulo}
+                        alt={inscripcion.cursos?.titulo || inscripcion.tutoriales?.titulo || ''}
+                        fill style={{ objectFit: 'cover' }}
                         className="slider-cursos-imagen"
                       />
                       <div className="slider-cursos-badge-tipo">

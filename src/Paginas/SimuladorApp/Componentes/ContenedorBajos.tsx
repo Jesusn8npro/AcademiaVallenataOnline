@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { motion, useMotionValue } from 'framer-motion';
 import { ChevronUp, MoveHorizontal } from 'lucide-react';
 import { motorAudioPro } from '../../../Core/audio/AudioEnginePro';
@@ -218,7 +219,7 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                 onPointerDown={handlePointerDownFuelle}
                 onPointerUp={handlePointerUpFuelle}
                 onPointerCancel={handlePointerUpFuelle}
-                style={{ touchAction: 'manipulation' }}
+                style={{ touchAction: 'manipulation', position: 'relative' }}
             >
                 {!visible && (
                     <button className="boton-bajos-superior" onClick={onOpen}>
@@ -226,7 +227,7 @@ const ContenedorBajos: React.FC<ContenedorBajosProps> = ({
                         <span className="flecha-bajos">▼</span>
                     </button>
                 )}
-                <img src={imagenBajos} alt="Fondo Bajos" className="img-bajos-fondo" />
+                <Image src={imagenBajos} alt="Fondo Bajos" fill style={{ objectFit: 'cover' }} className="img-bajos-fondo" />
                 <div className="fuelle-status-overlay">
                     {logica.direccion === 'empujar' ? 'CERRANDO' : 'ABRIENDO'}
                 </div>

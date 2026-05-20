@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { X, Crown, Check, Sparkles } from 'lucide-react';
 import {
     TEMAS_ACORDEON, ETIQUETAS_CATEGORIA, type CategoriaTema, type TemaAcordeon,
@@ -99,11 +100,11 @@ const GaleriaAcordeones: React.FC<Props> = ({
                                         <span>PLUS</span>
                                     </div>
                                 )}
-                                <div className="gal-card-imagen">
-                                    <img
+                                <div className="gal-card-imagen" style={{ position: 'relative' }}>
+                                    <Image
                                         src={tema.preview}
                                         alt={tema.nombre}
-                                        loading="lazy"
+                                        fill style={{ objectFit: 'cover' }}
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).style.opacity = '0.3';
                                         }}

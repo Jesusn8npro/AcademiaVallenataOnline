@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import './PasoResumenGuardar.css'
 import { supabase } from '../../servicios/clienteSupabase'
 import { notificarNuevoCurso, notificarNuevoTutorial } from '../../servicios/generador/_notificadores'
@@ -190,7 +191,7 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
             <div className="info-item"><span className="info-label">Estado:</span><span className={`badge ${badgeEstado.color}`}>{badgeEstado.texto}</span></div>
             <div className="info-item"><span className="info-label">Destacado:</span><span className={`badge ${datosGenerales.es_destacado ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{datosGenerales.es_destacado ? '⭐ Sí' : '📄 No'}</span></div>
             <div className="info-item"><span className="info-label">Acceso:</span><span className={`badge ${datosGenerales.tipo_acceso === 'pago' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>{datosGenerales.tipo_acceso === 'pago' ? '💰 De Pago' : '🎁 Gratuito'}</span></div>
-            {datosGenerales.imagen_url && (<div className="info-item imagen-preview-resumen"><span className="info-label">Imagen de Portada:</span><div className="imagen-miniatura"><img src={datosGenerales.imagen_url} alt={`Portada del ${tipo}`} className="imagen-resumen" /></div></div>)}
+            {datosGenerales.imagen_url && (<div className="info-item imagen-preview-resumen"><span className="info-label">Imagen de Portada:</span><div className="imagen-miniatura" style={{ position: 'relative' }}><Image src={datosGenerales.imagen_url} alt={`Portada del ${tipo}`} fill style={{ objectFit: 'cover' }} className="imagen-resumen" /></div></div>)}
           </div>
           {datosGenerales.tipo_acceso === 'pago' && (
             <div className="seccion-precios"><h4 className="subtitulo-precio">💰 Información de Precios</h4><div className="grid-precios"><div className="precio-item"><span className="precio-label">Precio Normal:</span><span className="precio-value">{formatearPrecio(datosGenerales.precio_normal)}</span></div>{datosGenerales.precio_rebajado && (<div className="precio-item"><span className="precio-label">Precio Rebajado:</span><span className="precio-value descuento">{formatearPrecio(datosGenerales.precio_rebajado)}</span></div>)}{datosGenerales.fecha_expiracion && (<div className="precio-item"><span className="precio-label">Expiración del Descuento:</span><span className="precio-value">{new Date(datosGenerales.fecha_expiracion).toLocaleDateString('es-CO')}</span></div>)}</div></div>

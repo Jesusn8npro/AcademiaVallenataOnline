@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useNavigate } from '@/compat/router';
 import {
   obtenerTodosPaquetes,
@@ -249,9 +250,9 @@ const PaquetesAdmin: React.FC = () => {
         ) : (
           paquetesFiltrados.map((paquete) => (
             <div key={paquete.id} className="paquetes-admin__item">
-              <div className="paquetes-admin__item-imagen">
+              <div className="paquetes-admin__item-imagen" style={{ position: 'relative' }}>
                 {paquete.imagen_url ? (
-                  <img src={paquete.imagen_url} alt={paquete.titulo} />
+                  <Image src={paquete.imagen_url} alt={paquete.titulo} fill style={{ objectFit: 'cover' }} />
                 ) : (
                   <div className="paquetes-admin__item-imagen-placeholder">🎵</div>
                 )}

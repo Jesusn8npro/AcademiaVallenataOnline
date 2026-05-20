@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react'
+import Image from 'next/image'
 
 interface ContenidoPublicacionProps {
   tipo: string;
@@ -68,10 +69,11 @@ const ContenidoPublicacion: React.FC<ContenidoPublicacionProps> = ({
       )}
 
       {url_imagen && (
-        <div className={`feed-publicaciones-contenedor-media ${tipo === 'foto_perfil' ? 'feed-publicaciones-media-perfil' : ''}`}>
-          <img
+        <div className={`feed-publicaciones-contenedor-media ${tipo === 'foto_perfil' ? 'feed-publicaciones-media-perfil' : ''}`} style={{ position: 'relative' }}>
+          <Image
             src={url_imagen}
             alt="Imagen de la publicación"
+            fill style={{ objectFit: 'cover' }}
             className="feed-publicaciones-imagen-publicacion"
             loading="lazy"
           />

@@ -1,4 +1,5 @@
 
+import Image from 'next/image'
 import type { Mensaje } from '../../servicios/mensajeriaService'
 
 interface Props {
@@ -42,11 +43,11 @@ export default function BurbujaMensaje({ mensaje, mensajeAnterior, mensajeSiguie
         <div className={`bm_group ${tipo} ${esPrimero ? 'is-first' : ''}`} onDoubleClick={onResponder}>
             {/* <img> con fallback: migrar cuando tengamos placeholder de next/image */}
             {!mensaje.es_mio && (esUltimo ? (
-                <img
+                <Image
                     src={URL_ESTABLE(mensaje.usuario?.url_foto_perfil) || '/images/default-user.png'}
                     alt="avatar"
+                    width={32} height={32}
                     className="bm_avatar"
-                    loading="eager"
                     decoding="async"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/images/default-user.png' }}
                 />

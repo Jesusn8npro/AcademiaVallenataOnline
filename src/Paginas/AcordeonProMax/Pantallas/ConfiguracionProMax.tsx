@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -76,7 +77,7 @@ const ConfiguracionProMax: React.FC = () => {
                                 <div className="user-profile-summary">
                                     <div className="user-avatar-wrapper">
                                         {form.url_foto_perfil ? (
-                                            <img src={form.url_foto_perfil} alt="Avatar" />
+                                            <Image src={form.url_foto_perfil} alt="Avatar" width={64} height={64} />
                                         ) : (
                                             <UserCircle size={80} strokeWidth={0.5} />
                                         )}

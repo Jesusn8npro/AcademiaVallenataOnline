@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { X, Music, Check, Loader2 } from 'lucide-react';
 import './ModalInstrumentos.css';
 
@@ -64,7 +65,7 @@ const ModalInstrumentos: React.FC<ModalInstrumentosProps> = ({
                             >
                                 <div className="instrumento-imagen-container">
                                     {inst.imagen_url ? (
-                                        <img src={inst.imagen_url} alt={inst.nombre} className="instrumento-img" />
+                                        <Image src={inst.imagen_url} alt={inst.nombre} width={48} height={48} className="instrumento-img" />
                                     ) : (
                                         <div className="instrumento-placeholder">
                                             <span>🪗</span>

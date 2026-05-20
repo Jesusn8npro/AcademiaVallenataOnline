@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import Image from 'next/image'
 import { motion } from 'framer-motion';
 import {
     ArrowLeft, HelpCircle, Search, Music, Hand, ListMusic, BarChart3, Disc3,
@@ -307,9 +308,9 @@ const TarjetaCategoria: React.FC<TarjetaCategoriaProps> = ({
             <h2 className="tarjeta-titulo">{titulo}</h2>
         </div>
         <div className="tarjeta-divider" />
-        <div className="tarjeta-imagen">
+        <div className="tarjeta-imagen" style={{ position: 'relative' }}>
             {imagen
-                ? <img src={imagen} alt={titulo} />
+                ? <Image src={imagen} alt={titulo} fill style={{ objectFit: 'cover' }} />
                 : <div className="tarjeta-imagen-placeholder">{icono}</div>}
         </div>
         <div className="tarjeta-stats">

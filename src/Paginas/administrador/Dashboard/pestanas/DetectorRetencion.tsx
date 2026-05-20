@@ -1,4 +1,5 @@
 
+import Image from 'next/image'
 import { RefreshCw, Eye, EyeOff, User, MessageCircle } from 'lucide-react'
 import './DetectorRetencion.css'
 import { useDetectorRetencion } from './useDetectorRetencion'
@@ -64,7 +65,7 @@ const DetectorRetencion = () => {
                                     <div className="usuario-info-compacto">
                                         <div className="foto-y-nombre">
                                             {usuario.url_foto_perfil ? (
-                                                <img src={usuario.url_foto_perfil} alt={usuario.nombre} className="foto-mini" />
+                                                <Image src={usuario.url_foto_perfil} alt={usuario.nombre} width={28} height={28} className="foto-mini" />
                                             ) : (
                                                 <div className="avatar-mini"><User size={14} /></div>
                                             )}
@@ -97,7 +98,7 @@ const DetectorRetencion = () => {
                                     <div className="usuario-header">
                                         <div className="usuario-foto-info">
                                             {usuario.url_foto_perfil ? (
-                                                <img src={usuario.url_foto_perfil} alt={usuario.nombre} className="foto-perfil" />
+                                                <Image src={usuario.url_foto_perfil} alt={usuario.nombre} width={40} height={40} className="foto-perfil" />
                                             ) : (
                                                 <div className="avatar-default"><User size={24} /></div>
                                             )}
