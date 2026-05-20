@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import './BannerComunidad.css';
 
 const BannerComunidad: React.FC = () => {

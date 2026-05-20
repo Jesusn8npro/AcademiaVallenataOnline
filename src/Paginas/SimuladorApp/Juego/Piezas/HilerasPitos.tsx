@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import type { GuiaPitoResultado } from '../Hooks/useGuiaPitoObjetivo';
 
 const MAPA_CIFRADO: Record<string, string> = {

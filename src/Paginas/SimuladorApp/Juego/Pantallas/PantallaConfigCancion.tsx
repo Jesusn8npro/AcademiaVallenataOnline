@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion';
 import { Play, X, Volume2, Trophy, Music2, Pause, GraduationCap, CheckCircle2, Lock, Coins } from 'lucide-react';
 import type { CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import './GestorEstructuraContenido.css'
 
 interface Modulo { titulo: string; descripcion: string; orden: number; lecciones: Leccion[] }

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import './PestanaConfiguracion.css';
 import { usePestanaConfiguracion, type Usuario, type Pago } from './usePestanaConfiguracion';
 

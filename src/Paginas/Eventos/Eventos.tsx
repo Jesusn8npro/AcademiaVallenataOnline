@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { useUsuario } from '../../contextos/UsuarioContext';
 import CalendarioEventos from './Componentes/CalendarioEventos';
 import './eventos.css';

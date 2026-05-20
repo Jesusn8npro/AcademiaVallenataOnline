@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react'
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react'
 import './pestanas-perfil.css'
 import { Link, useLocation } from '@/compat/router'
 import { sanitizarHTML } from '../../utilidades/sanitizar'

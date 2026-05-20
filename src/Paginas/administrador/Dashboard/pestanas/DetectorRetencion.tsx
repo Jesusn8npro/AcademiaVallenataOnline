@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { RefreshCw, Eye, EyeOff, User, MessageCircle } from 'lucide-react'
 import './DetectorRetencion.css'
 import { useDetectorRetencion } from './useDetectorRetencion'

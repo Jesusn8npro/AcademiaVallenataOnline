@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import * as React from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';

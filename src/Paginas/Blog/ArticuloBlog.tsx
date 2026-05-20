@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useParams, Link } from '@/compat/router';

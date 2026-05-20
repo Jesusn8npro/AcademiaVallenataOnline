@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Music, Sliders } from 'lucide-react';
 import type { MetronomoV2, SonidoMetronomoV2 } from '../hooks/useMetronomoV2';
 import { SONIDOS_METRONOMO } from '../hooks/useMetronomoV2';

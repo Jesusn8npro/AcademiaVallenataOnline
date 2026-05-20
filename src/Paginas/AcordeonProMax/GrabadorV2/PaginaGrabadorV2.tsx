@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@/compat/router';
 import { AlertCircle } from 'lucide-react';
 

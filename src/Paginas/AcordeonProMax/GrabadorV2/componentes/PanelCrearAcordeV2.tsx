@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Save, ListMusic, Layers } from 'lucide-react';
 import { useModalCreadorAcordes } from '../../../../Core/componentes/useModalCreadorAcordes';
 import './PanelCrearAcordeV2.css';

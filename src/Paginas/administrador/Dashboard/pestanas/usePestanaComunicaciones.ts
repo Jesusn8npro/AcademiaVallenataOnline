@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../servicios/clienteSupabase'
-import React from 'react'
+import * as React from 'react'
 import { Mail, MessageCircle, Bell } from 'lucide-react'
 
 export interface CampañaComunicacion {

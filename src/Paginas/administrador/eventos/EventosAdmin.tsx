@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { useEventosAdmin } from './useEventosAdmin';
 import FormularioCrearEvento from './FormularioCrearEvento';
 import { supabase } from '../../../servicios/clienteSupabase';

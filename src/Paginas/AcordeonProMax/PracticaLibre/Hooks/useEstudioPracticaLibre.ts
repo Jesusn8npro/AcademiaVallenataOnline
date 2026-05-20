@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import {
   PREFERENCIAS_PRACTICA_LIBRE_POR_DEFECTO,
   type PistaPracticaLibre,

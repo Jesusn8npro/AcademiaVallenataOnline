@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Lock, CheckCircle2, Coins, PlayCircle, RotateCcw } from 'lucide-react';
 import type { SeccionConEstado } from '../TiposProMax';
 import './SelectorSeccion.css';

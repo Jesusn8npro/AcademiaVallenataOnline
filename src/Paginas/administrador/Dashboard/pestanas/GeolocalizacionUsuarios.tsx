@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import './GeolocalizacionUsuarios.css';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { RefreshCw, MapPin } from 'lucide-react';

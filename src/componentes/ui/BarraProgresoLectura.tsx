@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 
 /**
  * Barra de progreso que muestra cuánto ha leído el usuario del artículo.

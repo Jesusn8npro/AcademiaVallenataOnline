@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import './NavbarProMax.css';
 import { Howl } from 'howler';
 import {

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { Save, Eye, ArrowLeft, Loader } from 'lucide-react';
 import { Link } from '@/compat/router';
 import UploaderImagenesArticulo from './Componentes/UploaderImagenesArticulo';

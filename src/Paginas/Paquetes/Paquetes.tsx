@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import Image from 'next/image';
 import { formatearPrecio } from '../../servicios/paquetesService';
 import { usePaquetes } from './Hooks/usePaquetes';

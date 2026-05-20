@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import * as React from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLogicaAcordeon } from '../../Core/hooks/useLogicaAcordeon';
 import CuerpoAcordeon from '../../Core/componentes/CuerpoAcordeon';
 import SeccionPLSonido from '../../Paginas/AcordeonProMax/PracticaLibre/Componentes/SeccionPLSonido';

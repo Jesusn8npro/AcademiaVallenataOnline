@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import {
     Download, RefreshCw, DollarSign, Calendar, Target, CheckCircle,
     Clock, Eye, TrendingUp, TrendingDown, CreditCard

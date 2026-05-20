@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { useNavigate } from '@/compat/router';
 import { useLogicaProMax } from '../Hooks/useLogicaProMax';
 import { useCancionesProMax } from '../Hooks/useCancionesProMax';

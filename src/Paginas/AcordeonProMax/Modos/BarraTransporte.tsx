@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react'
 import { Play, Pause, FastForward, Rewind, Repeat, Square } from 'lucide-react';
 import './BarraTransporte.css';
 

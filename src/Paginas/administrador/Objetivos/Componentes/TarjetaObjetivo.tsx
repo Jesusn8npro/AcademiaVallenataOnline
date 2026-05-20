@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Calendar, Tag, MoreVertical, Clock } from 'lucide-react';
 import type { ObjetivoAdmin } from '../../../../servicios/servicioObjetivos';
 

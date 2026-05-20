@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import BannerComunidad from '../../componentes/ComponentesComunidad/BannerComunidad';
 import ComunidadPublicar from '../../componentes/ComponentesComunidad/ComunidadPublicar';
 import FeedPublicaciones from '../../componentes/ComponentesComunidad/FeedPublicaciones';

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react'
+
 import './FiltrosCursos.css'
 
 export interface FiltrosCursos {

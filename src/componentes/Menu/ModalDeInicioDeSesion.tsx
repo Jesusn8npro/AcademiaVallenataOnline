@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import Image from 'next/image';
 import { useModalInicioSesion, paises } from './useModalInicioSesion';
 import { getModalInicioSesionStyles } from './getModalInicioSesionStyles';

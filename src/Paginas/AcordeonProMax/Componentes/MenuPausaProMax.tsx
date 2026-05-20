@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, RotateCcw, Settings, LogOut } from 'lucide-react';

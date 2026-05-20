@@ -1,7 +1,7 @@
 'use client';
 import { Link } from '@/compat/router';
 
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './WizardContenido.css'
 import PasoInformacionGeneral from './PasoInformacionGeneral'
 import GestorEstructuraContenido from './GestorEstructuraContenido'

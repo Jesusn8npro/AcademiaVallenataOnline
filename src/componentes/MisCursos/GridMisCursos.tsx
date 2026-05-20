@@ -1,7 +1,7 @@
 'use client';
 import { Link } from '@/compat/router';
 
-import React from 'react'
+
 import TarjetaCurso from './TarjetaCurso'
 
 interface Props {

@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import { TICKS_VIAJE } from '../../../AcordeonProMax/TiposProMax';
 import ModoVistaLibre from './ModoVistaLibre';
 import './PistaNotasGuia.css';

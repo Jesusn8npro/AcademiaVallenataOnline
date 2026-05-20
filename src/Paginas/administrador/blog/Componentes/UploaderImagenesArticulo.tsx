@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone';
 import { Upload, Trash2, Loader, AlertCircle } from 'lucide-react';
 import './UploaderImagenesArticulo.css';

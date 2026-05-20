@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Eye, EyeOff, X as XIcon, Crown } from 'lucide-react';
 
 interface BotonModoFocoProps {

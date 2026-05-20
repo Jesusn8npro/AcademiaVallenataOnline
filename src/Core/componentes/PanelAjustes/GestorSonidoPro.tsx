@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useCallback } from 'react'
 import { X, Edit2, GripVertical } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import type { AjustesAcordeon } from '../../acordeon/TiposAcordeon';

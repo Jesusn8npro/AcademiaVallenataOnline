@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import './CrearUsuario.css';
 import { useCrearUsuario, type Usuario } from './useCrearUsuario';
 

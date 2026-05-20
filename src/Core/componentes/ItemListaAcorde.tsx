@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Reorder, motion } from 'framer-motion';
 import { Trash2, Play, Square, Edit3, Copy, Layers, ChevronUp, ChevronDown } from 'lucide-react';
 import { obtenerNotasDelAcorde, TONALIDAD_OFFSETS, identificarNombreAcorde } from '../acordeon/notasAcordeonDiatonico';

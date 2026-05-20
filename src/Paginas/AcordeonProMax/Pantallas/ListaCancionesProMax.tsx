@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from '@/compat/router';
 import './ListaCancionesProMax.css';
 import NavbarProMax from '../Componentes/NavbarProMax';

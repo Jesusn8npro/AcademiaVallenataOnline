@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from '@/compat/router';
 import { useUsuario } from '../contextos/UsuarioContext';
 import './ProteccionRuta.css'; // We'll create this CSS next

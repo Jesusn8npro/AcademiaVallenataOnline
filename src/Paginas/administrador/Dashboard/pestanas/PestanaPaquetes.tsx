@@ -1,4 +1,4 @@
-import React from 'react';
+
 import GestionPaquetes from './GestionPaquetes';
 import { Plus } from 'lucide-react';
 import './PestanaPaquetes.css';

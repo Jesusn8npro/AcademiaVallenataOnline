@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Play, Pause, Square, X, Layers } from 'lucide-react';
 import { motorAudioPro } from '../../../../Core/audio/AudioEnginePro';
 import { ReproductorMP3 } from '../../../../Core/audio/ReproductorMP3';

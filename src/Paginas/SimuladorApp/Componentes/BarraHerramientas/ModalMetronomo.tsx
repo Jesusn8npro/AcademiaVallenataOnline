@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { X } from 'lucide-react';
 import type { useMetronomo } from '../../Hooks/useMetronomo';
 import PanelMetronomoInline from './PanelMetronomoInline';

@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import * as React from 'react';
+import { useMemo, useState } from 'react'
 import { X, Crown, Check, Sparkles } from 'lucide-react';
 import {
     TEMAS_ACORDEON, ETIQUETAS_CATEGORIA, type CategoriaTema, type TemaAcordeon,

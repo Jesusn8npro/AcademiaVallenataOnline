@@ -1,4 +1,4 @@
-import React from 'react'
+
 
 export default function BarraProgresoAvanzada({ estadisticasProgreso, tipoContenido }: { estadisticasProgreso: { completadas: number; total: number; porcentaje: number }, tipoContenido: 'tutorial' | 'curso' }) {
   const color = tipoContenido === 'tutorial' ? '#a855f7' : '#2563eb'

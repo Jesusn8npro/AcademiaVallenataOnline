@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import { scoresHeroService } from '../../servicios/scoresHeroService';
 import { supabase } from '../../servicios/clienteSupabase';
 import './ExperienciaPerfil.css';

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react'
 import { motion, useMotionValue } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useLogicaProMax } from '../../AcordeonProMax/Hooks/useLogicaProMax';

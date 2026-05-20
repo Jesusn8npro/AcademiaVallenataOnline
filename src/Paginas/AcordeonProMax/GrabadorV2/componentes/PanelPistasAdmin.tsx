@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Music2, Plus, RotateCw, Trash2, Upload, Save, X, Loader2, Play, Pause } from 'lucide-react';
 import {
     listarPistasAdmin, crearPistaAdmin, actualizarPistaAdmin,

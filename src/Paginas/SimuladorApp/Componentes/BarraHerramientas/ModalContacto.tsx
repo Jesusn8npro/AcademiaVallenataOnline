@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { X } from 'lucide-react';
 import './ModalContacto.css';
 

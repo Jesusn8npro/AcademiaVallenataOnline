@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../TiposProMax';
 import type { Seccion } from '../tiposSecciones';
 import ModalHistorialHero from './ModalHistorialHero';

@@ -1,4 +1,4 @@
-import React from 'react'
+
 import type { Mensaje } from '../../servicios/mensajeriaService'
 
 interface Props {

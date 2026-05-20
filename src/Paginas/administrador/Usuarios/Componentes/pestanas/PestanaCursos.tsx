@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import Image from 'next/image';
 import './PestanaCursos.css';
 import { usePestanaCursos, formatearFecha, formatearPrecio, type Usuario, type Inscripcion, type Paquete } from './usePestanaCursos';

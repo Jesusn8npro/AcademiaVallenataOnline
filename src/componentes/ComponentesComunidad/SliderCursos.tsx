@@ -1,7 +1,7 @@
 'use client';
 import { Link } from '@/compat/router';
 
-import React from 'react';
+import * as React from 'react'
 import { useSliderCursos } from './Hooks/useSliderCursos';
 import './SliderCursos.css';
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Save, X } from 'lucide-react';
 
 interface Props {

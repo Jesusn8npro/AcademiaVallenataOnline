@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { mensajeriaService } from '../../servicios/mensajeriaService'
 import { X, Search, MessageSquare, UserPlus, Users } from 'lucide-react'
 import './ModalNuevoChat.css'

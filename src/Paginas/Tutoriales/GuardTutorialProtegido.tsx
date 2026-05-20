@@ -4,7 +4,7 @@
 // reimplementar la lógica de auth. ProteccionRuta acepta `children` y, si
 // hay sesión, los renderiza tal cual. Este wrapper solo existe para exponer
 // el guard como Client Component a un layout.tsx de Next App Router.
-import React from 'react';
+import * as React from 'react'
 import ProteccionRuta from '../../SeguridadApp/ProteccionRuta';
 
 export default function GuardTutorialProtegido({

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Play, Music, ChevronDown, ChevronRight, Layers } from 'lucide-react';
 import { useCancionesProMax } from '../../Hooks/useCancionesProMax';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';

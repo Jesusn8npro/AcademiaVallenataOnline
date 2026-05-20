@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import './EstadisticasGenerales.css';
 import { useNavigate } from '@/compat/router';
 

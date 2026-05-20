@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { useNavigate } from '@/compat/router';
 import ModalBusqueda from '../../componentes/Busqueda/ModalBusqueda';
 import { useParticulasFlotantes } from './Hooks/useParticulasFlotantes';

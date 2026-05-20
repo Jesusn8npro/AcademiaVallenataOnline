@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Check, Pause, Play, RotateCcw, Square, Upload, Mic2, Music2, Activity, Circle } from 'lucide-react';
 import type { PistaPracticaLibre, PreferenciasPracticaLibre } from '../TiposPracticaLibre';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';

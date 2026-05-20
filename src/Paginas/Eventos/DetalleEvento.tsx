@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { useDetalleEvento } from './useDetalleEvento';
 import HeroEvento from './Componentes/HeroEvento';
 import { sanitizarTextoConSaltos } from '../../utilidades/sanitizar';
