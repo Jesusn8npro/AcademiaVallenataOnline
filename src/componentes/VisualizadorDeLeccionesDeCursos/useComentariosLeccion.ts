@@ -73,7 +73,8 @@ export function useComentariosLeccion({ leccionId, usuarioActual, tipo = 'clase'
     const campoId = tipo === 'clase' ? 'clase_id' : 'leccion_id';
     const { error: err } = await supabase
       .from(tabla)
-      .insert({ [campoId]: leccionId, usuario_id: usuarioActual.id, contenido: nuevoComentario, respuesta_a: null });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .insert({ [campoId]: leccionId, usuario_id: usuarioActual.id, contenido: nuevoComentario, respuesta_a: null } as any);
     if (err) {
       setError(err.message || 'Error agregando comentario');
     } else {
@@ -93,7 +94,8 @@ export function useComentariosLeccion({ leccionId, usuarioActual, tipo = 'clase'
     const campoId = tipo === 'clase' ? 'clase_id' : 'leccion_id';
     const { error: err } = await supabase
       .from(tabla)
-      .insert({ [campoId]: leccionId, usuario_id: usuarioActual.id, contenido: textoRespuesta, respuesta_a: parentId });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .insert({ [campoId]: leccionId, usuario_id: usuarioActual.id, contenido: textoRespuesta, respuesta_a: parentId } as any);
     if (err) {
       setError(err.message || 'Error agregando respuesta');
     } else {

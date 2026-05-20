@@ -123,6 +123,7 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
 
             const { error } = await supabase
                 .from('inscripciones')
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .insert({
                     usuario_id: usuario.id,
                     [foreignKey]: itemId,
@@ -130,7 +131,7 @@ const ModalInscripciones: React.FC<Props> = ({ isOpen, onClose, itemId, itemTitu
                     estado: 'activo',
                     porcentaje_completado: 0,
                     completado: false
-                });
+                } as any);
 
             if (error) throw error;
 
