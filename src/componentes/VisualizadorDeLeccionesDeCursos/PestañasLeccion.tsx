@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import './PestañasLeccion.css'
+import './ComentariosLeccion.css'
+import './NotasLeccion.css'
 import TabContenido from './TabContenido'
 import TarjetaInformacionCurso from './TarjetaInformacionCurso'
 import ComentariosLeccion from './ComentariosLeccion'

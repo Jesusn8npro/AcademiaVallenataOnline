@@ -120,6 +120,7 @@ body {
         flex-direction: column;
         min-height: 0;
         overflow: hidden;
+        background: #fff;
     }
 
     .area-video>.reproductor-container {
