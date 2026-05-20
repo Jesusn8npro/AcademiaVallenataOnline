@@ -196,15 +196,6 @@
     }
 }
 
-/* Móvil (≤768px) */
-@media (max-width: 768px) {
-    .leccion-contenido {
-        padding: 0 !important;
-        flex: 1;
-        min-height: 0;
-    }
-}
-
 /* Tablets y móviles (<900px) */
 @media (max-width: 900px) {
     .encabezados-pestañas {
@@ -219,21 +210,26 @@
         white-space: nowrap;
         min-width: fit-content;
     }
-
-    .contenido-pestaña {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .contenido-pestaña::-webkit-scrollbar {
-        display: none;
-    }
 }
 
-/* Móvil (≤768px) */
+/* Móvil (≤768px) — el scroll lo maneja .tutorial-scroll-container */
 @media (max-width: 768px) {
+    .leccion-contenido {
+        padding: 0 !important;
+        overflow: visible;
+        position: static;
+        z-index: auto;
+        flex: none;
+        min-height: 0;
+    }
+
+    .pestañas {
+        height: auto;
+        overflow: visible;
+    }
+
     .encabezados-pestañas {
-        margin-bottom: 1rem;
+        margin-bottom: 0;
         -webkit-overflow-scrolling: touch;
         background-color: #fff !important;
         position: sticky;
@@ -248,15 +244,21 @@
     }
 
     .contenido-pestaña {
+        overflow: visible !important;
+        height: auto;
+        flex: none;
+        min-height: 0;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto !important;
     }
 
     .contenido-pestaña::-webkit-scrollbar {
         display: none;
+    }
+
+    .panel-pestaña,
+    .panel-pestaña.active {
+        height: auto;
     }
 }
 
@@ -282,11 +284,11 @@
     }
 
     .contenido-pestaña {
+        overflow: visible !important;
+        flex: none;
+        min-height: 0;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto !important;
     }
 
     .contenido-pestaña::-webkit-scrollbar {
