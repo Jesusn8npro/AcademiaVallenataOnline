@@ -130,7 +130,8 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         visible: parte.visible !== false
       }))
 
-      const { error } = await supabase.from('partes_tutorial').insert(partesParaGuardar)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('partes_tutorial').insert(partesParaGuardar as any)
       if (error) throw error
     } else {
       if (modoEdicion) {
@@ -167,7 +168,8 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
           if (errM) throw errM
           if (modulo.lecciones && modulo.lecciones.length > 0) {
             const leccionesParaGuardar = modulo.lecciones.map((leccion: any) => ({ modulo_id: moduloCreado.id, titulo: leccion.titulo || 'Lección sin título', descripcion: leccion.descripcion || '', tipo_contenido: leccion.tipo_contenido || 'video', video_url: leccion.video_url || '', contenido: leccion.contenido || '', orden: leccion.orden || 1 }))
-            const { error: errL } = await supabase.from('lecciones').insert(leccionesParaGuardar)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: errL } = await supabase.from('lecciones').insert(leccionesParaGuardar as any)
             if (errL) throw errL
           }
         }

@@ -165,6 +165,7 @@ export async function guardarPerfilUsuario(usuarioId: string, datosPago: DatosPa
         if (datosPago.ciudad) datos.ciudad = datosPago.ciudad;
         if (datosPago.pais) datos.pais = datosPago.pais;
         if (datosPago.codigo_postal) datos.codigo_postal = datosPago.codigo_postal;
-        if (Object.keys(datos).length > 0) await supabase.from('perfiles').update(datos).eq('id', usuarioId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (Object.keys(datos).length > 0) await supabase.from('perfiles').update(datos as any).eq('id', usuarioId);
     } catch { /* non-fatal */ }
 }

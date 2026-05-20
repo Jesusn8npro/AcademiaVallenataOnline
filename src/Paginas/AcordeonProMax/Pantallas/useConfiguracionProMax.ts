@@ -65,7 +65,8 @@ export function useConfiguracionProMax() {
         fecha_actualizacion: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      const { error } = await supabase.from('perfiles').update(updates).eq('id', usuario.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('perfiles').update(updates as any).eq('id', usuario.id);
       if (error) throw error;
       actualizarPerfil(updates as any);
       setMensaje({ tipo: 'exito', texto: '¡Información actualizada con éxito!' });
