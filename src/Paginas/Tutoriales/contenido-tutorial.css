@@ -127,12 +127,11 @@ body {
 
     .tutorial-scroll-container {
         flex: 1;
-        /* Ocupa el resto del espacio */
+        min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
-        height: auto;
-        /* Asegurar que tome la altura disponible */
+        background: #fff;
     }
 
     /* Ajuste para móviles en horizontal */
