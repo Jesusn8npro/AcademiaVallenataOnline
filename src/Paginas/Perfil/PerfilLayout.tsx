@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react'
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import ProteccionAutenticacion from '../../guards/ProteccionAutenticacion'
 import { PerfilProvider, usePerfilStore } from '../../stores/perfilStore'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'

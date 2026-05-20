@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@/compat/router';
 import {
     Gamepad2, Crown, GraduationCap, Trophy, Users, Smartphone, ArrowRight,

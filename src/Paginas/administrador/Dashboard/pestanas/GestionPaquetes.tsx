@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../../servicios/clienteSupabase';
 import { Box, Star, DollarSign, PlayCircle, Clock, Key, Plus, Boxes, Edit3 } from 'lucide-react';

@@ -1,4 +1,5 @@
-import React, { useCallback, useRef } from 'react';
+import * as React from 'react';
+import { useCallback, useRef } from 'react'
 import type { NotaHero, SeccionV2 } from '../tipos';
 
 const PALETA = [

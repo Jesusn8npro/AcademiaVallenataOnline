@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react'
 import { usePagoExitoso } from './Hooks/usePagoExitoso';
 import { vibracionMedia } from '../../../utilidades/plataforma';
 import './PagoExitoso.css';

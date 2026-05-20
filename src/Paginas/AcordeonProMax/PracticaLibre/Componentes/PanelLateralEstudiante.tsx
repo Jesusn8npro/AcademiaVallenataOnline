@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { ChevronRight } from 'lucide-react';
 import { MODELOS_VISUALES_ACORDEON } from '../Datos/modelosVisualesAcordeon';
 import type { ModeloVisualAcordeon, PistaPracticaLibre, PreferenciasPracticaLibre, SeccionPanelPracticaLibre } from '../TiposPracticaLibre';

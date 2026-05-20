@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { RotateCcw, X, ArrowRight, Star, Coins, History, Save, Trophy, TrendingUp, TrendingDown, Lock, AlertTriangle } from 'lucide-react';
 import { usePantallaResultados } from '../../../AcordeonProMax/Componentes/usePantallaResultados';
 import ModalHistorialSimulador from '../Modales/ModalHistorialSimulador';

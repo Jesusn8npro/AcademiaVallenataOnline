@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Music, RotateCw, Plus, Trash2 } from 'lucide-react';
 import type { CancionV2 } from '../tipos';
 

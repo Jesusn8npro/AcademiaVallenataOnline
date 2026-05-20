@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 import { supabase } from '../../../../servicios/clienteSupabase';
 import DetectorRetencion from './DetectorRetencion';
 import { RefreshCw, MessageCircle, Eye, Clock, BookOpen, Timer, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';

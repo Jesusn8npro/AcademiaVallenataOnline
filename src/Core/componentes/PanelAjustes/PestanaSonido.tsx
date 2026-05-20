@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { X, Music, Play, Pause } from 'lucide-react';
 import type { AjustesAcordeon, SonidoVirtual } from '../../acordeon/TiposAcordeon';
 import GestorSonidoPro from './GestorSonidoPro';

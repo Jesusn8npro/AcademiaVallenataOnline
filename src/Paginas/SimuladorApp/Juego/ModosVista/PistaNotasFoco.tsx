@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import './PistaNotasFoco.css';
 
 // Modo FOCO — minimalismo extremo. Una sola tarjeta grande arriba al centro

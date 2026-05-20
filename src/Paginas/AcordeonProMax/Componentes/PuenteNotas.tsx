@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import type { ModoVista } from '../../../Core/acordeon/TiposAcordeon';
 import type { CancionHeroConTonalidad } from '../TiposProMax';
 import { TICKS_VIAJE, COLORES_SOMBRA_HILERA, COLOR_ABRIENDO, COLOR_CERRANDO } from '../TiposProMax';

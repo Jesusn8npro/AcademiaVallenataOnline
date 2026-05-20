@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import HeaderHero from '../Componentes/HeaderHero';
 import FondoEspacialProMax from '../Componentes/FondoEspacialProMax';
 import ModalMetronomo from '../../SimuladorApp/Componentes/BarraHerramientas/ModalMetronomo';

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { servicioSeguridad } from '../../../../servicios/servicioSeguridad';
 import { RefreshCw, Clock, Globe, BarChart2, Users, AlertTriangle, Shield, CheckCircle } from 'lucide-react';
 import './AnalyticsGeograficos.css';

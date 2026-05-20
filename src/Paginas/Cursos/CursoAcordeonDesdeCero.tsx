@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react'
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react'
 import Image, { type StaticImageData } from 'next/image'
 import BannerOfertaCurso from './BannerOfertaCurso'
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente'

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from '@/compat/router';
 import { vibracionLeve } from '../../../utilidades/plataforma';
 import './PagoError.css';

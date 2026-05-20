@@ -1,4 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import * as React from 'react';
+import { lazy, Suspense } from 'react'
 import type { useEfectosAudio } from '../Hooks/useEfectosAudio';
 import type { useReproductorLoops } from '../Hooks/useReproductorLoops';
 import type { useMetronomo } from '../Hooks/useMetronomo';

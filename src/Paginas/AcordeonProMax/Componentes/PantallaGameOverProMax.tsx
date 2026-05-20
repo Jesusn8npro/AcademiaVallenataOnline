@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { motion } from 'framer-motion';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../TiposProMax';
 import { calcularPrecision } from '../TiposProMax';

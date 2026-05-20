@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useUsuario } from '../../contextos/UsuarioContext'
 import { supabase } from '../../servicios/clienteSupabase'
 import ModalCompletarEmail from './ModalCompletarEmail'

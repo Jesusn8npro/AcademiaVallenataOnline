@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { Plus, Trash2, MapPin, Flag, Coins, Mic, Pencil, X, Check } from 'lucide-react';
 import type { SeccionV2 } from '../tipos';
 

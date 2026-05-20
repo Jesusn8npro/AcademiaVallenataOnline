@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import Image from 'next/image';
 import type { UsuarioAdmin } from '../../../../../servicios/usuariosAdminService';
 import './PestanaActividad.css';

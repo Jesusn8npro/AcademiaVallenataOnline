@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './PasoResumenGuardar.css'
 import { supabase } from '../../servicios/clienteSupabase'
 import { notificarNuevoCurso, notificarNuevoTutorial } from '../../servicios/generador/_notificadores'

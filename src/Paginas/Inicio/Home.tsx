@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react'
 import dynamic from 'next/dynamic';
 import HeroHome from './Componentes/HeroHome';
 import SEO from '../../componentes/common/SEO';

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { ArrowLeft, Music, Settings, Layers, List, Usb, Sparkles, Music2 } from 'lucide-react';
 
 export type TabGrabadorV2 = 'canciones' | 'gestor' | 'crear' | 'acordes' | 'usb' | 'pistas';

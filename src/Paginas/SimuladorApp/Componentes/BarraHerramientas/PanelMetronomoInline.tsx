@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Music, Sliders } from 'lucide-react';
 import type { useMetronomo } from '../../Hooks/useMetronomo';
 import { usePulsoMetronomo } from '../../store/pulsoMetronomoStore';

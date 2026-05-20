@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { X, Save, Trash2 } from 'lucide-react';
 import type { NuevoObjetivo, ObjetivoAdmin } from '../../../../servicios/servicioObjetivos';
 

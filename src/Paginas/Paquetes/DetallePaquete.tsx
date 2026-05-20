@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import Image from 'next/image';
 import { useParams, useNavigate } from '@/compat/router';
 import { obtenerPaquetePorSlug, obtenerTutorialesPaquete, formatearPrecio, type PaqueteTutorial } from '../../servicios/paquetesService';

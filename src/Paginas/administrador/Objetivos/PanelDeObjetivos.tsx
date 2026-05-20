@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { Plus, Layout, Loader2, Calendar, CheckCircle2, ListTodo, PlayCircle } from 'lucide-react';
 import { servicioObjetivos } from '../../../servicios/servicioObjetivos';
 import type { ObjetivoAdmin, NuevoObjetivo } from '../../../servicios/servicioObjetivos';

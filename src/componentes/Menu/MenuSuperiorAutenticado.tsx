@@ -1,7 +1,8 @@
 'use client';
 import { Link } from '@/compat/router';
 
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import Image from 'next/image';
 import BusquedaGlobal from '../BusquedaGlobal/BusquedaGlobal';
 import MenuLateralResponsive from './MenuLateralResponsive';

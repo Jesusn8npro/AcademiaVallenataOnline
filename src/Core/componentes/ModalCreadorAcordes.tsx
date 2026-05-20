@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Layers } from 'lucide-react';
 import { useModalCreadorAcordes } from './useModalCreadorAcordes';

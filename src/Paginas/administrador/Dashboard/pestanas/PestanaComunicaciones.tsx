@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { Mail, MessageCircle, Bell, TrendingUp, Users, RefreshCw, Download, Plus, Eye, MessageSquare } from 'lucide-react'
 import './PestanaComunicaciones.css'
 import { usePestanaComunicaciones } from './usePestanaComunicaciones'

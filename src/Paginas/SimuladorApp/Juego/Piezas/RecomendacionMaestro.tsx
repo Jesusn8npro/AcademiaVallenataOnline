@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { GraduationCap, ArrowRight } from 'lucide-react';
 import './RecomendacionMaestro.css';
 

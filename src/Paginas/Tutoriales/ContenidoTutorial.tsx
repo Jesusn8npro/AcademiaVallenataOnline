@@ -1,7 +1,7 @@
 'use client';
 import { Link } from '@/compat/router';
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from '@/compat/router'
 import { supabase } from '../../servicios/clienteSupabase'
 import BarraProgresoAvanzada from '../../componentes/Tutoriales/BarraProgresoAvanzada'

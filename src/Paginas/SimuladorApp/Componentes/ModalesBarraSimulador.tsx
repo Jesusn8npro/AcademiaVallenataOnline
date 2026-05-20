@@ -1,4 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import * as React from 'react';
+import { lazy, Suspense } from 'react'
 
 import MenuOpciones from './BarraHerramientas/MenuOpciones';
 import ModalContacto from './BarraHerramientas/ModalContacto';

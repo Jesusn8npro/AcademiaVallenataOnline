@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from '@/compat/router'
 import ListaChats from './ListaChats'
 import type { Chat } from './ListaChats'

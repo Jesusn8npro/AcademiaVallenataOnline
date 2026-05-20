@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../servicios/clienteSupabase';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import './ValidacionesAdmin.css';

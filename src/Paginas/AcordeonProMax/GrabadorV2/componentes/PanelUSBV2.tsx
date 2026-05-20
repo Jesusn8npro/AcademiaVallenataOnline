@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Usb, Wifi, WifiOff, AlertCircle, Sparkles } from 'lucide-react';
 
 interface Props {

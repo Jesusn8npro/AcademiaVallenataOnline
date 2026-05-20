@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bot, User, Send, Loader2, Sparkles, RotateCcw, MessageCircle } from 'lucide-react';
 import './CrearArticuloIA.css';
 import FormularioArticulo from '../FormularioArticulo';

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import './EditorJsonArticulo.css';
 

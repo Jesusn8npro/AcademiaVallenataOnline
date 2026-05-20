@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { Rocket, Clock, Save, Database, PieChart, Download, Upload, Power, Trash2 } from 'lucide-react'
 import './PestanaConfiguracion.css'
 import { usePestanaConfiguracion } from './usePestanaConfiguracion'

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { RotateCcw, ArrowLeft, X, Skull } from 'lucide-react';
 import type { EstadisticasPartida, CancionHeroConTonalidad } from '../../../AcordeonProMax/TiposProMax';
 import { calcularPrecision } from '../../../AcordeonProMax/TiposProMax';

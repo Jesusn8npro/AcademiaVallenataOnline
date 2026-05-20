@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react'
+import * as React from 'react';
+import { useRef, useState, useEffect } from 'react'
 import './PasoInformacionGeneral.css'
 import GestorLista from './GestorLista'
 import { supabase } from '../../servicios/clienteSupabase'

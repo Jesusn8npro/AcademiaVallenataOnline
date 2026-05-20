@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import './PorcentajePerfil.css'
 
 export default function PorcentajePerfil({ perfil }: { perfil: any }) {

@@ -1,4 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import * as React from 'react';
+import { lazy, Suspense } from 'react'
 import ModalGuardarSimulador from './ModalGuardarSimulador';
 
 const ModalGrabacionAdmin = lazy(() => import('./ModalGrabacionAdmin'));

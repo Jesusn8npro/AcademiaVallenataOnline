@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Pago } from './usePagos';
 import { formatearFecha, formatearValor, obtenerClaseBadgeEstado, obtenerIconoEstado, truncarReferencia } from './usePagos';
 

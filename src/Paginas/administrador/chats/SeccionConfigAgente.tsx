@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, RotateCcw, Bot, CheckCircle } from 'lucide-react'
 import { supabase } from '../../../servicios/clienteSupabase'
 

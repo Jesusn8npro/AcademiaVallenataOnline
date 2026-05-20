@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { supabaseAnonimo } from '../../servicios/clienteSupabase'
 import { useNavigate } from '@/compat/router'
 import Image from 'next/image'

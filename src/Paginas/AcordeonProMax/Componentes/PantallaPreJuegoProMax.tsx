@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import { motion } from 'framer-motion';
 import { Play, Music, Zap, BookOpen, Volume2, X } from 'lucide-react';
 import type { ModoPractica, ModoAudioSynthesia } from '../TiposProMax';

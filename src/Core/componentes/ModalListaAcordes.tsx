@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Save, Layers, Square, Play, Search, Filter } from 'lucide-react';
 import { useModalListaAcordes } from './useModalListaAcordes';

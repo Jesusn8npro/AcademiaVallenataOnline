@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { useTranslation, Trans } from 'react-i18next';
 import Image from 'next/image';
 import './SeccionOpciones.css';

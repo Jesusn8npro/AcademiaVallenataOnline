@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import { Pause, Play, X, AudioLines, Loader, AlertTriangle } from 'lucide-react';
 import { listarPistasPracticaLibre } from '../../AcordeonProMax/PracticaLibre/Servicios/servicioPistasPracticaLibre';
 import type { PistaPracticaLibre } from '../../AcordeonProMax/PracticaLibre/TiposPracticaLibre';

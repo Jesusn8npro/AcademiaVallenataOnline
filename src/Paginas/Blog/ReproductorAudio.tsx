@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react'
 import { Pause, Play } from 'lucide-react';
 
 const ReproductorAudio = ({ texto }: { texto: string }) => {

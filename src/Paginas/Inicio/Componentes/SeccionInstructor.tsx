@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import Image from 'next/image';
 import FotoMaestro from '../../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
 import './SeccionInstructor.css';

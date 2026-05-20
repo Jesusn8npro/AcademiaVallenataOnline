@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import PanelAjustes from '../../../Core/componentes/PanelAjustes/PanelAjustes';
 import CuerpoAcordeonBase from '../../../Core/componentes/CuerpoAcordeon';
 

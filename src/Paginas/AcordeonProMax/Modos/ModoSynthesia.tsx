@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import PuenteNotas from '../Componentes/PuenteNotas';

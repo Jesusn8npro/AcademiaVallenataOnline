@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import { eventosService } from '../../../servicios/eventosService';
 import type { EventoCompleto } from '../../../servicios/eventosService';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { useNavigate } from '@/compat/router';
 import { useLogrosDesafios, formatearTiempo } from '../Hooks/useLogrosDesafios';
 import './LogrosDesafios.css';

@@ -1,5 +1,5 @@
 import { Link } from '@/compat/router';
-import React from 'react';
+
 import type { EstadisticasAdmin } from './useSidebarAdmin';
 
 interface Props {

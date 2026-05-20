@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react'
 import { Heart, AudioLines, X, Loader } from 'lucide-react';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { obtenerMisGrabaciones } from '../../../servicios/grabacionesHeroService';

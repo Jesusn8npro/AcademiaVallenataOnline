@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react'
 import { Save, RotateCcw, RefreshCw, Palette, Music2 } from 'lucide-react';
 import PestanaDiseno from '../../../../Core/componentes/PanelAjustes/PestanaDiseno';
 import PestanaSonido from '../../../../Core/componentes/PanelAjustes/PestanaSonido';

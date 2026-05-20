@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { supabase } from '../../servicios/clienteSupabase';
 import './MonedasPerfil.css';

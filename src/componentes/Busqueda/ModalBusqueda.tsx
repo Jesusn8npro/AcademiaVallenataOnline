@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import { useModalBusqueda } from './useModalBusqueda';
 import ListaResultados from './ResultadosBusqueda';
 import './ModalBusqueda.css';

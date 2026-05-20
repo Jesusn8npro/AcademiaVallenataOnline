@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { Pause, Heart } from 'lucide-react';
 import './HeaderJuegoSimulador.css';
 

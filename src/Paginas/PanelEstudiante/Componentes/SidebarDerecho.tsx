@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import * as React from 'react'
 import Avatar from './Avatar';
 import { useSidebarDerecho, formatearFecha, truncarTexto } from '../Hooks/useSidebarDerecho';
 import './SidebarDerecho.css';

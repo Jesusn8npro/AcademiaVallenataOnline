@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react'
 import './SeccionCTAFinal.css';
 import { ctaFinalStyles as styles } from './SeccionCTAFinal.styles';
 import { useNavigate } from '@/compat/router';

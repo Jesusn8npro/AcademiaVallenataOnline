@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import {
   Play, Pause, Square, Mic, Save, RotateCcw, Upload, Loader2, Music, ListMusic,
 } from 'lucide-react';

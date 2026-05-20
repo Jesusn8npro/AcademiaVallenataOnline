@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react'
+import * as React from 'react';
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from '@/compat/router'
 
 const STORAGE_KEY = 'cadc_oferta_inicio'

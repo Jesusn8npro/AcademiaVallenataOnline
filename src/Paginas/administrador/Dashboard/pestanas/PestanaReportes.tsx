@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import {
     TrendingUp, CheckCircle, DollarSign, RefreshCw,
     FileText, MessageCircle, Target, Clock, GraduationCap
