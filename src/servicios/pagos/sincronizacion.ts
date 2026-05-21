@@ -87,7 +87,7 @@ export async function inscribirUsuarioDespuesDePago(
             ...(pagoId && { pago_id: pagoId })
         };
 
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from(tablaInscripcion)
             .insert([datosInscripcion])
             .select()

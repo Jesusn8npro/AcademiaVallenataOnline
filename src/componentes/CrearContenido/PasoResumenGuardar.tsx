@@ -53,7 +53,7 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         precio_rebajado: datosGenerales.tipo_acceso === 'pago' ? parseFloat(datosGenerales.precio_rebajado || '0') || 0 : 0,
         fecha_expiracion: datosGenerales.fecha_expiracion || null,
         imagen_url: datosGenerales.imagen_url || null,
-        ...(tipo === 'tutorial' && { artista: datosGenerales.artista, tonalidad: datosGenerales.tonalidad, acordeonista: datosGenerales.acordeonista, video_url: datosGenerales.video_url, objetivos: datosGenerales.objetivos, requisitos: datosGenerales.requisitos, duracion_estimada: datosGenerales.duracion_estimada || 0, duracion: datosGenerales.duracion || 0 }),
+        ...(tipo === 'tutorial' && { artista: datosGenerales.artista, tonalidad: datosGenerales.tonalidad, acordeonista: datosGenerales.acordeonista, video_url: datosGenerales.video_url, objetivos: datosGenerales.objetivos, requisitos: datosGenerales.requisitos, duracion_estimada: datosGenerales.duracion_estimada || 0, duracion: datosGenerales.duracion || 0, recursos: datosGenerales.recursos || null }),
         ...(tipo === 'curso' && { requisitos: Array.isArray(datosGenerales.requisitos) ? datosGenerales.requisitos : (datosGenerales.requisitos ? [datosGenerales.requisitos] : []), objetivos: Array.isArray(datosGenerales.objetivos) ? datosGenerales.objetivos : (datosGenerales.objetivos ? [datosGenerales.objetivos] : []), duracion_estimada: datosGenerales.duracion_estimada || 0, con_modulos: datosGenerales.con_modulos ?? true })
       }
       const tabla = tipo === 'curso' ? 'cursos' : 'tutoriales'
@@ -128,7 +128,7 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         video_url: parte.video_url || '',
         contenido: parte.contenido || '',
         orden: parte.orden || index + 1,
-        visible: parte.visible !== false
+        visible: parte.visible !== false,
       }))
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -122,7 +122,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
         <div className="mpub-contenedor-barra-principal">
           {/* Logo */}
           <Link href="/" className="mpub-logo-navegacion" aria-label="Ir a la página de inicio">
-            <Image src="/logo-175.webp" alt="Logo Academia Vallenata" width={175} height={113} priority quality={65} />
+            <Image src="/logo-175.webp" alt="Logo Academia Vallenata" width={175} height={113} priority quality={75} />
           </Link>
 
           {/* Menú de navegación */}
@@ -242,7 +242,7 @@ const MenuPublico: React.FC<MenuPublicoProps> = ({ usuario, onCerrarSesion }) =>
 
             <div className="mpub-encabezado-menu">
               <Link href="/" className="mpub-logo-menu-link" aria-label="Ir a la página de inicio" onClick={cerrarModales}>
-                <Image src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width={175} height={113} />
+                <Image src="/logo-175.webp" alt="Academia Vallenata" className="mpub-logo-menu" width={175} height={113} quality={75} />
               </Link>
               <p className="mpub-descripcion-menu">
                 {t('menu.descripcion')}

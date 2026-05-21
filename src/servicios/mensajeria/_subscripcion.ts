@@ -51,7 +51,7 @@ export async function suscribirseAChat(
             )
             .on('presence', { event: 'sync' }, () => {
                 if (!callbacks.onPresenceCambiada) return;
-                const state = channel.presenceState<{ typing: boolean; user_id: string }>();
+                const state = channel.presenceState() as Record<string, Array<{ typing: boolean; user_id: string }>>;
                 const escribiendo = Object.values(state).flatMap(presences =>
                     presences.map(p => ({ usuario_id: p.user_id, typing: !!p.typing }))
                 ).filter(p => p.usuario_id !== userId);

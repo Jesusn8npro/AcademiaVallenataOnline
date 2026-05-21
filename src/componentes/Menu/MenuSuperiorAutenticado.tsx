@@ -4,6 +4,7 @@ import { Link } from '@/compat/router';
 import * as React from 'react';
 import { useState } from 'react'
 import Image from 'next/image';
+import avatarDefault from '../../assets/images/perfil-portada/Imagen perfil 1.jpg';
 import BusquedaGlobal from '../BusquedaGlobal/BusquedaGlobal';
 import MenuLateralResponsive from './MenuLateralResponsive';
 import NotificacionesPanel from '../Notificaciones/NotificacionesPanel';
@@ -14,7 +15,7 @@ import './MenuSuperiorAutenticado.css';
 
 const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size: 'medium' | 'large' }> = ({ src, alt, size }) => {
     const [imgError, setImgError] = useState(false);
-    const imagenFinal = !src || imgError ? '/images/perfil-portada/Imagen perfil 1.jpg' : src;
+    const imagenFinal = !src || imgError ? avatarDefault : src;
     const tamaño = size === 'large' ? '50px' : '40px';
     return (
         <div style={{ width: tamaño, height: tamaño, borderRadius: '50%', backgroundColor: '#f3f4f6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>

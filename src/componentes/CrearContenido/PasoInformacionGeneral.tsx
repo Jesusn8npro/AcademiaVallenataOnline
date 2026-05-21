@@ -131,7 +131,10 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
       imagen_url,
       duracion_estimada,
       ...(tipo === 'curso' && { requisitos: requisitos_curso, objetivos: objetivos_curso, con_modulos }),
-      ...(tipo === 'tutorial' && { artista, tonalidad, acordeonista, video_url, requisitos: requisitos_tutorial, objetivos: objetivos_tutorial })
+      ...(tipo === 'tutorial' && {
+        artista, tonalidad, acordeonista, video_url,
+        requisitos: requisitos_tutorial, objetivos: objetivos_tutorial,
+      })
     }
     onContinuar(datosCompletos)
   }
@@ -278,6 +281,7 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
               <div className="campo-formulario"><label className="etiqueta-campo"><span className="texto-etiqueta">Acordeonista</span></label><input type="text" value={acordeonista} onChange={e => setAcordeonista(e.target.value)} className="input-moderno" placeholder="Nombre del acordeonista" /></div>
             </div>
           )}
+
         </div>
 
         <div className="acciones-formulario"><button className="btn-continuar" onClick={continuar}><span className="icono-btn">🚀</span>Continuar al Siguiente Paso<span className="flecha-btn">→</span></button></div>

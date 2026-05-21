@@ -32,6 +32,7 @@
     ]
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "@supabase/supabase-js": "^2.49.8",
     "@tailwindcss/postcss": "^4.1.17",
     "autoprefixer": "^10.4.22",
@@ -51,18 +52,18 @@
     "react-international-phone": "^4.8.0",
     "recharts": "^3.8.1",
     "tailwindcss": "^4.1.17",
-    "typescript": "~5.9.3",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
-    "@types/dompurify": "^3.0.5",
-    "@types/howler": "^2.2.12"
+    "typescript": "~5.9.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@next/bundle-analyzer": "^16.2.6",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/dompurify": "^3.0.5",
+    "@types/howler": "^2.2.12",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
     "cross-env": "^7.0.3",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",

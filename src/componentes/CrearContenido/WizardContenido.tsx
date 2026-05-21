@@ -81,7 +81,15 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
   }
 
   function manejarDatosGenerales(datos: any) { setDatosGenerales(datos); avanzarPaso() }
-  function manejarEstructura(datos: any[]) { setEstructuraContenido(datos); avanzarPaso() }
+  function manejarEstructura(datos: any) {
+    if (Array.isArray(datos)) {
+      setEstructuraContenido(datos)
+    } else {
+      setEstructuraContenido(datos.partes || [])
+      setDatosGenerales((prev: any) => ({ ...prev, recursos: datos.recursos ?? null }))
+    }
+    // No avanza automáticamente: el usuario usa el botón "Siguiente" del footer
+  }
   function manejarGuardado(finalData: any) { setCursoCreado(finalData); setPasoActual(4) }
 
   return (
@@ -155,7 +163,7 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
         )}
         {pasoActual === 2 && (
           <GestorEstructuraContenido
-            key={datosIniciales?.id || 'nuevo'}
+            key={`${datosIniciales?.id || 'nuevo'}-${estructuraContenido.length > 0 ? 'loaded' : 'empty'}`}
             tipo={tipo}
             datosGenerales={datosGenerales}
             estructura={estructuraContenido}
