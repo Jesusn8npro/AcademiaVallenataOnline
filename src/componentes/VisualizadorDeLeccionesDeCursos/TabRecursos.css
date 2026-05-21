@@ -3,27 +3,29 @@
  * Acento: indigo #6366f1 | Fondo: #0b0d14 / #12162a
  * ============================================================ */
 
-:root {
-  --tr-bg:        #0b0d14;
-  --tr-card:      #12162a;
-  --tr-card2:     #1c2238;
-  --tr-accent:    #6366f1;
-  --tr-accent2:   #818cf8;
-  --tr-accent-dim: rgba(99, 102, 241, 0.12);
-  --tr-accent-glow: rgba(99, 102, 241, 0.35);
-  --tr-verde:     #10b981;
-  --tr-verde-dim: rgba(16, 185, 129, 0.14);
-  --tr-rojo:      #f43f5e;
-  --tr-rojo-dim:  rgba(244, 63, 94, 0.14);
-  --tr-texto:     #f1f5f9;
-  --tr-mute:      #8b9ab5;
-  --tr-dim:       #4b5a70;
-  --tr-borde:     rgba(255, 255, 255, 0.06);
-  --tr-borde2:    rgba(255, 255, 255, 0.11);
-}
-
 /* ── Contenedor ───────────────────────────────────────────── */
 .tab-recursos {
+  /* Tema oscuro (por defecto) */
+  --tr-bg:          #0b0d14;
+  --tr-card:        #12162a;
+  --tr-card2:       #1c2238;
+  --tr-accent:      #6366f1;
+  --tr-accent2:     #818cf8;
+  --tr-accent-dim:  rgba(99, 102, 241, 0.12);
+  --tr-accent-glow: rgba(99, 102, 241, 0.35);
+  --tr-verde:       #10b981;
+  --tr-verde-dim:   rgba(16, 185, 129, 0.14);
+  --tr-rojo:        #f43f5e;
+  --tr-rojo-dim:    rgba(244, 63, 94, 0.14);
+  --tr-texto:       #f1f5f9;
+  --tr-mute:        #8b9ab5;
+  --tr-dim:         #4b5a70;
+  --tr-borde:       rgba(255, 255, 255, 0.06);
+  --tr-borde2:      rgba(255, 255, 255, 0.11);
+  --tr-track-bg:    rgba(255, 255, 255, 0.08);
+  --tr-track-hover: rgba(255, 255, 255, 0.12);
+  --tr-texto-body:  #c8d3e6;
+
   padding: 1rem 1rem 2rem;
   display: flex;
   flex-direction: column;
@@ -31,6 +33,66 @@
   background: var(--tr-bg);
   min-height: 100%;
   box-sizing: border-box;
+}
+
+/* ── Tema claro ───────────────────────────────────────────── */
+.tab-recursos[data-tema="claro"] {
+  --tr-bg:          #f1f5f9;
+  --tr-card:        #ffffff;
+  --tr-card2:       #f8fafc;
+  --tr-accent:      #6366f1;
+  --tr-accent2:     #4f46e5;
+  --tr-accent-dim:  rgba(99, 102, 241, 0.09);
+  --tr-accent-glow: rgba(99, 102, 241, 0.22);
+  --tr-verde:       #059669;
+  --tr-verde-dim:   rgba(5, 150, 105, 0.09);
+  --tr-rojo:        #e11d48;
+  --tr-rojo-dim:    rgba(225, 29, 72, 0.09);
+  --tr-texto:       #1e293b;
+  --tr-mute:        #64748b;
+  --tr-dim:         #94a3b8;
+  --tr-borde:       rgba(0, 0, 0, 0.07);
+  --tr-borde2:      rgba(0, 0, 0, 0.14);
+  --tr-track-bg:    rgba(0, 0, 0, 0.08);
+  --tr-track-hover: rgba(0, 0, 0, 0.13);
+  --tr-texto-body:  #374151;
+}
+
+/* ── Fix: el panel padre hereda el fondo del tema activo ──── */
+.panel-pestaña:has(> .tab-recursos) {
+  background: #0b0d14;
+}
+.panel-pestaña:has(> .tab-recursos[data-tema="claro"]) {
+  background: #f1f5f9;
+}
+
+/* ── Toggle de tema ───────────────────────────────────────── */
+.tr-tema-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -0.3rem;
+}
+
+.tr-btn-tema {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid var(--tr-borde2);
+  background: var(--tr-card);
+  color: var(--tr-mute);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+
+.tr-btn-tema:hover {
+  border-color: var(--tr-accent);
+  color: var(--tr-accent2);
+  background: var(--tr-accent-dim);
 }
 
 /* ── Tarjeta ──────────────────────────────────────────────── */
@@ -48,6 +110,14 @@
 .tr-player-card:hover {
   border-color: var(--tr-borde2);
   box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35);
+}
+
+.tab-recursos[data-tema="claro"] .tr-player-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.tab-recursos[data-tema="claro"] .tr-player-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.13);
 }
 
 .tr-player-header {
@@ -139,14 +209,14 @@
 .tr-seekbar-track {
   position: relative;
   height: 5px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--tr-track-bg);
   border-radius: 99px;
   overflow: visible;
   cursor: pointer;
 }
 
 .tr-seekbar-track:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--tr-track-hover);
 }
 
 .tr-seekbar-fill {
@@ -310,8 +380,8 @@
     to right,
     var(--tr-accent) 0%,
     var(--tr-accent) var(--fill, 50%),
-    rgba(255, 255, 255, 0.08) var(--fill, 50%),
-    rgba(255, 255, 255, 0.08) 100%
+    var(--tr-track-bg) var(--fill, 50%),
+    var(--tr-track-bg) 100%
   );
   border-radius: 99px;
   cursor: pointer;
@@ -550,7 +620,7 @@
 .tr-texto-contenido {
   font-size: 0.87rem;
   line-height: 1.8;
-  color: #c8d3e6;
+  color: var(--tr-texto-body);
   white-space: pre-wrap;
 }
 
@@ -646,6 +716,11 @@
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* min-height absoluto para que no quede espacio blanco debajo en móvil */
+  .tab-recursos { min-height: 65dvh; }
+}
+
 @media (max-width: 480px) {
   .tab-recursos       { padding: 0.75rem 0.75rem 1.5rem; }
   .tr-player-card     { padding: 0.9rem; border-radius: 12px; }
