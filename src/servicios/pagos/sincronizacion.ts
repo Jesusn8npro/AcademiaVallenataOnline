@@ -81,8 +81,7 @@ export async function inscribirUsuarioDespuesDePago(
             usuario_id: usuarioId,
             [campoContenido]: valorContenido,
             fecha_inscripcion: new Date().toISOString(),
-            progreso: 0,
-            activo: true,
+            estado: 'activo',
             metodo_inscripcion: 'pago_epayco',
             ...(pagoId && { pago_id: pagoId })
         };
