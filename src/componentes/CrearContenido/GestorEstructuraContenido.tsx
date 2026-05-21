@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react'
+import { supabase } from '../../servicios/clienteSupabase'
 import './GestorEstructuraContenido.css'
 
 interface Modulo { titulo: string; descripcion: string; orden: number; lecciones: Leccion[] }
@@ -14,9 +15,44 @@ interface Props{
   onContinuar: (estructura: any[])=>void
 }
 
-export default function GestorEstructuraContenido({ tipo, estructura, onContinuar }: Props){
+export default function GestorEstructuraContenido({ tipo, datosGenerales, estructura, onContinuar }: Props){
   const [modulos, setModulos] = useState<Modulo[]>(tipo==='curso' ? (estructura.length?estructura:[{ titulo:'', descripcion:'', orden:1, lecciones:[] }]) : [])
   const [partes, setPartes] = useState<Parte[]>(tipo==='tutorial' ? (estructura.length?estructura:[{ titulo:'', descripcion:'', tipo_parte:'', video_url:'', orden:1 }]) : [])
+  const [recAbiertos, setRecAbiertos] = useState(false)
+  const [recAudio, setRecAudio] = useState<string>(datosGenerales?.recursos?.audio_url || '')
+  const [recYoutube, setRecYoutube] = useState<string>(datosGenerales?.recursos?.youtube_url || '')
+  const [recTexto, setRecTexto] = useState<string>(datosGenerales?.recursos?.texto || '')
+  const [recImagenes, setRecImagenes] = useState<string>((datosGenerales?.recursos?.imagenes || []).join(', '))
+  const [recTonoDefecto, setRecTonoDefecto] = useState<number>(datosGenerales?.recursos?.tono_defecto ?? 0)
+  const [recTonoNota, setRecTonoNota]       = useState<string>(datosGenerales?.recursos?.tono_nota || '')
+  const [guardado, setGuardado] = useState(false)
+  const [subiendoAudio, setSubiendoAudio] = useState(false)
+  const [errorSubida, setErrorSubida] = useState('')
+
+  async function subirAudio(file: File) {
+    setErrorSubida('')
+    const esWav = file.type === 'audio/wav' || file.type === 'audio/wave' || file.name.toLowerCase().endsWith('.wav')
+    if (esWav) {
+      setErrorSubida('Formato WAV no soportado (archivo muy grande). Convierte a MP3 o M4A primero.')
+      return
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      setErrorSubida('El archivo supera los 30 MB. Por favor comprime el audio.')
+      return
+    }
+    setSubiendoAudio(true)
+    try {
+      const nombre = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { data, error } = await supabase.storage.from('recursos-audio').upload(nombre, file, { contentType: file.type, upsert: false })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('recursos-audio').getPublicUrl(data.path)
+      setRecAudio(publicUrl)
+    } catch (e: any) {
+      setErrorSubida(e.message || 'Error al subir el archivo')
+    } finally {
+      setSubiendoAudio(false)
+    }
+  }
 
   function agregarModulo(){ setModulos([...modulos, { titulo:'', descripcion:'', orden: modulos.length+1, lecciones:[] }]) }
   function agregarParte(){ setPartes([...partes, { titulo:'', descripcion:'', tipo_parte:'', video_url:'', orden: partes.length+1 }]) }
@@ -26,7 +62,21 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
   function moverLeccion(idxModulo:number, from:number, to:number){ const list=[...modulos]; const lecs=[...(list[idxModulo].lecciones||[])]; if(from===to||from<0||to<0||from>=lecs.length||to>=lecs.length) return; const [mv]=lecs.splice(from,1); lecs.splice(to,0,mv); list[idxModulo].lecciones=lecs.map((l,i)=>({ ...l, orden: i+1 })); setModulos(list) }
   function moverParte(from:number,to:number){ const list=[...partes]; const p=list.splice(from,1)[0]; list.splice(to,0,p); setPartes(list.map((par,i)=>({ ...par, orden: i+1 }))) }
 
-  function continuar(){ onContinuar(tipo==='curso'?modulos:partes) }
+  function continuar(){
+    if(tipo==='curso'){ onContinuar(modulos as any) } else {
+      const recursos = (recAudio||recYoutube||recTexto||recImagenes) ? {
+        ...(recAudio && { audio_url: recAudio }),
+        ...(recYoutube && { youtube_url: recYoutube }),
+        ...(recTexto && { texto: recTexto }),
+        ...(recImagenes && { imagenes: recImagenes.split(',').map((s:string)=>s.trim()).filter(Boolean) }),
+        ...(recTonoDefecto !== 0 && { tono_defecto: recTonoDefecto }),
+        ...(recTonoNota && { tono_nota: recTonoNota }),
+      } : null
+      onContinuar({ partes, recursos } as any)
+    }
+    setGuardado(true)
+    setTimeout(() => setGuardado(false), 2500)
+  }
 
   if (tipo==='curso'){
     return (
@@ -35,8 +85,8 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
         {modulos.map((modulo, idxModulo) => (
           <div key={idxModulo} className="modulo">
             <div className="modulo-header"><span className="drag">☰</span>
-              <input type="text" value={modulo.titulo} onChange={e=>{ const list=[...modulos]; list[idxModulo].titulo=e.target.value; setModulos(list) }} placeholder="Título del módulo" />
-              <input type="text" value={modulo.descripcion} onChange={e=>{ const list=[...modulos]; list[idxModulo].descripcion=e.target.value; setModulos(list) }} placeholder="Descripción" />
+              <input type="text" value={modulo.titulo||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].titulo=e.target.value; setModulos(list) }} placeholder="Título del módulo" />
+              <input type="text" value={modulo.descripcion||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].descripcion=e.target.value; setModulos(list) }} placeholder="Descripción" />
               <button onClick={()=>agregarLeccion(idxModulo)}>+ Lección</button>
               {modulos.length>1 && (<button onClick={()=>{ const list=[...modulos]; list.splice(idxModulo,1); setModulos(list) }}>Eliminar módulo</button>)}
             </div>
@@ -44,8 +94,8 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
               {(modulo.lecciones||[]).map((leccion, idxLeccion) => (
                 <div key={idxLeccion} className="leccion">
                   <span className="drag">⋮</span>
-                  <input type="text" value={leccion.titulo} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].titulo=e.target.value; setModulos(list) }} placeholder="Título de la lección" />
-                  <input type="text" value={leccion.descripcion} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].descripcion=e.target.value; setModulos(list) }} placeholder="Descripción" />
+                  <input type="text" value={leccion.titulo||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].titulo=e.target.value; setModulos(list) }} placeholder="Título de la lección" />
+                  <input type="text" value={leccion.descripcion||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].descripcion=e.target.value; setModulos(list) }} placeholder="Descripción" />
                   {leccion.tipo_contenido==='video' && (<input type="text" value={leccion.video_url||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].video_url=e.target.value; setModulos(list) }} placeholder="URL de video" className="input-video-url" />)}
                   {leccion.tipo_contenido==='texto' && (<textarea value={leccion.contenido||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].contenido=e.target.value; setModulos(list) }} placeholder="Escribe el contenido de la lección" rows={2} className="textarea-contenido"></textarea>)}
                   <select value={leccion.tipo_contenido||''} onChange={e=>{ const list=[...modulos]; list[idxModulo].lecciones[idxLeccion].tipo_contenido=e.target.value; setModulos(list) }} className="select-tipo-contenido"><option value="">Tipo de contenido</option><option value="video">Video</option><option value="quiz">Quiz</option><option value="texto">Texto</option></select>
@@ -62,7 +112,9 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
           </div>
         ))}
         <button className="agregar" onClick={agregarModulo}>+ Módulo</button>
-        <button className="continuar" onClick={continuar}>Continuar</button>
+        <button className={`continuar ${guardado ? 'guardado' : ''}`} onClick={continuar}>
+          {guardado ? '✓ Guardado' : 'Guardar'}
+        </button>
       </div>
     )
   }
@@ -73,8 +125,8 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
       {partes.map((parte, idxParte) => (
         <div key={idxParte} className="parte">
           <span className="drag">☰</span>
-          <input type="text" value={parte.titulo} onChange={e=>{ const list=[...partes]; list[idxParte].titulo=e.target.value; setPartes(list) }} placeholder="Título de la parte" className="input-parte" aria-label="Título de la parte" />
-          <input type="text" value={parte.descripcion} onChange={e=>{ const list=[...partes]; list[idxParte].descripcion=e.target.value; setPartes(list) }} placeholder="Descripción corta (opcional)" className="input-parte" aria-label="Descripción corta" />
+          <input type="text" value={parte.titulo||''} onChange={e=>{ const list=[...partes]; list[idxParte].titulo=e.target.value; setPartes(list) }} placeholder="Título de la parte" className="input-parte" aria-label="Título de la parte" />
+          <input type="text" value={parte.descripcion||''} onChange={e=>{ const list=[...partes]; list[idxParte].descripcion=e.target.value; setPartes(list) }} placeholder="Descripción corta (opcional)" className="input-parte" aria-label="Descripción corta" />
           <input type="number" value={parte.orden} onChange={e=>{ const list=[...partes]; list[idxParte].orden=Number(e.target.value); setPartes(list) }} min={1} placeholder="Orden" style={{ width: 90 }} className="input-parte" aria-label="Orden de la parte" />
           <label className="label-visible" style={{ display:'flex', alignItems:'center', gap:4 }}><input type="checkbox" checked={parte.visible||false} onChange={e=>{ const list=[...partes]; list[idxParte].visible=e.target.checked; setPartes(list) }} aria-label="Parte visible" /> Visible</label>
           <select value={parte.tipo_parte||''} onChange={e=>{ const list=[...partes]; list[idxParte].tipo_parte=e.target.value; setPartes(list) }} className="select-tipo-parte" required aria-label="Tipo de parte" title="Selecciona el tipo lógico de la parte"><option value="" disabled>Tipo de parte</option><option value="introduccion">Introducción</option><option value="pase_intermedio">Pase intermedio</option><option value="pase_final">Pase final</option><option value="acompanamiento">Acompañamiento</option><option value="extra">Extra</option></select>
@@ -87,7 +139,92 @@ export default function GestorEstructuraContenido({ tipo, estructura, onContinua
         </div>
       ))}
       <button className="agregar" onClick={agregarParte}>+ Parte</button>
-      <button className="continuar" onClick={continuar}>Continuar</button>
+
+      {/* ── Recursos de práctica del tutorial ── */}
+      <div className="gest-recursos-wrapper">
+        <button
+          type="button"
+          className={`gest-recursos-toggle ${(recAudio||recYoutube||recTexto||recImagenes) ? 'tiene-datos' : ''}`}
+          onClick={()=>setRecAbiertos(v=>!v)}
+        >
+          <span>🎵</span>
+          <div style={{flex:1}}>
+            <strong>Recursos de práctica</strong>
+            <div style={{fontSize:'0.78rem',color:'#b45309',marginTop:2}}>Audio, video de YouTube, texto y fotos para el alumno</div>
+          </div>
+          {(recAudio||recYoutube||recTexto||recImagenes) && <span className="gest-rec-badge">Configurados ✓</span>}
+          <span style={{fontSize:'0.7rem',color:'#b45309'}}>{recAbiertos?'▲':'▼'}</span>
+        </button>
+
+        {recAbiertos && (
+          <div className="gest-recursos-body">
+            <div className="recursos-fila">
+              <label>🔊 Audio (mp3, m4a, ogg)
+                <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+                  <input type="url" value={recAudio} onChange={e=>setRecAudio(e.target.value)} placeholder="https://... o sube un archivo →" style={{flex:1,minWidth:120}} />
+                  <label className="gest-btn-subir-audio">
+                    {subiendoAudio ? 'Subiendo…' : '📁 Subir'}
+                    <input type="file" accept=".mp3,.m4a,.aac,.ogg,.webm,audio/mpeg,audio/mp4,audio/ogg,audio/aac,audio/webm,audio/x-m4a" style={{display:'none'}} disabled={subiendoAudio} onChange={e=>{const f=e.target.files?.[0];if(f)subirAudio(f);e.target.value=''}} />
+                  </label>
+                </div>
+                {errorSubida && <span style={{color:'#dc2626',fontSize:'0.75rem'}}>{errorSubida}</span>}
+              </label>
+              <label>▶ YouTube<input type="url" value={recYoutube} onChange={e=>setRecYoutube(e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
+            </div>
+            {/* Tono por defecto para el alumno */}
+            <label>🎵 Tono por defecto del alumno
+              <div style={{marginTop:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <span style={{fontSize:'0.82rem',color:'#92400e'}}>
+                    {recTonoDefecto === 0
+                      ? 'Tono original (0 semitonos)'
+                      : recTonoDefecto > 0
+                      ? `+${recTonoDefecto} semitono${Math.abs(recTonoDefecto)>1?'s':''} arriba`
+                      : `${recTonoDefecto} semitono${Math.abs(recTonoDefecto)>1?'s':''} abajo`
+                    }
+                  </span>
+                  {recTonoDefecto !== 0 && (
+                    <button type="button"
+                      onClick={() => setRecTonoDefecto(0)}
+                      style={{fontSize:'0.72rem',padding:'2px 8px',borderRadius:6,border:'1px solid #fcd34d',background:'#fff',cursor:'pointer',color:'#92400e'}}>
+                      Resetear
+                    </button>
+                  )}
+                </div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                  {[-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6].map(t => (
+                    <button key={t} type="button"
+                      onClick={() => setRecTonoDefecto(t)}
+                      style={{
+                        padding:'3px 9px', fontSize:'0.78rem', fontWeight:600, borderRadius:6, cursor:'pointer', fontFamily:'inherit',
+                        background: recTonoDefecto===t ? '#f59e0b' : '#fff',
+                        color: recTonoDefecto===t ? '#1c1917' : '#92400e',
+                        border: `1.5px solid ${recTonoDefecto===t ? '#f59e0b' : '#fcd34d'}`,
+                      }}>
+                      {t > 0 ? `+${t}` : t}
+                    </button>
+                  ))}
+                </div>
+                {recTonoDefecto !== 0 && (
+                  <input
+                    type="text"
+                    value={recTonoNota}
+                    onChange={e => setRecTonoNota(e.target.value)}
+                    placeholder={`Ej: para acordeón en Mi ♭, o "bajado ${Math.abs(recTonoDefecto)} tonos"`}
+                    style={{marginTop:6,width:'100%',boxSizing:'border-box',padding:'5px 10px',borderRadius:8,border:'1.5px solid #fcd34d',fontSize:'0.85rem',fontFamily:'inherit'}}
+                  />
+                )}
+              </div>
+            </label>
+            <label>📝 Texto / Cifrado / Tablatura<textarea rows={3} value={recTexto} onChange={e=>setRecTexto(e.target.value)} placeholder="Notas, cifrado de acordeón, tablatura..." /></label>
+            <label>🖼 Imágenes (URLs separadas por coma)<input type="text" value={recImagenes} onChange={e=>setRecImagenes(e.target.value)} placeholder="https://img1.jpg, https://img2.jpg" /></label>
+          </div>
+        )}
+      </div>
+
+      <button className={`continuar ${guardado ? 'guardado' : ''}`} onClick={continuar}>
+        {guardado ? '✓ Guardado' : 'Guardar'}
+      </button>
     </div>
   )
 }
