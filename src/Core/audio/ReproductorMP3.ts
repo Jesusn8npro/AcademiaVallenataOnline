@@ -28,6 +28,8 @@ export class ReproductorMP3 {
   private _paused: boolean = true;
   private _playbackRate: number = 1;
   private _volume: number = 1;
+  // Offset de tono adicional en cents (independiente de la velocidad).
+  private _pitchCentOffset: number = 0;
   private _src: string = '';
   private cargandoUrl: string | null = null;
   private listeners: Map<string, Set<() => void>> = new Map();
@@ -132,8 +134,19 @@ export class ReproductorMP3 {
       this.startOffset = Math.min(this.duration, this.startOffset + elapsed * this._playbackRate);
       this.startContextTime = now;
       this.source.playbackRate.setValueAtTime(clamp, now);
+      // Compensar el cambio de tono causado por el cambio de velocidad.
+      this.source.detune.setValueAtTime(this._pitchCentOffset - Math.log2(clamp) * 1200, now);
     }
     this._playbackRate = clamp;
+  }
+
+  /** Ajuste de tono en semitonos, independiente de la velocidad. */
+  set pitchSemitonos(semitonos: number) {
+    this._pitchCentOffset = semitonos * 100;
+    if (this.source && !this._paused) {
+      const now = this.contexto.currentTime;
+      this.source.detune.setValueAtTime(this._pitchCentOffset - Math.log2(this._playbackRate) * 1200, now);
+    }
   }
 
   // --------- Play / Pause ---------
@@ -178,6 +191,7 @@ export class ReproductorMP3 {
     this.source = this.contexto.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.playbackRate.value = rate;
+    this.source.detune.value = this._pitchCentOffset - Math.log2(rate) * 1200;
     this.source.connect(this.gainNode);
     try {
       this.source.start(contextStartTime, objetivo);
@@ -217,6 +231,7 @@ export class ReproductorMP3 {
     this.source = this.contexto.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.playbackRate.value = this._playbackRate;
+    this.source.detune.value = this._pitchCentOffset - Math.log2(this._playbackRate) * 1200;
     this.source.connect(this.gainNode);
     // start(when=0=ahora, offset=startOffset). El pipeline de Web Audio empieza este sample en este AudioContext.currentTime.
     this.startContextTime = this.contexto.currentTime;

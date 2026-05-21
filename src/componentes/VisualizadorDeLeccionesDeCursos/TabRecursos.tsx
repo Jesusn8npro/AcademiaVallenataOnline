@@ -309,7 +309,8 @@ function ReproductorAudio({ url, tonoDefecto = 0, tonoNota, secciones = [] }: { 
     const src = ctxRef.current.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = v;
-    src.detune.value = ton * 100;
+    // Compensar cambio de tono causado por la velocidad + tono independiente del usuario.
+    src.detune.value = ton * 100 - Math.log2(v) * 1200;
     if (loop && lA !== null && lB !== null && lB > lA) {
       src.loop = true; src.loopStart = lA; src.loopEnd = lB;
     }
@@ -355,13 +356,18 @@ function ReproductorAudio({ url, tonoDefecto = 0, tonoNota, secciones = [] }: { 
 
   function cambiarVel(v: number) {
     setVel(v); velRef.current = v;
-    if (srcRef.current) srcRef.current.playbackRate.value = v;
+    if (srcRef.current) {
+      srcRef.current.playbackRate.value = v;
+      srcRef.current.detune.value = tonoRef.current * 100 - Math.log2(v) * 1200;
+    }
   }
 
   function cambiarTono(t: number) {
     tonoRef.current = t;
     setTono(t);
-    if (srcRef.current) srcRef.current.detune.value = t * 100;
+    if (srcRef.current) {
+      srcRef.current.detune.value = t * 100 - Math.log2(velRef.current) * 1200;
+    }
   }
 
   function marcarA() {

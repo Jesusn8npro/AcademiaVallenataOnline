@@ -161,6 +161,7 @@ export function useReproductorLoops() {
         source.buffer = buffer;
         source.loop = true;
         source.playbackRate.value = velocidad;
+        source.detune.value = -Math.log2(velocidad) * 1200;
         source.connect(gain);
 
         try {
@@ -200,7 +201,10 @@ export function useReproductorLoops() {
     // Velocidad en vivo via AudioParam de la fuente.
     useEffect(() => {
         const source = sourceRef.current;
-        if (source) source.playbackRate.value = velocidad;
+        if (source) {
+            source.playbackRate.value = velocidad;
+            source.detune.value = -Math.log2(velocidad) * 1200;
+        }
     }, [velocidad]);
 
     // Cleanup al desmontar.
