@@ -5,13 +5,16 @@ import { useEffect, useRef, useState } from 'react';
 import { sanitizarHTML } from '../../utilidades/sanitizar';
 import './TabRecursos.css';
 
+interface SeccionAudio { id: string; nombre: string; inicio: number; fin: number }
+
 interface Recursos {
   audio_url?: string;
   youtube_url?: string;
   texto?: string;
   imagenes?: string[];
   tono_defecto?: number;
-  tono_nota?: string; // ej: "para acordeón en Mi ♭"
+  tono_nota?: string;
+  secciones?: SeccionAudio[];
 }
 
 interface TabRecursosProps {
@@ -210,7 +213,7 @@ function ReproductorYouTube({ url }: { url: string }) {
 /* ─────────────────────────────────────────────────────────────
    SUB-COMPONENTE: reproductor Web Audio (velocidad + tono + loop)
    ───────────────────────────────────────────────────────────── */
-function ReproductorAudio({ url, tonoDefecto = 0, tonoNota }: { url: string; tonoDefecto?: number; tonoNota?: string }) {
+function ReproductorAudio({ url, tonoDefecto = 0, tonoNota, secciones = [] }: { url: string; tonoDefecto?: number; tonoNota?: string; secciones?: SeccionAudio[] }) {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
@@ -413,6 +416,21 @@ function ReproductorAudio({ url, tonoDefecto = 0, tonoNota }: { url: string; ton
     else setProgreso(ratio);
   }
 
+  async function seleccionarSeccion(s: SeccionAudio) {
+    if (!audioBuffer || !ctxRef.current) return;
+    if (ctxRef.current.state === 'suspended') await ctxRef.current.resume();
+    loopARef.current = s.inicio;
+    loopBRef.current = s.fin;
+    loopOnRef.current = true;
+    setLoopA(s.inicio);
+    setLoopB(s.fin);
+    setLoopOn(true);
+    playRef.current = true;
+    setReproduciendo(true);
+    iniciar(audioBuffer, s.inicio, velRef.current, tonoRef.current, s.inicio, s.fin, true);
+    raf(audioBuffer);
+  }
+
   function fmt(s: number) {
     const m = Math.floor(s / 60), sec = Math.floor(s % 60);
     return `${m}:${sec < 10 ? '0' : ''}${sec}`;
@@ -430,6 +448,30 @@ function ReproductorAudio({ url, tonoDefecto = 0, tonoNota }: { url: string; ton
 
   return (
     <div className="tr-audio-wrap">
+
+      {/* ── Secciones ───────────────────────────────────────── */}
+      {secciones.length > 0 && (
+        <div className="tr-seccion-lista">
+          <div className="tr-grupo-top tr-secciones-header">
+            <span className="tr-grupo-label">Secciones</span>
+            <span className="tr-grupo-hint">Toca una sección para practicarla en loop</span>
+          </div>
+          <div className="tr-secciones-btns">
+            {secciones.map(s => {
+              const activa = loopOn && loopA !== null && loopB !== null &&
+                Math.abs(loopA - s.inicio) < 0.2 && Math.abs(loopB - s.fin) < 0.2;
+              return (
+                <button key={s.id} type="button"
+                  className={`tr-seccion-btn ${activa ? 'activa' : ''}`}
+                  onClick={() => seleccionarSeccion(s)}>
+                  <span className="tr-seccion-btn-nombre">{s.nombre}</span>
+                  <span className="tr-seccion-btn-tiempo">{fmt(s.inicio)} → {fmt(s.fin)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Seekbar ─────────────────────────────────────────── */}
       <div className="tr-seekbar-wrap" onClick={seek}>
@@ -622,7 +664,7 @@ const TabRecursos: React.FC<TabRecursosProps> = ({ recursos }) => {
           <div className="tr-player-header">
             <span className="tr-player-label">Audio de referencia</span>
           </div>
-          <ReproductorAudio url={urlAudio} tonoDefecto={recursos.tono_defecto ?? 0} tonoNota={recursos.tono_nota} />
+          <ReproductorAudio url={urlAudio} tonoDefecto={recursos.tono_defecto ?? 0} tonoNota={recursos.tono_nota} secciones={recursos.secciones ?? []} />
         </div>
       )}
 
