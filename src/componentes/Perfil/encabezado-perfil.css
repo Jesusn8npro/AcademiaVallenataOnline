@@ -166,9 +166,9 @@
 
 .ep-seccion-estadisticas {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   position: relative;
   z-index: 1;
   grid-column: 1;
@@ -188,8 +188,12 @@
   line-height: 1;
 }
 
-.ep-icono-estadistica.ep-publicacion {
-  color: #3b82f6;
+.ep-icono-estadistica.ep-puntaje {
+  color: #f59e0b;
+}
+
+.ep-icono-estadistica.ep-monedas {
+  color: #d97706;
 }
 
 .ep-icono-estadistica.ep-curso {
@@ -561,11 +565,11 @@
 
   .ep-seccion-estadisticas {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     margin-top: 10px;
-    padding: 16px 8px;
+    padding: 16px 6px;
   }
 
   .ep-avatar-interactivo {

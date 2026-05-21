@@ -30,10 +30,11 @@ interface PerfilData {
 }
 
 interface StatsData {
-  publicaciones: number;
+  puntaje: number;
   cursos: number;
   tutoriales: number;
   ranking: number;
+  monedas: number;
 }
 
 interface PerfilStore {
@@ -45,7 +46,7 @@ interface PerfilStore {
 
 const estadoInicial: PerfilStore = {
   perfil: null,
-  stats: { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 },
+  stats: { puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 },
   cargando: false,
   inicializado: false
 };
@@ -59,23 +60,24 @@ function crearPerfilStore() {
   const unsubscribe = subscribe(state => currentStore = state);
 
   // Función interna para cargar estadísticas
-  async function cargarEstadisticasInternas(userId: string, experienciaUsuario = 0): Promise<StatsData> {
+  async function cargarEstadisticasInternas(userId: string): Promise<StatsData> {
     try {
-      const [publicacionesResult, cursosResult, tutorialesResult, rankingResult] = await Promise.all([
-        supabase.from('comunidad_publicaciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
-        supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId),
-        supabase.from('progreso_tutorial').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).eq('completado', true),
-        supabase.from('perfiles').select('*', { count: 'exact', head: true }).gt('experiencia_total', experienciaUsuario)
+      const [cursosResult, tutorialesResult, rankingResult, monedasResult] = await Promise.all([
+        supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).not('curso_id', 'is', null),
+        supabase.from('inscripciones').select('*', { count: 'exact', head: true }).eq('usuario_id', userId).not('tutorial_id', 'is', null),
+        supabase.from('ranking_global').select('posicion, puntuacion').eq('usuario_id', userId).eq('tipo_ranking', 'general').maybeSingle(),
+        supabase.from('monedas_usuario').select('saldo').eq('usuario_id', userId).maybeSingle()
       ]);
 
       return {
-        publicaciones: publicacionesResult.count || 0,
+        puntaje: rankingResult.data?.puntuacion || 0,
         cursos: cursosResult.count || 0,
         tutoriales: tutorialesResult.count || 0,
-        ranking: (rankingResult.count || 0) + 1
+        ranking: rankingResult.data?.posicion || 0,
+        monedas: Number(monedasResult.data?.saldo || 0)
       };
     } catch (error) {
-      return { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
+      return { puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 };
     }
   }
 
@@ -117,11 +119,10 @@ function crearPerfilStore() {
           .eq('id', user.id)
           .single();
 
-        // Cargar estadísticas con experiencia del usuario para calcular ranking eficientemente
-        let statsResult = { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 };
+        let statsResult = { puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 };
         try {
           statsResult = await Promise.race([
-            cargarEstadisticasInternas(user.id, perfilData?.experiencia_total || 0),
+            cargarEstadisticasInternas(user.id),
             new Promise<StatsData>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
           ]);
         } catch {
@@ -166,8 +167,8 @@ function crearPerfilStore() {
       }
     },
 
-    async cargarEstadisticasComunidad(userId: string, experienciaUsuario = 0): Promise<StatsData> {
-      return cargarEstadisticasInternas(userId, experienciaUsuario);
+    async cargarEstadisticasComunidad(userId: string): Promise<StatsData> {
+      return cargarEstadisticasInternas(userId);
     },
 
     actualizarPerfil(nuevoPerfil: Partial<PerfilData>) {

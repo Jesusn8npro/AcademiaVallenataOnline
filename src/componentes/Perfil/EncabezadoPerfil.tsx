@@ -15,7 +15,7 @@ interface Props {
   nombreCompleto: string
   posicionPortadaY?: number
   userId?: string | null
-  stats?: { publicaciones: number; cursos: number; tutoriales: number; ranking: number }
+  stats?: { puntaje: number; cursos: number; tutoriales: number; ranking: number; monedas: number }
   nivelUsuario?: number
   rolUsuario?: string
   suscripcionUsuario?: string
@@ -27,7 +27,7 @@ interface Props {
 
 export default function EncabezadoPerfil({
   urlPortada, urlAvatar, nombreCompleto, posicionPortadaY = 50, userId,
-  stats = { publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 },
+  stats = { puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 },
   nivelUsuario = 1, rolUsuario = 'Estudiante', suscripcionUsuario = 'Free',
   esPerfilPublico = false, fechaCreacion = null, slugUsuario = null, onModalStateChange
 }: Props) {
@@ -130,10 +130,11 @@ export default function EncabezadoPerfil({
 
       <div className="ep-info-usuario">
         <div className="ep-seccion-estadisticas">
-          <div className="ep-estadistica"><div className="ep-icono-estadistica ep-publicacion">📝</div><div className="ep-valor">{stats.publicaciones}</div><div className="ep-etiqueta">Publicaciones</div></div>
+          <div className="ep-estadistica"><div className="ep-icono-estadistica ep-puntaje">⭐</div><div className="ep-valor">{stats.puntaje.toLocaleString('es-CO')}</div><div className="ep-etiqueta">Puntaje XP</div></div>
           <div className="ep-estadistica"><div className="ep-icono-estadistica ep-curso">📚</div><div className="ep-valor">{stats.cursos}</div><div className="ep-etiqueta">Cursos</div></div>
           <div className="ep-estadistica"><div className="ep-icono-estadistica ep-tutorial">🎓</div><div className="ep-valor">{stats.tutoriales}</div><div className="ep-etiqueta">Tutoriales</div></div>
-          <div className="ep-estadistica"><div className="ep-icono-estadistica ep-ranking">🏆</div><div className="ep-valor">#{stats.ranking || '--'}</div><div className="ep-etiqueta">Ranking</div></div>
+          <div className="ep-estadistica"><div className="ep-icono-estadistica ep-ranking">🏆</div><div className="ep-valor">{stats.ranking ? `#${stats.ranking}` : '--'}</div><div className="ep-etiqueta">Ranking</div></div>
+          <div className="ep-estadistica"><div className="ep-icono-estadistica ep-monedas">🪙</div><div className="ep-valor">{Math.round(stats.monedas).toLocaleString('es-CO')}</div><div className="ep-etiqueta">Monedas</div></div>
         </div>
         <div className="ep-separador-vertical" />
         <div className="ep-seccion-central">
