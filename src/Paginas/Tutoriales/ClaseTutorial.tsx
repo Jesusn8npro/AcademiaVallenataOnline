@@ -32,7 +32,6 @@ export default function ClaseTutorial() {
   const [mostrarAcordeon, setMostrarAcordeon] = useState(false)
 
   const [progresoMap, setProgresoMap] = useState<Record<string, boolean>>({})
-  const [copiado, setCopiado] = useState(false)
   const [usuarioActual, setUsuarioActual] = useState<any>(null)
 
   // Cuando el alumno vuelve del simulador con ?t=N, retomamos el video en ese segundo.
@@ -40,23 +39,10 @@ export default function ClaseTutorial() {
   const tiempoInicialParam = searchParams.get('t')
   const tiempoInicialVideo = tiempoInicialParam ? Math.max(0, parseInt(tiempoInicialParam, 10) || 0) : 0
 
-  // Navegación client-side sin remount: actualiza estado + URL sin Next.js router.
-  // El popstate listener sincroniza el estado cuando el usuario usa back/forward.
-  useEffect(() => {
-    function onPopState() {
-      const parts = window.location.pathname.split('/')
-      const idx = parts.indexOf('clase')
-      if (idx !== -1 && parts[idx + 1]) setClaseActivaSlug(parts[idx + 1])
-    }
-    window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
-  }, [])
-
   function cambiarClase(leccion: any) {
     const nuevoSlug = leccion.slug || leccion.id || ''
     if (!nuevoSlug) return
     setClaseActivaSlug(nuevoSlug)
-    window.history.pushState(null, '', `/tutoriales/${slug}/clase/${nuevoSlug}`)
     window.scrollTo(0, 0)
   }
 
@@ -182,21 +168,6 @@ const estadisticasProgreso = useMemo(() => {
   const claseAnterior = indice > 0 ? clases[indice - 1] : null
   const claseSiguiente = indice >= 0 && indice < clases.length - 1 ? clases[indice + 1] : null
 
-  async function compartirClase() {
-    const url = `${window.location.origin}/tutoriales/${slug}/contenido`
-    const nombreClase = clase?.titulo || 'una clase'
-    const nombreTutorial = tutorial?.titulo || 'un tutorial'
-    const texto = `¡Completé la clase "${nombreClase}" de "${nombreTutorial}" en Academia Vallenata Online! 🎹🎵`
-
-    if (navigator.share) {
-      await navigator.share({ title: nombreClase, text: texto, url })
-    } else {
-      await navigator.clipboard.writeText(`${texto}\n${url}`)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2000)
-    }
-  }
-
   async function marcarComoCompletada() {
     setCargandoCompletar(true); setErrorCompletar('')
     try {
@@ -282,14 +253,6 @@ const estadisticasProgreso = useMemo(() => {
                 onTiempoActualizado={(seg) => { tiempoVideoRef.current = seg }}
                 onCambiarClase={cambiarClase}
               />
-              {completada && (
-                <div className="ct-clase-completada-acciones">
-                  <button className="ct-btn-compartir" onClick={compartirClase}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    {copiado ? '¡Enlace copiado!' : 'Compartir progreso'}
-                  </button>
-                </div>
-              )}
               <div className="tutorial-scroll-container">
                 <PestañasLeccion
                   leccionId={clase.id}
