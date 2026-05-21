@@ -259,6 +259,7 @@
     .panel-pestaña,
     .panel-pestaña.active {
         height: auto;
+        min-height: 65dvh; /* suficiente para llenar la pantalla en móvil */
     }
 }
 

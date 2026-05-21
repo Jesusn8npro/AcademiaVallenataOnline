@@ -2,7 +2,6 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  typescript: { ignoreBuildErrors: true },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [

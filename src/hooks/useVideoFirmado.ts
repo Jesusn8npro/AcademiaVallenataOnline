@@ -125,10 +125,11 @@ async function pedirURL(
       if (tutorialId) body.tutorial_id = tutorialId;
       if (leccionId) body.leccion_id = leccionId;
 
-      const { data, error: errInvoke } = await supabase.functions.invoke<RespuestaEdge>(
+      const { data: rawData, error: errInvoke } = await supabase.functions.invoke(
         'obtener-video-firmado',
         { body }
       );
+      const data = rawData as RespuestaEdge | null;
 
       if (errInvoke) {
         const status = (errInvoke as { context?: { status?: number } }).context?.status;
