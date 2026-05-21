@@ -9,6 +9,7 @@ import TabContenido from './TabContenido'
 import TarjetaInformacionCurso from './TarjetaInformacionCurso'
 import ComentariosLeccion from './ComentariosLeccion'
 import NotasLeccion from './NotasLeccion'
+import TabRecursos from './TabRecursos'
 
 interface PestañasLeccionProps {
     usuarioActual?: any
@@ -33,11 +34,13 @@ const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
 }) => {
     const [pestañaActiva, setPestañaActiva] = useState(0)
     const CLAVE_TAB = 'leccionTabs-activeTab'
+    const r = curso?.recursos
+    const tieneRecursos = !!(r?.audio_url || r?.youtube_url || r?.texto || r?.imagenes?.length)
 
-    // Etiquetas dinámicas según mostrarSidebar
+    // Etiquetas dinámicas según mostrarSidebar y recursos
     const etiquetasPestañas = mostrarSidebar
-        ? ['Información', 'Comentarios', 'Notas']
-        : ['Contenido', 'Información', 'Comentarios', 'Notas']
+        ? ['Información', 'Comentarios', 'Notas', ...(tieneRecursos ? ['Recursos'] : [])]
+        : ['Contenido', 'Información', 'Comentarios', 'Notas', ...(tieneRecursos ? ['Recursos'] : [])]
 
     // Persistencia en localStorage
     useEffect(() => {
@@ -138,6 +141,11 @@ const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
                                     />
                                 </div>
                             )}
+                            {tieneRecursos && pestañaActiva === 4 && (
+                                <div className="panel-pestaña active">
+                                    <TabRecursos recursos={curso.recursos} />
+                                </div>
+                            )}
                         </>
                     ) : (
                         <>
@@ -171,6 +179,11 @@ const PestañasLeccion: React.FC<PestañasLeccionProps> = ({
                                     tipo={tipo}
                                 />
                             </div>
+                            {tieneRecursos && (
+                                <div className={`panel-pestaña ${pestañaActiva === 3 ? 'active' : ''}`}>
+                                    <TabRecursos recursos={curso.recursos} />
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
