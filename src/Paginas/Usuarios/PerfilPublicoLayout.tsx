@@ -31,17 +31,18 @@ interface PerfilPublico {
 }
 
 interface StatsPerfil {
-  publicaciones: number
+  puntaje: number
   cursos: number
   tutoriales: number
   ranking: number
+  monedas: number
 }
 
 export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug?: string; children?: ReactNode } = {}) {
   const params = useParams()
   const slug = slugProp ?? params.slug ?? ''
   const [usuarioPublico, setUsuarioPublico] = useState<PerfilPublico | null>(null)
-  const [stats, setStats] = useState<StatsPerfil>({ publicaciones: 0, cursos: 0, tutoriales: 0, ranking: 0 })
+  const [stats, setStats] = useState<StatsPerfil>({ puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 })
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -104,16 +105,17 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
         }
       } catch { }
 
-      const { count: publicacionesCount } = await supabase
-        .from('comunidad_publicaciones')
-        .select('*', { count: 'exact', head: true })
-        .eq('usuario_id', usuarioId);
+      const [rankingGlobal, monedasData] = await Promise.all([
+        supabase.from('ranking_global').select('puntuacion').eq('usuario_id', usuarioId).eq('tipo_ranking', 'general').maybeSingle(),
+        supabase.from('monedas_usuario').select('saldo').eq('usuario_id', usuarioId).maybeSingle()
+      ]);
 
       setStats({
-        publicaciones: publicacionesCount || 0,
+        puntaje: rankingGlobal.data?.puntuacion || 0,
         cursos: cursosCount,
         tutoriales: tutorialesCount,
-        ranking: ranking
+        ranking: ranking,
+        monedas: Number(monedasData.data?.saldo || 0)
       })
 
       setCargando(false)
