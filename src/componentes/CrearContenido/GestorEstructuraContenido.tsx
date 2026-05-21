@@ -1,12 +1,18 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../../servicios/clienteSupabase'
 import './GestorEstructuraContenido.css'
 
 interface Modulo { titulo: string; descripcion: string; orden: number; lecciones: Leccion[] }
 interface Leccion { titulo: string; descripcion: string; video_url?: string; tipo_contenido?: string; contenido?: string; orden: number }
 interface Parte { titulo: string; descripcion: string; tipo_parte?: string; video_url?: string; tipo_contenido?: string; contenido?: string; orden: number; visible?: boolean }
+interface SeccionAudio { id: string; nombre: string; inicio: number; fin: number }
+
+function fmtSec(s: number) {
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60)
+  return `${m}:${sec < 10 ? '0' : ''}${sec}`
+}
 
 interface Props{
   tipo: 'curso'|'tutorial'
@@ -25,6 +31,14 @@ export default function GestorEstructuraContenido({ tipo, datosGenerales, estruc
   const [recImagenes, setRecImagenes] = useState<string>((datosGenerales?.recursos?.imagenes || []).join(', '))
   const [recTonoDefecto, setRecTonoDefecto] = useState<number>(datosGenerales?.recursos?.tono_defecto ?? 0)
   const [recTonoNota, setRecTonoNota]       = useState<string>(datosGenerales?.recursos?.tono_nota || '')
+  const [recSecciones, setRecSecciones] = useState<SeccionAudio[]>(datosGenerales?.recursos?.secciones ?? [])
+  const [tiempoActual, setTiempoActual] = useState(0)
+  const [duracionAudio, setDuracionAudio] = useState(0)
+  const [repAudio, setRepAudio] = useState(false)
+  const [secNombre, setSecNombre] = useState('')
+  const [secInicio, setSecInicio] = useState<number|null>(null)
+  const [secFin, setSecFin] = useState<number|null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [guardado, setGuardado] = useState(false)
   const [subiendoAudio, setSubiendoAudio] = useState(false)
   const [errorSubida, setErrorSubida] = useState('')
@@ -64,13 +78,14 @@ export default function GestorEstructuraContenido({ tipo, datosGenerales, estruc
 
   function continuar(){
     if(tipo==='curso'){ onContinuar(modulos as any) } else {
-      const recursos = (recAudio||recYoutube||recTexto||recImagenes) ? {
+      const recursos = (recAudio||recYoutube||recTexto||recImagenes||recSecciones.length>0) ? {
         ...(recAudio && { audio_url: recAudio }),
         ...(recYoutube && { youtube_url: recYoutube }),
         ...(recTexto && { texto: recTexto }),
         ...(recImagenes && { imagenes: recImagenes.split(',').map((s:string)=>s.trim()).filter(Boolean) }),
         ...(recTonoDefecto !== 0 && { tono_defecto: recTonoDefecto }),
         ...(recTonoNota && { tono_nota: recTonoNota }),
+        ...(recSecciones.length > 0 && { secciones: recSecciones }),
       } : null
       onContinuar({ partes, recursos } as any)
     }
@@ -152,7 +167,7 @@ export default function GestorEstructuraContenido({ tipo, datosGenerales, estruc
             <strong>Recursos de práctica</strong>
             <div style={{fontSize:'0.78rem',color:'#b45309',marginTop:2}}>Audio, video de YouTube, texto y fotos para el alumno</div>
           </div>
-          {(recAudio||recYoutube||recTexto||recImagenes) && <span className="gest-rec-badge">Configurados ✓</span>}
+          {(recAudio||recYoutube||recTexto||recImagenes||recSecciones.length>0) && <span className="gest-rec-badge">Configurados ✓</span>}
           <span style={{fontSize:'0.7rem',color:'#b45309'}}>{recAbiertos?'▲':'▼'}</span>
         </button>
 
@@ -171,6 +186,81 @@ export default function GestorEstructuraContenido({ tipo, datosGenerales, estruc
               </label>
               <label>▶ YouTube<input type="url" value={recYoutube} onChange={e=>setRecYoutube(e.target.value)} placeholder="https://youtube.com/watch?v=..." /></label>
             </div>
+            {/* ── Secciones del audio ── */}
+            {recAudio && (
+              <div className="gest-secciones-seccion">
+                <audio
+                  ref={audioRef}
+                  src={recAudio}
+                  onTimeUpdate={() => setTiempoActual(audioRef.current?.currentTime ?? 0)}
+                  onLoadedMetadata={() => setDuracionAudio(audioRef.current?.duration ?? 0)}
+                  onPlay={() => setRepAudio(true)}
+                  onPause={() => setRepAudio(false)}
+                />
+                <div className="gest-secciones-titulo">📍 Secciones del audio</div>
+                <div className="gest-mini-player">
+                  <button type="button" className="gest-mini-btn-play"
+                    onClick={() => repAudio ? audioRef.current?.pause() : audioRef.current?.play()}>
+                    {repAudio ? '⏸' : '▶'}
+                  </button>
+                  <input type="range" className="gest-mini-seek"
+                    min={0} max={duracionAudio || 100} step={0.1} value={tiempoActual}
+                    onChange={e => {
+                      const t = parseFloat(e.target.value)
+                      if (audioRef.current) audioRef.current.currentTime = t
+                      setTiempoActual(t)
+                    }} />
+                  <span className="gest-mini-tiempo">{fmtSec(tiempoActual)} / {fmtSec(duracionAudio)}</span>
+                </div>
+                <div className="gest-seccion-editor">
+                  <input type="text" className="gest-seccion-nombre"
+                    placeholder="Nombre de la sección (ej: Intro, Pase, Estrofa…)"
+                    value={secNombre} onChange={e => setSecNombre(e.target.value)} />
+                  <div className="gest-seccion-marcas">
+                    <button type="button"
+                      className={`gest-btn-marca ${secInicio !== null ? 'marcado' : ''}`}
+                      onClick={() => setSecInicio(Math.round(tiempoActual * 10) / 10)}>
+                      📍 A: {secInicio !== null ? fmtSec(secInicio) : '—'}
+                    </button>
+                    <button type="button"
+                      className={`gest-btn-marca ${secFin !== null ? 'marcado' : ''}`}
+                      onClick={() => setSecFin(Math.round(tiempoActual * 10) / 10)}
+                      disabled={secInicio === null}>
+                      🚩 B: {secFin !== null ? fmtSec(secFin) : '—'}
+                    </button>
+                    <button type="button" className="gest-btn-agregar-sec"
+                      disabled={!secNombre.trim() || secInicio === null || secFin === null || secFin <= secInicio}
+                      onClick={() => {
+                        if (!secNombre.trim() || secInicio === null || secFin === null || secFin <= secInicio) return
+                        setRecSecciones(prev => [...prev, { id: `sec-${Date.now()}`, nombre: secNombre.trim(), inicio: secInicio, fin: secFin }])
+                        setSecNombre(''); setSecInicio(null); setSecFin(null)
+                      }}>
+                      ✓ Agregar
+                    </button>
+                  </div>
+                </div>
+                {recSecciones.length > 0 && (
+                  <div className="gest-secciones-lista">
+                    {recSecciones.map((s, i) => (
+                      <div key={s.id} className="gest-seccion-item">
+                        <span className="gest-sec-num">{i + 1}</span>
+                        <span className="gest-sec-nombre">{s.nombre}</span>
+                        <span className="gest-sec-tiempo">{fmtSec(s.inicio)} → {fmtSec(s.fin)}</span>
+                        <button type="button" className="gest-sec-play"
+                          onClick={() => { if (audioRef.current) { audioRef.current.currentTime = s.inicio; audioRef.current.play() } }}>
+                          ▶
+                        </button>
+                        <button type="button" className="gest-sec-del"
+                          onClick={() => setRecSecciones(prev => prev.filter(x => x.id !== s.id))}>
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Tono por defecto para el alumno */}
             <label>🎵 Tono por defecto del alumno
               <div style={{marginTop:6}}>

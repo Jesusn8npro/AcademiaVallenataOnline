@@ -715,6 +715,78 @@
   color: var(--tr-rojo);
 }
 
+/* ── Secciones de práctica ───────────────────────────────── */
+.tr-seccion-lista {
+  padding: 0.9rem 0 0.5rem;
+  border-bottom: 1px solid var(--tr-borde);
+  margin-bottom: 0.25rem;
+}
+
+.tr-secciones-header {
+  margin-bottom: 0.6rem;
+}
+
+.tr-secciones-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.tr-seccion-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--tr-borde2);
+  background: transparent;
+  color: var(--tr-texto);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.tr-seccion-btn:hover {
+  border-color: var(--tr-accent);
+  background: var(--tr-accent-dim);
+}
+
+.tr-seccion-btn.activa {
+  border-color: var(--tr-verde);
+  background: var(--tr-verde-dim);
+  animation: tr-seccion-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tr-seccion-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50%       { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+}
+
+.tr-seccion-btn-nombre {
+  font-size: 0.83rem;
+  font-weight: 600;
+  flex: 1;
+  color: var(--tr-texto);
+}
+
+.tr-seccion-btn.activa .tr-seccion-btn-nombre {
+  color: var(--tr-verde);
+}
+
+.tr-seccion-btn-tiempo {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--tr-mute);
+  flex-shrink: 0;
+}
+
+.tr-seccion-btn.activa .tr-seccion-btn-tiempo {
+  color: var(--tr-verde);
+}
+
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   /* min-height absoluto para que no quede espacio blanco debajo en móvil */
