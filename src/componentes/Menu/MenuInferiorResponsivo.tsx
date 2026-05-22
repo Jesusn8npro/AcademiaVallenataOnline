@@ -1,189 +1,79 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from '@/compat/router';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import './MenuInferiorResponsivo.css';
 
-interface MenuInferiorResponsivoProps {
-    // Props opcionales si se necesitan en el futuro
-}
+const TIEMPO_INACTIVIDAD = 2000;
 
-const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
+const MenuInferiorResponsivo: React.FC = () => {
     const { usuario } = useUsuario();
     const navigate = useNavigate();
     const location = useLocation();
     const [menuVisible, setMenuVisible] = useState(true);
-    const [timeoutInactividad, setTimeoutInactividad] = useState<NodeJS.Timeout | null>(null);
-    const [ultimaActividad, setUltimaActividad] = useState(Date.now());
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const TIEMPO_INACTIVIDAD = 2000; // 2 segundos de inactividad
-
-    // Determinar el tipo de usuario y ruta actual
     const tipoUsuario = usuario?.rol === 'admin' ? 'admin' : 'estudiante';
     const rutaActual = location.pathname;
-
-    // Detectar si estamos en página de clase/lección
     const esPaginaClase = rutaActual.includes('/clase/') || rutaActual.includes('/leccion/');
 
-    // Navegación para administradores
     const menuAdmin = [
-        {
-            id: 'dashboard',
-            icono: 'dashboard',
-            texto: 'Panel',
-            ruta: '/administrador',
-            badge: '3'
-        },
-        {
-            id: 'contenido',
-            icono: 'contenido',
-            texto: 'Contenido',
-            ruta: '/administrador/panel-contenido',
-            badge: null
-        },
-        {
-            id: 'simulador',
-            icono: 'simulador',
-            texto: 'Simulador',
-            ruta: '/simulador-app',
-            badge: 'MÓVIL'
-        }
+        { id: 'dashboard', icono: 'dashboard', texto: 'Panel', ruta: '/administrador', badge: '3' },
+        { id: 'contenido', icono: 'contenido', texto: 'Contenido', ruta: '/administrador/panel-contenido', badge: null },
+        { id: 'simulador', icono: 'simulador', texto: 'Simulador', ruta: '/simulador-app', badge: 'MÓVIL' }
     ];
 
-    // Navegación para estudiantes
     const menuEstudiante = [
-        {
-            id: 'panel',
-            icono: 'dashboard',
-            texto: 'Inicio',
-            ruta: '/panel-estudiante',
-            badge: null
-        },
-        {
-            id: 'comunidad',
-            icono: 'comunidad',
-            texto: 'Comunidad',
-            ruta: '/comunidad',
-            badge: '5'
-        },
-        {
-            id: 'cursos',
-            icono: 'cursos',
-            texto: 'Mis Cursos',
-            ruta: '/mis-cursos',
-            badge: null
-        },
-        {
-            id: 'blog',
-            icono: 'blog',
-            texto: 'Blog',
-            ruta: '/blog',
-            badge: null
-        },
-        {
-            id: 'perfil',
-            icono: 'perfil',
-            texto: 'Perfil',
-            ruta: '/mi-perfil',
-            badge: null
-        }
+        { id: 'panel', icono: 'dashboard', texto: 'Inicio', ruta: '/panel-estudiante', badge: null },
+        { id: 'comunidad', icono: 'comunidad', texto: 'Comunidad', ruta: '/comunidad', badge: '5' },
+        { id: 'cursos', icono: 'cursos', texto: 'Mis Cursos', ruta: '/mis-cursos', badge: null },
+        { id: 'blog', icono: 'blog', texto: 'Blog', ruta: '/blog', badge: null },
+        { id: 'perfil', icono: 'perfil', texto: 'Perfil', ruta: '/mi-perfil', badge: null }
     ];
 
     const menuItems = tipoUsuario === 'admin' ? menuAdmin : menuEstudiante;
 
-    // Verificar si una ruta está activa
     const esRutaActiva = (ruta: string): boolean => {
-        // Para la ruta base de admin, solo marcar activa si es exactamente esa o subrutas que NO tienen su propia entrada en el menú
         if (ruta === '/administrador') {
             return rutaActual === '/administrador' ||
                 (rutaActual.startsWith('/administrador/') && !rutaActual.includes('panel-contenido'));
         }
-
-        // Para las demás rutas
         return rutaActual === ruta || rutaActual.startsWith(ruta + '/');
     };
 
-    // Navegación
-    const navegarA = (ruta: string) => {
-        navigate(ruta);
-    };
-
-    // Detectar actividad del usuario
-    const detectarActividad = () => {
-        if (!esPaginaClase) return; // Solo en páginas de clases
-
-        setUltimaActividad(Date.now());
-        if (!menuVisible) {
-            mostrarMenu();
-        }
-        reiniciarTimeoutInactividad();
-    };
-
-    const ocultarMenu = () => {
-        if (!esPaginaClase) return; // Solo en páginas de clases
-
-        setMenuVisible(false);
-    };
-
-    const mostrarMenu = () => {
-        if (!esPaginaClase) return; // Solo en páginas de clases
-
+    // Referencia estable — no cambia entre renders
+    const detectarActividad = useCallback(() => {
         setMenuVisible(true);
-    };
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => setMenuVisible(false), TIEMPO_INACTIVIDAD);
+    }, []);
 
-    const reiniciarTimeoutInactividad = () => {
-        if (!esPaginaClase) return; // Solo en páginas de clases
-
-        if (timeoutInactividad) {
-            clearTimeout(timeoutInactividad);
-        }
-
-        const nuevoTimeout = setTimeout(() => {
-            if (Date.now() - ultimaActividad >= TIEMPO_INACTIVIDAD) {
-                ocultarMenu();
-            }
-        }, TIEMPO_INACTIVIDAD);
-
-        setTimeoutInactividad(nuevoTimeout);
-    };
-
-    // Configurar detectores de actividad
     useEffect(() => {
         if (!esPaginaClase) {
-            setMenuVisible(true); // Siempre visible fuera de páginas de clases
+            setMenuVisible(true);
             return;
         }
 
         const eventos = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-        eventos.forEach(evento => {
-            document.addEventListener(evento, detectarActividad, { passive: true } as any);
-        });
+        eventos.forEach(ev => document.addEventListener(ev, detectarActividad, { passive: true } as any));
 
-        // Detección de video con delay seguro
         const videoTimeout = setTimeout(() => {
-            const videos = document.querySelectorAll('video, iframe');
-            videos.forEach((video) => {
-                video.addEventListener('play', detectarActividad);
-                video.addEventListener('pause', detectarActividad);
-                video.addEventListener('seeking', detectarActividad);
+            document.querySelectorAll('video, iframe').forEach(el => {
+                el.addEventListener('play', detectarActividad);
+                el.addEventListener('pause', detectarActividad);
+                el.addEventListener('seeking', detectarActividad);
             });
         }, 1000);
 
         return () => {
-            if (timeoutInactividad) {
-                clearTimeout(timeoutInactividad);
-            }
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             clearTimeout(videoTimeout);
-
-            eventos.forEach(evento => {
-                document.removeEventListener(evento, detectarActividad);
-            });
+            eventos.forEach(ev => document.removeEventListener(ev, detectarActividad));
         };
-    }, [esPaginaClase, ultimaActividad]);
+    }, [esPaginaClase, detectarActividad]);
 
-    // Obtener ícono SVG por tipo
     const obtenerIcono = (tipo: string) => {
         const iconos: { [key: string]: React.ReactElement } = {
             dashboard: (
@@ -222,11 +112,6 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
                     <circle cx="12" cy="7" r="4" />
                 </svg>
             ),
-            mensajes: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-            ),
             blog: (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -246,17 +131,16 @@ const MenuInferiorResponsivo: React.FC<MenuInferiorResponsivoProps> = () => {
         return iconos[tipo] || iconos.dashboard;
     };
 
-    // Solo mostrar para usuarios logueados
     if (!usuario) return null;
 
     return (
-        <nav className={`menu-inferior-responsivo ${menuVisible ? 'visible' : ''}`}>
+        <nav className={`menu-inferior-responsivo ${menuVisible ? 'visible' : ''}`} translate="no">
             <div className="menu-container">
                 {menuItems.map((item) => (
                     <button
                         key={item.id}
                         className={`menu-item cursor-hover ${esRutaActiva(item.ruta) ? 'activo' : ''}`}
-                        onClick={() => navegarA(item.ruta)}
+                        onClick={() => navigate(item.ruta)}
                         aria-label={item.texto}
                     >
                         <div className="item-icon">

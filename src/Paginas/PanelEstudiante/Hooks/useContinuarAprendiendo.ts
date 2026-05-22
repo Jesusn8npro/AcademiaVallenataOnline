@@ -69,7 +69,7 @@ export function useContinuarAprendiendo() {
 
             const [cursosResult, tutorialesResult] = await Promise.all([
                 inscripcionesCursos.length > 0
-                    ? supabase.from('cursos').select('id, titulo, imagen_url, slug, instructor_id, categoria, artista, acordeonista').in('id', inscripcionesCursos.map((i: any) => i.curso_id))
+                    ? supabase.from('cursos').select('id, titulo, imagen_url, slug, instructor_id, categoria').in('id', inscripcionesCursos.map((i: any) => i.curso_id))
                     : Promise.resolve({ data: [], error: null }),
                 inscripcionesTutoriales.length > 0
                     ? supabase.from('tutoriales').select('id, titulo, imagen_url, instructor_id, artista, acordeonista').in('id', inscripcionesTutoriales.map((i: any) => i.tutorial_id))

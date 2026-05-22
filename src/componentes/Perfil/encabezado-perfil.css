@@ -166,7 +166,7 @@
 
 .ep-seccion-estadisticas {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
   align-items: center;
   gap: 8px;
   position: relative;
@@ -181,6 +181,253 @@
   justify-content: center;
   text-align: center;
   min-width: 0;
+  position: relative;
+  cursor: default;
+}
+
+.ep-estadistica[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
+  width: 160px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 50;
+}
+
+.ep-estadistica[data-tooltip]::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1f2937;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 50;
+}
+
+.ep-estadistica[data-tooltip]:hover::before,
+.ep-estadistica[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+.ep-estadistica-clickable {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s, transform 0.12s;
+  padding: 6px 4px;
+}
+
+.ep-estadistica-clickable:hover {
+  background: rgba(37, 99, 235, 0.07);
+  transform: translateY(-2px);
+}
+
+.ep-estadistica-clickable:active {
+  transform: translateY(0);
+}
+
+@keyframes ep-pulso {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+.ep-valor-cargando {
+  display: inline-block;
+  width: 36px;
+  height: 16px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  animation: ep-pulso 1.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+/* Modal de estadística */
+.ep-stat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+}
+
+.ep-stat-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 20px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: ep-modal-in 0.2s ease;
+}
+
+@keyframes ep-modal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+.ep-stat-modal-cerrar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.ep-stat-modal-cerrar:hover { background: #e5e7eb; }
+
+.ep-stat-modal-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.ep-stat-modal-desc {
+  font-size: 0.92rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.ep-stat-modal-seccion {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.ep-stat-modal-seccion-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.ep-stat-modal-seccion-texto {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ep-stat-modal-btn-ir {
+  width: 100%;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ep-stat-modal-btn-ir:hover { background: #1d4ed8; }
+
+.ep-stat-modal-valor-actual {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.ep-stat-modal-lista-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.ep-stat-modal-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ep-stat-modal-lista-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #374151;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+  line-height: 1.4;
+}
+
+.ep-stat-modal-lista-item:last-child { border-bottom: none; }
+
+.ep-stat-modal-lista-dot { font-size: 1rem; flex-shrink: 0; }
+
+/* Ocultar menú inferior responsivo cuando el modal de stat está abierto */
+body.ep-stat-modal-abierto .menu-inferior-responsivo {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.ep-stat-modal-vacio {
+  font-size: 0.88rem;
+  color: #9ca3af;
+  margin: 0;
+  text-align: center;
+  padding: 8px 0;
+}
+
+@media (max-width: 640px) {
+  .ep-stat-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .ep-stat-modal {
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+    padding: 24px 20px 32px;
+    animation: ep-modal-slide-up 0.22s ease;
+  }
+  @keyframes ep-modal-slide-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
 }
 
 .ep-icono-estadistica {
@@ -565,7 +812,7 @@
 
   .ep-seccion-estadisticas {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
     align-items: center;
     gap: 6px;
     margin-top: 10px;

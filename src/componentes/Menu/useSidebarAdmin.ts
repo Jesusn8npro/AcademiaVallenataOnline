@@ -51,18 +51,29 @@ export function useSidebarAdmin() {
   const tipoUsuario = usuario?.rol === 'admin' ? 'admin' : 'estudiante';
   const nombreUsuario = usuario?.nombre || 'Usuario';
 
-  const mensajesMotivacionales = [
-    "¡Sigue así! Cada día es un paso hacia el éxito 🎵",
-    "Tu dedicación te llevará lejos ⭐",
-    "El acordeón es tu pasión, ¡persíguela! 🎶",
-    "Cada nota que aprendes te hace mejor músico 🎼",
-    "La práctica hace al maestro 🎯",
-    "¡Tu talento brilla cada día más! ✨",
-    "Cada lección te acerca a tu sueño 🚀",
-    "El ritmo está en tu sangre 💪",
-    "¡Eres capaz de grandes cosas! 🌟",
-    "Tu esfuerzo hoy será tu éxito mañana 🎉"
-  ];
+  const mensajesMotivacionales = {
+    racha: [
+      "¡Racha activa! Cada día que practicas te acercas más a dominar el acordeón 🔥",
+      "¡No pares! Tu constancia diaria es lo que separa a los buenos músicos de los grandes 🎵",
+      "Llevas días seguidos estudiando — eso es dedicación real. ¡Sigue! 💪",
+    ],
+    progreso: [
+      "Mira cuánto has avanzado. Cada lección completada es una victoria 🏆",
+      "Tu progreso habla por ti. ¡Continúa con esa energía! 🚀",
+      "Estás construyendo una habilidad que durará toda la vida 🎶",
+    ],
+    inicio: [
+      "¡Hoy es un gran día para aprender algo nuevo en el acordeón! 🎼",
+      "El maestro fue primero estudiante. Tu camino empieza aquí 🌟",
+      "Cada nota que tocas hoy es una inversión en tu futuro musical ⭐",
+    ],
+    general: [
+      "El acordeón vallenato es cultura viva — tú eres parte de ella 🎵",
+      "La práctica hace al maestro. ¿Listo para la sesión de hoy? 🎯",
+      "Tu talento se afila cada vez que abres una lección ✨",
+      "¡Eres capaz de grandes cosas! La música lo comprueba 🎉",
+    ],
+  };
 
   const esRutaActiva = (ruta: string): boolean => {
     if (ruta === '/administrador') {
@@ -153,14 +164,19 @@ export function useSidebarAdmin() {
         miembrosComunidad: 0, leccionesCompletadas: totalActividadesCompletadas,
         tutorialesCompletados, totalTutoriales, puntos, racha
       });
+      seleccionarMensajeMotivacional(racha, totalActividadesCompletadas);
     } catch {
       // ignore progress load errors
     }
   };
 
-  const seleccionarMensajeMotivacional = () => {
-    const indiceAleatorio = Math.floor(Math.random() * mensajesMotivacionales.length);
-    setMensajeMotivacional(mensajesMotivacionales[indiceAleatorio]);
+  const seleccionarMensajeMotivacional = (racha = 0, lecciones = 0) => {
+    let pool: string[];
+    if (racha >= 2) pool = mensajesMotivacionales.racha;
+    else if (lecciones >= 5) pool = mensajesMotivacionales.progreso;
+    else if (lecciones === 0) pool = mensajesMotivacionales.inicio;
+    else pool = mensajesMotivacionales.general;
+    setMensajeMotivacional(pool[Math.floor(Math.random() * pool.length)]);
   };
 
   const alternarBarraLateral = () => setColapsado(!colapsado);
@@ -209,7 +225,6 @@ export function useSidebarAdmin() {
       cargarEstadisticasAdmin();
     } else if (tipoUsuario === 'estudiante') {
       cargarProgresoEstudiante();
-      seleccionarMensajeMotivacional();
     }
   }, [usuario, tipoUsuario]);
 

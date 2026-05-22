@@ -142,8 +142,8 @@ export function usePestanaActividad(usuario: UsuarioAdmin) {
         .from('eventos_actividad')
         .select('*')
         .eq('usuario_id', usuario.id)
-        .gte('created_at', hace30Dias)
-        .order('created_at', { ascending: false })
+        .gte('timestamp_evento', hace30Dias)
+        .order('timestamp_evento', { ascending: false })
         .limit(100);
 
       const { data: progresoInscripciones } = await supabase

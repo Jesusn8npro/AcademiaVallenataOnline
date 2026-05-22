@@ -138,12 +138,8 @@ export class TiempoService {
                 .eq('usuario_id', usuarioId)
                 .gte('ultimo_acceso', fechaHaceUnaSemana.toISOString());
 
-            // 3. Tiempo en simulador
-            const { data: tiempoSimulador } = await (supabase as any)
-                .from('sesiones_simulador_acordeon')
-                .select('duracion_minutos')
-                .eq('usuario_id', usuarioId)
-                .gte('created_at', fechaHaceUnaSemana.toISOString());
+            // 3. Tiempo en simulador (tabla no implementada aún)
+            const tiempoSimulador: any[] = [];
 
             // 4. Tiempo total en plataforma (sesiones)
             const { data: tiempoSesiones } = await supabase

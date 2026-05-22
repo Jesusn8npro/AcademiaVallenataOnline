@@ -8,7 +8,6 @@ import { supabase } from '../../servicios/clienteSupabase'
 import EncabezadoPerfil from '../../componentes/Perfil/EncabezadoPerfil'
 import PestanasPerfil from '../../componentes/Perfil/PestanasPerfil'
 import { generarSlug } from '../../utilidades/slug'
-import { GamificacionServicio } from '../../servicios/gamificacionServicio'
 import './perfil-publico-layout.css'
 
 interface PerfilPublico {
@@ -82,39 +81,20 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
 
       const usuarioId = usuario.id
 
-      const { data: inscripciones } = await supabase
-        .from('inscripciones')
-        .select('curso_id, tutorial_id')
-        .eq('usuario_id', usuarioId);
-
-      const cursosCount = inscripciones?.filter(i => i.curso_id).length || 0;
-      const tutorialesCount = inscripciones?.filter(i => i.tutorial_id).length || 0;
-
-      let ranking = 0;
-      try {
-        const rankingList = await GamificacionServicio.obtenerRanking('general', 100);
-        const rankingUser = rankingList.find(r => r.usuario_id === usuarioId);
-
-        if (rankingUser) {
-          ranking = rankingUser.posicion;
-        } else {
-          const rankingData = await GamificacionServicio.obtenerPosicionUsuario(usuarioId, 'general');
-          if (rankingData && rankingData.posicion) {
-            ranking = rankingData.posicion;
-          }
-        }
-      } catch { }
-
-      const [rankingGlobal, monedasData] = await Promise.all([
-        supabase.from('ranking_global').select('puntuacion').eq('usuario_id', usuarioId).eq('tipo_ranking', 'general').maybeSingle(),
+      const [inscripcionesResult, rankingGlobal, monedasData] = await Promise.all([
+        supabase.from('inscripciones').select('curso_id, tutorial_id').eq('usuario_id', usuarioId),
+        supabase.from('ranking_global').select('puntuacion,posicion').eq('usuario_id', usuarioId).eq('tipo_ranking', 'general').maybeSingle(),
         supabase.from('monedas_usuario').select('saldo').eq('usuario_id', usuarioId).maybeSingle()
       ]);
+
+      const cursosCount = inscripcionesResult.data?.filter(i => i.curso_id).length || 0;
+      const tutorialesCount = inscripcionesResult.data?.filter(i => i.tutorial_id).length || 0;
 
       setStats({
         puntaje: rankingGlobal.data?.puntuacion || 0,
         cursos: cursosCount,
         tutoriales: tutorialesCount,
-        ranking: ranking,
+        ranking: rankingGlobal.data?.posicion || 0,
         monedas: Number(monedasData.data?.saldo || 0)
       })
 
@@ -148,6 +128,7 @@ export default function PerfilPublicoLayout({ slug: slugProp, children }: { slug
               posicionPortadaY={Number(usuarioPublico.posicion_img_portada || 50)}
               userId={usuarioPublico.id}
               stats={stats}
+              cargandoStats={false}
               nivelUsuario={1}
               rolUsuario={(usuarioPublico.rol || 'Estudiante') || 'Estudiante'}
               suscripcionUsuario={(usuarioPublico.suscripcion || 'Free') || 'Free'}

@@ -121,25 +121,25 @@ const SidebarAdmin = () => {
               <div className="sidebar-admin-stats-title-student">⭐ Estadísticas Clave</div>
             </div>
             <div className="sidebar-admin-stats-content-student">
-              <div className="sidebar-admin-stat-item-student">
-                <span className="sidebar-admin-stat-icon-emoji">💎</span>
+              <div className="sidebar-admin-stat-item-student" title="Tu puntuación XP total acumulada en cursos y actividades">
+                <span className="sidebar-admin-stat-icon-emoji">⭐</span>
                 <div className="sidebar-admin-stat-info">
-                  <div className="sidebar-admin-stat-value-student">{progresoEstudiante.puntos}</div>
-                  <div className="sidebar-admin-stat-label-student">Puntos</div>
+                  <div className="sidebar-admin-stat-value-student">{progresoEstudiante.puntos.toLocaleString('es-CO')}</div>
+                  <div className="sidebar-admin-stat-label-student">Puntaje XP</div>
                 </div>
               </div>
-              <div className="sidebar-admin-stat-item-student">
+              <div className="sidebar-admin-stat-item-student" title="Clases y partes de tutoriales que has completado">
                 <span className="sidebar-admin-stat-icon-emoji">📚</span>
                 <div className="sidebar-admin-stat-info">
                   <div className="sidebar-admin-stat-value-student">{progresoEstudiante.leccionesCompletadas}</div>
                   <div className="sidebar-admin-stat-label-student">Lecciones</div>
                 </div>
               </div>
-              <div className="sidebar-admin-stat-item-student">
+              <div className="sidebar-admin-stat-item-student" title="Días consecutivos con actividad en la plataforma">
                 <span className="sidebar-admin-stat-icon-emoji">🔥</span>
                 <div className="sidebar-admin-stat-info">
                   <div className="sidebar-admin-stat-value-student">{progresoEstudiante.racha}</div>
-                  <div className="sidebar-admin-stat-label-student">Días</div>
+                  <div className="sidebar-admin-stat-label-student">Racha</div>
                 </div>
               </div>
             </div>

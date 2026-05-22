@@ -199,7 +199,7 @@ if ('serviceWorker' in navigator) {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" translate="no" suppressHydrationWarning className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: authHideScript }} />
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
@@ -216,7 +216,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(speculationRules) }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Script id="sw-register" strategy="afterInteractive">
           {swRegisterScript}

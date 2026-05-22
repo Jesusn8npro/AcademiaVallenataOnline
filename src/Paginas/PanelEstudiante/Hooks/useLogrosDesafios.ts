@@ -29,13 +29,12 @@ export async function calcularTiempoHistoricoRapido(usuarioId: string): Promise<
         const [leccionesResult, tutorialesResult, simuladorResult, sesionesResult] = await Promise.all([
             supabase.from('progreso_lecciones').select('tiempo_total').eq('usuario_id', usuarioId),
             supabase.from('progreso_tutorial').select('tiempo_visto').eq('usuario_id', usuarioId),
-            (supabase as any).from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuarioId),
+            supabase.from('estadisticas_acordeon').select('tiempo_total_minutos').eq('usuario_id', usuarioId).maybeSingle(),
             supabase.from('sesiones_usuario').select('tiempo_total_minutos').eq('usuario_id', usuarioId)
         ]);
 
         const lecciones = leccionesResult.data || [];
         const tutoriales = tutorialesResult.data || [];
-        const sesionesSimulador = simuladorResult.data || [];
         const sesionesUsuario = sesionesResult.data || [];
 
         const calcularTiempo = (items: any[], campo: string): number => {
@@ -48,7 +47,7 @@ export async function calcularTiempoHistoricoRapido(usuarioId: string): Promise<
 
         const totalLecciones = calcularTiempo(lecciones, 'tiempo_total');
         const totalTutoriales = calcularTiempo(tutoriales, 'tiempo_visto');
-        const totalSimulador = sesionesSimulador.reduce((s: number, i: any) => s + (i.duracion_minutos || 0), 0);
+        const totalSimulador = (simuladorResult.data as any)?.tiempo_total_minutos || 0;
         const totalSesiones = sesionesUsuario.reduce((s: number, i: any) => {
             const t = i.tiempo_total_minutos || 0;
             return s + (t < 480 ? t : 0);
@@ -58,7 +57,7 @@ export async function calcularTiempoHistoricoRapido(usuarioId: string): Promise<
         const tiempoCombinado = Math.max(tiempoReal, totalSesiones);
 
         if (tiempoCombinado === 0) {
-            const { data: actividad } = await supabase.from('eventos_actividad').select('created_at').eq('usuario_id', usuarioId).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()).order('created_at', { ascending: false });
+            const { data: actividad } = await supabase.from('eventos_actividad').select('timestamp_evento').eq('usuario_id', usuarioId).gte('timestamp_evento', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()).order('timestamp_evento', { ascending: false });
             if (actividad && actividad.length > 0) return Math.min(actividad.length * 5, 120);
         }
 
@@ -71,7 +70,7 @@ export async function calcularTiempoHistoricoRapido(usuarioId: string): Promise<
 async function calcularTiempoRealPlataforma(usuarioId: string): Promise<number> {
     try {
         const fechaLimite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const { data: eventos } = await supabase.from('eventos_actividad').select('tipo_evento').eq('usuario_id', usuarioId).gte('created_at', fechaLimite.toISOString());
+        const { data: eventos } = await supabase.from('eventos_actividad').select('tipo_evento').eq('usuario_id', usuarioId).gte('timestamp_evento', fechaLimite.toISOString());
         if (!eventos || eventos.length === 0) return 0;
         const tiempoTotal = eventos.reduce((total: number, evento: any) => {
             switch (evento.tipo_evento) {
@@ -102,7 +101,7 @@ export function useLogrosDesafios() {
                     GamificacionService.obtenerRanking('general', 50).catch(() => []),
                     supabase.from('progreso_lecciones').select('tiempo_total, porcentaje_completado, updated_at, estado').eq('usuario_id', usuario.id).gte('updated_at', fechaSQL),
                     supabase.from('progreso_tutorial').select('tiempo_visto, ultimo_acceso, completado').eq('usuario_id', usuario.id).gte('ultimo_acceso', fechaSQL),
-                    (supabase as any).from('sesiones_simulador_acordeon').select('duracion_minutos').eq('usuario_id', usuario.id).gte('created_at', fechaSQL),
+                    Promise.resolve({ data: [] as any[], error: null }),
                     supabase.from('progreso_lecciones').select('updated_at').eq('usuario_id', usuario.id).gte('updated_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order('updated_at', { ascending: false }),
                     calcularTiempoHistoricoRapido(usuario.id),
                     calcularTiempoRealPlataforma(usuario.id)
