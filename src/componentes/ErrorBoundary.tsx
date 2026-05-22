@@ -3,23 +3,38 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 
 interface Props { children: ReactNode }
-interface State { hasError: boolean }
+interface State { hasError: boolean; esErrorExtension: boolean }
+
+function esErrorDOMExtension(error: Error): boolean {
+  const msg = error.message || '';
+  return (
+    msg.includes('removeChild') ||
+    msg.includes('insertBefore') ||
+    msg.includes('is not a child of this node') ||
+    msg.includes('The node to be removed')
+  );
+}
 
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false }
+  state: State = { hasError: false, esErrorExtension: false }
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true }
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, esErrorExtension: esErrorDOMExtension(error) }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (process.env.NODE_ENV !== 'production') {
       console.error('[ErrorBoundary]', error, info.componentStack)
     }
+    // Errores de extensión manipulando el DOM: recuperar automáticamente
+    if (esErrorDOMExtension(error)) {
+      setTimeout(() => this.setState({ hasError: false, esErrorExtension: false }), 100);
+    }
   }
 
   render() {
-    if (this.state.hasError) {
+    // Errores de extensión: renderizar children (se remontarán tras el reset)
+    if (this.state.hasError && !this.state.esErrorExtension) {
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',

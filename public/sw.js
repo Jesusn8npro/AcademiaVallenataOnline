@@ -1,6 +1,6 @@
 // Academia Vallenata Online — Service Worker
 // La versión de caché se actualiza automáticamente en cada `npm run build`
-const CACHE = 'ava-ldI6Qi1s8cVG_L8P-_QO7';
+const CACHE = 'ava-v2-no-dev-cache';
 
 const PRECACHE = [
   '/logo-175.webp',
@@ -27,6 +27,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
+
+  // En desarrollo no cachear nada: hot reload cambia chunks sin cambiar nombres de archivo,
+  // lo que causaría que el SW sirva JS viejo → hydration mismatch → removeChild errors.
+  const isDev = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+  if (isDev) return;
 
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;

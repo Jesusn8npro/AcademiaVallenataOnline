@@ -11,7 +11,7 @@ import './perfil-layout.css'
 import { Outlet } from '@/compat/router'
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
-  const { perfil, stats, cargarDatosPerfil, forzarInicializacion, inicializado } = usePerfilStore()
+  const { perfil, stats, cargando: cargandoStats, cargarDatosPerfil, forzarInicializacion, inicializado } = usePerfilStore()
   const { usuario } = useUsuario()
   const [modalAbierto, setModalAbierto] = useState(false)
 
@@ -20,7 +20,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
 
     const safetyTimer = setTimeout(() => {
       if (!inicializado && !perfil) forzarInicializacion()
-    }, 3000)
+    }, 4000)
 
     return () => clearTimeout(safetyTimer)
   }, [])
@@ -42,6 +42,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
             posicionPortadaY={Number(perfil?.posicion_img_portada || 50)}
             userId={userId}
             stats={stats}
+            cargandoStats={!inicializado}
             onModalStateChange={(abierto) => setModalAbierto(abierto)}
           />
         ) : (

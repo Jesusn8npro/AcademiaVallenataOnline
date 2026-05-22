@@ -99,10 +99,9 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
         </Suspense>
       )}
 
-      {!esInmersivo && (
-        clienteMontado && inicializado && estaAutenticado
-          ? <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
-          : <MenuPublico />
+      {!esInmersivo && !(clienteMontado && inicializado && estaAutenticado) && <MenuPublico />}
+      {!esInmersivo && clienteMontado && inicializado && estaAutenticado && (
+        <MenuSuperiorAutenticado onCerrarSesion={cerrarSesion} />
       )}
 
       {clienteMontado && estaAutenticado && !esInmersivo && (

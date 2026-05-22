@@ -42,13 +42,15 @@ interface PerfilStore {
   stats: StatsData;
   cargando: boolean;
   inicializado: boolean;
+  ultimaActualizacion: number;
 }
 
 const estadoInicial: PerfilStore = {
   perfil: null,
   stats: { puntaje: 0, cursos: 0, tutoriales: 0, ranking: 0, monedas: 0 },
   cargando: false,
-  inicializado: false
+  inicializado: false,
+  ultimaActualizacion: 0,
 };
 
 function crearPerfilStore() {
@@ -85,16 +87,11 @@ function crearPerfilStore() {
     subscribe,
 
     async cargarDatosPerfil(forzarRecarga = false) {
+      const STALE_MS = 60_000; // 60 segundos
+      const esStale = (Date.now() - currentStore.ultimaActualizacion) > STALE_MS;
 
-      // Si ya está inicializado y no es recarga forzada, no hacer nada
-      if (currentStore.inicializado && !forzarRecarga) {
-        return;
-      }
-
-      // Si ya está cargando, no iniciar otra carga
-      if (currentStore.cargando && !forzarRecarga) {
-        return;
-      }
+      if (currentStore.inicializado && !forzarRecarga && !esStale) return;
+      if (currentStore.cargando) return; // nunca iniciar carga concurrente
 
       update(state => ({ ...state, cargando: true }));
 
@@ -153,7 +150,8 @@ function crearPerfilStore() {
           perfil: perfilCompleto,
           stats: statsResult,
           cargando: false,
-          inicializado: true
+          inicializado: true,
+          ultimaActualizacion: Date.now(),
         }));
 
 
