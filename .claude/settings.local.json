@@ -5,7 +5,12 @@
       "PowerShell(\\(Get-Content \"c:\\\\PROGRAMACION\\\\Academia\\\\src\\\\Paginas\\\\Legales\\\\Terminos.tsx\"\\).Count; Get-Content \"c:\\\\PROGRAMACION\\\\Academia\\\\src\\\\Paginas\\\\Legales\\\\Terminos.tsx\" | Select-Object -First 30)",
       "Bash(awk '/} catch \\\\\\(error\\\\\\) \\\\{/{getline; if\\(/^[\\\\s]*\\\\}/\\) print NR-1\": EMPTY CATCH\"}' \"c:\\\\PROGRAMACION\\\\Academia\\\\src\\\\servicios\\\\gamificacionService.ts\")",
       "Bash(python3 -c ' *)",
-      "Bash(grep -v \"//\")"
+      "Bash(grep -v \"//\")",
+      "Bash(npx next *)",
+      "Bash(sort -k2 -rn)",
+      "Bash(sort -t'B' -k1 -rn)",
+      "Bash(xargs du -sh)",
+      "mcp__Blender__get_blendfile_summary_path_info"
     ]
   }
 }

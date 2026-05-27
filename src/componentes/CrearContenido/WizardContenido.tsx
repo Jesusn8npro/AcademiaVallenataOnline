@@ -2,6 +2,7 @@
 import { Link } from '@/compat/router';
 
 import { useEffect, useMemo, useState } from 'react'
+import { generarSlug } from '../../utilidades/slug'
 import './WizardContenido.css'
 import PasoInformacionGeneral from './PasoInformacionGeneral'
 import GestorEstructuraContenido from './GestorEstructuraContenido'
@@ -177,10 +178,10 @@ export default function WizardContenido({ tipo: tipoProp, datosIniciales, estruc
           <div className="paso-final">
             <div className="exito-container">
               <div className="exito-circulo"><div className="check-icon">✓</div></div>
-              <h2 className="exito-titulo">¡{tipo === 'curso' ? 'Curso' : 'Tutorial'} Creado Exitosamente!</h2>
-              <p className="exito-descripcion">Tu {tipo} "{datosGenerales.titulo}" ha sido guardado correctamente en la base de datos.</p>
+              <h2 className="exito-titulo">¡{tipo === 'curso' ? 'Curso' : 'Tutorial'} {modoEdicion ? 'Actualizado' : 'Creado'} Exitosamente!</h2>
+              <p className="exito-descripcion">Tu {tipo} "{datosGenerales.titulo}" ha sido {modoEdicion ? 'actualizado' : 'guardado'} correctamente en la base de datos.</p>
               <div className="acciones-finales">
-                <a href={`/${tipo === 'curso' ? 'cursos' : 'tutoriales'}/${cursoCreado ? (tipo === 'curso' ? cursoCreado.slug : cursoCreado.titulo?.toLowerCase().replace(/\s+/g, '-')) : 'nuevo-contenido'}`} className="btn-ver-contenido" target="_blank">
+                <a href={`/${tipo === 'curso' ? 'cursos' : 'tutoriales'}/${cursoCreado ? (tipo === 'curso' ? (cursoCreado.slug || generarSlug(cursoCreado.titulo)) : generarSlug(cursoCreado.titulo)) : 'nuevo-contenido'}`} className="btn-ver-contenido" target="_blank">
                   <span className="icono">👁️</span>
                   Ver {tipo === 'curso' ? 'Curso' : 'Tutorial'}
                 </a>

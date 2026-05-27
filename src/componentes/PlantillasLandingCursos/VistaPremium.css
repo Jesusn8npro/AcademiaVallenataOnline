@@ -8,6 +8,13 @@ body.vista-premium-activa {
     background-color: #000 !important;
 }
 
+/* Cuando hay sidebar activo, resetear el padding para que VistaPremium ocupe toda la pantalla */
+body.vista-premium-activa.con-sidebar,
+body.vista-premium-activa.con-sidebar-colapsado {
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+}
+
 /* MODO INMERSIVO: solo cuando hay banner de oferta activo
    Oculta menú superior, sidebar, footer, etc. para que el banner fixed
    no choque con la navegación. Sin oferta activa, todo se renderiza normal. */
@@ -65,16 +72,11 @@ body.vista-premium-banner-activo nav {
     top: -99999px !important;
 }
 
-body.vista-premium-banner-activo> *:not(#root) {
-    display: none !important;
-}
-
-body.vista-premium-banner-activo #root> *:not(.vista-premium-container) {
-    display: none !important;
-}
+/* Next.js App Router no tiene #root — los menús ya se ocultan por selectores
+   específicos arriba ([class*="menu"], nav, etc.). Reglas previas de
+   body > *:not(#root) ocultaban TODO el árbol porque #root no existe. */
 
 body.vista-premium-banner-activo main,
-body.vista-premium-banner-activo #root,
 body.vista-premium-banner-activo .app {
     margin-left: 0 !important;
     padding-left: 0 !important;

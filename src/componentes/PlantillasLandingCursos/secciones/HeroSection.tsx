@@ -144,6 +144,7 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                                 alt={contenido.titulo || 'Imagen del curso'}
                                 className="vista-premium-video-imagen"
                                 fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
                                 style={{ objectFit: 'cover' }}
                                 onError={(e) => {
                                     const img = e.target as HTMLImageElement;

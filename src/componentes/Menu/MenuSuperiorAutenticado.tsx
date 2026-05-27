@@ -19,7 +19,7 @@ const Avatar: React.FC<{ src?: string; alt: string; nombreCompleto: string; size
     const tamaño = size === 'large' ? '50px' : '40px';
     return (
         <div style={{ width: tamaño, height: tamaño, borderRadius: '50%', backgroundColor: '#f3f4f6', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <Image src={imagenFinal} alt={alt} fill onError={() => setImgError(true)} style={{ objectFit: 'cover' }} />
+            <Image src={imagenFinal} alt={alt} fill sizes="50px" onError={() => setImgError(true)} style={{ objectFit: 'cover' }} />
         </div>
     );
 };

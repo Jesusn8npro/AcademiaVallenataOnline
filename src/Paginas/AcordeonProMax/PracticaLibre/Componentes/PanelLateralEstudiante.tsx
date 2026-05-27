@@ -10,6 +10,8 @@ import SeccionPLEfectos from './SeccionPLEfectos';
 // (antes habia un PanelEfectosAudio ~85% duplicado). Misma logica y props.
 import PanelEfectosSimulador from '@/Paginas/SimuladorApp/Componentes/PanelEfectosSimulador';
 import SeccionPLLibreria from './SeccionPLLibreria';
+import SeccionPL3D, { type VarianteId } from './SeccionPL3D';
+import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza } from './VisorAcordeon3D';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
 
@@ -54,12 +56,23 @@ interface PanelLateralEstudianteProps {
   grabando: boolean;
   tiempoGrabacionTexto: string;
   onAlternarGrabacion: () => void;
+  // Visor 3D
+  visor3dPiezaSeleccionada: string | null;
+  visor3dPiezas: InfoPieza[];
+  visor3dGrupoActivo: string;
+  onCambiarVisor3DGrupo: (grupo: string) => void;
+  onAplicarVisor3DTinta: (hex: string) => void;
+  onAplicarVisor3DVariante: (id: VarianteId) => void;
+  onDispararVisor3DShapeKey: (id: AnimShapeKeyId) => void;
+  onDispararVisor3DProgramatica: (id: AnimProgramaticaId) => void;
+  onDetenerVisor3DProgramatica: () => void;
+  visor3dProgramaticaActiva: AnimProgramaticaId | null;
 }
 
 const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
   sonido: 'Sonido y lectura', modelos: 'Modelos visuales',
   pistas: 'Pistas y Estudio', teoria: 'Teoria musical', efectos: 'Efectos y mezcla',
-  libreria: 'Librería de canciones',
+  libreria: 'Librería de canciones', visor3d: 'Visor 3D del acordeón',
 };
 
 const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
@@ -73,9 +86,13 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
   onSeleccionarCancionHero, onSeleccionarSeccionHero,
   modoGrabacion, onCambiarModoGrabacion, metronomo,
   grabando, tiempoGrabacionTexto, onAlternarGrabacion,
+  visor3dPiezaSeleccionada, visor3dPiezas, visor3dGrupoActivo,
+  onCambiarVisor3DGrupo, onAplicarVisor3DTinta, onAplicarVisor3DVariante,
+  onDispararVisor3DShapeKey, onDispararVisor3DProgramatica,
+  onDetenerVisor3DProgramatica, visor3dProgramaticaActiva,
 }) => {
   if (!visible || !seccionActiva) return null;
-  if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria'].includes(seccionActiva)) return null;
+  if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria', 'visor3d'].includes(seccionActiva)) return null;
 
   return (
     <aside className="estudio-practica-libre-panel">
@@ -176,6 +193,21 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
         <SeccionPLLibreria
           onSeleccionarCancion={onSeleccionarCancionHero}
           onSeleccionarSeccion={onSeleccionarSeccionHero}
+        />
+      )}
+
+      {seccionActiva === 'visor3d' && (
+        <SeccionPL3D
+          piezaSeleccionada={visor3dPiezaSeleccionada}
+          piezasDisponibles={visor3dPiezas}
+          grupoActivo={visor3dGrupoActivo}
+          onCambiarGrupoActivo={onCambiarVisor3DGrupo}
+          onAplicarTinta={onAplicarVisor3DTinta}
+          onAplicarVariante={onAplicarVisor3DVariante}
+          onDispararShapeKey={onDispararVisor3DShapeKey}
+          onDispararProgramatica={onDispararVisor3DProgramatica}
+          onDetenerProgramatica={onDetenerVisor3DProgramatica}
+          programaticaActiva={visor3dProgramaticaActiva}
         />
       )}
     </aside>

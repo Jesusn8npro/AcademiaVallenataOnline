@@ -33,8 +33,11 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "@tailwindcss/postcss": "^4.1.17",
+    "@types/three": "^0.184.1",
     "autoprefixer": "^10.4.22",
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.1",
@@ -52,6 +55,7 @@
     "react-international-phone": "^4.8.0",
     "recharts": "^3.8.1",
     "tailwindcss": "^4.1.17",
+    "three": "^0.184.0",
     "typescript": "~5.9.3"
   },
   "devDependencies": {
