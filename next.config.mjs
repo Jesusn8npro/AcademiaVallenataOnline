@@ -52,7 +52,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
               "media-src 'self' blob: https://*.supabase.co https://*.b-cdn.net",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com",
+              "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com",
               "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://iframe.mediadelivery.net",
               "worker-src 'self' blob:",
               "object-src 'none'",

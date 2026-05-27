@@ -223,7 +223,14 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
             } else if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                 // INITIAL_SESSION: el cliente termino de rehidratar el token.
                 // Recupera la sesion si getSession() dio null transitorio antes.
-                if (session?.user) cargarUsuario()
+                if (session?.user) {
+                    cargarUsuario()
+                } else if (event === 'TOKEN_REFRESHED' && !session) {
+                    // Refresh falló: limpiar token corrupto del storage para evitar 401s
+                    supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+                    setUsuario(null)
+                    setInicializado(true)
+                }
             } else if (event === 'SIGNED_OUT') {
                 setUsuario(null)
                 setInicializado(true)

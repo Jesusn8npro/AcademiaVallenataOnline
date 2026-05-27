@@ -13,6 +13,7 @@ import {
   Music,
   Home,
   Settings,
+  Box,
 } from 'lucide-react';
 import type { SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
 
@@ -38,6 +39,7 @@ interface BarraSuperiorPracticaLibreProps {
 // funcionando y se eliminó hasta que esté lista. Acá solo controles del estudio.
 const ACCIONES_PANEL: Array<{ clave: SeccionPanelPracticaLibre; label: string; icono: React.ReactNode }> = [
   { clave: 'sonido', label: 'Sonido', icono: <Volume2 size={15} /> },
+  { clave: 'visor3d', label: '3D', icono: <Box size={15} /> },
   { clave: 'modelos', label: 'Modelos', icono: <Image size={15} /> },
   { clave: 'pistas', label: 'Pistas y Estudio', icono: <Music2 size={15} /> },
   { clave: 'efectos', label: 'FX', icono: <SlidersHorizontal size={15} /> },

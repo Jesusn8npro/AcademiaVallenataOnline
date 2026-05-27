@@ -1,4 +1,5 @@
 import * as React from 'react'
+import dynamic from 'next/dynamic';
 import PanelAjustes from '../../../Core/componentes/PanelAjustes/PanelAjustes';
 import CuerpoAcordeonBase from '../../../Core/componentes/CuerpoAcordeon';
 
@@ -11,8 +12,16 @@ import BarraSuperiorPracticaLibre from './Componentes/BarraSuperiorPracticaLibre
 import PanelLateralEstudiante from './Componentes/PanelLateralEstudiante';
 import ModalGuardarPracticaLibre from './Componentes/ModalGuardarPracticaLibre';
 import ReproductorCancionHero from './Componentes/ReproductorCancionHero';
+import { VARIANTES_3D, type VarianteId } from './Componentes/SeccionPL3D';
+import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza, MaterialPieza } from './Componentes/VisorAcordeon3D';
 import { formatearDuracion } from './Utilidades/SecuenciaLogic';
 import './EstudioPracticaLibre.css';
+
+// Three.js es pesado (~500KB) — cargar solo cuando el alumno abre la pestaña 3D.
+const VisorAcordeon3D = dynamic(
+  () => import('./Componentes/VisorAcordeon3D'),
+  { ssr: false, loading: () => <div className="visor-acordeon-3d-cargando">Cargando visor 3D…</div> }
+);
 
 interface EstudioPracticaLibreProps {
   logica: any;
@@ -69,6 +78,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     setCancionEnReproductor(null);
     setSeccionInicialPendiente(null);
   }, []);
+
   const estudio = useEstudioPracticaLibre({
     tonalidadSeleccionada: logica.tonalidadSeleccionada,
     instrumentoId: logica.instrumentoId,
@@ -77,6 +87,91 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     setVolumenAcordeon,
   });
   const metronomo = useMetronomoEstudiante();
+
+  // ─── Visor 3D ───────────────────────────────────────────────────────
+  // Material por mesh: clave 'todos' es default, claves de grupo (ej 'botones-melodia')
+  // sobrescriben para ese grupo, claves de nombre exacto (ej 'Boton_D_05') ganan a todo lo demás.
+  // Default cálido: textura baked tintada en un crema marfil (no blanco plano).
+  // Cuando el usuario aplique cualquier color del panel, se desactiva la textura y va
+  // sólido. Cuando vuelva a "Original" (#ffffff), se restaura este look cálido.
+  const [materialPorMesh, setMaterialPorMesh] = React.useState<Record<string, MaterialPieza>>({
+    todos: { tinta: '#f5ead3', roughness: 0.55, metalness: 0.08, usarTexturaOriginal: true },
+  });
+  const [visor3dPiezas, setVisor3dPiezas] = React.useState<InfoPieza[]>([]);
+  const [piezaSeleccionada, setPiezaSeleccionada] = React.useState<string | null>(null);
+  const [grupoActivo, setGrupoActivo] = React.useState<string>('todos');
+  const [visor3dShapeKey, setVisor3dShapeKey] = React.useState<{ id: AnimShapeKeyId; epoch: number } | null>(null);
+  const [visor3dProgramatica, setVisor3dProgramatica] = React.useState<{ id: AnimProgramaticaId; epoch: number } | null>(null);
+  const [pulseEpoch, setPulseEpoch] = React.useState<{ mesh: string; epoch: number } | null>(null);
+
+  // Q key (control continuo del fuelle). Usamos ref para que el visor lo lea en useFrame sin re-renderizar.
+  const fuelleCerrandoRef = React.useRef(false);
+  React.useEffect(() => {
+    if (estudio.panelActivo !== 'visor3d') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'q' || e.key === 'Q') fuelleCerrandoRef.current = true;
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'q' || e.key === 'Q') fuelleCerrandoRef.current = false;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      fuelleCerrandoRef.current = false;
+    };
+  }, [estudio.panelActivo]);
+
+  // Click en una pieza del visor → la deja seleccionada y dispara pulse visual.
+  const onClickPieza = React.useCallback((nombre: string) => {
+    setPiezaSeleccionada(nombre);
+    setPulseEpoch({ mesh: nombre, epoch: Date.now() });
+  }, []);
+
+  // Aplicar color al target actual: pieza individual gana, sino grupo.
+  // hex === '#ffffff' = boton "Original" del panel → vuelve a mostrar la textura baked
+  // del GLB. Cualquier otro color → mostramos solido sin textura para que el cambio se
+  // vea limpio (sin la textura baked filtrando el color).
+  const aplicarTinta = React.useCallback((hex: string) => {
+    const target = piezaSeleccionada ?? grupoActivo;
+    const esOriginal = hex.toLowerCase() === '#ffffff';
+    setMaterialPorMesh((prev) => ({
+      ...prev,
+      [target]: {
+        ...(prev[target] ?? prev['todos']),
+        tinta: hex,
+        usarTexturaOriginal: esOriginal,
+      },
+    }));
+  }, [piezaSeleccionada, grupoActivo]);
+
+  const aplicarVariante = React.useCallback((id: VarianteId) => {
+    const v = VARIANTES_3D.find((x) => x.id === id) ?? VARIANTES_3D[1];
+    const target = piezaSeleccionada ?? grupoActivo;
+    setMaterialPorMesh((prev) => ({
+      ...prev,
+      [target]: {
+        ...(prev[target] ?? prev['todos']),
+        roughness: v.roughness,
+        metalness: v.metalness,
+        usarTexturaOriginal: false,
+      },
+    }));
+  }, [piezaSeleccionada, grupoActivo]);
+
+  const dispararVisor3DShapeKey = React.useCallback((id: AnimShapeKeyId) => {
+    setVisor3dShapeKey({ id, epoch: Date.now() });
+  }, []);
+  const dispararVisor3DProgramatica = React.useCallback((id: AnimProgramaticaId) => {
+    setVisor3dProgramatica({ id, epoch: Date.now() });
+  }, []);
+  const detenerVisor3DProgramatica = React.useCallback(() => {
+    setVisor3dProgramatica(null);
+  }, []);
+  // Solo las animaciones programáticas en loop (Respira) deben mostrarse como "activas"
+  // — las one-shot terminan solas y el botón Stop no aplica para ellas.
+  const programaticaActiva = visor3dProgramatica?.id === 'Respira' ? visor3dProgramatica.id : null;
 
   const modeloActivo = React.useMemo(
     () => obtenerModeloVisualPorId(estudio.preferencias.modeloVisualId),
@@ -194,21 +289,34 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
 
           <div className="estudio-practica-libre-area-acordeon">
             <div className="estudio-practica-libre-acordeon">
-              {logica.disenoCargado && (
-                <CuerpoAcordeon
-                  imagenFondo={imagenFondoAcordeon}
-                  ajustes={ajustesPractica as any}
-                  direccion={logica.direccion}
-                  configTonalidad={logica.configTonalidad}
-                  botonesActivos={logica.botonesActivos}
-                  modoAjuste={modoAjuste}
-                  botonSeleccionado={logica.botonSeleccionado}
-                  modoVista={logica.modoVista}
-                  vistaDoble={false}
-                  setBotonSeleccionado={logica.setBotonSeleccionado}
-                  actualizarBotonActivo={logica.actualizarBotonActivo}
-                  listo
+              {estudio.panelActivo === 'visor3d' ? (
+                <VisorAcordeon3D
+                  materialPorMesh={materialPorMesh}
+                  piezaSeleccionada={piezaSeleccionada}
+                  onClickPieza={onClickPieza}
+                  onMallasDetectadas={setVisor3dPiezas}
+                  fuelleCerrandoRef={fuelleCerrandoRef}
+                  animShapeKey={visor3dShapeKey}
+                  animProgramatica={visor3dProgramatica}
+                  pulseEpoch={pulseEpoch}
                 />
+              ) : (
+                logica.disenoCargado && (
+                  <CuerpoAcordeon
+                    imagenFondo={imagenFondoAcordeon}
+                    ajustes={ajustesPractica as any}
+                    direccion={logica.direccion}
+                    configTonalidad={logica.configTonalidad}
+                    botonesActivos={logica.botonesActivos}
+                    modoAjuste={modoAjuste}
+                    botonSeleccionado={logica.botonSeleccionado}
+                    modoVista={logica.modoVista}
+                    vistaDoble={false}
+                    setBotonSeleccionado={logica.setBotonSeleccionado}
+                    actualizarBotonActivo={logica.actualizarBotonActivo}
+                    listo
+                  />
+                )
               )}
             </div>
           </div>
@@ -255,6 +363,16 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           grabando={grabando}
           tiempoGrabacionTexto={formatearDuracion(tiempoGrabacionMs)}
           onAlternarGrabacion={manejarGrabacionSesion}
+          visor3dPiezaSeleccionada={piezaSeleccionada}
+          visor3dPiezas={visor3dPiezas}
+          visor3dGrupoActivo={grupoActivo}
+          onCambiarVisor3DGrupo={(g) => { setPiezaSeleccionada(null); setGrupoActivo(g); }}
+          onAplicarVisor3DTinta={aplicarTinta}
+          onAplicarVisor3DVariante={aplicarVariante}
+          onDispararVisor3DShapeKey={dispararVisor3DShapeKey}
+          onDispararVisor3DProgramatica={dispararVisor3DProgramatica}
+          onDetenerVisor3DProgramatica={detenerVisor3DProgramatica}
+          visor3dProgramaticaActiva={programaticaActiva}
         />
       </div>
 

@@ -19,6 +19,9 @@ out
 
 # Logs de deploy con secretos (no subir nunca)
 ERRORES_EASYPANEL.md
+error_deploy.md
+error_deploy*.md
+*_deploy*.md
 
 # Editor directories and files
 .vscode/*

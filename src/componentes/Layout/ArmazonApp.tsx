@@ -40,6 +40,11 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     pathname.startsWith('/acordeon-pro-max') ||
     pathname === '/acordeon-promax' ||
     pathname === '/acordeon-promax-menu'
+  // Landing pages de tutoriales y cursos (no clases)
+  const esTutorialLanding = /^\/tutoriales\/[^/]+$/.test(pathname)
+  const esCursoLanding = /^\/cursos\/[^/]+$/.test(pathname)
+  // En landing pages se muestra el menú pero NO el sidebar (evita padding-left: 280px en VistaPremium)
+  const esPaginaLanding = esTutorialLanding || esCursoLanding
 
   const esInmersivo =
     esModoLectura ||
@@ -79,7 +84,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
   }
 
   useEffect(() => {
-    if (estaAutenticado && !esInmersivo) {
+    if (estaAutenticado && !esInmersivo && !esPaginaLanding) {
       document.body.classList.add('con-sidebar')
     } else {
       document.body.classList.remove('con-sidebar')
@@ -89,7 +94,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
       document.body.classList.remove('con-sidebar')
       document.body.classList.remove('con-sidebar-colapsado')
     }
-  }, [estaAutenticado, esInmersivo])
+  }, [estaAutenticado, esInmersivo, esPaginaLanding])
 
   return (
     <>
@@ -110,8 +115,8 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
         </Suspense>
       )}
 
-      {clienteMontado && estaAutenticado && !esInmersivo && <SidebarAdmin />}
-      {clienteMontado && estaAutenticado && !esInmersivo && <MenuInferiorResponsivo />}
+      {clienteMontado && estaAutenticado && !esInmersivo && !esPaginaLanding && <SidebarAdmin />}
+      {clienteMontado && estaAutenticado && !esInmersivo && !esPaginaLanding && <MenuInferiorResponsivo />}
 
       {children}
 

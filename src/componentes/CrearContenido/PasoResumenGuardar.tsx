@@ -58,7 +58,8 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
       }
       const tabla = tipo === 'curso' ? 'cursos' : 'tutoriales'
       let data: any, supErr: any
-      if (modoEdicion && idContenido) {
+      if (modoEdicion) {
+        if (!idContenido) throw new Error(`No se encontró el ID del ${tipo} a editar. Intenta recargar la página.`)
         const res = await supabase.from(tabla).update(datosParaGuardar).eq('id', String(idContenido)).select().single()
         data = res.data; supErr = res.error
       } else {
