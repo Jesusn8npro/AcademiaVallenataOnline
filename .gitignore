@@ -39,6 +39,9 @@ error_deploy*.md
 src/referencias_migracion
 .agent
 
+# Worktrees temporales de Claude Code (subagentes)
+.claude/worktrees/
+
 # Lighthouse outputs (generados localmente)
 lh-*.json
 lh-*.html

@@ -33,7 +33,7 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
         Banner Hero deshabilitado: el archivo /images/Home/Banner-...jpg
         NO existe en public/, daba 404 en cada carga + DOM mutate al fallback.
         Si quieres re-habilitarlo: copiar el archivo a public/images/Home/
-        o (mejor) importarlo como modulo Vite desde src/assets/images/Home/
+        o (mejor) importarlo como modulo desde src/assets/images/Home/
       */}
 
       <div style={styles.heroContent}>

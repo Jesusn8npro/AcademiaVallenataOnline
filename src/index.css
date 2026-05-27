@@ -3,7 +3,7 @@
    Estructura:
    1. Reset y box-sizing
    2. HTML root — Escala fluida (la clave del responsive global)
-   3. Body y #root
+   3. Body
    4. Layout con sidebar (clases en body)
    5. Medios (img, video, iframe)
    6. Tipografía anti-overflow
@@ -23,7 +23,7 @@
 /* ── Safe areas (notch / status bar / home indicator) ──
    Variables expuestas para que cualquier componente las use.
    Solo aplican padding al body cuando corre en Capacitor (clase 'es-nativo'
-   añadida desde main.tsx). En web siguen siendo 0px (fallback). */
+   añadida desde el inicializador de Capacitor). En web siguen siendo 0px. */
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -59,7 +59,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── 3. Body y #root ──────────────────────────────── */
+/* ── 3. Body ──────────────────────────────────────── */
 body {
   font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -70,12 +70,6 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   max-width: 100vw;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
 }
 
 /* ── 4. Layout con sidebar (clases añadidas al body) ── */

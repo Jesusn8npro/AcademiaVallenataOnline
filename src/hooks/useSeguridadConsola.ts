@@ -2,7 +2,7 @@
  * SISTEMA DE SEGURIDAD DE CONSOLA - VERSIÓN FINAL ESTABLE Y PERMISIVA PARA ADMINS
  * 
  * Protege los datos en producción:
- * 1. Usa (process.env.NODE_ENV !== 'production') para detección 100% confiable en Vite (En Localhost NO hace nada).
+ * 1. Usa (process.env.NODE_ENV !== 'production') para detección 100% confiable (En Localhost NO hace nada).
  * 2. En producción, deshabilita logs y bloquea DevTools a los usuarios.
  * 3. Permite el uso completo de la consola a los administradores.
  * 4. Muestra un mensaje gigante anti-SelfXSS.

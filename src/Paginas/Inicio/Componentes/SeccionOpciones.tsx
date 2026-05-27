@@ -8,7 +8,7 @@ import './SeccionOpciones.css';
 import { opcionesStyles as styles } from './SeccionOpciones.styles';
 import { useNavigate } from '@/compat/router';
 
-// Import explícito de las imágenes desde src/assets — Vite las bundlea con hash en el build.
+// Import explícito de las imágenes desde src/assets — Next las bundlea con hash en el build.
 // Antes el componente usaba strings tipo "/images/Clusters .../Cursos-De-Acordeon.jpg" que
 // apuntan a /public/, pero las imágenes nunca estuvieron en public/ → los <img> daban 404
 // y se veía el placeholder gris de la card. Las imágenes viven en src/assets/images/.

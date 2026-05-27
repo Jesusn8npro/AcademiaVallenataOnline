@@ -29,8 +29,7 @@
 
 /* Forzar el fondo de la página completa */
 body.tutorial-premium-view-active,
-body:has(.contenido-tutorial-premium-root),
-#root:has(.contenido-tutorial-premium-root) {
+body:has(.contenido-tutorial-premium-root) {
     background-color: #f8fafc !important;
 }
 
