@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image';
 import './nuestra-academia.css'
 
-// Imports de imágenes desde src/assets — Vite las bundlea con hash. Antes el componente
+// Imports de imágenes desde src/assets — Next las bundlea con hash. Antes el componente
 // usaba paths como "/images/NuestraAcademia/..." apuntando a public/, pero esos archivos
 // nunca estuvieron en public/ → todas las imágenes daban 404.
 import imgMaestroJesus__img from '../../assets/images/Foto maestro oficial JESUS GONZALEZ.jpg';
