@@ -14,8 +14,15 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   const { perfil, stats, cargando: cargandoStats, cargarDatosPerfil, forzarInicializacion, inicializado } = usePerfilStore()
   const { usuario } = useUsuario()
   const [modalAbierto, setModalAbierto] = useState(false)
+  // mounted: hydration-safe. En SSR + first client render, mounted=false →
+  // renderiza placeholder (HTML idéntico al server). Después del mount, en
+  // el efecto, mounted=true → renderiza EncabezadoPerfil con userId real.
+  // Sin este flag había hydration mismatch porque userId era null en SSR
+  // pero válido en el primer render del cliente (viene del localStorage cache).
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     cargarDatosPerfil()
 
     const safetyTimer = setTimeout(() => {
@@ -29,7 +36,8 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   // se actualiza solo cuando el store termina de cargar
   const nombreCompleto = perfil?.nombre_completo || usuario?.nombre || ''
   const urlAvatar = perfil?.url_foto_perfil || usuario?.url_foto_perfil
-  const userId = perfil?.id || usuario?.id
+  // En SSR/first render, userId queda null para que coincida con el HTML del server.
+  const userId = mounted ? (perfil?.id || usuario?.id) : null
 
   return (
     <div className="layout-perfil-fijo" translate="no">

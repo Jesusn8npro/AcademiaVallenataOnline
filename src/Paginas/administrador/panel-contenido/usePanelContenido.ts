@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
+import { leerCacheStale, guardarCache } from '../../../utilidades/cacheLocal';
 
 interface Contenido {
     id: string;
@@ -70,35 +71,60 @@ export function usePanelContenido() {
 
     const cargarContenido = async () => {
         try {
-            const [cursosRes, tutorialesRes, modulosRes, leccionesRes, inscripcionesRes, partesRes] = await Promise.all([
-                supabase.from('cursos').select('*').order('created_at', { ascending: false }),
-                supabase.from('tutoriales').select('*').order('created_at', { ascending: false }),
-                supabase.from('modulos').select('curso_id'),
-                supabase.from('lecciones').select('curso_id'),
-                supabase.from('inscripciones').select('*'),
-                supabase.from('partes_tutorial').select('tutorial_id')
+            // Stale-while-revalidate: si hay cache, lo aplicamos al instante
+            // (no muestra "Cargando..." al volver a la página) y luego refrescamos.
+            const cached = leerCacheStale<{ cursos: Contenido[]; tutoriales: Contenido[] }>('panel-contenido');
+            if (cached) {
+                setCursos(cached.cursos || []);
+                setTutoriales(cached.tutoriales || []);
+                setCargando(false); // ya hay datos para mostrar
+            }
+
+            // Promise.allSettled: si una query falla/cuelga, las otras igual cargan.
+            // Antes con Promise.all UNA falla dejaba "Cargando panel..." infinito.
+            // Timeout 10s por query — corta queries colgadas y deja seguir.
+            const withTimeout = <T,>(p: PromiseLike<T>): Promise<T> => Promise.race([
+                Promise.resolve(p),
+                new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000)),
             ]);
 
-            const modulosData = modulosRes.data || [];
-            const leccionesData = leccionesRes.data || [];
-            const inscripcionesData = inscripcionesRes.data || [];
-            const partesData = partesRes.data || [];
+            const results = await Promise.allSettled([
+                withTimeout(supabase.from('cursos').select('*').order('created_at', { ascending: false })),
+                withTimeout(supabase.from('tutoriales').select('*').order('created_at', { ascending: false })),
+                withTimeout(supabase.from('modulos').select('curso_id')),
+                withTimeout(supabase.from('lecciones').select('curso_id')),
+                withTimeout(supabase.from('inscripciones').select('curso_id, tutorial_id')),
+                withTimeout(supabase.from('partes_tutorial').select('tutorial_id')),
+            ]);
+            const pick = (i: number): any => results[i].status === 'fulfilled' ? (results[i] as any).value : { data: [], error: null };
+            const cursosRes = pick(0);
+            const tutorialesRes = pick(1);
+            const modulosData = pick(2).data || [];
+            const leccionesData = pick(3).data || [];
+            const inscripcionesData = pick(4).data || [];
+            const partesData = pick(5).data || [];
 
-            if (!cursosRes.error) {
-                setCursos((cursosRes.data || []).map((curso: any) => ({
+            const cursosEnriq: Contenido[] = !cursosRes.error
+                ? (cursosRes.data || []).map((curso: any) => ({
                     ...curso,
                     modulos_count_real: modulosData.filter((m: any) => m.curso_id === curso.id).length,
                     lecciones_count_real: leccionesData.filter((l: any) => l.curso_id === curso.id).length,
                     estudiantes_inscritos_real: inscripcionesData.filter((i: any) => i.curso_id === curso.id).length
-                })));
-            }
-
-            if (!tutorialesRes.error) {
-                setTutoriales((tutorialesRes.data || []).map((tutorial: any) => ({
+                }))
+                : [];
+            const tutorialesEnriq: Contenido[] = !tutorialesRes.error
+                ? (tutorialesRes.data || []).map((tutorial: any) => ({
                     ...tutorial,
                     estudiantes_inscritos_real: inscripcionesData.filter((i: any) => i.tutorial_id === tutorial.id).length,
                     partes_count_real: partesData.filter((p: any) => p.tutorial_id === tutorial.id).length
-                })));
+                }))
+                : [];
+
+            if (cursosEnriq.length > 0) setCursos(cursosEnriq);
+            if (tutorialesEnriq.length > 0) setTutoriales(tutorialesEnriq);
+            // Guardar cache para la próxima navegación
+            if (cursosEnriq.length > 0 || tutorialesEnriq.length > 0) {
+                guardarCache('panel-contenido', { cursos: cursosEnriq, tutoriales: tutorialesEnriq });
             }
         } catch { /* error no fatal */ } finally {
             setCargando(false);

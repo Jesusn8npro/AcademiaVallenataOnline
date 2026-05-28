@@ -67,7 +67,11 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         data = res.data; supErr = res.error
       }
       if (supErr) throw supErr
-      if (estructura.length > 0) { await guardarEstructura(data.id, estructura) }
+      // Para tutorial: también ejecutar si solo se activó el toggle de evaluación
+      // (sin partes normales) — guardarEstructura crea la parte de evaluación.
+      const necesitaGuardarEstructura = estructura.length > 0
+        || (tipo === 'tutorial' && !!datosGenerales.tiene_evaluacion)
+      if (necesitaGuardarEstructura) { await guardarEstructura(data.id, estructura) }
 
       // Notificar a inscritos cuando es una edición y el admin lo indicó
       if (modoEdicion && notificarInscritos && data.id) {
@@ -132,9 +136,34 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         visible: parte.visible !== false,
       }))
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('partes_tutorial').insert(partesParaGuardar as any)
-      if (error) throw error
+      if (partesParaGuardar.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await supabase.from('partes_tutorial').insert(partesParaGuardar as any)
+        if (error) throw error
+      }
+
+      // Evaluación final: el toggle del Paso 1 controla si existe una parte
+      // tipo_contenido='evaluacion'. El DELETE de arriba ya la eliminó si
+      // existía; aquí solo la recreamos cuando el toggle está activo.
+      if (datosGenerales.tiene_evaluacion) {
+        const ordenEval = (estructura?.length || 0) + 1
+        const slugEval = `evaluacion-final-${String(idContenido).slice(0, 8)}`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: errEval } = await (supabase.from('partes_tutorial') as any).insert({
+          tutorial_id: idContenido,
+          titulo: 'Evaluación Final',
+          descripcion: '',
+          tipo_parte: 'evaluacion',
+          tipo_contenido: 'evaluacion',
+          video_url: '',
+          contenido: '',
+          orden: ordenEval,
+          visible: true,
+          slug: slugEval,
+          monedas_recompensa: datosGenerales.monedas_evaluacion ?? 10,
+        })
+        if (errEval) throw errEval
+      }
     } else {
       if (modoEdicion) {
         const { data: modulosExistentes } = await supabase.from('modulos').select('id,titulo,descripcion,orden').eq('curso_id', idContenido).order('orden')
@@ -200,7 +229,7 @@ export default function PasoResumenGuardar({ tipo, datosGenerales, estructura, m
         </div>
 
         {tipo === 'tutorial' && (
-          <div className="seccion-resumen"><h3 className="subtitulo-resumen"><span className="numero-resumen">2</span>Información Musical</h3><div className="grid-info"><div className="info-item"><span className="info-label">Artista:</span><span className="info-value">{datosGenerales.artista || 'No especificado'}</span></div><div className="info-item"><span className="info-label">Tonalidad:</span><span className="info-value">{datosGenerales.tonalidad || 'No especificada'}</span></div><div className="info-item"><span className="info-label">Acordeonista:</span><span className="info-value">{datosGenerales.acordeonista || 'No especificado'}</span></div></div></div>
+          <div className="seccion-resumen"><h3 className="subtitulo-resumen"><span className="numero-resumen">2</span>Información Musical</h3><div className="grid-info"><div className="info-item"><span className="info-label">Artista:</span><span className="info-value">{datosGenerales.artista || 'No especificado'}</span></div><div className="info-item"><span className="info-label">Tonalidad:</span><span className="info-value">{datosGenerales.tonalidad || 'No especificada'}</span></div><div className="info-item"><span className="info-label">Acordeonista:</span><span className="info-value">{datosGenerales.acordeonista || 'No especificado'}</span></div><div className="info-item"><span className="info-label">Evaluación final:</span><span className={`badge ${datosGenerales.tiene_evaluacion ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{datosGenerales.tiene_evaluacion ? `✅ Activa · ${datosGenerales.monedas_evaluacion ?? 10} 🪙` : '❌ Sin evaluación'}</span></div></div></div>
         )}
 
         {estructura.length > 0 && (

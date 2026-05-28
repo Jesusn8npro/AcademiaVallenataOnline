@@ -15,7 +15,7 @@ import { useNavigate } from '@/compat/router';
 import imgCursos from '../../../assets/images/Clusters (Por donde empezart)/Cursos-De-Acordeon.webp';
 import imgTutoriales from '../../../assets/images/Clusters (Por donde empezart)/Tutoriales-De-Acordeon.webp';
 import imgPaquetes from '../../../assets/images/Clusters (Por donde empezart)/Paquetes-de-tutoriales.webp';
-import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas!.webp';
+import imgClases from '../../../assets/images/Clusters (Por donde empezart)/Clases-Personalizadas.webp';
 const GRADIENTS: Record<string, string> = {
   'from-blue-500 to-purple-600': 'linear-gradient(135deg, #3b82f6, #9333ea)',
   'from-purple-600 to-pink-600': 'linear-gradient(135deg, #9333ea, #dc2626)',

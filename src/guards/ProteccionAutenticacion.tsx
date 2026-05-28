@@ -1,6 +1,6 @@
+'use client';
 import { Link } from '@/compat/router';
 import * as React from 'react';
-import { useEffect, useState } from 'react'
 import { useUsuario } from '../contextos/UsuarioContext'
 
 interface Props {
@@ -9,31 +9,33 @@ interface Props {
   children: React.ReactNode
 }
 
-const Spinner = () => (
-  <div style={{ padding: '2rem', textAlign: 'center' }}>
-    <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
-    <p style={{ color: '#6b7280' }}>Verificando sesión...</p>
-  </div>
-)
-
+/**
+ * OPTIMISTA — sin pantalla bloqueante "Verificando sesión...".
+ *
+ * Render rules (en orden):
+ *   1. Si NO está inicializado todavía → renderiza children (optimista).
+ *      Los datos están protegidos por RLS server-side, no hay riesgo de leak.
+ *      Esto evita el flash feo de "Verificando sesión..." con footer
+ *      desordenado debajo mientras Supabase resuelve la sesión.
+ *   2. Si está inicializado Y hay usuario → renderiza children normal.
+ *   3. Si está inicializado Y NO hay usuario → "acceso denegado" estilizado.
+ *
+ * Patrón documentado en supabase #553 y guías de auth optimista de Next.
+ */
 export default function ProteccionAutenticacion({ titulo = '🔒 PERFIL RESTRINGIDO', mensajePrincipal = 'Tu perfil personal requiere que inicies sesión', children }: Props) {
   const { usuario, inicializado } = useUsuario()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
 
-  // Server y primer render cliente son idénticos (spinner) → sin hydration mismatch.
-  // Después del mount se evalúa el auth real.
-  if (!mounted || !inicializado) return <Spinner />
-
-  if (!usuario) {
-    return (
-      <div style={{ maxWidth: 700, margin: '2rem auto', background: '#fff', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-        <h2 style={{ marginTop: 0 }}>{titulo}</h2>
-        <p>{mensajePrincipal}</p>
-        <Link href="/" style={{ display: 'inline-block', marginTop: '1rem', background: '#2563eb', color: '#fff', padding: '0.75rem 1rem', borderRadius: 8, textDecoration: 'none' }}>Ir al inicio</Link>
-      </div>
-    )
+  // Renderizar contenido inmediatamente; si después se confirma que no hay
+  // sesión, mostramos la pantalla de acceso denegado.
+  if (!inicializado || usuario) {
+    return <>{children}</>
   }
 
-  return <>{children}</>
+  return (
+    <div style={{ maxWidth: 700, margin: '2rem auto', background: '#fff', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', textAlign: 'center' }}>
+      <h2 style={{ marginTop: 0 }}>{titulo}</h2>
+      <p>{mensajePrincipal}</p>
+      <Link href="/" style={{ display: 'inline-block', marginTop: '1rem', background: '#2563eb', color: '#fff', padding: '0.75rem 1rem', borderRadius: 8, textDecoration: 'none' }}>Ir al inicio</Link>
+    </div>
+  )
 }

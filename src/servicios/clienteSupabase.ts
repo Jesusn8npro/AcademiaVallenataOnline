@@ -7,7 +7,11 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
     console.warn('[Supabase] Falta NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY.');
 }
 
-// Singleton — sobrevive HMR en desarrollo
+// AMBOS clientes son singletons sobre globalThis para sobrevivir HMR.
+// Bug conocido (supabase-js #37755): si createClient se llama múltiples veces,
+// crea instancias duplicadas de GoTrueClient → warning + queries CUELGAN.
+// Antes supabaseAnonimo NO era singleton → se recreaba en cada HMR
+// → todo cargaba lento y las queries colgaban en panel-contenido y sidebars.
 const globalAny: any = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : {};
 
 if (!globalAny.__INSTANCIA_SUPABASE) {
@@ -21,8 +25,18 @@ if (!globalAny.__INSTANCIA_SUPABASE) {
     });
 }
 
-export const supabase = globalAny.__INSTANCIA_SUPABASE;
+if (!globalAny.__INSTANCIA_SUPABASE_ANONIMO) {
+    globalAny.__INSTANCIA_SUPABASE_ANONIMO = createClient(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+            // storageKey distinto: evita que ambos clientes peleen por el mismo
+            // localStorage (causa de warnings "Multiple GoTrueClient instances").
+            storageKey: 'supabase.anon.notoken',
+        }
+    });
+}
 
-export const supabaseAnonimo = createClient(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-});
+export const supabase = globalAny.__INSTANCIA_SUPABASE;
+export const supabaseAnonimo = globalAny.__INSTANCIA_SUPABASE_ANONIMO;
