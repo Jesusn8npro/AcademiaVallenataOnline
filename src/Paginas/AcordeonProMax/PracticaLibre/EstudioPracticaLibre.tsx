@@ -15,6 +15,7 @@ import ReproductorCancionHero from './Componentes/ReproductorCancionHero';
 import { VARIANTES_3D, type VarianteId } from './Componentes/SeccionPL3D';
 import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza, MaterialPieza } from './Componentes/VisorAcordeon3D';
 import { formatearDuracion } from './Utilidades/SecuenciaLogic';
+import { LogicaAcordeonProvider } from './contextoLogicaAcordeon';
 import './EstudioPracticaLibre.css';
 
 // Three.js es pesado (~500KB) — cargar solo cuando el alumno abre la pestaña 3D.
@@ -256,6 +257,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   };
 
   return (
+    <LogicaAcordeonProvider logica={logica}>
     <section className="estudio-practica-libre">
       <BarraSuperiorPracticaLibre
         panelActivo={estudio.panelActivo}
@@ -410,6 +412,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
         />
       )}
     </section>
+    </LogicaAcordeonProvider>
   );
 };
 
