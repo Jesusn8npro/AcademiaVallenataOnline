@@ -1,6 +1,6 @@
 // Academia Vallenata Online — Service Worker
 // La versión de caché se actualiza automáticamente en cada `npm run build`
-const CACHE = 'ava-zUCequBVn6rcc6Quym7gd';
+const CACHE = 'ava-F3at_L2xW5Gq5IXermyP4';
 
 const PRECACHE = [
   '/logo-175.webp',
