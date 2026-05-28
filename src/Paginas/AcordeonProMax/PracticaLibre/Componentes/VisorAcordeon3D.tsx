@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useGLTF, OrbitControls, Bounds, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { subscribirNotas } from '../../../../Core/audio/emisorNotasAcordeon'
 
 // v3 — re-exportado con export_yup=False (mantener Z-up de Blender) para evitar que
 // el exporter agregue rotaciones residuales en los nodos. La conversion Z-up→Y-up la
@@ -46,6 +47,26 @@ export function grupoDePieza(nombre: string): string {
 
 export interface InfoPieza { nombre: string; grupo: string }
 
+// three.js GLTFLoader SANEA los nombres de nodo (PropertyBinding.sanitizeNodeName):
+// reemplaza espacios por '_' y elimina los chars reservados de animación [].:/ — así
+// "Caja izquierda del acordeon, bajos" llega a la escena como
+// "Caja_izquierda_del_acordeon,_bajos". Por eso buscar por el nombre con espacios fallaba
+// (la caja de bajos, el marco y la caja de melodía nunca se encontraban). Saneamos el
+// nombre buscado para que coincida con el real.
+const sanitizar = (s: string) => s.replace(/\s/g, '_').replace(/[[\].:/]/g, '')
+
+// Convierte el id lógico que emite useLogicaAcordeon (ej. "1-5-halar",
+// "1-3-empujar-bajo") en la clave espacial de un botón 3D. La dirección del fuelle
+// (halar/empujar) no cambia QUÉ botón es, así que la descartamos: el mismo botón físico
+// suena distinto al abrir/cerrar. Melodía → "${fila}-${i}", bajos → "bajo-${fila}-${i}".
+function keyDeId(idBoton: string): string {
+  let s = idBoton
+  let bajo = false
+  if (s.endsWith('-bajo')) { bajo = true; s = s.slice(0, -5) }
+  s = s.replace(/-halar$/, '').replace(/-empujar$/, '')
+  return bajo ? `bajo-${s}` : s
+}
+
 // Configuración de las 3 animaciones programáticas.
 // El fuelle NO se traslada nunca — solo se deforma via la shape key Cerr_uniforme.
 // influMax = valor máximo de la influencia del morph target durante la animación
@@ -55,12 +76,6 @@ const PROG_CONFIG: Record<AnimProgramaticaId, { duracion: number; influMax: numb
   Tocar_Fuerte: { duracion: 0.75, influMax: 0.45, loop: false },
   Respira:      { duracion: 2.80, influMax: 0.25, loop: true  },
 }
-
-// Contracción que produce cada shape key sobre el extremo derecho del fuelle.
-// Medidos en Blender comparando bbox de Basis vs cada shape key al peso máximo.
-const CONTRACCION_UNIFORME_X = 0.95
-const CONTRACCION_ABAJO_X = 0.034
-const CONTRACCION_ARRIBA_X = 0.033
 
 interface ModeloProps {
   materialPorMesh: Record<string, MaterialPieza>
@@ -91,6 +106,30 @@ function Modelo({
   // Cajas que sirven de "centro" para calcular la direccion de hundimiento de los botones.
   const cajaBotonesPrincipalesRef = React.useRef<THREE.Object3D | null>(null)
   const cajaBajosCentroRef = React.useRef<THREE.Object3D | null>(null)
+  // Transformación medida del extremo del fuelle (cara del lado bajos) por cada morph:
+  // t = traslación media de la cara, w = vector de rotación (eje·ángulo) que mide cuánto
+  // se INCLINA la cara (cierre abajo/arriba la inclinan, uniforme no). C0 = centro de la
+  // cara = pivote del giro. El lado bajos sigue esta transformación rígida cada frame, así
+  // queda pegado Y se inclina igual que el fuelle.
+  const fuelleEdgeDeltasRef = React.useRef<{
+    C0: THREE.Vector3
+    u: { t: THREE.Vector3; w: THREE.Vector3 }
+    a: { t: THREE.Vector3; w: THREE.Vector3 }
+    r: { t: THREE.Vector3; w: THREE.Vector3 }
+  } | null>(null)
+  // Mapeo nota lógica → nombre de mesh del botón 3D (ej. "1-5" → "Boton_D_07",
+  // "bajo-1-3" → "Boton_I_02"). Se arma por posición en la detección. notasActivasRef
+  // guarda los nombres de mesh actualmente pisados (vía emisorNotasAcordeon). botonesDRef
+  // cachea los botones de melodía para hundirlos cada frame.
+  const notaAMeshRef = React.useRef<Record<string, string>>({})
+  const notasActivasRef = React.useRef<Set<string>>(new Set())
+  const botonesDRef = React.useRef<THREE.Mesh[]>([])
+  const edgeDeltaTmp = React.useRef(new THREE.Vector3())
+  const rotVecTmp = React.useRef(new THREE.Vector3())
+  const rotAxisTmp = React.useRef(new THREE.Vector3())
+  const quatTmp = React.useRef(new THREE.Quaternion())
+  const pivTmp = React.useRef(new THREE.Vector3())
+  const hundirTmp = React.useRef(new THREE.Vector3())
 
   React.useEffect(() => {
     const lista: THREE.Mesh[] = []
@@ -125,77 +164,207 @@ function Modelo({
       // Estos son los objetos que se mueven juntos con el extremo derecho del fuelle.
       const nombre = obj.name ?? ''
       const esLadoBajos =
-        nombre === 'Caja izquierda del acordeon, bajos' ||
-        nombre === 'marco Fuelle 2' ||
+        nombre === sanitizar('Caja izquierda del acordeon, bajos') ||
+        nombre === sanitizar('marco Fuelle 2') ||
         /^Boton_I_\d+$/.test(nombre)
       if (esLadoBajos) {
-        if (obj.userData.origX === undefined) obj.userData.origX = obj.position.x
         if (!ladoBajosObjects.current.includes(obj)) ladoBajosObjects.current.push(obj)
       }
-      if (nombre === 'Caja izquierda del acordeon, bajos') {
+      if (nombre === sanitizar('Caja izquierda del acordeon, bajos')) {
         cajaBajosCentroRef.current = obj
       }
-      if (nombre === 'Caja botones principales') {
+      if (nombre === sanitizar('Caja botones principales')) {
         cajaBotonesPrincipalesRef.current = obj
       }
     })
     setMeshes(lista)
 
-    // Calcular OFFSET LOCAL de hundimiento por cada boton (para el pulse).
-    // Estrategia: en world, el vector "hacia adentro" = centro_caja − centro_boton
-    // normalizado. La magnitud es chica (~7% del lado mas corto del boton, que es la
-    // altura visible del boton). Convertimos el punto destino (centro_boton + dirWorld*mag)
-    // a coordenadas LOCALES del PADRE del mesh y guardamos el delta respecto al originalPos.
-    // Asi el desplazamiento es robusto al escalado/rotacion del grupo (Bounds, Center).
-    const tmpCajaCenter = new THREE.Vector3()
-    const tmpBotonCenter = new THREE.Vector3()
+    // ── Botones: hundimiento perpendicular + mapeo nota→mesh ──────────────────────────
     const box = new THREE.Box3()
+    const centrarMesh = (m: THREE.Mesh) => box.setFromObject(m).getCenter(new THREE.Vector3())
+    const tamMesh = (m: THREE.Mesh) => box.setFromObject(m).getSize(new THREE.Vector3())
 
     const centroCajaD = cajaBotonesPrincipalesRef.current
-      ? box.setFromObject(cajaBotonesPrincipalesRef.current).getCenter(tmpCajaCenter.clone())
-      : null
+      ? centrarMesh(cajaBotonesPrincipalesRef.current as THREE.Mesh) : null
     const centroCajaI = cajaBajosCentroRef.current
-      ? box.setFromObject(cajaBajosCentroRef.current).getCenter(tmpCajaCenter.clone())
-      : null
+      ? centrarMesh(cajaBajosCentroRef.current as THREE.Mesh) : null
 
+    // Agrupar botones por X (cada fila comparte X). El primer cluster SIEMPRE se crea.
+    const clusterPorX = (items: Array<{ m: THREE.Mesh; c: THREE.Vector3 }>) => {
+      const ordenados = [...items].sort((a, b) => a.c.x - b.c.x)
+      const clusters: Array<Array<{ m: THREE.Mesh; c: THREE.Vector3 }>> = []
+      let prevX = -Infinity
+      for (const it of ordenados) {
+        if (clusters.length === 0 || it.c.x - prevX > 0.05) clusters.push([])
+        clusters[clusters.length - 1].push(it)
+        prevX = it.c.x
+      }
+      return clusters // ordenados por X ascendente
+    }
+    const dMeshes = lista.filter((m) => /^Boton_D_\d+$/.test(m.name))
+    const iMeshes = lista.filter((m) => /^Boton_I_\d+$/.test(m.name))
+    botonesDRef.current = dMeshes
+    const filasMel = clusterPorX(dMeshes.map((m) => ({ m, c: centrarMesh(m) })))
+    const filasBajo = clusterPorX(iMeshes.map((m) => ({ m, c: centrarMesh(m) })))
+
+    // NORMAL del teclado = dirección de hundimiento real (perpendicular a la superficie de
+    // botones). Antes promediábamos "boton→centro caja", que da una diagonal y hacía que los
+    // botones se "corrieran". En cambio: normal = rowDir × colDir, donde rowDir es el eje entre
+    // filas y colDir el eje a lo largo de una fila. La firmamos hacia el centro de la caja para
+    // que apunte HACIA ADENTRO (el botón se mete en su agujero, no se desliza).
+    const centroide = (fila: Array<{ c: THREE.Vector3 }>) =>
+      fila.reduce((acc, it) => acc.add(it.c), new THREE.Vector3()).multiplyScalar(1 / fila.length)
+    const normalDeFilas = (
+      filas: Array<Array<{ m: THREE.Mesh; c: THREE.Vector3 }>>,
+      centroCaja: THREE.Vector3 | null,
+    ): THREE.Vector3 | null => {
+      if (filas.length < 2 || !centroCaja) return null
+      const filaLarga = filas.reduce((a, b) => (b.length > a.length ? b : a))
+      if (filaLarga.length < 2) return null
+      const colSorted = [...filaLarga].sort((a, b) => a.c.y - b.c.y)
+      const colDir = new THREE.Vector3().subVectors(
+        colSorted[colSorted.length - 1].c, colSorted[0].c)
+      const rowDir = new THREE.Vector3().subVectors(
+        centroide(filas[filas.length - 1]), centroide(filas[0]))
+      const normal = new THREE.Vector3().crossVectors(rowDir, colDir)
+      if (normal.lengthSq() < 1e-9) return null
+      normal.normalize()
+      // Firmar la normal para que el hundimiento entre el botón en su agujero. Empíricamente,
+      // por cómo el GLB viene apply-transformed + la rotación del grupo, el sentido que se ve
+      // "hacia adentro" es el OPUESTO al centro de la caja: usamos la normal que apunta en
+      // contra de haciaCaja.
+      const haciaCaja = new THREE.Vector3().subVectors(centroCaja, filaLarga[0].c)
+      if (normal.dot(haciaCaja) > 0) normal.negate()
+      return normal
+    }
+    const normalD = normalDeFilas(filasMel, centroCajaD)
+    const normalI = normalDeFilas(filasBajo, centroCajaI)
+
+    // Pasar la normal world → local del padre de los botones (sólo rotación inversa: el GLB
+    // viene apply-transformed, mesh.position=(0,0,0) y el hundimiento es un DELTA de posición).
     const _qInv = new THREE.Quaternion()
-    lista.forEach((m) => {
-      if (m.userData.hundirOffset) return
-      const esD = m.name.startsWith('Boton_D_')
-      const esI = m.name.startsWith('Boton_I_')
-      if (!esD && !esI) return
-      const centroCaja = esD ? centroCajaD : centroCajaI
-      if (!centroCaja || !m.parent) return
+    const padreBotones = (dMeshes[0] ?? iMeshes[0])?.parent
+    if (padreBotones) padreBotones.getWorldQuaternion(_qInv).invert()
+    const normalDLocal = normalD ? normalD.clone().applyQuaternion(_qInv) : null
+    const normalILocal = normalI ? normalI.clone().applyQuaternion(_qInv) : null
+    const asignarHundir = (meshes: THREE.Mesh[], normalLocal: THREE.Vector3 | null) => {
+      if (!normalLocal) return
+      meshes.forEach((m) => {
+        const s = tamMesh(m)
+        // Magnitud = 50% de la altura del botón (lado más chico del bbox): se mete hasta
+        // la mitad en su agujero durante el pulse/nota.
+        const mag = Math.min(s.x, s.y, s.z) * 0.5
+        m.userData.hundirOffset = normalLocal.clone().multiplyScalar(mag)
+      })
+    }
+    asignarHundir(dMeshes, normalDLocal)
+    asignarHundir(iMeshes, normalILocal)
 
-      // Centro del boton en world
-      box.setFromObject(m).getCenter(tmpBotonCenter)
-      const dirWorld = new THREE.Vector3().subVectors(centroCaja, tmpBotonCenter)
-      if (dirWorld.lengthSq() < 1e-6) return
-      dirWorld.normalize()
-
-      // Magnitud: 50% de la altura del cilindro del boton (el lado mas chico del bbox).
-      // Es bien visible — el boton se "mete" hasta la mitad en la caja durante el pulse.
-      const size = box.getSize(new THREE.Vector3())
-      const magnitud = Math.min(size.x, size.y, size.z) * 0.5
-
-      // Convertir el VECTOR direccion de world a local del padre (solo rotacion inversa).
-      // Como el GLB v2 viene con todos los meshes apply-transformed, sus vertices estan en
-      // world position y mesh.position queda en (0,0,0). El offset que aplicamos al pulse
-      // es un DELTA de translation desde la posicion original, asi que solo necesitamos
-      // expresar la direccion en local space del padre.
-      m.parent.getWorldQuaternion(_qInv).invert()
-      const dirLocal = dirWorld.clone().applyQuaternion(_qInv)
-      m.userData.hundirOffset = dirLocal.multiplyScalar(magnitud)
+    // Mapeo POSICIONAL nota→mesh. Conteos 3D = filas lógicas: melodía 10/11/10 =
+    // primeraFila/segundaFila/terceraFila, bajos 6/6 = una/dos. Filas por X ascendente →
+    // prefijos "1","2","3"; índice dentro de la fila por Y descendente.
+    const mapa: Record<string, string> = {}
+    filasMel.forEach((fila, iFila) => {
+      const pre = String(iFila + 1)
+      ;[...fila].sort((a, b) => b.c.y - a.c.y).forEach((it, i) => {
+        mapa[`${pre}-${i + 1}`] = it.m.name
+      })
     })
+    filasBajo.forEach((fila, iFila) => {
+      const pre = String(iFila + 1)
+      ;[...fila].sort((a, b) => b.c.y - a.c.y).forEach((it, i) => {
+        mapa[`bajo-${pre}-${i + 1}`] = it.m.name
+      })
+    })
+    notaAMeshRef.current = mapa
 
-    // Debug temporal: confirmar qué piezas se detectaron como lado bajos.
-    // Si el marco Fuelle 2 no aparece en este log, el problema es la detección.
-    if (typeof window !== 'undefined') {
-      console.log('[Visor3D] lado bajos detectados:',
-        ladoBajosObjects.current.map((o) => o.name))
+    // Desplazamiento REAL del extremo del fuelle (cara del lado bajos) por cada morph,
+    // medido directamente de la geometria del GLB. Los morphs de glTF son DELTAS relativos,
+    // asi que el delta promedio de los vertices de esa cara ES el desplazamiento que sufre.
+    // El lado bajos seguira este vector cada frame → queda SIEMPRE pegado al fuelle en
+    // cualquier morph (uniforme/abajo/arriba) sin constantes medidas a ojo.
+    const f = fuelleMesh.current
+    if (f && f.morphTargetDictionary) {
+      const geo = f.geometry as THREE.BufferGeometry
+      const pos = geo.attributes.position
+      const morphs = geo.morphAttributes.position
+      let maxX = -Infinity
+      for (let i = 0; i < pos.count; i++) maxX = Math.max(maxX, pos.getX(i))
+      const EPS_CARA = 0.02
+      const capIdx: number[] = []
+      for (let i = 0; i < pos.count; i++) if (pos.getX(i) >= maxX - EPS_CARA) capIdx.push(i)
+
+      // Centroide de la cara = pivote del giro.
+      const C0 = new THREE.Vector3()
+      const pv = new THREE.Vector3()
+      for (const idx of capIdx) { pv.fromBufferAttribute(pos, idx); C0.add(pv) }
+      if (capIdx.length) C0.multiplyScalar(1 / capIdx.length)
+
+      // Para cada morph descomponemos el campo de desplazamiento de la cara en
+      // traslación media (t) + rotación rígida (w, vector eje·ángulo) por mínimos
+      // cuadrados: delta_i ≈ t + w × (P_i − C0). Resolviendo B·w = c con
+      // B = Σ(|r|²I − r·rᵀ) y c = Σ(r × (delta_i − t)). Así "abajo"/"arriba" producen
+      // un w no nulo (la cara se inclina) y "uniforme" un w ≈ 0 (solo traslada).
+      const rigidoDeMorph = (key: string): { t: THREE.Vector3; w: THREE.Vector3 } => {
+        const mi = f.morphTargetDictionary![key]
+        const attr = mi !== undefined && morphs ? morphs[mi] : undefined
+        const t = new THREE.Vector3()
+        const w = new THREE.Vector3()
+        if (!attr || capIdx.length === 0) return { t, w }
+        const d = new THREE.Vector3()
+        for (const idx of capIdx) { d.fromBufferAttribute(attr, idx); t.add(d) }
+        t.multiplyScalar(1 / capIdx.length)
+        let B00 = 0, B11 = 0, B22 = 0, B01 = 0, B02 = 0, B12 = 0, cx = 0, cy = 0, cz = 0
+        const r = new THREE.Vector3()
+        const dd = new THREE.Vector3()
+        for (const idx of capIdx) {
+          pv.fromBufferAttribute(pos, idx); r.copy(pv).sub(C0)
+          dd.fromBufferAttribute(attr, idx); dd.sub(t)
+          B00 += r.y * r.y + r.z * r.z
+          B11 += r.x * r.x + r.z * r.z
+          B22 += r.x * r.x + r.y * r.y
+          B01 -= r.x * r.y; B02 -= r.x * r.z; B12 -= r.y * r.z
+          cx += r.y * dd.z - r.z * dd.y
+          cy += r.z * dd.x - r.x * dd.z
+          cz += r.x * dd.y - r.y * dd.x
+        }
+        const m = new THREE.Matrix3().set(B00, B01, B02, B01, B11, B12, B02, B12, B22)
+        w.set(cx, cy, cz).applyMatrix3(m.invert())
+        return { t, w }
+      }
+
+      fuelleEdgeDeltasRef.current = {
+        C0,
+        u: rigidoDeMorph('Cerr_uniforme'),
+        a: rigidoDeMorph('Cerr_abajo'),
+        r: rigidoDeMorph('Cerr_arriba'),
+      }
     }
 
     onMallasDetectadas(lista.map((m) => ({ nombre: m.name, grupo: grupoDePieza(m.name) })))
+
+    // DEBUG TEMPORAL: volcar posiciones WORLD reales de las piezas clave.
+    if (typeof window !== 'undefined') {
+      ;(window as any).__visor = { scene, fuelle: fuelleMesh.current, ladoBajos: ladoBajosObjects.current, ed: fuelleEdgeDeltasRef.current, notaAMesh: notaAMeshRef.current, notasActivas: notasActivasRef.current }
+      const bb = new THREE.Box3()
+      const nombres = ['Fuelle', 'marco Fuelle 2', 'Caja izquierda del acordeon, bajos',
+        'Boton_I_01', 'Boton_I_06', 'Boton_I_12', 'Caja botones principales', 'Boton_D_01']
+      const filas = nombres.map((nm) => {
+        const o = scene.getObjectByName(nm)
+        if (!o) return `${nm}: NO ENCONTRADO`
+        bb.setFromObject(o)
+        const wp = o.getWorldPosition(new THREE.Vector3())
+        return `${nm} | worldBBoxX[${bb.min.x.toFixed(3)},${bb.max.x.toFixed(3)}] | localPos[${o.position.x.toFixed(3)},${o.position.y.toFixed(3)},${o.position.z.toFixed(3)}] | worldPos[${wp.x.toFixed(3)},${wp.y.toFixed(3)},${wp.z.toFixed(3)}]`
+      })
+      const ed = fuelleEdgeDeltasRef.current
+      // eslint-disable-next-line no-console
+      console.log('[Visor3D DEBUG]\n' + filas.join('\n')
+        + `\nC0=${ed?.C0.toArray().map((x) => +x.toFixed(3))}`
+        + `\nu t=${ed?.u.t.toArray().map((x) => +x.toFixed(3))} w=${ed?.u.w.toArray().map((x) => +x.toFixed(4))}`
+        + `\na t=${ed?.a.t.toArray().map((x) => +x.toFixed(3))} w=${ed?.a.w.toArray().map((x) => +x.toFixed(4))}`
+        + `\nr t=${ed?.r.t.toArray().map((x) => +x.toFixed(3))} w=${ed?.r.w.toArray().map((x) => +x.toFixed(4))}`
+        + `\nladoBajos detectados (${ladoBajosObjects.current.length}): ${ladoBajosObjects.current.map((o) => o.name).join(', ')}`)
+    }
   }, [scene, onMallasDetectadas])
 
   // UN SOLO useEffect que aplica TODO: color, roughness, metalness, mapas y emissive
@@ -283,6 +452,18 @@ function Modelo({
     if (pulseEpoch) pulse.current = { mesh: pulseEpoch.mesh, t: 0 }
   }, [pulseEpoch])
 
+  // Suscripción a las notas reales del acordeón: cuando se pisa/suelta un botón (teclado,
+  // click 2D, MIDI, pista) marcamos/desmarcamos su mesh 3D para que se hunda en useFrame.
+  React.useEffect(() => {
+    const off = subscribirNotas((e) => {
+      const nombreMesh = notaAMeshRef.current[keyDeId(e.idBoton)]
+      if (!nombreMesh) return
+      if (e.accion === 'down') notasActivasRef.current.add(nombreMesh)
+      else notasActivasRef.current.delete(nombreMesh)
+    })
+    return off
+  }, [])
+
   useFrame((_, delta) => {
     const fuelle = fuelleMesh.current
 
@@ -349,22 +530,34 @@ function Modelo({
       setInflu('Cerr_arriba',   influShapeArriba)
     }
 
-    // 4) Contracción total = suma de contracciones de cada shape key activa.
-    //    Define cuánto se ha movido el extremo derecho del fuelle hacia -X.
-    let contraccionTotal = 0
-    if (fuelle?.morphTargetInfluences && fuelle.morphTargetDictionary) {
+    // 4) Desplazamiento REAL del extremo del fuelle = combinación lineal de los
+    //    desplazamientos medidos de cada morph activo (calculados en la detección).
+    //    El lado bajos seguirá ESTE vector, así queda siempre pegado al fuelle.
+    const edgeDelta = edgeDeltaTmp.current.set(0, 0, 0)
+    const rotVec = rotVecTmp.current.set(0, 0, 0)
+    const deltas = fuelleEdgeDeltasRef.current
+    if (deltas && fuelle?.morphTargetInfluences && fuelle.morphTargetDictionary) {
       const infl = fuelle.morphTargetInfluences
       const dict = fuelle.morphTargetDictionary
       const uni = infl[dict['Cerr_uniforme'] ?? -1] ?? 0
       const ab = infl[dict['Cerr_abajo'] ?? -1] ?? 0
       const ar = infl[dict['Cerr_arriba'] ?? -1] ?? 0
-      contraccionTotal += uni * CONTRACCION_UNIFORME_X
-      contraccionTotal += ab * CONTRACCION_ABAJO_X
-      contraccionTotal += ar * CONTRACCION_ARRIBA_X
+      edgeDelta.addScaledVector(deltas.u.t, uni)
+      edgeDelta.addScaledVector(deltas.a.t, ab)
+      edgeDelta.addScaledVector(deltas.r.t, ar)
+      rotVec.addScaledVector(deltas.u.w, uni)
+      rotVec.addScaledVector(deltas.a.w, ab)
+      rotVec.addScaledVector(deltas.r.w, ar)
     }
-    // Snap final: si contraccionTotal es chiquito, el marco se queda en su posición
-    // ORIGINAL exacta — fijo, no flotando un pelo.
-    if (Math.abs(contraccionTotal) < SNAP_EPS) contraccionTotal = 0
+    // El vector de rotación (rotVec) representa eje·ángulo; lo convertimos a quaternion.
+    // El cierre uniforme da rotVec≈0 → quaternion identidad (solo traslación).
+    const angulo = rotVec.length()
+    const qR = quatTmp.current
+    if (angulo > 1e-5) {
+      qR.setFromAxisAngle(rotAxisTmp.current.copy(rotVec).divideScalar(angulo), angulo)
+    } else {
+      qR.identity()
+    }
 
     // Calcular pulse (hundimiento) ANTES de mover el lado bajos, para combinarlos.
     let pulseFactor = 0
@@ -380,77 +573,87 @@ function Modelo({
       pulseMeshName = pulse.current.mesh
     }
 
-    // Mover el lado bajos (caja + marco fuelle 2 + 12 botones I) por -contraccionTotal
-    // en X. Si un objeto de ese grupo está siendo pulsado, sumamos también su offset de
-    // hundimiento para que ambos efectos se vean al mismo tiempo.
-    for (const obj of ladoBajosObjects.current) {
-      // Capturar origX/origPos DEFENSIVAMENTE si todavía no se hizo (puede ser que
-      // el objeto entró al lado bajos pero no era mesh y no llegó a setear originalPos).
-      if (obj.userData.origX === undefined) obj.userData.origX = obj.position.x
-      if (!obj.userData.originalPos) obj.userData.originalPos = obj.position.clone()
-      const origX = obj.userData.origX as number
-      const origPos = obj.userData.originalPos as THREE.Vector3
-      const hundirOffset = (pulseMeshName === obj.name)
-        ? obj.userData.hundirOffset as THREE.Vector3 | undefined
-        : undefined
-      obj.position.x = origX - contraccionTotal + (hundirOffset ? hundirOffset.x * pulseFactor : 0)
-      obj.position.y = origPos.y + (hundirOffset ? hundirOffset.y * pulseFactor : 0)
-      obj.position.z = origPos.z + (hundirOffset ? hundirOffset.z * pulseFactor : 0)
-    }
-
-    // Debug: una vez cada ~2 segundos, log las posiciones del marco y caja bajos.
-    // Esto nos dice si el código mueve correctamente o no.
-    const debugRef = fuelle?.userData as { _debugT?: number } | undefined
-    if (debugRef) {
-      debugRef._debugT = (debugRef._debugT ?? 0) + delta
-      if (debugRef._debugT >= 2) {
-        debugRef._debugT = 0
-        const marco = ladoBajosObjects.current.find((o) => o.name === 'marco Fuelle 2')
-        const caja = ladoBajosObjects.current.find((o) => o.name === 'Caja izquierda del acordeon, bajos')
-        const boton = ladoBajosObjects.current.find((o) => o.name === 'Boton_I_01')
-        // eslint-disable-next-line no-console
-        console.log('[Visor3D] frame state',
-          'contraccion:', contraccionTotal.toFixed(4),
-          'marco.x:', marco?.position.x.toFixed(4),
-          'caja.x:', caja?.position.x.toFixed(4),
-          'boton.x:', boton?.position.x.toFixed(4),
-          'ladoBajos count:', ladoBajosObjects.current.length,
-        )
+    // Factor de hundimiento por nota sostenida (0..1) con damping: 1 mientras la nota está
+    // pisada, vuelve a 0 al soltarla. Se guarda por mesh en userData.hundirFactor.
+    const sinkFactor = (obj: THREE.Object3D) => {
+      const activo = notasActivasRef.current.has(obj.name)
+      // Ataque INSTANTÁNEO al pisar (cero latencia: salta a 1 en el frame de la nota) y
+      // release suave al soltar (damping). Así el botón reacciona en el momento exacto.
+      let f: number
+      if (activo) {
+        f = 1
+      } else {
+        f = THREE.MathUtils.damp((obj.userData.hundirFactor as number | undefined) ?? 0, 0, 26, delta)
+        if (f < 0.004) f = 0
       }
+      obj.userData.hundirFactor = f
+      return f
     }
 
-    // 4) Pulse del click para piezas que NO son del lado bajos (botones D, otras piezas).
+    // Mover el lado bajos (caja + marco fuelle 2 + 12 botones I) siguiendo el extremo del
+    // fuelle (edgeDelta). Todos parten de su posición original (0,0,0 baked) y se trasladan
+    // por el MISMO vector → quedan rígidos entre sí Y pegados al fuelle. Si un objeto del
+    // grupo está pulsado, sumamos su hundimiento encima.
+    const C0 = deltas ? deltas.C0 : null
+    for (const obj of ladoBajosObjects.current) {
+      if (!obj.userData.originalPos) obj.userData.originalPos = obj.position.clone()
+      if (!obj.userData.originalQuat) obj.userData.originalQuat = obj.quaternion.clone()
+      const origPos = obj.userData.originalPos as THREE.Vector3
+      const origQuat = obj.userData.originalQuat as THREE.Quaternion
+      // Rotación rígida del lado bajos: qR (inclinación del extremo del fuelle) compuesta
+      // con la orientación original de cada objeto.
+      obj.quaternion.copy(qR).multiply(origQuat)
+      // Posición: rotamos la posición original alrededor del pivote C0 (centroide del
+      // extremo del fuelle) y luego trasladamos por edgeDelta. Así la caja queda pegada
+      // al fuelle Y se inclina igual que su cara.
+      const piv = pivTmp.current
+      if (C0) piv.copy(origPos).sub(C0).applyQuaternion(qR).add(C0).add(edgeDelta)
+      else piv.copy(origPos).add(edgeDelta)
+      // Hundimiento = max(nota sostenida, pulse del click), rotado por qR para hundirse
+      // perpendicular a la caja inclinada.
+      const hundirOffset = obj.userData.hundirOffset as THREE.Vector3 | undefined
+      if (hundirOffset) {
+        const factor = Math.max(sinkFactor(obj), pulseMeshName === obj.name ? pulseFactor : 0)
+        if (factor > 0) {
+          piv.add(hundirTmp.current.copy(hundirOffset).applyQuaternion(qR).multiplyScalar(factor))
+        }
+      }
+      obj.position.copy(piv)
+    }
+
+    // Hundir botones de melodía (Boton_D): no se mueven con el fuelle, sólo se hunden.
+    // factor = max(nota sostenida, pulse del click). Al soltar, el damping los devuelve.
+    for (const m of botonesDRef.current) {
+      const offset = m.userData.hundirOffset as THREE.Vector3 | undefined
+      const origPos = m.userData.originalPos as THREE.Vector3 | undefined
+      if (!offset || !origPos) continue
+      const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
+      m.position.set(
+        origPos.x + offset.x * factor,
+        origPos.y + offset.y * factor,
+        origPos.z + offset.z * factor,
+      )
+    }
+
+    // Pulse del click para piezas GENÉRICAS (caja, marco, fuelle): mini-flash emissive azul.
+    // Los botones (con hundirOffset) ya se hunden en los loops de arriba.
     if (pulse.current) {
       const mesh = scene.getObjectByName(pulseMeshName!) as THREE.Mesh | undefined
       const esLadoBajos = mesh ? ladoBajosObjects.current.includes(mesh) : false
-      if (mesh && !esLadoBajos) {
-        const offsetLocal = mesh.userData.hundirOffset as THREE.Vector3 | undefined
-        const origPos = mesh.userData.originalPos as THREE.Vector3 | undefined
-
-        if (offsetLocal && origPos) {
-          mesh.position.x = origPos.x + offsetLocal.x * pulseFactor
-          mesh.position.y = origPos.y + offsetLocal.y * pulseFactor
-          mesh.position.z = origPos.z + offsetLocal.z * pulseFactor
-        } else {
-          // Pieza generica (caja, marco, fuelle): mini-flash emissive azul.
-          const mat = mesh.material as THREE.MeshStandardMaterial
-          if (mat && (mat as any).isMeshStandardMaterial) {
-            mat.emissive.set('#60a5fa')
-            mat.emissiveIntensity = pulseFactor * 0.9
-            mat.needsUpdate = true
-          }
+      if (mesh && !esLadoBajos && !mesh.userData.hundirOffset) {
+        const mat = mesh.material as THREE.MeshStandardMaterial
+        if (mat && (mat as any).isMeshStandardMaterial) {
+          mat.emissive.set('#60a5fa')
+          mat.emissiveIntensity = pulseFactor * 0.9
+          mat.needsUpdate = true
         }
       }
     }
-    // Cleanup del pulse cuando termina su duracion.
+    // Cleanup del pulse cuando termina su duracion (sólo restaura emissive; las posiciones
+    // de los botones las gobiernan los loops cada frame).
     if (pulse.current && pulse.current.t >= 0.14) {
       const mesh = scene.getObjectByName(pulse.current.mesh) as THREE.Mesh | undefined
       if (mesh) {
-        const esLadoBajos = ladoBajosObjects.current.includes(mesh)
-        if (!esLadoBajos && mesh.userData.originalPos) {
-          // Piezas no-lado-bajos: restaurar position. Las del lado bajos las maneja el loop.
-          mesh.position.copy(mesh.userData.originalPos as THREE.Vector3)
-        }
         const mat = mesh.material as THREE.MeshStandardMaterial | undefined
         if (mat && (mat as any).isMeshStandardMaterial) {
           if (mesh.name === piezaSeleccionada) {
@@ -509,7 +712,7 @@ interface VisorAcordeon3DProps {
 const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
   return (
     <div className="visor-acordeon-3d-stage">
-      <Canvas camera={{ position: [0, 1.2, 6], fov: 32 }} dpr={[1, 1.8]}>
+      <Canvas camera={{ position: [0, 1.2, 6], fov: 32 }} dpr={[1, 1.25]}>
         <React.Suspense fallback={null}>
           {/* Envmap procedural local — indispensable para que el acabado "Cromo" /
               metalness alto se vea como un metal real (sin esto se ven negros porque

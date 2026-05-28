@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { Check, Pause, Play, RotateCcw, Square, Upload, Mic2, Music2, Activity, Circle } from 'lucide-react';
+import { Check, Pause, Play, RotateCcw, Square, Upload, Mic2, Music2, Activity, Circle, Library, User } from 'lucide-react';
 import type { PistaPracticaLibre, PreferenciasPracticaLibre } from '../TiposPracticaLibre';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
 import PanelMetronomoStudio from '../../GrabadorV2/componentes/PanelMetronomoStudio';
+import MisPistasUsuario from './MisPistasUsuario';
 
 export type ModoGrabacionPL = 'libre' | 'pista' | 'metronomo';
 
@@ -42,8 +43,17 @@ const SeccionPLPistas: React.FC<Props> = ({
   onAlternarCapa, preferencias,
   modoGrabacion, onCambiarModoGrabacion, metronomo,
   grabando, tiempoGrabacionTexto, onAlternarGrabacion,
-}) => (
+}) => {
+  // Sub-pestaña dentro del modo "pista": ver catálogo curado o las pistas propias del alumno.
+  const [tabPistas, setTabPistas] = React.useState<'catalogo' | 'mis_pistas'>('mis_pistas');
+  // Cuando una pista del alumno está activa en el reproductor inline, ocultamos los
+  // bloques de arriba (modo grabación, tabs, controles del catálogo) para dejarle todo
+  // el espacio. Volver desde el reproductor restaura la vista normal.
+  const [reproductorActivo, setReproductorActivo] = React.useState(false);
+
+  return (
   <div className="estudio-practica-libre-seccion">
+    {!reproductorActivo && (
     <div className="estudio-practica-libre-bloque">
       <div className="estudio-practica-libre-bloque-titulo">Modo de grabación</div>
       <div className="estudio-practica-libre-grid-chips">
@@ -72,69 +82,102 @@ const SeccionPLPistas: React.FC<Props> = ({
         {grabando ? `Detener REC ${tiempoGrabacionTexto}` : 'REC'}
       </button>
     </div>
+    )}
 
-    {modoGrabacion === 'pista' && (
-      <>
-        <div className="estudio-practica-libre-bloque">
-          <div className="estudio-practica-libre-bloque-titulo">Pista activa</div>
-          <div className="estudio-practica-libre-pista-activa">
-            <div>
-              <strong>{pistaActiva?.nombre || 'Sin pista seleccionada'}</strong>
-              <span>
-                {pistaActiva
-                  ? `${tiempoPista} / ${duracionPista}${pistaActiva.bpm ? ` · ${pistaActiva.bpm} BPM` : ''}`
-                  : 'Carga una pista local o elige una del catalogo.'}
-              </span>
-            </div>
-            <div className="estudio-practica-libre-pista-botones">
-              <button className="estudio-practica-libre-icon-btn" onClick={onAlternarReproduccionPista} disabled={!pistaActiva}>
-                {reproduciendoPista ? <Pause size={15} /> : <Play size={15} />}
-              </button>
-              <button className="estudio-practica-libre-icon-btn" onClick={onReiniciarPista} disabled={!pistaActiva}><RotateCcw size={15} /></button>
-              <button className="estudio-practica-libre-icon-btn" onClick={onLimpiarPista} disabled={!pistaActiva}><Square size={15} /></button>
-            </div>
+    {modoGrabacion === 'pista' && !reproductorActivo && (
+      <div className="estudio-practica-libre-bloque">
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+          <button
+            onClick={() => setTabPistas('mis_pistas')}
+            className={`estudio-practica-libre-chip-boton ${tabPistas === 'mis_pistas' ? 'activo' : ''}`}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+          >
+            <User size={13} /> Mis pistas
+          </button>
+          <button
+            onClick={() => setTabPistas('catalogo')}
+            className={`estudio-practica-libre-chip-boton ${tabPistas === 'catalogo' ? 'activo' : ''}`}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+          >
+            <Library size={13} /> Catálogo
+          </button>
+        </div>
+      </div>
+    )}
+
+    {modoGrabacion === 'pista' && tabPistas === 'mis_pistas' && (
+      <div className="estudio-practica-libre-bloque">
+        <MisPistasUsuario onReproductorActivo={setReproductorActivo} />
+      </div>
+    )}
+
+    {modoGrabacion === 'pista' && tabPistas === 'catalogo' && (
+      <div className="estudio-practica-libre-bloque">
+        <div className="estudio-practica-libre-bloque-titulo">Pista activa</div>
+        <div className="estudio-practica-libre-pista-activa">
+          <div>
+            <strong>{pistaActiva?.nombre || 'Sin pista seleccionada'}</strong>
+            <span>
+              {pistaActiva
+                ? `${tiempoPista} / ${duracionPista}${pistaActiva.bpm ? ` · ${pistaActiva.bpm} BPM` : ''}`
+                : 'Carga una pista local o elige una del catalogo.'}
+            </span>
+          </div>
+          <div className="estudio-practica-libre-pista-botones">
+            <button className="estudio-practica-libre-icon-btn" onClick={onAlternarReproduccionPista} disabled={!pistaActiva}>
+              {reproduciendoPista ? <Pause size={15} /> : <Play size={15} />}
+            </button>
+            <button className="estudio-practica-libre-icon-btn" onClick={onReiniciarPista} disabled={!pistaActiva}><RotateCcw size={15} /></button>
+            <button className="estudio-practica-libre-icon-btn" onClick={onLimpiarPista} disabled={!pistaActiva}><Square size={15} /></button>
           </div>
         </div>
-        <div className="estudio-practica-libre-bloque">
-          <label className="estudio-practica-libre-carga-local">
-            <Upload size={16} />Cargar pista local
-            <input type="file" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) onCargarArchivoLocal(f); e.target.value = ''; }} />
-          </label>
+      </div>
+    )}
+
+    {modoGrabacion === 'pista' && tabPistas === 'catalogo' && (
+      <div className="estudio-practica-libre-bloque">
+        <label className="estudio-practica-libre-carga-local">
+          <Upload size={16} />Cargar pista local
+          <input type="file" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) onCargarArchivoLocal(f); e.target.value = ''; }} />
+        </label>
+      </div>
+    )}
+
+    {modoGrabacion === 'pista' && tabPistas === 'catalogo' && pistaActiva?.capas && pistaActiva.capas.length > 0 && (
+      <div className="estudio-practica-libre-bloque">
+        <div className="estudio-practica-libre-bloque-titulo">Capas sincronizadas</div>
+        <div className="estudio-practica-libre-grid-chips">
+          {pistaActiva.capas.map((capa) => (
+            <button key={capa.id}
+              className={`estudio-practica-libre-chip-boton ${preferencias.capasActivas.includes(capa.id) ? 'activo' : ''}`}
+              onClick={() => onAlternarCapa(capa.id)}>{capa.nombre}</button>
+          ))}
         </div>
-        {pistaActiva?.capas && pistaActiva.capas.length > 0 && (
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Capas sincronizadas</div>
-            <div className="estudio-practica-libre-grid-chips">
-              {pistaActiva.capas.map((capa) => (
-                <button key={capa.id}
-                  className={`estudio-practica-libre-chip-boton ${preferencias.capasActivas.includes(capa.id) ? 'activo' : ''}`}
-                  onClick={() => onAlternarCapa(capa.id)}>{capa.nombre}</button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="estudio-practica-libre-bloque">
-          <div className="estudio-practica-libre-bloque-titulo">Catalogo disponible</div>
-          <div className="estudio-practica-libre-lista-vertical pista-lista">
-            {cargandoPistas && <div className="estudio-practica-libre-vacio">Cargando pistas disponibles...</div>}
-            {!cargandoPistas && pistasDisponibles.length === 0 && (
-              <div className="estudio-practica-libre-vacio">Todavia no hay pistas precargadas. Ya puedes probar con una pista local.</div>
-            )}
-            {pistasDisponibles.map((pista) => (
-              <button key={pista.id}
-                className={`estudio-practica-libre-item-lista ${pistaActiva?.id === pista.id ? 'activo' : ''}`}
-                onClick={() => onSeleccionarPista(pista)}>
-                <div>
-                  <strong>{pista.nombre}</strong>
-                  <span>{[pista.artista, pista.tonalidad, pista.bpm ? `${pista.bpm} BPM` : null].filter(Boolean).join(' · ') || 'Pista de practica'}</span>
-                </div>
-                {pistaActiva?.id === pista.id && <Check size={16} />}
-              </button>
-            ))}
-          </div>
+      </div>
+    )}
+
+    {modoGrabacion === 'pista' && tabPistas === 'catalogo' && (
+      <div className="estudio-practica-libre-bloque">
+        <div className="estudio-practica-libre-bloque-titulo">Catalogo disponible</div>
+        <div className="estudio-practica-libre-lista-vertical pista-lista">
+          {cargandoPistas && <div className="estudio-practica-libre-vacio">Cargando pistas disponibles...</div>}
+          {!cargandoPistas && pistasDisponibles.length === 0 && (
+            <div className="estudio-practica-libre-vacio">Todavia no hay pistas precargadas. Ya puedes probar con una pista local.</div>
+          )}
+          {pistasDisponibles.map((pista) => (
+            <button key={pista.id}
+              className={`estudio-practica-libre-item-lista ${pistaActiva?.id === pista.id ? 'activo' : ''}`}
+              onClick={() => onSeleccionarPista(pista)}>
+              <div>
+                <strong>{pista.nombre}</strong>
+                <span>{[pista.artista, pista.tonalidad, pista.bpm ? `${pista.bpm} BPM` : null].filter(Boolean).join(' · ') || 'Pista de practica'}</span>
+              </div>
+              {pistaActiva?.id === pista.id && <Check size={16} />}
+            </button>
+          ))}
         </div>
-      </>
+      </div>
     )}
 
     {modoGrabacion === 'metronomo' && (
@@ -152,7 +195,8 @@ const SeccionPLPistas: React.FC<Props> = ({
         </div>
       </div>
     )}
-  </div>
-);
+    </div>
+  );
+};
 
 export default SeccionPLPistas;

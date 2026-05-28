@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '../../servicios/clienteSupabase';
 import { motorAudioPro } from '../audio/AudioEnginePro';
+import { emitirNota } from '../audio/emisorNotasAcordeon';
 import { encontrarMejorMuestra, type Muestra } from '../audio/UniversalSampler';
 import { mapaTeclas, tono } from '../acordeon/mapaTecladoYFrecuencias';
 import { mapaTeclasBajos, TONALIDADES } from '../acordeon/notasAcordeonDiatonico';
@@ -380,7 +381,12 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 botonesActivosRef.current = botonesActivosStore.getSnapshot();
             }
 
-            if (!silencioso) onNotaPresionada?.({ idBoton: id, nombre: id });
+            if (!silencioso) {
+                onNotaPresionada?.({ idBoton: id, nombre: id });
+                // Además del callback prop existente, emitimos al pub/sub global para que cualquier
+                // grabador suscrito (ej. el del reproductor de pista del alumno) capture la nota.
+                emitirNota(id, 'down');
+            }
         } else {
             if (!botonesActivosRef.current[id]) return;
 
@@ -395,7 +401,10 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 botonesActivosRef.current = botonesActivosStore.getSnapshot();
             }
 
-            if (!silencioso) onNotaLiberada?.({ idBoton: id, nombre: id });
+            if (!silencioso) {
+                onNotaLiberada?.({ idBoton: id, nombre: id });
+                emitirNota(id, 'up');
+            }
         }
     }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
 
