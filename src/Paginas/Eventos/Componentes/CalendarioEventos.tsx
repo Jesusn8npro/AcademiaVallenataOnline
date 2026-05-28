@@ -11,16 +11,19 @@ interface CalendarioEventosProps {
   vistaInicial?: 'grid' | 'lista';
   mostrarFiltros?: boolean;
   eventosPorPagina?: number;
+  eventosIniciales?: any[];
+  totalInicial?: number;
 }
 
 const CalendarioEventos: React.FC<CalendarioEventosProps> = ({
   vistaInicial = 'grid', mostrarFiltros = true, eventosPorPagina = 12,
+  eventosIniciales, totalInicial,
 }) => {
   const navigate = useNavigate();
   const {
     vista, setVista, eventos, loading, error, paginaActual, setPaginaActual,
     totalPaginas, filtros, handleFiltroChange, limpiarFiltros, cargarEventos,
-  } = useCalendarioEventos(eventosPorPagina, vistaInicial);
+  } = useCalendarioEventos(eventosPorPagina, vistaInicial, { eventosIniciales, totalInicial });
 
   return (
     <div className="evt-cal-container">
