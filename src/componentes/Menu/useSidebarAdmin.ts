@@ -133,23 +133,42 @@ export function useSidebarAdmin() {
 
   const cargarProgresoEstudiante = async () => {
     if (!usuario || tipoUsuario !== 'estudiante') return;
+
+    // Cache stale-while-revalidate: si hay datos previos, los mostramos
+    // instantáneamente mientras refrescamos. Evita el "0/0/0" mientras carga.
+    const claveCache = `sidebar-estudiante-progreso:${usuario.id}`;
+    const cached = leerCacheStale<ProgresoEstudiante>(claveCache);
+    if (cached) setProgresoEstudiante(cached);
+
+    // Promise.allSettled + timeout: si UNA query falla (token corrupto, RLS,
+    // tabla inexistente), las otras igual cargan. Antes con Promise.all UNA
+    // falla dejaba todo en 0.
+    const withTimeout = <T,>(p: PromiseLike<T>): Promise<T> => Promise.race([
+      Promise.resolve(p),
+      new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+    ]);
+    const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
     try {
       const [inscripcionesResult, progresoLeccionesResult, progresoTutorialesResult, rankingResult, sesionesResult] =
-        await Promise.all([
-          supabase.from('inscripciones').select('*, cursos(titulo)').eq('usuario_id', usuario.id),
-          supabase.from('progreso_lecciones').select('porcentaje_completado, estado').eq('usuario_id', usuario.id),
-          supabase.from('progreso_tutorial').select('completado, ultimo_acceso').eq('usuario_id', usuario.id),
-          supabase.from('ranking_global').select('puntuacion, posicion').eq('usuario_id', usuario.id).maybeSingle(),
-          supabase.from('sesiones_usuario').select('created_at').eq('usuario_id', usuario.id)
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-            .order('created_at', { ascending: false })
+        await Promise.allSettled([
+          withTimeout(supabase.from('inscripciones').select('*, cursos(titulo)').eq('usuario_id', usuario.id)),
+          withTimeout(supabase.from('progreso_lecciones').select('porcentaje_completado, estado').eq('usuario_id', usuario.id)),
+          withTimeout(supabase.from('progreso_tutorial').select('completado, ultimo_acceso').eq('usuario_id', usuario.id)),
+          withTimeout(supabase.from('ranking_global').select('puntuacion, posicion').eq('usuario_id', usuario.id).maybeSingle()),
+          withTimeout(supabase.from('sesiones_usuario').select('created_at').eq('usuario_id', usuario.id)
+            .gte('created_at', hace7Dias)
+            .order('created_at', { ascending: false })),
         ]);
 
-      const inscripciones = inscripcionesResult.data || [];
-      const progresoLecciones = progresoLeccionesResult.data || [];
-      const progresoTutoriales = progresoTutorialesResult.data || [];
-      const ranking = rankingResult.data as any;
-      const sesiones = sesionesResult.data || [];
+      const data = (res: PromiseSettledResult<any>): any =>
+        res.status === 'fulfilled' ? ((res.value as any)?.data ?? null) : null;
+
+      const inscripciones = data(inscripcionesResult) || [];
+      const progresoLecciones = data(progresoLeccionesResult) || [];
+      const progresoTutoriales = data(progresoTutorialesResult) || [];
+      const ranking = data(rankingResult);
+      const sesiones = data(sesionesResult) || [];
 
       const cursosActivos = inscripciones.filter((i: any) => !i.completado).length;
       const cursosCompletados = inscripciones.filter((i: any) => i.completado).length;
@@ -178,11 +197,13 @@ export function useSidebarAdmin() {
 
       const porcentajeProgreso = totalCursos > 0 ? Math.round((cursosCompletados / totalCursos) * 100) : 0;
 
-      setProgresoEstudiante({
+      const nuevoProgreso: ProgresoEstudiante = {
         cursosCompletados, cursosEnProgreso: cursosActivos, porcentajeProgreso,
         miembrosComunidad: 0, leccionesCompletadas: totalActividadesCompletadas,
-        tutorialesCompletados, totalTutoriales, puntos, racha
-      });
+        tutorialesCompletados, totalTutoriales, puntos, racha,
+      };
+      setProgresoEstudiante(nuevoProgreso);
+      guardarCache(claveCache, nuevoProgreso);
       seleccionarMensajeMotivacional(racha, totalActividadesCompletadas);
     } catch {
       // ignore progress load errors

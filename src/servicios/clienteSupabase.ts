@@ -10,8 +10,6 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 // AMBOS clientes son singletons sobre globalThis para sobrevivir HMR.
 // Bug conocido (supabase-js #37755): si createClient se llama múltiples veces,
 // crea instancias duplicadas de GoTrueClient → warning + queries CUELGAN.
-// Antes supabaseAnonimo NO era singleton → se recreaba en cada HMR
-// → todo cargaba lento y las queries colgaban en panel-contenido y sidebars.
 const globalAny: any = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : {};
 
 if (!globalAny.__INSTANCIA_SUPABASE) {
@@ -25,15 +23,24 @@ if (!globalAny.__INSTANCIA_SUPABASE) {
     });
 }
 
+// noOpLock: el cliente Supabase usa el Web Locks API del navegador para
+// serializar operaciones de auth. Cuando hay 2 clientes activos (authenticated
+// + anonimo) compitiendo por el mismo lock, uno "roba" el lock del otro con
+// la opción 'steal' → "Lock broken by another request" → AbortError.
+// supabaseAnonimo NO necesita locks (no persiste sesión, no refresca tokens),
+// así que le pasamos un lock que no hace nada.
+// Issue: https://github.com/supabase/supabase-js/issues/2111
+const noOpLock = async <T>(_name: string, _acquireTimeout: number, fn: () => Promise<T>): Promise<T> => {
+    return await fn();
+};
+
 if (!globalAny.__INSTANCIA_SUPABASE_ANONIMO) {
     globalAny.__INSTANCIA_SUPABASE_ANONIMO = createClient(URL_SUPABASE, LLAVE_ANON_SUPABASE, {
         auth: {
             persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false,
-            // storageKey distinto: evita que ambos clientes peleen por el mismo
-            // localStorage (causa de warnings "Multiple GoTrueClient instances").
-            storageKey: 'supabase.anon.notoken',
+            lock: noOpLock,
         }
     });
 }
