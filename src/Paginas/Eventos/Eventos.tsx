@@ -6,7 +6,12 @@ import { useUsuario } from '../../contextos/UsuarioContext';
 import CalendarioEventos from './Componentes/CalendarioEventos';
 import './eventos.css';
 
-const Eventos: React.FC = () => {
+interface EventosProps {
+  eventosIniciales?: any[];
+  totalInicial?: number;
+}
+
+const Eventos: React.FC<EventosProps> = ({ eventosIniciales, totalInicial } = {}) => {
   const { usuario } = useUsuario();
   const [mostrarBannerBienvenida, setMostrarBannerBienvenida] = useState(true);
 
@@ -195,7 +200,9 @@ const Eventos: React.FC = () => {
         <CalendarioEventos
           mostrarFiltros={true}
           eventosPorPagina={12}
-          vistaInicial={'grid'} // React prop
+          vistaInicial={'grid'}
+          eventosIniciales={eventosIniciales}
+          totalInicial={totalInicial}
         />
       </div>
     </main>

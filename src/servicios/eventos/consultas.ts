@@ -4,7 +4,12 @@ import { mapearEvento } from './_tipos';
 
 export async function obtenerEventos(filtros?: FiltrosEventos): Promise<{ eventos: EventoCompleto[]; total: number; error?: string }> {
     try {
-        let query = supabase
+        // supabaseAnonimo: la página /eventos es pública (RLS lo permite).
+        // Antes se usaba el cliente authenticated, que colgaba indefinidamente
+        // cuando el token del usuario estaba corrupto/expirado.
+        // Timeout 8s: si Supabase no responde, devolver array vacío y dejar al
+        // UI mostrar "no hay eventos" en vez de spinner infinito.
+        let query = supabaseAnonimo
             .from('eventos')
             .select('*', { count: 'exact' })
             .order('fecha_inicio', { ascending: false });
@@ -30,13 +35,16 @@ export async function obtenerEventos(filtros?: FiltrosEventos): Promise<{ evento
         if (filtros?.limit) query = query.limit(filtros.limit);
         if (filtros?.offset) query = query.range(filtros.offset, filtros.offset + (filtros.limit || 10) - 1);
 
-        const { data, count, error } = await query;
+        const timeout = new Promise<{ data: null; count: null; error: any }>((_, rej) =>
+            setTimeout(() => rej(new Error('timeout')), 8000),
+        );
+        const { data, count, error }: any = await Promise.race([query, timeout]);
 
         if (error) {
             return { eventos: [], total: 0, error: 'Error al cargar eventos' };
         }
 
-        return { eventos: data.map((e: any) => mapearEvento(e, false)), total: count || 0 };
+        return { eventos: (data || []).map((e: any) => mapearEvento(e, false)), total: count || 0 };
     } catch (error) {
         return { eventos: [], total: 0, error: 'Error al cargar eventos' };
     }
@@ -89,7 +97,9 @@ export async function obtenerEventosUsuario(usuarioId: string, filtros?: Filtros
 
 export async function obtenerEventoPorId(eventoId: string): Promise<EventoCompleto | null> {
     try {
-        const { data, error } = await supabase
+        // Página de detalle es pública (eventos publicados). supabaseAnonimo
+        // evita cuelgues por tokens corruptos del cliente autenticado.
+        const { data, error } = await supabaseAnonimo
             .from('eventos')
             .select('*')
             .eq('id', eventoId)
@@ -104,7 +114,8 @@ export async function obtenerEventoPorId(eventoId: string): Promise<EventoComple
 
 export async function obtenerCategorias(): Promise<string[]> {
     try {
-        const { data, error } = await supabase
+        // supabaseAnonimo: catálogo público, no requiere auth.
+        const { data, error } = await supabaseAnonimo
             .from('eventos')
             .select('categoria')
             .not('categoria', 'is', null);
@@ -118,7 +129,7 @@ export async function obtenerCategorias(): Promise<string[]> {
 
 export async function obtenerTiposEvento(): Promise<string[]> {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAnonimo
             .from('eventos')
             .select('tipo_evento')
             .not('tipo_evento', 'is', null);
