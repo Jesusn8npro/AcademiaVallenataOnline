@@ -19,6 +19,14 @@ const nextConfig = {
       // Fotos de perfil de OAuth (Facebook)
       { protocol: 'https', hostname: 'platform-lookaside.fbsbx.com' },
       { protocol: 'https', hostname: '**.fbcdn.net' },
+      // Hosts externos donde el admin puede pegar URLs desde el wizard
+      // (eventos, portadas de tutoriales, etc.). Si el admin pega una URL
+      // desde un host NUEVO no listado aquí, next/image tira "Invalid src
+      // prop" en runtime → agregalo a esta lista.
+      { protocol: 'https', hostname: 'i.pinimg.com' },
+      { protocol: 'https', hostname: '**.imgur.com' },
+      { protocol: 'https', hostname: 'i.imgur.com' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
       // Comunidad: GIFs y banderas de geolocalización
       { protocol: 'https', hostname: 'media.tenor.com' },
       { protocol: 'https', hostname: 'media1.tenor.com' },
