@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from '@/compat/router';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import { supabase } from '../../servicios/clienteSupabase';
+import { leerCacheStale, guardarCache } from '../../utilidades/cacheLocal';
 
 export interface EstadisticasAdmin {
   totalEstudiantes: number;
@@ -90,26 +91,44 @@ export function useSidebarAdmin() {
 
   const cargarEstadisticasAdmin = async () => {
     if (!usuario || tipoUsuario !== 'admin') return;
-    try {
-      const { count: estudiantes } = await supabase
-        .from('perfiles').select('*', { count: 'exact', head: true }).eq('rol', 'estudiante');
-      const { count: cursos } = await supabase
-        .from('cursos').select('*', { count: 'exact', head: true }).eq('estado', 'publicado');
-      const { count: usuariosComunidad } = await supabase
-        .from('perfiles').select('*', { count: 'exact', head: true })
-        .gte('updated_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      setEstadisticasAdmin({
-        totalEstudiantes: estudiantes || 0,
-        totalCursos: cursos || 0,
-        objetivoMensual: 100,
-        porcentajeObjetivo: Math.round(((estudiantes || 0) / 100) * 100),
-        notificacionesPendientes: 0,
-        usuariosComunidad: usuariosComunidad || 0
-      });
-    } catch {
-      // ignore stats load errors
-    }
+    // Stale-while-revalidate: si hay cache, lo mostramos INSTANTÁNEAMENTE
+    // mientras se refresca de Supabase en background. Hace que volver al
+    // sidebar después de navegar no muestre "0 / 0" mientras carga.
+    const claveCache = `sidebar-admin-stats:${usuario.id}`;
+    const cached = leerCacheStale<EstadisticasAdmin>(claveCache);
+    if (cached) setEstadisticasAdmin(cached);
+
+    // Promise.allSettled: si UNA query falla/cuelga (ej. token expirado),
+    // las otras 2 igual aplican sus contadores. Antes con Promise.all una
+    // falla dejaba el sidebar en "0 / 0 / 0" para siempre.
+    // Timeout: 8s — evita que el sidebar quede "Cargando..." si Supabase no responde.
+    const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const withTimeout = <T,>(p: PromiseLike<T>): Promise<T> => Promise.race([
+      Promise.resolve(p),
+      new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+    ]);
+
+    const [estudiantesRes, cursosRes, comunidadRes] = await Promise.allSettled([
+      withTimeout(supabase.from('perfiles').select('*', { count: 'exact', head: true }).eq('rol', 'estudiante')),
+      withTimeout(supabase.from('cursos').select('*', { count: 'exact', head: true }).eq('estado', 'publicado')),
+      withTimeout(supabase.from('perfiles').select('*', { count: 'exact', head: true }).gte('updated_at', hace30Dias)),
+    ]);
+
+    const estudiantes = estudiantesRes.status === 'fulfilled' ? ((estudiantesRes.value as any)?.count || 0) : 0;
+    const cursos = cursosRes.status === 'fulfilled' ? ((cursosRes.value as any)?.count || 0) : 0;
+    const usuariosComunidad = comunidadRes.status === 'fulfilled' ? ((comunidadRes.value as any)?.count || 0) : 0;
+
+    const nuevasStats: EstadisticasAdmin = {
+      totalEstudiantes: estudiantes,
+      totalCursos: cursos,
+      objetivoMensual: 100,
+      porcentajeObjetivo: Math.round((estudiantes / 100) * 100),
+      notificacionesPendientes: 0,
+      usuariosComunidad,
+    };
+    setEstadisticasAdmin(nuevasStats);
+    guardarCache(claveCache, nuevasStats);
   };
 
   const cargarProgresoEstudiante = async () => {

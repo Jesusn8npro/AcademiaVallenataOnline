@@ -45,52 +45,61 @@ const CrearContenido = () => {
       let datosContenido: any = null;
       let errorConsulta: any = null;
 
-      if (tipo === 'curso') {
-        if (esUUID || esNumerico) {
-          const { data, error } = await supabase
-            .from('cursos')
-            .select('*')
-            .eq('id', slugContenido)
-            .single();
-          datosContenido = data; errorConsulta = error;
-        } else {
-          const { data, error } = await supabase
-            .from('cursos')
-            .select('*')
-            .eq('slug', slugContenido)
-            .single();
-          datosContenido = data; errorConsulta = error;
+      // Cuando el identificador ya es un UUID (o numérico para cursos), podemos
+      // disparar la query del contenido y la de su estructura EN PARALELO porque
+      // ambas usan el mismo ID. Antes eran secuenciales (1 query + await + otra),
+      // duplicando el tiempo de carga del wizard de edición.
+      const puedeParalelizar = esUUID || (tipo === 'curso' && esNumerico);
+      if (puedeParalelizar) {
+        const tabla = tipo === 'curso' ? 'cursos' : 'tutoriales';
+        const [contenidoRes] = await Promise.all([
+          supabase.from(tabla).select('*').eq('id', slugContenido).single(),
+          cargarEstructuraContenido(slugContenido, tipo),
+        ]);
+        datosContenido = contenidoRes.data;
+        errorConsulta = contenidoRes.error;
+        if (errorConsulta || !datosContenido) throw new Error(`${tipo === 'curso' ? 'Curso' : 'Tutorial'} no encontrado`);
+        // Merge: cargarEstructuraContenido pudo haber seteado los campos
+        // tiene_evaluacion/monedas_evaluacion (para tutoriales con eval).
+        // Los preservamos al setear los datos del contenido.
+        setDatosIniciales((prev: any) => prev
+          ? { ...datosContenido,
+              tiene_evaluacion: prev.tiene_evaluacion,
+              monedas_evaluacion: prev.monedas_evaluacion,
+              parte_evaluacion_id: prev.parte_evaluacion_id }
+          : datosContenido);
+        return;
+      }
 
-          if (errorConsulta || !datosContenido) {
-            const tituloDesdeSlug = slugContenido.replace(/-/g, ' ');
-            const { data: dataTitulo } = await supabase
-              .from('cursos')
-              .select('*')
-              .ilike('titulo', `%${tituloDesdeSlug}%`);
-            if (Array.isArray(dataTitulo) && dataTitulo.length > 0) {
-              datosContenido = dataTitulo[0];
-              errorConsulta = null;
-            }
+      // Fallback: búsqueda por slug/título — secuencial porque no conocemos el ID.
+      if (tipo === 'curso') {
+        const { data, error } = await supabase
+          .from('cursos')
+          .select('*')
+          .eq('slug', slugContenido)
+          .single();
+        datosContenido = data; errorConsulta = error;
+
+        if (errorConsulta || !datosContenido) {
+          const tituloDesdeSlug = slugContenido.replace(/-/g, ' ');
+          const { data: dataTitulo } = await supabase
+            .from('cursos')
+            .select('*')
+            .ilike('titulo', `%${tituloDesdeSlug}%`);
+          if (Array.isArray(dataTitulo) && dataTitulo.length > 0) {
+            datosContenido = dataTitulo[0];
+            errorConsulta = null;
           }
         }
       } else {
-        if (esUUID) {
-          const { data, error } = await supabase
-            .from('tutoriales')
-            .select('*')
-            .eq('id', slugContenido)
-            .single();
-          datosContenido = data; errorConsulta = error;
-        } else {
-          const tituloDesdeSlug = slugContenido.replace(/-/g, ' ');
-          const { data, error } = await supabase
-            .from('tutoriales')
-            .select('*')
-            .ilike('titulo', `%${tituloDesdeSlug}%`);
-          errorConsulta = error;
-          if (Array.isArray(data) && data.length > 0) {
-            datosContenido = data[0];
-          }
+        const tituloDesdeSlug = slugContenido.replace(/-/g, ' ');
+        const { data, error } = await supabase
+          .from('tutoriales')
+          .select('*')
+          .ilike('titulo', `%${tituloDesdeSlug}%`);
+        errorConsulta = error;
+        if (Array.isArray(data) && data.length > 0) {
+          datosContenido = data[0];
         }
       }
 
@@ -138,7 +147,23 @@ const CrearContenido = () => {
           .select('*')
           .eq('tutorial_id', String(idContenido))
           .order('orden', { ascending: true });
-        if (!errorPartes && partes) setEstructuraInicial(partes || []);
+        if (!errorPartes && partes) {
+          // Separar la parte de evaluación (si existe) de las partes normales.
+          // El toggle de "tiene evaluación" en Paso 1 gestiona esa parte aparte;
+          // si la dejáramos en estructuraInicial el usuario la vería como una
+          // parte editable más, lo cual rompe el flujo.
+          const parteEval = (partes as any[]).find((p: any) => p.tipo_contenido === 'evaluacion');
+          const partesNormales = (partes as any[]).filter((p: any) => p.tipo_contenido !== 'evaluacion');
+          setEstructuraInicial(partesNormales);
+          if (parteEval) {
+            setDatosIniciales((prev: any) => ({
+              ...prev,
+              tiene_evaluacion: true,
+              monedas_evaluacion: parteEval.monedas_recompensa ?? 10,
+              parte_evaluacion_id: parteEval.id,
+            }));
+          }
+        }
       }
     } catch (e) {
     }

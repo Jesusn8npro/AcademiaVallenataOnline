@@ -59,6 +59,11 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
   const [acordeonista, setAcordeonista] = useState<string>(datos.acordeonista || '')
   const [artista, setArtista] = useState<string>(datos.artista || '')
   const [tonalidad, setTonalidad] = useState<string>(datos.tonalidad || '')
+  // Evaluación final del tutorial: crea una parte tipo_contenido='evaluacion'
+  // en partes_tutorial al guardar. El estudiante deberá subir un video que
+  // será revisado en /administrador/validaciones.
+  const [tiene_evaluacion, setTieneEvaluacion] = useState<boolean>(!!datos.tiene_evaluacion)
+  const [monedas_evaluacion, setMonedasEvaluacion] = useState<number>(datos.monedas_evaluacion ?? 10)
 
   // CRÍTICO: Actualizar todos los estados cuando cambien los datos
   useEffect(() => {
@@ -86,6 +91,8 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
       setAcordeonista(datos.acordeonista || '');
       setArtista(datos.artista || '');
       setTonalidad(datos.tonalidad || '');
+      setTieneEvaluacion(!!datos.tiene_evaluacion);
+      setMonedasEvaluacion(datos.monedas_evaluacion ?? 10);
     }
   }, [datos])
 
@@ -134,6 +141,8 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
       ...(tipo === 'tutorial' && {
         artista, tonalidad, acordeonista, video_url,
         requisitos: requisitos_tutorial, objetivos: objetivos_tutorial,
+        tiene_evaluacion, monedas_evaluacion,
+        parte_evaluacion_id: datos.parte_evaluacion_id,
       })
     }
     onContinuar(datosCompletos)
@@ -279,6 +288,30 @@ export default function PasoInformacionGeneral({ tipo, datos, onContinuar }: Pro
               <div className="campos-en-linea"><div className="campo-formulario"><label className="etiqueta-campo"><span className="texto-etiqueta">Artista</span></label><input type="text" value={artista} onChange={e => setArtista(e.target.value)} className="input-moderno" placeholder="Nombre del artista" /></div>
                 <div className="campo-formulario"><label className="etiqueta-campo"><span className="texto-etiqueta">Tonalidad</span></label><input type="text" value={tonalidad} onChange={e => setTonalidad(e.target.value)} className="input-moderno" placeholder="Ej: Do Mayor, La menor" /></div></div>
               <div className="campo-formulario"><label className="etiqueta-campo"><span className="texto-etiqueta">Acordeonista</span></label><input type="text" value={acordeonista} onChange={e => setAcordeonista(e.target.value)} className="input-moderno" placeholder="Nombre del acordeonista" /></div>
+            </div>
+          )}
+
+          {tipo === 'tutorial' && (
+            <div className="seccion-formulario">
+              <h3 className="subtitulo-seccion"><span className="numero-seccion">5</span>Evaluación Final</h3>
+              <div className="configuraciones-especiales">
+                <div className="campo-toggle">
+                  <label className="toggle-container">
+                    <input type="checkbox" checked={tiene_evaluacion} onChange={e => setTieneEvaluacion(e.target.checked)} className="toggle-input" />
+                    <div className={`toggle-slider ${tiene_evaluacion ? 'activo' : ''}`}><div className="toggle-knob"></div></div>
+                    <div className="toggle-text">
+                      <span className="toggle-titulo">Este tutorial tiene evaluación final</span>
+                      <span className="toggle-descripcion">El estudiante debe subir un video y ser aprobado para completar el tutorial al 100%. Las evaluaciones aparecen en /administrador/validaciones.</span>
+                    </div>
+                  </label>
+                </div>
+                {tiene_evaluacion && (
+                  <div className="campo-formulario" style={{ marginTop: 12 }}>
+                    <label className="etiqueta-campo"><span className="texto-etiqueta">Monedas de recompensa</span><span className="descripcion-campo">Cantidad que recibe el estudiante al ser aprobado</span></label>
+                    <input type="number" min={0} value={monedas_evaluacion} onChange={e => setMonedasEvaluacion(parseInt(e.target.value) || 0)} className="input-moderno" style={{ maxWidth: 160 }} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

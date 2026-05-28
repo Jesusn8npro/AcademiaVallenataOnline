@@ -8,7 +8,8 @@
     "node": ">=20.9.0"
   },
   "scripts": {
-    "dev": "node scripts/sync-samples.cjs && next dev",
+    "dev": "node scripts/sync-samples.cjs && next dev --webpack",
+    "dev:turbo": "node scripts/sync-samples.cjs && next dev",
     "sync": "node scripts/sync-samples.cjs",
     "build": "node scripts/sync-samples.cjs && next build && node scripts/inject-sw-version.mjs",
     "start": "next start",

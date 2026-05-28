@@ -60,6 +60,102 @@ export async function buscarDatosJsonLd(
   return tipo === 'curso' ? buscarCurso(slug) : buscarTutorial(slug)
 }
 
+/**
+ * Carga COMPLETA del contenido para SSG/ISR.
+ *
+ * Devuelve el contenido + sus partes (tutorial) o módulos+lecciones (curso),
+ * en una forma compatible con el tipo `Contenido` que espera VistaPremium.
+ *
+ * Se llama en el Server Component (page.tsx) y se pasa como `contenidoInicial`
+ * a `<LandingCurso>`. Resultado: la landing renderiza con datos REALES desde
+ * el primer paint, sin spinner. El client component aún corre `useLandingCurso`
+ * en background para refrescar (stale-while-revalidate).
+ *
+ * Tolerante a fallos: si algo falla, devuelve null y el client fetcheará.
+ */
+export async function buscarContenidoCompleto(
+  slug: string,
+  tipo: 'curso' | 'tutorial',
+): Promise<any | null> {
+  try {
+    if (tipo === 'curso') {
+      const esUUID = UUID_RE.test(slug)
+      const { data: curso } = await supabaseAnonimo
+        .from('cursos')
+        .select('*')
+        .eq(esUUID ? 'id' : 'slug', slug)
+        .maybeSingle()
+      if (!curso) return null
+
+      const { data: modulos } = await supabaseAnonimo
+        .from('modulos')
+        .select('id, titulo, descripcion, orden')
+        .eq('curso_id', (curso as any).id)
+        .order('orden')
+
+      const moduloIds = (modulos || []).map((m: any) => m.id)
+      const { data: lecciones } = moduloIds.length
+        ? await supabaseAnonimo
+            .from('lecciones')
+            .select('id, titulo, orden, modulo_id')
+            .in('modulo_id', moduloIds)
+            .order('orden')
+        : { data: [] as any[] }
+
+      const leccPorModulo = ((lecciones || []) as any[]).reduce(
+        (acc: Record<string, any[]>, l: any) => {
+          if (!acc[l.modulo_id]) acc[l.modulo_id] = []
+          acc[l.modulo_id].push(l)
+          return acc
+        }, {})
+
+      const modulosConLecciones = (modulos || []).map((m: any) => ({
+        ...m,
+        slug: generarSlug(m.titulo),
+        lecciones: (leccPorModulo[m.id] || [])
+          .map((l: any) => ({ ...l, slug: generarSlug(l.titulo) }))
+          .sort((a: any, b: any) => a.orden - b.orden),
+      }))
+
+      return {
+        ...(curso as any),
+        tipo: 'curso',
+        modulos: modulosConLecciones,
+        modulos_preview: modulosConLecciones,
+      }
+    }
+
+    // tipo === 'tutorial'
+    let tutorial: any = null
+    if (UUID_RE.test(slug)) {
+      const { data } = await supabaseAnonimo
+        .from('tutoriales')
+        .select('*')
+        .eq('id', slug)
+        .maybeSingle()
+      tutorial = data
+    } else {
+      const { data: todos } = await supabaseAnonimo.from('tutoriales').select('*')
+      tutorial = (todos || []).find((t: any) => generarSlug(t.titulo) === slug)
+    }
+    if (!tutorial) return null
+
+    const { data: partes } = await supabaseAnonimo
+      .from('partes_tutorial')
+      .select('id, titulo, descripcion, orden, slug')
+      .eq('tutorial_id', tutorial.id)
+      .order('orden')
+
+    return {
+      ...tutorial,
+      tipo: 'tutorial',
+      modulos_preview: partes || [],
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function metadataLanding(
   slug: string,
   tipo: 'curso' | 'tutorial',

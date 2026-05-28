@@ -16,6 +16,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'randomuser.me' },
       { protocol: 'https', hostname: 'api.dicebear.com' },
       { protocol: 'https', hostname: '**.googleusercontent.com' },
+      // Fotos de perfil de OAuth (Facebook)
+      { protocol: 'https', hostname: 'platform-lookaside.fbsbx.com' },
+      { protocol: 'https', hostname: '**.fbcdn.net' },
       // Comunidad: GIFs y banderas de geolocalización
       { protocol: 'https', hostname: 'media.tenor.com' },
       { protocol: 'https', hostname: 'media1.tenor.com' },
@@ -27,7 +30,20 @@ const nextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    // Tree-shaking agresivo: en vez de importar todo el paquete, Next.js
+    // genera imports individuales por símbolo. Reduce bundle size 30-70%
+    // en estos paquetes que tienden a tener "barrel files" enormes.
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'date-fns',
+      'recharts',
+      '@react-three/drei',
+      '@react-three/fiber',
+      'three',
+      'react-i18next',
+      'i18next',
+    ],
   },
   async headers() {
     return [

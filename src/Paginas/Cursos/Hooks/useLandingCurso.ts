@@ -12,14 +12,22 @@ const plantillas = {
     'premium': VistaPremium,
 };
 
-export function useLandingCurso() {
+interface UseLandingCursoOptions {
+    contenidoInicial?: Contenido | null;
+}
+
+export function useLandingCurso(options: UseLandingCursoOptions = {}) {
+    const { contenidoInicial } = options;
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const { usuario } = useUsuario();
 
-    const [contenido, setContenido] = useState<Contenido | null>(null);
+    // Si el Server Component nos pasó datos pre-cargados, los usamos como
+    // estado inicial → la landing renderiza al instante sin esperar fetch.
+    // El useEffect debajo aún corre para refrescar en background (SWR-like).
+    const [contenido, setContenido] = useState<Contenido | null>(contenidoInicial || null);
     const [estaInscrito, setEstaInscrito] = useState(false);
-    const [cargando, setCargando] = useState(true);
+    const [cargando, setCargando] = useState(!contenidoInicial);
     const [error, setError] = useState(false);
     const [errorAccion, setErrorAccion] = useState('');
     const [instructorInfo, setInstructorInfo] = useState<{ full_name?: string; avatar_url?: string } | null>(null);
@@ -31,7 +39,8 @@ export function useLandingCurso() {
 
         const cargar = async () => {
             try {
-                setCargando(true);
+                // Si ya tenemos contenido inicial (SSG), no mostramos skeleton.
+                if (!contenidoInicial) setCargando(true);
                 setError(false);
 
                 const esCurso = window.location.pathname.includes('/cursos/');

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../servicios/clienteSupabase';
+import { leerCacheStale, guardarCache } from '../../../../utilidades/cacheLocal';
 import './SidebarResumenAdmin.css';
 
 interface Stats {
@@ -31,22 +32,40 @@ const SidebarResumenAdmin = () => {
 
     const cargarEstadisticas = async () => {
         try {
-            const [cursosRes, tutorialesRes] = await Promise.all([
-                supabase.from('cursos').select('*').order('created_at', { ascending: false }),
-                supabase.from('tutoriales').select('*').order('created_at', { ascending: false })
+            // Stale-while-revalidate: mostrar cache al instante mientras refrescamos
+            const cached = leerCacheStale<Stats>('sidebar-resumen-admin');
+            if (cached) {
+                setStats(cached);
+                setCargando(false);
+            }
+
+            // Promise.allSettled + timeout: si una query falla, las otras igual cargan.
+            // Antes con Promise.all, una falla dejaba los counts en 0.
+            const withTimeout = <T,>(p: PromiseLike<T>): Promise<T> => Promise.race([
+                Promise.resolve(p),
+                new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
             ]);
 
-            const cursos = cursosRes.data || [];
-            const tutoriales = tutorialesRes.data || [];
+            const results = await Promise.allSettled([
+                withTimeout(supabase.from('cursos').select('*', { count: 'exact', head: true })),
+                withTimeout(supabase.from('tutoriales').select('*', { count: 'exact', head: true })),
+                withTimeout(supabase.from('cursos').select('*', { count: 'exact', head: true }).eq('estado', 'publicado')),
+                withTimeout(supabase.from('tutoriales').select('*', { count: 'exact', head: true }).eq('estado', 'publicado')),
+                withTimeout(supabase.from('cursos').select('id, titulo, estado, created_at').order('created_at', { ascending: false }).limit(3)),
+                withTimeout(supabase.from('tutoriales').select('id, titulo, estado, created_at').order('created_at', { ascending: false }).limit(3)),
+            ]);
+            const val = (i: number): any => results[i].status === 'fulfilled' ? (results[i] as any).value : null;
 
-            setStats({
-                totalCursos: cursos.length,
-                totalTutoriales: tutoriales.length,
-                cursosPublicados: cursos.filter((c: any) => c.estado === 'publicado').length,
-                tutorialesPublicados: tutoriales.filter((t: any) => t.estado === 'publicado').length,
-                cursosRecientes: cursos.slice(0, 3),
-                tutorialesRecientes: tutoriales.slice(0, 3)
-            });
+            const nuevasStats: Stats = {
+                totalCursos: val(0)?.count || 0,
+                totalTutoriales: val(1)?.count || 0,
+                cursosPublicados: val(2)?.count || 0,
+                tutorialesPublicados: val(3)?.count || 0,
+                cursosRecientes: val(4)?.data || [],
+                tutorialesRecientes: val(5)?.data || [],
+            };
+            setStats(nuevasStats);
+            guardarCache('sidebar-resumen-admin', nuevasStats);
         } catch (error) {
         } finally {
             setCargando(false);

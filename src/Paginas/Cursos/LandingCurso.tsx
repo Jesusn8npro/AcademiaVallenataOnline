@@ -3,15 +3,23 @@
 
 import SkeletonLanding from '../../componentes/Skeletons/SkeletonLanding';
 import { useLandingCurso } from './Hooks/useLandingCurso';
+import type { Contenido } from './tipos';
 
 // Re-exportamos los tipos para mantener compatibilidad con VistaPremium
 export type { Modulo, Leccion, Contenido, DatosVista } from './tipos';
 
-const LandingCurso = () => {
+interface Props {
+    // Datos pre-cargados desde el Server Component (app/tutoriales/[slug]/page.tsx).
+    // Permite que la landing renderice instantáneamente sin esperar al fetch
+    // del cliente. SSG + revalidate=3600 hace que el HTML llegue con datos.
+    contenidoInicial?: Contenido | null;
+}
+
+const LandingCurso = ({ contenidoInicial }: Props = {}) => {
     const {
         cargando, error, errorAccion, contenido, estaInscrito, instructorInfo,
         manejarInscripcion, verContenido, irACursos, Vista,
-    } = useLandingCurso();
+    } = useLandingCurso({ contenidoInicial });
 
     if (cargando) return <SkeletonLanding />;
 

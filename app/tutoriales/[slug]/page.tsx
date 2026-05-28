@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { supabaseAnonimo } from '@/servicios/clienteSupabase'
 import LandingCurso from '@/Paginas/Cursos/LandingCurso'
-import { metadataLanding, buscarDatosJsonLd } from '@/Paginas/Cursos/metadataServidor'
+import { metadataLanding, buscarContenidoCompleto } from '@/Paginas/Cursos/metadataServidor'
 import { generarSlug } from '@/utilidades/slug'
 
 const BASE = 'https://academiavallenata.online'
@@ -36,20 +36,24 @@ export default async function TutorialLandingPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const datos = await buscarDatosJsonLd(slug, 'tutorial')
+  // Carga completa del tutorial + sus partes en el SERVIDOR. Esto se ejecuta
+  // durante el build (SSG con generateStaticParams) o on-demand con
+  // revalidate=3600. El HTML pre-renderizado llega al cliente con los datos
+  // ya embebidos → la landing renderiza INSTANTÁNEA sin spinner.
+  const contenido = await buscarContenidoCompleto(slug, 'tutorial')
 
-  const jsonLd = datos ? {
+  const jsonLd = contenido ? {
     '@context': 'https://schema.org',
     '@type': 'Course',
-    name: datos.titulo,
-    description: datos.descripcion || 'Tutorial de acordeón vallenato paso a paso con los mejores maestros de Colombia.',
+    name: contenido.titulo,
+    description: contenido.descripcion || 'Tutorial de acordeón vallenato paso a paso con los mejores maestros de Colombia.',
     url: `${BASE}/tutoriales/${slug}`,
     provider: { '@type': 'Organization', name: 'Academia Vallenata Online', url: BASE },
-    ...(datos.imagen_url ? { image: datos.imagen_url } : {}),
-    ...(datos.nivel ? { educationalLevel: datos.nivel } : {}),
+    ...(contenido.imagen_url ? { image: contenido.imagen_url } : {}),
+    ...(contenido.nivel ? { educationalLevel: contenido.nivel } : {}),
     offers: {
       '@type': 'Offer',
-      price: datos.precio_rebajado ?? datos.precio_normal ?? 0,
+      price: contenido.precio_rebajado ?? contenido.precio_normal ?? 0,
       priceCurrency: 'COP',
       availability: 'https://schema.org/InStock',
     },
@@ -60,7 +64,7 @@ export default async function TutorialLandingPage({
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
-      <LandingCurso />
+      <LandingCurso contenidoInicial={contenido} />
     </>
   )
 }
