@@ -375,6 +375,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           onDispararVisor3DProgramatica={dispararVisor3DProgramatica}
           onDetenerVisor3DProgramatica={detenerVisor3DProgramatica}
           visor3dProgramaticaActiva={programaticaActiva}
+          logica={logica}
         />
       </div>
 
@@ -411,6 +412,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
           onCerrar={cerrarReproductor}
         />
       )}
+
     </section>
     </LogicaAcordeonProvider>
   );

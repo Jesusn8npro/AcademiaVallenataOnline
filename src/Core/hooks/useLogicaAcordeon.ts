@@ -317,6 +317,27 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         return { instances: instances as any[] };
     }, [obtenerRutasAudio, instrumentoId]);
 
+    /**
+     * Resuelve una nota a sus muestras SIN reproducirla — para render offline (descarga de audio).
+     * Mismo cálculo que reproducirTono (rutas + pitch) pero devuelve datos en vez de sonar.
+     */
+    const resolverTono = useCallback((id: string): { bancoId: string; volumen: number; samples: Array<{ idSonido: string; semitonos: number }> } => {
+        const rawRutas = soundsPerKeyRef.current[id] || obtenerRutasAudio(id);
+        const esBajo = id.includes('bajo');
+        const volumen = esBajo ? VOL_BAJOS : VOL_PITOS;
+        const userPitch = ajustesRef.current.pitchPersonalizado?.[id] || 0;
+        const globalPitch = ajustesRef.current.pitchGlobal || 0;
+        const samples = rawRutas.map((rutaRaw: string) => {
+            let ruta = rutaRaw; let pitchBase = 0;
+            if (rutaRaw.startsWith('pitch:')) {
+                const parts = rutaRaw.replace('pitch:', '').split('|');
+                pitchBase = parseInt(parts[0]); ruta = parts[1];
+            }
+            return { idSonido: ruta, semitonos: globalPitch + userPitch + pitchBase };
+        });
+        return { bancoId: instrumentoId, volumen, samples };
+    }, [obtenerRutasAudio, instrumentoId]);
+
     const preprogramarTono = useCallback((id: string, delayInicioSec: number, delayFinSec: number) => {
         const { instances } = reproducirTono(id, delayInicioSec, delayFinSec - delayInicioSec);
         return instances;
@@ -412,6 +433,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         motorAudioPro.detenerTodo(0.02);
         Object.keys(botonesActivosRef.current).forEach(id => {
             onNotaLiberada?.({ idBoton: id, nombre: id });
+            emitirNota(id, 'up');
         });
         botonesActivosRef.current = {};
         botonesActivosStore.clear();
@@ -443,9 +465,14 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                     bOld.instances.forEach((inst: any) => motorAudioPro.detener(inst, 0.005));
                 }
                 onNotaLiberada?.({ idBoton: oldId, nombre: oldId });
+                // Emitir al pub/sub global TAMBIÉN en el swap de fuelle. Sin esto, los grabadores
+                // suscritos al emisor (ej. Grabador de pistas del alumno) se perdían el 'up' de la
+                // nota vieja → notas quedaban abiertas → "pegadas" al reproducir.
+                emitirNota(oldId, 'up');
 
                 const { instances } = reproducirTono(newId);
                 onNotaPresionada?.({ idBoton: newId, nombre: newId });
+                emitirNota(newId, 'down');
 
                 if (instances && instances.length > 0) {
                     next[newId] = { instances, ...mapaBotonesActual.current[newId] };
@@ -604,7 +631,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
         limpiarTodasLasNotas, actualizarBotonActivo, ejecutarSwapDireccion, guardarAjustes, resetearAjustes,
         setDireccionSinSwap, muestrasDB, obtenerRutasAudio, sincronizarAudios: cargarMuestrasLocales,
         guardarNuevoSonidoVirtual, eliminarTonalidad,
-        playPreview, stopPreview, reproduceTono: reproducirTono,
+        playPreview, stopPreview, reproduceTono: reproducirTono, resolverTono,
         configTonalidad, muestrasInstrumento: muestrasLocalesDBRef.current,
         soundsPerKey: soundsPerKeyRef.current, teclasFastMap: teclasFastMapRef.current,
         midiActivado, esp32Conectado, conectarESP32,

@@ -67,6 +67,8 @@ interface PanelLateralEstudianteProps {
   onDispararVisor3DProgramatica: (id: AnimProgramaticaId) => void;
   onDetenerVisor3DProgramatica: () => void;
   visor3dProgramaticaActiva: AnimProgramaticaId | null;
+  // Grabador de pistas (dentro de "Pistas y Estudio" → Mis pistas): usa la lógica compartida.
+  logica: any;
 }
 
 const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
@@ -90,6 +92,7 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
   onCambiarVisor3DGrupo, onAplicarVisor3DTinta, onAplicarVisor3DVariante,
   onDispararVisor3DShapeKey, onDispararVisor3DProgramatica,
   onDetenerVisor3DProgramatica, visor3dProgramaticaActiva,
+  logica,
 }) => {
   if (!visible || !seccionActiva) return null;
   if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria', 'visor3d'].includes(seccionActiva)) return null;
@@ -160,6 +163,7 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
           grabando={grabando}
           tiempoGrabacionTexto={tiempoGrabacionTexto}
           onAlternarGrabacion={onAlternarGrabacion}
+          logica={logica}
         />
       )}
 

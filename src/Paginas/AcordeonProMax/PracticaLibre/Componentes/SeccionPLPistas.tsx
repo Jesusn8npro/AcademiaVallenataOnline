@@ -3,7 +3,7 @@ import { Check, Pause, Play, RotateCcw, Square, Upload, Mic2, Music2, Activity, 
 import type { PistaPracticaLibre, PreferenciasPracticaLibre } from '../TiposPracticaLibre';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
 import PanelMetronomoStudio from '../../GrabadorV2/componentes/PanelMetronomoStudio';
-import MisPistasUsuario from './MisPistasUsuario';
+import EstudioUsuario from './EstudioUsuario';
 
 export type ModoGrabacionPL = 'libre' | 'pista' | 'metronomo';
 
@@ -28,6 +28,8 @@ interface Props {
   grabando: boolean;
   tiempoGrabacionTexto: string;
   onAlternarGrabacion: () => void;
+  /** Lógica del acordeón compartida (para el grabador de pistas en "Mis pistas"). */
+  logica: any;
 }
 
 const MODOS: Array<{ clave: ModoGrabacionPL; label: string; descripcion: string; icono: React.ReactNode }> = [
@@ -43,6 +45,7 @@ const SeccionPLPistas: React.FC<Props> = ({
   onAlternarCapa, preferencias,
   modoGrabacion, onCambiarModoGrabacion, metronomo,
   grabando, tiempoGrabacionTexto, onAlternarGrabacion,
+  logica,
 }) => {
   // Sub-pestaña dentro del modo "pista": ver catálogo curado o las pistas propias del alumno.
   const [tabPistas, setTabPistas] = React.useState<'catalogo' | 'mis_pistas'>('mis_pistas');
@@ -107,7 +110,7 @@ const SeccionPLPistas: React.FC<Props> = ({
 
     {modoGrabacion === 'pista' && tabPistas === 'mis_pistas' && (
       <div className="estudio-practica-libre-bloque">
-        <MisPistasUsuario onReproductorActivo={setReproductorActivo} />
+        <EstudioUsuario logica={logica} onEditorActivo={setReproductorActivo} />
       </div>
     )}
 

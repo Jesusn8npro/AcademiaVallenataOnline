@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Music, RotateCw, Plus, Trash2 } from 'lucide-react';
+import { Music, RotateCw, Plus, Trash2, Pencil, Download } from 'lucide-react';
 import type { CancionV2 } from '../tipos';
 
 interface Props {
@@ -10,10 +10,14 @@ interface Props {
   onNueva(): void;
   onRefrescar(): void;
   onEliminar(c: CancionV2): void;
+  /** Si se proveen, muestran botones de editar/descargar por fila (estudiante). */
+  onEditar?(c: CancionV2): void;
+  onDescargar?(c: CancionV2): void;
 }
 
 const ListaCancionesV2: React.FC<Props> = ({
   canciones, cancionActivaId, cargando, onSeleccionar, onNueva, onRefrescar, onEliminar,
+  onEditar, onDescargar,
 }) => {
   return (
     <div className="grabv2-lista">
@@ -47,6 +51,24 @@ const ListaCancionesV2: React.FC<Props> = ({
                 {c.bpm} BPM · {c.secuencia_json.length} notas · {c.secciones.length} sec.
               </span>
             </div>
+            {onDescargar && (
+              <button
+                className="grabv2-btn-mini"
+                onClick={(e) => { e.stopPropagation(); onDescargar(c); }}
+                title="Descargar pista completa (MP3 mezclado)"
+              >
+                <Download size={11} />
+              </button>
+            )}
+            {onEditar && (
+              <button
+                className="grabv2-btn-mini"
+                onClick={(e) => { e.stopPropagation(); onEditar(c); }}
+                title="Editar / entrar a grabar"
+              >
+                <Pencil size={11} />
+              </button>
+            )}
             <button
               className="grabv2-btn-mini grabv2-btn-del"
               onClick={(e) => { e.stopPropagation(); onEliminar(c); }}

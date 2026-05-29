@@ -85,6 +85,8 @@ export class ReproductorMP3 {
 
   get cargado(): boolean { return !!this.buffer; }
   get src(): string { return this._src; }
+  /** AudioBuffer ya decodificado (para exportar/analizar). null si aún no cargó. */
+  get audioBuffer(): AudioBuffer | null { return this.buffer; }
 
   // readyState 4 = HAVE_ENOUGH_DATA (suficiente para reproducir hasta el final). Para nuestro caso: si hay buffer.
   get readyState(): number { return this.buffer ? 4 : 0; }

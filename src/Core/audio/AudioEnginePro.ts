@@ -1252,6 +1252,16 @@ export class MotorAudioPro {
         await _cargarSonido(banco, idSonido, url, this.contexto);
     }
 
+    /** Devuelve el AudioBuffer + offset de una muestra del banco (para render offline). null si no está cargada. */
+    obtenerMuestra(bancoId: string, idSonido: string): { buffer: AudioBuffer; offset: number } | null {
+        const banco = this.bancos.get(bancoId);
+        const buffer = banco?.muestras.get(idSonido);
+        if (!buffer) return null;
+        return { buffer, offset: banco!.offsets.get(idSonido) || 0 };
+    }
+
+    get sampleRateActual(): number { return this.contexto?.sampleRate || 44100; }
+
     reproducir(idSonido: string, bancoId: string, volumen: number = 1.0, semitonos: number = 0, loop: boolean = false, tiempoProgramado?: number, duracionSec?: number, seccion?: 'teclado' | 'bajos'): { fuente: AudioBufferSourceNode, ganancia: GainNode, tiempo: number } | null {
         const banco = this.bancos.get(bancoId);
         if (!banco || !this.contexto) return null;
@@ -1340,6 +1350,18 @@ export class MotorAudioPro {
         const cTime = this.contexto.currentTime;
         this.nodoGananciaPrincipal.gain.cancelScheduledValues(cTime);
         this.nodoGananciaPrincipal.gain.setTargetAtTime(volumen, cTime, tiempoRampa);
+    }
+
+    /**
+     * Tap de captura: conecta la salida maestra (TODO el acordeón sintetizado pasa por aquí) a
+     * un nodo externo, p.ej. un MediaStreamAudioDestinationNode para grabar la mezcla a archivo.
+     * El nodo de fondo (MP3) va directo al destination, así que el caller debe conectarlo aparte.
+     */
+    conectarCaptura(nodo: AudioNode) {
+        try { this.nodoGananciaPrincipal?.connect(nodo); } catch (_) {}
+    }
+    desconectarCaptura(nodo: AudioNode) {
+        try { this.nodoGananciaPrincipal?.disconnect(nodo); } catch (_) {}
     }
 
     // ─── Sub-buses TECLADO / BAJOS ──────────────────────────────────────────
