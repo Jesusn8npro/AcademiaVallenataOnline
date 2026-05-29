@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react'
-import { Plus, Trash2, MapPin, Flag, Coins, Mic, Pencil, X, Check } from 'lucide-react';
+import { Plus, Trash2, MapPin, Flag, Coins, Mic, Pencil, X, Check, Download } from 'lucide-react';
 import type { SeccionV2 } from '../tipos';
 
 interface Props {
@@ -16,6 +16,10 @@ interface Props {
   onSeek(tick: number): void;
   /** Inicia grabación punch-in en el rango de la sección. */
   onGrabarSeccion(seccion: SeccionV2): void;
+  /** Mostrar el campo de monedas (gamificación). Default true (admin). El estudiante lo oculta. */
+  mostrarMonedas?: boolean;
+  /** Si se provee, muestra un botón de descarga por sección (audio MP3 + secuencia). */
+  onDescargar?: (seccion: SeccionV2) => void;
 }
 
 function fmt(seg: number) {
@@ -27,6 +31,7 @@ function fmt(seg: number) {
 const EditorSeccionesV2: React.FC<Props> = ({
   secciones, tickActual, bpm, resolucion, puedeGrabar,
   onAgregar, onActualizar, onEliminar, onSeek, onGrabarSeccion,
+  mostrarMonedas = true, onDescargar,
 }) => {
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoInicio, setNuevoInicio] = useState<number | null>(null);
@@ -97,24 +102,31 @@ const EditorSeccionesV2: React.FC<Props> = ({
                 </span>
               </div>
 
-              <div className="grabv2-seccion-monedas">
-                <Coins size={11} />
-                {enEdicion ? (
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    className="grabv2-seccion-monedas-edit"
-                    value={edicionTemp.monedas}
-                    onChange={(e) => setEdicionTemp(prev => ({ ...prev, monedas: Number(e.target.value) }))}
-                  />
-                ) : (
-                  <span>{s.monedas}</span>
-                )}
-              </div>
+              {mostrarMonedas && (
+                <div className="grabv2-seccion-monedas">
+                  <Coins size={11} />
+                  {enEdicion ? (
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      className="grabv2-seccion-monedas-edit"
+                      value={edicionTemp.monedas}
+                      onChange={(e) => setEdicionTemp(prev => ({ ...prev, monedas: Number(e.target.value) }))}
+                    />
+                  ) : (
+                    <span>{s.monedas}</span>
+                  )}
+                </div>
+              )}
 
               <div className="grabv2-seccion-acciones">
                 <button className="grabv2-btn-mini" onClick={() => onSeek(s.tickInicio)} title="Ir al inicio">⤴</button>
+                {onDescargar && !enEdicion && (
+                  <button className="grabv2-btn-mini" onClick={() => onDescargar(s)} title="Descargar sección (MP3 + secuencia)">
+                    <Download size={12} />
+                  </button>
+                )}
                 {puedeGrabar && !enEdicion && (
                   <button
                     className="grabv2-btn-mini grabv2-btn-grabar-sec"
@@ -178,17 +190,19 @@ const EditorSeccionesV2: React.FC<Props> = ({
             </span>
           </button>
         </div>
-        <label className="grabv2-input-monedas">
-          <Coins size={12} />
-          <span>Monedas</span>
-          <input
-            type="number"
-            min={0}
-            step={0.5}
-            value={nuevoMonedas}
-            onChange={(e) => setNuevoMonedas(Number(e.target.value))}
-          />
-        </label>
+        {mostrarMonedas && (
+          <label className="grabv2-input-monedas">
+            <Coins size={12} />
+            <span>Monedas</span>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={nuevoMonedas}
+              onChange={(e) => setNuevoMonedas(Number(e.target.value))}
+            />
+          </label>
+        )}
         <button className="grabv2-btn-agregar" onClick={agregar} disabled={!puedeAgregar}>
           <Plus size={12} /> Agregar sección
         </button>

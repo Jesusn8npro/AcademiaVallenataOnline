@@ -28,6 +28,11 @@ export interface ReproductorMP3V2 {
   setVolumen(v: number): void;
   /** Cambia la velocidad de reproducción del MP3 (1 = original). preservesPitch automático. */
   setPlaybackRate(v: number): void;
+  /** AudioBuffer decodificado del fondo (para exportar secciones a audio). null si no cargó. */
+  getAudioBuffer(): AudioBuffer | null;
+  /** Conecta/desconecta la salida del fondo a un nodo externo (para capturar la mezcla a archivo). */
+  conectarSalida(nodo: AudioNode): void;
+  desconectarSalida(nodo: AudioNode): void;
 }
 
 export function useReproductorMP3V2(reloj: RelojUnificado): ReproductorMP3V2 {
@@ -142,5 +147,9 @@ export function useReproductorMP3V2(reloj: RelojUnificado): ReproductorMP3V2 {
     if (repro) repro.playbackRate = Math.max(0.25, Math.min(2.5, v));
   }, []);
 
-  return { cargado, cargando, duracionSeg, reproduciendo, cargar, play, pause, detener, seek, leerCurrentTime, setVolumen, setPlaybackRate };
+  const getAudioBuffer = useCallback(() => reproRef.current?.audioBuffer ?? null, []);
+  const conectarSalida = useCallback((nodo: AudioNode) => { try { reproRef.current?.nodoSalida?.connect(nodo); } catch (_) {} }, []);
+  const desconectarSalida = useCallback((nodo: AudioNode) => { try { reproRef.current?.nodoSalida?.disconnect(nodo); } catch (_) {} }, []);
+
+  return { cargado, cargando, duracionSeg, reproduciendo, cargar, play, pause, detener, seek, leerCurrentTime, setVolumen, setPlaybackRate, getAudioBuffer, conectarSalida, desconectarSalida };
 }

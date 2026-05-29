@@ -39,6 +39,16 @@ export class ReproductorSoundTouch {
   private listeners: Set<(t: InfoTiempo) => void> = new Set();
   private listenersFin: Set<() => void> = new Set();
   private _src = '';
+  // Reloj de reproducción anclado a AudioContext.currentTime — MISMO mecanismo que el reloj del
+  // grabador admin (`useRelojUnificado`), que reproduce perfecto. NO usamos `shifter.timePlayed`
+  // como reloj: es la posición SOURCE ya extraída por el ScriptProcessor, que corre ADELANTADA
+  // del audio audible y avanza a RÁFAGAS; anclar el secuenciador a eso disparaba las notas de la
+  // grabación en racimos y adelantadas ("se acumulan / se pegan"). En su lugar:
+  //   posicion = _segAncla + (ctx.currentTime − _ctxAncla) × velocidad
+  // Captura y reproducción leen este mismo reloj, así que la latencia de arranque del SoundTouch
+  // es un offset CONSTANTE que se cancela entre grabar y reproducir.
+  private _segAncla = 0;
+  private _ctxAncla = 0;
 
   constructor(contexto: AudioContext) {
     this.contexto = contexto;
@@ -49,6 +59,19 @@ export class ReproductorSoundTouch {
 
   get duration(): number { return this.buffer?.duration ?? 0; }
   get currentTime(): number { return this.shifter?.timePlayed ?? 0; }
+  /**
+   * Posición de reproducción en segundos. Reloj anclado a AudioContext.currentTime (igual que el
+   * reloj del grabador admin). Mientras suena: _segAncla + (ctx.currentTime − _ctxAncla) × vel.
+   * En pausa: la posición congelada (_segAncla). Es suave, monotónico y locked al hardware de
+   * audio — no depende del `timePlayed` adelantado/a ráfagas del SoundTouch.
+   */
+  get posicionSeg(): number {
+    const interp = this.conectado
+      ? this._segAncla + (this.contexto.currentTime - this._ctxAncla) * this._velocidad
+      : this._segAncla;
+    const dur = this.duration;
+    return dur > 0 ? Math.min(Math.max(0, interp), dur) : Math.max(0, interp);
+  }
   get paused(): boolean { return !this.conectado; }
   get cargado(): boolean { return !!this.buffer; }
   get src(): string { return this._src; }
@@ -75,6 +98,8 @@ export class ReproductorSoundTouch {
 
   private _crearShifterEn(posicionSeg: number): any {
     if (!this.buffer) return null;
+    // Ancla del reloj en la posición de arranque (carga/seek). El _ctxAncla se fija en play().
+    this._segAncla = Math.max(0, posicionSeg);
     const shifter = new PitchShifter(this.contexto, this.buffer, 4096, () => {
       // onEnd del filter: el buffer interno se agotó (llegamos al final).
       this.listenersFin.forEach((fn) => { try { fn(); } catch (_) {} });
@@ -93,7 +118,11 @@ export class ReproductorSoundTouch {
         this.seekSeg(this._loop.inicioSeg);
         return;
       }
-      const t: InfoTiempo = { seg, pct: dur > 0 ? seg / dur : 0, duracion: dur };
+      // Progreso para la UI. OJO: este `seg` (timePlayed) NO es el reloj del secuenciador —
+      // ese es `posicionSeg`, anclado a AudioContext. Aquí reportamos `posicionSeg` para que la
+      // barra de progreso quede coherente con las notas.
+      const pos = this.posicionSeg;
+      const t: InfoTiempo = { seg: pos, pct: dur > 0 ? pos / dur : 0, duracion: dur };
       this.listeners.forEach((fn) => { try { fn(t); } catch (_) {} });
     });
     return shifter;
@@ -123,6 +152,10 @@ export class ReproductorSoundTouch {
     }
     if (!this.shifter) return;
     if (this.conectado) return;
+    // Anclar el reloj AL CONECTAR: ctx.currentTime de AHORA ↔ posición lógica actual. En arranque
+    // o tras seek, _crearShifterEn ya dejó _segAncla en el objetivo; al reanudar tras pausa,
+    // pause() congeló _segAncla en la posición actual. Solo hace falta refrescar el ancla de ctx.
+    this._ctxAncla = this.contexto.currentTime;
     this.shifter.connect(this.gain);
     this.conectado = true;
   }
@@ -130,6 +163,9 @@ export class ReproductorSoundTouch {
   pause(): void {
     if (!this.shifter) return;
     if (!this.conectado) return;
+    // Congelar la posición lógica actual ANTES de soltar la conexión (posicionSeg en pausa
+    // devuelve _segAncla, así que debe quedar en la posición real de este instante).
+    this._segAncla = this.posicionSeg;
     try { this.shifter.disconnect(); } catch (_) {}
     this.conectado = false;
   }
@@ -157,6 +193,13 @@ export class ReproductorSoundTouch {
   get velocidad(): number { return this._velocidad; }
   setVelocidad(v: number): void {
     const c = Math.max(0.5, Math.min(1.5, v));
+    // Re-anclar en la posición actual ANTES de cambiar la velocidad: el reloj integra
+    // (ctx.currentTime − _ctxAncla) × velocidad, así que cambiar la velocidad sin re-anclar
+    // aplicaría la nueva velocidad al tiempo ya transcurrido con la vieja.
+    if (this.conectado) {
+      this._segAncla = this.posicionSeg;
+      this._ctxAncla = this.contexto.currentTime;
+    }
     this._velocidad = c;
     if (this.shifter) this.shifter.tempo = c;
   }

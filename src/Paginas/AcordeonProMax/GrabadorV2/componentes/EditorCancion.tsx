@@ -47,6 +47,12 @@ interface Props {
   onVolverALista: () => void;
   onGuardar: () => void;
   estadoGuardado: 'idle' | 'guardando' | 'guardado' | 'error';
+  /** Mostrar el visor "Captura en vivo". Default true (admin). El estudiante lo oculta. */
+  mostrarCaptura?: boolean;
+  /** Mostrar el campo de monedas en secciones (gamificación admin). Default true. */
+  mostrarMonedas?: boolean;
+  /** Descargar una sección (audio MP3 + secuencia). Si no se pasa, no se muestra el botón. */
+  onDescargarSeccion?: (seccion: SeccionV2) => void;
 }
 
 const EditorCancion: React.FC<Props> = (p) => {
@@ -251,11 +257,13 @@ const EditorCancion: React.FC<Props> = (p) => {
       </div>
 
       {/* Visor en vivo */}
-      <VisorCapturaEnVivo
-        eventos={p.grabador.ultimosEventos}
-        bpm={p.bpm}
-        resolucion={192}
-      />
+      {p.mostrarCaptura !== false && (
+        <VisorCapturaEnVivo
+          eventos={p.grabador.ultimosEventos}
+          bpm={p.bpm}
+          resolucion={192}
+        />
+      )}
 
       {/* Editor secciones */}
       <EditorSeccionesV2
@@ -269,6 +277,8 @@ const EditorCancion: React.FC<Props> = (p) => {
         onEliminar={p.onEliminarSeccion}
         onSeek={p.onSeekA}
         onGrabarSeccion={p.onGrabarSeccion}
+        mostrarMonedas={p.mostrarMonedas}
+        onDescargar={p.onDescargarSeccion}
       />
 
       <div className="grabv2-bloque grabv2-resumen">

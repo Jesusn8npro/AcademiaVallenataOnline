@@ -991,3 +991,47 @@
   font-size: 10.5px;
 }
 
+
+/* Grabador de pistas embebido en el panel del estudio: que ocupe el ancho del panel y no
+   desborde (los estilos grabv2 fueron pensados para una columna fija de 600px). */
+.estudio-grabador-panel {
+  /* CRÍTICO: las variables --gv2-* viven en .grabv2-pagina, que NO es ancestro aquí.
+     Sin redefinirlas, los grabv2-bloque quedan sin color → "se ve oscuro / sin estilos".
+     Las redefinimos con la paleta de práctica libre (acento azul, tarjetas claras). */
+  --gv2-bg: transparent;
+  --gv2-bg-1: rgba(255, 255, 255, 0.035);
+  --gv2-bg-2: rgba(255, 255, 255, 0.06);
+  --gv2-borde: rgba(255, 255, 255, 0.12);
+  --gv2-borde-fuerte: rgba(255, 255, 255, 0.24);
+  --gv2-texto: #e2e8f0;
+  --gv2-texto-mute: #94a3b8;
+  --gv2-texto-dim: #64748b;
+  --gv2-cyan: #3b82f6;
+  --gv2-cyan-dim: rgba(59, 130, 246, 0.18);
+  --gv2-magenta: #a855f7;
+  --gv2-amarillo: #fbbf24;
+  --gv2-verde: #22c55e;
+  --gv2-rojo: #ef4444;
+  --gv2-rojo-dim: rgba(239, 68, 68, 0.18);
+  width: 100%;
+  box-sizing: border-box;
+}
+.estudio-grabador-panel > *,
+.estudio-grabador-panel .grabv2-bloque,
+.estudio-grabador-panel .grabv2-met { width: 100%; box-sizing: border-box; max-width: 100%; }
+.estudio-grabador-panel .grabv2-timeline,
+.estudio-grabador-panel canvas { max-width: 100%; }
+
+/* Tarjetas un poco más visibles sobre el panel oscuro (evita el look "todo negro plano"). */
+.estudio-grabador-panel .grabv2-bloque {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gv2-borde);
+}
+/* Inputs/botones legibles dentro del panel. */
+.estudio-grabador-panel .grabv2-input,
+.estudio-grabador-panel input[type="text"],
+.estudio-grabador-panel input[type="number"] {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--gv2-texto);
+  border: 1px solid var(--gv2-borde);
+}

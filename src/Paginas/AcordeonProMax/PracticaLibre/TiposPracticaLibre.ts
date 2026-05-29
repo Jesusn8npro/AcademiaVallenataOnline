@@ -1,6 +1,6 @@
 export type SeccionPanelPracticaLibre =
   | 'sonido' | 'modelos' | 'pistas' | 'teoria' | 'efectos' | 'visor3d'
-  | 'rec' | 'gestor' | 'gestor_acordes' | 'lista_acordes' | 'libreria' | 'usb';
+  | 'rec' | 'gestor' | 'gestor_acordes' | 'lista_acordes' | 'libreria' | 'usb' | 'estudio';
 
 export interface ModeloVisualAcordeon {
   id: string;

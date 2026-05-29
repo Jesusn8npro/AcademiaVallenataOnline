@@ -13,7 +13,7 @@ export const LIMITE_PISTAS_PREMIUM = Infinity;
 // Grabaciones (REC sobre pistas del alumno). Independiente de las pistas subidas:
 // las pistas pesan en storage, las grabaciones son JSON livianas — pero igual limitamos
 // el free para reservar la feature como diferencial premium.
-export const LIMITE_GRABACIONES_FREE = 3;
+export const LIMITE_GRABACIONES_FREE = 10;
 export const LIMITE_GRABACIONES_PREMIUM = Infinity;
 
 export interface ResultadoLimitePistas {
