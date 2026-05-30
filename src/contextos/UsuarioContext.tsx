@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useLayoutEffect, type ReactNode, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useLayoutEffect, type ReactNode, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../servicios/clienteSupabase'
 
 interface Usuario {
@@ -240,18 +240,23 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         return () => subscription.unsubscribe()
     }, [cargarUsuario])
 
+    // Memoizado: el value solo cambia cuando cambia `usuario` o `inicializado`
+    // (los callbacks son estables con useCallback). Evita re-render en cascada
+    // de todos los consumidores del contexto en cada render del provider.
+    const value = useMemo<UsuarioContextType>(() => ({
+        usuario,
+        setUsuario,
+        actualizarUsuario,
+        cargarUsuario,
+        cerrarSesion,
+        estaAutenticado,
+        esAdmin,
+        esEstudiante,
+        inicializado,
+    }), [usuario, inicializado, setUsuario, actualizarUsuario, cargarUsuario, cerrarSesion, estaAutenticado, esAdmin, esEstudiante])
+
     return (
-        <UsuarioContext.Provider value={{
-            usuario,
-            setUsuario,
-            actualizarUsuario,
-            cargarUsuario,
-            cerrarSesion,
-            estaAutenticado,
-            esAdmin,
-            esEstudiante,
-            inicializado
-        }}>
+        <UsuarioContext.Provider value={value}>
             {children}
         </UsuarioContext.Provider>
     )

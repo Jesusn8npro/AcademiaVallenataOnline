@@ -1,0 +1,442 @@
+/* ===== Página de Membresías ===== */
+.mem-page {
+  --mem-bg: #0b0b12;
+  --mem-surface: #14141f;
+  --mem-surface-2: #1b1b2a;
+  --mem-border: rgba(255, 255, 255, 0.08);
+  --mem-text: #f4f4f8;
+  --mem-text-dim: #a7a7b8;
+  min-height: 100dvh;
+  background:
+    radial-gradient(1100px 600px at 50% -8%, rgba(139, 92, 246, 0.16), transparent 60%),
+    radial-gradient(800px 500px at 100% 10%, rgba(59, 130, 246, 0.10), transparent 55%),
+    var(--mem-bg);
+  color: var(--mem-text);
+  padding-bottom: 64px;
+}
+
+/* ===== HERO ===== */
+.mem-hero {
+  position: relative;
+  text-align: center;
+  padding: clamp(56px, 9vw, 110px) 20px clamp(28px, 4vw, 48px);
+  overflow: hidden;
+}
+.mem-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(620px 320px at 50% 0%, rgba(245, 158, 11, 0.12), transparent 70%);
+  pointer-events: none;
+}
+/* Orbes flotantes (motion graphics) */
+.mem-orbs { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mem-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.mem-orb-1 { width: 320px; height: 320px; left: -60px; top: 40px; background: rgba(139, 92, 246, 0.5); animation: mem-float-1 14s ease-in-out infinite; }
+.mem-orb-2 { width: 260px; height: 260px; right: -40px; top: 10px; background: rgba(59, 130, 246, 0.45); animation: mem-float-2 17s ease-in-out infinite; }
+.mem-orb-3 { width: 220px; height: 220px; left: 45%; bottom: -80px; background: rgba(245, 158, 11, 0.4); animation: mem-float-3 12s ease-in-out infinite; }
+@keyframes mem-float-1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.1); } }
+@keyframes mem-float-2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-30px,40px) scale(1.08); } }
+@keyframes mem-float-3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,-30px) scale(1.12); } }
+
+.mem-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+}
+.mem-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  padding: 7px 14px;
+  border-radius: 999px;
+}
+.mem-hero-title {
+  font-size: clamp(1.9rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 20px 0 0;
+}
+.mem-grad {
+  background: linear-gradient(100deg, #a78bfa, #60a5fa 55%, #fcd34d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.mem-hero-sub {
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  color: var(--mem-text-dim);
+  line-height: 1.6;
+  margin: 18px auto 0;
+  max-width: 620px;
+}
+.mem-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+}
+.mem-hero-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  font-size: 0.88rem;
+  color: var(--mem-text-dim);
+}
+
+/* ===== Botones ===== */
+.mem-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.98rem;
+  border-radius: 12px;
+  padding: 13px 26px;
+  min-height: 48px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.mem-btn:focus-visible {
+  outline: 3px solid #a78bfa;
+  outline-offset: 2px;
+}
+.mem-btn-primary {
+  color: #1a1205;
+  background: linear-gradient(100deg, #fcd34d, #f59e0b);
+  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.28);
+}
+.mem-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(245, 158, 11, 0.4);
+}
+.mem-btn-outline {
+  color: var(--mem-text);
+  background: transparent;
+  border: 1.5px solid var(--mem-accent, rgba(255, 255, 255, 0.25));
+}
+.mem-btn-outline:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--mem-accent, #8b5cf6) 16%, transparent);
+}
+.mem-btn-plan {
+  width: 100%;
+  margin-top: 4px;
+}
+.mem-btn-trial {
+  color: #f4f4f8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+}
+.mem-btn-trial:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.mem-btn-trial:disabled { opacity: 0.6; cursor: default; }
+.mem-hero-msg {
+  margin: 16px auto 0;
+  max-width: 460px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+/* ===== Toggle mensual/anual ===== */
+.mem-toggle-wrap {
+  position: relative;
+  display: flex;
+  width: max-content;
+  margin: 8px auto 36px;
+  background: var(--mem-surface);
+  border: 1px solid var(--mem-border);
+  border-radius: 999px;
+  padding: 5px;
+}
+.mem-toggle-opt {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  color: var(--mem-text-dim);
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 26px;
+  min-height: 44px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+.mem-toggle-opt.is-active { color: #1a1205; }
+.mem-toggle-ahorro {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.mem-toggle-opt.is-active .mem-toggle-ahorro { color: #065f46; background: rgba(6, 95, 70, 0.25); }
+.mem-toggle-thumb {
+  position: absolute;
+  z-index: 0;
+  top: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  height: calc(100% - 10px);
+  background: linear-gradient(100deg, #fcd34d, #f59e0b);
+  border-radius: 999px;
+}
+
+/* ===== Grid de planes ===== */
+.mem-planes { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+.mem-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.mem-skeleton {
+  height: 520px;
+  border-radius: 20px;
+  background: linear-gradient(110deg, var(--mem-surface) 30%, var(--mem-surface-2) 50%, var(--mem-surface) 70%);
+  background-size: 200% 100%;
+  animation: mem-shimmer 1.4s linear infinite;
+}
+@keyframes mem-shimmer { to { background-position: -200% 0; } }
+
+/* ===== Card ===== */
+.mem-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--mem-surface);
+  border: 1px solid var(--mem-border);
+  border-radius: 20px;
+  padding: 26px 22px;
+  height: 100%;
+}
+.mem-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: 20px 20px 0 0;
+  background: var(--mem-accent, #8b5cf6);
+  opacity: 0.85;
+}
+.mem-card.is-destacada {
+  border-color: color-mix(in srgb, var(--mem-accent, #8b5cf6) 60%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mem-accent, #8b5cf6) 12%, var(--mem-surface)), var(--mem-surface));
+  box-shadow: 0 20px 50px -18px color-mix(in srgb, var(--mem-accent, #8b5cf6) 70%, transparent);
+}
+@media (min-width: 1024px) {
+  .mem-card.is-destacada { transform: scale(1.04); }
+}
+.mem-badge-popular {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1a1205;
+  background: linear-gradient(100deg, #fcd34d, #f59e0b);
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+.mem-card-head { text-align: left; }
+.mem-card-icono { font-size: 1.9rem; line-height: 1; }
+.mem-card-nombre { font-size: 1.35rem; font-weight: 800; margin: 8px 0 0; }
+.mem-card-tagline { font-size: 0.86rem; color: var(--mem-text-dim); margin: 4px 0 0; }
+
+.mem-card-precio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 0 2px;
+  border-bottom: 1px solid var(--mem-border);
+  margin-bottom: 4px;
+}
+.mem-precio-num {
+  font-size: 1.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.mem-precio-periodo {
+  font-size: 0.85rem;
+  color: var(--mem-text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mem-precio-ahorro {
+  flex-basis: 100%;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #34d399;
+  margin-top: 2px;
+}
+.mem-card-desc { font-size: 0.88rem; color: var(--mem-text-dim); line-height: 1.5; min-height: 38px; }
+
+.mem-beneficios { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.mem-beneficios li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; line-height: 1.45; }
+.mem-check { flex-shrink: 0; margin-top: 1px; color: var(--mem-accent, #34d399); }
+
+.mem-nota-pie {
+  text-align: center;
+  color: var(--mem-text-dim);
+  font-size: 0.84rem;
+  max-width: 600px;
+  margin: 34px auto 0;
+  line-height: 1.6;
+}
+
+/* ===== Sección Simulador ===== */
+.mem-sim {
+  position: relative;
+  max-width: 1100px;
+  margin: 64px auto 0;
+  padding: 0 20px;
+}
+.mem-sim-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(700px 300px at 50% 40%, rgba(139, 92, 246, 0.14), transparent 70%);
+  pointer-events: none;
+}
+.mem-sim-inner {
+  position: relative;
+  text-align: center;
+  background: linear-gradient(180deg, var(--mem-surface-2), var(--mem-surface));
+  border: 1px solid var(--mem-border);
+  border-radius: 24px;
+  padding: clamp(32px, 5vw, 56px) clamp(20px, 4vw, 48px);
+  overflow: hidden;
+}
+.mem-sim-kicker {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #c4b5fd;
+}
+.mem-sim-title {
+  font-size: clamp(1.5rem, 3.6vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.18;
+  margin: 12px auto 0;
+  max-width: 660px;
+}
+.mem-sim-sub {
+  font-size: 1.02rem;
+  color: var(--mem-text-dim);
+  line-height: 1.6;
+  margin: 14px auto 0;
+  max-width: 560px;
+}
+.mem-sim-features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 36px 0;
+}
+.mem-sim-feat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--mem-border);
+  border-radius: 14px;
+  padding: 18px 16px;
+}
+.mem-sim-feat-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #fcd34d;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(139, 92, 246, 0.18));
+  margin-bottom: 4px;
+}
+.mem-sim-feat strong { font-size: 0.98rem; }
+.mem-sim-feat span { font-size: 0.86rem; color: var(--mem-text-dim); line-height: 1.45; }
+
+@media (max-width: 900px) { .mem-sim-features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .mem-sim-features { grid-template-columns: 1fr; } }
+
+/* ===== Confianza ===== */
+.mem-confianza {
+  max-width: 960px;
+  margin: 48px auto 0;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.mem-conf-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--mem-surface);
+  border: 1px solid var(--mem-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  color: #c4b5fd;
+}
+.mem-conf-item div { display: flex; flex-direction: column; }
+.mem-conf-item strong { color: var(--mem-text); font-size: 0.95rem; }
+.mem-conf-item span { color: var(--mem-text-dim); font-size: 0.82rem; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1023px) {
+  .mem-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .mem-grid { grid-template-columns: 1fr; }
+  .mem-confianza { grid-template-columns: 1fr; }
+}
+
+/* ===== Reduced motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .mem-skeleton { animation: none; }
+  .mem-orb-1, .mem-orb-2, .mem-orb-3 { animation: none; }
+  .mem-btn, .mem-btn-primary:hover, .mem-btn-outline:hover { transition: none; transform: none; }
+}

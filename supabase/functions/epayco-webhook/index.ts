@@ -116,6 +116,100 @@ async function inscribirTutorialesDelPaquete(
   }
 }
 
+// Activa la membresía del usuario tras un pago aceptado.
+// El acceso por plan se lee de perfiles.membresia_activa_id + fecha_vencimiento_membresia
+// (ver src/config/accesoPlan.ts), por eso aquí actualizamos AMBAS cosas:
+//   1) registramos la suscripción en suscripciones_usuario (historial)
+//   2) activamos el plan en el perfil
+// Idempotente vía ref_payco: ePayco puede llamar el webhook varias veces.
+async function activarMembresia(
+  supabase: ReturnType<typeof createClient>,
+  data: Record<string, any>,
+  refPayco: string,
+): Promise<void> {
+  const { data: yaExiste } = await supabase
+    .from("suscripciones_usuario")
+    .select("id")
+    .eq("ref_payco", refPayco)
+    .maybeSingle();
+  if (yaExiste) {
+    console.log(`↩️ Suscripción ya registrada para ref ${refPayco}, omito`);
+    return;
+  }
+
+  const { data: m, error: errM } = await supabase
+    .from("membresias")
+    .select("precio_mensual, precio_anual, permisos")
+    .eq("id", data.membresia_id)
+    .maybeSingle();
+  if (errM || !m) {
+    console.error("❌ Membresía no encontrada:", data.membresia_id);
+    return;
+  }
+
+  const valor = Number(data.valor) || 0;
+  const esVitalicio = m.permisos?.facturacion === "unica";
+  const precioAnual = Number(m.precio_anual) || 0;
+  const precioMensual = Number(m.precio_mensual) || 0;
+  // Periodo según el monto pagado: si pagó (más cerca de) el precio anual → anual.
+  const esAnual = !esVitalicio && precioAnual > 0 &&
+    Math.abs(valor - precioAnual) < Math.abs(valor - precioMensual);
+
+  const ahora = new Date();
+  let periodo = "mensual";
+  let fechaVenc: Date;
+  if (esVitalicio) {
+    periodo = "vitalicio";
+    fechaVenc = new Date("2999-12-31T00:00:00Z"); // lifetime: fecha lejana = nunca vence
+  } else if (esAnual) {
+    periodo = "anual";
+    fechaVenc = new Date(ahora);
+    fechaVenc.setFullYear(fechaVenc.getFullYear() + 1);
+  } else {
+    periodo = "mensual";
+    fechaVenc = new Date(ahora);
+    fechaVenc.setMonth(fechaVenc.getMonth() + 1);
+  }
+
+  const hoyStr = ahora.toISOString().slice(0, 10);
+  const vencStr = fechaVenc.toISOString().slice(0, 10);
+
+  // Solo puede haber UNA suscripción activa por usuario
+  // (idx_suscripciones_usuario_activa_unica). Si renueva o sube de plan,
+  // marcamos la activa anterior como vencida antes de insertar la nueva.
+  await supabase.from("suscripciones_usuario")
+    .update({ estado: "vencida", updated_at: new Date().toISOString() })
+    .eq("usuario_id", data.usuario_id)
+    .eq("estado", "activa");
+
+  // 1) Historial de suscripción
+  const { error: errSus } = await supabase.from("suscripciones_usuario").insert({
+    usuario_id: data.usuario_id,
+    membresia_id: data.membresia_id,
+    estado: "activa",
+    fecha_inicio: hoyStr,
+    fecha_vencimiento: vencStr,
+    precio_pagado: valor,
+    periodo,
+    metodo_pago: "epayco",
+    ref_payco: refPayco,
+    origen_suscripcion: "web",
+  });
+  if (errSus) console.error("❌ Error creando suscripción:", errSus.message);
+
+  // 2) Activar el plan en el perfil (esto es lo que da el acceso)
+  const { error: errPerfil } = await supabase.from("perfiles").update({
+    membresia_activa_id: data.membresia_id,
+    fecha_vencimiento_membresia: vencStr,
+  }).eq("id", data.usuario_id);
+
+  if (errPerfil) {
+    console.error("❌ Error activando membresía en perfil:", errPerfil.message);
+  } else {
+    console.log(`✅ Membresía ${data.membresia_id} activada (${periodo}) para usuario=${data.usuario_id}`);
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -228,7 +322,7 @@ Deno.serve(async (request) => {
               await inscribirTutorialesDelPaquete(supabase, data.usuario_id, data.paquete_id);
             }
             if (data.membresia_id) {
-              await crearInscripcion(supabase, data.usuario_id, "membresia_id", data.membresia_id);
+              await activarMembresia(supabase, data, xRefPayco);
             }
 
             // Notificación en la plataforma

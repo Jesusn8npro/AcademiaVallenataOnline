@@ -146,7 +146,10 @@ function Modelo({ fuelleAbiertoRef }: { fuelleAbiertoRef: React.MutableRefObject
         const sink = m.parent!.worldToLocal(pWmov).sub(m.position)
         const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone()
         m.material = mat
-        const emisivoBase = mat.emissive ? mat.emissive.clone() : new THREE.Color(0x000000)
+        // `emissive` solo existe en materiales tipo MeshStandard/Phong/etc., no en
+        // el tipo base Material. En runtime el chequeo `?` lo cubre; el cast evita el error TS.
+        const matEmisivo = mat as any
+        const emisivoBase = matEmisivo.emissive ? matEmisivo.emissive.clone() : new THREE.Color(0x000000)
         botones.current[(m.userData as any).botonBase] = { mesh: m, orig: m.position.clone(), sink, mat, emisivoBase }
       })
     }
