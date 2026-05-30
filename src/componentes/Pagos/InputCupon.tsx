@@ -13,7 +13,9 @@ export function InputCupon({ monto, usuarioId, onAplicar, onLimpiar }: Props) {
   const { codigo, setCodigo, validando, resultado, error, validarCupon, limpiarCupon } = useCupon()
 
   const handleAplicar = async () => {
-    await validarCupon(monto, usuarioId)
+    const r = await validarCupon(monto, usuarioId)
+    // Propagar el precio con descuento al modal para que se cobre lo correcto.
+    if (r?.valido) onAplicar(r.precio_final, r.descuento)
   }
 
   const handleLimpiar = () => { limpiarCupon(); onLimpiar() }

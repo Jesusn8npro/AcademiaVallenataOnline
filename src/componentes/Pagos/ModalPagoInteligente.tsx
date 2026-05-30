@@ -276,7 +276,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                             {procesandoPago
                                 ? 'Procesando...'
                                 : esUltimoPaso
-                                    ? `💳 Pagar $${obtenerPrecio(contenido).toLocaleString('es-CO')}`
+                                    ? `💳 Pagar $${(precioConDescuento ?? obtenerPrecio(contenido)).toLocaleString('es-CO')}`
                                     : 'Continuar →'}
                         </button>
                     </div>
