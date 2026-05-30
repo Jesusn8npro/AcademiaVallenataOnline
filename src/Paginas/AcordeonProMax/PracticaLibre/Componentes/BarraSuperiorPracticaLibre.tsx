@@ -14,6 +14,7 @@ import {
   Home,
   Settings,
   Box,
+  PersonStanding,
 } from 'lucide-react';
 import type { SeccionPanelPracticaLibre } from '../TiposPracticaLibre';
 
@@ -40,6 +41,7 @@ interface BarraSuperiorPracticaLibreProps {
 const ACCIONES_PANEL: Array<{ clave: SeccionPanelPracticaLibre; label: string; icono: React.ReactNode }> = [
   { clave: 'sonido', label: 'Sonido', icono: <Volume2 size={15} /> },
   { clave: 'visor3d', label: '3D', icono: <Box size={15} /> },
+  { clave: 'personaje3d', label: 'Personaje', icono: <PersonStanding size={15} /> },
   { clave: 'modelos', label: 'Modelos', icono: <Image size={15} /> },
   { clave: 'pistas', label: 'Pistas y Estudio', icono: <Music2 size={15} /> },
   { clave: 'efectos', label: 'FX', icono: <SlidersHorizontal size={15} /> },

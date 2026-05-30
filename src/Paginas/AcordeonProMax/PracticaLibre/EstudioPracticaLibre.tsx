@@ -24,6 +24,12 @@ const VisorAcordeon3D = dynamic(
   { ssr: false, loading: () => <div className="visor-acordeon-3d-cargando">Cargando visor 3D…</div> }
 );
 
+// Personaje 3D con acordeón: GLB pesado, cargar solo al abrir la pestaña Personaje.
+const VisorPersonaje3D = dynamic(
+  () => import('./Componentes/VisorPersonaje3D'),
+  { ssr: false, loading: () => <div className="visor-acordeon-3d-cargando">Cargando personaje 3D…</div> }
+);
+
 interface EstudioPracticaLibreProps {
   logica: any;
   modoAjuste: boolean;
@@ -291,7 +297,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
 
           <div className="estudio-practica-libre-area-acordeon">
             <div className="estudio-practica-libre-acordeon">
-              {estudio.panelActivo === 'visor3d' ? (
+              {estudio.panelActivo === 'personaje3d' ? (
+                <VisorPersonaje3D />
+              ) : estudio.panelActivo === 'visor3d' ? (
                 <VisorAcordeon3D
                   materialPorMesh={materialPorMesh}
                   piezaSeleccionada={piezaSeleccionada}

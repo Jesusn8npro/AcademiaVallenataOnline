@@ -768,6 +768,7 @@
 
 /* ─── VISOR 3D ──────────────────────────────────────────────────────── */
 .visor-acordeon-3d-stage {
+  position: relative;
   width: 100%;
   height: clamp(360px, 60vh, 720px);
   border-radius: 18px;
@@ -775,6 +776,23 @@
   background: radial-gradient(ellipse at center, rgba(40, 50, 80, 0.4) 0%, rgba(8, 10, 22, 0.95) 80%);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5), 0 16px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* Overlay de selección de animaciones del personaje (esquina inferior izquierda del visor). */
+.visor-personaje-anims {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  z-index: 5;
+}
+
+.visor-personaje-anims .visor3d-anim-btn {
+  background: rgba(8, 10, 22, 0.7);
+  backdrop-filter: blur(6px);
 }
 
 .visor-acordeon-3d-cargando {
