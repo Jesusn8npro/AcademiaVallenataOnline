@@ -1,27 +1,63 @@
 // @ts-nocheck
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_EMAIL = "Academia Vallenata <no-reply@academiavallenataonline.com>";
 
+// Cliente service-role para registrar el historial de correos (tabla emails_enviados).
+const _SB_URL = Deno.env.get("SUPABASE_URL");
+const _SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const sbLog = (_SB_URL && _SB_KEY) ? createClient(_SB_URL, _SB_KEY, { auth: { persistSession: false } }) : null;
+
+async function registrarEmail(tipo, destinatario, asunto, estado, resendId, errMsg, usuarioId) {
+  if (!sbLog) return;
+  try {
+    await sbLog.from("emails_enviados").insert({
+      tipo, destinatario, asunto: asunto || null, estado,
+      resend_id: resendId || null, error: errMsg || null, usuario_id: usuarioId || null,
+    });
+  } catch (_e) { /* el log no debe romper el envío */ }
+}
+
+// Evita correos de bienvenida duplicados (onAuthStateChange dispara SIGNED_IN varias veces).
+async function yaSeEnvioBienvenida(destinatario) {
+  if (!sbLog) return false;
+  const { data } = await sbLog.from("emails_enviados")
+    .select("id").eq("tipo", "bienvenida").eq("destinatario", destinatario).limit(1).maybeSingle();
+  return !!data;
+}
+
 function plantillaBienvenida(nombre: string) {
   return {
-    subject: "¡Bienvenido a Academia Vallenata Online! 🎵",
+    subject: "🎻 ¡Bienvenido a la Academia Vallenata Online!",
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0f0520;color:white;border-radius:16px;overflow:hidden">
-        <div style="background:linear-gradient(135deg,#2d1264,#6d28d9);padding:40px 32px;text-align:center">
-          <div style="font-size:48px;margin-bottom:8px">🎵</div>
-          <h1 style="margin:0;font-size:28px;color:white">Academia Vallenata Online</h1>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0613;border-radius:18px;overflow:hidden;border:1px solid #2a1a4a">
+        <div style="background:linear-gradient(135deg,#1a0a3a 0%,#6d28d9 60%,#f59e0b 140%);padding:46px 32px;text-align:center">
+          <div style="font-size:42px;margin-bottom:6px">🎻</div>
+          <div style="color:#fcd34d;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Academia Vallenata Online</div>
+          <h1 style="margin:10px 0 0;font-size:26px;color:#fff;font-weight:800">¡Bienvenido, ${nombre}! 👋</h1>
         </div>
         <div style="padding:32px">
-          <h2 style="color:#c4b5fd">¡Hola, ${nombre}! 👋</h2>
-          <p style="color:#e9d5ff;line-height:1.6">Bienvenido a la Academia Vallenata Online. Estamos emocionados de tenerte aquí.</p>
-          <p style="color:#e9d5ff;line-height:1.6">Tienes acceso a nuestros tutoriales gratuitos y puedes explorar todos los cursos disponibles.</p>
-          <div style="text-align:center;margin:32px 0">
-            <a href="https://academiavallenataonline.com/panel-estudiante"
-               style="background:#7c3aed;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">
-              Ir a mi panel →
+          <p style="color:#e9d5ff;font-size:16px;line-height:1.6;margin:0 0 18px">¡Qué alegría tenerte aquí! Ya eres parte de la academia #1 de acordeón vallenato online. 🎉</p>
+          <div style="background:linear-gradient(135deg,#1a0f33,#241247);border:1px solid #4c1d95;border-radius:14px;padding:20px;margin:0 0 22px">
+            <div style="color:#c4b5fd;font-size:15px;font-weight:700;margin-bottom:10px">Esto puedes hacer ahora:</div>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:5px 0;color:#34d399;font-size:15px;width:26px;vertical-align:top">✓</td><td style="padding:5px 0;color:#e9d5ff;font-size:14px;line-height:1.5">Practicar en el simulador de acordeón</td></tr>
+              <tr><td style="padding:5px 0;color:#34d399;font-size:15px;width:26px;vertical-align:top">✓</td><td style="padding:5px 0;color:#e9d5ff;font-size:14px;line-height:1.5">Explorar tutoriales y cursos de acordeón vallenato</td></tr>
+              <tr><td style="padding:5px 0;color:#34d399;font-size:15px;width:26px;vertical-align:top">✓</td><td style="padding:5px 0;color:#e9d5ff;font-size:14px;line-height:1.5">Unirte a la comunidad de estudiantes</td></tr>
+            </table>
+          </div>
+          <div style="text-align:center;margin:28px 0 8px">
+            <a href="https://academiavallenataonline.com/mis-cursos"
+               style="background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#1a1205;padding:15px 38px;border-radius:10px;text-decoration:none;font-weight:800;font-size:16px;display:inline-block">
+              Empezar a aprender →
             </a>
           </div>
-          <p style="color:#a78bfa;font-size:14px;text-align:center">academiavallenataonline.com</p>
+          <div style="border-top:1px solid #2a1a4a;margin-top:26px;padding-top:18px;text-align:center">
+            <p style="color:#a78bfa;font-size:13px;margin:0 0 4px">¿Tienes alguna pregunta? Escríbenos a</p>
+            <a href="mailto:Contacto@academiavallenataonline.com" style="color:#fcd34d;font-size:14px;font-weight:600;text-decoration:none">Contacto@academiavallenataonline.com</a>
+            <p style="color:#5b4a7a;font-size:12px;margin:14px 0 0">academiavallenataonline.com</p>
+          </div>
         </div>
       </div>`,
   };
@@ -348,6 +384,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Dedup: una sola bienvenida por correo (onAuthStateChange dispara SIGNED_IN varias veces).
+    if (tipo === "bienvenida" && await yaSeEnvioBienvenida(destinatario)) {
+      return new Response(JSON.stringify({ ok: true, deduplicado: true }), {
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+
     let plantilla: { subject: string; html: string };
 
     if (tipo === "bienvenida") plantilla = plantillaBienvenida(nombre || "");
@@ -404,10 +447,13 @@ Deno.serve(async (req) => {
     const data = await res.json();
 
     if (!res.ok) {
+      const detalle = data.message || data.name || `Resend HTTP ${res.status}`;
       console.error(`❌ Resend error (${res.status}):`, JSON.stringify(data));
-      throw new Error(data.message || data.name || `Resend HTTP ${res.status}`);
+      await registrarEmail(tipo, destinatario, plantilla.subject, "error", null, detalle, extra.usuario_id);
+      throw new Error(detalle);
     }
 
+    await registrarEmail(tipo, destinatario, plantilla.subject, "enviado", data.id, null, extra.usuario_id);
     console.log(`✅ Email enviado id=${data.id} a=${destinatario}`);
 
     return new Response(JSON.stringify({ ok: true, id: data.id }), {

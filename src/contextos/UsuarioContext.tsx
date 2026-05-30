@@ -208,7 +208,10 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                 if (session?.user) {
                     cargarUsuario()
                     const creadoHace = Date.now() - new Date(session.user.created_at).getTime()
-                    if (creadoHace < 60000) {
+                    // Flag local: evita el 2do envío (SIGNED_IN dispara varias veces al registrarse).
+                    const flagBienvenida = 'bienvenida_' + session.user.id
+                    if (creadoHace < 60000 && !localStorage.getItem(flagBienvenida)) {
+                        localStorage.setItem(flagBienvenida, '1')
                         fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/enviar-email`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
