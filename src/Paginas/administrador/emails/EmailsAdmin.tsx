@@ -3,7 +3,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../servicios/clienteSupabase'
 
-type Tab = 'enviados' | 'inactivos' | 'incompletos' | 'abandonados' | 'suscriptores' | 'redactar'
+type Tab = 'historial' | 'enviados' | 'inactivos' | 'incompletos' | 'abandonados' | 'suscriptores' | 'redactar'
+
+interface EmailLog {
+  id: string
+  destinatario: string
+  tipo: string
+  asunto: string | null
+  estado: string
+  created_at: string
+}
 
 interface EmailEnviado {
   id: string
@@ -58,7 +67,9 @@ async function invocarEmail(body: object): Promise<{ ok: boolean; error?: string
 }
 
 export default function EmailsAdmin() {
-  const [tab, setTab] = useState<Tab>('enviados')
+  const [tab, setTab] = useState<Tab>('historial')
+  const [historial, setHistorial] = useState<EmailLog[]>([])
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
   const [enviados, setEnviados] = useState<EmailEnviado[]>([])
   const [inactivos, setInactivos] = useState<UsuarioInactivo[]>([])
   const [incompletos, setIncompletos] = useState<CursoIncompleto[]>([])
@@ -90,13 +101,27 @@ export default function EmailsAdmin() {
   const [enviandoForm, setEnviandoForm] = useState(false)
 
   useEffect(() => {
-    if (tab === 'enviados') cargarEnviados()
+    if (tab === 'historial') cargarHistorial()
+    else if (tab === 'enviados') cargarEnviados()
     else if (tab === 'inactivos') cargarInactivos()
     else if (tab === 'incompletos') cargarIncompletos()
     else if (tab === 'suscriptores') cargarSuscriptores()
-  }, [tab, diasInactivo])
+  }, [tab, diasInactivo, filtroTipo])
 
   const notif = (texto: string, ok = true) => setMsg({ texto, ok })
+
+  const cargarHistorial = async () => {
+    setCargando(true)
+    let q = supabase
+      .from('emails_enviados')
+      .select('id, destinatario, tipo, asunto, estado, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (filtroTipo !== 'todos') q = q.eq('tipo', filtroTipo)
+    const { data } = await q
+    setHistorial((data as EmailLog[]) || [])
+    setCargando(false)
+  }
 
   const cargarEnviados = async () => {
     setCargando(true)
@@ -281,7 +306,19 @@ export default function EmailsAdmin() {
   const fmtFecha = (iso: string) =>
     iso ? new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
 
+  const ETIQUETA_TIPO: Record<string, { label: string; color: string }> = {
+    bienvenida: { label: 'Bienvenida', color: '#3b82f6' },
+    pago_exitoso: { label: 'Pago confirmado', color: '#10b981' },
+    recordatorio: { label: 'Recordatorio', color: '#f59e0b' },
+    pago_abandonado: { label: 'Pago abandonado', color: '#ef4444' },
+    tutorial_completado: { label: 'Logro', color: '#8b5cf6' },
+    inscripcion_evento: { label: 'Evento', color: '#06b6d4' },
+    recordatorio_evento: { label: 'Rec. evento', color: '#06b6d4' },
+    personalizado: { label: 'Personalizado', color: '#a78bfa' },
+  }
+
   const TABS: { id: Tab; label: string }[] = [
+    { id: 'historial', label: '📜 Historial' },
     { id: 'enviados', label: '📨 Confirmaciones' },
     { id: 'inactivos', label: '💤 Inactivos' },
     { id: 'incompletos', label: '📚 Incompletos' },
@@ -310,6 +347,61 @@ export default function EmailsAdmin() {
           </button>
         ))}
       </div>
+
+      {/* ── TAB: Historial (todos los correos enviados) ── */}
+      {tab === 'historial' && (
+        <div style={s.card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, flexWrap: 'wrap' as const }}>
+            <h2 style={{ fontSize: 17, fontWeight: 600, color: '#c4b5fd', margin: 0 }}>Historial de correos enviados</h2>
+            <label style={{ color: '#a78bfa', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              Tipo:
+              <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={{ ...s.input, width: 'auto', padding: '6px 10px' }}>
+                <option value="todos">Todos</option>
+                <option value="bienvenida">Bienvenida</option>
+                <option value="pago_exitoso">Pago confirmado</option>
+                <option value="recordatorio">Recordatorio</option>
+                <option value="pago_abandonado">Pago abandonado</option>
+                <option value="personalizado">Personalizado</option>
+              </select>
+            </label>
+            {!cargando && <span style={{ color: '#6d28d9', fontSize: 13 }}>{historial.length} correos</span>}
+          </div>
+          {cargando ? <p style={{ color: '#a78bfa' }}>Cargando…</p> : historial.length === 0 ? (
+            <p style={{ color: '#6d28d9' }}>Aún no hay correos registrados. (El historial empieza a llenarse desde ahora.)</p>
+          ) : (
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>Fecha</th>
+                  <th style={s.th}>Tipo</th>
+                  <th style={s.th}>Destinatario</th>
+                  <th style={s.th}>Asunto</th>
+                  <th style={s.th}>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historial.map(h => {
+                  const et = ETIQUETA_TIPO[h.tipo] || { label: h.tipo, color: '#6d28d9' }
+                  const ok = h.estado === 'enviado'
+                  return (
+                    <tr key={h.id}>
+                      <td style={s.td}>{fmtFecha(h.created_at)}</td>
+                      <td style={s.td}><span style={{ ...s.badge, background: et.color, color: 'white' }}>{et.label}</span></td>
+                      <td style={s.td}>{h.destinatario}</td>
+                      <td style={{ ...s.td, color: '#cbb8e6', fontSize: 13 }}>{h.asunto || '—'}</td>
+                      <td style={s.td}>
+                        <span style={{ ...s.badge, background: ok ? '#14532d' : '#450a0a', color: ok ? '#86efac' : '#fca5a5' }}>
+                          {ok ? 'Enviado' : 'Error'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {/* ── TAB: Enviados ─────────────────────────────── */}
       {tab === 'enviados' && (
