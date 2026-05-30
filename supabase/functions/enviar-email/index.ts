@@ -353,9 +353,11 @@ function plantillaPagoAbandonado(nombre: string, extra: Record<string, string> =
   };
 }
 
-const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
+// CORS abierto: la función se llama desde el navegador (bienvenida, panel admin)
+// en varios orígenes (localhost + dominios de producción) y desde el webhook
+// (server-to-server). El control de acceso real no depende de CORS.
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": SITE_URL,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
