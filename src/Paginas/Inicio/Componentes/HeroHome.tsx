@@ -6,6 +6,10 @@ import { sanitizarHTML } from '../../../utilidades/sanitizar';
 import './HeroHome.css';
 import { heroStyles as styles } from './HeroHome.styles';
 import { useNavigate } from '@/compat/router';
+import Image from 'next/image';
+import imgArtistas from '../../../assets/images/Jesus-Gonzalez,-Orlando-Acosta-y-Felipe-Pelaez.jpg';
+import imgBanner from '../../../assets/images/Jesus-Gonzalez--BANNER.jpg';
+import imgVenta from '../../../assets/images/Home/Venta de acordeones Fondo.jpg';
 
 interface HeroHomeProps {
   scrollToSection: (id: string) => void;
@@ -25,7 +29,16 @@ const HeroHome: React.FC<HeroHomeProps> = ({ scrollToSection }) => {
 
   return (
     <section className="hero-section-container" style={styles.heroSection}>
-      <div style={styles.heroParticles}>
+      {/* Fondo: 3 imágenes que se alternan con crossfade. next/image las sirve
+          optimizadas (WebP/AVIF + responsivo). El overlay mantiene el texto legible. */}
+      <div className="hero-bg-carousel" aria-hidden="true">
+        <Image src={imgArtistas} alt="" fill priority sizes="100vw" className="hero-cf hero-cf-1" style={{ objectFit: 'cover' }} />
+        <Image src={imgBanner} alt="" fill sizes="100vw" className="hero-cf hero-cf-2" style={{ objectFit: 'cover' }} />
+        <Image src={imgVenta} alt="" fill sizes="100vw" className="hero-cf hero-cf-3" style={{ objectFit: 'cover' }} />
+        <div className="hero-bg-overlay" />
+      </div>
+
+      <div className="hero-particles-layer" style={styles.heroParticles}>
         <div style={styles.particles}></div>
       </div>
 
