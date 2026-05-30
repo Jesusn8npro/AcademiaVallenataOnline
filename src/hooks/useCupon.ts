@@ -17,8 +17,8 @@ export function useCupon() {
   const [resultado, setResultado] = useState<ResultadoCupon | null>(null)
   const [error, setError] = useState('')
 
-  const validarCupon = async (monto: number, usuario_id?: string) => {
-    if (!codigo.trim()) { setError('Ingresa un código de cupón'); return }
+  const validarCupon = async (monto: number, usuario_id?: string): Promise<ResultadoCupon | null> => {
+    if (!codigo.trim()) { setError('Ingresa un código de cupón'); return null }
     setValidando(true)
     setError('')
     setResultado(null)
@@ -34,10 +34,12 @@ export function useCupon() {
         body: JSON.stringify({ codigo, monto, usuario_id })
       })
       const data: ResultadoCupon = await res.json()
-      if (data.valido) setResultado(data)
-      else setError(data.mensaje)
+      if (data.valido) { setResultado(data); return data }
+      setError(data.mensaje)
+      return null
     } catch {
       setError('Error al validar el cupón')
+      return null
     } finally {
       setValidando(false)
     }
