@@ -26,7 +26,7 @@ async function yaSeEnvioBienvenida(destinatario) {
 }
 
 const EMAIL_CONTACTO = "Contacto@academiavallenataonline.com";
-const GRAD = "linear-gradient(135deg,#1a0a3a 0%,#6d28d9 60%,#f59e0b 140%)";
+const GRAD = "linear-gradient(135deg,#2e1065 0%,#7c3aed 40%,#db2777 78%,#f59e0b 128%)";
 
 function formatearFecha(iso) {
   try {
@@ -36,14 +36,42 @@ function formatearFecha(iso) {
   } catch { return iso; }
 }
 
-const footerContacto = `<div style="border-top:1px solid #2a1a4a;margin-top:26px;padding-top:18px;text-align:center"><p style="color:#a78bfa;font-size:13px;margin:0 0 4px">¿Necesitas ayuda? Escríbenos a</p><a href="mailto:${EMAIL_CONTACTO}" style="color:#fcd34d;font-size:14px;font-weight:600;text-decoration:none">${EMAIL_CONTACTO}</a><p style="color:#5b4a7a;font-size:12px;margin:14px 0 0">academiavallenataonline.com</p></div>`;
+const LOGO_URL = "https://academiavallenataonline.com/logo-175.webp";
 
-// Wrapper de LUJO compartido por todas las plantillas (diseño premium consistente).
+// Wrapper de LUJO compartido: logo, prueba social, divisores dorados y footer completo.
 function emailLujo({ emoji, titulo, cuerpoHtml, ctaText, ctaHref, headerGradient }) {
   const cta = ctaText
-    ? `<div style="text-align:center;margin:28px 0 8px"><a href="${ctaHref}" style="background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#1a1205;padding:15px 38px;border-radius:10px;text-decoration:none;font-weight:800;font-size:16px;display:inline-block">${ctaText}</a></div>`
+    ? `<div style="text-align:center;margin:30px 0 6px"><a href="${ctaHref}" style="background:linear-gradient(135deg,#fde68a,#f59e0b);color:#1a1205;padding:16px 40px;border-radius:12px;text-decoration:none;font-weight:800;font-size:16px;display:inline-block;box-shadow:0 10px 26px rgba(245,158,11,0.35)">${ctaText}</a></div>`
     : "";
-  return `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0613;border-radius:18px;overflow:hidden;border:1px solid #2a1a4a"><div style="background:${headerGradient || GRAD};padding:44px 32px;text-align:center"><div style="font-size:42px;margin-bottom:6px">${emoji}</div><div style="color:#fcd34d;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Academia Vallenata Online</div><h1 style="margin:10px 0 0;font-size:25px;color:#fff;font-weight:800">${titulo}</h1></div><div style="padding:32px">${cuerpoHtml}${cta}${footerContacto}</div></div>`;
+  return `<div style="background:#060410;padding:26px 12px;font-family:'Segoe UI',Arial,sans-serif">
+    <div style="max-width:600px;margin:0 auto;background:#0d0820;border-radius:22px;overflow:hidden;border:1px solid rgba(252,211,77,0.20);box-shadow:0 24px 70px rgba(0,0,0,0.55)">
+      <div style="background:${headerGradient || GRAD};padding:38px 32px 32px;text-align:center">
+        <img src="${LOGO_URL}" alt="Academia Vallenata Online" width="62" style="width:62px;height:auto;margin:0 auto 10px;display:block;border-radius:12px">
+        <div style="color:#fde68a;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px">Academia Vallenata Online</div>
+        <div style="font-size:34px;line-height:1;margin-bottom:6px">${emoji}</div>
+        <h1 style="margin:6px 0 0;font-size:26px;color:#ffffff;font-weight:800;line-height:1.2">${titulo}</h1>
+      </div>
+      <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#fcd34d,#db2777,#7c3aed)"></div>
+      <div style="padding:34px 30px 10px">${cuerpoHtml}${cta}</div>
+      <div style="margin-top:22px;padding:18px 24px;background:#130a28;border-top:1px solid rgba(252,211,77,0.14);text-align:center">
+        <span style="color:#fcd34d;font-size:13px;font-weight:700">⭐ 4.9/5</span>
+        <span style="color:#4a3a6a;font-size:13px">&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+        <span style="color:#e9d5ff;font-size:13px;font-weight:600">5.000+ estudiantes</span>
+        <span style="color:#4a3a6a;font-size:13px">&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+        <span style="color:#c4b5fd;font-size:13px;font-weight:600">Academia #1 de acordeón vallenato</span>
+      </div>
+      <div style="padding:24px 30px 28px;text-align:center;background:#0d0820">
+        <p style="color:#a78bfa;font-size:13px;margin:0 0 4px">¿Necesitas ayuda? Escríbenos a</p>
+        <a href="mailto:${EMAIL_CONTACTO}" style="color:#fcd34d;font-size:15px;font-weight:700;text-decoration:none">${EMAIL_CONTACTO}</a>
+        <div style="margin:16px 0 0">
+          <a href="https://academiavallenataonline.com" style="color:#a78bfa;font-size:12px;text-decoration:none;margin:0 7px">Inicio</a><span style="color:#3a2a5a">•</span>
+          <a href="https://academiavallenataonline.com/tutoriales-de-acordeon" style="color:#a78bfa;font-size:12px;text-decoration:none;margin:0 7px">Tutoriales</a><span style="color:#3a2a5a">•</span>
+          <a href="https://academiavallenataonline.com/membresias" style="color:#a78bfa;font-size:12px;text-decoration:none;margin:0 7px">Planes</a>
+        </div>
+        <p style="color:#4a3a6a;font-size:11px;margin:16px 0 0">© Academia Vallenata Online · academiavallenataonline.com</p>
+      </div>
+    </div>
+  </div>`;
 }
 
 function cardLujo(inner) {
