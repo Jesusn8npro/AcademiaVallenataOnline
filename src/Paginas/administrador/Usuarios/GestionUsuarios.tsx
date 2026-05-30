@@ -81,18 +81,36 @@ const GestionUsuarios: React.FC = () => {
       )}
 
       {confirmandoBulk && (
-        <div className="gestion-usuarios-confirm-panel">
-          <p>¿Eliminar {usuariosSeleccionados.size} usuario(s)? Esta acción no se puede deshacer.</p>
-          <button onClick={confirmarEliminarBulk}>Confirmar</button>
-          <button onClick={() => setConfirmandoBulk(false)}>Cancelar</button>
+        <div className="gu-modal-overlay" onClick={() => setConfirmandoBulk(false)}>
+          <div className="gu-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+            <span className="gu-modal-icono" aria-hidden="true">🗑️</span>
+            <h3 className="gu-modal-titulo">¿Eliminar {usuariosSeleccionados.size} usuario(s)?</h3>
+            <p className="gu-modal-texto">
+              Se borrará <strong>todo</strong> su contenido (inscripciones, pagos, progreso, grabaciones…).
+              Esta acción <strong>no se puede deshacer</strong>.
+            </p>
+            <div className="gu-modal-acciones">
+              <button className="gu-btn gu-btn-cancelar" onClick={() => setConfirmandoBulk(false)}>Cancelar</button>
+              <button className="gu-btn gu-btn-eliminar" onClick={confirmarEliminarBulk}>Sí, eliminar todo</button>
+            </div>
+          </div>
         </div>
       )}
 
       {confirmandoIndividualId && (
-        <div className="gestion-usuarios-confirm-panel">
-          <p>¿Eliminar a "{nombreConfirmandoIndividual}"? Esta acción no se puede deshacer.</p>
-          <button onClick={confirmarEliminarIndividual}>Confirmar</button>
-          <button onClick={() => setConfirmandoIndividualId(null)}>Cancelar</button>
+        <div className="gu-modal-overlay" onClick={() => setConfirmandoIndividualId(null)}>
+          <div className="gu-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+            <span className="gu-modal-icono" aria-hidden="true">🗑️</span>
+            <h3 className="gu-modal-titulo">¿Eliminar a "{nombreConfirmandoIndividual}"?</h3>
+            <p className="gu-modal-texto">
+              Se borrará <strong>todo</strong> su contenido (inscripciones, pagos, progreso, grabaciones…).
+              Esta acción <strong>no se puede deshacer</strong>.
+            </p>
+            <div className="gu-modal-acciones">
+              <button className="gu-btn gu-btn-cancelar" onClick={() => setConfirmandoIndividualId(null)}>Cancelar</button>
+              <button className="gu-btn gu-btn-eliminar" onClick={confirmarEliminarIndividual}>Sí, eliminar todo</button>
+            </div>
+          </div>
         </div>
       )}
 
