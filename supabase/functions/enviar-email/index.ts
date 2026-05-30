@@ -27,27 +27,105 @@ function plantillaBienvenida(nombre: string) {
   };
 }
 
+function formatearFecha(iso: string): string {
+  try {
+    const [y, m, d] = iso.split("-").map(Number);
+    const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    return `${d} de ${meses[m - 1]} de ${y}`;
+  } catch { return iso; }
+}
+
+const EMAIL_CONTACTO = "Contacto@academiavallenataonline.com";
+
 function plantillaPagoExitoso(nombre: string, extra: Record<string, string> = {}) {
+  const esMembresia = extra.tipo_compra === "membresia";
+
+  // ── Footer común (contacto de lujo) ──────────────────────────────────────
+  const footer = `
+    <div style="border-top:1px solid #2a1a4a;margin-top:26px;padding-top:18px;text-align:center">
+      <p style="color:#a78bfa;font-size:13px;margin:0 0 4px">¿Necesitas ayuda? Escríbenos a</p>
+      <a href="mailto:${EMAIL_CONTACTO}" style="color:#fcd34d;font-size:14px;font-weight:600;text-decoration:none">${EMAIL_CONTACTO}</a>
+      <p style="color:#5b4a7a;font-size:12px;margin:14px 0 0">academiavallenataonline.com</p>
+    </div>`;
+
+  if (esMembresia) {
+    let beneficios: string[] = [];
+    try { beneficios = JSON.parse(extra.beneficios || "[]"); } catch { beneficios = []; }
+    const esVitalicio = extra.periodo === "vitalicio";
+    const vencTexto = esVitalicio
+      ? "Acceso de por vida ♾️"
+      : (extra.vencimiento ? `Activa hasta el ${formatearFecha(extra.vencimiento)}` : "Activa");
+    const listaBeneficios = beneficios.map((b) =>
+      `<tr><td style="padding:5px 0;color:#34d399;font-size:15px;vertical-align:top;width:26px">✓</td><td style="padding:5px 0;color:#e9d5ff;font-size:15px;line-height:1.5">${b}</td></tr>`
+    ).join("");
+
+    return {
+      subject: `🎉 ¡Bienvenido al plan ${extra.plan || "Premium"}! — Academia Vallenata`,
+      html: `
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0613;border-radius:18px;overflow:hidden;border:1px solid #2a1a4a">
+        <div style="background:linear-gradient(135deg,#1a0a3a 0%,#6d28d9 60%,#f59e0b 140%);padding:44px 32px;text-align:center">
+          <div style="font-size:40px;margin-bottom:6px">🎻</div>
+          <div style="color:#fcd34d;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Academia Vallenata Online</div>
+          <h1 style="margin:10px 0 0;font-size:26px;color:#fff;font-weight:800">¡Tu membresía está activa! 🎉</h1>
+        </div>
+        <div style="padding:32px">
+          <p style="color:#e9d5ff;font-size:16px;line-height:1.6;margin:0 0 18px">¡Hola, <strong style="color:#fff">${nombre}</strong>! Gracias por unirte. Tu pago fue confirmado y <strong style="color:#fcd34d">ya tienes acceso</strong>.</p>
+
+          <div style="background:linear-gradient(135deg,#1a0f33,#241247);border:1px solid #4c1d95;border-radius:14px;padding:22px;margin:0 0 22px">
+            <div style="color:#a78bfa;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Tu plan</div>
+            <div style="color:#fcd34d;font-size:24px;font-weight:800">${extra.plan || "Premium"}</div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #3a2360">
+              <span style="color:#a78bfa;font-size:13px">Vigencia: </span>
+              <span style="color:#fff;font-size:14px;font-weight:600">${vencTexto}</span>
+            </div>
+            ${extra.monto ? `<div style="margin-top:6px"><span style="color:#a78bfa;font-size:13px">Pagado: </span><span style="color:#34d399;font-size:14px;font-weight:600">${extra.monto}</span></div>` : ""}
+          </div>
+
+          ${beneficios.length ? `
+          <div style="margin:0 0 24px">
+            <div style="color:#c4b5fd;font-size:15px;font-weight:700;margin-bottom:8px">Esto es lo que incluye tu plan:</div>
+            <table style="width:100%;border-collapse:collapse">${listaBeneficios}</table>
+          </div>` : ""}
+
+          <div style="text-align:center;margin:28px 0 8px">
+            <a href="https://academiavallenataonline.com/mis-cursos"
+               style="background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#1a1205;padding:15px 38px;border-radius:10px;text-decoration:none;font-weight:800;font-size:16px;display:inline-block">
+              Entrar a la plataforma →
+            </a>
+          </div>
+          ${extra.email_usuario ? `<p style="color:#a78bfa;font-size:13px;text-align:center;margin:6px 0 0">Inicia sesión con tu correo <strong style="color:#c4b5fd">${extra.email_usuario}</strong></p>` : ""}
+
+          <div style="background:#140a26;border-radius:12px;padding:18px;margin:24px 0 0">
+            <div style="color:#c4b5fd;font-size:14px;font-weight:700;margin-bottom:6px">¿Qué sigue?</div>
+            <p style="color:#cbb8e6;font-size:13px;line-height:1.6;margin:0">Entra, inicia sesión y empieza a aprender hoy mismo. ${esVitalicio ? "Tu acceso no vence: es de por vida." : "Te avisaremos antes de que venza tu membresía para que no pierdas tu progreso."}</p>
+          </div>
+
+          ${footer}
+        </div>
+      </div>`,
+    };
+  }
+
+  // ── Compra individual (curso / tutorial / paquete) ───────────────────────
   return {
     subject: "✅ Pago confirmado — Academia Vallenata Online",
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0f0520;color:white;border-radius:16px;overflow:hidden">
-        <div style="background:linear-gradient(135deg,#2d1264,#6d28d9);padding:40px 32px;text-align:center">
-          <div style="font-size:48px;margin-bottom:8px">✅</div>
-          <h1 style="margin:0;font-size:28px;color:white">Pago Confirmado</h1>
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0613;border-radius:18px;overflow:hidden;border:1px solid #2a1a4a">
+        <div style="background:linear-gradient(135deg,#1a0a3a 0%,#6d28d9 60%,#f59e0b 140%);padding:44px 32px;text-align:center">
+          <div style="font-size:40px;margin-bottom:6px">✅</div>
+          <div style="color:#fcd34d;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Academia Vallenata Online</div>
+          <h1 style="margin:10px 0 0;font-size:26px;color:#fff;font-weight:800">¡Pago confirmado!</h1>
         </div>
         <div style="padding:32px">
-          <h2 style="color:#c4b5fd">¡Gracias, ${nombre}!</h2>
-          <p style="color:#e9d5ff;line-height:1.6">Tu pago fue procesado exitosamente. Ya tienes acceso completo a tu curso.</p>
-          ${extra.curso ? `<p style="color:#c4b5fd;font-weight:600">📚 Curso: ${extra.curso}</p>` : ""}
-          ${extra.monto ? `<p style="color:#e9d5ff">💰 Monto pagado: <strong>${extra.monto}</strong></p>` : ""}
-          <div style="text-align:center;margin:32px 0">
-            <a href="https://academiavallenataonline.com/panel-estudiante"
-               style="background:#7c3aed;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">
+          <p style="color:#e9d5ff;font-size:16px;line-height:1.6;margin:0 0 18px">¡Gracias, <strong style="color:#fff">${nombre}</strong>! Tu pago fue procesado y ya tienes acceso a tu contenido.</p>
+          ${extra.curso ? `<div style="background:linear-gradient(135deg,#1a0f33,#241247);border:1px solid #4c1d95;border-radius:14px;padding:20px;margin:0 0 20px"><div style="color:#a78bfa;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Tu compra</div><div style="color:#fcd34d;font-size:18px;font-weight:700">${extra.curso}</div>${extra.monto ? `<div style="margin-top:8px"><span style="color:#a78bfa;font-size:13px">Pagado: </span><span style="color:#34d399;font-size:14px;font-weight:600">${extra.monto}</span></div>` : ""}</div>` : ""}
+          <div style="text-align:center;margin:28px 0 8px">
+            <a href="https://academiavallenataonline.com/mis-cursos"
+               style="background:linear-gradient(135deg,#fcd34d,#f59e0b);color:#1a1205;padding:15px 38px;border-radius:10px;text-decoration:none;font-weight:800;font-size:16px;display:inline-block">
               Empezar ahora →
             </a>
           </div>
-          <p style="color:#a78bfa;font-size:13px;text-align:center">¿Preguntas? soporte@academiavallenataonline.com</p>
+          ${footer}
         </div>
       </div>`,
   };

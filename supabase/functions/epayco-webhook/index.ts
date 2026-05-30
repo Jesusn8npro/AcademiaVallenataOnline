@@ -134,17 +134,17 @@ async function activarMembresia(
     .maybeSingle();
   if (yaExiste) {
     console.log(`↩️ Suscripción ya registrada para ref ${refPayco}, omito`);
-    return;
+    return null;
   }
 
   const { data: m, error: errM } = await supabase
     .from("membresias")
-    .select("precio_mensual, precio_anual, permisos")
+    .select("nombre, beneficios, precio_mensual, precio_anual, permisos")
     .eq("id", data.membresia_id)
     .maybeSingle();
   if (errM || !m) {
     console.error("❌ Membresía no encontrada:", data.membresia_id);
-    return;
+    return null;
   }
 
   const valor = Number(data.valor) || 0;
@@ -208,6 +208,9 @@ async function activarMembresia(
   } else {
     console.log(`✅ Membresía ${data.membresia_id} activada (${periodo}) para usuario=${data.usuario_id}`);
   }
+
+  // Datos para el correo de confirmación (plan, beneficios, vencimiento).
+  return { nombre: m.nombre, beneficios: m.beneficios, vencStr, periodo };
 }
 
 Deno.serve(async (request) => {
@@ -286,27 +289,23 @@ Deno.serve(async (request) => {
     // ── Acciones post-pago solo cuando es ACEPTADA ──────────────────────────
     if (estado === "aceptada") {
 
-      // 1. Email de confirmación (fire-and-forget)
-      if (data.email) {
+      // Acciones post-pago (fire-and-forget): inscripciones/membresía + email + notificación
+      const montoTxt = data.valor ? `$${Number(data.valor).toLocaleString("es-CO")} COP` : "";
+
+      const enviarCorreo = (extra: Record<string, any>) => {
+        if (!data.email) return;
         fetch(`${supabaseUrl}/functions/v1/enviar-email`, {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${supabaseServiceRoleKey}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Authorization": `Bearer ${supabaseServiceRoleKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             tipo: "pago_exitoso",
             destinatario: data.email,
             nombre: data.nombre || "Estudiante",
-            extra: {
-              curso: data.nombre_producto || "",
-              monto: data.valor ? `$${Number(data.valor).toLocaleString("es-CO")} COP` : "",
-            },
+            extra,
           }),
         }).catch(() => {});
-      }
+      };
 
-      // 2. Crear inscripción automática + notificación (fire-and-forget)
       if (data.usuario_id) {
         (async () => {
           try {
@@ -321,8 +320,24 @@ Deno.serve(async (request) => {
               await crearInscripcion(supabase, data.usuario_id, "paquete_id", data.paquete_id);
               await inscribirTutorialesDelPaquete(supabase, data.usuario_id, data.paquete_id);
             }
+            let datosMembresia = null;
             if (data.membresia_id) {
-              await activarMembresia(supabase, data, xRefPayco);
+              datosMembresia = await activarMembresia(supabase, data, xRefPayco);
+            }
+
+            // Email de confirmación (después de activar → con los datos del plan)
+            if (datosMembresia) {
+              enviarCorreo({
+                tipo_compra: "membresia",
+                plan: datosMembresia.nombre || "",
+                beneficios: JSON.stringify(datosMembresia.beneficios || []),
+                vencimiento: datosMembresia.vencStr || "",
+                periodo: datosMembresia.periodo || "",
+                monto: montoTxt,
+                email_usuario: data.email,
+              });
+            } else {
+              enviarCorreo({ curso: data.nombre_producto || "", monto: montoTxt });
             }
 
             // Notificación en la plataforma
@@ -334,7 +349,7 @@ Deno.serve(async (request) => {
               icono: "💳",
               categoria: "pago",
               prioridad: "alta",
-              url_accion: "/panel-estudiante",
+              url_accion: "/mis-cursos",
               entidad_id: data.id,
               entidad_tipo: "pago",
             });
@@ -343,7 +358,9 @@ Deno.serve(async (request) => {
           }
         })();
       } else {
-        console.warn("⚠️ Pago aceptado sin usuario_id — inscripción manual requerida:", xRefPayco);
+        // Sin usuario_id: email genérico de respaldo
+        enviarCorreo({ curso: data.nombre_producto || "", monto: montoTxt });
+        console.warn("⚠️ Pago aceptado sin usuario_id:", xRefPayco);
       }
     }
 
