@@ -1,11 +1,14 @@
 'use client';
 
 
+import { useEffect, useState, type MouseEvent } from 'react'
 import Image from 'next/image'
 import './GridCursos.css'
 import { generarSlug } from '../../utilidades/slug'
 import { useNavigate } from '@/compat/router'
 import { useFavoritos } from '../../hooks/useFavoritos'
+import { supabase } from '../../servicios/clienteSupabase'
+import { obtenerPermisos, agregarContenidoConMembresia } from '../../config/accesoPlan'
 
 interface Item {
   id: string
@@ -53,6 +56,48 @@ function acortarTexto(texto?: string, maxLength = 100) {
 export default function GridCursos({ items, cargando, error, paginaActual, itemsPorPagina, totalItems, onPaginaChange }: Props) {
   const navigate = useNavigate()
   const { toggleFavorito, esFavorito } = useFavoritos()
+  // Plan del usuario: si cubre el tipo, en vez de "Comprar" puede "Agregar" gratis.
+  const [cubre, setCubre] = useState<{ curso: boolean; tutorial: boolean }>({ curso: false, tutorial: false })
+  const [agregados, setAgregados] = useState<Set<string>>(new Set())
+  const [agregandoId, setAgregandoId] = useState<string | null>(null)
+  // listo: hasta que sepamos el plan e inscripciones del usuario no pintamos el
+  // botón final, para evitar el parpadeo "Comenzar Ahora → Agregar/En Mis Cursos".
+  const [listo, setListo] = useState(false)
+
+  useEffect(() => {
+    let activo = true
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!activo) return
+      if (user) {
+        // Permisos del plan + lo que el usuario YA tiene en Mis Cursos.
+        const [permisos, inscRes] = await Promise.all([
+          obtenerPermisos(user.id),
+          supabase.from('inscripciones').select('curso_id, tutorial_id').eq('usuario_id', user.id),
+        ])
+        if (!activo) return
+        setCubre({ curso: permisos.contenido.cursos, tutorial: permisos.contenido.tutoriales_video })
+        const ids = new Set<string>()
+        ;((inscRes as any)?.data || []).forEach((r: any) => {
+          if (r.curso_id) ids.add(r.curso_id)
+          if (r.tutorial_id) ids.add(r.tutorial_id)
+        })
+        setAgregados(ids)
+      }
+      if (activo) setListo(true)
+    })()
+    return () => { activo = false }
+  }, [])
+
+  const agregarItem = async (item: Item, e: MouseEvent) => {
+    e.stopPropagation()
+    if (agregandoId) return
+    setAgregandoId(item.id)
+    const r = await agregarContenidoConMembresia(item.tipo, item.id)
+    setAgregandoId(null)
+    if (r.ok) setAgregados(prev => new Set(prev).add(item.id))
+  }
+
   const totalPaginas = Math.ceil(totalItems / itemsPorPagina)
   const inicioRango = (paginaActual - 1) * itemsPorPagina + 1
   const finRango = Math.min(paginaActual * itemsPorPagina, totalItems)
@@ -226,9 +271,27 @@ export default function GridCursos({ items, cargando, error, paginaActual, items
                         )}
                       </div>
 
-                      <button className={`gc-btn-acceder ${item.tipo}`}>
-                        {esGratis ? 'Acceder Gratis' : 'Comenzar Ahora'}
-                      </button>
+                      {!listo ? (
+                        <button className={`gc-btn-acceder ${item.tipo}`} disabled style={{ opacity: 0.55 }}>
+                          Cargando…
+                        </button>
+                      ) : agregados.has(item.id) ? (
+                        <button className="gc-btn-acceder gc-btn-agregado" onClick={(e) => { e.stopPropagation(); verContenido(item) }}>
+                          ✓ En Mis Cursos
+                        </button>
+                      ) : (!esGratis && cubre[item.tipo]) ? (
+                        <button
+                          className={`gc-btn-acceder ${item.tipo}`}
+                          onClick={(e) => agregarItem(item, e)}
+                          disabled={agregandoId === item.id}
+                        >
+                          {agregandoId === item.id ? 'Agregando…' : '➕ Agregar a Mis Cursos'}
+                        </button>
+                      ) : (
+                        <button className={`gc-btn-acceder ${item.tipo}`}>
+                          {esGratis ? 'Acceder Gratis' : 'Comenzar Ahora'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

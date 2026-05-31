@@ -231,7 +231,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
         {cargandoFirmado ? (
           <div className="loading-overlay">
             <div className="spinner"></div>
-            <p className="loading-text">Verificando acceso...</p>
+            <p className="loading-text">Cargando video…</p>
           </div>
         ) : errorFirmado || (!usarFirmado && tieneError) || !srcIframe ? (
           <div className="error-overlay">

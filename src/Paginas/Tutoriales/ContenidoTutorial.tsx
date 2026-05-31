@@ -59,42 +59,43 @@ export default function ContenidoTutorial() {
     if (!slug) return
     setCargando(true); setError(null)
     try {
-      const { data: todos, error: errTodos } = await supabase.from('tutoriales').select('*')
-      if (errTodos) throw errTodos
-
       const safeGenerateSlug = (text: string) => {
         try { return generarSlug(text || ''); } catch { return ''; }
       };
 
-      let tut = (todos || []).find((t: any) => safeGenerateSlug(t.titulo) === slug);
-      if (!tut) {
-        tut = (todos || []).find((t: any) => {
-          const s = safeGenerateSlug(t.titulo);
-          return t.id === slug || s.includes(slug);
-        });
-      }
+      // Lista LIGERA (id+titulo) para resolver el slug — evita traer las 69 filas
+      // con todas sus columnas.
+      const { data: lista, error: errTodos } = await supabase.from('tutoriales').select('id, titulo')
+      if (errTodos) throw errTodos
 
-      if (!tut) {
+      const match = (lista || []).find((t: any) => safeGenerateSlug(t.titulo) === slug)
+        || (lista || []).find((t: any) => t.id === slug || safeGenerateSlug(t.titulo).includes(slug));
+
+      if (!match) {
         setError(`No pudimos encontrar el tutorial "${slug}".`);
         return
       }
 
-      const { data: partes, error: errPartes } = await supabase
-        .from('partes_tutorial')
-        .select('*')
-        .eq('tutorial_id', tut.id)
-        .order('orden', { ascending: true })
+      // Tutorial completo + partes + sesión EN PARALELO (no en cascada).
+      const [tutRes, partesRes, userRes] = await Promise.all([
+        supabase.from('tutoriales').select('*').eq('id', match.id).single(),
+        supabase.from('partes_tutorial').select('*').eq('tutorial_id', match.id).order('orden', { ascending: true }),
+        supabase.auth.getUser(),
+      ])
+      if (tutRes.error) throw tutRes.error
+      if (partesRes.error) throw partesRes.error
 
-      if (errPartes) throw errPartes
+      const tut = tutRes.data
+      const partes = partesRes.data
+      const user = userRes.data?.user ?? null
 
-      const { data: { user } } = await supabase.auth.getUser()
       let insc = null
       if (user) {
         const { data: ins } = await supabase
           .from('inscripciones')
           .select('*')
           .eq('usuario_id', user.id)
-          .eq('tutorial_id', tut.id)
+          .eq('tutorial_id', match.id)
           .maybeSingle();
         insc = ins || null
       }

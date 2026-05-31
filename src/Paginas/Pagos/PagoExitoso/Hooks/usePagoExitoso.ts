@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from '@/compat/router';
 import { useUsuario } from '../../../../contextos/UsuarioContext';
-import { supabaseAnonimo } from '../../../../servicios/clienteSupabase';
+import { supabase } from '../../../../servicios/clienteSupabase';
 
 export interface DatosPago {
     referencia: string;
@@ -68,7 +68,20 @@ export function usePagoExitoso() {
                     return;
                 }
 
-                const { data, error } = await supabaseAnonimo
+                // Verificación autoritativa con ePayco: la URL trae el ref_payco
+                // HEXADECIMAL de ePayco. Con él consultamos su API pública (sin
+                // depender del webhook ni del P_KEY) y actualizamos/activamos el
+                // pago en la BD ANTES de leerlo. Idempotente y best-effort.
+                const refPaycoHex = searchParams.get('ref_payco') || searchParams.get('x_ref_payco') || '';
+                if (refPaycoHex) {
+                    try {
+                        await supabase.functions.invoke('verificar-pago-epayco', {
+                            body: { ref_payco: refPaycoHex },
+                        });
+                    } catch { /* no fatal: seguimos con lo que haya en BD */ }
+                }
+
+                const { data, error } = await supabase
                     .from('pagos_epayco')
                     .select('estado, nombre_producto, valor')
                     .eq('ref_payco', refPayco)
@@ -87,27 +100,6 @@ export function usePagoExitoso() {
 
                 const pagoEnBD = data as PagoEnBD;
                 setEstadoPago(pagoEnBD.estado);
-
-                // Fix #7: si el webhook no llegó pero ePayco ya puso los params en la URL, forzar verificación
-                if (pagoEnBD.estado === 'pendiente') {
-                    const xCodResponse   = searchParams.get('x_cod_response') || '';
-                    const xTransactionId = searchParams.get('x_transaction_id') || '';
-                    const xAmount        = searchParams.get('x_amount') || '';
-                    const xCurrencyCode  = searchParams.get('x_currency_code') || '';
-                    const xSignature     = searchParams.get('x_signature') || '';
-                    if (xCodResponse === '1' && xTransactionId && xAmount && xCurrencyCode && xSignature) {
-                        supabaseAnonimo.functions.invoke('verificar-pago-epayco', {
-                            body: {
-                                x_ref_payco: refPayco,
-                                x_cod_response: xCodResponse,
-                                x_transaction_id: xTransactionId,
-                                x_amount: xAmount,
-                                x_currency_code: xCurrencyCode,
-                                x_signature: xSignature,
-                            },
-                        }).catch(() => {});
-                    }
-                }
 
                 const nuevosDatosPago: DatosPago = {
                     referencia: refPayco,
@@ -180,7 +172,7 @@ export function usePagoExitoso() {
         const polling = setInterval(async () => {
             intentos++;
             try {
-                const { data } = await supabaseAnonimo
+                const { data } = await supabase
                     .from('pagos_epayco')
                     .select('estado, cod_respuesta, respuesta')
                     .eq('ref_payco', datosPago.referencia)

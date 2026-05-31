@@ -40,13 +40,17 @@ function GateAccesoCurso({ children }: { children: React.ReactNode }) {
         // Verificaciones del usuario EN PARALELO (admin · inscripción · permisos del plan).
         const [perfilRes, inscRes, permisos] = await Promise.all([
           supabase.from('perfiles').select('rol').eq('id', user.id).maybeSingle(),
-          supabase.from('inscripciones').select('id').eq('usuario_id', user.id).eq('curso_id', curso.id).maybeSingle(),
+          supabase.from('inscripciones').select('id, tipo_acceso').eq('usuario_id', user.id).eq('curso_id', curso.id).maybeSingle(),
           obtenerPermisos(user.id),
         ]);
 
         const esAdmin = (perfilRes as any)?.data?.rol === 'admin';
-        const tieneInscripcion = !!(inscRes as any)?.data;
-        if (activo) setEstado(esAdmin || tieneInscripcion || permisos.contenido.cursos ? 'ok' : 'bloqueado');
+        const insc = (inscRes as any)?.data as { tipo_acceso?: string } | null;
+        const cubrePlan = permisos.contenido.cursos; // obtenerPermisos ya es consciente del vencimiento
+        // Acceso requiere inscripción (modelo de control). Las inscripciones por
+        // membresía caducan con el plan; las pagadas/gratuitas son permanentes.
+        const accesoInscripcion = !!insc && (insc.tipo_acceso !== 'membresia' || cubrePlan);
+        if (activo) setEstado(esAdmin || accesoInscripcion ? 'ok' : 'bloqueado');
       } catch {
         if (activo) setEstado('ok');
       }
@@ -54,16 +58,13 @@ function GateAccesoCurso({ children }: { children: React.ReactNode }) {
     return () => { activo = false; };
   }, [slug]);
 
-  if (estado === 'verificando') {
-    return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-        Verificando acceso…
-      </div>
-    );
-  }
   if (estado === 'bloqueado') {
     return <CandadoContenido tipo="curso" titulo={tituloCurso} landingHref={`/cursos/${slug}`} />;
   }
+  // Optimista: mientras verificamos (estado 'verificando') mostramos el contenido
+  // de una vez — carga su propio esqueleto, sin pantalla "Verificando acceso…"
+  // adicional. Si el chequeo resulta bloqueado, se reemplaza por el candado.
+  // El contenido sensible (video) está protegido server-side por URLs firmadas.
   return <>{children}</>;
 }
 

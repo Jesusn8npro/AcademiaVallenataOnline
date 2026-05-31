@@ -5,6 +5,8 @@ import { useNavigate } from '@/compat/router';
 import type { DatosVista } from '../../Paginas/Cursos/LandingCurso';
 import './VistaPremium.css';
 import ModalPagoInteligente from '../Pagos/ModalPagoInteligente';
+import { supabase } from '../../servicios/clienteSupabase';
+import { obtenerPermisos, agregarContenidoConMembresia } from '../../config/accesoPlan';
 import BannerOferta from './secciones/BannerOferta';
 import HeroSection from './secciones/HeroSection';
 import VentajasSection from './secciones/VentajasSection';
@@ -24,10 +26,22 @@ const VistaPremium = ({ data, verContenido }: Props) => {
     const [tiempoRestante, setTiempoRestante] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
     const [ofertaActiva, setOfertaActiva] = useState(false);
     const [mostrarModalPago, setMostrarModalPago] = useState(false);
+    // Estado de "agregar con membresía": si el plan del usuario cubre este
+    // contenido, en vez de cobrar lo agrega gratis a Mis Cursos.
+    const [puedeAgregar, setPuedeAgregar] = useState(false);
+    const [agregando, setAgregando] = useState(false);
+    const [agregado, setAgregado] = useState(false);
+    // Inscripción real del usuario (consultada aquí para evitar parpadeo) y si fue
+    // por membresía (para ofrecer "comprar de por vida"). chequeoListo evita el
+    // flash "normal → membresía": no renderizamos el CTA hasta saber el estado.
+    const [inscritoLocal, setInscritoLocal] = useState(false);
+    const [inscMembresia, setInscMembresia] = useState(false);
+    const [chequeoListo, setChequeoListo] = useState(false);
     const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const { contenido, estaInscrito } = data;
     const tipoContenido = contenido.tipo;
+    const inscritoEfectivo = estaInscrito || agregado || inscritoLocal;
 
     const calcularTiempoRestante = () => {
         if (!contenido.fecha_expiracion) return;
@@ -76,7 +90,50 @@ const VistaPremium = ({ data, verContenido }: Props) => {
     };
 
     const objetivos = procesarObjetivos();
-    const comprar = () => setMostrarModalPago(true);
+
+    // Chequeo único: inscripción (y su tipo) + permisos del plan. Marca chequeoListo
+    // al terminar para que el CTA se pinte una sola vez (sin parpadeo).
+    useEffect(() => {
+        let activo = true;
+        setChequeoListo(false);
+        (async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!activo) return;
+            if (!user) { setChequeoListo(true); return; }
+            const campo = tipoContenido === 'curso' ? 'curso_id' : 'tutorial_id';
+            const [inscRes, permisos] = await Promise.all([
+                supabase.from('inscripciones').select('id, tipo_acceso').eq('usuario_id', user.id).eq(campo, contenido.id).maybeSingle(),
+                obtenerPermisos(user.id),
+            ]);
+            if (!activo) return;
+            const insc = (inscRes as any)?.data as { tipo_acceso?: string } | null;
+            setInscritoLocal(!!insc);
+            setInscMembresia(insc?.tipo_acceso === 'membresia');
+            const cubrePlan = tipoContenido === 'curso' ? permisos.contenido.cursos : permisos.contenido.tutoriales_video;
+            setPuedeAgregar(contenido.tipo_acceso !== 'gratuito' && cubrePlan);
+            setChequeoListo(true);
+        })();
+        return () => { activo = false; };
+    }, [contenido.id, tipoContenido]);
+
+    // CTA inteligente: si ya está inscrito → abrir; si su plan lo cubre → agregar
+    // gratis con membresía; si no → abrir modal de pago.
+    const comprar = async () => {
+        if (inscritoEfectivo) { verContenido(); return; }
+        if (puedeAgregar) {
+            setAgregando(true);
+            const r = await agregarContenidoConMembresia(tipoContenido as 'curso' | 'tutorial', contenido.id);
+            setAgregando(false);
+            if (r.ok) { setAgregado(true); verContenido(); return; }
+            // Si por algún motivo no se pudo agregar, ofrecemos el pago como respaldo.
+            setMostrarModalPago(true);
+            return;
+        }
+        setMostrarModalPago(true);
+    };
+
+    // Compra directa (acceso de por vida) aunque el plan ya lo cubra.
+    const comprarPago = () => setMostrarModalPago(true);
 
     useEffect(() => {
         document.body.classList.add('vista-premium-activa');
@@ -109,14 +166,18 @@ const VistaPremium = ({ data, verContenido }: Props) => {
             )}
             <HeroSection
                 contenido={contenido}
-                estaInscrito={estaInscrito}
+                estaInscrito={inscritoEfectivo}
                 tipoContenido={tipoContenido}
                 objetivos={objetivos}
-                cargando={cargando}
+                cargando={cargando || agregando}
+                puedeAgregar={puedeAgregar && !inscritoEfectivo}
+                inscripcionMembresia={inscMembresia}
+                verificando={!chequeoListo}
                 onComprar={comprar}
+                onComprarPago={comprarPago}
                 verContenido={verContenido}
             />
-            <VentajasSection estaInscrito={estaInscrito} />
+            <VentajasSection estaInscrito={inscritoEfectivo} />
             <PreciosSection contenido={contenido} objetivos={objetivos} cargando={cargando} onComprar={comprar} />
             <MentorSection cargando={cargando} onComprar={comprar} />
             <ModalPagoInteligente

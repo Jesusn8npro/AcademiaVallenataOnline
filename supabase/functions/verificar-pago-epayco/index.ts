@@ -1,19 +1,29 @@
 // @ts-nocheck
-// Fallback: si el webhook de ePayco no llegó, el frontend envía los mismos
-// params que ePayco pone en la URL de respuesta. Esta función verifica la
-// firma y procesa el pago igual que el webhook.
+// Verificación de pago desde el frontend (página /pago-exitoso).
+//
+// La página de éxito recibe en la URL el `ref_payco` HEXADECIMAL de ePayco
+// (ej. 6a1b7e33616a532388bf1f35). Con ese ref consultamos la API PÚBLICA de
+// validación de ePayco para conocer el estado REAL de la transacción, sin
+// depender del P_KEY ni de la firma. Luego actualizamos el pago en nuestra BD
+// (clave = invoice, ej. MEM-A7503CD42-...) y, si fue aceptado, activamos las
+// inscripciones / la membresía.
+//
+// Este es el camino PRINCIPAL de activación. El webhook server-to-server queda
+// como respaldo (depende del P_KEY).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
+const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": SITE_URL,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const EPAYCO_VALIDATION_URL = "https://secure.epayco.co/validation/v1/reference";
+
 const STATUS_MAP: Record<string, string> = {
   "1": "aceptada", "2": "rechazada", "3": "pendiente",
-  "4": "fallida",  "6": "rechazada", "9": "pendiente",
+  "4": "fallida", "6": "rechazada", "9": "pendiente",
   "10": "cancelada", "11": "expirada",
 };
 
@@ -22,11 +32,6 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { "Content-Type": "application/json", ...CORS_HEADERS },
   });
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function crearInscripcion(supabase: any, usuarioId: string, campo: string, valor: string) {
@@ -41,102 +46,162 @@ async function crearInscripcion(supabase: any, usuarioId: string, campo: string,
   });
 }
 
+async function inscribirTutorialesDelPaquete(supabase: any, usuarioId: string, paqueteId: string) {
+  const { data: items } = await supabase
+    .from("paquetes_tutoriales_items").select("tutorial_id")
+    .eq("paquete_id", paqueteId).eq("incluido", true);
+  for (const item of items || []) {
+    if (item.tutorial_id) await crearInscripcion(supabase, usuarioId, "tutorial_id", item.tutorial_id);
+  }
+}
+
+// Activa la membresía: historial en suscripciones_usuario + plan en el perfil.
+async function activarMembresia(supabase: any, data: any, refPayco: string) {
+  const { data: yaExiste } = await supabase
+    .from("suscripciones_usuario").select("id").eq("ref_payco", refPayco).maybeSingle();
+  if (yaExiste) return null;
+
+  const { data: m } = await supabase
+    .from("membresias")
+    .select("nombre, beneficios, precio_mensual, precio_anual, permisos")
+    .eq("id", data.membresia_id).maybeSingle();
+  if (!m) return null;
+
+  const valor = Number(data.valor) || 0;
+  const esVitalicio = m.permisos?.facturacion === "unica";
+  const precioAnual = Number(m.precio_anual) || 0;
+  const precioMensual = Number(m.precio_mensual) || 0;
+  const esAnual = !esVitalicio && precioAnual > 0 &&
+    Math.abs(valor - precioAnual) < Math.abs(valor - precioMensual);
+
+  const ahora = new Date();
+  let periodo = "mensual";
+  let fechaVenc: Date;
+  if (esVitalicio) { periodo = "vitalicio"; fechaVenc = new Date("2999-12-31T00:00:00Z"); }
+  else if (esAnual) { periodo = "anual"; fechaVenc = new Date(ahora); fechaVenc.setFullYear(fechaVenc.getFullYear() + 1); }
+  else { periodo = "mensual"; fechaVenc = new Date(ahora); fechaVenc.setMonth(fechaVenc.getMonth() + 1); }
+
+  const hoyStr = ahora.toISOString().slice(0, 10);
+  const vencStr = fechaVenc.toISOString().slice(0, 10);
+
+  await supabase.from("suscripciones_usuario")
+    .update({ estado: "vencida", updated_at: new Date().toISOString() })
+    .eq("usuario_id", data.usuario_id).eq("estado", "activa");
+
+  await supabase.from("suscripciones_usuario").insert({
+    usuario_id: data.usuario_id, membresia_id: data.membresia_id,
+    estado: "activa", fecha_inicio: hoyStr, fecha_vencimiento: vencStr,
+    precio_pagado: valor, periodo, metodo_pago: "epayco",
+    ref_payco: refPayco, origen_suscripcion: "web",
+  });
+
+  await supabase.from("perfiles").update({
+    membresia_activa_id: data.membresia_id,
+    fecha_vencimiento_membresia: vencStr,
+  }).eq("id", data.usuario_id);
+
+  return { nombre: m.nombre, beneficios: m.beneficios, vencStr, periodo };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
-  const epaycoCustomerId = Deno.env.get("EPAYCO_CUSTOMER_ID");
-  const epaycoPKey = Deno.env.get("EPAYCO_P_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  if (!epaycoCustomerId || !epaycoPKey) return json({ error: "Credenciales ePayco no configuradas" }, 500);
-
   try {
-    const body = await req.json();
-    const xRefPayco      = String(body.x_ref_payco   || "").trim();
-    const xCodResponse   = String(body.x_cod_response || "").trim();
-    const xTransactionId = String(body.x_transaction_id || "").trim();
-    const xAmount        = String(body.x_amount       || "").trim();
-    const xCurrencyCode  = String(body.x_currency_code || "").trim();
-    const xSignature     = String(body.x_signature    || "").trim().toLowerCase();
+    const body = await req.json().catch(() => ({}));
+    // El frontend envía el ref hexadecimal de ePayco (param `ref_payco` de la URL).
+    const refHex = String(body.ref_payco || body.ref || body.x_ref_payco || "").trim();
+    if (!refHex) return json({ error: "Falta ref_payco" }, 400);
 
-    if (!xRefPayco || !xCodResponse || !xTransactionId || !xAmount || !xCurrencyCode || !xSignature) {
-      return json({ error: "Parámetros de ePayco incompletos" }, 400);
+    // Consulta autoritativa a ePayco (pública, sin P_KEY).
+    const resp = await fetch(`${EPAYCO_VALIDATION_URL}/${encodeURIComponent(refHex)}`);
+    if (!resp.ok) return json({ error: `Validación ePayco HTTP ${resp.status}` }, 502);
+    const vjson = await resp.json();
+    if (vjson?.success === false || !vjson?.data) {
+      return json({ error: "ePayco no devolvió datos para ese ref", detalle: vjson?.text_response || null }, 404);
     }
+    const v = vjson.data;
 
-    // Verificar firma
-    const signSrc = [epaycoCustomerId, epaycoPKey, xRefPayco, xTransactionId, xAmount, xCurrencyCode].join("^");
-    const expected = await sha256Hex(signSrc);
-    if (expected.toLowerCase() !== xSignature) {
-      console.error("❌ Firma inválida en verificar-pago-epayco");
-      return json({ error: "Firma inválida" }, 401);
-    }
+    const codResponse = String(v.x_cod_response ?? v.x_cod_respuesta ?? "").trim();
+    const estado = STATUS_MAP[codResponse];
+    if (!estado) return json({ error: "x_cod_response no soportado", cod: codResponse }, 400);
 
-    const estado = STATUS_MAP[xCodResponse];
-    if (!estado) return json({ error: "x_cod_response no soportado" }, 400);
+    const invoice = String(v.x_id_invoice || v.x_id_factura || "").trim();
+    if (!invoice) return json({ error: "ePayco no devolvió invoice" }, 422);
 
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Verificar si ya fue procesado
     const { data: pagoActual } = await supabase
-      .from("pagos_epayco").select("id, estado").eq("ref_payco", xRefPayco).maybeSingle();
+      .from("pagos_epayco").select("id, estado").eq("ref_payco", invoice).maybeSingle();
+    if (!pagoActual) return json({ error: "Pago no encontrado", invoice }, 404);
 
-    if (!pagoActual) return json({ error: "Pago no encontrado", ref: xRefPayco }, 404);
-    if (pagoActual.estado !== "pendiente") {
-      // Ya fue procesado por el webhook, no hacer nada
-      return json({ ok: true, estado: pagoActual.estado, yaProcessado: true });
-    }
+    const yaEstabaAceptada = pagoActual.estado === "aceptada";
 
-    // Actualizar pago
     const { data, error } = await supabase
       .from("pagos_epayco")
-      .update({ estado, cod_respuesta: xCodResponse, fecha_transaccion: new Date().toISOString() })
-      .eq("ref_payco", xRefPayco)
-      .select("id, estado, email, nombre, nombre_producto, valor, usuario_id, curso_id, tutorial_id, paquete_id, membresia_id")
+      .update({
+        estado,
+        cod_respuesta: codResponse,
+        respuesta: String(v.x_response_reason_text || v.x_response || "").trim(),
+        fecha_transaccion: new Date().toISOString(),
+      })
+      .eq("ref_payco", invoice)
+      .select("id, ref_payco, estado, nombre_producto, valor, usuario_id, curso_id, tutorial_id, paquete_id, membresia_id")
       .maybeSingle();
 
-    if (error || !data) return json({ error: "Error actualizando pago" }, 500);
+    if (error || !data) return json({ error: "Error actualizando pago", detalle: error?.message }, 500);
 
-    console.log(`✅ Pago ${xRefPayco} actualizado a estado=${estado} vía verificación forzada`);
+    if (estado === "aceptada" && !yaEstabaAceptada && data.usuario_id) {
+      // El email/nombre del usuario viven en `perfiles` (no en pagos_epayco).
+      const { data: perfil } = await supabase
+        .from("perfiles").select("correo_electronico, nombre").eq("id", data.usuario_id).maybeSingle();
+      const emailUsuario = perfil?.correo_electronico || "";
+      const nombreUsuario = perfil?.nombre || "Estudiante";
 
-    if (estado === "aceptada" && data.usuario_id) {
-      // Inscripciones
-      if (data.curso_id)    await crearInscripcion(supabase, data.usuario_id, "curso_id", data.curso_id);
+      if (data.curso_id) await crearInscripcion(supabase, data.usuario_id, "curso_id", data.curso_id);
       if (data.tutorial_id) await crearInscripcion(supabase, data.usuario_id, "tutorial_id", data.tutorial_id);
-      if (data.paquete_id)  await crearInscripcion(supabase, data.usuario_id, "paquete_id", data.paquete_id);
-      if (data.membresia_id) await crearInscripcion(supabase, data.usuario_id, "membresia_id", data.membresia_id);
+      if (data.paquete_id) {
+        await crearInscripcion(supabase, data.usuario_id, "paquete_id", data.paquete_id);
+        await inscribirTutorialesDelPaquete(supabase, data.usuario_id, data.paquete_id);
+      }
+      let datosMembresia = null;
+      if (data.membresia_id) datosMembresia = await activarMembresia(supabase, data, data.ref_payco);
 
-      // Notificación en plataforma
       await supabase.from("notificaciones").insert({
         usuario_id: data.usuario_id,
         tipo: "pago_confirmado",
         titulo: "¡Pago confirmado!",
-        mensaje: `Tu compra de "${data.nombre_producto || 'contenido'}" fue procesada exitosamente.`,
+        mensaje: `Tu compra de "${data.nombre_producto || 'contenido'}" fue procesada exitosamente. ¡Ya tienes acceso completo!`,
         icono: "💳", categoria: "pago", prioridad: "alta",
-        url_accion: "/panel-estudiante", entidad_id: data.id, entidad_tipo: "pago",
+        url_accion: "/mis-cursos", entidad_id: data.id, entidad_tipo: "pago",
       });
 
-      // Email confirmación
-      const emailDest = data.email;
-      if (emailDest) {
+      if (emailUsuario) {
+        const montoTxt = data.valor ? `$${Number(data.valor).toLocaleString("es-CO")} COP` : "";
+        const extra = datosMembresia
+          ? {
+              tipo_compra: "membresia",
+              plan: datosMembresia.nombre || "",
+              beneficios: JSON.stringify(datosMembresia.beneficios || []),
+              vencimiento: datosMembresia.vencStr || "",
+              periodo: datosMembresia.periodo || "",
+              monto: montoTxt,
+              email_usuario: emailUsuario,
+            }
+          : { curso: data.nombre_producto || "", monto: montoTxt };
         fetch(`${supabaseUrl}/functions/v1/enviar-email`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tipo: "pago_exitoso", destinatario: emailDest,
-            nombre: data.nombre || "Estudiante",
-            extra: {
-              curso: data.nombre_producto || "",
-              monto: data.valor ? `$${Number(data.valor).toLocaleString("es-CO")} COP` : "",
-            },
-          }),
+          body: JSON.stringify({ tipo: "pago_exitoso", destinatario: emailUsuario, nombre: nombreUsuario, extra }),
         }).catch(() => {});
       }
     }
 
-    return json({ ok: true, estado, procesado: true });
+    return json({ ok: true, estado, invoice, procesado: estado === "aceptada" && !yaEstabaAceptada });
   } catch (err: unknown) {
     console.error("❌ Error en verificar-pago-epayco:", err);
     return json({ error: (err as Error).message }, 500);

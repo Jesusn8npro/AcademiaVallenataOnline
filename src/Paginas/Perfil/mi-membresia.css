@@ -1,0 +1,219 @@
+/* Mi Membresía — vista del plan activo del usuario */
+
+.mim-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ---- Tarjeta principal del plan ---- */
+.mim-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 1.75rem;
+  background: linear-gradient(135deg, #1b1430 0%, #120d22 100%);
+  border: 1px solid color-mix(in srgb, var(--mim-accent) 35%, transparent);
+  color: #fff;
+}
+.mim-card-glow {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: var(--mim-accent);
+  opacity: 0.28;
+  filter: blur(60px);
+  pointer-events: none;
+}
+.mim-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+}
+.mim-icono {
+  font-size: 2.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.mim-card-headtext { flex: 1; min-width: 0; }
+.mim-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mim-accent) 60%, #fff);
+}
+.mim-plan-nombre {
+  margin: 0.25rem 0 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.mim-plan-tagline {
+  margin: 0.3rem 0 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+.mim-estado-badge {
+  flex-shrink: 0;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
+}
+
+.mim-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.mim-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+.mim-meta-item svg { color: var(--mim-accent); flex-shrink: 0; }
+.mim-meta-label {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.mim-meta-item strong { font-size: 0.95rem; font-weight: 700; }
+
+.mim-desc {
+  margin: 1.25rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---- Secciones ---- */
+.mim-seccion {
+  background: #fff;
+  border: 1px solid #ececf1;
+  border-radius: 16px;
+  padding: 1.4rem 1.5rem;
+}
+.mim-seccion-titulo {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.mim-accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.6rem;
+}
+.mim-acceso {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 11px;
+  border: 1px solid #eee;
+  font-size: 0.92rem;
+}
+.mim-acceso.is-on { background: #f3fbf5; border-color: #cdeed5; color: #14532d; }
+.mim-acceso.is-off { background: #f7f7f8; color: #9ca3af; }
+.mim-acceso-ico { display: inline-flex; flex-shrink: 0; }
+.mim-acceso.is-on .mim-acceso-ico { color: #16a34a; }
+.mim-acceso-texto { flex: 1; }
+.mim-acceso-check { color: #16a34a; flex-shrink: 0; }
+.mim-acceso-x { color: #c5c5cc; font-weight: 700; }
+
+.mim-beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.mim-beneficios li { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.95rem; color: #374151; }
+.mim-check { color: #16a34a; flex-shrink: 0; margin-top: 1px; }
+
+/* ---- CTAs ---- */
+.mim-footer-cta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.mim-btn-primary, .mim-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.3rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mim-btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  border: none;
+}
+.mim-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(124, 58, 237, 0.3); }
+.mim-btn-outline {
+  background: #fff;
+  color: #4b5563;
+  border: 1px solid #d8d8df;
+}
+.mim-btn-outline:hover { background: #f7f7f8; }
+
+/* ---- Estado vacío ---- */
+.mim-empty {
+  text-align: center;
+  background: #fff;
+  border: 1px solid #ececf1;
+  border-radius: 18px;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mim-empty-ico {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+  color: #7c3aed;
+  margin-bottom: 0.5rem;
+}
+.mim-empty h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #1f2937; }
+.mim-empty p { margin: 0 0 0.75rem; color: #6b7280; max-width: 420px; }
+
+/* ---- Skeleton ---- */
+.mim-skeleton {
+  height: 280px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #f0f0f3 25%, #e7e7ee 37%, #f0f0f3 63%);
+  background-size: 400% 100%;
+  animation: mim-shimmer 1.4s ease infinite;
+}
+@keyframes mim-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@media (max-width: 600px) {
+  .mim-plan-nombre { font-size: 1.5rem; }
+  .mim-card { padding: 1.25rem; }
+  .mim-seccion { padding: 1.15rem; }
+}
