@@ -6,7 +6,6 @@ import UltimosArticulosBlog from '../../componentes/Perfil/UltimosArticulosBlog'
 import { usePerfilStore } from '../../stores/perfilStore'
 import ExperienciaPerfil from '../../componentes/Perfil/ExperienciaPerfil'
 import MonedasPerfil from '../../componentes/Perfil/MonedasPerfil'
-import BannerOnboarding from '../../componentes/Perfil/BannerOnboarding'
 
 export default function MiPerfil() {
   const { perfil, actualizarPerfil } = usePerfilStore()
@@ -22,7 +21,6 @@ export default function MiPerfil() {
 
   return (
     <div className="contenido-mi-perfil">
-      {perfil && <BannerOnboarding perfil={perfil} />}
       <div className="layout-info-perfil">
         <div className="columna-formulario-principal" style={{ minWidth: 0 }}>
           <InfoPestanaPerfil perfil={perfilVisualizar as any} onActualizar={actualizarPerfil} />

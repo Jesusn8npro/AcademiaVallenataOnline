@@ -47,6 +47,15 @@ export default function SidebarNavStudent({ esRutaActiva, colapsado, progresoEst
           </div>
           {!colapsado && <span className="sidebar-admin-nav-text">Cursos & Tutoriales</span>}
         </Link>
+
+        <Link href="/mi-membresia" className={`sidebar-admin-nav-item ${esRutaActiva('/mi-membresia') ? 'sidebar-admin-destacado' : ''}`}>
+          <div className="sidebar-admin-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 8l4 4 5-7 5 7 4-4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {!colapsado && <span className="sidebar-admin-nav-text">Mi Membresía</span>}
+        </Link>
       </div>
 
       <div className="sidebar-admin-nav-section">

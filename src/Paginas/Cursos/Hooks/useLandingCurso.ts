@@ -114,31 +114,37 @@ export function useLandingCurso(options: UseLandingCursoOptions = {}) {
                         }
                     }
 
-                    // tutoriales no tiene columna slug — buscar en todos por título generado
-                    // supabaseAnonimo: evita que un token expirado cause 401 en datos públicos
-                    const { data: todosTutoriales } = await supabaseAnonimo
+                    // tutoriales no tiene columna slug — lista LIGERA (id+titulo) para
+                    // resolver el slug, y luego el tutorial completo + partes EN PARALELO.
+                    // Evita traer las 69 filas con todas sus columnas (`select('*')`).
+                    const { data: listaTuts } = await supabaseAnonimo
                         .from('tutoriales')
-                        .select('*');
+                        .select('id, titulo');
 
-                    const tutorial = (todosTutoriales || []).find(
+                    const match = (listaTuts || []).find(
                         (t: any) => generarSlug(t.titulo) === slug
                     );
 
-                    if (tutorial) {
-                        const { data: partes } = await supabaseAnonimo
-                            .from('partes_tutorial')
-                            .select('id, titulo, descripcion, orden, slug')
-                            .eq('tutorial_id', tutorial.id)
-                            .order('orden');
+                    if (match) {
+                        const [tutRes, partesRes] = await Promise.all([
+                            supabaseAnonimo.from('tutoriales').select('*').eq('id', match.id).single(),
+                            supabaseAnonimo
+                                .from('partes_tutorial')
+                                .select('id, titulo, descripcion, orden, slug')
+                                .eq('tutorial_id', match.id)
+                                .order('orden'),
+                        ]);
 
                         if (cancelado) return;
-                        setContenido({
-                            ...tutorial,
-                            tipo: 'tutorial',
-                            modulos_preview: partes || []
-                        } as any);
-                        setCargando(false);
-                        return;
+                        if (tutRes.data) {
+                            setContenido({
+                                ...tutRes.data,
+                                tipo: 'tutorial',
+                                modulos_preview: partesRes.data || []
+                            } as any);
+                            setCargando(false);
+                            return;
+                        }
                     }
                 }
 

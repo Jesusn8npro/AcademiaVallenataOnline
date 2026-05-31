@@ -275,6 +275,43 @@
   white-space: nowrap;
   box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
+/* Plan que el usuario ya tiene activo */
+.mem-badge-actual {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: linear-gradient(100deg, #22c55e, #16a34a);
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+}
+.mem-card.is-actual {
+  border-color: #16a34a;
+  box-shadow: 0 20px 50px -18px rgba(22, 163, 74, 0.55);
+}
+.mem-card.is-actual::before { background: #16a34a; opacity: 1; }
+.mem-btn-actual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  background: linear-gradient(100deg, #22c55e, #16a34a);
+  border: none;
+  text-decoration: none;
+}
+.mem-btn-actual:hover { transform: translateY(-2px); }
+
 .mem-card-head { text-align: left; }
 .mem-card-icono { font-size: 1.9rem; line-height: 1; }
 .mem-card-nombre { font-size: 1.35rem; font-weight: 800; margin: 8px 0 0; }

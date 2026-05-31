@@ -435,6 +435,12 @@
     background: linear-gradient(45deg, #3b82f6, #2563eb);
 }
 
+/* Ya agregado a Mis Cursos → verde distintivo */
+.gc-btn-acceder.gc-btn-agregado {
+    background: linear-gradient(45deg, #16a34a, #15803d);
+    color: #fff;
+}
+
 .gc-btn-acceder:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);

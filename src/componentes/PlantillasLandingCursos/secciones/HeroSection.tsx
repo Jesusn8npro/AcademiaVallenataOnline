@@ -14,7 +14,11 @@ interface Props {
     tipoContenido: 'curso' | 'tutorial';
     objetivos: string[];
     cargando: boolean;
+    puedeAgregar?: boolean;
+    inscripcionMembresia?: boolean;
+    verificando?: boolean;
     onComprar: () => void;
+    onComprarPago?: () => void;
     verContenido: () => void;
 }
 
@@ -22,7 +26,7 @@ const CHECK_CIRCLE = 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.4
 const STAR_PATH = 'M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z';
 const IMG_FALLBACK = imgFallbackHero;
 
-const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargando, onComprar, verContenido }: Props) => (
+const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargando, puedeAgregar = false, inscripcionMembresia = false, verificando = false, onComprar, onComprarPago, verContenido }: Props) => (
     <div className="vista-premium-hero">
         <div className="vista-premium-hero-espaciador" />
         <div className="vista-premium-hero-fondo">
@@ -77,9 +81,19 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                     </div>
 
                     <div className="vista-premium-cta-container">
-                        {!estaInscrito ? (
+                        {verificando ? (
+                            <button className="vista-premium-btn-principal" disabled style={{ opacity: 0.65 }}>
+                                Cargando…
+                            </button>
+                        ) : !estaInscrito ? (
                             <>
                                 <div className="vista-premium-precio-container">
+                                    {puedeAgregar ? (
+                                        <>
+                                            <span className="vista-premium-precio-gratis">Incluido en tu plan</span>
+                                            <p className="vista-premium-precio-detalle">✓ Agrégalo gratis a Mis Cursos con tu membresía</p>
+                                        </>
+                                    ) : (<>
                                     {contenido.precio_rebajado || contenido.fecha_expiracion ? (
                                         <div className="vista-premium-precio-flex">
                                             {contenido.precio_normal && contenido.precio_rebajado && contenido.precio_normal > contenido.precio_rebajado ? (
@@ -99,6 +113,7 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                                         <span className="vista-premium-precio-premium">Premium</span>
                                     )}
                                     <p className="vista-premium-precio-detalle">✓ Pago único - Acceso de por vida</p>
+                                    </>)}
                                 </div>
 
                                 <div className="vista-premium-botones-container">
@@ -109,14 +124,27 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                                                     <circle className="vista-premium-spinner-circulo" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                     <path className="vista-premium-spinner-path" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                                 </svg>
-                                                Procesando...
+                                                {puedeAgregar ? 'Agregando...' : 'Procesando...'}
                                             </>
-                                        ) : (tipoContenido === 'curso' ? 'Comprar curso' : 'Comprar tutorial')}
+                                        ) : puedeAgregar
+                                            ? '➕ Agregar a Mis Cursos'
+                                            : (tipoContenido === 'curso' ? 'Comprar curso' : 'Comprar tutorial')}
                                     </button>
-                                    <button className="vista-premium-btn-secundario" onClick={() => document.getElementById('detalles')?.scrollIntoView({ behavior: 'smooth' })}>
-                                        Ver más detalles
-                                    </button>
+                                    {puedeAgregar ? (
+                                        <button className="vista-premium-btn-secundario" onClick={onComprarPago} disabled={cargando}>
+                                            Comprar — acceso de por vida
+                                        </button>
+                                    ) : (
+                                        <button className="vista-premium-btn-secundario" onClick={() => document.getElementById('detalles')?.scrollIntoView({ behavior: 'smooth' })}>
+                                            Ver más detalles
+                                        </button>
+                                    )}
                                 </div>
+                                {puedeAgregar && (
+                                    <p className="vista-premium-precio-detalle" style={{ marginTop: 6 }}>
+                                        ¿Prefieres que sea tuyo para siempre, aunque venza tu plan? Cómpralo una sola vez.
+                                    </p>
+                                )}
 
                                 {contenido.tipo_acceso === 'pago' && (
                                     <div className="vista-premium-garantia">
@@ -128,9 +156,16 @@ const HeroSection = ({ contenido, estaInscrito, tipoContenido, objetivos, cargan
                                 )}
                             </>
                         ) : (
-                            <button className="vista-premium-btn-continuar" onClick={verContenido}>
-                                {tipoContenido === 'curso' ? 'Continuar curso' : 'Continuar tutorial'}
-                            </button>
+                            <div className="vista-premium-botones-container">
+                                <button className="vista-premium-btn-continuar" onClick={verContenido}>
+                                    {tipoContenido === 'curso' ? 'Continuar curso' : 'Continuar tutorial'}
+                                </button>
+                                {inscripcionMembresia && onComprarPago && (
+                                    <button className="vista-premium-btn-secundario" onClick={onComprarPago}>
+                                        {tipoContenido === 'curso' ? 'Comprar curso de por vida' : 'Comprar tutorial de por vida'}
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

@@ -159,6 +159,12 @@ const MenuSuperiorAutenticado: React.FC<MenuSuperiorAutenticadoProps> = ({ onCer
                                                 </svg>
                                                 Mis Cursos
                                             </Link>
+                                            <Link href="/mi-membresia" className="dropdown-usuario-link" onClick={cerrarMenuUsuario}>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M3 8l4 4 5-7 5 7 4-4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" strokeLinejoin="round" />
+                                                </svg>
+                                                Mi Membresía
+                                            </Link>
                                             <Link href="/comunidad" className="dropdown-usuario-link" onClick={cerrarMenuUsuario}>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />

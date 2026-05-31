@@ -147,6 +147,30 @@ export async function tieneAccesoContenido(
   return { acceso: false, via: 'ninguno' };
 }
 
+/**
+ * "Agrega" un curso/tutorial/paquete a Mis Cursos usando la membresía del usuario
+ * (sin pago). El RPC valida en el servidor que el plan esté activo y cubra el tipo.
+ * Idempotente. Devuelve { ok, error? }.
+ */
+export async function agregarContenidoConMembresia(
+  tipo: 'curso' | 'tutorial' | 'paquete',
+  contenidoId: string,
+): Promise<{ ok: boolean; error?: string; ya?: boolean }> {
+  const { data, error } = await (supabase.rpc('inscribir_con_membresia', {
+    p_tipo: tipo,
+    p_contenido_id: contenidoId,
+  }) as any);
+  if (error) return { ok: false, error: error.message };
+  return (data as { ok: boolean; error?: string; ya?: boolean }) || { ok: false, error: 'sin_respuesta' };
+}
+
+/** ¿El plan activo del usuario cubre este tipo de contenido? (para mostrar "Agregar"). */
+export async function planCubreContenido(userId: string, tipo: TipoContenido): Promise<boolean> {
+  if (!userId) return false;
+  const permisos = await obtenerPermisos(userId);
+  return !!permisos.contenido[BUCKET_CONTENIDO[tipo]];
+}
+
 /** ¿Puede usar una feature del simulador (efectos / móvil / modo Hero)? */
 export async function puedeUsarFeature(
   userId: string,

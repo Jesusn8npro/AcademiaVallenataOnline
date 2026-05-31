@@ -1,11 +1,16 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Check, Sparkles, Crown, ShieldCheck, Infinity as InfinityIcon, Gauge, Smartphone, Gamepad2, Music4 } from 'lucide-react';
 import { supabase } from '../../servicios/clienteSupabase';
 import ModalPagoInteligente from '../../componentes/Pagos/ModalPagoInteligente';
 import type { ContenidoCompra } from '../../componentes/Pagos/Hooks/useModalPago';
+import heroImg1 from '../../assets/membresias/hero-1.jpg';
+import heroImg2 from '../../assets/membresias/hero-2.jpg';
+import heroImg3 from '../../assets/membresias/hero-3.jpg';
+import heroImg4 from '../../assets/membresias/hero-4.jpg';
 import './Membresias.css';
 
 interface Plan {
@@ -35,6 +40,7 @@ const Membresias: React.FC = () => {
 
   const [mostrarPago, setMostrarPago] = React.useState(false);
   const [planSeleccionado, setPlanSeleccionado] = React.useState<ContenidoCompra | null>(null);
+  const [planActivoId, setPlanActivoId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let activo = true;
@@ -47,6 +53,26 @@ const Membresias: React.FC = () => {
       if (!activo) return;
       setPlanes((data as Plan[]) || []);
       setCargando(false);
+    })();
+    return () => { activo = false; };
+  }, []);
+
+  // Detecta el plan activo del usuario logueado para marcar "Tu plan actual".
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const { data: perfil } = await supabase
+        .from('perfiles')
+        .select('membresia_activa_id, fecha_vencimiento_membresia')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if (!activo) return;
+      const memId = (perfil as any)?.membresia_activa_id as string | null;
+      const venc = (perfil as any)?.fecha_vencimiento_membresia as string | null;
+      const vigente = !!memId && (!venc || venc >= new Date().toISOString().slice(0, 10));
+      setPlanActivoId(vigente ? memId : null);
     })();
     return () => { activo = false; };
   }, []);
@@ -102,6 +128,13 @@ const Membresias: React.FC = () => {
     <div className="mem-page">
       {/* ===== HERO ===== */}
       <header className="mem-hero">
+        <div className="mem-hero-bg" aria-hidden="true">
+          <Image src={heroImg1} alt="" fill priority sizes="100vw" className="mem-hero-img mem-hero-img-1" />
+          <Image src={heroImg2} alt="" fill sizes="100vw" className="mem-hero-img mem-hero-img-2" />
+          <Image src={heroImg3} alt="" fill sizes="100vw" className="mem-hero-img mem-hero-img-3" />
+          <Image src={heroImg4} alt="" fill sizes="100vw" className="mem-hero-img mem-hero-img-4" />
+        </div>
+        <div className="mem-hero-overlay" aria-hidden="true" />
         <div className="mem-hero-glow" aria-hidden="true" />
         <div className="mem-orbs" aria-hidden="true">
           <span className="mem-orb mem-orb-1" />
@@ -176,17 +209,22 @@ const Membresias: React.FC = () => {
               const precio = precioElegido(p);
               const color = p.color_hex || '#8b5cf6';
               const mostrarAnual = !vit && periodo === 'anual' && p.precio_anual;
+              const esActual = planActivoId === p.id;
               return (
                 <motion.article
                   key={p.id}
-                  className={`mem-card ${p.destacada ? 'is-destacada' : ''}`}
+                  className={`mem-card ${p.destacada ? 'is-destacada' : ''} ${esActual ? 'is-actual' : ''}`}
                   style={{ ['--mem-accent' as string]: color }}
                   initial={{ opacity: 0, y: 28 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ duration: 0.4, ease: 'easeOut', delay: i * 0.07 }}
                 >
-                  {p.destacada && (
+                  {esActual ? (
+                    <span className="mem-badge-actual">
+                      <Check size={14} aria-hidden="true" /> Tu plan actual
+                    </span>
+                  ) : p.destacada && (
                     <span className="mem-badge-popular">
                       <Crown size={14} aria-hidden="true" /> Más popular
                     </span>
@@ -225,12 +263,18 @@ const Membresias: React.FC = () => {
 
                   {p.descripcion && <p className="mem-card-desc">{p.descripcion}</p>}
 
-                  <button
-                    className={`mem-btn mem-btn-plan ${p.destacada ? 'mem-btn-primary' : 'mem-btn-outline'}`}
-                    onClick={() => elegirPlan(p)}
-                  >
-                    {vit ? 'Comprar acceso vitalicio' : 'Elegir este plan'}
-                  </button>
+                  {esActual ? (
+                    <a href="/mi-membresia" className="mem-btn mem-btn-plan mem-btn-actual">
+                      <Check size={16} aria-hidden="true" /> Ver mi membresía
+                    </a>
+                  ) : (
+                    <button
+                      className={`mem-btn mem-btn-plan ${p.destacada ? 'mem-btn-primary' : 'mem-btn-outline'}`}
+                      onClick={() => elegirPlan(p)}
+                    >
+                      {planActivoId ? 'Cambiar a este plan' : vit ? 'Comprar acceso vitalicio' : 'Elegir este plan'}
+                    </button>
+                  )}
 
                   <ul className="mem-beneficios">
                     {(p.beneficios || []).map((b, idx) => (

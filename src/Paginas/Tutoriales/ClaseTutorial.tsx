@@ -11,6 +11,7 @@ import PanelAcordeonEnClase from '../../componentes/VisualizadorDeLeccionesDeCur
 import PestañasLeccion from '../../componentes/VisualizadorDeLeccionesDeCursos/PestañasLeccion'
 import SkeletonClase from '../../componentes/Skeletons/SkeletonClase'
 import FormularioEvaluacion from '../../componentes/Tutoriales/FormularioEvaluacion'
+import { prefetchVideoFirmado } from '../../hooks/useVideoFirmado'
 import './contenido-tutorial.css'
 
 export default function ClaseTutorial() {
@@ -86,50 +87,42 @@ export default function ClaseTutorial() {
     if (!slug) return
     setCargando(true); setError(null)
     try {
-      const { data: tuts, error: errT } = await supabase.from('tutoriales').select('*')
-      if (errT) {
-        setError(errT.message);
-        return
-      }
+      // 1) Lista LIGERA (solo id+titulo) para resolver el slug — evita traer las
+      //    69 filas con todas sus columnas (`select('*')`), que hacía el esqueleto largo.
+      const { data: tuts, error: errT } = await supabase.from('tutoriales').select('id, titulo')
+      if (errT) { setError(errT.message); return }
 
-      let tut = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug) || (tuts || []).find((t: any) => (t as any).slug === slug)
-      if (!tut) {
-        setError('Tutorial no encontrado');
-        return
-      }
-      setTutorial(tut)
+      const match = (tuts || []).find((t: any) => generarSlug(t.titulo) === slug)
+      if (!match) { setError('Tutorial no encontrado'); return }
 
-      const { data: partes, error: errP } = await supabase
-        .from('partes_tutorial')
-        .select('id, titulo, slug, video_url, orden, descripcion, tipo_contenido, monedas_recompensa')
-        .eq('tutorial_id', tut.id)
-        .order('orden', { ascending: true })
+      // 2) Tutorial completo + partes + sesión EN PARALELO (no en cascada).
+      const [tutRes, partesRes, sessionRes] = await Promise.all([
+        supabase.from('tutoriales').select('*').eq('id', match.id).single(),
+        supabase
+          .from('partes_tutorial')
+          .select('id, titulo, slug, video_url, orden, descripcion, tipo_contenido, monedas_recompensa')
+          .eq('tutorial_id', match.id)
+          .order('orden', { ascending: true }),
+        supabase.auth.getSession(),
+      ])
 
-      if (errP) {
-        setError(errP.message);
-        return
-      }
-      const lista = partes || []
-      setClases(lista)
+      if (tutRes.error || !tutRes.data) { setError(tutRes.error?.message || 'Tutorial no encontrado'); return }
+      if (partesRes.error) { setError(partesRes.error.message); return }
 
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
+      setTutorial(tutRes.data)
+      setClases(partesRes.data || [])
+
+      const user = sessionRes.data?.session?.user ?? null
       setUsuarioActual(user)
       if (user) {
         const { data: progAll } = await supabase
           .from('progreso_tutorial')
           .select('parte_tutorial_id, completado')
           .eq('usuario_id', user.id)
-          .eq('tutorial_id', tut.id)
+          .eq('tutorial_id', match.id)
 
         const map: Record<string, boolean> = {}
-        if (progAll) {
-          progAll.forEach((p: any) => {
-            if (p.completado) {
-              map[p.parte_tutorial_id] = true
-            }
-          })
-        }
+        ;(progAll || []).forEach((p: any) => { if (p.completado) map[p.parte_tutorial_id] = true })
         setProgresoMap(map)
       } else {
         setProgresoMap({})
@@ -167,6 +160,14 @@ const estadisticasProgreso = useMemo(() => {
   const indice = useMemo(() => clases.findIndex((p: any) => p.id === clase?.id), [clases, clase])
   const claseAnterior = indice > 0 ? clases[indice - 1] : null
   const claseSiguiente = indice >= 0 && indice < clases.length - 1 ? clases[indice + 1] : null
+
+  // Prefetch del video de la clase activa y las adyacentes → navegar entre
+  // clases es instantáneo (cache hit), sin esperar la URL firmada cada vez.
+  useEffect(() => {
+    if (clase?.id) prefetchVideoFirmado({ parteId: clase.id })
+    if (claseSiguiente?.id) prefetchVideoFirmado({ parteId: claseSiguiente.id })
+    if (claseAnterior?.id) prefetchVideoFirmado({ parteId: claseAnterior.id })
+  }, [clase?.id, claseSiguiente?.id, claseAnterior?.id])
 
   async function marcarComoCompletada() {
     setCargandoCompletar(true); setErrorCompletar('')
