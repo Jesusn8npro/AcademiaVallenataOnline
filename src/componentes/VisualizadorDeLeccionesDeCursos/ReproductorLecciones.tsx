@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useReproductorLecciones } from './useReproductorLecciones';
 import { useVideoFirmado } from '../../hooks/useVideoFirmado';
+import { useUsuario } from '../../contextos/UsuarioContext';
 import './ReproductorLecciones.css';
 
 // YouTube bloquea con X-Frame-Options:sameorigin cuando la URL es /watch?v=.
@@ -95,6 +96,23 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   const cargandoFirmado = usarFirmado && firmado.loading && !firmado.url;
   const errorFirmado = usarFirmado && !!firmado.error && firmado.error.codigo !== 'sin_acceso';
   const esBunnyFirmado = usarFirmado && firmado.plataforma === 'bunny';
+
+  // Marca de agua dinámica: identifica al usuario sobre el video. No impide
+  // grabar, pero si alguien comparte una grabación se sabe quién la filtró.
+  // Se mueve cada cierto tiempo para que no se pueda recortar fácil.
+  const { usuario } = useUsuario();
+  const marcaAgua = (usuario as any)?.email || (usuario as any)?.correo_electronico || (usuario as any)?.id || '';
+  const POSICIONES_WM = [
+    { top: 7, left: 6 }, { top: 7, left: 66 }, { top: 84, left: 66 }, { top: 84, left: 6 }, { top: 46, left: 36 },
+  ];
+  const [wmIdx, setWmIdx] = useState(0);
+  useEffect(() => {
+    if (!marcaAgua) return;
+    const id = setInterval(() => setWmIdx((i) => (i + 1) % POSICIONES_WM.length), 7000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marcaAgua]);
+  const wmPos = POSICIONES_WM[wmIdx];
 
   // Hook interno solo para navegación y flujo legacy (sin parteId/leccionId).
   // Cuando hay URL firmada la usamos tal cual: si la pasáramos por procesarUrl()
@@ -226,7 +244,7 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
   }
 
   return (
-    <div className="reproductor-container">
+    <div className="reproductor-container" onContextMenu={(e) => e.preventDefault()}>
       <div className="video-wrapper">
         {cargandoFirmado ? (
           <div className="loading-overlay">
@@ -295,6 +313,28 @@ const ReproductorLecciones: React.FC<ReproductorLeccionesProps> = ({
               <div className="loading-overlay">
                 <div className="spinner"></div>
                 <p className="loading-text">Cargando video...</p>
+              </div>
+            )}
+            {marcaAgua && (
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: `${wmPos.top}%`,
+                  left: `${wmPos.left}%`,
+                  pointerEvents: 'none',
+                  zIndex: 6,
+                  color: 'rgba(255,255,255,0.22)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  letterSpacing: '0.02em',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+                  transition: 'top 1.2s ease, left 1.2s ease',
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {marcaAgua}
               </div>
             )}
           </>

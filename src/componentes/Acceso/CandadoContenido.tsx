@@ -29,7 +29,8 @@ const CandadoContenido: React.FC<Props> = ({ titulo, tipo = 'tutorial', landingH
         <h2 className="candado-titulo">Contenido bloqueado</h2>
         <p className="candado-texto">
           {titulo ? <><strong>{titulo}</strong> está disponible </> : <>Para ver {que} </>}
-          con una membresía activa. Desbloquea {titulo ? que : 'todo el contenido'} y aprende sin límites.
+          con una membresía activa. Si tu plan venció, <strong>vuelve a activarlo</strong> y recupera el
+          acceso a todo al instante.
         </p>
         <div className="candado-acciones">
           <Link href="/membresias" className="candado-btn candado-btn-primary">
