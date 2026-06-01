@@ -413,3 +413,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Indicador EN VIVO (Realtime) */
+.ugeo-envivo { font-size: 0.7rem; font-weight: 800; color: #34d399; margin-left: 10px; letter-spacing: 0.04em; animation: ugeo-parpadeo 1.8s ease-in-out infinite; }
+@keyframes ugeo-parpadeo { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .ugeo-envivo { animation: none; } }

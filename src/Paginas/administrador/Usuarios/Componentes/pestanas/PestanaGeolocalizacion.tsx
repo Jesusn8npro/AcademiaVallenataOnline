@@ -8,6 +8,7 @@ import {
   detectarRiesgo,
   colorRiesgo
 } from '../../../../../servicios/servicioGeolocalizacion';
+import { supabase } from '../../../../../servicios/clienteSupabase';
 
 interface PestanaGeolocalizacionProps {
   usuario: any;
@@ -18,9 +19,21 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const [estadisticas, setEstadisticas] = useState({ totalRegistros: 0, visitas: 0, paisesUnicos: 0 });
+  const [enVivo, setEnVivo] = useState(false);
 
   useEffect(() => {
     if (usuario?.id) cargarTodo();
+  }, [usuario.id]);
+
+  // Suscripción en vivo: refresca cuando llega/cambia una ubicación del usuario.
+  useEffect(() => {
+    if (!usuario?.id) return;
+    const canal = supabase
+      .channel(`geo-user-${usuario.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'geolocalizacion_usuarios', filter: `usuario_id=eq.${usuario.id}` },
+        () => { cargarTodo(); })
+      .subscribe((estado) => { setEnVivo(estado === 'SUBSCRIBED'); });
+    return () => { supabase.removeChannel(canal); };
   }, [usuario.id]);
 
   async function cargarTodo() {
@@ -64,8 +77,8 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
     <div className="ugeo-container">
       <div className="ugeo-header">
         <div className="ugeo-title">
-          <h3>Ubicación del Usuario</h3>
-          <p>Ubicaciones reales detectadas en cada inicio de sesión del usuario</p>
+          <h3>Ubicación del Usuario {enVivo && <span className="ugeo-envivo">● EN VIVO</span>}</h3>
+          <p>Ubicaciones reales detectadas en cada conexión del usuario · se actualiza en tiempo real</p>
         </div>
         <div className="ugeo-actions">
           <button className="ugeo-btn-tracking" onClick={cargarTodo} disabled={cargando}>
@@ -103,8 +116,8 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
                     </div>
                   </div>
                   <div className="ugeo-connection-details">
-                    <div className="ugeo-detail-item"><span className="ugeo-detail-label">Proveedor</span><span className="ugeo-detail-value">{ultima.proveedor || ultima.isp || 'Desconocido'}</span></div>
-                    <div className="ugeo-detail-item"><span className="ugeo-detail-label">Conexión</span><span className="ugeo-detail-value">{ultima.es_movil ? 'Móvil' : 'Fija'}{ultima.es_vpn ? ' · VPN' : ''}{ultima.es_proxy ? ' · Proxy' : ''}</span></div>
+                    <div className="ugeo-detail-item"><span className="ugeo-detail-label">Dispositivo</span><span className="ugeo-detail-value">{ultima.datos_completos_raw?._dispositivo ? `${ultima.es_movil ? '📱' : '💻'} ${ultima.datos_completos_raw._dispositivo}` : (ultima.es_movil ? '📱 Móvil' : '💻 Escritorio')}{ultima.datos_completos_raw?._navegador ? ` · ${ultima.datos_completos_raw._navegador}` : ''}{ultima.datos_completos_raw?._so ? ` · ${ultima.datos_completos_raw._so}` : ''}</span></div>
+                    <div className="ugeo-detail-item"><span className="ugeo-detail-label">Conexión</span><span className="ugeo-detail-value">{ultima.proveedor || ultima.isp || 'Desconocido'}{ultima.es_vpn ? ' · VPN' : ''}{ultima.es_proxy ? ' · Proxy' : ''}</span></div>
                     <div className="ugeo-detail-item"><span className="ugeo-detail-label">Último acceso</span><span className="ugeo-detail-value">{ultima.ultima_visita ? new Date(ultima.ultima_visita).toLocaleString('es-ES') : '—'}</span></div>
                     <div className="ugeo-detail-item"><span className="ugeo-detail-label">Coordenadas</span><span className="ugeo-detail-value">{ultima.latitud ? `${ultima.latitud}, ${ultima.longitud}` : 'N/A'}</span></div>
                   </div>
@@ -145,8 +158,8 @@ const PestanaGeolocalizacion: React.FC<PestanaGeolocalizacionProps> = ({ usuario
                       </div>
                     </div>
                     <div className="ugeo-history-conn">
-                      <div className="ugeo-conn-type">{h.es_movil ? 'Móvil' : 'Fija'}</div>
-                      <div className="ugeo-conn-isp">{h.proveedor || h.isp || ''}</div>
+                      <div className="ugeo-conn-type">{h.datos_completos_raw?._dispositivo ? `${h.es_movil ? '📱' : '💻'} ${h.datos_completos_raw._dispositivo}` : (h.es_movil ? '📱 Móvil' : '💻 PC')}</div>
+                      <div className="ugeo-conn-isp">{h.datos_completos_raw?._navegador || h.proveedor || h.isp || ''}</div>
                     </div>
                     <div className="ugeo-history-time">
                       <div className="ugeo-time-date">{h.primera_visita ? new Date(h.primera_visita).toLocaleDateString('es-ES') : '-'}</div>

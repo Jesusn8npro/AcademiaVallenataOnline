@@ -25,15 +25,22 @@ const RETRASO_LIMITE_VELOCIDAD = 150;
 const cache = new Map<string, DatosGeolocalizacion>();
 let tiempoUltimaSolicitud = 0;
 
-// Deriva si el dispositivo es móvil a partir del user-agent del navegador.
-// Se usa cuando el proveedor de geo no informa is_mobile de forma fiable.
-function detectarMovilUA(): boolean {
-    if (typeof navigator === 'undefined' || !navigator.userAgent) return false;
-    return /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(navigator.userAgent);
-}
-
 function userAgentActual(): string {
     return typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
+}
+
+// Clasifica el dispositivo real a partir del user-agent del navegador.
+// Devuelve tipo (Móvil/Tablet/Escritorio), navegador y sistema operativo.
+export function infoDispositivo(ua: string = userAgentActual()): { tipo: 'Móvil' | 'Tablet' | 'Escritorio'; esMovil: boolean; navegador: string; so: string } {
+    if (!ua) return { tipo: 'Escritorio', esMovil: false, navegador: 'Desconocido', so: 'Desconocido' };
+    const esTablet = /iPad|Tablet|PlayBook|Silk|(Android(?!.*Mobile))/i.test(ua);
+    const esMovilUA = /Android|iPhone|iPod|Mobile|Windows Phone|Opera Mini|IEMobile|BlackBerry/i.test(ua) && !esTablet;
+    const tipo: 'Móvil' | 'Tablet' | 'Escritorio' = esMovilUA ? 'Móvil' : esTablet ? 'Tablet' : 'Escritorio';
+    const navegador = /Edg/i.test(ua) ? 'Edge' : /OPR|Opera/i.test(ua) ? 'Opera' : /Chrome|CriOS/i.test(ua) ? 'Chrome'
+        : /Firefox|FxiOS/i.test(ua) ? 'Firefox' : /Safari/i.test(ua) ? 'Safari' : 'Otro';
+    const so = /Windows/i.test(ua) ? 'Windows' : /iPhone|iPad|iPod|Mac OS|Macintosh/i.test(ua) ? (/(iPhone|iPad|iPod)/i.test(ua) ? 'iOS' : 'macOS')
+        : /Android/i.test(ua) ? 'Android' : /Linux/i.test(ua) ? 'Linux' : 'Otro';
+    return { tipo, esMovil: esMovilUA || esTablet, navegador, so };
 }
 
 async function respetarLimiteVelocidad(): Promise<void> {
@@ -98,11 +105,11 @@ async function obtenerGeolocalizacionFallback(ip?: string): Promise<DatosGeoloca
             codigoPostal: data.postal,
             moneda: data.currency?.code,
             idioma: 'es',
-            esMovil: detectarMovilUA(),
+            esMovil: infoDispositivo().esMovil,
             esProxy: false,
             esVpn: false,
             urlBandera: codigoPais ? `https://flagcdn.com/32x24/${codigoPais}.png` : '',
-            datosCompletos: { ...data, _userAgent: userAgentActual(), _proveedor: 'ipwho.is' }
+            datosCompletos: { ...data, _userAgent: userAgentActual(), _proveedor: 'ipwho.is', _dispositivo: infoDispositivo().tipo, _navegador: infoDispositivo().navegador, _so: infoDispositivo().so }
         };
     } catch (error: any) {
         return { error: true, mensaje: `Error en todas las APIs de geolocalización: ${error.message}`, tipoError: 'API' };
@@ -148,11 +155,11 @@ export async function obtenerGeolocalizacion(ip?: string): Promise<DatosGeolocal
             codigoPostal: datosRaw.postal,
             moneda: datosRaw.currency,
             idioma: datosRaw.language || 'es',
-            esMovil: datosRaw.is_mobile ?? detectarMovilUA(),
+            esMovil: datosRaw.is_mobile ?? infoDispositivo().esMovil,
             esProxy: datosRaw.is_proxy || false,
             esVpn: datosRaw.is_vpn || false,
             urlBandera: `https://flagcdn.com/32x24/${datosRaw.country_code.toLowerCase()}.png`,
-            datosCompletos: { ...datosRaw, _userAgent: userAgentActual(), _proveedor: 'ipapi.co' }
+            datosCompletos: { ...datosRaw, _userAgent: userAgentActual(), _proveedor: 'ipapi.co', _dispositivo: infoDispositivo().tipo, _navegador: infoDispositivo().navegador, _so: infoDispositivo().so }
         };
         if (datos.ip) cache.set(datos.ip, datos);
         return datos;
