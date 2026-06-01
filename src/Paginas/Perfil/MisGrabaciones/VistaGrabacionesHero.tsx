@@ -10,7 +10,7 @@ import './MisGrabaciones.css';
 
 interface VistaGrabacionesHeroProps {
     usuarioId?: string | null;
-    tipoVista: 'propia' | 'publica';
+    tipoVista: 'propia' | 'publica' | 'admin';
     nombreUsuario?: string | null;
 }
 
@@ -92,11 +92,13 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
             ) : estaVacia ? (
                 <div className="mis-grabaciones-estado vacio">
                     <div className="mis-grabaciones-estado-icono"><Disc3 size={30} /></div>
-                    <h3>{tipoVista === 'publica' ? 'Aun no hay grabaciones publicas' : 'Aun no tienes grabaciones guardadas'}</h3>
+                    <h3>{tipoVista === 'propia' ? 'Aun no tienes grabaciones guardadas' : 'Este usuario aun no tiene grabaciones'}</h3>
                     <p>
-                        {tipoVista === 'publica'
-                            ? 'Cuando este usuario publique sus mejores replays apareceran aqui.'
-                            : 'Juega en Pro Max, guarda tus mejores ejecuciones y revisalas luego desde esta biblioteca.'}
+                        {tipoVista === 'admin'
+                            ? 'Cuando el usuario grabe ejecuciones en Acordeon Hero Pro Max apareceran aqui.'
+                            : tipoVista === 'publica'
+                                ? 'Cuando este usuario publique sus mejores replays apareceran aqui.'
+                                : 'Juega en Pro Max, guarda tus mejores ejecuciones y revisalas luego desde esta biblioteca.'}
                     </p>
                     {tipoVista === 'propia' && (
                         <Link to="/acordeon-pro-max/lista" className="mis-grabaciones-boton-principal">
@@ -127,7 +129,7 @@ export default function VistaGrabacionesHero({ usuarioId, tipoVista, nombreUsuar
                                                 <span className="mis-grabaciones-chip publica">
                                                     <Globe size={12} /> Publica
                                                 </span>
-                                            ) : tipoVista === 'propia' ? (
+                                            ) : (tipoVista === 'propia' || tipoVista === 'admin') ? (
                                                 <span className="mis-grabaciones-chip privada">
                                                     <Lock size={12} /> Privada
                                                 </span>

@@ -8,7 +8,7 @@ export async function guardarGeolocalizacion(idUsuario: string, datosGeo: DatosG
             .select('id')
             .eq('usuario_id', idUsuario)
             .eq('ip', datosGeo.ip)
-            .single();
+            .maybeSingle();
 
         if (existente) {
             const { error } = await supabase
@@ -30,6 +30,7 @@ export async function guardarGeolocalizacion(idUsuario: string, datosGeo: DatosG
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', existente.id);
+            if (error) console.warn('[geo] update falló:', error.message);
             return !error;
         }
 
@@ -58,8 +59,10 @@ export async function guardarGeolocalizacion(idUsuario: string, datosGeo: DatosG
                 ultima_visita: new Date().toISOString(),
                 visitas_totales: 1
             });
+        if (error) console.warn('[geo] insert falló:', error.message);
         return !error;
-    } catch {
+    } catch (e) {
+        console.warn('[geo] excepción al guardar:', e);
         return false;
     }
 }

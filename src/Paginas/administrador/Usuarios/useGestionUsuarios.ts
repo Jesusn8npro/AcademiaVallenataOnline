@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { cargarUsuarios, calcularEstadisticas, eliminarUsuario, type UsuarioAdmin } from '../../../servicios/usuariosAdminService';
+import { cargarUsuariosEnriquecido, calcularEstadisticas, eliminarUsuario, type UsuarioAdminEnriquecido, type ContenidoUsuario } from '../../../servicios/usuariosAdminService';
 
 export interface Usuario {
   id: string;
@@ -26,6 +26,27 @@ export interface Usuario {
   longitud?: string;
   zona_horaria?: string;
   ip_registro?: string;
+  // Datos enriquecidos (RPC admin_listar_usuarios_enriquecido)
+  membresia_nombre?: string | null;
+  membresia_color?: string | null;
+  membresia_estado?: string | null;
+  membresia_vence?: string | null;
+  membresia_dias_restantes?: number | null;
+  ult_ip?: string | null;
+  ult_ciudad?: string | null;
+  ult_pais?: string | null;
+  ult_visita?: string | null;
+  ult_es_movil?: boolean | null;
+  dias_activos?: number | null;
+  tiempo_total_min?: number | null;
+  sesiones_total?: number | null;
+  ultima_sesion?: string | null;
+  en_linea?: boolean | null;
+  total_contenido?: number | null;
+  total_cursos?: number | null;
+  total_tutoriales?: number | null;
+  total_paquetes?: number | null;
+  contenido?: ContenidoUsuario[] | null;
 }
 
 export interface EstadisticasUsuarios {
@@ -49,7 +70,13 @@ export function useGestionUsuarios() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroSuscripcion, setFiltroSuscripcion] = useState('todas');
+  const [filtroMembresiaEstado, setFiltroMembresiaEstado] = useState('todos');
+  const [filtroActividad, setFiltroActividad] = useState('todos');
   const [mostrarEliminados, setMostrarEliminados] = useState(false);
+  const [orden, setOrden] = useState<{ campo: string; dir: 'asc' | 'desc' }>({ campo: 'fecha_creacion', dir: 'desc' });
+
+  const cambiarOrden = (campo: string) =>
+    setOrden(o => o.campo === campo ? { campo, dir: o.dir === 'asc' ? 'desc' : 'asc' } : { campo, dir: 'asc' });
 
   const [usuariosSeleccionados, setUsuariosSeleccionados] = useState<Set<string>>(new Set());
   const [seleccionarTodos, setSeleccionarTodos] = useState(false);
@@ -69,7 +96,7 @@ export function useGestionUsuarios() {
 
   useEffect(() => { cargarUsuariosData(); }, []);
   useEffect(() => { if (usuarios.length > 0) procesarParametrosURL(); }, [usuarios]);
-  useEffect(() => { cargarUsuariosData(); }, [busqueda, filtroRol, filtroSuscripcion, mostrarEliminados]);
+  useEffect(() => { cargarUsuariosData(); }, [mostrarEliminados]);
 
   useEffect(() => {
     const handleClickOutside = () => { if (menuContextual.visible) ocultarMenuContextual(); };
@@ -81,8 +108,8 @@ export function useGestionUsuarios() {
     try {
       setCargando(true);
       setError('');
-      const usuariosData = await cargarUsuarios(mostrarEliminados);
-      const usuariosMapeados: Usuario[] = (usuariosData as UsuarioAdmin[]).map((u) => ({
+      const usuariosData = await cargarUsuariosEnriquecido(mostrarEliminados);
+      const usuariosMapeados: Usuario[] = usuariosData.map((u) => ({
         id: u.id,
         nombre: u.nombre || '',
         apellido: u.apellido || '',
@@ -92,15 +119,25 @@ export function useGestionUsuarios() {
         suscripcion: (u.suscripcion || '').toLowerCase(),
         fecha_creacion: u.fecha_creacion || new Date().toISOString(),
         fecha_actualizacion: u.fecha_creacion || new Date().toISOString(),
-        ultima_actividad: undefined,
+        ultima_actividad: u.ultima_actividad || undefined,
         url_foto_perfil: u.url_foto_perfil || undefined,
-        eliminado: false,
-        whatsapp: undefined,
+        eliminado: !!u.eliminado,
+        whatsapp: u.whatsapp || undefined,
         ciudad: u.ciudad || undefined,
         pais: u.pais || undefined,
         nivel_habilidad: undefined, documento_numero: undefined, profesion: undefined,
         documento_tipo: undefined, instrumento: undefined,
         latitud: undefined, longitud: undefined, zona_horaria: undefined, ip_registro: undefined,
+        membresia_nombre: u.membresia_nombre, membresia_color: u.membresia_color,
+        membresia_estado: u.membresia_estado, membresia_vence: u.membresia_vence,
+        membresia_dias_restantes: u.membresia_dias_restantes,
+        ult_ip: u.ult_ip, ult_ciudad: u.ult_ciudad, ult_pais: u.ult_pais, ult_visita: u.ult_visita,
+        ult_es_movil: u.ult_es_movil,
+        dias_activos: u.dias_activos, tiempo_total_min: u.tiempo_total_min,
+        sesiones_total: u.sesiones_total, ultima_sesion: u.ultima_sesion, en_linea: u.en_linea,
+        total_contenido: u.total_contenido, total_cursos: u.total_cursos,
+        total_tutoriales: u.total_tutoriales, total_paquetes: u.total_paquetes,
+        contenido: u.contenido || [],
       }));
       setUsuarios(usuariosMapeados);
       calcularEstadisticasLocal(usuariosData);
@@ -111,11 +148,12 @@ export function useGestionUsuarios() {
     }
   };
 
-  const calcularEstadisticasLocal = (usuariosData: UsuarioAdmin[]) => {
+  const calcularEstadisticasLocal = (usuariosData: UsuarioAdminEnriquecido[]) => {
     const base = calcularEstadisticas(usuariosData);
-    const administradores = usuariosData.filter(u => (u.rol || '').toLowerCase() === 'admin').length;
-    const premium = usuariosData.filter(u => ['premium', 'pro'].includes((u.suscripcion || '').toLowerCase())).length;
-    const gratuitos = usuariosData.filter(u => (u.suscripcion || '').toLowerCase() === 'free').length;
+    const administradores = usuariosData.filter(u => ['admin', 'administrador'].includes((u.rol || '').toLowerCase())).length;
+    // Premium = membresía real activa (no la columna legacy 'suscripcion')
+    const premium = usuariosData.filter(u => u.membresia_nombre && (u.membresia_estado || '').toLowerCase() === 'activa').length;
+    const gratuitos = usuariosData.filter(u => !u.membresia_nombre || (u.membresia_estado || '').toLowerCase() !== 'activa').length;
     const hoyISO = new Date().toISOString().slice(0, 10);
     const nuevosHoy = usuariosData.filter(u => (u.fecha_creacion || '').slice(0, 10) === hoyISO).length;
     setEstadisticas({ total: base.total, activos: base.activos, administradores, estudiantes: base.estudiantes, premium, gratuitos, nuevosHoy });
@@ -257,9 +295,48 @@ export function useGestionUsuarios() {
     const q = busqueda.trim().toLowerCase();
     const matchBusqueda = q === '' || (u.nombre_completo?.toLowerCase().includes(q) || u.correo_electronico?.toLowerCase().includes(q));
     const matchRol = filtroRol === 'todos' || (u.rol || '').toLowerCase() === filtroRol;
-    const matchSuscripcion = filtroSuscripcion === 'todas' || (u.suscripcion || '').toLowerCase() === filtroSuscripcion;
+    const tieneMembresiaActiva = !!u.membresia_nombre && (u.membresia_estado || '').toLowerCase() === 'activa';
+    const matchSuscripcion =
+      filtroSuscripcion === 'todas' ||
+      (filtroSuscripcion === 'con_membresia' && tieneMembresiaActiva) ||
+      (filtroSuscripcion === 'solo_tutoriales' && !tieneMembresiaActiva && (u.total_contenido || 0) > 0) ||
+      (filtroSuscripcion === 'sin_nada' && !tieneMembresiaActiva && (u.total_contenido || 0) === 0) ||
+      (u.membresia_nombre || '').toLowerCase() === filtroSuscripcion;
+    const estadoM = (u.membresia_estado || '').toLowerCase();
+    const matchMembresiaEstado =
+      filtroMembresiaEstado === 'todos' ||
+      (filtroMembresiaEstado === 'por_vencer' && tieneMembresiaActiva && (u.membresia_dias_restantes ?? 999) <= 7) ||
+      estadoM === filtroMembresiaEstado;
+    const refMs = u.ultima_sesion || u.ultima_actividad;
+    const diasDesdeActividad = refMs ? Math.floor((Date.now() - new Date(refMs).getTime()) / 86400000) : null;
+    const matchActividad =
+      filtroActividad === 'todos' ||
+      (filtroActividad === 'activos_7' && diasDesdeActividad !== null && diasDesdeActividad <= 7) ||
+      (filtroActividad === 'inactivos_30' && (diasDesdeActividad === null || diasDesdeActividad > 30)) ||
+      (filtroActividad === 'nunca' && diasDesdeActividad === null);
     const matchEliminados = mostrarEliminados ? true : !u.eliminado;
-    return matchBusqueda && matchRol && matchSuscripcion && matchEliminados;
+    return matchBusqueda && matchRol && matchSuscripcion && matchMembresiaEstado && matchActividad && matchEliminados;
+  }).sort((a, b) => {
+    const dir = orden.dir === 'asc' ? 1 : -1;
+    const ms = (d?: string | null) => d ? new Date(d).getTime() : 0;
+    const val = (u: Usuario): number | string => {
+      switch (orden.campo) {
+        case 'nombre': return (u.nombre_completo || '').toLowerCase();
+        case 'correo': return (u.correo_electronico || '').toLowerCase();
+        case 'membresia': return u.membresia_nombre && (u.membresia_estado || '').toLowerCase() === 'activa'
+          ? (u.membresia_dias_restantes ?? 99999) : -1;
+        case 'actividad': return ms(u.ultima_sesion || u.ultima_actividad);
+        case 'frecuencia': return (u.dias_activos || 0) * 100000 + (u.tiempo_total_min || 0);
+        case 'ubicacion': return (u.ult_pais || 'zzz').toLowerCase();
+        case 'estado': return u.eliminado ? 1 : 0;
+        case 'fecha_creacion':
+        default: return ms(u.fecha_creacion);
+      }
+    };
+    const av = val(a), bv = val(b);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
   });
 
   const nombreConfirmandoIndividual = confirmandoIndividualId
@@ -271,6 +348,9 @@ export function useGestionUsuarios() {
     cargando, error, exito,
     busqueda, setBusqueda, filtroRol, setFiltroRol,
     filtroSuscripcion, setFiltroSuscripcion,
+    filtroMembresiaEstado, setFiltroMembresiaEstado,
+    filtroActividad, setFiltroActividad,
+    orden, cambiarOrden,
     mostrarEliminados, setMostrarEliminados,
     usuariosSeleccionados, seleccionarTodos, mostrarAccionesSeleccion,
     menuContextual, estadisticas,

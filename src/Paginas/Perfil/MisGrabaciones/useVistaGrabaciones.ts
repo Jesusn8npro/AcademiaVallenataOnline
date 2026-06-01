@@ -13,7 +13,7 @@ type FiltroGrabacion = 'todas' | ModoGrabacionHero;
 
 interface UseVistaGrabacionesProps {
     usuarioId?: string | null;
-    tipoVista: 'propia' | 'publica';
+    tipoVista: 'propia' | 'publica' | 'admin';
     nombreUsuario?: string | null;
 }
 
@@ -33,11 +33,13 @@ export function useVistaGrabaciones({ usuarioId, tipoVista, nombreUsuario }: Use
     const [pendingCambioVisibilidad, setPendingCambioVisibilidad] = useState<{ grabacion: GrabacionReplayHero; siguienteEsPublica: boolean } | null>(null);
 
     const tituloSeccion = useMemo(() => {
+        if (tipoVista === 'admin') return nombreUsuario ? `Grabaciones de ${nombreUsuario}` : 'Grabaciones del usuario';
         if (tipoVista === 'publica') return nombreUsuario ? `Grabaciones de ${nombreUsuario}` : 'Grabaciones publicas';
         return 'Mis grabaciones';
     }, [nombreUsuario, tipoVista]);
 
     const subtituloSeccion = useMemo(() => {
+        if (tipoVista === 'admin') return 'Todas las grabaciones (públicas y privadas) — vista de administrador';
         if (tipoVista === 'publica') return 'Replays publicados desde Acordeon Hero Pro Max';
         return 'Tu biblioteca privada de ejecuciones, replays y practicas destacadas';
     }, [tipoVista]);
@@ -58,6 +60,7 @@ export function useVistaGrabaciones({ usuarioId, tipoVista, nombreUsuario }: Use
             const data = tipoVista === 'publica'
                 ? await obtenerGrabacionesPublicasUsuario(usuarioId, modo)
                 : await obtenerGrabacionesUsuario(usuarioId, { modo });
+            // 'admin' y 'propia' usan obtenerGrabacionesUsuario (todas, incluidas privadas).
             setGrabaciones((Array.isArray(data) ? data : []) as GrabacionReplayHero[]);
         } catch (err: any) {
             setError(err?.message || 'No se pudieron cargar las grabaciones.');
