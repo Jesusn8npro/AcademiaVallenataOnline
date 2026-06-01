@@ -8,7 +8,7 @@ import { subscribirNotas } from '../../../../Core/audio/emisorNotasAcordeon'
 
 // GLB del personaje: geometría horneada (pose de agarre) + morph "Cerrar" (fuelle) +
 // 8 morphs de dedos (R/L Index/Mid/Ring/Pinky) en CC_Base_Body.
-const GLB_PATH = '/modelos3d/personaje-acordeon.glb?v=22'
+const GLB_PATH = '/modelos3d/personaje-acordeon.glb?v=25'
 
 useGLTF.setDecoderPath('/draco/')
 
@@ -82,10 +82,13 @@ function keyDeId(idBoton: string): string {
   return bajo ? `bajo-${s}` : s
 }
 
-function Modelo({ fuelleAbiertoRef }: { fuelleAbiertoRef: React.MutableRefObject<boolean> }) {
+function Modelo({ fuelleAbiertoRef, skin }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const { scene } = useGLTF(GLB_PATH) as any
   const camera = useThree((s) => s.camera)
+  // Materiales del acordeón (acc_*) inyectados por pieza → permiten cambiar de "piel".
+  const accMats = React.useRef<Array<{ part: string; mat: any }>>([])
+  const [matsReady, setMatsReady] = React.useState(0)
 
   // Morphs "Cerrar" (en todas las mallas) y 8 morphs de dedos (R/L Index/Mid/Ring/Pinky).
   const cerrarMorphs = React.useRef<Array<{ infl: number[]; idx: number }>>([])
@@ -159,6 +162,53 @@ function Modelo({ fuelleAbiertoRef }: { fuelleAbiertoRef: React.MutableRefObject
     notaAMesh.current = NOTA_BOTON
   }, [scene])
 
+  // Recolectar los materiales por pieza del acordeón (acc_cuerpo, acc_fuelle, acc_botones,
+  // acc_pack, "acc_parte botones") y cachear sus mapas originales para poder volver a "Original".
+  React.useEffect(() => {
+    const seen = new Set<any>()
+    const list: Array<{ part: string; mat: any }> = []
+    scene.traverse((o: any) => {
+      if (!o.isMesh) return
+      const mats = Array.isArray(o.material) ? o.material : [o.material]
+      for (const m of mats) {
+        if (!m || seen.has(m)) continue
+        const name: string = m.name || ''
+        if (!name.startsWith('acc_')) continue
+        seen.add(m)
+        m.userData.orig = { map: m.map, roughnessMap: m.roughnessMap, metalnessMap: m.metalnessMap, normalMap: m.normalMap }
+        list.push({ part: name.slice(4), mat: m })
+      }
+    })
+    accMats.current = list
+    setMatsReady(list.length)
+  }, [scene])
+
+  // Aplicar la piel seleccionada. 'original' = mapas horneados del GLB. '1'..'7' = pieles
+  // generadas en /public/texturas-acordeon. Las texturas del GLB usan flipY=false (glTF).
+  React.useEffect(() => {
+    if (!accMats.current.length) return
+    const loader = new THREE.TextureLoader()
+    const cargar = (url: string, srgb: boolean) => {
+      const t = loader.load(url, () => {})
+      t.flipY = false
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace
+      return t
+    }
+    for (const { part, mat } of accMats.current) {
+      if (skin === 'original') {
+        const o = mat.userData.orig
+        if (o) { mat.map = o.map; mat.roughnessMap = o.roughnessMap; mat.metalnessMap = o.metalnessMap; mat.normalMap = o.normalMap }
+      } else {
+        const dir = `/texturas-acordeon/${skin}/${part.replace(/\s+/g, '-')}`
+        mat.map = cargar(`${dir}_base.webp`, true)
+        const mr = cargar(`${dir}_mr.webp`, false)
+        mat.roughnessMap = mr; mat.metalnessMap = mr; mat.roughness = 1; mat.metalness = 1
+        mat.normalMap = cargar(`${dir}_normal.webp`, false)
+      }
+      mat.needsUpdate = true
+    }
+  }, [skin, matsReady])
+
   // Suscripción a las notas reales: marca/desmarca el botón que suena.
   React.useEffect(() => {
     const off = subscribirNotas((e) => {
@@ -179,8 +229,11 @@ function Modelo({ fuelleAbiertoRef }: { fuelleAbiertoRef: React.MutableRefObject
       m.infl[m.idx] = v
     }
     // Dedos activos según los botones pisados → curvar ese dedo (presión).
-    // El morph horneado es sutil (~2cm); amplificación moderada (sin sobre-deformar el dedo).
-    const AMP_DEDO = 1.1
+    // OJO: el GLB es una malla HORNEADA SIN esqueleto; solo hay un morph crudo por dedo que
+    // mueve la PUNTA. Pasar de 1.0 lo sobre-deforma. Lo dejamos sutil (0.55) para que no se
+    // vea grotesco. El movimiento natural (dedo desde la base + mano) requiere re-exportar el
+    // modelo CON huesos (skinned) desde el blend nuevo → ahí se anima por huesos, no por morph.
+    const AMP_DEDO = 0.55
     const dedosActivos = new Set<string>()
     notasActivas.current.forEach((nm) => { const d = BOTON_DEDO[nm]; if (d) dedosActivos.add(d) })
     for (const [fn, arr] of Object.entries(fingerMorphs.current)) {
@@ -220,6 +273,8 @@ const EnvmapLocal: React.FC = () => {
 const VisorPersonaje3D: React.FC = () => {
   const fuelleAbiertoRef = React.useRef(false)
   const [abierto, setAbierto] = React.useState(false)
+  const [skin, setSkin] = React.useState('original')
+  const PIELES = ['original', '1', '2', '3', '4', '5', '6', '7']
 
   React.useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
@@ -247,10 +302,23 @@ const VisorPersonaje3D: React.FC = () => {
           <directionalLight position={[-5, 3, -3]} intensity={0.4} />
           <Bounds fit clip margin={1.05}>
             <Center>
-              <Modelo fuelleAbiertoRef={fuelleAbiertoRef} />
+              <Modelo fuelleAbiertoRef={fuelleAbiertoRef} skin={skin} />
             </Center>
           </Bounds>
-          <OrbitControls makeDefault enablePan={false} target={[0, 1, 0]} minDistance={1.5} maxDistance={8} />
+          {/* Control tipo Blender: orbitar (clic izq), encuadrar/pan (clic der), zoom (scroll).
+              Pan habilitado + rango amplio para poder alejarse y ver TODO el personaje o
+              acercarse a un botón sin perder el cuadro. */}
+          <OrbitControls
+            makeDefault
+            enablePan
+            target={[0, 1, 0]}
+            minDistance={0.6}
+            maxDistance={20}
+            enableDamping
+            dampingFactor={0.1}
+            zoomSpeed={0.9}
+            panSpeed={0.8}
+          />
         </React.Suspense>
       </Canvas>
 
@@ -264,6 +332,20 @@ const VisorPersonaje3D: React.FC = () => {
         >
           Mantené <kbd>Q</kbd> para cerrar el fuelle · tocá el teclado y el muñeco presiona el botón
         </button>
+
+        <div className="visor-personaje-pieles">
+          <span className="visor-personaje-pieles-label">Estilo del acordeón:</span>
+          {PIELES.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={`visor-piel-btn ${skin === p ? 'activo' : ''}`}
+              onClick={() => setSkin(p)}
+            >
+              {p === 'original' ? 'Original' : p}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
