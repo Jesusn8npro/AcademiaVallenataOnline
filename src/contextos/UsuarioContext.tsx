@@ -203,23 +203,24 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         // 2. Carga real (refresca sesion/perfil desde Supabase)
         cargarUsuario()
 
-        // Captura la geolocalización REAL del usuario (corre en SU navegador → su IP real),
-        // máximo una vez al día por usuario. Alimenta el panel de admin sin contaminar con la IP del admin.
+        // Captura la geolocalización REAL del usuario (corre en SU navegador → su IP real).
+        // Rastrea TODAS las ubicaciones: recaptura cada 30 min de actividad y en cada visita
+        // nueva. guardar.ts deduplica por IP (suma visitas) e inserta fila nueva si cambia de
+        // ubicación, así que se registra cada lugar real desde donde se conecta.
+        const VENTANA_GEO_MS = 30 * 60 * 1000
         const capturarGeoUsuario = (userId: string) => {
             try {
-                const hoy = new Date().toISOString().slice(0, 10)
-                const flag = 'geo_capturada_' + userId
-                if (localStorage.getItem(flag) === hoy) return
-                // Guard en memoria: los eventos de auth (SIGNED_IN/INITIAL_SESSION)
-                // disparan varias veces; evita lanzar el rastreo en paralelo.
+                const flag = 'geo_capturada_ts_' + userId
+                const ultimo = Number(localStorage.getItem(flag) || 0)
+                if (Date.now() - ultimo < VENTANA_GEO_MS) return
+                // Guard en memoria: los eventos de auth disparan varias veces; evita rastreo en paralelo.
                 if (geoEnCurso.current) return
                 geoEnCurso.current = true
-                // Marcar el throttle SOLO tras un guardado exitoso. Si el primer
-                // intento falla (429, red, etc.), NO se marca y se reintenta en
-                // el próximo evento de auth del día.
+                // Marcar el throttle SOLO tras un guardado exitoso. Si falla (429, red, etc.),
+                // NO se marca y se reintenta en el próximo evento de auth.
                 import('../servicios/servicioGeolocalizacion')
                     .then(m => m.servicioGeolocalizacion.rastreoCompleto(userId))
-                    .then(exito => { if (exito) localStorage.setItem(flag, hoy) })
+                    .then(exito => { if (exito) localStorage.setItem(flag, String(Date.now())) })
                     .catch(() => {})
                     .finally(() => { geoEnCurso.current = false })
             } catch { }

@@ -41,10 +41,11 @@ const tiempoRelativo = (fecha: string): string => {
     return `hace ${diff} min`;
 };
 
-interface UbicacionActiva { ciudad: string | null; pais: string | null; es_movil: boolean | null; }
+interface UbicacionActiva { ciudad: string | null; pais: string | null; es_movil: boolean | null; dispositivo: string | null; }
 
 const ActividadTiempoReal: React.FC<Props> = ({ usuarios }) => {
     const [ubicaciones, setUbicaciones] = useState<Record<string, UbicacionActiva>>({});
+    const [tick, setTick] = useState(0);
 
     useEffect(() => {
         const ids = (usuarios || []).map(u => u.usuario_id);
@@ -53,18 +54,27 @@ const ActividadTiempoReal: React.FC<Props> = ({ usuarios }) => {
         (async () => {
             const { data } = await supabase
                 .from('geolocalizacion_usuarios')
-                .select('usuario_id, ciudad, pais, es_movil, ultima_visita')
+                .select('usuario_id, ciudad, pais, es_movil, ultima_visita, datos_completos_raw')
                 .in('usuario_id', ids)
                 .order('ultima_visita', { ascending: false });
             if (!activo) return;
             const mapa: Record<string, UbicacionActiva> = {};
             for (const r of (data || []) as any[]) {
-                if (!mapa[r.usuario_id]) mapa[r.usuario_id] = { ciudad: r.ciudad, pais: r.pais, es_movil: r.es_movil };
+                if (!mapa[r.usuario_id]) mapa[r.usuario_id] = { ciudad: r.ciudad, pais: r.pais, es_movil: r.es_movil, dispositivo: r.datos_completos_raw?._dispositivo || null };
             }
             setUbicaciones(mapa);
         })();
         return () => { activo = false; };
-    }, [usuarios]);
+    }, [usuarios, tick]);
+
+    // En vivo: refresca las ubicaciones cuando llega un cambio de geolocalización.
+    useEffect(() => {
+        const canal = supabase
+            .channel('geo-dashboard-tiempo-real')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'geolocalizacion_usuarios' }, () => setTick(t => t + 1))
+            .subscribe();
+        return () => { supabase.removeChannel(canal); };
+    }, []);
 
     return (
         <div className="actividad-tiempo-real">
@@ -136,7 +146,7 @@ const ActividadTiempoReal: React.FC<Props> = ({ usuarios }) => {
                                 <span style={{ fontSize: '0.78rem', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
                                     {ubicaciones[usuario.usuario_id]
                                         ? <>📍 {[ubicaciones[usuario.usuario_id].ciudad, ubicaciones[usuario.usuario_id].pais].filter(Boolean).join(', ') || 'Desconocida'}
-                                            {ubicaciones[usuario.usuario_id].es_movil != null ? ` · ${ubicaciones[usuario.usuario_id].es_movil ? '📱 Móvil' : '💻 PC'}` : ''}</>
+                                            {(() => { const u2 = ubicaciones[usuario.usuario_id]; const dev = u2.dispositivo || (u2.es_movil != null ? (u2.es_movil ? 'Móvil' : 'Escritorio') : null); return dev ? ` · ${u2.es_movil ? '📱' : '💻'} ${dev}` : ''; })()}</>
                                         : <span style={{ fontStyle: 'italic', opacity: 0.7 }}>📍 Ubicación no registrada aún</span>}
                                 </span>
                             </div>
