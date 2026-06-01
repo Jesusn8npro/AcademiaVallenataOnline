@@ -25,6 +25,17 @@ const RETRASO_LIMITE_VELOCIDAD = 150;
 const cache = new Map<string, DatosGeolocalizacion>();
 let tiempoUltimaSolicitud = 0;
 
+// Deriva si el dispositivo es móvil a partir del user-agent del navegador.
+// Se usa cuando el proveedor de geo no informa is_mobile de forma fiable.
+function detectarMovilUA(): boolean {
+    if (typeof navigator === 'undefined' || !navigator.userAgent) return false;
+    return /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(navigator.userAgent);
+}
+
+function userAgentActual(): string {
+    return typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '';
+}
+
 async function respetarLimiteVelocidad(): Promise<void> {
     const tiempoActual = Date.now();
     const tiempoTranscurrido = tiempoActual - tiempoUltimaSolicitud;
@@ -58,33 +69,40 @@ export async function obtenerIpPublica(): Promise<string | null> {
     }
 }
 
-async function obtenerGeolocalizacionFallback(ip: string): Promise<DatosGeolocalizacion | ErrorGeolocalizacion> {
+// Fallback 100% HTTPS (evita el bloqueo por mixed-content en sitios https).
+// ipwho.is es gratuito, sin API key y sirve por https.
+async function obtenerGeolocalizacionFallback(ip?: string): Promise<DatosGeolocalizacion | ErrorGeolocalizacion> {
     try {
-        const respuesta = await fetch(
-            `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,query`,
-            { headers: { 'Accept': 'application/json' } }
-        );
+        const controlador = new AbortController();
+        const timeoutId = setTimeout(() => controlador.abort(), 15000);
+        // Sin IP: ipwho.is geolocaliza al llamante automáticamente.
+        const respuesta = await fetch(`https://ipwho.is/${ip || ''}`, {
+            signal: controlador.signal,
+            headers: { 'Accept': 'application/json' }
+        });
+        clearTimeout(timeoutId);
         if (!respuesta.ok) throw new Error(`Error en API fallback: ${respuesta.status}`);
         const data = await respuesta.json();
-        if (data.status === 'fail') throw new Error(`API fallback falló: ${data.message}`);
+        if (data.success === false) throw new Error(`API fallback falló: ${data.message}`);
+        const codigoPais = String(data.country_code || '').toLowerCase();
         return {
-            ip: data.query,
+            ip: data.ip || ip,
             ciudad: data.city || 'Desconocida',
-            region: data.regionName || data.region || 'Desconocida',
-            pais: data.country,
-            codigoPais: data.countryCode.toLowerCase(),
-            latitud: data.lat || 0,
-            longitud: data.lon || 0,
-            zonaHoraria: data.timezone || 'UTC',
-            organizacion: data.org || data.isp || 'Desconocida',
-            codigoPostal: data.zip,
-            moneda: undefined,
+            region: data.region || 'Desconocida',
+            pais: data.country || 'Desconocido',
+            codigoPais,
+            latitud: data.latitude || 0,
+            longitud: data.longitude || 0,
+            zonaHoraria: data.timezone?.id || 'UTC',
+            organizacion: data.connection?.isp || data.connection?.org || 'Desconocida',
+            codigoPostal: data.postal,
+            moneda: data.currency?.code,
             idioma: 'es',
-            esMovil: false,
+            esMovil: detectarMovilUA(),
             esProxy: false,
             esVpn: false,
-            urlBandera: `https://flagcdn.com/32x24/${data.countryCode.toLowerCase()}.png`,
-            datosCompletos: data
+            urlBandera: codigoPais ? `https://flagcdn.com/32x24/${codigoPais}.png` : '',
+            datosCompletos: { ...data, _userAgent: userAgentActual(), _proveedor: 'ipwho.is' }
         };
     } catch (error: any) {
         return { error: true, mensaje: `Error en todas las APIs de geolocalización: ${error.message}`, tipoError: 'API' };
@@ -97,7 +115,8 @@ export async function obtenerGeolocalizacion(ip?: string): Promise<DatosGeolocal
         await respetarLimiteVelocidad();
         if (!ip) {
             const ipObtenida = await obtenerIpPublica();
-            if (!ipObtenida) return { error: true, mensaje: 'No se pudo obtener la IP pública', tipoError: 'RED' };
+            // Sin IP propia: el fallback https (ipwho.is) geolocaliza al llamante.
+            if (!ipObtenida) return obtenerGeolocalizacionFallback();
             ip = ipObtenida;
         }
         const controlador = new AbortController();
@@ -129,16 +148,16 @@ export async function obtenerGeolocalizacion(ip?: string): Promise<DatosGeolocal
             codigoPostal: datosRaw.postal,
             moneda: datosRaw.currency,
             idioma: datosRaw.language || 'es',
-            esMovil: datosRaw.is_mobile || false,
+            esMovil: datosRaw.is_mobile ?? detectarMovilUA(),
             esProxy: datosRaw.is_proxy || false,
             esVpn: datosRaw.is_vpn || false,
             urlBandera: `https://flagcdn.com/32x24/${datosRaw.country_code.toLowerCase()}.png`,
-            datosCompletos: datosRaw
+            datosCompletos: { ...datosRaw, _userAgent: userAgentActual(), _proveedor: 'ipapi.co' }
         };
         if (datos.ip) cache.set(datos.ip, datos);
         return datos;
     } catch (error: any) {
-        if (error.name === 'AbortError') return { error: true, mensaje: 'Tiempo de espera agotado al consultar ipapi.co', tipoError: 'RED' };
+        // Cualquier fallo de ipapi.co (timeout/red): si tenemos IP, intentar el fallback https.
         if (ip) return obtenerGeolocalizacionFallback(ip);
         return { error: true, mensaje: `Error de red con ipapi.co: ${error.message}`, tipoError: 'RED' };
     }

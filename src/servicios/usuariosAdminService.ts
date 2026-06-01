@@ -14,6 +14,39 @@ export interface UsuarioAdmin {
   fecha_creacion?: string | null
 }
 
+export interface ContenidoUsuario {
+  tipo: 'curso' | 'tutorial' | 'paquete'
+  titulo: string | null
+  estado: string | null
+}
+
+/** Fila enriquecida que devuelve admin_listar_usuarios_enriquecido (membresía real, ubicación, frecuencia, contenido). */
+export interface UsuarioAdminEnriquecido extends UsuarioAdmin {
+  eliminado?: boolean | null
+  whatsapp?: string | null
+  ultima_actividad?: string | null
+  membresia_nombre?: string | null
+  membresia_color?: string | null
+  membresia_estado?: string | null
+  membresia_vence?: string | null
+  membresia_dias_restantes?: number | null
+  ult_ip?: string | null
+  ult_ciudad?: string | null
+  ult_pais?: string | null
+  ult_visita?: string | null
+  ult_es_movil?: boolean | null
+  dias_activos?: number | null
+  tiempo_total_min?: number | null
+  sesiones_total?: number | null
+  ultima_sesion?: string | null
+  en_linea?: boolean | null
+  total_contenido?: number | null
+  total_cursos?: number | null
+  total_tutoriales?: number | null
+  total_paquetes?: number | null
+  contenido?: ContenidoUsuario[] | null
+}
+
 export interface EstadisticasUsuarios {
   total: number
   activos: number
@@ -29,6 +62,12 @@ export async function cargarUsuarios(mostrarEliminados = false): Promise<Usuario
   }
 
   return (data || []) as UsuarioAdmin[];
+}
+
+export async function cargarUsuariosEnriquecido(mostrarEliminados = false): Promise<UsuarioAdminEnriquecido[]> {
+  const { data, error } = await supabase.rpc('admin_listar_usuarios_enriquecido', { p_mostrar_eliminados: mostrarEliminados });
+  if (error) throw error;
+  return (data || []) as UsuarioAdminEnriquecido[];
 }
 
 export function calcularEstadisticas(usuarios: UsuarioAdmin[]): EstadisticasUsuarios {

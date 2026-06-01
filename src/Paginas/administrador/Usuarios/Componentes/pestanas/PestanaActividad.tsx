@@ -91,20 +91,30 @@ const PestanaActividad: React.FC<PestanaActividadProps> = ({ usuario }) => {
 
           {datosActividad.cursosProgreso.length > 0 && (
             <div className="cursos-progreso">
-              <h4>📚 Progreso en Cursos</h4>
+              <h4>📚 Progreso en Contenido ({datosActividad.cursosProgreso.length})</h4>
               <div className="cursos-grid">
-                {datosActividad.cursosProgreso.map((curso, index) => (
-                  <div key={index} className="curso-card">
-                    <Image src={curso.imagen} alt={curso.nombre} width={80} height={56} style={{ objectFit: 'cover' }} className="curso-imagen" />
-                    <div className="curso-info">
-                      <h5>{curso.nombre}</h5>
-                      <div className="progreso-bar">
-                        <div className="progreso-fill" style={{ width: `${curso.porcentaje_completado || 0}%` }}></div>
+                {datosActividad.cursosProgreso.map((curso, index) => {
+                  const pct = curso.porcentaje_completado || 0;
+                  const completado = pct >= 100 || curso.estado === 'Completado';
+                  const color = completado ? '#22c55e' : pct >= 50 ? '#7c3aed' : '#f59e0b';
+                  return (
+                    <div key={index} className="curso-card">
+                      <Image src={curso.imagen} alt={curso.nombre} width={80} height={56} style={{ objectFit: 'cover' }} className="curso-imagen" />
+                      <div className="curso-info">
+                        <h5>{curso.nombre}</h5>
+                        <div className="progreso-bar">
+                          <div className="progreso-fill" style={{ width: `${pct}%`, background: color }}></div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                          <span className="progreso-texto" style={{ color }}>{pct}% completado</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: `${color}22`, color }}>
+                            {completado ? '✓ Completado' : pct > 0 ? 'En progreso' : 'Sin iniciar'}
+                          </span>
+                        </div>
                       </div>
-                      <span className="progreso-texto">{curso.progreso_texto}</span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

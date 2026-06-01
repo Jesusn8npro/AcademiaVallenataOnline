@@ -25,6 +25,26 @@ export interface Usuario {
   longitud?: string;
   zona_horaria?: string;
   ip_registro?: string;
+  // Datos enriquecidos (admin_listar_usuarios_enriquecido)
+  membresia_nombre?: string | null;
+  membresia_color?: string | null;
+  membresia_estado?: string | null;
+  membresia_vence?: string | null;
+  membresia_dias_restantes?: number | null;
+  fecha_inicio_membresia?: string | null;
+  ult_ip?: string | null;
+  ult_ciudad?: string | null;
+  ult_pais?: string | null;
+  ult_visita?: string | null;
+  dias_activos?: number | null;
+  tiempo_total_min?: number | null;
+  sesiones_total?: number | null;
+  ultima_sesion?: string | null;
+  total_contenido?: number | null;
+  total_cursos?: number | null;
+  total_tutoriales?: number | null;
+  total_paquetes?: number | null;
+  contenido?: Array<{ tipo: string; titulo: string | null; estado: string | null }> | null;
 }
 
 interface Props {

@@ -1,10 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react'
-import Image from 'next/image';
 import DetalleUsuario from './Componentes/DetalleUsuario';
 import CrearUsuario from './Componentes/CrearUsuario';
+import FilaUsuario from './Componentes/FilaUsuario';
 import './GestionUsuarios.css';
 import { useGestionUsuarios } from './useGestionUsuarios';
 
@@ -14,6 +13,9 @@ const GestionUsuarios: React.FC = () => {
     cargando, error, exito,
     busqueda, setBusqueda, filtroRol, setFiltroRol,
     filtroSuscripcion, setFiltroSuscripcion,
+    filtroMembresiaEstado, setFiltroMembresiaEstado,
+    filtroActividad, setFiltroActividad,
+    orden, cambiarOrden,
     mostrarEliminados, setMostrarEliminados,
     usuariosSeleccionados, seleccionarTodos, mostrarAccionesSeleccion,
     menuContextual, estadisticas,
@@ -26,7 +28,6 @@ const GestionUsuarios: React.FC = () => {
     mostrarMenuContextual, ocultarMenuContextual,
     usuarios,
   } = useGestionUsuarios();
-  const [avatarErrores, setAvatarErrores] = useState<Set<string>>(new Set())
 
   return (
     <div className="gestion-usuarios-contenedor">
@@ -132,10 +133,22 @@ const GestionUsuarios: React.FC = () => {
                 </select>
                 <select value={filtroSuscripcion} onChange={(e) => setFiltroSuscripcion(e.target.value)}>
                   <option value="todas">Todas las membresías</option>
-                  <option value="free">Gratuita</option>
-                  <option value="basic">Básica</option>
-                  <option value="premium">Premium</option>
-                  <option value="pro">Profesional</option>
+                  <option value="con_membresia">Con membresía activa</option>
+                  <option value="solo_tutoriales">Solo tutoriales sueltos</option>
+                  <option value="sin_nada">Sin contenido</option>
+                </select>
+                <select value={filtroMembresiaEstado} onChange={(e) => setFiltroMembresiaEstado(e.target.value)}>
+                  <option value="todos">Estado membresía</option>
+                  <option value="activa">Activa</option>
+                  <option value="por_vencer">Por vencer (≤7 días)</option>
+                  <option value="pendiente_pago">Pendiente de pago</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+                <select value={filtroActividad} onChange={(e) => setFiltroActividad(e.target.value)}>
+                  <option value="todos">Toda actividad</option>
+                  <option value="activos_7">Activos (≤7 días)</option>
+                  <option value="inactivos_30">Inactivos (&gt;30 días)</option>
+                  <option value="nunca">Nunca activos</option>
                 </select>
                 <label className="gestion-usuarios-toggle">
                   <input type="checkbox" checked={mostrarEliminados} onChange={(e) => setMostrarEliminados(e.target.checked)} />
@@ -187,73 +200,34 @@ const GestionUsuarios: React.FC = () => {
                       <th className="gestion-usuarios-celda-checkbox">
                         <input type="checkbox" checked={seleccionarTodos} onChange={() => toggleSeleccionarTodos(usuariosFiltrados)} className="gestion-usuarios-checkbox-principal" />
                       </th>
-                      <th>Usuario</th>
-                      <th>Correo</th>
-                      <th>Rol</th>
-                      <th>Membresía</th>
-                      <th>Fecha Registro</th>
-                      <th>Estado</th>
+                      {([
+                        ['nombre', 'Usuario'],
+                        ['correo', 'Correo'],
+                        ['membresia', 'Membresía real'],
+                        ['actividad', 'Última actividad'],
+                        ['frecuencia', 'Frecuencia'],
+                        ['ubicacion', 'Última ubicación'],
+                        ['fecha_creacion', 'Fecha Registro'],
+                        ['estado', 'Estado'],
+                      ] as const).map(([campo, label]) => (
+                        <th key={campo} className="gu-th-sortable" onClick={() => cambiarOrden(campo)}>
+                          {label}
+                          <span className="gu-sort-ind">{orden.campo === campo ? (orden.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+                        </th>
+                      ))}
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {usuariosFiltrados.map((usuario) => (
-                      <tr
+                      <FilaUsuario
                         key={usuario.id}
-                        className={`gestion-usuarios-fila-usuario ${usuario.eliminado ? 'eliminado' : ''} ${usuariosSeleccionados.has(usuario.id) ? 'seleccionado' : ''}`}
-                        onContextMenu={(e) => mostrarMenuContextual(e, usuario.id)}
-                      >
-                        <td className="gestion-usuarios-celda-checkbox">
-                          <input type="checkbox" checked={usuariosSeleccionados.has(usuario.id)} onChange={(e) => { e.stopPropagation(); toggleSeleccionUsuario(usuario.id); }} className="gestion-usuarios-checkbox-usuario" />
-                        </td>
-                        <td className="gestion-usuarios-celda-usuario">
-                          <div className="gestion-usuarios-info-usuario" onClick={() => seleccionarUsuario(usuario)} style={{ cursor: 'pointer' }}>
-                            {usuario.url_foto_perfil && !avatarErrores.has(usuario.id) ? (
-                              <Image
-                                src={usuario.url_foto_perfil}
-                                alt={usuario.nombre_completo}
-                                width={40} height={40}
-                                style={{ objectFit: 'cover' }}
-                                className="gestion-usuarios-avatar"
-                                onError={() => setAvatarErrores(prev => new Set([...prev, usuario.id]))}
-                              />
-                            ) : (
-                              <div className="gestion-usuarios-avatar-placeholder">
-                                {usuario.nombre?.charAt(0) || ''}{usuario.apellido?.charAt(0) || ''}
-                              </div>
-                            )}
-                            <div className="gestion-usuarios-datos-usuario">
-                              <span className="gestion-usuarios-nombre">{usuario.nombre_completo || `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim()}</span>
-                              <span className="gestion-usuarios-ubicacion">{usuario.ciudad ? `${usuario.ciudad}, ${usuario.pais}` : usuario.pais || ''}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{usuario.correo_electronico}</td>
-                        <td>
-                          <span className={`gestion-usuarios-badge gestion-usuarios-badge-${usuario.rol}`}>
-                            {usuario.rol === 'admin' ? 'Administrador' : 'Estudiante'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`gestion-usuarios-badge gestion-usuarios-badge-suscripcion-${usuario.suscripcion}`}>
-                            {usuario.suscripcion === 'free' ? 'Gratuita' : usuario.suscripcion === 'basic' ? 'Básica' : usuario.suscripcion === 'premium' ? 'Premium' : usuario.suscripcion === 'pro' ? 'Profesional' : usuario.suscripcion}
-                          </span>
-                        </td>
-                        <td>{new Date(usuario.fecha_creacion).toLocaleDateString('es-ES')}</td>
-                        <td>
-                          <span className={`gestion-usuarios-estado ${usuario.eliminado ? 'inactivo' : 'activo'}`}>
-                            {usuario.eliminado ? 'Eliminado' : 'Activo'}
-                          </span>
-                        </td>
-                        <td className="gestion-usuarios-celda-acciones">
-                          <button className="gestion-usuarios-btn-accion" onClick={(e) => { e.stopPropagation(); seleccionarUsuario(usuario); }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" />
-                              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
+                        usuario={usuario}
+                        seleccionado={usuariosSeleccionados.has(usuario.id)}
+                        onToggleSeleccion={toggleSeleccionUsuario}
+                        onSeleccionar={seleccionarUsuario}
+                        onContextMenu={mostrarMenuContextual}
+                      />
                     ))}
                   </tbody>
                 </table>

@@ -6,6 +6,10 @@ import PestanaActividad from './pestanas/PestanaActividad';
 import PestanaGeolocalizacion from './pestanas/PestanaGeolocalizacion';
 import PestanaCursos from './pestanas/PestanaCursos';
 import PestanaConfiguracion from './pestanas/PestanaConfiguracion';
+import PestanaMembresia from './pestanas/PestanaMembresia';
+import PestanaComunicacion from './pestanas/PestanaComunicacion';
+import PestanaGrabaciones from './pestanas/PestanaGrabaciones';
+import PestanaHero from './pestanas/PestanaHero';
 import PestanaGeneral, { type Usuario } from './PestanaGeneral';
 import './DetalleUsuario.css';
 
@@ -18,17 +22,25 @@ interface Props {
 
 const PESTANAS = [
   { id: 'general', label: 'General' },
+  { id: 'membresia', label: 'Membresía' },
   { id: 'actividad', label: 'Actividad' },
   { id: 'geolocalizacion', label: 'Ubicación' },
   { id: 'cursos', label: 'Cursos' },
+  { id: 'grabaciones', label: 'Grabaciones' },
+  { id: 'hero', label: 'Acordeón Hero' },
+  { id: 'comunicacion', label: 'Comunicación' },
   { id: 'configuracion', label: 'Configuracion' }
 ];
 
 const ICONOS_PESTANA: Record<string, React.ReactNode> = {
   general: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" /><path d="M6 21v-2a6 6 0 0 1 12 0v2" stroke="currentColor" strokeWidth="2" /></svg>,
+  membresia: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.9 6.3L22 9.3l-5 4.7 1.2 6.8L12 17.8 5.8 20.8 7 14 2 9.3l7.1-1z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>,
   actividad: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18" stroke="currentColor" strokeWidth="2" /><path d="M7 14l4-4 3 3 3-5" stroke="currentColor" strokeWidth="2" /></svg>,
   geolocalizacion: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M3 12h18" stroke="currentColor" strokeWidth="2" /><path d="M12 3c3 4 3 14 0 18" stroke="currentColor" strokeWidth="2" /></svg>,
   cursos: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 4h14a3 3 0 0 1 3 3v13H6a3 3 0 0 1-3-3V4z" stroke="currentColor" strokeWidth="2" /><path d="M6 4v13" stroke="currentColor" strokeWidth="2" /></svg>,
+  grabaciones: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" /></svg>,
+  hero: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="2" /><circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="2" /></svg>,
+  comunicacion: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>,
   configuracion: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" /><path d="M19.4 15a7.9 7.9 0 0 0 .1-6l2-1.6-2-3.4-2.4.6a8 8 0 0 0-5.2-2l-.6-2h-4l-.6 2a8 8 0 0 0-5.2 2L2.5 4l-2 3.4 2 1.6a8 8 0 0 0 .1 6l-2 1.6 2 3.4 2.4-.6a8 8 0 0 0 5.2 2l.6 2h4l.6-2a8 8 0 0 0 5.2-2l2.4.6 2-3.4-2-1.6z" stroke="currentColor" strokeWidth="2" /></svg>
 };
 
@@ -135,7 +147,13 @@ const DetalleUsuario: React.FC<Props> = ({ usuario, onCerrar, onUsuarioActualiza
             <p className="detalle-usuario-correo">{usuario.correo_electronico}</p>
             <div className="detalle-usuario-badges">
               <span className={`detalle-usuario-badge detalle-usuario-badge-${usuario.rol}`}>{usuario.rol}</span>
-              <span className={`detalle-usuario-badge detalle-usuario-badge-${usuario.suscripcion}`}>{usuario.suscripcion}</span>
+              {usuario.membresia_nombre && (usuario.membresia_estado || '').toLowerCase() === 'activa' ? (
+                <span className="detalle-usuario-badge" style={{ background: usuario.membresia_color || '#7c3aed', color: '#fff' }}>
+                  {usuario.membresia_nombre}{usuario.membresia_dias_restantes != null ? ` · ${usuario.membresia_dias_restantes}d` : ''}
+                </span>
+              ) : (
+                <span className={`detalle-usuario-badge detalle-usuario-badge-${usuario.suscripcion}`}>{(usuario.total_contenido || 0) > 0 ? 'Solo tutoriales' : 'Sin membresía'}</span>
+              )}
               <span className={`detalle-usuario-badge detalle-usuario-badge-${usuario.eliminado ? 'eliminado' : 'activo'}`}>{usuario.eliminado ? 'Eliminado' : 'Activo'}</span>
             </div>
           </div>
@@ -219,9 +237,13 @@ const DetalleUsuario: React.FC<Props> = ({ usuario, onCerrar, onUsuarioActualiza
             eliminarUsuarioHandler={eliminarUsuarioHandler}
           />
         )}
+        {pestanaActiva === 'membresia' && <PestanaMembresia usuario={usuario} />}
         {pestanaActiva === 'cursos' && <PestanaCursos usuario={usuario} />}
         {pestanaActiva === 'actividad' && <PestanaActividad usuario={usuario} />}
         {pestanaActiva === 'geolocalizacion' && <PestanaGeolocalizacion usuario={usuario} />}
+        {pestanaActiva === 'grabaciones' && <PestanaGrabaciones usuario={usuario} />}
+        {pestanaActiva === 'hero' && <PestanaHero usuario={usuario} />}
+        {pestanaActiva === 'comunicacion' && <PestanaComunicacion usuario={usuario} />}
         {pestanaActiva === 'configuracion' && <PestanaConfiguracion usuario={usuario} onUsuarioActualizado={handleUsuarioActualizado} />}
       </div>
     </div>

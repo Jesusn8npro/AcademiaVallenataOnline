@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../../servicios/clienteSupabase'
 import './ActividadTiempoReal.css';
 
 interface UsuarioActivoRPC {
@@ -39,7 +41,31 @@ const tiempoRelativo = (fecha: string): string => {
     return `hace ${diff} min`;
 };
 
+interface UbicacionActiva { ciudad: string | null; pais: string | null; es_movil: boolean | null; }
+
 const ActividadTiempoReal: React.FC<Props> = ({ usuarios }) => {
+    const [ubicaciones, setUbicaciones] = useState<Record<string, UbicacionActiva>>({});
+
+    useEffect(() => {
+        const ids = (usuarios || []).map(u => u.usuario_id);
+        if (ids.length === 0) { setUbicaciones({}); return; }
+        let activo = true;
+        (async () => {
+            const { data } = await supabase
+                .from('geolocalizacion_usuarios')
+                .select('usuario_id, ciudad, pais, es_movil, ultima_visita')
+                .in('usuario_id', ids)
+                .order('ultima_visita', { ascending: false });
+            if (!activo) return;
+            const mapa: Record<string, UbicacionActiva> = {};
+            for (const r of (data || []) as any[]) {
+                if (!mapa[r.usuario_id]) mapa[r.usuario_id] = { ciudad: r.ciudad, pais: r.pais, es_movil: r.es_movil };
+            }
+            setUbicaciones(mapa);
+        })();
+        return () => { activo = false; };
+    }, [usuarios]);
+
     return (
         <div className="actividad-tiempo-real">
             <div className="encabezado-seccion">
@@ -107,6 +133,12 @@ const ActividadTiempoReal: React.FC<Props> = ({ usuarios }) => {
                                 <div className="actividad-usuario">
                                     <span className="pagina-actual">{limpiarPagina(usuario.pagina_actual)}</span>
                                 </div>
+                                <span style={{ fontSize: '0.78rem', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+                                    {ubicaciones[usuario.usuario_id]
+                                        ? <>📍 {[ubicaciones[usuario.usuario_id].ciudad, ubicaciones[usuario.usuario_id].pais].filter(Boolean).join(', ') || 'Desconocida'}
+                                            {ubicaciones[usuario.usuario_id].es_movil != null ? ` · ${ubicaciones[usuario.usuario_id].es_movil ? '📱 Móvil' : '💻 PC'}` : ''}</>
+                                        : <span style={{ fontStyle: 'italic', opacity: 0.7 }}>📍 Ubicación no registrada aún</span>}
+                                </span>
                             </div>
 
                             <div className="tiempo-actividad">

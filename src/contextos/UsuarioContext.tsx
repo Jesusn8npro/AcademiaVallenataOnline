@@ -53,6 +53,7 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
     const [usuario, setUsuarioState] = useState<Usuario | null>(null)
     const [inicializado, setInicializado] = useState(false)
     const authInitialized = useRef(false)
+    const geoEnCurso = useRef(false)
 
     // Lee el cache del localStorage ANTES del primer paint del navegador.
     // No puede hacerse en useState lazy porque en Next.js SSR ese código corre
@@ -202,11 +203,34 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
         // 2. Carga real (refresca sesion/perfil desde Supabase)
         cargarUsuario()
 
+        // Captura la geolocalización REAL del usuario (corre en SU navegador → su IP real),
+        // máximo una vez al día por usuario. Alimenta el panel de admin sin contaminar con la IP del admin.
+        const capturarGeoUsuario = (userId: string) => {
+            try {
+                const hoy = new Date().toISOString().slice(0, 10)
+                const flag = 'geo_capturada_' + userId
+                if (localStorage.getItem(flag) === hoy) return
+                // Guard en memoria: los eventos de auth (SIGNED_IN/INITIAL_SESSION)
+                // disparan varias veces; evita lanzar el rastreo en paralelo.
+                if (geoEnCurso.current) return
+                geoEnCurso.current = true
+                // Marcar el throttle SOLO tras un guardado exitoso. Si el primer
+                // intento falla (429, red, etc.), NO se marca y se reintenta en
+                // el próximo evento de auth del día.
+                import('../servicios/servicioGeolocalizacion')
+                    .then(m => m.servicioGeolocalizacion.rastreoCompleto(userId))
+                    .then(exito => { if (exito) localStorage.setItem(flag, hoy) })
+                    .catch(() => {})
+                    .finally(() => { geoEnCurso.current = false })
+            } catch { }
+        }
+
         // 3. Listener de cambios
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN') {
                 if (session?.user) {
                     cargarUsuario()
+                    capturarGeoUsuario(session.user.id)
                     const creadoHace = Date.now() - new Date(session.user.created_at).getTime()
                     // Flag local: evita el 2do envío (SIGNED_IN dispara varias veces al registrarse).
                     const flagBienvenida = 'bienvenida_' + session.user.id
@@ -228,6 +252,7 @@ export const UsuarioProvider = ({ children }: { children: ReactNode }) => {
                 // Recupera la sesion si getSession() dio null transitorio antes.
                 if (session?.user) {
                     cargarUsuario()
+                    if (event === 'INITIAL_SESSION') capturarGeoUsuario(session.user.id)
                 } else if (event === 'TOKEN_REFRESHED' && !session) {
                     // Refresh falló: limpiar token corrupto del storage para evitar 401s
                     supabase.auth.signOut({ scope: 'local' }).catch(() => {})
