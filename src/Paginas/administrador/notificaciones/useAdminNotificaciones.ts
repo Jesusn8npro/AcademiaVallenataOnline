@@ -20,6 +20,8 @@ export function useAdminNotificaciones() {
     const [enviadas, setEnviadas] = useState<any[]>([]);
     const [cargandoEnviadas, setCargandoEnviadas] = useState(false);
     const [grupoAEliminar, setGrupoAEliminar] = useState<{ grupo: string; titulo: string; total: number } | null>(null);
+    const [detalle, setDetalle] = useState<{ grupo: string; titulo: string; destinatarios: any[] } | null>(null);
+    const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
     const [formManual, setFormManual] = useState({
         tipo: 'nuevo_curso' as TipoEvento,
@@ -48,6 +50,17 @@ export function useAdminNotificaciones() {
         if (!error) setEnviadas(data || []);
         setCargandoEnviadas(false);
     };
+
+    // Ver a quién se le envió la notificación (lista de destinatarios).
+    const verDestinatarios = async (grupo: string, titulo: string) => {
+        setDetalle({ grupo, titulo, destinatarios: [] });
+        setCargandoDetalle(true);
+        const { data, error } = await supabase.rpc('admin_listar_destinatarios_notificacion', { p_grupo: grupo });
+        if (error) { mostrarMensaje(`❌ Error: ${error.message}`, 'error'); setDetalle(null); }
+        else setDetalle({ grupo, titulo, destinatarios: data || [] });
+        setCargandoDetalle(false);
+    };
+    const cerrarDetalle = () => setDetalle(null);
 
     const solicitarEliminarGrupo = (grupo: string, titulo: string, total: number) => setGrupoAEliminar({ grupo, titulo, total });
     const cancelarEliminarGrupo = () => setGrupoAEliminar(null);
@@ -139,6 +152,7 @@ export function useAdminNotificaciones() {
         pedirConfirmacionLimpiar,
         enviadas, cargandoEnviadas, cargarEnviadas,
         grupoAEliminar, solicitarEliminarGrupo, cancelarEliminarGrupo, confirmarEliminarGrupo,
+        detalle, cargandoDetalle, verDestinatarios, cerrarDetalle,
         formManual, setFormManual,
         formCurso, setFormCurso,
         formTutorial, setFormTutorial,

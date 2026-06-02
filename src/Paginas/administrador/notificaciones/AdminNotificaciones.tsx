@@ -11,6 +11,7 @@ const AdminNotificaciones: React.FC = () => {
         pedirConfirmacionLimpiar,
         enviadas, cargandoEnviadas, cargarEnviadas,
         grupoAEliminar, solicitarEliminarGrupo, cancelarEliminarGrupo, confirmarEliminarGrupo,
+        detalle, cargandoDetalle, verDestinatarios, cerrarDetalle,
         formManual, setFormManual,
         formCurso, setFormCurso,
         formTutorial, setFormTutorial,
@@ -39,18 +40,6 @@ const AdminNotificaciones: React.FC = () => {
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={confirmarLimpiarExpiradas} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Confirmar</button>
                         <button onClick={cancelarLimpiarExpiradas} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
-                    </div>
-                </div>
-            )}
-
-            {grupoAEliminar && (
-                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>
-                        ¿Eliminar la notificación <strong>“{grupoAEliminar.titulo}”</strong> de los {grupoAEliminar.total} usuarios? Esta acción no se puede deshacer.
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button onClick={confirmarEliminarGrupo} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Sí, eliminar de todos</button>
-                        <button onClick={cancelarEliminarGrupo} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
                     </div>
                 </div>
             )}
@@ -100,7 +89,14 @@ const AdminNotificaciones: React.FC = () => {
                         <div className="academia-enviadas-lista">
                             {enviadas.map((n) => (
                                 <div key={n.grupo} className="academia-enviada-item">
-                                    <div className="academia-enviada-info">
+                                    <div
+                                        className="academia-enviada-info academia-enviada-clic"
+                                        onClick={() => verDestinatarios(n.grupo, n.titulo || n.tipo)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && verDestinatarios(n.grupo, n.titulo || n.tipo)}
+                                        title="Ver a quién se le envió"
+                                    >
                                         <div className="academia-enviada-top">
                                             <span className="academia-enviada-icono">{n.icono || '🔔'}</span>
                                             <strong>{n.titulo || n.tipo}</strong>
@@ -108,7 +104,7 @@ const AdminNotificaciones: React.FC = () => {
                                         </div>
                                         {n.mensaje && <p className="academia-enviada-mensaje">{n.mensaje}</p>}
                                         <span className="academia-enviada-meta">
-                                            {new Date(n.fecha).toLocaleString('es-CO')} · {n.leidas}/{n.total} leídas · {n.categoria || n.tipo}
+                                            {new Date(n.fecha).toLocaleString('es-CO')} · {n.leidas}/{n.total} leídas · 👁️ ver destinatarios
                                         </span>
                                     </div>
                                     <button
@@ -211,6 +207,54 @@ const AdminNotificaciones: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {grupoAEliminar && (
+                <div className="academia-modal-fondo" onClick={cancelarEliminarGrupo}>
+                    <div className="academia-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>🗑️ Eliminar notificación</h3>
+                        <p>
+                            ¿Eliminar la notificación <strong>“{grupoAEliminar.titulo}”</strong> de los{' '}
+                            <strong>{grupoAEliminar.total}</strong> {grupoAEliminar.total === 1 ? 'usuario' : 'usuarios'} que la recibieron?
+                            Esta acción no se puede deshacer.
+                        </p>
+                        <div className="academia-modal-acciones">
+                            <button className="academia-modal-btn-cancelar" onClick={cancelarEliminarGrupo}>Cancelar</button>
+                            <button className="academia-modal-btn-eliminar" onClick={confirmarEliminarGrupo} disabled={cargando}>
+                                {cargando ? 'Eliminando…' : 'Sí, eliminar de todos'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {detalle && (
+                <div className="academia-modal-fondo" onClick={cerrarDetalle}>
+                    <div className="academia-modal academia-modal-detalle" onClick={(e) => e.stopPropagation()}>
+                        <div className="academia-modal-detalle-header">
+                            <h3>👥 Destinatarios</h3>
+                            <button className="academia-modal-cerrar" onClick={cerrarDetalle} aria-label="Cerrar">✕</button>
+                        </div>
+                        <p className="academia-modal-detalle-sub">“{detalle.titulo}” — {detalle.destinatarios.length} {detalle.destinatarios.length === 1 ? 'usuario' : 'usuarios'}</p>
+                        {cargandoDetalle ? (
+                            <p style={{ color: '#718096' }}>Cargando…</p>
+                        ) : (
+                            <div className="academia-destinatarios-lista">
+                                {detalle.destinatarios.map((d) => (
+                                    <div key={d.usuario_id} className="academia-destinatario">
+                                        <div className="academia-destinatario-info">
+                                            <strong>{d.nombre || 'Sin nombre'}</strong>
+                                            <span>{d.correo || d.usuario_id}</span>
+                                        </div>
+                                        <span className={`academia-destinatario-estado ${d.leida ? 'leida' : 'no-leida'}`}>
+                                            {d.leida ? '✓ Leída' : '• Sin leer'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
