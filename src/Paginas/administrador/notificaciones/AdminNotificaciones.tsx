@@ -25,6 +25,20 @@ const AdminNotificaciones: React.FC = () => {
         { id: 'estadisticas', label: 'Estadísticas', icono: '📊' },
     ];
 
+    // Filtro de envíos: individual (1 usuario) vs masivo (a varios/todos) + búsqueda.
+    const [filtro, setFiltro] = React.useState<'todas' | 'masivas' | 'individuales'>('todas');
+    const [busqueda, setBusqueda] = React.useState('');
+    const totalMasivas = enviadas.filter((n) => Number(n.total) > 1).length;
+    const totalIndividuales = enviadas.filter((n) => Number(n.total) === 1).length;
+    const enviadasFiltradas = enviadas.filter((n) => {
+        const total = Number(n.total);
+        if (filtro === 'masivas' && total <= 1) return false;
+        if (filtro === 'individuales' && total !== 1) return false;
+        const q = busqueda.trim().toLowerCase();
+        if (q && !(`${n.titulo || ''} ${n.mensaje || ''} ${n.tipo || ''}`.toLowerCase().includes(q))) return false;
+        return true;
+    });
+
     return (
         <div className="academia-panel-notificaciones">
             <div className="academia-np-inner">
@@ -68,6 +82,29 @@ const AdminNotificaciones: React.FC = () => {
                             </button>
                         </div>
 
+                        {!cargandoEnviadas && enviadas.length > 0 && (
+                            <div className="academia-filtros-barra">
+                                <div className="academia-filtros">
+                                    <button className={`academia-filtro-btn ${filtro === 'todas' ? 'activo' : ''}`} onClick={() => setFiltro('todas')}>
+                                        Todas <span>{enviadas.length}</span>
+                                    </button>
+                                    <button className={`academia-filtro-btn ${filtro === 'masivas' ? 'activo' : ''}`} onClick={() => setFiltro('masivas')}>
+                                        📢 A todos <span>{totalMasivas}</span>
+                                    </button>
+                                    <button className={`academia-filtro-btn ${filtro === 'individuales' ? 'activo' : ''}`} onClick={() => setFiltro('individuales')}>
+                                        👤 Individuales <span>{totalIndividuales}</span>
+                                    </button>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="academia-buscador"
+                                    placeholder="🔎 Buscar por título o mensaje…"
+                                    value={busqueda}
+                                    onChange={(e) => setBusqueda(e.target.value)}
+                                />
+                            </div>
+                        )}
+
                         {cargandoEnviadas ? (
                             <p className="academia-vacio-txt">Cargando…</p>
                         ) : enviadas.length === 0 ? (
@@ -76,9 +113,11 @@ const AdminNotificaciones: React.FC = () => {
                                 <p>Aún no se han enviado notificaciones.</p>
                                 <button className="academia-boton-enviar academia-btn-inline" onClick={() => setVista('crear')}>✍️ Crear la primera</button>
                             </div>
+                        ) : enviadasFiltradas.length === 0 ? (
+                            <p className="academia-vacio-txt">No hay notificaciones que coincidan con el filtro.</p>
                         ) : (
                             <div className="academia-enviadas-lista">
-                                {enviadas.map((n) => (
+                                {enviadasFiltradas.map((n) => (
                                     <div key={n.grupo} className="academia-enviada-item">
                                         <div
                                             className="academia-enviada-info academia-enviada-clic"
