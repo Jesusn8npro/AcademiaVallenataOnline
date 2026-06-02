@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../../../servicios/clienteSupabase';
 import {
     crearNotificacion,
     notificarNuevoCurso,
@@ -16,6 +17,9 @@ export function useAdminNotificaciones() {
     const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error'>('exito');
     const [estadisticas, setEstadisticas] = useState<any>(null);
     const [pedirConfirmacionLimpiar, setPedirConfirmacionLimpiar] = useState(false);
+    const [enviadas, setEnviadas] = useState<any[]>([]);
+    const [cargandoEnviadas, setCargandoEnviadas] = useState(false);
+    const [grupoAEliminar, setGrupoAEliminar] = useState<{ grupo: string; titulo: string; total: number } | null>(null);
 
     const [formManual, setFormManual] = useState({
         tipo: 'nuevo_curso' as TipoEvento,
@@ -30,11 +34,35 @@ export function useAdminNotificaciones() {
     const [formPago, setFormPago] = useState<{ usuario_id: string; monto: number; curso_titulo?: string }>({ usuario_id: '', monto: 0, curso_titulo: '' });
     const [formPromocion, setFormPromocion] = useState<{ titulo: string; descripcion: string; codigo: string; fecha_limite: string }>({ titulo: '', descripcion: '', codigo: '', fecha_limite: '' });
 
-    useEffect(() => { cargarEstadisticas(); }, []);
+    useEffect(() => { cargarEstadisticas(); cargarEnviadas(); }, []);
 
     const cargarEstadisticas = async () => {
         const { exito, estadisticas: stats } = await obtenerEstadisticasNotificaciones();
         if (exito) setEstadisticas(stats);
+    };
+
+    // Notificaciones enviadas agrupadas por envío (RPC admin SECURITY DEFINER).
+    const cargarEnviadas = async () => {
+        setCargandoEnviadas(true);
+        const { data, error } = await supabase.rpc('admin_listar_notificaciones_enviadas', { p_limite: 100 });
+        if (!error) setEnviadas(data || []);
+        setCargandoEnviadas(false);
+    };
+
+    const solicitarEliminarGrupo = (grupo: string, titulo: string, total: number) => setGrupoAEliminar({ grupo, titulo, total });
+    const cancelarEliminarGrupo = () => setGrupoAEliminar(null);
+
+    const confirmarEliminarGrupo = async () => {
+        if (!grupoAEliminar) return;
+        const { grupo } = grupoAEliminar;
+        setGrupoAEliminar(null);
+        setCargando(true);
+        const { data, error } = await supabase.rpc('admin_eliminar_notificaciones_grupo', { p_grupo: grupo });
+        if (error) mostrarMensaje(`❌ Error: ${error.message}`, 'error');
+        else mostrarMensaje(`🗑️ Notificación eliminada de ${data ?? 0} usuarios`, 'exito');
+        await cargarEnviadas();
+        await cargarEstadisticas();
+        setCargando(false);
     };
 
     const mostrarMensaje = (texto: string, tipo: 'exito' | 'error') => {
@@ -51,6 +79,7 @@ export function useAdminNotificaciones() {
             mostrarMensaje(`✅ Notificación enviada a ${resultado.notificaciones_creadas} usuarios`, 'exito');
             setFormManual(prev => ({ ...prev, mensaje: '', url_accion: '', usuario_id: '' }));
             await cargarEstadisticas();
+            await cargarEnviadas();
         } else {
             mostrarMensaje(`❌ Error: ${resultado.error}`, 'error');
         }
@@ -108,6 +137,8 @@ export function useAdminNotificaciones() {
     return {
         cargando, mensaje, tipoMensaje, estadisticas,
         pedirConfirmacionLimpiar,
+        enviadas, cargandoEnviadas, cargarEnviadas,
+        grupoAEliminar, solicitarEliminarGrupo, cancelarEliminarGrupo, confirmarEliminarGrupo,
         formManual, setFormManual,
         formCurso, setFormCurso,
         formTutorial, setFormTutorial,

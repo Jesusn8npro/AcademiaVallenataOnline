@@ -54,9 +54,14 @@ export async function crearNotificacion(params: {
         const fechaExpiracion = new Date();
         fechaExpiracion.setDate(fechaExpiracion.getDate() + config.dias_expiracion);
 
+        // Un id por envío: agrupa todas las filas (una por usuario) para que el admin
+        // pueda verlas como un solo "envío" y eliminarlas todas juntas.
+        const loteId = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
         const notificaciones = destinatarios.map(usuarioId => {
             const notificacion: any = {
                 usuario_id: usuarioId,
+                lote_id: loteId,
                 tipo: params.tipo,
                 titulo: config.titulo,
                 mensaje: params.mensaje,
