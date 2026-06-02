@@ -371,3 +371,51 @@
     .academia-enviada-item { flex-direction: column; align-items: stretch }
     .academia-boton-eliminar-grupo { width: 100% }
 }
+
+/* Fila clickeable para ver destinatarios */
+.academia-enviada-clic { cursor: pointer; border-radius: 0.5rem; transition: background .15s ease }
+.academia-enviada-clic:hover { background: rgba(99,102,241,.05) }
+
+/* ===== Modales (confirmar / destinatarios) ===== */
+.academia-modal-fondo {
+    position: fixed; inset: 0; background: rgba(15,23,42,.55);
+    display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;
+}
+.academia-modal {
+    background: #fff; border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 460px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+}
+.academia-modal h3 { margin: 0 0 0.75rem; color: #1a202c; font-size: 1.2rem }
+.academia-modal p { margin: 0 0 1.25rem; color: #4a5568; line-height: 1.5 }
+.academia-modal-acciones { display: flex; gap: 0.75rem; justify-content: flex-end }
+.academia-modal-btn-cancelar {
+    padding: 0.6rem 1.1rem; background: #e2e8f0; color: #4a5568; border: none;
+    border-radius: 0.5rem; font-weight: 600; cursor: pointer;
+}
+.academia-modal-btn-cancelar:hover { background: #cbd5e1 }
+.academia-modal-btn-eliminar {
+    padding: 0.6rem 1.1rem; background: #e53e3e; color: #fff; border: none;
+    border-radius: 0.5rem; font-weight: 700; cursor: pointer;
+}
+.academia-modal-btn-eliminar:hover:not(:disabled) { background: #c53030 }
+.academia-modal-btn-eliminar:disabled { opacity: .6; cursor: not-allowed }
+
+.academia-modal-detalle { max-width: 560px }
+.academia-modal-detalle-header { display: flex; align-items: center; justify-content: space-between }
+.academia-modal-detalle-sub { margin: 0.25rem 0 1rem !important; font-size: 0.85rem; color: #718096 !important }
+.academia-modal-cerrar {
+    background: none; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer;
+    width: 32px; height: 32px; border-radius: 8px;
+}
+.academia-modal-cerrar:hover { background: #f1f5f9; color: #475569 }
+.academia-destinatarios-lista { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem }
+.academia-destinatario {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.6rem 0.75rem; background: #f8fafc; border: 1px solid #eef2f7; border-radius: 0.5rem;
+}
+.academia-destinatario-info { display: flex; flex-direction: column; min-width: 0 }
+.academia-destinatario-info strong { color: #1a202c; font-size: 0.9rem }
+.academia-destinatario-info span { color: #94a3b8; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.academia-destinatario-estado { font-size: 0.72rem; font-weight: 700; white-space: nowrap; padding: 2px 9px; border-radius: 999px }
+.academia-destinatario-estado.leida { background: #d1fae5; color: #065f46 }
+.academia-destinatario-estado.no-leida { background: #f1f5f9; color: #64748b }
