@@ -8,9 +8,10 @@
 // nadie pueda llamarla directamente y obtener contenido gratis sin un cupón válido.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com";
+// ACAO '*' : endpoint protegido por JWT (verify_jwt) y sin cookies → seguro y
+// permite localhost + ambos dominios de producción.
 const CORS = {
-  "Access-Control-Allow-Origin": SITE_URL,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
