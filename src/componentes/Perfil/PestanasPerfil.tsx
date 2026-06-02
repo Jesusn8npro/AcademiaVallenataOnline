@@ -21,7 +21,8 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
     eventos: `<svg width='24' height='24' viewBox='0 0 24 24'><rect x='3' y='4' width='18' height='18' rx='2' ry='2' stroke='currentColor' stroke-width='1.5' fill='none'/><line x1='16' y1='2' x2='16' y2='6' stroke='currentColor' stroke-width='1.5'/><line x1='8' y1='2' x2='8' y2='6' stroke='currentColor' stroke-width='1.5'/><line x1='3' y1='10' x2='21' y2='10' stroke='currentColor' stroke-width='1.5'/><circle cx='8' cy='14' r='1.5' fill='currentColor'/><circle cx='12' cy='18' r='1.5' fill='currentColor'/><circle cx='16' cy='14' r='1.5' fill='currentColor'/></svg>`,
     grabaciones: `<svg width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='3' stroke='currentColor' stroke-width='1.5' fill='none'/><path d='M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24' stroke='currentColor' stroke-width='1.5'/><circle cx='12' cy='12' r='9' stroke='currentColor' stroke-width='1.5' fill='none'/></svg>`,
     validaciones: `<svg width='24' height='24' viewBox='0 0 24 24'><path d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>`,
-    membresia: `<svg width='24' height='24' viewBox='0 0 24 24'><path d='M3 8l4 4 5-7 5 7 4-4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linejoin='round'/></svg>`
+    membresia: `<svg width='24' height='24' viewBox='0 0 24 24'><path d='M3 8l4 4 5-7 5 7 4-4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linejoin='round'/></svg>`,
+    guardados: `<svg width='24' height='24' viewBox='0 0 24 24'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linejoin='round'/></svg>`
   };
 
   const pestañas = modoPublico && slugUsuario ? [
@@ -37,7 +38,7 @@ export default function PestanasPerfil({ modalAbierto = false, modoPublico = fal
     { label: 'Publicaciones', icon: iconos.publicaciones, route: '/publicaciones' },
     { label: 'Grabaciones', icon: iconos.grabaciones, route: '/grabaciones' },
     { label: 'Validaciones', icon: iconos.validaciones, route: '/mis-validaciones' },
-    { label: '❤️ Guardados', icon: '', route: '/mi-perfil/favoritos' },
+    { label: 'Guardados', icon: iconos.guardados, route: '/mi-perfil/favoritos' },
     { label: 'Configuración', icon: iconos.configuracion, route: '/configuracion' }
   ]
   let indiceActivo = pestañas.findIndex(p => p.route === location.pathname)

@@ -73,14 +73,20 @@ export default function MisFavoritos() {
 
   return (
     <div className="mf-contenedor">
-      <h1 className="mf-titulo">Guardados</h1>
+      <h1 className="mf-titulo">❤️ Guardados</h1>
+      <p className="mf-intro">
+        Tu lista de deseos. Guarda aquí los <strong>cursos y tutoriales</strong> que te interesan
+        para <strong>comprarlos más adelante</strong> o retomarlos cuando quieras. Toca el corazón ❤️
+        en cualquier curso o tutorial para añadirlo.
+      </p>
 
       {sinFavoritos ? (
         <div className="mf-vacio">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-          <p>Aún no guardaste ningún contenido. Explora el catálogo ❤️</p>
+          <p>Todavía no has guardado nada.</p>
+          <p className="mf-vacio-sub">Explora el catálogo y toca el ❤️ para guardar lo que quieras comprar en el futuro.</p>
           <button className="mf-btn-explorar" onClick={() => navigate('/tutoriales-de-acordeon')}>
             Explorar catálogo
           </button>
