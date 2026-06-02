@@ -184,20 +184,22 @@ export function usePagoExitoso() {
         return () => clearInterval(polling);
     }, [estadoPago, datosPago?.referencia]);
 
-    // Contador visible: al confirmarse el pago, cuenta atrás y redirige a Mis Cursos
-    // (donde el usuario ya tiene el contenido). El usuario puede adelantarse con los botones.
+    // Contador visible: al confirmarse el pago, cuenta atrás. El navigate NO va dentro
+    // del updater de setState (eso dispara un update del Router durante el render); se
+    // hace en un efecto aparte cuando llega a 0.
     useEffect(() => {
         if (estadoPago !== 'aceptada') return;
         setSegundosRedireccion(8);
         const id = setInterval(() => {
-            setSegundosRedireccion(s => {
-                if (s <= 1) { clearInterval(id); navigate('/mis-cursos'); return 0; }
-                return s - 1;
-            });
+            setSegundosRedireccion(s => Math.max(0, s - 1));
         }, 1000);
         return () => clearInterval(id);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [estadoPago]);
+
+    useEffect(() => {
+        if (estadoPago === 'aceptada' && segundosRedireccion === 0) navigate('/mis-cursos');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [estadoPago, segundosRedireccion]);
 
     const montoFmt = (monto: string) =>
         `$${parseInt(monto || '0').toLocaleString('es-CO')}`;
