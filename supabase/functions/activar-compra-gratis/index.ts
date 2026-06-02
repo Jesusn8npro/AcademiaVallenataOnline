@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
     if (Object.keys(perfilUpd).length) await supabase.from("perfiles").update(perfilUpd).eq("id", user.id);
 
     // 7. Registrar el pago (estado aceptada, valor 0) para trazabilidad.
-    await supabase.from("pagos_epayco").insert({
+    const { error: errPago } = await supabase.from("pagos_epayco").insert({
       usuario_id: user.id,
       [cfg.campo]: contenidoId,
       nombre_producto: titulo,
@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
       direccion_completa: datos.direccion || null, ciudad: datos.ciudad || null,
       pais: datos.pais || null, codigo_postal: datos.codigo_postal || null,
     });
+    if (errPago) console.error("❌ pago insert:", errPago.message);
 
     // 8. Dar acceso.
     if (tipo === "membresia") {
