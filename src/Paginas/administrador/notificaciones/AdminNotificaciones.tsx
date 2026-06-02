@@ -9,6 +9,8 @@ const AdminNotificaciones: React.FC = () => {
     const {
         cargando, mensaje, tipoMensaje, estadisticas,
         pedirConfirmacionLimpiar,
+        enviadas, cargandoEnviadas, cargarEnviadas,
+        grupoAEliminar, solicitarEliminarGrupo, cancelarEliminarGrupo, confirmarEliminarGrupo,
         formManual, setFormManual,
         formCurso, setFormCurso,
         formTutorial, setFormTutorial,
@@ -41,6 +43,18 @@ const AdminNotificaciones: React.FC = () => {
                 </div>
             )}
 
+            {grupoAEliminar && (
+                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                    <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>
+                        ¿Eliminar la notificación <strong>“{grupoAEliminar.titulo}”</strong> de los {grupoAEliminar.total} usuarios? Esta acción no se puede deshacer.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={confirmarEliminarGrupo} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Sí, eliminar de todos</button>
+                        <button onClick={cancelarEliminarGrupo} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
+                    </div>
+                </div>
+            )}
+
             {estadisticas && (
                 <div className="academia-seccion-estadisticas">
                     <h2>📊 Estadísticas de Notificaciones</h2>
@@ -68,6 +82,48 @@ const AdminNotificaciones: React.FC = () => {
             )}
 
             <div className="academia-contenido-panel">
+                <div className="academia-seccion">
+                    <div className="academia-enviadas-header">
+                        <h2>📋 Notificaciones enviadas a los usuarios</h2>
+                        <button className="academia-boton-herramienta academia-actualizar academia-btn-mini" onClick={cargarEnviadas} disabled={cargandoEnviadas}>
+                            🔄 Actualizar
+                        </button>
+                    </div>
+                    <p className="academia-descripcion" style={{ marginTop: '-0.25rem' }}>
+                        Cada fila es un envío. Eliminar quita esa notificación de <strong>todos</strong> los usuarios que la recibieron.
+                    </p>
+                    {cargandoEnviadas ? (
+                        <p style={{ color: '#718096' }}>Cargando…</p>
+                    ) : enviadas.length === 0 ? (
+                        <p style={{ color: '#718096' }}>Aún no se han enviado notificaciones.</p>
+                    ) : (
+                        <div className="academia-enviadas-lista">
+                            {enviadas.map((n) => (
+                                <div key={n.grupo} className="academia-enviada-item">
+                                    <div className="academia-enviada-info">
+                                        <div className="academia-enviada-top">
+                                            <span className="academia-enviada-icono">{n.icono || '🔔'}</span>
+                                            <strong>{n.titulo || n.tipo}</strong>
+                                            <span className="academia-enviada-badge">{n.total} {Number(n.total) === 1 ? 'usuario' : 'usuarios'}</span>
+                                        </div>
+                                        {n.mensaje && <p className="academia-enviada-mensaje">{n.mensaje}</p>}
+                                        <span className="academia-enviada-meta">
+                                            {new Date(n.fecha).toLocaleString('es-CO')} · {n.leidas}/{n.total} leídas · {n.categoria || n.tipo}
+                                        </span>
+                                    </div>
+                                    <button
+                                        className="academia-boton-eliminar-grupo"
+                                        onClick={() => solicitarEliminarGrupo(n.grupo, n.titulo || n.tipo, Number(n.total))}
+                                        disabled={cargando}
+                                    >
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 <div className="academia-seccion">
                     <h2>✍️ Crear Notificación Manual</h2>
                     <div className="academia-formulario">
