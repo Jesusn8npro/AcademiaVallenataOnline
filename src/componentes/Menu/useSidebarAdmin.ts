@@ -138,7 +138,7 @@ export function useSidebarAdmin() {
     // instantáneamente mientras refrescamos. Evita el "0/0/0" mientras carga.
     const claveCache = `sidebar-estudiante-progreso:${usuario.id}`;
     const cached = leerCacheStale<ProgresoEstudiante>(claveCache);
-    if (cached) setProgresoEstudiante(cached);
+    if (cached) { setProgresoEstudiante(cached); seleccionarMensajeMotivacional(cached); }
 
     // Promise.allSettled + timeout: si UNA query falla (token corrupto, RLS,
     // tabla inexistente), las otras igual cargan. Antes con Promise.all UNA
@@ -204,19 +204,37 @@ export function useSidebarAdmin() {
       };
       setProgresoEstudiante(nuevoProgreso);
       guardarCache(claveCache, nuevoProgreso);
-      seleccionarMensajeMotivacional(racha, totalActividadesCompletadas);
+      seleccionarMensajeMotivacional(nuevoProgreso);
     } catch {
       // ignore progress load errors
     }
   };
 
-  const seleccionarMensajeMotivacional = (racha = 0, lecciones = 0) => {
-    let pool: string[];
-    if (racha >= 2) pool = mensajesMotivacionales.racha;
-    else if (lecciones >= 5) pool = mensajesMotivacionales.progreso;
-    else if (lecciones === 0) pool = mensajesMotivacionales.inicio;
-    else pool = mensajesMotivacionales.general;
-    setMensajeMotivacional(pool[Math.floor(Math.random() * pool.length)]);
+  // Construye un mensaje PERSONALIZADO con el nombre del usuario y su actividad real
+  // (racha, cursos en progreso/completados, lecciones, XP). Rota por día para que se
+  // sienta como una "motivación diaria" estable (no cambia en cada render).
+  const seleccionarMensajeMotivacional = (p: ProgresoEstudiante) => {
+    const nombre = (nombreUsuario || 'crack').trim().split(' ')[0] || 'crack';
+    const cap = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+    const candidatos: string[] = [];
+
+    if (p.racha >= 2) candidatos.push(`¡${cap}, llevas ${p.racha} días de racha! 🔥 No la rompas hoy.`);
+    if (p.cursosEnProgreso > 0) candidatos.push(`${cap}, tienes ${p.cursosEnProgreso} ${p.cursosEnProgreso === 1 ? 'curso' : 'cursos'} en progreso. ¡Continúa donde lo dejaste! 🎯`);
+    if (p.cursosCompletados > 0) candidatos.push(`¡Grande, ${cap}! Ya completaste ${p.cursosCompletados} ${p.cursosCompletados === 1 ? 'curso' : 'cursos'} 🏆`);
+    if (p.leccionesCompletadas >= 5) candidatos.push(`Vas muy bien, ${cap}: ${p.leccionesCompletadas} lecciones completadas ✨`);
+    if (p.puntos > 0) candidatos.push(`${cap}, acumulas ${p.puntos} XP. ¡Cada lección suma! ⭐`);
+
+    // Usuario nuevo / sin actividad: mensajes de bienvenida con su nombre.
+    if (p.leccionesCompletadas === 0 && p.cursosCompletados === 0 && p.cursosEnProgreso === 0) {
+      candidatos.push(`¡Bienvenido, ${cap}! Hoy es un gran día para tu primera lección 🎼`);
+      candidatos.push(`${cap}, tu camino en el acordeón vallenato empieza hoy. ¡Vamos! 🌟`);
+    }
+
+    if (candidatos.length === 0) candidatos.push(...mensajesMotivacionales.general);
+
+    // Selección estable por día (no aleatoria en cada render).
+    const idx = new Date().getDate() % candidatos.length;
+    setMensajeMotivacional(candidatos[idx]);
   };
 
   const alternarBarraLateral = () => setColapsado(!colapsado);
