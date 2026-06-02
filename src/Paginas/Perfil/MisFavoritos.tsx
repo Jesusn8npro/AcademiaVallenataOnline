@@ -38,9 +38,12 @@ export default function MisFavoritos() {
           .from('cursos')
           .select('id, titulo, descripcion, imagen_url, nivel, precio_normal, slug')
           .in('id', favoritos),
+        // tutoriales NO tiene columna `slug` (a diferencia de cursos); se omite y
+        // la URL se arma con generarSlug(titulo). Pedir `slug` rompía la query (400)
+        // y por eso los tutoriales guardados no aparecían.
         supabase
           .from('tutoriales')
-          .select('id, titulo, descripcion, imagen_url, nivel, precio_normal, slug')
+          .select('id, titulo, descripcion, imagen_url, nivel, precio_normal')
           .in('id', favoritos),
       ])
       setCursos((cursosData || []).map((c: any) => ({ ...c, tipo: 'curso' as const })))

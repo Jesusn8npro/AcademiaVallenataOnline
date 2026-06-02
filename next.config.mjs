@@ -76,7 +76,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
               "media-src 'self' blob: https://*.supabase.co https://*.b-cdn.net",
-              "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com https://*.epayco.co",
+              "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com https://*.epayco.co https://ipapi.co https://api.ipify.org https://ipwho.is",
               "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://iframe.mediadelivery.net https://checkout.epayco.co https://*.epayco.co https://secure.epayco.co",
               "worker-src 'self' blob:",
               "object-src 'none'",
