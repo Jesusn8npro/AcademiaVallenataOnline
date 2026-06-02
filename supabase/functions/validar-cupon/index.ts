@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const SITE_URL = Deno.env.get("SITE_URL") || "https://academiavallenataonline.com"
+// ACAO '*' : endpoint protegido por JWT (verify_jwt) y sin cookies, así que es
+// seguro y permite localhost + ambos dominios de producción.
 const cors = {
-  'Access-Control-Allow-Origin': SITE_URL,
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, content-type',
   'Content-Type': 'application/json'
 }
