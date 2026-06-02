@@ -5,7 +5,7 @@ import { useCupon } from '../../hooks/useCupon'
 interface Props {
   monto: number
   usuarioId?: string
-  onAplicar: (precioFinal: number, descuento: number) => void
+  onAplicar: (precioFinal: number, descuento: number, codigo: string) => void
   onLimpiar: () => void
 }
 
@@ -14,8 +14,8 @@ export function InputCupon({ monto, usuarioId, onAplicar, onLimpiar }: Props) {
 
   const handleAplicar = async () => {
     const r = await validarCupon(monto, usuarioId)
-    // Propagar el precio con descuento al modal para que se cobre lo correcto.
-    if (r?.valido) onAplicar(r.precio_final, r.descuento)
+    // Propagar el precio con descuento y el código al modal para cobrar/consumir lo correcto.
+    if (r?.valido) onAplicar(r.precio_final, r.descuento, codigo.toUpperCase().trim())
   }
 
   const handleLimpiar = () => { limpiarCupon(); onLimpiar() }

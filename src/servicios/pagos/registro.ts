@@ -44,6 +44,21 @@ export async function crearRegistroPago(datos: any): Promise<ResultadoOperacion>
             ref_payco: datos.ref_payco,
             factura: datos.factura || null,
             estado: 'pendiente',
+            cupon_codigo: datos.cupon_codigo || null,
+            // Columnas dedicadas (además del JSONB): facturación consultable directamente.
+            apellido: datos.apellido || null,
+            telefono: datos.telefono || null,
+            whatsapp: datos.whatsapp || null,
+            fecha_nacimiento: datos.fecha_nacimiento || null,
+            profesion: datos.profesion || null,
+            documento_tipo: datos.documento_tipo || 'CC',
+            documento_numero: datos.documento_numero || null,
+            direccion_completa: datos.direccion_completa || null,
+            ciudad: datos.ciudad || null,
+            pais: datos.pais || 'Colombia',
+            codigo_postal: datos.codigo_postal || null,
+            como_nos_conocio: datos.como_nos_conocio || null,
+            user_agent: datos.user_agent || null,
             datos_adicionales: {
                 datos_personales: {
                     nombre: datos.nombre,

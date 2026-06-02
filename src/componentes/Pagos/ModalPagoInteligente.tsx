@@ -20,6 +20,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
     const [precioConDescuento, setPrecioConDescuento] = useState<number | null>(null);
+    const [cuponCodigo, setCuponCodigo] = useState<string>('');
 
     const {
         usuario, pasoActual, setPasoActual, pasoMax, cargando, procesandoPago,
@@ -27,7 +28,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         datosPago, setDatosPago, erroresValidacion,
         validarEmail, validarTelefono, validarDocumento, validarPassword,
         handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
-    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride: precioConDescuento ?? undefined });
+    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride: precioConDescuento ?? undefined, cuponCodigo });
 
     const TITULOS_PASO: Record<number, string> = {
         1: usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra',
@@ -95,8 +96,8 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
                             <InputCupon
                                 monto={obtenerPrecio(contenido)}
                                 usuarioId={usuario?.id}
-                                onAplicar={(precioFinal) => setPrecioConDescuento(precioFinal)}
-                                onLimpiar={() => setPrecioConDescuento(null)}
+                                onAplicar={(precioFinal, _descuento, codigo) => { setPrecioConDescuento(precioFinal); setCuponCodigo(codigo); }}
+                                onLimpiar={() => { setPrecioConDescuento(null); setCuponCodigo(''); }}
                             />
                         </div>
                     )}
