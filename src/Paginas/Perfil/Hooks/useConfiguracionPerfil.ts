@@ -30,10 +30,18 @@ export function useConfiguracionPerfil() {
         correo_electronico: '',
         whatsapp: '',
         ciudad: '',
-        fecha_creacion: ''
+        fecha_creacion: '',
+        documento_tipo: '',
+        documento_numero: '',
+        direccion_completa: '',
+        pais: '',
+        codigo_postal: ''
     });
     const [editandoCuenta, setEditandoCuenta] = useState(false);
-    const [datosEditados, setDatosEditados] = useState({ nombre_completo: '', correo_electronico: '', whatsapp: '', ciudad: '' });
+    const [datosEditados, setDatosEditados] = useState({
+        nombre_completo: '', correo_electronico: '', whatsapp: '', ciudad: '',
+        documento_tipo: 'CC', documento_numero: '', direccion_completa: '', pais: 'Colombia', codigo_postal: ''
+    });
     const [guardandoCuenta, setGuardandoCuenta] = useState(false);
 
     useEffect(() => { cargarDatosUsuario(); }, [usuario]);
@@ -44,8 +52,10 @@ export function useConfiguracionPerfil() {
             setCargando(true);
             const [perfilResult, pagosResult] = await Promise.all([
                 supabase.rpc('obtener_mi_perfil_completo'),
-                supabase.from('pagos_epayco').select('*').eq('usuario_id', usuario.id)
-                    .eq('estado', 'Aceptada').order('created_at', { ascending: false }).limit(3)
+                supabase.from('pagos_epayco')
+                    .select('id, nombre_producto, valor, estado, metodo_pago, ref_payco, created_at')
+                    .eq('usuario_id', usuario.id)
+                    .order('created_at', { ascending: false }).limit(8)
             ]);
 
             const perfilData = perfilResult.data;
@@ -70,7 +80,12 @@ export function useConfiguracionPerfil() {
                 correo_electronico: perfilData.correo_electronico || '',
                 whatsapp: perfilData.whatsapp || '',
                 ciudad: perfilData.ciudad || perfilData.pais || '',
-                fecha_creacion: new Date(perfilData.fecha_creacion).toLocaleDateString('es-ES')
+                fecha_creacion: new Date(perfilData.fecha_creacion).toLocaleDateString('es-ES'),
+                documento_tipo: (perfilData as any).documento_tipo || '',
+                documento_numero: (perfilData as any).documento_numero || '',
+                direccion_completa: (perfilData as any).direccion_completa || '',
+                pais: (perfilData as any).pais || '',
+                codigo_postal: (perfilData as any).codigo_postal || ''
             });
 
             setCorreoRecuperar(perfilData.correo_electronico || '');
@@ -141,7 +156,12 @@ export function useConfiguracionPerfil() {
             nombre_completo: datosPersonales.nombre_completo,
             correo_electronico: datosPersonales.correo_electronico,
             whatsapp: datosPersonales.whatsapp,
-            ciudad: datosPersonales.ciudad
+            ciudad: datosPersonales.ciudad,
+            documento_tipo: datosPersonales.documento_tipo || 'CC',
+            documento_numero: datosPersonales.documento_numero,
+            direccion_completa: datosPersonales.direccion_completa,
+            pais: datosPersonales.pais || 'Colombia',
+            codigo_postal: datosPersonales.codigo_postal
         });
         setEditandoCuenta(true);
     }
@@ -159,7 +179,12 @@ export function useConfiguracionPerfil() {
                 nombre,
                 apellido,
                 whatsapp: datosEditados.whatsapp,
-                ciudad: datosEditados.ciudad
+                ciudad: datosEditados.ciudad,
+                documento_tipo: datosEditados.documento_tipo,
+                documento_numero: datosEditados.documento_numero,
+                direccion_completa: datosEditados.direccion_completa,
+                pais: datosEditados.pais,
+                codigo_postal: datosEditados.codigo_postal
             }).eq('id', usuario.id);
 
             if (datosEditados.correo_electronico !== datosPersonales.correo_electronico) {

@@ -110,10 +110,41 @@
 .precio { font-weight: 700; color: #059669 }
 .lista-pagos { display: flex; flex-direction: column; gap: .5rem }
 
-.pago { display: flex; justify-content: space-between; align-items: center; padding: .85rem; background: #f8faf6; border: 1px solid #eef0ee; border-radius: 10px }
-.producto { font-weight: 600; color: #1f2937; display: block }
+.pago { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: .85rem; background: #f8faf6; border: 1px solid #eef0ee; border-radius: 10px }
+.pago-info { min-width: 0 }
+.producto { font-weight: 600; color: #1f2937; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .fecha { font-size: .8rem; color: #6b7280; display: block; margin-top: 2px }
+.pago-derecha { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0 }
 .pago .precio { font-weight: 700; color: #059669 }
+
+/* Badges de estado de pago */
+.cp-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: .3px; white-space: nowrap }
+.cp-badge-ok { background: #d1fae5; color: #065f46 }
+.cp-badge-pend { background: #fef3c7; color: #92400e }
+.cp-badge-bad { background: #fee2e2; color: #991b1b }
+
+/* Estado vacío del historial */
+.cp-vacio { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 12px; text-align: center; color: #6b7280 }
+.cp-vacio-ico { font-size: 34px }
+.cp-vacio p { margin: 0; font-size: 14px }
+.cp-vacio .boton-secundario { width: auto }
+
+/* Caja informativa (medios de pago) */
+.cp-info-box { background: #f8faf6; border: 1px solid #eef0ee; border-radius: 12px; padding: 16px; color: #374151; font-size: 13.5px; line-height: 1.55 }
+
+/* Filas de 2 columnas dentro de formularios */
+.cp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.cp-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dfe3da;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background: #fff;
+}
+.cp-select:focus { outline: none; border-color: #3B6D11; box-shadow: 0 0 0 3px rgba(59,109,17,.12) }
 
 /* Toggles de privacidad */
 .opciones { display: flex; flex-direction: column; gap: .9rem }
@@ -285,5 +316,6 @@
     .botones .boton-principal, .botones .boton-cancelar { width: 100% }
     .boton-guardar { width: 100%; min-width: 0 }
     .acciones-principales { padding: 16px }
+    .cp-grid-2 { grid-template-columns: 1fr }
     .modal { margin: 16px; padding: 18px }
 }
