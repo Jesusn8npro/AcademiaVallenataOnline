@@ -186,6 +186,7 @@ const VistaPremium = ({ data, verContenido }: Props) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 contenido={contenido as any}
                 tipoContenido={tipoContenido === 'curso' ? 'curso' : 'tutorial'}
+                onExito={() => { setInscritoLocal(true); setAgregado(true); }}
             />
         </div>
     );

@@ -14,9 +14,10 @@ interface ModalPagoInteligenteProps {
     setMostrar: (mostrar: boolean) => void;
     contenido: ContenidoCompra | null;
     tipoContenido?: 'curso' | 'tutorial' | 'paquete' | 'membresia';
+    onExito?: () => void;
 }
 
-const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso' }: ModalPagoInteligenteProps) => {
+const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 'curso', onExito }: ModalPagoInteligenteProps) => {
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmarPassword, setMostrarConfirmarPassword] = useState(false);
     const [precioConDescuento, setPrecioConDescuento] = useState<number | null>(null);
@@ -28,7 +29,7 @@ const ModalPagoInteligente = ({ mostrar, setMostrar, contenido, tipoContenido = 
         datosPago, setDatosPago, erroresValidacion,
         validarEmail, validarTelefono, validarDocumento, validarPassword,
         handleSiguiente, cerrarModal, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
-    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride: precioConDescuento ?? undefined, cuponCodigo });
+    } = useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride: precioConDescuento ?? undefined, cuponCodigo, onExito });
 
     const TITULOS_PASO: Record<number, string> = {
         1: usuarioEstaRegistrado ? 'Confirmar Compra' : 'Completar Compra',
