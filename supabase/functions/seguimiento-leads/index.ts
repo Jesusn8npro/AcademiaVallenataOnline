@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       try {
         const r = await fetch(cfg.url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-webhook-secret": cfg.secret || "" },
+          headers: { "Content-Type": "application/json", "x-chat-token": cfg.secret || "" },
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(10_000),
         });
