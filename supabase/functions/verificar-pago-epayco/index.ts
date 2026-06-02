@@ -103,6 +103,22 @@ async function activarMembresia(supabase: any, data: any, refPayco: string) {
   return { nombre: m.nombre, beneficios: m.beneficios, vencStr, periodo };
 }
 
+// Consume el cupón usado en la compra: lo marca como usado por este usuario
+// (una vez por usuario) e incrementa el contador global. Idempotente.
+async function consumirCupon(supabase: any, codigo: string | null, usuarioId: string, refPayco: string) {
+  if (!codigo) return;
+  const { data: cupon } = await supabase
+    .from("cupones").select("id, usos_actuales").eq("codigo", codigo.toUpperCase().trim()).maybeSingle();
+  if (!cupon) return;
+  const { data: yaUsado } = await supabase
+    .from("cupones_uso").select("id").eq("cupon_id", cupon.id).eq("usuario_id", usuarioId).maybeSingle();
+  if (yaUsado) return;
+  await supabase.from("cupones_uso").insert({
+    cupon_id: cupon.id, usuario_id: usuarioId, descuento_aplicado: 0, referencia: refPayco,
+  });
+  await supabase.from("cupones").update({ usos_actuales: (cupon.usos_actuales || 0) + 1 }).eq("id", cupon.id);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
@@ -150,7 +166,7 @@ Deno.serve(async (req) => {
         fecha_transaccion: new Date().toISOString(),
       })
       .eq("ref_payco", invoice)
-      .select("id, ref_payco, estado, nombre_producto, valor, usuario_id, curso_id, tutorial_id, paquete_id, membresia_id")
+      .select("id, ref_payco, estado, nombre_producto, valor, usuario_id, curso_id, tutorial_id, paquete_id, membresia_id, cupon_codigo")
       .maybeSingle();
 
     if (error || !data) return json({ error: "Error actualizando pago", detalle: error?.message }, 500);
@@ -170,6 +186,9 @@ Deno.serve(async (req) => {
       }
       let datosMembresia = null;
       if (data.membresia_id) datosMembresia = await activarMembresia(supabase, data, data.ref_payco);
+
+      // Consumir el cupón solo ahora que el pago está confirmado.
+      await consumirCupon(supabase, data.cupon_codigo, data.usuario_id, data.ref_payco);
 
       await supabase.from("notificaciones").insert({
         usuario_id: data.usuario_id,

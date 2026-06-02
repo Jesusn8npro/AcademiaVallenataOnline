@@ -8,6 +8,10 @@ const cors = {
   'Content-Type': 'application/json'
 }
 
+// SOLO VALIDA. No consume el cupón aquí: el consumo (incrementar usos_actuales +
+// registrar en cupones_uso) ocurre cuando el pago se confirma (verificar-pago-epayco,
+// epayco-webhook o activar-compra-gratis). Así, si el usuario aplica el cupón y
+// abandona el checkout, NO se quema. Además bloquea reuso: un cupón = una vez por usuario.
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -42,6 +46,19 @@ serve(async (req) => {
       return new Response(JSON.stringify({ valido: false, mensaje: 'Este cupón ya alcanzó su límite de usos' }), { headers: cors })
     }
 
+    // Un cupón solo puede usarse una vez por usuario.
+    if (usuario_id) {
+      const { data: usoPrevio } = await supabase
+        .from('cupones_uso')
+        .select('id')
+        .eq('cupon_id', cupon.id)
+        .eq('usuario_id', usuario_id)
+        .maybeSingle()
+      if (usoPrevio) {
+        return new Response(JSON.stringify({ valido: false, mensaje: 'Ya usaste este cupón anteriormente' }), { headers: cors })
+      }
+    }
+
     if (monto < cupon.valor_minimo) {
       return new Response(JSON.stringify({
         valido: false,
@@ -54,17 +71,6 @@ serve(async (req) => {
       : Math.min(cupon.valor, monto)
 
     const precio_final = Math.max(0, monto - descuento)
-
-    // Incrementar uso y registrar
-    await supabase.from('cupones').update({ usos_actuales: cupon.usos_actuales + 1 }).eq('id', cupon.id)
-
-    if (usuario_id) {
-      await supabase.from('cupones_uso').insert({
-        cupon_id: cupon.id,
-        usuario_id,
-        descuento_aplicado: descuento
-      })
-    }
 
     return new Response(JSON.stringify({
       valido: true,

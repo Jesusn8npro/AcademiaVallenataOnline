@@ -40,8 +40,16 @@ export const DATOS_INICIALES: DatosPago = {
     ciudad: '', pais: 'Colombia', codigo_postal: '', password: '', confirmarPassword: '',
 };
 
-export function limpiarTelefono(tel: string): string {
-    return tel ? tel.replace(/^\+\d{1,3}/, '').replace(/\s/g, '').trim() : '';
+// Quita el código de país de un teléfono E.164 ("+573001234567" -> "3001234567").
+// Importante: recorta EXACTAMENTE el código de país (callingCode), no un \d{1,3}
+// greedy — ese bug se comía el primer dígito real del número y ePayco recibía el
+// teléfono incompleto.
+export function limpiarTelefono(tel: string, callingCode?: string): string {
+    if (!tel) return '';
+    let s = tel.replace(/[\s\-()]/g, '').replace(/^\+/, '');
+    const cc = (callingCode || '').replace(/[^\d]/g, '');
+    if (cc && s.startsWith(cc)) s = s.slice(cc.length);
+    return s.trim();
 }
 
 export function calcularIVA(valor: number) {
@@ -157,7 +165,7 @@ export async function guardarPerfilUsuario(usuarioId: string, datosPago: DatosPa
         if (datosPago.apellido) datos.apellido = datosPago.apellido;
         if (datosPago.nombre && datosPago.apellido) datos.nombre_completo = `${datosPago.nombre} ${datosPago.apellido}`;
         if (datosPago.email) datos.correo_electronico = datosPago.email;
-        const tel = limpiarTelefono(datosPago.telefono || datosPago.whatsapp);
+        const tel = limpiarTelefono(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode);
         if (tel) datos.whatsapp = tel;
         if (datosPago.tipo_documento) datos.documento_tipo = datosPago.tipo_documento;
         if (datosPago.numero_documento) datos.documento_numero = datosPago.numero_documento;
@@ -168,4 +176,46 @@ export async function guardarPerfilUsuario(usuarioId: string, datosPago: DatosPa
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (Object.keys(datos).length > 0) await supabase.from('perfiles').update(datos as any).eq('id', usuarioId);
     } catch { /* non-fatal */ }
+}
+
+// Activa una compra cuyo total quedó en $0 por un cupón. Llama a la Edge Function
+// activar-compra-gratis, que registra el pago, da acceso y consume el cupón
+// server-side (re-validando precio y cupón). Sin esto, una compra gratis solo
+// mostraría "pago exitoso" sin entregar el contenido.
+export async function activarCompraGratis(params: {
+    tipo: string;
+    contenidoId: string | number | undefined;
+    cuponCodigo: string;
+    datos: DatosPago;
+}): Promise<void> {
+    const { data: sesion } = await supabase.auth.getSession();
+    const token = sesion?.session?.access_token;
+    if (!token) throw new Error('Usuario no autenticado');
+
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const response = await fetch(`${baseUrl}/functions/v1/activar-compra-gratis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+            tipo: params.tipo,
+            contenido_id: String(params.contenidoId ?? ''),
+            cupon_codigo: params.cuponCodigo,
+            datos: {
+                nombre: params.datos.nombre,
+                apellido: params.datos.apellido,
+                telefono: limpiarTelefono(params.datos.telefono || params.datos.whatsapp, params.datos.callingCode),
+                tipo_documento: params.datos.tipo_documento,
+                numero_documento: params.datos.numero_documento,
+                direccion: params.datos.direccion,
+                ciudad: params.datos.ciudad,
+                pais: params.datos.pais,
+                codigo_postal: params.datos.codigo_postal,
+            },
+        }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || `Error activando la compra (${response.status})`);
+    }
 }

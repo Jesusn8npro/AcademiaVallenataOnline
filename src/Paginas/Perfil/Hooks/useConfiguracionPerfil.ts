@@ -124,7 +124,9 @@ export function useConfiguracionPerfil() {
         }
         if (!usuario?.id) return;
         try {
-            const { error } = await supabase.from('perfiles').update({ eliminado: true }).eq('id', usuario.id);
+            // RLS impide que el usuario cambie por sí mismo la columna `eliminado`,
+            // así que el borrado va por una RPC SECURITY DEFINER que solo marca la propia cuenta.
+            const { error } = await supabase.rpc('eliminar_mi_cuenta');
             if (error) throw error;
             await cerrarSesionContext();
             resetearPerfil();

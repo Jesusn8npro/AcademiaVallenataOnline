@@ -7,7 +7,7 @@ import {
     EPAYCO_RESPONSE_URL, DATOS_INICIALES,
     limpiarTelefono, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario,
-    crearSesionEpayco
+    crearSesionEpayco, activarCompraGratis
 } from './_utilidadesPago';
 export type { ContenidoCompra } from './_utilidadesPago';
 
@@ -17,9 +17,12 @@ interface Params {
     contenido: ContenidoCompra | null;
     tipoContenido: 'curso' | 'tutorial' | 'paquete' | 'membresia';
     precioOverride?: number;
+    cuponCodigo?: string;
 }
 
-export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride }: Params) {
+const DRAFT_KEY = 'mpi_draft_v1';
+
+export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride, cuponCodigo }: Params) {
     const { usuario } = useUsuario();
     const [pasoActual, setPasoActual] = useState(1);
     const [cargando, setCargando] = useState(false);
@@ -42,6 +45,25 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mostrar, usuario]);
 
+    // Borrador: persiste lo escrito para no perderlo si el usuario cierra el modal
+    // (o la pestaña) y vuelve. Nunca guarda contraseñas. Se limpia al completar la compra.
+    const leerDraft = (): Partial<DatosPago> => {
+        try { const r = localStorage.getItem(DRAFT_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; }
+    };
+    const soloNoVacios = (obj: Partial<DatosPago>): Partial<DatosPago> =>
+        Object.fromEntries(Object.entries(obj).filter(([, v]) => v != null && v !== '')) as Partial<DatosPago>;
+
+    useEffect(() => {
+        if (!mostrar) return;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, confirmarPassword, ...rest } = datosPago;
+        try { localStorage.setItem(DRAFT_KEY, JSON.stringify(rest)); } catch { /* storage lleno/no disponible */ }
+    }, [datosPago, mostrar]);
+
+    useEffect(() => {
+        if (pagoExitoso) { try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }
+    }, [pagoExitoso]);
+
     const fallbackCtx = () => setDatosPago(prev => ({
         ...prev,
         nombre: usuario?.nombre || '',
@@ -50,10 +72,17 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
         whatsapp: (usuario as any)?.telefono || '',
         ciudad: (usuario as any)?.ciudad || '',
         pais: (usuario as any)?.pais || 'Colombia',
+        ...soloNoVacios(leerDraft()),
     }));
 
     const verificarUsuario = async () => {
-        if (!usuario) { setUsuarioEstaRegistrado(false); setPasoActual(1); return; }
+        if (!usuario) {
+            setUsuarioEstaRegistrado(false);
+            setPasoActual(1);
+            const draft = soloNoVacios(leerDraft());
+            if (Object.keys(draft).length) setDatosPago(prev => ({ ...prev, ...draft }));
+            return;
+        }
         setUsuarioEstaRegistrado(true);
         setPasoActual(1);
         try {
@@ -76,6 +105,8 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
                 ciudad: perfil.ciudad || '',
                 pais: perfil.pais || 'Colombia',
                 codigo_postal: perfil.codigo_postal || '',
+                // El borrador (lo que el usuario alcanzó a escribir) gana sobre el perfil.
+                ...soloNoVacios(leerDraft()),
             }));
         } catch { fallbackCtx(); }
     };
@@ -163,10 +194,23 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
             const usuarioId = usuarioEstaRegistrado ? (usuario?.id || null) : await crearOObtenerUsuario();
             if (!usuarioId) throw new Error('No se pudo obtener ID de usuario');
 
-            await loadEpaycoScript();
-
             const precio = precioOverride ?? obtenerPrecio(contenido, tipoContenido);
-            if (precio <= 0) { setPagoExitoso(true); setCargando(false); setProcesandoPago(false); return; }
+
+            // Compra gratis (cupón cubre el total): NO pasa por ePayco. Activamos el
+            // acceso server-side (registra el pago, inscribe/activa membresía y consume
+            // el cupón). Antes este caso solo mostraba "pago exitoso" sin dar acceso.
+            if (precio <= 0) {
+                await guardarPerfilUsuario(usuarioId, datosPago);
+                await activarCompraGratis({
+                    tipo: tipoContenido,
+                    contenidoId: contenido?.id,
+                    cuponCodigo: cuponCodigo || '',
+                    datos: datosPago,
+                });
+                setPagoExitoso(true); setCargando(false); setProcesandoPago(false); return;
+            }
+
+            await loadEpaycoScript();
 
             const refPayco = generarRefPaycoReal(tipoContenido, contenido?.id);
             const { base, iva, total } = calcularIVA(precio);
@@ -180,9 +224,11 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
                 nombre_producto: obtenerTitulo(contenido, tipoContenido),
                 descripcion: `${obtenerLabelTipo(tipoContenido)}: ${obtenerTitulo(contenido, tipoContenido)}`,
                 valor: total, iva, base_iva: base, moneda: 'COP',
-                ref_payco: refPayco, factura: refPayco,
+                ref_payco: refPayco, factura: refPayco, cupon_codigo: cuponCodigo || null,
                 nombre: datosPago.nombre, apellido: datosPago.apellido,
-                email: datosPago.email, telefono: datosPago.telefono, whatsapp: datosPago.whatsapp,
+                email: datosPago.email,
+                telefono: limpiarTelefono(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
+                whatsapp: limpiarTelefono(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
                 fecha_nacimiento: datosPago.fecha_nacimiento, profesion: datosPago.profesion,
                 documento_tipo: datosPago.tipo_documento, documento_numero: datosPago.numero_documento,
                 direccion_completa: datosPago.direccion, ciudad: datosPago.ciudad,
