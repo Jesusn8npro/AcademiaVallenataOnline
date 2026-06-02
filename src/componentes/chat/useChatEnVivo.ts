@@ -161,8 +161,8 @@ export function useChatEnVivo() {
         setMensajes(prev => {
           if (prev.length > 0) return prev
           const saludo = usuario?.nombre
-            ? `¡Hola, ${usuario.nombre}! 👋 Soy Juancho, tu asistente de Academia Vallenata Online. ¿En qué puedo ayudarte hoy?`
-            : '¡Hola! 👋 Soy Juancho, el asistente virtual de Academia Vallenata Online. ¿Quieres aprender acordeón o tienes alguna pregunta?'
+            ? `¡Hola, ${usuario.nombre}! 👋 Soy Juancho, tu asistente de Academia Vallenata Online. ¿Qué te gustaría aprender o mejorar hoy en el acordeón? 🪗`
+            : '¡Hola! 👋 Soy Juancho, de Academia Vallenata Online. Para acompañarte mejor, cuéntame: ¿cómo te llamas y qué te gustaría aprender en el acordeón? 🪗'
           return [{ id: 'bienvenida', texto: saludo, esUsuario: false, timestamp: new Date(), tipo: 'sistema' }]
         })
       }
