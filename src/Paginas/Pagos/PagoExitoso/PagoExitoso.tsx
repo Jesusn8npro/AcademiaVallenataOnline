@@ -28,7 +28,7 @@ const IcoWarn = () => (
 const PagoExitoso: React.FC = () => {
     const {
         datosPago, datosUsuarioNuevo, estadoPago,
-        cargandoDatos, mostrandoAnimacion, errorCarga,
+        cargandoDatos, mostrandoAnimacion, errorCarga, segundosRedireccion,
         montoFmt, compartirEnWhatsApp, getEstadoClase,
         irAPanelEstudiante, irAMisCursos, irAInicio, intentarDeNuevo,
     } = usePagoExitoso();
@@ -118,14 +118,14 @@ const PagoExitoso: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="estado-acceso">
-                                                <p className="texto-acceso">🎉 <strong>¡Ya estás dentro!</strong> En unos segundos serás redirigido automáticamente a tu panel de estudiante.</p>
+                                                <p className="texto-acceso">🎉 <strong>¡Ya estás dentro!</strong> Te llevamos a tus cursos en <strong>{segundosRedireccion}s</strong>…</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="botones-accion">
-                                        <button onClick={irAPanelEstudiante} className="boton-principal">Ir a Mi Panel</button>
-                                        <button onClick={irAMisCursos} className="boton-secundario">Ver Mis Cursos</button>
+                                        <button onClick={irAMisCursos} className="boton-principal">🎬 Acceder a mi contenido</button>
+                                        <button onClick={irAPanelEstudiante} className="boton-secundario">Ir a Mi Panel</button>
                                         <button onClick={compartirEnWhatsApp} className="boton-compartir">Compartir Experiencia</button>
                                     </div>
 

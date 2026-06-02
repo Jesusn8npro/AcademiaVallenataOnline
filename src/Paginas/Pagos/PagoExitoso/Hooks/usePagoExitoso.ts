@@ -50,6 +50,7 @@ export function usePagoExitoso() {
     const [cargandoDatos, setCargandoDatos] = useState(true);
     const [mostrandoAnimacion, setMostrandoAnimacion] = useState(true);
     const [errorCarga, setErrorCarga] = useState('');
+    const [segundosRedireccion, setSegundosRedireccion] = useState(8);
 
     useEffect(() => {
         const inicializar = async () => {
@@ -140,18 +141,7 @@ export function usePagoExitoso() {
                     setCargandoDatos(false);
                 }, pagoEnBD.estado === 'aceptada' ? 3000 : 2000);
 
-                // Auto-redirect al panel cuando el pago es aceptado
-                let redirectTimer: ReturnType<typeof setTimeout> | null = null;
-                if (pagoEnBD.estado === 'aceptada') {
-                    redirectTimer = setTimeout(() => {
-                        navigate('/panel-estudiante');
-                    }, 6000);
-                }
-
-                return () => {
-                    clearTimeout(animTimer);
-                    if (redirectTimer) clearTimeout(redirectTimer);
-                };
+                return () => clearTimeout(animTimer);
             } catch {
                 setErrorCarga('Error procesando la información del pago.');
                 setEstadoPago('no_encontrada');
@@ -194,6 +184,21 @@ export function usePagoExitoso() {
         return () => clearInterval(polling);
     }, [estadoPago, datosPago?.referencia]);
 
+    // Contador visible: al confirmarse el pago, cuenta atrás y redirige a Mis Cursos
+    // (donde el usuario ya tiene el contenido). El usuario puede adelantarse con los botones.
+    useEffect(() => {
+        if (estadoPago !== 'aceptada') return;
+        setSegundosRedireccion(8);
+        const id = setInterval(() => {
+            setSegundosRedireccion(s => {
+                if (s <= 1) { clearInterval(id); navigate('/mis-cursos'); return 0; }
+                return s - 1;
+            });
+        }, 1000);
+        return () => clearInterval(id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [estadoPago]);
+
     const montoFmt = (monto: string) =>
         `$${parseInt(monto || '0').toLocaleString('es-CO')}`;
 
@@ -217,6 +222,7 @@ export function usePagoExitoso() {
         cargandoDatos,
         mostrandoAnimacion,
         errorCarga,
+        segundosRedireccion,
         montoFmt,
         compartirEnWhatsApp,
         getEstadoClase,

@@ -52,6 +52,18 @@ export function limpiarTelefono(tel: string, callingCode?: string): string {
     return s.trim();
 }
 
+// Asegura formato E.164 para alimentar al PhoneInput. Si el número no trae '+'
+// (ej. viene del perfil como nacional "3123790071"), antepone el callingCode
+// (por defecto +57 Colombia). Sin esto, react-international-phone adivina mal el
+// país a partir de los dígitos (p.ej. "31..." -> Holanda +31).
+export function aE164(tel: string, callingCode = '+57'): string {
+    if (!tel) return '';
+    const t = tel.trim();
+    if (t.startsWith('+')) return t.replace(/[\s\-()]/g, '');
+    const cc = callingCode.startsWith('+') ? callingCode : '+' + callingCode;
+    return cc + t.replace(/[^\d]/g, '');
+}
+
 export function calcularIVA(valor: number) {
     const iva = Math.round(valor * 0.19);
     return { base: valor - iva, iva, total: valor };
@@ -187,7 +199,7 @@ export async function activarCompraGratis(params: {
     contenidoId: string | number | undefined;
     cuponCodigo: string;
     datos: DatosPago;
-}): Promise<void> {
+}): Promise<{ ok: boolean; ref_payco?: string; ya_activo?: boolean }> {
     const { data: sesion } = await supabase.auth.getSession();
     const token = sesion?.session?.access_token;
     if (!token) throw new Error('Usuario no autenticado');
@@ -218,4 +230,5 @@ export async function activarCompraGratis(params: {
     if (!response.ok || !result?.ok) {
         throw new Error(result?.error || `Error activando la compra (${response.status})`);
     }
+    return result;
 }

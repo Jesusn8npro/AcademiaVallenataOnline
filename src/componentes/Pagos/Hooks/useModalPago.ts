@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from '@/compat/router';
 import { useUsuario } from '../../../contextos/UsuarioContext';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { crearRegistroPago } from '../../../servicios/pagoService';
 import {
     type ContenidoCompra, type DatosPago,
     EPAYCO_RESPONSE_URL, DATOS_INICIALES,
-    limpiarTelefono, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
+    limpiarTelefono, aE164, calcularIVA, obtenerPrecio, obtenerTitulo, obtenerLabelTipo,
     generarRefPaycoReal, loadEpaycoScript, guardarPerfilUsuario,
     crearSesionEpayco, activarCompraGratis
 } from './_utilidadesPago';
@@ -18,12 +19,14 @@ interface Params {
     tipoContenido: 'curso' | 'tutorial' | 'paquete' | 'membresia';
     precioOverride?: number;
     cuponCodigo?: string;
+    onExito?: () => void;
 }
 
 const DRAFT_KEY = 'mpi_draft_v1';
 
-export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride, cuponCodigo }: Params) {
+export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, precioOverride, cuponCodigo, onExito }: Params) {
     const { usuario } = useUsuario();
+    const navigate = useNavigate();
     const [pasoActual, setPasoActual] = useState(1);
     const [cargando, setCargando] = useState(false);
     const [procesandoPago, setProcesandoPago] = useState(false);
@@ -97,8 +100,11 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
                 nombre: perfil.nombre || '',
                 apellido: perfil.apellido || '',
                 email: perfil.correo_electronico || usuario.email || '',
-                telefono: perfil.whatsapp || '',
+                // El perfil guarda el número nacional; lo volvemos E.164 para que el
+                // PhoneInput muestre el país correcto (CO por defecto) y no lo adivine mal.
+                telefono: aE164(perfil.whatsapp || ''),
                 whatsapp: perfil.whatsapp || '',
+                callingCode: '+57',
                 tipo_documento: perfil.documento_tipo || 'CC',
                 numero_documento: perfil.documento_numero || '',
                 direccion: perfil.direccion_completa || '',
@@ -201,13 +207,20 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
             // el cupón). Antes este caso solo mostraba "pago exitoso" sin dar acceso.
             if (precio <= 0) {
                 await guardarPerfilUsuario(usuarioId, datosPago);
-                await activarCompraGratis({
+                const r = await activarCompraGratis({
                     tipo: tipoContenido,
                     contenidoId: contenido?.id,
                     cuponCodigo: cuponCodigo || '',
                     datos: datosPago,
                 });
-                setPagoExitoso(true); setCargando(false); setProcesandoPago(false); return;
+                try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
+                onExito?.();
+                setCargando(false); setProcesandoPago(false);
+                setMostrar(false);
+                // Llevamos al usuario a la página de pago exitoso (contador + botones
+                // para ir al contenido / Mis Cursos), igual que en una compra pagada.
+                navigate(r.ref_payco ? `/pago-exitoso?invoice=${encodeURIComponent(r.ref_payco)}` : '/mis-cursos');
+                return;
             }
 
             await loadEpaycoScript();
@@ -227,8 +240,9 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
                 ref_payco: refPayco, factura: refPayco, cupon_codigo: cuponCodigo || null,
                 nombre: datosPago.nombre, apellido: datosPago.apellido,
                 email: datosPago.email,
-                telefono: limpiarTelefono(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
-                whatsapp: limpiarTelefono(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
+                // Guardamos el número COMPLETO (E.164, con indicativo) en el registro.
+                telefono: aE164(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
+                whatsapp: aE164(datosPago.telefono || datosPago.whatsapp, datosPago.callingCode),
                 fecha_nacimiento: datosPago.fecha_nacimiento, profesion: datosPago.profesion,
                 documento_tipo: datosPago.tipo_documento, documento_numero: datosPago.numero_documento,
                 direccion_completa: datosPago.direccion, ciudad: datosPago.ciudad,
@@ -245,7 +259,7 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
             // callingCode viene del meta del PhoneInput (country.dialCode) — evita
             // el bug de parsear greedy en E.164.
             const callingCode = datosPago.callingCode || '+57';
-            const numero = limpiarTelefono(datosPago.telefono || datosPago.whatsapp);
+            const numero = limpiarTelefono(datosPago.telefono || datosPago.whatsapp, callingCode);
 
             // Flujo SDK v2: pedir sessionId al backend (Edge Function que usa
             // PRIVATE_KEY) y pasarlo al SDK. external:false = modal onpage.
@@ -257,7 +271,7 @@ export function useModalPago({ mostrar, setMostrar, contenido, tipoContenido, pr
                 nombre: datosPago.nombre,
                 apellido: datosPago.apellido,
                 email: datosPago.email,
-                telefono: numero || limpiarTelefono(datosPago.telefono || datosPago.whatsapp),
+                telefono: numero || limpiarTelefono(datosPago.telefono || datosPago.whatsapp, callingCode),
                 callingCode,
                 direccion: datosPago.direccion,
                 tipoDocumento: datosPago.tipo_documento,
