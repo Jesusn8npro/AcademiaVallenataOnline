@@ -7,207 +7,209 @@ import './AdminNotificaciones.css';
 
 const AdminNotificaciones: React.FC = () => {
     const {
+        vista, setVista,
         cargando, mensaje, tipoMensaje, estadisticas,
         pedirConfirmacionLimpiar,
         enviadas, cargandoEnviadas, cargarEnviadas,
         grupoAEliminar, solicitarEliminarGrupo, cancelarEliminarGrupo, confirmarEliminarGrupo,
         detalle, cargandoDetalle, verDestinatarios, cerrarDetalle,
         formManual, setFormManual,
-        formCurso, setFormCurso,
-        formTutorial, setFormTutorial,
-        formPago, setFormPago,
-        formPromocion, setFormPromocion,
         enviarNotificacionManual,
-        probarNuevoCurso, probarNuevoTutorial, probarPagoAprobado, probarPromocionEspecial,
         solicitarLimpiarExpiradas, cancelarLimpiarExpiradas, confirmarLimpiarExpiradas,
         cargarEstadisticas
     } = useAdminNotificaciones();
 
+    const tabs: { id: typeof vista; label: string; icono: string }[] = [
+        { id: 'enviadas', label: 'Enviadas', icono: '📋' },
+        { id: 'crear', label: 'Crear notificación', icono: '✍️' },
+        { id: 'estadisticas', label: 'Estadísticas', icono: '📊' },
+    ];
+
     return (
         <div className="academia-panel-notificaciones">
-            <div className="academia-header-panel">
-                <h1><span className="academia-icono">🔔</span> Panel de Gestión de Notificaciones</h1>
-                <p className="academia-descripcion">Gestiona y prueba el sistema de notificaciones de la plataforma</p>
-            </div>
-
-            {mensaje && (
-                <div className={`academia-mensaje-panel academia-${tipoMensaje}`}>{mensaje}</div>
-            )}
-
-            {pedirConfirmacionLimpiar && (
-                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', padding: '0.75rem 1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.5rem', color: '#c53030' }}>¿Eliminar todas las notificaciones expiradas?</p>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button onClick={confirmarLimpiarExpiradas} style={{ padding: '0.3rem 0.75rem', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Confirmar</button>
-                        <button onClick={cancelarLimpiarExpiradas} style={{ padding: '0.3rem 0.75rem', background: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
-                    </div>
+            <div className="academia-np-inner">
+                <div className="academia-header-panel">
+                    <h1><span className="academia-icono">🔔</span> Notificaciones</h1>
+                    <p className="academia-descripcion">Crea, revisa y administra las notificaciones de la plataforma</p>
                 </div>
-            )}
 
-            {estadisticas && (
-                <div className="academia-seccion-estadisticas">
-                    <h2>📊 Estadísticas de Notificaciones</h2>
-                    <div className="academia-stats-grid">
-                        <div className="academia-stat-card"><div className="academia-numero">{estadisticas.total}</div><div className="academia-label">Total</div></div>
-                        <div className="academia-stat-card"><div className="academia-numero">{estadisticas.no_leidas}</div><div className="academia-label">Sin leer</div></div>
-                        <div className="academia-stat-card"><div className="academia-numero">{estadisticas.leidas}</div><div className="academia-label">Leídas</div></div>
-                        <div className="academia-stat-card"><div className="academia-numero">{estadisticas.ultimos_30_dias}</div><div className="academia-label">Últimos 30 días</div></div>
-                    </div>
-                    <div className="academia-stats-details">
-                        <div className="academia-stat-section">
-                            <h3>Por Categoría</h3>
-                            {Object.entries(estadisticas.por_categoria).map(([categoria, cantidad]) => (
-                                <div key={categoria} className="academia-stat-item"><span>{categoria}</span><span>{cantidad as React.ReactNode}</span></div>
-                            ))}
-                        </div>
-                        <div className="academia-stat-section">
-                            <h3>Por Prioridad</h3>
-                            {Object.entries(estadisticas.por_prioridad).map(([prioridad, cantidad]) => (
-                                <div key={prioridad} className="academia-stat-item"><span>{prioridad}</span><span>{cantidad as React.ReactNode}</span></div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+                {mensaje && (
+                    <div className={`academia-mensaje-panel academia-${tipoMensaje}`}>{mensaje}</div>
+                )}
 
-            <div className="academia-contenido-panel">
-                <div className="academia-seccion">
-                    <div className="academia-enviadas-header">
-                        <h2>📋 Notificaciones enviadas a los usuarios</h2>
-                        <button className="academia-boton-herramienta academia-actualizar academia-btn-mini" onClick={cargarEnviadas} disabled={cargandoEnviadas}>
-                            🔄 Actualizar
+                {/* Navegación por pestañas */}
+                <div className="academia-tabs">
+                    {tabs.map(t => (
+                        <button
+                            key={t.id}
+                            className={`academia-tab ${vista === t.id ? 'activo' : ''}`}
+                            onClick={() => setVista(t.id)}
+                        >
+                            <span>{t.icono}</span> {t.label}
+                            {t.id === 'enviadas' && enviadas.length > 0 && (
+                                <span className="academia-tab-contador">{enviadas.length}</span>
+                            )}
                         </button>
-                    </div>
-                    <p className="academia-descripcion" style={{ marginTop: '-0.25rem' }}>
-                        Cada fila es un envío. Eliminar quita esa notificación de <strong>todos</strong> los usuarios que la recibieron.
-                    </p>
-                    {cargandoEnviadas ? (
-                        <p style={{ color: '#718096' }}>Cargando…</p>
-                    ) : enviadas.length === 0 ? (
-                        <p style={{ color: '#718096' }}>Aún no se han enviado notificaciones.</p>
-                    ) : (
-                        <div className="academia-enviadas-lista">
-                            {enviadas.map((n) => (
-                                <div key={n.grupo} className="academia-enviada-item">
-                                    <div
-                                        className="academia-enviada-info academia-enviada-clic"
-                                        onClick={() => verDestinatarios(n.grupo, n.titulo || n.tipo)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => e.key === 'Enter' && verDestinatarios(n.grupo, n.titulo || n.tipo)}
-                                        title="Ver a quién se le envió"
-                                    >
-                                        <div className="academia-enviada-top">
-                                            <span className="academia-enviada-icono">{n.icono || '🔔'}</span>
-                                            <strong>{n.titulo || n.tipo}</strong>
-                                            <span className="academia-enviada-badge">{n.total} {Number(n.total) === 1 ? 'usuario' : 'usuarios'}</span>
+                    ))}
+                </div>
+
+                {/* ===== ENVIADAS ===== */}
+                {vista === 'enviadas' && (
+                    <div className="academia-seccion">
+                        <div className="academia-enviadas-header">
+                            <div>
+                                <h2>📋 Notificaciones enviadas</h2>
+                                <p className="academia-descripcion academia-sub">
+                                    Cada fila es un envío. Toca una para ver <strong>a quién</strong> se le envió, o elimínala de <strong>todos</strong> los usuarios.
+                                </p>
+                            </div>
+                            <button className="academia-btn-mini" onClick={cargarEnviadas} disabled={cargandoEnviadas}>
+                                🔄 Actualizar
+                            </button>
+                        </div>
+
+                        {cargandoEnviadas ? (
+                            <p className="academia-vacio-txt">Cargando…</p>
+                        ) : enviadas.length === 0 ? (
+                            <div className="academia-vacio">
+                                <span className="academia-vacio-ico">🔔</span>
+                                <p>Aún no se han enviado notificaciones.</p>
+                                <button className="academia-boton-enviar academia-btn-inline" onClick={() => setVista('crear')}>✍️ Crear la primera</button>
+                            </div>
+                        ) : (
+                            <div className="academia-enviadas-lista">
+                                {enviadas.map((n) => (
+                                    <div key={n.grupo} className="academia-enviada-item">
+                                        <div
+                                            className="academia-enviada-info academia-enviada-clic"
+                                            onClick={() => verDestinatarios(n.grupo, n.titulo || n.tipo)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => e.key === 'Enter' && verDestinatarios(n.grupo, n.titulo || n.tipo)}
+                                            title="Ver a quién se le envió"
+                                        >
+                                            <div className="academia-enviada-top">
+                                                <span className="academia-enviada-icono">{n.icono || '🔔'}</span>
+                                                <strong>{n.titulo || n.tipo}</strong>
+                                                <span className="academia-enviada-badge">{n.total} {Number(n.total) === 1 ? 'usuario' : 'usuarios'}</span>
+                                            </div>
+                                            {n.mensaje && <p className="academia-enviada-mensaje">{n.mensaje}</p>}
+                                            <span className="academia-enviada-meta">
+                                                {new Date(n.fecha).toLocaleString('es-CO')} · {n.leidas}/{n.total} leídas · 👁️ ver destinatarios
+                                            </span>
                                         </div>
-                                        {n.mensaje && <p className="academia-enviada-mensaje">{n.mensaje}</p>}
-                                        <span className="academia-enviada-meta">
-                                            {new Date(n.fecha).toLocaleString('es-CO')} · {n.leidas}/{n.total} leídas · 👁️ ver destinatarios
-                                        </span>
+                                        <button
+                                            className="academia-boton-eliminar-grupo"
+                                            onClick={() => solicitarEliminarGrupo(n.grupo, n.titulo || n.tipo, Number(n.total))}
+                                            disabled={cargando}
+                                        >
+                                            🗑️ Eliminar
+                                        </button>
                                     </div>
-                                    <button
-                                        className="academia-boton-eliminar-grupo"
-                                        onClick={() => solicitarEliminarGrupo(n.grupo, n.titulo || n.tipo, Number(n.total))}
-                                        disabled={cargando}
-                                    >
-                                        🗑️ Eliminar
-                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ===== CREAR ===== */}
+                {vista === 'crear' && (
+                    <div className="academia-seccion academia-seccion-form">
+                        <h2>✍️ Crear notificación</h2>
+                        <p className="academia-descripcion academia-sub">
+                            Déjala sin “Usuario ID” para enviarla a <strong>todos</strong> los usuarios, o pon un ID para enviarla a uno solo.
+                        </p>
+                        <div className="academia-formulario">
+                            <div className="academia-campo">
+                                <label htmlFor="tipo">Tipo de notificación</label>
+                                <select id="tipo" value={formManual.tipo} onChange={(e) => setFormManual({ ...formManual, tipo: e.target.value as any })}>
+                                    <option value="nuevo_curso">🎓 Nuevo Curso</option>
+                                    <option value="nuevo_tutorial">📹 Nuevo Tutorial</option>
+                                    <option value="nueva_actualizacion_plataforma">🚀 Actualización</option>
+                                    <option value="promocion_especial">🎁 Promoción</option>
+                                    <option value="bienvenida_usuario">👋 Bienvenida</option>
+                                </select>
+                            </div>
+                            <div className="academia-campo">
+                                <label htmlFor="mensaje">Mensaje</label>
+                                <textarea id="mensaje" value={formManual.mensaje} onChange={(e) => setFormManual({ ...formManual, mensaje: e.target.value })} placeholder="Escribe el mensaje de la notificación..." rows={4}></textarea>
+                            </div>
+                            <div className="academia-campo-grid">
+                                <div className="academia-campo">
+                                    <label htmlFor="url">URL de acción (opcional)</label>
+                                    <input id="url" type="text" value={formManual.url_accion} onChange={(e) => setFormManual({ ...formManual, url_accion: e.target.value })} placeholder="/cursos, /blog/articulo-1, etc." />
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="academia-seccion">
-                    <h2>✍️ Crear Notificación Manual</h2>
-                    <div className="academia-formulario">
-                        <div className="academia-campo">
-                            <label htmlFor="tipo">Tipo de Notificación:</label>
-                            <select id="tipo" value={formManual.tipo} onChange={(e) => setFormManual({ ...formManual, tipo: e.target.value as any })}>
-                                <option value="nuevo_curso">🎓 Nuevo Curso</option>
-                                <option value="nuevo_tutorial">📹 Nuevo Tutorial</option>
-                                <option value="nueva_actualizacion_plataforma">🚀 Actualización</option>
-                                <option value="promocion_especial">🎁 Promoción</option>
-                                <option value="bienvenida_usuario">👋 Bienvenida</option>
-                            </select>
-                        </div>
-                        <div className="academia-campo">
-                            <label htmlFor="mensaje">Mensaje:</label>
-                            <textarea id="mensaje" value={formManual.mensaje} onChange={(e) => setFormManual({ ...formManual, mensaje: e.target.value })} placeholder="Escribe el mensaje de la notificación..." rows={3}></textarea>
-                        </div>
-                        <div className="academia-campo">
-                            <label htmlFor="url">URL de Acción (opcional):</label>
-                            <input id="url" type="text" value={formManual.url_accion} onChange={(e) => setFormManual({ ...formManual, url_accion: e.target.value })} placeholder="/cursos, /blog/articulo-1, etc." />
-                        </div>
-                        <div className="academia-campo">
-                            <label htmlFor="usuario">Usuario ID específico (opcional):</label>
-                            <input id="usuario" type="text" value={formManual.usuario_id} onChange={(e) => setFormManual({ ...formManual, usuario_id: e.target.value })} placeholder="Dejar vacío para enviar a todos" />
-                        </div>
-                        <button className="academia-boton-enviar" onClick={enviarNotificacionManual} disabled={cargando}>
-                            {cargando ? '⏳ Enviando...' : '📤 Enviar Notificación'}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="academia-seccion">
-                    <h2>🧪 Pruebas de Notificaciones Automáticas</h2>
-                    <div className="academia-pruebas-grid">
-                        <div className="academia-prueba-card">
-                            <h3>🎓 Nuevo Curso</h3>
-                            <div className="academia-formulario-mini">
-                                <input type="text" value={formCurso.titulo} onChange={(e) => setFormCurso({ ...formCurso, titulo: e.target.value })} placeholder="Título del curso" />
-                                <input type="text" value={formCurso.descripcion} onChange={(e) => setFormCurso({ ...formCurso, descripcion: e.target.value })} placeholder="Descripción" />
-                                <button className="academia-boton-prueba" onClick={probarNuevoCurso} disabled={cargando}>Probar</button>
+                                <div className="academia-campo">
+                                    <label htmlFor="usuario">Usuario ID (opcional)</label>
+                                    <input id="usuario" type="text" value={formManual.usuario_id} onChange={(e) => setFormManual({ ...formManual, usuario_id: e.target.value })} placeholder="Vacío = enviar a todos" />
+                                </div>
                             </div>
-                        </div>
-                        <div className="academia-prueba-card">
-                            <h3>📹 Nuevo Tutorial</h3>
-                            <div className="academia-formulario-mini">
-                                <input type="text" value={formTutorial.titulo} onChange={(e) => setFormTutorial({ ...formTutorial, titulo: e.target.value })} placeholder="Título del tutorial" />
-                                <input type="text" value={formTutorial.descripcion} onChange={(e) => setFormTutorial({ ...formTutorial, descripcion: e.target.value })} placeholder="Descripción" />
-                                <button className="academia-boton-prueba" onClick={probarNuevoTutorial} disabled={cargando}>Probar</button>
-                            </div>
-                        </div>
-                        <div className="academia-prueba-card">
-                            <h3>✅ Pago Aprobado</h3>
-                            <div className="academia-formulario-mini">
-                                <input type="text" value={formPago.usuario_id} onChange={(e) => setFormPago({ ...formPago, usuario_id: e.target.value })} placeholder="ID del usuario" />
-                                <input type="number" value={formPago.monto} onChange={(e) => setFormPago({ ...formPago, monto: Number(e.target.value) })} placeholder="Monto" />
-                                <input type="text" value={formPago.curso_titulo} onChange={(e) => setFormPago({ ...formPago, curso_titulo: e.target.value })} placeholder="Título del curso (opcional)" />
-                                <button className="academia-boton-prueba" onClick={probarPagoAprobado} disabled={cargando}>Probar</button>
-                            </div>
-                        </div>
-                        <div className="academia-prueba-card">
-                            <h3>🎁 Promoción Especial</h3>
-                            <div className="academia-formulario-mini">
-                                <input type="text" value={formPromocion.titulo} onChange={(e) => setFormPromocion({ ...formPromocion, titulo: e.target.value })} placeholder="Título de la promoción" />
-                                <input type="text" value={formPromocion.descripcion} onChange={(e) => setFormPromocion({ ...formPromocion, descripcion: e.target.value })} placeholder="Descripción" />
-                                <input type="text" value={formPromocion.codigo} onChange={(e) => setFormPromocion({ ...formPromocion, codigo: e.target.value })} placeholder="Código de descuento" />
-                                <input type="date" value={formPromocion.fecha_limite} onChange={(e) => setFormPromocion({ ...formPromocion, fecha_limite: e.target.value })} />
-                                <button className="academia-boton-prueba" onClick={probarPromocionEspecial} disabled={cargando}>Probar</button>
-                            </div>
+                            <button className="academia-boton-enviar" onClick={enviarNotificacionManual} disabled={cargando}>
+                                {cargando ? '⏳ Enviando...' : '📤 Enviar notificación'}
+                            </button>
                         </div>
                     </div>
-                </div>
+                )}
 
-                <div className="academia-seccion">
-                    <h2>🛠️ Herramientas de Gestión</h2>
-                    <div className="academia-herramientas">
-                        <button className="academia-boton-herramienta academia-limpiar" onClick={solicitarLimpiarExpiradas} disabled={cargando}>
-                            🧹 Limpiar Notificaciones Expiradas
-                        </button>
-                        <button className="academia-boton-herramienta academia-actualizar" onClick={cargarEstadisticas} disabled={cargando}>
-                            🔄 Actualizar Estadísticas
-                        </button>
-                        <Link to="/notificaciones" className="academia-boton-herramienta academia-ver">
-                            👀 Ver Mis Notificaciones
-                        </Link>
-                    </div>
-                </div>
+                {/* ===== ESTADÍSTICAS ===== */}
+                {vista === 'estadisticas' && (
+                    <>
+                        {estadisticas ? (
+                            <div className="academia-seccion">
+                                <h2>📊 Estadísticas</h2>
+                                <div className="academia-stats-grid">
+                                    <div className="academia-stat-card"><div className="academia-numero">{estadisticas.total}</div><div className="academia-label">Total</div></div>
+                                    <div className="academia-stat-card"><div className="academia-numero">{estadisticas.no_leidas}</div><div className="academia-label">Sin leer</div></div>
+                                    <div className="academia-stat-card"><div className="academia-numero">{estadisticas.leidas}</div><div className="academia-label">Leídas</div></div>
+                                    <div className="academia-stat-card"><div className="academia-numero">{estadisticas.ultimos_30_dias}</div><div className="academia-label">Últimos 30 días</div></div>
+                                </div>
+                                <div className="academia-stats-details">
+                                    <div className="academia-stat-section">
+                                        <h3>Por categoría</h3>
+                                        {Object.entries(estadisticas.por_categoria || {}).map(([categoria, cantidad]) => (
+                                            <div key={categoria} className="academia-stat-item"><span>{categoria}</span><span>{cantidad as React.ReactNode}</span></div>
+                                        ))}
+                                    </div>
+                                    <div className="academia-stat-section">
+                                        <h3>Por prioridad</h3>
+                                        {Object.entries(estadisticas.por_prioridad || {}).map(([prioridad, cantidad]) => (
+                                            <div key={prioridad} className="academia-stat-item"><span>{prioridad}</span><span>{cantidad as React.ReactNode}</span></div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="academia-seccion"><p className="academia-vacio-txt">Cargando estadísticas…</p></div>
+                        )}
+
+                        <div className="academia-seccion">
+                            <h2>🛠️ Herramientas</h2>
+                            {pedirConfirmacionLimpiar && (
+                                <div className="academia-aviso-limpiar">
+                                    <p>¿Eliminar todas las notificaciones expiradas?</p>
+                                    <div className="academia-aviso-acciones">
+                                        <button onClick={confirmarLimpiarExpiradas} className="academia-modal-btn-eliminar">Confirmar</button>
+                                        <button onClick={cancelarLimpiarExpiradas} className="academia-modal-btn-cancelar">Cancelar</button>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="academia-herramientas">
+                                <button className="academia-boton-herramienta academia-limpiar" onClick={solicitarLimpiarExpiradas} disabled={cargando}>
+                                    🧹 Limpiar expiradas
+                                </button>
+                                <button className="academia-boton-herramienta academia-actualizar" onClick={cargarEstadisticas} disabled={cargando}>
+                                    🔄 Actualizar estadísticas
+                                </button>
+                                <Link to="/notificaciones" className="academia-boton-herramienta academia-ver">
+                                    👀 Ver mis notificaciones
+                                </Link>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
+            {/* ===== Modales ===== */}
             {grupoAEliminar && (
                 <div className="academia-modal-fondo" onClick={cancelarEliminarGrupo}>
                     <div className="academia-modal" onClick={(e) => e.stopPropagation()}>
@@ -236,7 +238,7 @@ const AdminNotificaciones: React.FC = () => {
                         </div>
                         <p className="academia-modal-detalle-sub">“{detalle.titulo}” — {detalle.destinatarios.length} {detalle.destinatarios.length === 1 ? 'usuario' : 'usuarios'}</p>
                         {cargandoDetalle ? (
-                            <p style={{ color: '#718096' }}>Cargando…</p>
+                            <p className="academia-vacio-txt">Cargando…</p>
                         ) : (
                             <div className="academia-destinatarios-lista">
                                 {detalle.destinatarios.map((d) => (

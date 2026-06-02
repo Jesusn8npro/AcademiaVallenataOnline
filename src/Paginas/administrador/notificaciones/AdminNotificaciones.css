@@ -1,35 +1,92 @@
 .academia-panel-notificaciones {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+    width: 100%;
     font-family: 'Inter', sans-serif;
 }
 
+/* Ancho completo con padding fluido (sin cap angosto). */
+.academia-np-inner {
+    width: 100%;
+    padding: 28px clamp(16px, 3.5vw, 48px) 48px;
+    box-sizing: border-box;
+}
+
 .academia-header-panel {
-    text-align: center;
-    margin-bottom: 3rem;
+    text-align: left;
+    margin-bottom: 1.5rem;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #4338ca 0%, #6366f1 100%);
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(67, 56, 202, .25);
 }
 
 .academia-header-panel h1 {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 1rem 0;
+    gap: 0.6rem;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.35rem 0;
 }
 
-.academia-icono {
-    font-size: 2.5rem;
-}
+.academia-icono { font-size: 1.6rem; }
 
 .academia-descripcion {
     color: #64748b;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     margin: 0;
 }
+.academia-header-panel .academia-descripcion { color: rgba(255,255,255,.85); }
+.academia-sub { margin-top: 0.25rem !important; font-size: 0.85rem; }
+
+/* Pestañas internas */
+.academia-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecf3;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.academia-tabs::-webkit-scrollbar { display: none; }
+.academia-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.1rem;
+    border: none;
+    background: none;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s ease, border-color .15s ease;
+}
+.academia-tab:hover { color: #4338ca; }
+.academia-tab.activo { color: #4338ca; border-bottom-color: #6366f1; }
+.academia-tab-contador {
+    font-size: 0.72rem; font-weight: 800; background: #e0e7ff; color: #3730a3;
+    padding: 1px 8px; border-radius: 999px;
+}
+
+/* Formulario en 2 columnas */
+.academia-campo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.academia-seccion-form { max-width: 760px; }
+
+/* Estados vacíos */
+.academia-vacio { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2.5rem 1rem; text-align: center; color: #94a3b8; }
+.academia-vacio-ico { font-size: 2.5rem; }
+.academia-vacio-txt { color: #94a3b8; padding: 0.5rem 0; }
+.academia-btn-inline { width: auto !important; }
+
+/* Aviso limpiar expiradas (inline) */
+.academia-aviso-limpiar { background: #fff7ed; border: 1px solid #fed7aa; padding: 0.85rem 1rem; border-radius: 0.6rem; margin-bottom: 1rem; }
+.academia-aviso-limpiar p { margin: 0 0 0.6rem; color: #9a3412; font-weight: 600; }
+.academia-aviso-acciones { display: flex; gap: 0.5rem; }
 
 .academia-mensaje-panel {
     padding: 1rem 1.5rem;
@@ -281,14 +338,12 @@
 }
 
 @media (max-width: 768px) {
-    .academia-panel-notificaciones {
-        padding: 1rem;
+    .academia-header-panel h1 {
+        font-size: 1.6rem;
     }
 
-    .academia-header-panel h1 {
-        font-size: 2rem;
-        flex-direction: column;
-        gap: 0.25rem;
+    .academia-campo-grid {
+        grid-template-columns: 1fr;
     }
 
     .academia-pruebas-grid {
