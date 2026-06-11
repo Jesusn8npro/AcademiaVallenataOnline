@@ -778,23 +778,6 @@
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5), 0 16px 50px rgba(0, 0, 0, 0.35);
 }
 
-/* Overlay de selección de animaciones del personaje (esquina inferior izquierda del visor). */
-.visor-personaje-anims {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: calc(100% - 28px);
-  z-index: 5;
-}
-
-.visor-personaje-anims .visor3d-anim-btn {
-  background: rgba(8, 10, 22, 0.7);
-  backdrop-filter: blur(6px);
-}
-
 .visor-acordeon-3d-cargando {
   width: 100%;
   height: clamp(360px, 60vh, 720px);
@@ -908,6 +891,232 @@
   background: linear-gradient(135deg, #b91c1c, #dc2626);
   color: #fff;
   border-color: #ef4444;
+}
+
+/* ─── PESTAÑA PERSONAJE: escenario completo + dock de controles ───────────
+   El canvas ocupa TODO el alto disponible; los controles viven en una barra
+   propia debajo (nunca tapan al personaje). Hover en tarjeta = foto en grande. */
+.visor-personaje-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: clamp(440px, 72vh, 900px);
+  gap: 10px;
+}
+
+.visor-personaje-lienzo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 30%, rgba(40, 50, 80, 0.45) 0%, rgba(8, 10, 22, 0.96) 78%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.5), 0 16px 50px rgba(0, 0, 0, 0.35);
+}
+
+.visor-personaje-dock {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(10, 14, 28, 0.92), rgba(6, 9, 20, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  animation: visor-dock-entrada 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes visor-dock-entrada {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.visor-personaje-cards {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.visor-personaje-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 62px;
+  padding: 5px 4px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.16s;
+}
+
+.visor-personaje-card > img {
+  width: 48px;
+  height: 58px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 28%, rgba(59, 130, 246, 0.16), rgba(255, 255, 255, 0.03) 70%);
+  transition: transform 0.18s;
+}
+
+.visor-personaje-card > span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.visor-personaje-card:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-2px);
+}
+
+.visor-personaje-card:hover > img { transform: scale(1.06); }
+.visor-personaje-card:active { transform: scale(0.96); }
+
+.visor-personaje-card.activo {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.28), 0 6px 18px rgba(251, 191, 36, 0.12);
+}
+
+.visor-personaje-card.activo > span { color: #fde68a; }
+
+/* Vista previa GRANDE al hacer hover (se despliega hacia arriba, sobre el lienzo) */
+.visor-personaje-zoom {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  width: 178px;
+  padding: 8px 8px 10px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(13, 18, 36, 0.97), rgba(7, 10, 22, 0.99));
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px) scale(0.92);
+  transform-origin: bottom center;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 40;
+}
+
+.visor-personaje-zoom img {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 24%, rgba(59, 130, 246, 0.22), rgba(8, 10, 22, 0.9) 75%);
+}
+
+.visor-personaje-zoom em {
+  display: block;
+  margin-top: 8px;
+  font-style: normal;
+  text-align: center;
+  color: #fde68a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.visor-personaje-card:hover .visor-personaje-zoom,
+.visor-personaje-card:focus-visible .visor-personaje-zoom {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* Lado derecho del dock: fuelle + estilos */
+.visor-personaje-dock-der {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-left: auto;
+}
+
+.visor-personaje-fuelle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+}
+
+.visor-personaje-fuelle-btn kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.16);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.visor-personaje-fuelle-btn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.visor-personaje-fuelle-btn:active { transform: scale(0.97); }
+
+.visor-personaje-fuelle-btn.activo {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-color: #22c55e;
+  color: #fff;
+}
+
+.visor-personaje-fuelle-btn.activo kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+.visor-personaje-pieles-dock {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* El área del estudio reserva 120px de margen para otros modos; en Personaje
+   ese espacio se aprovecha para ver el cuerpo completo. */
+.estudio-practica-libre-area-acordeon.modo-personaje {
+  margin-bottom: 12px;
+  padding: 56px 14px 14px; /* deja libre la fila de chips superior */
+  align-items: stretch;
+}
+
+.estudio-practica-libre-area-acordeon.modo-personaje .estudio-practica-libre-acordeon {
+  align-items: stretch;
 }
 
 /* Selector de pieles/estilos del acordeón */

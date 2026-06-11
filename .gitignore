@@ -42,6 +42,9 @@ src/referencias_migracion
 # Worktrees temporales de Claude Code (subagentes)
 .claude/worktrees/
 
+# Exports crudos de Blender (intermedios, ~50-120MB c/u; el GLB final comprimido sí se versiona)
+public/modelos3d/_export/
+
 # Lighthouse outputs (generados localmente)
 lh-*.json
 lh-*.html

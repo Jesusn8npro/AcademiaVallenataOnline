@@ -295,7 +295,7 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             )}
           </div>
 
-          <div className="estudio-practica-libre-area-acordeon">
+          <div className={`estudio-practica-libre-area-acordeon${estudio.panelActivo === 'personaje3d' ? ' modo-personaje' : ''}`}>
             <div className="estudio-practica-libre-acordeon">
               {estudio.panelActivo === 'personaje3d' ? (
                 <VisorPersonaje3D />
