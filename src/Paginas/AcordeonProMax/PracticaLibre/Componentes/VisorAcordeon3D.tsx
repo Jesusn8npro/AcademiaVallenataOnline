@@ -10,7 +10,7 @@ import { subscribirNotas } from '../../../../Core/audio/emisorNotasAcordeon'
 // el exporter agregue rotaciones residuales en los nodos. La conversion Z-up→Y-up la
 // hacemos en three.js con un <group rotation={[-Math.PI/2, 0, 0]}> alrededor del modelo.
 // Cache-buster ?v=N — bumpear cada vez que se re-exporta el GLB.
-const GLB_PATH = '/modelos3d/acordeon-pro-max-v3.glb?v=4'
+const GLB_PATH = '/modelos3d/acordeon-fino-v1.glb?v=1'
 
 useGLTF.setDecoderPath('/draco/')
 
@@ -32,16 +32,22 @@ export interface MaterialPieza {
 }
 
 export function grupoDePieza(nombre: string): string {
-  if (nombre === 'Fuelle') return 'fuelle'
-  if (nombre === 'marco Fuelle 2' || nombre === 'Marco Derecho') return 'marcos'
-  if (nombre === 'Caja izquierda del acordeon, bajos') return 'caja-bajos'
-  if (nombre === 'Caja botones principales') return 'caja-melodia'
-  if (nombre === 'Diapason') return 'diapason'
-  if (nombre.startsWith('Boton_D_')) return 'botones-melodia'
-  if (nombre.startsWith('Boton_I_')) return 'botones-bajos'
-  if (nombre.startsWith('Tornillo_')) return 'tornillos'
-  if (nombre === 'Marco parrilla' || nombre === 'Tela parrilla'
-   || nombre === 'Celdas parrilla' || nombre === 'Cube_011') return 'parrilla'
+  // Nombres del GLB "acordeon-fino" (extraído del personaje). three.js sanea los espacios
+  // a '_', así que normalizamos a minúsculas con espacios para hacer match robusto.
+  if (/^Boton_D_\d+/i.test(nombre)) return 'botones-melodia'
+  if (/^Boton_I_\d+/i.test(nombre)) return 'botones-bajos'
+  const n = nombre.toLowerCase().replace(/_/g, ' ').trim()
+  if (n === 'fuelle') return 'fuelle'
+  if (n.startsWith('marco')) return 'marcos'
+  if (n.includes('caja de los bajos')) return 'caja-bajos'
+  if (n.includes('caja de parrilla')) return 'caja-melodia'
+  if (n.startsWith('diapason')) return 'diapason'
+  if (n.startsWith('tornillos')) return 'tornillos'
+  if (n === 'parrilla' || n === 'rejilla' || n === 'borde parrilla') return 'parrilla'
+  if (n.startsWith('cuerpo')) return 'correas'
+  if (n.includes('broche')) return 'broches'
+  if (n.startsWith('pin')) return 'pines'
+  if (n.startsWith('bases')) return 'bases'
   return 'otros'
 }
 
@@ -94,6 +100,7 @@ function Modelo({
 }: ModeloProps) {
   const grupo = React.useRef<THREE.Group>(null!)
   const { scene } = useGLTF(GLB_PATH) as any
+  const three = useThree()
 
   const [meshes, setMeshes] = React.useState<THREE.Mesh[]>([])
 
@@ -124,18 +131,24 @@ function Modelo({
   const notaAMeshRef = React.useRef<Record<string, string>>({})
   const notasActivasRef = React.useRef<Set<string>>(new Set())
   const botonesDRef = React.useRef<THREE.Mesh[]>([])
-  const edgeDeltaTmp = React.useRef(new THREE.Vector3())
-  const rotVecTmp = React.useRef(new THREE.Vector3())
-  const rotAxisTmp = React.useRef(new THREE.Vector3())
-  const quatTmp = React.useRef(new THREE.Quaternion())
-  const pivTmp = React.useRef(new THREE.Vector3())
-  const hundirTmp = React.useRef(new THREE.Vector3())
+  // Botones de bajos (Boton_I) para hundirlos en su sitio (igual que melodía).
+  const botonesIRef = React.useRef<THREE.Mesh[]>([])
+  // TODAS las mallas que llevan el morph de cierre (Cerr_uniforme/abajo/arriba). El cierre
+  // se aplica a TODAS a la vez (como el tab Personaje) → el acordeón se cierra como un
+  // bloque coherente y NADA se despega. Reemplaza la antigua "persecución" del lado bajos.
+  const cerrarMeshesRef = React.useRef<Array<{ infl: number[]; dict: Record<string, number> }>>([])
+  const valorQRef = React.useRef(0)
 
   React.useEffect(() => {
     const lista: THREE.Mesh[] = []
+    cerrarMeshesRef.current = []
     scene.traverse((obj: any) => {
       if (obj.isMesh) {
         lista.push(obj)
+        if (obj.morphTargetInfluences && obj.morphTargetDictionary
+            && ('Cerr_uniforme' in obj.morphTargetDictionary || 'Cerrar' in obj.morphTargetDictionary)) {
+          cerrarMeshesRef.current.push({ infl: obj.morphTargetInfluences, dict: obj.morphTargetDictionary })
+        }
         if (!obj.userData.preparado) {
           if (obj.material) obj.material = obj.material.clone()
           obj.userData.originalScale = obj.scale.clone()
@@ -170,10 +183,10 @@ function Modelo({
       if (esLadoBajos) {
         if (!ladoBajosObjects.current.includes(obj)) ladoBajosObjects.current.push(obj)
       }
-      if (nombre === sanitizar('Caja izquierda del acordeon, bajos')) {
+      if (nombre === sanitizar('Caja de los bajos, izquierda')) {
         cajaBajosCentroRef.current = obj
       }
-      if (nombre === sanitizar('Caja botones principales')) {
+      if (nombre === sanitizar('Caja de parrilla, derecha')) {
         cajaBotonesPrincipalesRef.current = obj
       }
     })
@@ -204,6 +217,7 @@ function Modelo({
     const dMeshes = lista.filter((m) => /^Boton_D_\d+$/.test(m.name))
     const iMeshes = lista.filter((m) => /^Boton_I_\d+$/.test(m.name))
     botonesDRef.current = dMeshes
+    botonesIRef.current = iMeshes
     const filasMel = clusterPorX(dMeshes.map((m) => ({ m, c: centrarMesh(m) })))
     const filasBajo = clusterPorX(iMeshes.map((m) => ({ m, c: centrarMesh(m) })))
 
@@ -345,7 +359,7 @@ function Modelo({
 
     // DEBUG TEMPORAL: volcar posiciones WORLD reales de las piezas clave.
     if (typeof window !== 'undefined') {
-      ;(window as any).__visor = { scene, fuelle: fuelleMesh.current, ladoBajos: ladoBajosObjects.current, ed: fuelleEdgeDeltasRef.current, notaAMesh: notaAMeshRef.current, notasActivas: notasActivasRef.current }
+      ;(window as any).__visor = { scene, fuelle: fuelleMesh.current, ladoBajos: ladoBajosObjects.current, ed: fuelleEdgeDeltasRef.current, notaAMesh: notaAMeshRef.current, notasActivas: notasActivasRef.current, cam: three.camera, gl: three.gl, ctrls: (three as any).controls }
       const bb = new THREE.Box3()
       const nombres = ['Fuelle', 'marco Fuelle 2', 'Caja izquierda del acordeon, bajos',
         'Boton_I_01', 'Boton_I_06', 'Boton_I_12', 'Caja botones principales', 'Boton_D_01']
@@ -465,8 +479,6 @@ function Modelo({
   }, [])
 
   useFrame((_, delta) => {
-    const fuelle = fuelleMesh.current
-
     // El fuelle NUNCA se traslada ni se escala. Solo se DEFORMA via shape keys.
     // CONTROL MANUAL DE LOS 3 MORPH INFLUENCES — sin depender de las actions del GLB,
     // que dejaban valores residuales y causaban que el lado bajos se moviera sin razón.
@@ -506,57 +518,26 @@ function Modelo({
       }
     }
 
-    // 3) Aplicar los 3 morph influences. SIEMPRE escribimos un valor explícito.
-    //    Snap a 0 cuando los valores son insignificantes (< 0.002): así el damping de
-    //    Q termina en 0 EXACTO en lugar de quedar en 0.0001 residual. Sin esto, el
-    //    marco se movía un pelo cada frame eternamente tras soltar Q.
+    // 3) Cierre del fuelle aplicado a TODAS las piezas a la vez (igual que el tab Personaje):
+    //    el morph Cerr_uniforme/abajo/arriba está horneado en CADA malla con un campo de
+    //    compresión GLOBAL coherente → el acordeón se cierra como un bloque y NADA se
+    //    despega. (Antes solo el fuelle tenía morph y la caja de bajos lo "perseguía" con
+    //    una medición, lo que despegaba las piezas al usar la geometría nueva.)
     const SNAP_EPS = 0.002
-    if (fuelle?.morphTargetInfluences && fuelle.morphTargetDictionary) {
-      const dict = fuelle.morphTargetDictionary
-      const targetQ = fuelleCerrandoRef.current ? 1 : 0
-      let valorQ = THREE.MathUtils.damp(
-        (fuelle.userData.valorQ as number | undefined) ?? 0, targetQ, 12, delta,
-      )
-      if (Math.abs(valorQ - targetQ) < SNAP_EPS) valorQ = targetQ
-      fuelle.userData.valorQ = valorQ
-
-      const snap = (v: number) => (Math.abs(v) < SNAP_EPS ? 0 : v)
-      const setInflu = (key: string, valor: number) => {
-        const idx = dict[key]
-        if (idx !== undefined) fuelle.morphTargetInfluences![idx] = snap(valor)
-      }
-      setInflu('Cerr_uniforme', Math.max(valorQ, influPrograma, influShapeUniforme))
-      setInflu('Cerr_abajo',    influShapeAbajo)
-      setInflu('Cerr_arriba',   influShapeArriba)
-    }
-
-    // 4) Desplazamiento REAL del extremo del fuelle = combinación lineal de los
-    //    desplazamientos medidos de cada morph activo (calculados en la detección).
-    //    El lado bajos seguirá ESTE vector, así queda siempre pegado al fuelle.
-    const edgeDelta = edgeDeltaTmp.current.set(0, 0, 0)
-    const rotVec = rotVecTmp.current.set(0, 0, 0)
-    const deltas = fuelleEdgeDeltasRef.current
-    if (deltas && fuelle?.morphTargetInfluences && fuelle.morphTargetDictionary) {
-      const infl = fuelle.morphTargetInfluences
-      const dict = fuelle.morphTargetDictionary
-      const uni = infl[dict['Cerr_uniforme'] ?? -1] ?? 0
-      const ab = infl[dict['Cerr_abajo'] ?? -1] ?? 0
-      const ar = infl[dict['Cerr_arriba'] ?? -1] ?? 0
-      edgeDelta.addScaledVector(deltas.u.t, uni)
-      edgeDelta.addScaledVector(deltas.a.t, ab)
-      edgeDelta.addScaledVector(deltas.r.t, ar)
-      rotVec.addScaledVector(deltas.u.w, uni)
-      rotVec.addScaledVector(deltas.a.w, ab)
-      rotVec.addScaledVector(deltas.r.w, ar)
-    }
-    // El vector de rotación (rotVec) representa eje·ángulo; lo convertimos a quaternion.
-    // El cierre uniforme da rotVec≈0 → quaternion identidad (solo traslación).
-    const angulo = rotVec.length()
-    const qR = quatTmp.current
-    if (angulo > 1e-5) {
-      qR.setFromAxisAngle(rotAxisTmp.current.copy(rotVec).divideScalar(angulo), angulo)
-    } else {
-      qR.identity()
+    const targetQ = fuelleCerrandoRef.current ? 1 : 0
+    let valorQ = THREE.MathUtils.damp(valorQRef.current, targetQ, 12, delta)
+    if (Math.abs(valorQ - targetQ) < SNAP_EPS) valorQ = targetQ
+    valorQRef.current = valorQ
+    const snap = (v: number) => (Math.abs(v) < SNAP_EPS ? 0 : v)
+    const valUniforme = snap(Math.max(valorQ, influPrograma, influShapeUniforme))
+    const valAbajo = snap(influShapeAbajo)
+    const valArriba = snap(influShapeArriba)
+    for (const { infl, dict } of cerrarMeshesRef.current) {
+      // El acordeón extraído del personaje usa el morph 'Cerrar' (cierre uniforme).
+      if (dict['Cerrar'] !== undefined) infl[dict['Cerrar']] = valUniforme
+      if (dict['Cerr_uniforme'] !== undefined) infl[dict['Cerr_uniforme']] = valUniforme
+      if (dict['Cerr_abajo'] !== undefined) infl[dict['Cerr_abajo']] = valAbajo
+      if (dict['Cerr_arriba'] !== undefined) infl[dict['Cerr_arriba']] = valArriba
     }
 
     // Calcular pulse (hundimiento) ANTES de mover el lado bajos, para combinarlos.
@@ -590,35 +571,18 @@ function Modelo({
       return f
     }
 
-    // Mover el lado bajos (caja + marco fuelle 2 + 12 botones I) siguiendo el extremo del
-    // fuelle (edgeDelta). Todos parten de su posición original (0,0,0 baked) y se trasladan
-    // por el MISMO vector → quedan rígidos entre sí Y pegados al fuelle. Si un objeto del
-    // grupo está pulsado, sumamos su hundimiento encima.
-    const C0 = deltas ? deltas.C0 : null
-    for (const obj of ladoBajosObjects.current) {
-      if (!obj.userData.originalPos) obj.userData.originalPos = obj.position.clone()
-      if (!obj.userData.originalQuat) obj.userData.originalQuat = obj.quaternion.clone()
-      const origPos = obj.userData.originalPos as THREE.Vector3
-      const origQuat = obj.userData.originalQuat as THREE.Quaternion
-      // Rotación rígida del lado bajos: qR (inclinación del extremo del fuelle) compuesta
-      // con la orientación original de cada objeto.
-      obj.quaternion.copy(qR).multiply(origQuat)
-      // Posición: rotamos la posición original alrededor del pivote C0 (centroide del
-      // extremo del fuelle) y luego trasladamos por edgeDelta. Así la caja queda pegada
-      // al fuelle Y se inclina igual que su cara.
-      const piv = pivTmp.current
-      if (C0) piv.copy(origPos).sub(C0).applyQuaternion(qR).add(C0).add(edgeDelta)
-      else piv.copy(origPos).add(edgeDelta)
-      // Hundimiento = max(nota sostenida, pulse del click), rotado por qR para hundirse
-      // perpendicular a la caja inclinada.
-      const hundirOffset = obj.userData.hundirOffset as THREE.Vector3 | undefined
-      if (hundirOffset) {
-        const factor = Math.max(sinkFactor(obj), pulseMeshName === obj.name ? pulseFactor : 0)
-        if (factor > 0) {
-          piv.add(hundirTmp.current.copy(hundirOffset).applyQuaternion(qR).multiplyScalar(factor))
-        }
-      }
-      obj.position.copy(piv)
+    // Hundir botones de bajos (Boton_I) en su sitio cuando suena su nota. Ya NO se mueven
+    // con el fuelle (de eso se encarga el morph global); solo se hunden como los de melodía.
+    for (const m of botonesIRef.current) {
+      const offset = m.userData.hundirOffset as THREE.Vector3 | undefined
+      const origPos = m.userData.originalPos as THREE.Vector3 | undefined
+      if (!offset || !origPos) continue
+      const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
+      m.position.set(
+        origPos.x + offset.x * factor,
+        origPos.y + offset.y * factor,
+        origPos.z + offset.z * factor,
+      )
     }
 
     // Hundir botones de melodía (Boton_D): no se mueven con el fuelle, sólo se hunden.
@@ -731,7 +695,8 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
               {/* Conversion Z-up (Blender) → Y-up (three.js): rotacion -90° X.
                   El GLB v3 fue exportado con export_yup=False para que no metiera
                   rotaciones residuales por nodo (que rompian al marco Fuelle 2). */}
-              <group rotation={[-Math.PI / 2, 0, 0]}>
+              {/* acordeon-solo extraído del personaje = Y-up nativo → SIN rotación -90X. */}
+              <group>
                 <Modelo {...props} />
               </group>
             </Center>
