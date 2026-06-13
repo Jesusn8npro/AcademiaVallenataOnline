@@ -13,7 +13,11 @@ import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
 import TocarEnVivo from './TocarEnVivo'
-import { useNavigate } from '@/compat/router'
+
+// SimuladorApp (el acordeón móvil real) se carga BAJO DEMANDA: solo al abrir "Tocar" en táctil. Se
+// monta como OVERLAY dentro del mundo (NO se navega) → el mundo sigue montado, la sesión multijugador
+// sigue viva y los demás te oyen/ven tocar. Trae su propia detección de horizontal/“gira el teléfono”.
+const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/SimuladorApp'))
 
 // Mundo multijugador con MODO CAMINANTE profesional. Controlador desacoplado (PlayerController) que
 // SOLO mueve/gira la cámara cuando isNavigationMode está activo (pointer-lock) → no choca con la
@@ -548,13 +552,6 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const moveRef = React.useRef({ fwd: 0, side: 0 }) // joystick analógico (móvil)
   const [tactil, setTactil] = React.useState(false)
   React.useEffect(() => { setTactil(typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) }, [])
-  const navigate = useNavigate()
-  // En MÓVIL, "Tocar" abre el SimuladorApp REAL (página completa, sin menú de la app) con un botón
-  // "Volver al mundo" — igual que las clases con su "Simulador móvil". En desktop usa el panel embebido.
-  const abrirSimuladorMovil = React.useCallback(() => {
-    const params = new URLSearchParams({ volverA: window.location.pathname + window.location.search, volverLabel: 'Volver al mundo' })
-    navigate('/simulador-app?' + params.toString())
-  }, [navigate])
 
   // Teclas 1-4 cambian de vista (si el foco no está en un input).
   React.useEffect(() => {
@@ -593,6 +590,14 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const [tocarAbierto, setTocarAbierto] = React.useState(false)
   const bloquearTecladoRef = React.useRef(false)
   React.useEffect(() => { bloquearTecladoRef.current = tocarAbierto }, [tocarAbierto])
+  // Cerrar el acordeón: también sale de pantalla completa (el SimuladorApp embebido la pide en Android).
+  const cerrarTocar = React.useCallback(() => {
+    setTocarAbierto(false)
+    const doc: any = document
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      try { (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc) } catch {}
+    }
+  }, [])
 
   return (
     <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'linear-gradient(#add0e6, #cfe6d0)' }}>
@@ -635,19 +640,37 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         )}
       </div>
 
-      {/* Botón Tocar en vivo. En móvil abre el SimuladorApp real (página); en desktop, el panel embebido. */}
+      {/* Botón Tocar. En táctil abre el SimuladorApp real como OVERLAY (sin salir del mundo); en
+          desktop, el panel pequeño embebido. */}
       <button
         type="button"
-        onClick={() => (compacto ? abrirSimuladorMovil() : setTocarAbierto((v) => !v))}
+        onClick={() => setTocarAbierto((v) => !v)}
         style={{ position: 'absolute', top: 92, right: 16, display: 'flex', alignItems: 'center', gap: 6, background: tocarAbierto ? '#ff7a18' : 'rgba(0,0,0,.5)', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 14px', fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
         title="Tocar el acordeón"
       >
-        🎹 {!compacto && tocarAbierto ? 'Cerrar' : 'Tocar'}
+        🎹 {tocarAbierto ? 'Cerrar' : 'Tocar'}
       </button>
 
-      {/* Panel "Tocar en vivo" (DESKTOP): panel pequeño flotante sobre el HUD. En móvil no se usa
-          (el botón navega al SimuladorApp real). */}
-      {tocarAbierto && !compacto && (
+      {/* TÁCTIL (móvil/tablet): SimuladorApp REAL como overlay a pantalla completa, SIN salir del mundo
+          → la sesión multijugador sigue viva y los demás te oyen/ven tocar. Trae su propio aviso de
+          "gira el teléfono a horizontal". Botón "Volver al mundo" arriba-izquierda (donde iría su volver). */}
+      {tocarAbierto && tactil && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000' }}>
+          <React.Suspense fallback={<div style={{ color: '#fff', padding: 24, fontFamily: 'system-ui' }}>Cargando acordeón…</div>}>
+            <SimuladorApp />
+          </React.Suspense>
+          <button
+            type="button"
+            onClick={cerrarTocar}
+            style={{ position: 'fixed', top: 10, left: 10, zIndex: 100000, display: 'flex', alignItems: 'center', gap: 6, background: '#c0392b', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontFamily: 'system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,.5)' }}
+          >
+            ← Volver al mundo
+          </button>
+        </div>
+      )}
+
+      {/* DESKTOP: panel pequeño flotante sobre el HUD. */}
+      {tocarAbierto && !tactil && (
         <div style={{ position: 'absolute', left: '50%', bottom: bottomBase, transform: 'translateX(-50%)', zIndex: 50, maxWidth: 'calc(100% - 16px)' }}>
           <TocarEnVivo onCerrar={() => setTocarAbierto(false)} ancho={460} />
         </div>
