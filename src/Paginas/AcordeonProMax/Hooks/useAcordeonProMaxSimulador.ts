@@ -3,7 +3,19 @@ import { useParams, useNavigate, useSearchParams } from '@/compat/router';
 import { supabase } from '../../../servicios/clienteSupabase';
 import { useLogicaProMax } from './useLogicaProMax';
 
-export function useAcordeonProMaxSimulador() {
+// Acordeón POR DEFECTO (mismo id default de useLogicaAcordeon). En un duelo ambos competidores usan ESTE
+// banco para que el sonido/tono no se cruce con el instrumento personal preseleccionado de cada quien.
+const ACORDEON_DUELO = '4e9f2a94-21c0-4029-872e-7cb1c314af69';
+
+// opts (opcional): permite EMBEBER el simulador fuera de su ruta (ej. el duelo del Mundo 3D):
+//   idDirecto   → carga la canción por id en vez de leerla de la URL (slug/searchParams).
+//   onSalir     → "volver" llama esto en vez de navegar (se queda en el mundo).
+//   onResultado → se dispara UNA vez con el puntaje al terminar (resultados/gameOver) → el duelo lo captura.
+//   autoIniciar → SALTA la pantalla de pre-juego: arranca solo, competitivo, SIN maestro/guía (evita el
+//                 doble acordeón), en cuanto la canción y el diseño cargan.
+//   seccionId   → arranca directamente en esa sección de la canción.
+export function useAcordeonProMaxSimulador(opts?: { idDirecto?: string; onSalir?: () => void; onResultado?: (puntos: number) => void; autoIniciar?: boolean; seccionId?: string | null }) {
+  const idDirecto = opts?.idDirecto;
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -79,7 +91,9 @@ export function useAcordeonProMaxSimulador() {
       }
     };
     const searchId = searchParams.get('id');
-    if (searchId) {
+    if (idDirecto) {
+      cargarCancion(idDirecto, false); // embebido (duelo): carga por id, ignora la URL
+    } else if (searchId) {
       cargarCancion(searchId, false);
     } else if (slug) {
       const esProbableId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
@@ -88,7 +102,7 @@ export function useAcordeonProMaxSimulador() {
       hero.iniciarPracticaLibre();
     }
     return () => { montado = false; };
-  }, [slug, searchParams]);
+  }, [slug, searchParams, idDirecto]);
 
   useEffect(() => {
     const handlePausaGlobal = (e: KeyboardEvent) => {
@@ -102,9 +116,56 @@ export function useAcordeonProMaxSimulador() {
   }, [hero.estadoJuego, hero.pausarJuego]);
 
   const volverAlMenu = () => {
+    if (opts?.onSalir) { opts.onSalir(); return; } // embebido: no navega, vuelve al mundo
     hero.volverASeleccion();
     navigate('/acordeon-pro-max/lista');
   };
+
+  // Embebido (duelo): avisar UNA vez con el puntaje al terminar la partida.
+  const onResultadoRef = useRef(opts?.onResultado);
+  useEffect(() => { onResultadoRef.current = opts?.onResultado; }, [opts?.onResultado]);
+  const resultadoEnviadoRef = useRef(false);
+  useEffect(() => {
+    if (resultadoEnviadoRef.current) return;
+    if (hero.estadoJuego === 'resultados' || hero.estadoJuego === 'gameOver') {
+      resultadoEnviadoRef.current = true;
+      onResultadoRef.current?.(hero.estadisticas?.puntos ?? 0);
+    }
+  }, [hero.estadoJuego, hero.estadisticas]);
+
+  // Embebido (duelo) con autoIniciar: SALTA el pre-juego. En cuanto la canción está seleccionada y el
+  // diseño del acordeón cargó, arranca SOLO en competitivo con el MAESTRO APAGADO (sin acordeón guía →
+  // no hay doble sonido) y en la sección pedida. Forzamos modoPractica='ninguno' por argumento.
+  const autoIniciadoRef = useRef(false);
+  useEffect(() => {
+    if (!opts?.autoIniciar || autoIniciadoRef.current) return;
+    if (hero.estadoJuego !== 'seleccion' || !hero.cancionSeleccionada) return;
+    if (!hero.logica?.disenoCargado) return;
+    autoIniciadoRef.current = true;
+    hero.setMaestroSuena(false);
+    const secId = opts?.seccionId;
+    if (secId && typeof hero.seleccionarSeccion === 'function') {
+      let secs: any = (hero.cancionSeleccionada as any)?.secciones || [];
+      if (typeof secs === 'string') { try { secs = JSON.parse(secs); } catch { secs = []; } }
+      const sec = Array.isArray(secs) ? secs.find((s: any) => s.id === secId) : null;
+      if (sec) hero.seleccionarSeccion(sec);
+    }
+    Promise.resolve(hero.iniciarJuego(hero.cancionSeleccionada, false, 'ninguno')).catch(() => {});
+  }, [opts?.autoIniciar, opts?.seccionId, hero.estadoJuego, hero.cancionSeleccionada, hero.logica?.disenoCargado]);
+
+  // GUARD de tonalidad + instrumento (solo embebido/duelo): los ajustes del usuario cargan de la nube
+  // DESPUÉS del mount y PISAN la tonalidad de la canción (se veía "Tono F-Bb-Eb" en una canción GDC →
+  // sonaba horrible) y el instrumento preseleccionado del usuario cruza el banco con el del oyente.
+  // Forzamos SIEMPRE la tonalidad de la canción + el acordeón POR DEFECTO → ambos competidores usan el
+  // MISMO banco/tono y nada se cruza. (idDirecto sólo lo pasa el duelo.)
+  useEffect(() => {
+    if (!idDirecto) return;
+    const L = hero.logica;
+    if (!L) return;
+    const tono = (hero.cancionSeleccionada as any)?.tonalidad;
+    if (tono && L.setTonalidadSeleccionada && L.tonalidadSeleccionada !== tono) L.setTonalidadSeleccionada(tono);
+    if (L.setInstrumentoId && L.instrumentoId !== ACORDEON_DUELO) L.setInstrumentoId(ACORDEON_DUELO);
+  }, [idDirecto, hero.cancionSeleccionada, hero.logica?.tonalidadSeleccionada, hero.logica?.instrumentoId, hero.logica?.setTonalidadSeleccionada, hero.logica?.setInstrumentoId]);
 
   const irAModoLibre = () => {
     hero.iniciarPracticaLibre();

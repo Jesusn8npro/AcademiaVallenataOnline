@@ -4,6 +4,16 @@ import dynamic from 'next/dynamic'
 import { PersonajeEstudioProvider } from '../../src/Paginas/AcordeonProMax/PracticaLibre/contextoPersonajeEstudio'
 import SeccionPLPersonaje from '../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/SeccionPLPersonaje'
 import '../../src/Paginas/AcordeonProMax/PracticaLibre/EstudioPracticaLibre.css'
+// CSS del simulador competitivo (duelo en PC): esta ruta vive FUERA del layout de acordeon-pro-max, así
+// que Next no incluía estas hojas en el bundle de /test-mundo-3d → la pantalla del duelo salía sin
+// estilos. Las importamos aquí para garantizarlas en la ruta.
+import '../../src/Paginas/AcordeonProMax/Modos/_BaseSimulador.css'
+import '../../src/Paginas/AcordeonProMax/Modos/ModoCompetitivo.css'
+import '../../src/Paginas/AcordeonProMax/Modos/ModoLibre.css'
+import '../../src/Paginas/AcordeonProMax/Componentes/HeaderHero.css'
+import '../../src/Paginas/AcordeonProMax/Componentes/PantallaPreJuegoProMax.css'
+import '../../src/Paginas/AcordeonProMax/Componentes/PantallaResultados.css'
+import '../../src/Paginas/AcordeonProMax/Componentes/PantallaGameOverProMax.css'
 
 const Mundo = dynamic(
   () => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/mundo/MundoPoC'),

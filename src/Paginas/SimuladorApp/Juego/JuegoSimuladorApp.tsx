@@ -28,6 +28,9 @@ import './JuegoSimuladorApp.css';
 interface JuegoSimuladorAppProps {
     config: ConfigCancion;
     onSalir: () => void;
+    // Opcional (Modo Competencia del Mundo 3D): se dispara UNA vez cuando la partida termina
+    // (estadoJuego 'resultados' o 'gameOver') con las estadísticas finales → el duelo captura el puntaje.
+    onResultado?: (estadisticas: any) => void;
 }
 
 const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro_solo'> = {
@@ -37,9 +40,21 @@ const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro
     maestro_solo: 'maestro_solo',
 };
 
-const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir }) => {
+const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir, onResultado }) => {
     const hero: any = useLogicaProMax();
     const inicializadoRef = useRef(false);
+
+    // Modo Competencia: avisar UNA sola vez con el puntaje final al terminar la partida.
+    const onResultadoRef = useRef(onResultado);
+    useEffect(() => { onResultadoRef.current = onResultado; }, [onResultado]);
+    const resultadoEnviadoRef = useRef(false);
+    useEffect(() => {
+        if (resultadoEnviadoRef.current) return;
+        if (hero?.estadoJuego === 'resultados' || hero?.estadoJuego === 'gameOver') {
+            resultadoEnviadoRef.current = true;
+            onResultadoRef.current?.(hero.estadisticas);
+        }
+    }, [hero?.estadoJuego, hero?.estadisticas]);
     const x = useMotionValue(0);
     const trenRef = useRef<HTMLDivElement>(null);
     const elementosCache = useRef<Map<string, { pito: Element | null; bajo: Element | null }>>(new Map());
