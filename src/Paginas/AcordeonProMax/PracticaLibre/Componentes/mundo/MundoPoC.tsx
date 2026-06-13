@@ -209,7 +209,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { i
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} ligero />
       </AnclaPies>
     </group>
   )
