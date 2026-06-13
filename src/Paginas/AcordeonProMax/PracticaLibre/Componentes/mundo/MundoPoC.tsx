@@ -12,6 +12,10 @@ import { subscribirNotas } from '../../../../../Core/audio/emisorNotasAcordeon'
 import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
+import { useReto } from './useReto'
+import PanelReto from './PanelReto'
+import DueloSimulador from './DueloSimulador'
+import DueloSimuladorDesktop from './DueloSimuladorDesktop'
 import TocarEnVivo from './TocarEnVivo'
 
 // SimuladorApp (el acordeón móvil real) se carga BAJO DEMANDA: solo al abrir "Tocar" en táctil. Se
@@ -214,6 +218,7 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
 function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>> }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
+  const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look), calculado desde 'mira' de la red
   const ent0 = remotosRef.current.get(id)
   const [personajeId, setPersonajeId] = React.useState(ent0?.target.personajeId ?? PERSONAJES[0].id)
@@ -250,6 +255,14 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     if (e && grupo.current) { grupo.current.position.set(e.target.x, 0, e.target.z); grupo.current.rotation.y = e.target.ry }
   }, [id, remotosRef])
 
+  // El balanceo se maneja por ACTIVIDAD DE NOTAS (no por el flag 'tocando' del estado): cuando el dueño
+  // juega su turno del duelo, SU Canvas está pausado y deja de transmitir 'tocando', pero las NOTAS sí
+  // siguen llegando (van por su propio broadcast). Así el balanceo funciona también durante el duelo.
+  const ultimaNotaRef = React.useRef(0)
+  React.useEffect(() => suscribirNotasRemotas((_idB, accion, deId) => {
+    if (deId === id && accion === 'down') ultimaNotaRef.current = performance.now()
+  }), [suscribirNotasRemotas, id])
+
   useFrame((_, dt) => {
     const ent = remotosRef.current.get(id)
     const g = grupo.current
@@ -264,6 +277,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     if (ent.target.personajeId && ent.target.personajeId !== personajeId) setPersonajeId(ent.target.personajeId)
     if (ent.target.nombre !== nombre) setNombre(ent.target.nombre)
     if (ent.target.tocando !== tocando) setTocando(ent.target.tocando)
+    tocandoRef.current = performance.now() - ultimaNotaRef.current < 650 // balanceo por actividad de notas
     posRemotosRef.current.set(id, [g.position.x, g.position.z]) // última posición → efecto al irse
   })
 
@@ -271,7 +285,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} ligero />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} tocandoRef={tocandoRef} ligero />
       </AnclaPies>
     </group>
   )
@@ -291,6 +305,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
+  const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look): cámara - orientación del cuerpo
   const teclas = React.useRef<Record<string, boolean>>({})
   const vel = React.useRef(new THREE.Vector3())
@@ -459,6 +474,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     // ¿Tocando? (nota <500ms) — para el indicador 🎵.
     const tocandoAhora = performance.now() - lastNoteRef.current < 500
     if (tocandoAhora !== tocando) setTocando(tocandoAhora)
+    tocandoRef.current = tocandoAhora
 
     // Head-look: la cabeza apunta hacia donde mira la cámara (yaw), limitado respecto al cuerpo.
     headYawRef.current = normAngle(yaw.current - g.rotation.y)
@@ -502,7 +518,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
           ni se rompe la caminata al cambiar seguido. */}
       <React.Suspense fallback={null}>
         <AnclaPies claveMedicion={glb}>
-          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} />
+          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} tocandoRef={tocandoRef} />
         </AnclaPies>
       </React.Suspense>
     </group>
@@ -514,12 +530,21 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
 // fuera del Canvas (es audio, no 3D). El volumen ajusta el maestro del motor. Reproduce el TONO que
 // viajó en cada nota (muestra+semitonos del que tocó) → audio puro vía motorAudioPro: no toca el store
 // de botones ni emite notas → no anima ni interfiere con tu avatar.
-function OyenteRemoto({ suscribir, volumen, escuchandoRef }: { suscribir: (cb: NotaRemotaCb) => () => void; volumen: number; escuchandoRef: React.MutableRefObject<Set<string>> }) {
+function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: { suscribir: (cb: NotaRemotaCb) => () => void; volumen: number; escuchandoRef: React.MutableRefObject<Set<string>>; tonalidadForzada?: string | null }) {
   // deshabilitarInteraccion: true → NO atiende el teclado físico (si no, al teclear o tocar en vivo
   // este motor también dispararía/broadcastearía notas). Igual reproduce audio: reproduceTono y
   // motorAudioPro.reproducir NO miran ese flag.
   const logica = useLogicaAcordeon({ deshabilitarInteraccion: true })
   React.useEffect(() => { try { motorAudioPro.setVolumenMaestro(volumen) } catch {} }, [volumen])
+  // En un DUELO forzamos la tonalidad de la CANCIÓN + el acordeón POR DEFECTO → el banco de este oyente
+  // queda IGUAL al del que toca (mismo instrumento + tono), así las notas remotas suenan idénticas y el
+  // fallback también queda correcto, sin cruzarse con el instrumento/tonalidad personal del que escucha
+  // (era el bug "llega en otro tono / se cruza con el acordeón preseleccionado").
+  React.useEffect(() => {
+    if (!tonalidadForzada) return
+    if (logica.setTonalidadSeleccionada) logica.setTonalidadSeleccionada(tonalidadForzada)
+    if (logica.setInstrumentoId && logica.instrumentoId !== '4e9f2a94-21c0-4029-872e-7cb1c314af69') logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69')
+  }, [tonalidadForzada, logica.setTonalidadSeleccionada, logica.setInstrumentoId, logica.instrumentoId])
   React.useEffect(() => {
     // Notas SONANDO ahora mismo, indexadas por (jugador:botón). 'down' arranca el tono igual que al
     // tocar en vivo (sin duración fija) y guarda sus instancias; 'up' las detiene → la nota dura
@@ -631,7 +656,9 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   React.useEffect(() => subscribirNotas((e) => { if (e.accion === 'down') lastNoteRef.current = performance.now() }), [])
 
   const estadoLocalRef = React.useRef<EstadoJugador>({ x: 0, z: 0, ry: 0, personajeId, anim: null, nombre, tocando: false, mira: 0 })
-  const { remotos, remotosRef, suscribirNotasRemotas } = useMultijugador(estadoLocalRef)
+  const { remotos, remotosRef, miId, suscribirNotasRemotas } = useMultijugador(estadoLocalRef)
+  // Modo Competencia (Rebanada 1): handshake + acuerdo del reto.
+  const reto = useReto(miId, nombre)
 
   // Efectos de aparición/desaparición de jugadores (partículas). Diff de la lista de remotos: el que
   // ENTRA → chispas doradas en su spawn; el que SALE → chispas celestes en su última posición.
@@ -677,11 +704,32 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
     setEscuchando((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   }, [])
 
+  // Durante el turno del RIVAL en un duelo, lo auto-escuchas (su avatar ya anima por las notas de red;
+  // así además lo OYES sin tener que clicarlo). El id del oponente del reto = el id de su avatar.
+  // Cuando ME TOCA jugar, MUTEO todo lo que escucho (vacío el set) → no oigo al otro mientras toco mi
+  // turno (pedido del usuario); al pasar al turno del rival se vuelve a auto-escuchar.
+  React.useEffect(() => {
+    if (reto.meTocaJugar) { setEscuchando(new Set()); return }
+    if (reto.dueloIniciado && !reto.terminado && reto.oponente) {
+      const id = reto.oponente.id
+      setEscuchando((s) => (s.has(id) ? s : new Set(s).add(id)))
+    }
+  }, [reto.dueloIniciado, reto.meTocaJugar, reto.terminado, reto.oponente])
+
+  // Clic en un avatar → abre un mini-popup con acciones (Escuchar / Retar) para ESE jugador.
+  const [seleccionado, setSeleccionado] = React.useState<{ id: string; nombre: string } | null>(null)
+  const seleccionarJugador = React.useCallback((id: string) => {
+    const nom = remotosRef.current.get(id)?.target.nombre || 'Jugador'
+    setSeleccionado({ id, nombre: nom })
+  }, [remotosRef])
+
   // "Tocar en vivo": al abrir el panel, el teclado toca el acordeón → bloqueamos el movimiento por
   // teclado (ref para no re-registrar el useFrame del PlayerController).
   const [tocarAbierto, setTocarAbierto] = React.useState(false)
   const bloquearTecladoRef = React.useRef(false)
-  React.useEffect(() => { bloquearTecladoRef.current = tocarAbierto }, [tocarAbierto])
+  // Bloquear el movimiento por teclado mientras tocas en vivo O juegas tu turno del duelo (las teclas
+  // son notas del acordeón, no caminar).
+  React.useEffect(() => { bloquearTecladoRef.current = tocarAbierto || reto.meTocaJugar }, [tocarAbierto, reto.meTocaJugar])
   // Cerrar el acordeón: también sale de pantalla completa (el SimuladorApp embebido la pide en Android).
   const cerrarTocar = React.useCallback(() => {
     setTocarAbierto(false)
@@ -693,20 +741,22 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
 
   return (
     <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'linear-gradient(#add0e6, #cfe6d0)' }}>
-      {/* Motor de audio oyente (fuera del Canvas; reproduce lo que tocan los jugadores elegidos). */}
-      {escuchando.size > 0 && <OyenteRemoto suscribir={suscribirNotasRemotas} volumen={volumen} escuchandoRef={escuchandoRef} />}
+      {/* Motor de audio oyente (fuera del Canvas; reproduce lo que tocan los jugadores elegidos). Se
+          APAGA durante MI turno del duelo → el motor del duelo es el único usando el audio (sin
+          contención = sin latencia en la ejecución). */}
+      {escuchando.size > 0 && !reto.meTocaJugar && <OyenteRemoto suscribir={suscribirNotasRemotas} volumen={volumen} escuchandoRef={escuchandoRef} tonalidadForzada={reto.dueloIniciado ? reto.cancion?.tonalidad : undefined} />}
       {/* Mientras tocas en móvil (SimuladorApp overlay tapa el mundo), PAUSAMOS el render 3D
           (frameloop=never) → libera CPU/GPU del teléfono para que las notas se transmitan SIN latencia.
           La conexión y el broadcast de notas (emisor → useMultijugador) NO dependen del Canvas, siguen
           vivos; los demás te oyen al instante. Al cerrar, el render se reanuda. */}
-      <Canvas frameloop={tocarAbierto && tactil ? 'never' : 'always'} camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
+      <Canvas frameloop={(tocarAbierto && tactil) || reto.meTocaJugar ? 'never' : 'always'} camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
         <React.Suspense fallback={null}>
           <EnvMundo />
           <fog attach="fog" args={['#bcd9d2', 38, 120]} />
           <ambientLight intensity={0.65} />
           <directionalLight position={[10, 16, 8]} intensity={1.2} />
           <Escena />
-          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={toggleEscuchar} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} />
+          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} />
           {/* Cada avatar remoto en su PROPIO Suspense: si uno nuevo entra con un personaje aún no
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
@@ -739,6 +789,46 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           <span style={{ opacity: 0.85 }}>🔇 Clic en un jugador para escucharlo</span>
         )}
       </div>
+
+      {/* Mini-popup de acciones al clicar un jugador: escucharlo o retarlo (Modo Competencia). Solo se
+          muestra si no hay un reto en curso (para no tapar el panel del reto). */}
+      {seleccionado && reto.estado === 'libre' && (
+        <div style={{ position: 'absolute', top: 92, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: 'rgba(15,18,26,.94)', color: '#fff', borderRadius: 12, padding: 12, fontFamily: 'system-ui, sans-serif', boxShadow: '0 8px 28px rgba(0,0,0,.5)', border: '1px solid rgba(255,255,255,.12)', minWidth: 200 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontWeight: 700 }}>{seleccionado.nombre}</span>
+            <button type="button" onClick={() => setSeleccionado(null)} style={{ border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 16 }}>✕</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => toggleEscuchar(seleccionado.id)} style={{ flex: 1, border: 'none', borderRadius: 9, padding: '9px 10px', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: escuchando.has(seleccionado.id) ? '#27ae60' : '#333b48', color: '#fff' }}>
+              {escuchando.has(seleccionado.id) ? '🔊 Silenciar' : '🔊 Escuchar'}
+            </button>
+            <button type="button" onClick={() => { reto.invitar(seleccionado.id, seleccionado.nombre); setSeleccionado(null) }} style={{ flex: 1, border: 'none', borderRadius: 9, padding: '9px 10px', fontSize: 14, fontWeight: 700, cursor: 'pointer', background: '#ff7a18', color: '#fff' }}>
+              ⚔️ Retar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Panel del reto (invitación / negociación con chat + canción / duelo). */}
+      <PanelReto
+        estado={reto.estado} oponente={reto.oponente} cancion={reto.cancion} chat={reto.chat}
+        miListo={reto.miListo} suListo={reto.suListo} ambosListos={reto.ambosListos}
+        aviso={reto.aviso} limpiarAviso={reto.limpiarAviso}
+        aceptar={reto.aceptar} rechazar={reto.rechazar} cancelar={reto.cancelar}
+        enviarChat={reto.enviarChat} proponerCancion={reto.proponerCancion} marcarListo={reto.marcarListo}
+        soyRetador={reto.soyRetador} dueloIniciado={reto.dueloIniciado} meTocaJugar={reto.meTocaJugar}
+        terminado={reto.terminado} ganador={reto.ganador} miPuntaje={reto.miPuntaje} rivalPuntaje={reto.rivalPuntaje}
+        empezarDuelo={reto.empezarDuelo}
+      />
+
+      {/* DUELO: cuando es MI turno, el simulador real ocupa la pantalla con la canción acordada. En
+          MÓVIL = SimuladorApp (JuegoSimuladorApp); en COMPUTADOR = pantalla competitiva de AcordeonProMax
+          (ModoJuego). Al terminar reporta el puntaje (el turno avanza solo). Salir antes = forfeit (0). */}
+      {reto.meTocaJugar && reto.cancion && (
+        tactil
+          ? <DueloSimulador cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
+          : <DueloSimuladorDesktop cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
+      )}
 
       {/* Botón Tocar. En táctil abre el SimuladorApp real como OVERLAY (sin salir del mundo); en
           desktop, el panel pequeño embebido. */}

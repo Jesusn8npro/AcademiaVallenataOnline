@@ -20,7 +20,17 @@ import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
 const IMG_ALUMNO = '/Acordeon PRO MAX.webp';
 const ModalMetronomoAny = ModalMetronomo as React.ComponentType<any>;
 
-const AcordeonProMaxSimulador: React.FC = () => {
+// Props OPCIONALES para EMBEBER el simulador fuera de su ruta (ej. el duelo del Mundo 3D). Sin props,
+// se comporta igual que siempre (carga por URL, "volver" navega).
+interface AcordeonProMaxSimuladorProps {
+  idDirecto?: string;
+  onSalir?: () => void;
+  onResultado?: (puntos: number) => void;
+  autoIniciar?: boolean;
+  seccionId?: string | null;
+}
+
+const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDirecto, onSalir, onResultado, autoIniciar, seccionId } = {}) => {
   const {
     hero,
     metronomoVisible, setMetronomoVisible,
@@ -37,7 +47,7 @@ const AcordeonProMaxSimulador: React.FC = () => {
     mostrarHeaderHero,
     mostrarEscenario,
     mostrarVideoFondo,
-  } = useAcordeonProMaxSimulador();
+  } = useAcordeonProMaxSimulador({ idDirecto, onSalir, onResultado, autoIniciar, seccionId });
 
   return (
     <div className="promax-simulador-container" style={{ ['--promax-header-height' as any]: `${headerHeight}px` }}>
@@ -184,7 +194,12 @@ const AcordeonProMaxSimulador: React.FC = () => {
         </main>
       )}
 
-      {mostrarSeleccion && (
+      {/* autoIniciar (duelo del mundo): saltamos el pre-juego. Mientras carga y arranca solo, un loader. */}
+      {mostrarSeleccion && autoIniciar && (
+        <div className="hero-cuenta-overlay"><span style={{ color: '#fff', fontFamily: 'system-ui', fontSize: 22, fontWeight: 700 }}>Preparando duelo…</span></div>
+      )}
+
+      {mostrarSeleccion && !autoIniciar && (
         <PantallaPreJuegoProMax
           cancion={hero.cancionSeleccionada}
           modoSeleccionado={hero.modoPractica}
