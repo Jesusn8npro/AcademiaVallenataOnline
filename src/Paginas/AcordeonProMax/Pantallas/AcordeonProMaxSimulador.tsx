@@ -53,6 +53,16 @@ const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDir
     <div className="promax-simulador-container" style={{ ['--promax-header-height' as any]: `${headerHeight}px` }}>
       <FondoEspacialProMax />
 
+      {/* Indicador de PISTA DE FONDO sonando (solo en el duelo embebido). La pista (MP3) la reproduce
+          iniciarJuego sincronizada con las notas; este "efectico" le confirma al usuario que está sonando. */}
+      {autoIniciar && hero.estadoJuego === 'jugando' && ((hero.cancionSeleccionada as any)?.audio_fondo_url || (hero.cancionSeleccionada as any)?.audioFondoUrl) && (
+        <div style={{ position: 'absolute', top: 'calc(var(--promax-header-height, 0px) + 12px)', left: 12, zIndex: 60, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,.55)', color: '#fff', padding: '6px 12px', borderRadius: 20, fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 700 }}>
+          <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#39d353', display: 'inline-block', animation: 'duelo-pista-pulso 1s ease-in-out infinite' }} />
+          🎵 Pista de fondo
+          <style>{`@keyframes duelo-pista-pulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.5)}}`}</style>
+        </div>
+      )}
+
       {hero.estadoJuego === 'contando' && hero.cuenta !== null && (
         <div className="hero-cuenta-overlay">
           <span key={hero.cuenta} className="hero-cuenta-numero">

@@ -536,17 +536,14 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: {
   // motorAudioPro.reproducir NO miran ese flag.
   const logica = useLogicaAcordeon({ deshabilitarInteraccion: true })
   React.useEffect(() => { try { motorAudioPro.setVolumenMaestro(volumen) } catch {} }, [volumen])
-  // En un DUELO forzamos la tonalidad de la CANCIÓN + el acordeón POR DEFECTO → el banco de este oyente
-  // queda IGUAL al del que toca (mismo instrumento + tono), así las notas remotas suenan idénticas y el
-  // fallback también queda correcto, sin cruzarse con el instrumento/tonalidad personal del que escucha.
-  // GUARD CONTINUO: los ajustes de la nube cargan async y PISAN lo forzado; al incluir tonalidadSeleccionada
-  // /instrumentoId en deps, el efecto re-corre y REVIERTE el override (era el bug "solo funciona si apago el
-  // escuchar": al escuchar, la nube volvía a poner la tonalidad personal del oyente → cruce).
+  // En un DUELO forzamos la tonalidad de la CANCIÓN en el oyente → las notas remotas suenan en el tono
+  // correcto (y el fallback también), sin cruzarse con la tonalidad personal del que escucha. GUARD
+  // CONTINUO (deps incluyen tonalidadSeleccionada): la nube la pisa async y aquí la revertimos. NO
+  // forzamos el instrumento (recargar el banco mete latencia y el pitch ya queda bien por la tonalidad).
   React.useEffect(() => {
     if (!tonalidadForzada) return
     if (logica.setTonalidadSeleccionada && logica.tonalidadSeleccionada !== tonalidadForzada) logica.setTonalidadSeleccionada(tonalidadForzada)
-    if (logica.setInstrumentoId && logica.instrumentoId !== '4e9f2a94-21c0-4029-872e-7cb1c314af69') logica.setInstrumentoId('4e9f2a94-21c0-4029-872e-7cb1c314af69')
-  }, [tonalidadForzada, logica.tonalidadSeleccionada, logica.instrumentoId, logica.setTonalidadSeleccionada, logica.setInstrumentoId])
+  }, [tonalidadForzada, logica.tonalidadSeleccionada, logica.setTonalidadSeleccionada])
   React.useEffect(() => {
     // Notas SONANDO ahora mismo, indexadas por (jugador:botón). 'down' arranca el tono igual que al
     // tocar en vivo (sin duración fija) y guarda sus instancias; 'up' las detiene → la nota dura
