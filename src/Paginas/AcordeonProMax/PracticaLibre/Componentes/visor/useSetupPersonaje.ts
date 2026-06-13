@@ -17,9 +17,10 @@ export function useSetupPersonaje(
     clipBrazos: THREE.AnimationClip | null
     clipCuerpo: THREE.AnimationClip | null
     camera: THREE.Camera
+    ligero?: boolean
   },
 ) {
-  const { scene, acordeon, mixer, clipBrazos, clipCuerpo, camera } = deps
+  const { scene, acordeon, mixer, clipBrazos, clipCuerpo, camera, ligero } = deps
   const {
     fingerData, fingerPress, botones, morphCerrar, closeAction, cuerpoAction, closeDur,
     brazoIzq, brazoDer, curForeDelta, curHandDelta, drivenDer, restW, handFactor, cajaGrip,
@@ -203,22 +204,26 @@ export function useSetupPersonaje(
     for (const sp of Object.values(ringSprites.current)) sp.parent?.remove(sp)
     ringSprites.current = {}
     botonGlow.current = {}
-    const ringTex = crearTexturaAnillo()
-    const _sz = new THREE.Vector3()
-    for (const base in botones.current) {
-      if (!/^Boton_D_/.test(base)) continue
-      const b = botones.current[base]
-      if (!b.mesh.geometry.boundingBox) b.mesh.geometry.computeBoundingBox()
-      b.mesh.geometry.boundingBox!.getSize(_sz)
-      const d = Math.max(_sz.x, _sz.y, _sz.z) || 0.01
-      const mat = new THREE.SpriteMaterial({ map: ringTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false, depthTest: false })
-      const sp = new THREE.Sprite(mat)
-      sp.scale.setScalar(d * 1.5) // halo JUSTO sobre el botón (chico, se entiende cuál se pisa)
-      sp.position.copy(b.localCenter)
-      sp.renderOrder = 999
-      b.mesh.add(sp)
-      ringSprites.current[base] = sp
-      botonGlow.current[base] = 0
+    // Modo ligero (remotos): SIN anillos de pisada — no se aprecian de lejos y son ~40 sprites/avatar
+    // (draw calls). El bucle per-frame de visuales de botones también se salta en usePersonajeFrame.
+    if (!ligero) {
+      const ringTex = crearTexturaAnillo()
+      const _sz = new THREE.Vector3()
+      for (const base in botones.current) {
+        if (!/^Boton_D_/.test(base)) continue
+        const b = botones.current[base]
+        if (!b.mesh.geometry.boundingBox) b.mesh.geometry.computeBoundingBox()
+        b.mesh.geometry.boundingBox!.getSize(_sz)
+        const d = Math.max(_sz.x, _sz.y, _sz.z) || 0.01
+        const mat = new THREE.SpriteMaterial({ map: ringTex, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false, depthTest: false })
+        const sp = new THREE.Sprite(mat)
+        sp.scale.setScalar(d * 1.5) // halo JUSTO sobre el botón (chico, se entiende cuál se pisa)
+        sp.position.copy(b.localCenter)
+        sp.renderOrder = 999
+        b.mesh.add(sp)
+        ringSprites.current[base] = sp
+        botonGlow.current[base] = 0
+      }
     }
 
     // --- Mapa botón → POSE que lo cubre (cobertura total con TODAS las poses) ---

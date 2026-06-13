@@ -12,10 +12,15 @@ import {
 // Bucle de render del personaje: UN solo useFrame con orden de operaciones crítico (fuelle →
 // mixer.update → morphs → brazo de bajos → poses → botones). NO partir en varios useFrame: el orden
 // importa (GOTCHAs de calibración del fuelle/brazo). Movido verbatim desde Modelo.
+// `ligero` (avatares remotos del mundo, muchos jugadores): salta los dos bloques per-frame caros (IK
+// del brazo de bajos con CCD + bucle de visuales de TODOS los botones), conservando lo visible de
+// lejos (caminar/bailar via mixer, fuelle, orientación del brazo de bajos, brazo de melodía). El
+// estudio y el jugador local NO lo usan → calidad completa.
 export function usePersonajeFrame(
   refs: RigRefs,
   fuelleAbiertoRef: React.MutableRefObject<boolean>,
   mixer: THREE.AnimationMixer | undefined,
+  ligero: boolean = false,
 ) {
   const {
     qRef, notasSonandoRef, ultimaNotaMsRef, fuelleNotaRef, aAccumRef, closeAction, cuerpoAction,
@@ -78,7 +83,7 @@ export function usePersonajeFrame(
     // se desplaza con el morph igual que en Blender (afuera), y la clava ahí (weld). Con FUELLE_ESTIRA=1
     // el objetivo es ALCANZABLE (a 1.25 quedaba fuera del alcance → se despegaba).
     const cg = cajaGrip.current
-    if (cg && bz.bones.length >= 4 && (abrir > 0.001 || cierre > 0.001)) {
+    if (!ligero && cg && bz.bones.length >= 4 && (abrir > 0.001 || cierre > 0.001)) {
       _vLm.copy(cg.dCerrar).multiplyScalar(wCerrar - cg.restW).addScaledVector(cg.dAbrir, abrirVisual)
       _vLt.copy(cg.handLocalBind).add(_vLm)
       cg.caja.updateWorldMatrix(true, false)
@@ -123,10 +128,12 @@ export function usePersonajeFrame(
     // era lo que lo DEFORMABA. No se toca ningún hueso del dedo: queda tal cual la pose. El feedback de
     // "pisada" es el ANILLO azul + el hundido del botón (abajo). Cobertura por botón vía botonHome.
 
-    // Hundir (sutil) + glow + ANILLOS de los botones pisados.
+    // Hundir (sutil) + glow + ANILLOS de los botones pisados. SALTADO en modo ligero (remotos): es el
+    // bucle más caro (recorre todos los botones cada frame tocando posición+material+sprite) y de lejos
+    // no se aprecia. El fuelle y el brazo (arriba) sí muestran que está tocando.
     const k = 1 - Math.exp(-26 * delta)
     const tPulse = performance.now() * 0.006
-    for (const [nm, b] of Object.entries(botones.current)) {
+    if (!ligero) for (const [nm, b] of Object.entries(botones.current)) {
       const activo = notasActivas.current.has(nm)
       const objetivo = activo ? b.orig.clone().add(b.sink) : b.orig
       b.mesh.position.lerp(objetivo, k)
