@@ -544,6 +544,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             <OverlaysNavegacion
                 volverAClaseParam={volverAClaseParam}
                 onVolverALaClase={volverALaClase}
+                etiquetaVolver={searchParams.get('volverLabel') || undefined}
                 vinoDeGrabaciones={replay.vinoDeGrabaciones}
                 usuarioEligioQuedarse={replay.usuarioEligioQuedarse}
                 countdownVolver={replay.countdownVolver}

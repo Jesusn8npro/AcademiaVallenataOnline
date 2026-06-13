@@ -5,6 +5,8 @@ interface OverlaysNavegacionProps {
     // Overlay "vine de la clase"
     volverAClaseParam: string | null;
     onVolverALaClase: () => void;
+    /** Texto del botón de volver (por defecto "Volver a la clase"; el mundo 3D pasa "Volver al mundo"). */
+    etiquetaVolver?: string;
     // Overlay "vine de Grabaciones"
     vinoDeGrabaciones: boolean;
     usuarioEligioQuedarse: boolean;
@@ -25,6 +27,7 @@ interface OverlaysNavegacionProps {
 const OverlaysNavegacion: React.FC<OverlaysNavegacionProps> = ({
     volverAClaseParam,
     onVolverALaClase,
+    etiquetaVolver,
     vinoDeGrabaciones,
     usuarioEligioQuedarse,
     countdownVolver,
@@ -38,10 +41,10 @@ const OverlaysNavegacion: React.FC<OverlaysNavegacionProps> = ({
                     type="button"
                     className="sim-volver-clase"
                     onClick={onVolverALaClase}
-                    aria-label="Volver a la clase"
+                    aria-label={etiquetaVolver || 'Volver a la clase'}
                 >
                     <ArrowLeft size={16} />
-                    <span>Volver a la clase</span>
+                    <span>{etiquetaVolver || 'Volver a la clase'}</span>
                 </button>
             )}
 
