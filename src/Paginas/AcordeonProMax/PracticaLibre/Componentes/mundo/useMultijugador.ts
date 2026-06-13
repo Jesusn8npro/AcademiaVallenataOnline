@@ -30,7 +30,8 @@ const HZ_MS = 90      // cada cuánto emito mi estado
 // segundo plano (que throttlea el emisor a ~1s) NO haga desaparecer a los demás jugadores.
 const TIMEOUT_MS = 6000
 
-export type NotaRemotaCb = (idBoton: string, accion: 'down' | 'up', deId: string) => void
+import type { TonoResuelto } from '../../../../../Core/audio/emisorNotasAcordeon'
+export type NotaRemotaCb = (idBoton: string, accion: 'down' | 'up', deId: string, tono?: TonoResuelto) => void
 
 export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJugador>) {
   const remotosRef = React.useRef<Map<string, RemotoEntry>>(new Map())
@@ -49,7 +50,7 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     // Notas que tocan los demás → avisar a los listeners (audio).
     ch.on('broadcast', { event: 'nota' }, ({ payload }: { payload: any }) => {
       if (!payload || payload.id === miId) return
-      listenersNotas.current.forEach((fn) => { try { fn(payload.idBoton, payload.accion, payload.id) } catch {} })
+      listenersNotas.current.forEach((fn) => { try { fn(payload.idBoton, payload.accion, payload.id, payload.tono) } catch {} })
     })
 
     ch.on('broadcast', { event: 'estado' }, ({ payload }: { payload: any }) => {
@@ -72,10 +73,13 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
       ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
     }, HZ_MS)
 
-    // Reenviar MIS notas (cuando toco una canción) para que los demás puedan oírlas. Solo 'down'
-    // (suficiente para reproducir el tono; ahorra la mitad de los mensajes).
+    // Reenviar MIS notas (cuando toco una canción) para que los demás puedan oírlas. Mandamos 'down'
+    // Y 'up': así el oyente suelta la nota EXACTO cuando yo la solté → suena fluido, sin notas pegadas
+    // (antes solo iba 'down' y el oyente la sostenía 1.5 s fijos → se amontonaban). En 'down' va el
+    // TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO, sin que su propia
+    // tonalidad/instrumento le cambie el tono.
     const offNotas = subscribirNotas((e) => {
-      if (e.accion === 'down') ch.send({ type: 'broadcast', event: 'nota', payload: { id: miId, idBoton: e.idBoton, accion: 'down' } })
+      ch.send({ type: 'broadcast', event: 'nota', payload: { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined } })
     })
 
     // Limpieza de remotos que dejaron de emitir (= se fueron).

@@ -12,6 +12,7 @@ import { subscribirNotas } from '../../../../../Core/audio/emisorNotasAcordeon'
 import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
+import TocarEnVivo from './TocarEnVivo'
 
 // Mundo multijugador con MODO CAMINANTE profesional. Controlador desacoplado (PlayerController) que
 // SOLO mueve/gira la cámara cuando isNavigationMode está activo (pointer-lock) → no choca con la
@@ -50,6 +51,19 @@ function dampAngle(cur: number, target: number, lambda: number, dt: number) {
   while (d > Math.PI) d -= Math.PI * 2
   while (d < -Math.PI) d += Math.PI * 2
   return cur + d * (1 - Math.exp(-lambda * dt))
+}
+
+// Posición de aparición DETERMINISTA a partir de un identificador estable (id de usuario): el mismo
+// usuario cae SIEMPRE en el mismo punto del mapa (en cualquier dispositivo / al recargar), y usuarios
+// distintos se reparten en un anillo (ángulo áureo) sin amontonarse en el centro. Antes era
+// Math.random() por sesión → cada quien aparecía en un sitio distinto cada vez. Hash FNV-1a.
+function spawnDeterminista(semilla: string): readonly [number, number] {
+  let h = 2166136261
+  for (let i = 0; i < semilla.length; i++) { h ^= semilla.charCodeAt(i); h = Math.imul(h, 16777619) }
+  h >>>= 0
+  const ang = (h % 100000) / 100000 * Math.PI * 2
+  const rad = 6 + ((h >>> 13) % 700) / 100 // anillo 6..13 m del centro
+  return [Math.cos(ang) * rad, Math.sin(ang) * rad] as const
 }
 
 // Escena: suelo + árboles + rocas + arbustos + flores + laguna. Low-poly, PRNG, centro libre.
@@ -124,8 +138,9 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
   )
 }
 
-// Avatar de OTRO usuario: interpola pos/rot y replica personaje + animación + nombre + 🎵.
-function AvatarRemoto({ id, remotosRef, escuchando }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean }) {
+// Avatar de OTRO usuario: interpola pos/rot y replica personaje + animación + nombre + 🎵 + ANIMA
+// los dedos/fuelle de lo que ESE jugador está tocando (notas de la red filtradas por su id).
+function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
   const ent0 = remotosRef.current.get(id)
@@ -134,6 +149,29 @@ function AvatarRemoto({ id, remotosRef, escuchando }: { id: string; remotosRef: 
   const [nombre, setNombre] = React.useState(ent0?.target.nombre ?? '')
   const [tocando, setTocando] = React.useState(false)
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
+
+  // Fuente de notas SOLO de este jugador → el Modelo anima sus dedos/fuelle. Reconstruye el evento que
+  // espera useNotasSuscripcion (fuelle según el id) y AUTO-SUELTA a los 3 s si un 'up' se pierde en la
+  // red (sin esto la nota se quedaría pegada: dedo hundido + fuelle abierto para siempre).
+  const fuenteNotas = React.useCallback((cb: (e: { idBoton: string; fuelle: 'abriendo' | 'cerrando'; accion: 'down' | 'up'; t: number }) => void) => {
+    const safety = new Map<string, ReturnType<typeof setTimeout>>()
+    const emitir = (idBoton: string, accion: 'down' | 'up') =>
+      cb({ idBoton, fuelle: idBoton.includes('-halar') ? 'abriendo' : 'cerrando', accion, t: performance.now() })
+    const off = suscribirNotasRemotas((idBoton, accion, deId) => {
+      if (deId !== id) return
+      if (accion === 'down') {
+        const prev = safety.get(idBoton)
+        if (prev) { clearTimeout(prev); emitir(idBoton, 'up') } // re-trigger limpio
+        emitir(idBoton, 'down')
+        safety.set(idBoton, setTimeout(() => { safety.delete(idBoton); emitir(idBoton, 'up') }, 3000))
+      } else {
+        const prev = safety.get(idBoton)
+        if (!prev) return // ya soltada (p.ej. por el safety) → no doble 'up'
+        clearTimeout(prev); safety.delete(idBoton); emitir(idBoton, 'up')
+      }
+    })
+    return () => { off(); safety.forEach(clearTimeout); safety.clear() }
+  }, [suscribirNotasRemotas, id])
 
   React.useEffect(() => {
     const e = remotosRef.current.get(id)
@@ -158,7 +196,7 @@ function AvatarRemoto({ id, remotosRef, escuchando }: { id: string; remotosRef: 
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} />
       </AnclaPies>
     </group>
   )
@@ -168,11 +206,12 @@ function AvatarRemoto({ id, remotosRef, escuchando }: { id: string; remotosRef: 
 // (pointer-lock): WASD/flechas mueven con velocidad amortiguada, el mouse orbita la cámara 360°, la
 // rueda acerca/aleja (hasta 1ª persona). Fuera del modo, no mueve nada y la cámara queda quieta
 // detrás del personaje (cursor libre para la interfaz). Colisión suave con remotos (no bloquea).
-function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef }: {
+function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef, semillaSpawn, bloquearTecladoRef }: {
   personajeId: string; skin: string; baile: string | null; nombre: string; vistaModo: string
   lastNoteRef: React.MutableRefObject<number>; estadoLocalRef: React.MutableRefObject<EstadoJugador>
   remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; onSeleccionarJugador?: (id: string) => void
-  moveRef: React.MutableRefObject<{ fwd: number; side: number }>
+  moveRef: React.MutableRefObject<{ fwd: number; side: number }>; semillaSpawn: string
+  bloquearTecladoRef: React.MutableRefObject<boolean>
 }) {
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
@@ -202,7 +241,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const _d = React.useRef(new THREE.Vector3())
   const _tgt = React.useRef(new THREE.Vector3())
 
-  const spawn = React.useMemo(() => { const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 3; return [Math.cos(a) * r, Math.sin(a) * r] as const }, [])
+  const spawn = React.useMemo(() => spawnDeterminista(semillaSpawn), [semillaSpawn])
   React.useEffect(() => {
     if (grupo.current) grupo.current.position.set(spawn[0], 0, spawn[1])
     estadoLocalRef.current.x = spawn[0]; estadoLocalRef.current.z = spawn[1]
@@ -298,9 +337,12 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     // Direcciones relativas al yaw de la cámara. (right invertido → A/D en el sentido natural.)
     const fwd = _f.current.set(Math.sin(yaw.current), 0, Math.cos(yaw.current))
     const right = _r.current.set(-Math.cos(yaw.current), 0, Math.sin(yaw.current))
-    // Teclado + joystick analógico (móvil) sumados.
-    const iz = (t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0) + moveRef.current.fwd
-    const ix = (t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0) + moveRef.current.side
+    // Teclado + joystick analógico (móvil) sumados. Si el panel "Tocar en vivo" está abierto, el
+    // teclado toca el acordeón (W/A/S/D son notas) → ignoramos las teclas de movimiento (el joystick
+    // móvil sigue funcionando). Es el "modo tocar": para caminar de nuevo se cierra el panel.
+    const kb = bloquearTecladoRef.current ? 0 : 1
+    const iz = kb * ((t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0)) + moveRef.current.fwd
+    const ix = kb * ((t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0)) + moveRef.current.side
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)
     const mag = desired.length() // analógico: joystick a medias = camina más lento; clamp a 1 = full
     if (mag > 1e-4) desired.multiplyScalar(((mag > 1 ? 1 / mag : 1)) * VEL)
@@ -375,19 +417,52 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   )
 }
 
-// Motor de audio "OYENTE": un useLogicaAcordeon headless (carga los samples) que reproduce las notas
-// que tocan los DEMÁS (recibidas por la red) → así escuchas a los otros usuarios tocar. Vive fuera del
-// Canvas (es audio, no 3D). El volumen ajusta el maestro del motor. Solo llama reproduceTono (audio
-// puro): no toca el store de botones ni emite notas → no anima ni interfiere con tu avatar.
+// Motor de audio "OYENTE": un useLogicaAcordeon headless (carga los samples / el banco) que reproduce
+// las notas que tocan los DEMÁS (recibidas por la red) → así escuchas a los otros usuarios tocar. Vive
+// fuera del Canvas (es audio, no 3D). El volumen ajusta el maestro del motor. Reproduce el TONO que
+// viajó en cada nota (muestra+semitonos del que tocó) → audio puro vía motorAudioPro: no toca el store
+// de botones ni emite notas → no anima ni interfiere con tu avatar.
 function OyenteRemoto({ suscribir, volumen, escuchandoRef }: { suscribir: (cb: NotaRemotaCb) => () => void; volumen: number; escuchandoRef: React.MutableRefObject<Set<string>> }) {
-  const logica = useLogicaAcordeon({ deshabilitarInteraccion: false })
+  // deshabilitarInteraccion: true → NO atiende el teclado físico (si no, al teclear o tocar en vivo
+  // este motor también dispararía/broadcastearía notas). Igual reproduce audio: reproduceTono y
+  // motorAudioPro.reproducir NO miran ese flag.
+  const logica = useLogicaAcordeon({ deshabilitarInteraccion: true })
   React.useEffect(() => { try { motorAudioPro.setVolumenMaestro(volumen) } catch {} }, [volumen])
-  React.useEffect(() => suscribir((idBoton, accion, deId) => {
-    // Solo suena lo de los jugadores que ELEGISTE escuchar (clic en su avatar). Se pasa una DURACIÓN
-    // (3er arg) para que la nota se AUTO-SUELTE: sin esto el acordeón sostiene el tono para siempre
-    // (notas pegadas), porque solo broadcasteamos 'down' (no 'up').
-    if (accion === 'down' && escuchandoRef.current.has(deId)) { try { logica.reproduceTono(idBoton, undefined, 1.5) } catch {} }
-  }), [suscribir, logica, escuchandoRef])
+  React.useEffect(() => {
+    // Notas SONANDO ahora mismo, indexadas por (jugador:botón). 'down' arranca el tono igual que al
+    // tocar en vivo (sin duración fija) y guarda sus instancias; 'up' las detiene → la nota dura
+    // EXACTO lo que el otro la sostuvo, fluido y sin pegarse. Temporizador de seguridad por si un 'up'
+    // se pierde en la red (broadcast no es fiable): suelta la nota a los 3 s como tope.
+    const activas = new Map<string, { instances: any[]; safety: ReturnType<typeof setTimeout> }>()
+    const soltar = (clave: string) => {
+      const v = activas.get(clave)
+      if (!v) return
+      clearTimeout(v.safety)
+      v.instances.forEach((inst) => { try { motorAudioPro.detener(inst, 0.04) } catch {} })
+      activas.delete(clave)
+    }
+    const off = suscribir((idBoton, accion, deId, tono) => {
+      if (!escuchandoRef.current.has(deId)) return
+      const clave = deId + ':' + idBoton
+      if (accion === 'down') {
+        soltar(clave) // re-trigger limpio: corta la anterior si seguía sonando
+        // Reproducir el TONO EXACTO que tocó el otro (muestra + semitonos que viajaron en el evento) →
+        // suena en el MISMO tono sin importar la tonalidad/instrumento de ESTE cliente. Si no llegó el
+        // tono (o el banco no está cargado aquí), caemos a la resolución local (puede sonar transpuesto).
+        let instances: any[] = []
+        if (tono && tono.samples?.length) {
+          instances = tono.samples
+            .map((s) => motorAudioPro.reproducir(s.idSonido, tono.bancoId, tono.volumen, s.semitonos, false))
+            .filter(Boolean)
+        }
+        if (instances.length === 0) { try { instances = logica.reproduceTono(idBoton).instances || [] } catch {} }
+        activas.set(clave, { instances, safety: setTimeout(() => soltar(clave), 3000) })
+      } else {
+        soltar(clave)
+      }
+    })
+    return () => { off(); Array.from(activas.keys()).forEach(soltar) }
+  }, [suscribir, logica, escuchandoRef])
   return null
 }
 
@@ -456,6 +531,9 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   }, [])
 
   const nombre = React.useMemo(() => (usuario as any)?.nombre || (usuario as any)?.nombre_usuario || 'Acordeonista-' + Math.random().toString(36).slice(2, 5), [usuario])
+  // Semilla del spawn DETERMINISTA: id de usuario logueado (mismo punto siempre, en cualquier
+  // dispositivo) o, sin login, el nombre de la sesión (estable mientras dure).
+  const semillaSpawn = React.useMemo(() => String((usuario as any)?.id || nombre), [usuario, nombre])
 
   const lastNoteRef = React.useRef(0)
   React.useEffect(() => subscribirNotas((e) => { if (e.accion === 'down') lastNoteRef.current = performance.now() }), [])
@@ -472,6 +550,12 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
     setEscuchando((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   }, [])
 
+  // "Tocar en vivo": al abrir el panel, el teclado toca el acordeón → bloqueamos el movimiento por
+  // teclado (ref para no re-registrar el useFrame del PlayerController).
+  const [tocarAbierto, setTocarAbierto] = React.useState(false)
+  const bloquearTecladoRef = React.useRef(false)
+  React.useEffect(() => { bloquearTecladoRef.current = tocarAbierto }, [tocarAbierto])
+
   return (
     <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'linear-gradient(#add0e6, #cfe6d0)' }}>
       {/* Motor de audio oyente (fuera del Canvas; reproduce lo que tocan los jugadores elegidos). */}
@@ -483,12 +567,12 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           <ambientLight intensity={0.65} />
           <directionalLight position={[10, 16, 8]} intensity={1.2} />
           <Escena />
-          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={toggleEscuchar} moveRef={moveRef} />
+          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={toggleEscuchar} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} />
           {/* Cada avatar remoto en su PROPIO Suspense: si uno nuevo entra con un personaje aún no
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
             <React.Suspense key={id} fallback={null}>
-              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} />
+              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} />
             </React.Suspense>
           ))}
         </React.Suspense>
@@ -513,8 +597,25 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         )}
       </div>
 
+      {/* Botón Tocar en vivo */}
+      <button
+        type="button"
+        onClick={() => setTocarAbierto((v) => !v)}
+        style={{ position: 'absolute', top: 92, right: 16, display: 'flex', alignItems: 'center', gap: 6, background: tocarAbierto ? '#ff7a18' : 'rgba(0,0,0,.5)', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 14px', fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+        title="Tocar el acordeón en vivo"
+      >
+        🎹 {tocarAbierto ? 'Cerrar' : 'Tocar'}
+      </button>
+
+      {/* Panel "Tocar en vivo": acordeón jugable. Centrado abajo, sobre el HUD. */}
+      {tocarAbierto && (
+        <div style={{ position: 'absolute', left: '50%', bottom: bottomBase, transform: 'translateX(-50%)', zIndex: 50, maxWidth: 'calc(100% - 16px)' }}>
+          <TocarEnVivo onCerrar={() => setTocarAbierto(false)} ancho={compacto ? 320 : 460} />
+        </div>
+      )}
+
       {/* Joystick táctil (móvil) */}
-      {tactil && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
+      {tactil && !tocarAbierto && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
 
       {/* HUD inferior: instrucciones + selector de vistas */}
       <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif', maxWidth: 'calc(100% - 180px)' }}>

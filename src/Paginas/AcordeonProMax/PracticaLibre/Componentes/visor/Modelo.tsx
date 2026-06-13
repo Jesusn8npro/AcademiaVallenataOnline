@@ -3,6 +3,7 @@ import * as React from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { clone as clonarConEsqueleto } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { PERSONAJES, ACORDEON_GLB } from '../../personajes'
 import { BAILES_GLB } from '../../animaciones'
 import { RE_HUESOS_BRAZO, restPoseDe, rebasarClip } from './rigUtils'
@@ -12,7 +13,7 @@ import { useAcopleAcordeon } from './useAcopleAcordeon'
 import { useSetupPersonaje } from './useSetupPersonaje'
 import { useBailes } from './useBailes'
 import { usePielesAcordeon } from './usePielesAcordeon'
-import { useNotasSuscripcion } from './useNotasSuscripcion'
+import { useNotasSuscripcion, FuenteNotas } from './useNotasSuscripcion'
 import { usePersonajeFrame } from './usePersonajeFrame'
 
 // Arquitectura: personaje (GLB liviano, rig mixamorig:, acción 'Cierre' horneada con el brazo
@@ -25,9 +26,15 @@ import { usePersonajeFrame } from './usePersonajeFrame'
 
 useGLTF.setDecoderPath('/draco/')
 
-export function Modelo({ fuelleAbiertoRef, skin, glb, baile }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null }) {
+export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas }) {
   const grupo = React.useRef<THREE.Group>(null!)
-  const { scene, animations } = useGLTF(glb) as any
+  const { scene: sceneCacheada, animations } = useGLTF(glb) as any
+  // useGLTF cachea y devuelve la MISMA escena por URL. En el mundo multijugador varios avatares pueden
+  // usar el mismo personaje (o un remoto recién entrado cae en el personaje por defecto antes de recibir
+  // el suyo): montar esa única escena en dos <primitive> hace que three.js solo la coloque en UNO → el
+  // otro DESAPARECE; además los hooks de setup mutan la escena compartida. Clonamos por instancia
+  // (SkeletonUtils preserva huesos y nombres → los clips se siguen ligando por nombre).
+  const scene = React.useMemo(() => clonarConEsqueleto(sceneCacheada) as THREE.Group, [sceneCacheada])
   const acordeonGltf = useGLTF(ACORDEON_GLB) as any
   const bailesGltf = useGLTF(BAILES_GLB) as any
   const { mixer } = useAnimations(animations, scene)
@@ -92,7 +99,7 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile }: { fuelleAbiertoRe
   useSetupPersonaje(refs, { scene, acordeon, mixer, clipBrazos, clipCuerpo, camera })
   useBailes(refs, { mixer, scene, baile, clipsBaile })
   usePielesAcordeon(refs, acordeon, skin)
-  useNotasSuscripcion(refs)
+  useNotasSuscripcion(refs, fuenteNotas)
   usePersonajeFrame(refs, fuelleAbiertoRef, mixer)
 
   return <primitive ref={grupo} object={scene} />
