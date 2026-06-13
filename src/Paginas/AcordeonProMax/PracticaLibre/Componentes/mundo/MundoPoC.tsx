@@ -134,12 +134,64 @@ function AnclaPies({ claveMedicion, children }: { claveMedicion: string; childre
       // setFromObject da bbox en MUNDO; el offset es LOCAL. Restamos la pos mundo del grupo (S) para
       // centrar el personaje SOBRE su grupo esté donde esté (sin esto se va volando al origen del mundo).
       const S = g.getWorldPosition(new THREE.Vector3())
-      g.position.set(S.x - c.x, S.y - box.min.y, S.z - c.z)
+      const offset = new THREE.Vector3(S.x - c.x, S.y - box.min.y, S.z - c.z)
+      // El padre (grupo del jugador) puede estar GIRADO (rotation.y al caminar). El offset está en
+      // MUNDO; hay que llevarlo al frame LOCAL del padre. Sin esto, al RE-medir tras cambiar de
+      // personaje con el cuerpo girado, el offset se aplica torcido → el personaje se descoloca/aleja
+      // y parece que se rompe la navegación. (Al aparecer rotation.y=0, por eso solo fallaba al cambiar.)
+      const padre = g.parent
+      if (padre) offset.applyQuaternion(padre.getWorldQuaternion(new THREE.Quaternion()).invert())
+      g.position.copy(offset)
     }
     raf = requestAnimationFrame(medir)
     return () => cancelAnimationFrame(raf)
   }, [claveMedicion])
   return <group ref={ref}>{children}</group>
+}
+
+// Efecto de aparición/desaparición de un jugador: ráfaga de partículas brillantes (chispas) que suben
+// desde el suelo y se desvanecen (~1.2 s) y luego se auto-desmonta. 'aparecer' = doradas, 'desaparecer'
+// = celestes. Aditivo, points → cero impacto en el layout/diseño. Se monta como overlay efímero.
+const EF_N = 64
+const EF_DUR = 1.2
+function EfectoJugador({ pos, tipo, onDone }: { pos: [number, number, number]; tipo: 'aparecer' | 'desaparecer'; onDone: () => void }) {
+  const ref = React.useRef<THREE.Points>(null!)
+  const t = React.useRef(0)
+  const { base, vel, geom } = React.useMemo(() => {
+    const base = new Float32Array(EF_N * 3)
+    const vel: number[][] = []
+    for (let i = 0; i < EF_N; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.random() * 0.35
+      base[i * 3] = Math.cos(a) * r; base[i * 3 + 1] = Math.random() * 0.25; base[i * 3 + 2] = Math.sin(a) * r
+      vel.push([Math.cos(a) * (0.25 + Math.random() * 0.5), 1.3 + Math.random() * 1.9, Math.sin(a) * (0.25 + Math.random() * 0.5)])
+    }
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.BufferAttribute(base.slice(), 3))
+    return { base, vel, geom }
+  }, [])
+  React.useEffect(() => () => geom.dispose(), [geom])
+  useFrame((_, dt) => {
+    t.current += dt
+    const k = t.current / EF_DUR
+    if (k >= 1) { onDone(); return }
+    const arr = geom.attributes.position.array as Float32Array
+    const tt = t.current
+    for (let i = 0; i < EF_N; i++) {
+      const v = vel[i]
+      arr[i * 3] = base[i * 3] + v[0] * tt
+      arr[i * 3 + 1] = base[i * 3 + 1] + v[1] * tt - 0.8 * tt * tt // sube y cae un poco (gravedad suave)
+      arr[i * 3 + 2] = base[i * 3 + 2] + v[2] * tt
+    }
+    geom.attributes.position.needsUpdate = true
+    const m = ref.current.material as THREE.PointsMaterial
+    m.opacity = 1 - k
+    m.size = 0.14 * (1 - k * 0.4)
+  })
+  return (
+    <points ref={ref} position={pos} geometry={geom}>
+      <pointsMaterial color={tipo === 'desaparecer' ? '#7bdfff' : '#ffd36b'} size={0.14} transparent opacity={1} depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
+    </points>
+  )
 }
 
 // Etiqueta flotante (nombre + 🎵) de tamaño constante sobre la cabeza.
@@ -155,7 +207,7 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
 
 // Avatar de OTRO usuario: interpola pos/rot y replica personaje + animación + nombre + 🎵 + ANIMA
 // los dedos/fuelle de lo que ESE jugador está tocando (notas de la red filtradas por su id).
-function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void }) {
+function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>> }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look), calculado desde 'mira' de la red
@@ -208,6 +260,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { i
     if (ent.target.personajeId && ent.target.personajeId !== personajeId) setPersonajeId(ent.target.personajeId)
     if (ent.target.nombre !== nombre) setNombre(ent.target.nombre)
     if (ent.target.tocando !== tocando) setTocando(ent.target.tocando)
+    posRemotosRef.current.set(id, [g.position.x, g.position.z]) // última posición → efecto al irse
   })
 
   return (
@@ -576,6 +629,30 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const estadoLocalRef = React.useRef<EstadoJugador>({ x: 0, z: 0, ry: 0, personajeId, anim: null, nombre, tocando: false, mira: 0 })
   const { remotos, remotosRef, suscribirNotasRemotas } = useMultijugador(estadoLocalRef)
 
+  // Efectos de aparición/desaparición de jugadores (partículas). Diff de la lista de remotos: el que
+  // ENTRA → chispas doradas en su spawn; el que SALE → chispas celestes en su última posición.
+  const posRemotosRef = React.useRef<Map<string, [number, number]>>(new Map())
+  const prevRemotosRef = React.useRef<string[]>([])
+  const [efectos, setEfectos] = React.useState<Array<{ key: number; pos: [number, number, number]; tipo: 'aparecer' | 'desaparecer' }>>([])
+  const keyEfectoRef = React.useRef(0)
+  React.useEffect(() => {
+    const prev = prevRemotosRef.current
+    const nuevos: Array<{ key: number; pos: [number, number, number]; tipo: 'aparecer' | 'desaparecer' }> = []
+    for (const id of remotos) {
+      if (prev.includes(id)) continue
+      const e = remotosRef.current.get(id)
+      if (e) nuevos.push({ key: keyEfectoRef.current++, pos: [e.target.x, 0, e.target.z], tipo: 'aparecer' })
+    }
+    for (const id of prev) {
+      if (remotos.includes(id)) continue
+      const p = posRemotosRef.current.get(id)
+      if (p) { nuevos.push({ key: keyEfectoRef.current++, pos: [p[0], 0, p[1]], tipo: 'desaparecer' }); posRemotosRef.current.delete(id) }
+    }
+    if (nuevos.length) setEfectos((es) => [...es, ...nuevos])
+    prevRemotosRef.current = remotos
+  }, [remotos, remotosRef])
+  const quitarEfecto = React.useCallback((key: number) => setEfectos((es) => es.filter((e) => e.key !== key)), [])
+
   // Audio de los demás POR JUGADOR: clic en un avatar → lo escuchas (toggle). + volumen.
   const [escuchando, setEscuchando] = React.useState<Set<string>>(new Set())
   const escuchandoRef = React.useRef(escuchando)
@@ -615,8 +692,12 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
             <React.Suspense key={id} fallback={null}>
-              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} />
+              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} posRemotosRef={posRemotosRef} />
             </React.Suspense>
+          ))}
+          {/* Efectos de partículas al entrar/salir un jugador (efímeros, se auto-desmontan). */}
+          {efectos.map((ef) => (
+            <EfectoJugador key={ef.key} pos={ef.pos} tipo={ef.tipo} onDone={() => quitarEfecto(ef.key)} />
           ))}
         </React.Suspense>
       </Canvas>
