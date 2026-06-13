@@ -130,18 +130,22 @@ function AnclaPies({ claveMedicion, children }: { claveMedicion: string; childre
       g.position.set(0, 0, 0); g.updateWorldMatrix(true, true)
       const box = new THREE.Box3().setFromObject(g)
       if (box.isEmpty()) { raf = requestAnimationFrame(medir); return }
-      const c = box.getCenter(new THREE.Vector3())
-      // setFromObject da bbox en MUNDO; el offset es LOCAL. Restamos la pos mundo del grupo (S) para
-      // centrar el personaje SOBRE su grupo esté donde esté (sin esto se va volando al origen del mundo).
-      const S = g.getWorldPosition(new THREE.Vector3())
-      const offset = new THREE.Vector3(S.x - c.x, S.y - box.min.y, S.z - c.z)
-      // El padre (grupo del jugador) puede estar GIRADO (rotation.y al caminar). El offset está en
-      // MUNDO; hay que llevarlo al frame LOCAL del padre. Sin esto, al RE-medir tras cambiar de
-      // personaje con el cuerpo girado, el offset se aplica torcido → el personaje se descoloca/aleja
-      // y parece que se rompe la navegación. (Al aparecer rotation.y=0, por eso solo fallaba al cambiar.)
+      // EJE DE GIRO = hueso HIPS (caderas), NO el centro del bbox. El bbox incluye el ACORDEÓN (sale
+      // hacia adelante) → centrarlo dejaba el CUERPO descentrado respecto al grupo, así que al girar
+      // caminando el cuerpo ORBITABA el grupo (giros bruscos, "no gira sobre su eje"). Con las caderas
+      // como eje, gira sobre sí mismo. Todo se calcula en el frame LOCAL del padre (grupo), por eso es
+      // independiente de la rotación del cuerpo (antes el offset de mundo aplicado como local se torcía
+      // al cambiar de personaje con el cuerpo girado).
+      let hips: THREE.Object3D | null = null
+      g.traverse((o: any) => { if (!hips && o.isBone && /Hips$/.test(o.name || '')) hips = o })
+      const eje = new THREE.Vector3()
+      if (hips) (hips as THREE.Object3D).getWorldPosition(eje)
+      else box.getCenter(eje)
       const padre = g.parent
-      if (padre) offset.applyQuaternion(padre.getWorldQuaternion(new THREE.Quaternion()).invert())
-      g.position.copy(offset)
+      const invP = new THREE.Matrix4().copy(padre ? padre.matrixWorld : g.matrixWorld).invert()
+      const ejeLocal = eje.clone().applyMatrix4(invP)                                  // caderas en frame del grupo
+      const piesLocalY = new THREE.Vector3(eje.x, box.min.y, eje.z).applyMatrix4(invP).y // pies en frame del grupo
+      g.position.set(-ejeLocal.x, -piesLocalY, -ejeLocal.z)
     }
     raf = requestAnimationFrame(medir)
     return () => cancelAnimationFrame(raf)
@@ -652,6 +656,17 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
     prevRemotosRef.current = remotos
   }, [remotos, remotosRef])
   const quitarEfecto = React.useCallback((key: number) => setEfectos((es) => es.filter((e) => e.key !== key)), [])
+
+  // Efecto de partículas cuando TÚ cambias de personaje (chispas doradas en tu posición actual) →
+  // la transición se siente menos brusca. Salta el primer montaje (no es un cambio).
+  const prevPersonajeLocalRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (prevPersonajeLocalRef.current !== null && prevPersonajeLocalRef.current !== personajeId) {
+      const s = estadoLocalRef.current
+      setEfectos((es) => [...es, { key: keyEfectoRef.current++, pos: [s.x, 0, s.z], tipo: 'aparecer' }])
+    }
+    prevPersonajeLocalRef.current = personajeId
+  }, [personajeId])
 
   // Audio de los demás POR JUGADOR: clic en un avatar → lo escuchas (toggle). + volumen.
   const [escuchando, setEscuchando] = React.useState<Set<string>>(new Set())
