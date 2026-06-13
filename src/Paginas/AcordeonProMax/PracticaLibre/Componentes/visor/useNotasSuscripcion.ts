@@ -1,7 +1,12 @@
 import * as React from 'react'
 import { RigRefs } from './useRigRefs'
-import { subscribirNotas } from '../../../../../Core/audio/emisorNotasAcordeon'
+import { subscribirNotas, EventoNotaAcordeon } from '../../../../../Core/audio/emisorNotasAcordeon'
 import { keyDeId, botonAPose } from './mapas'
+
+// Fuente de notas: por defecto el emisor global (las notas que toca ESTE cliente). En el mundo
+// multijugador, un avatar REMOTO recibe una fuente propia que solo trae las notas de SU jugador (de
+// la red) → cada avatar anima lo que toca su dueño, no lo que toca el local.
+export type FuenteNotas = (cb: (e: EventoNotaAcordeon) => void) => () => void
 
 // Logs de tuneo de poses: solo en desarrollo. En producción no se filtran a la consola del usuario
 // ni inundan el log en cada nota (hardening + rendimiento).
@@ -9,14 +14,15 @@ const DEBUG_PERSONAJE = process.env.NODE_ENV !== 'production'
 
 // Suscripción a las notas reales: marca/desmarca el botón que suena, rastrea el fuelleo y elige la
 // pose objetivo de la mano de melodía. Movido verbatim desde Modelo.
-export function useNotasSuscripcion(refs: RigRefs) {
+export function useNotasSuscripcion(refs: RigRefs, fuenteNotas?: FuenteNotas) {
   const {
     fuelleNotaRef, notasSonandoRef, ultimaNotaMsRef, notaAMesh, botonRegion,
     regionTargetRef, melodiaSonandoRef, ultimaMelodiaMsRef, melodyPoseRef, botonHome, notasActivas,
   } = refs
 
   React.useEffect(() => {
-    const off = subscribirNotas((e) => {
+    const suscribir = fuenteNotas ?? subscribirNotas
+    const off = suscribir((e) => {
       // Fuelleo: rastrear dirección + cuántas notas suenan (aunque el botón no mapee a una malla).
       if (e.accion === 'down') { fuelleNotaRef.current = e.fuelle; notasSonandoRef.current++; ultimaNotaMsRef.current = performance.now() }
       else notasSonandoRef.current = Math.max(0, notasSonandoRef.current - 1)
@@ -47,5 +53,5 @@ export function useNotasSuscripcion(refs: RigRefs) {
       else notasActivas.current.delete(nombre)
     })
     return off
-  }, [])
+  }, [fuenteNotas])
 }

@@ -406,7 +406,9 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 onNotaPresionada?.({ idBoton: id, nombre: id });
                 // Además del callback prop existente, emitimos al pub/sub global para que cualquier
                 // grabador suscrito (ej. el del reproductor de pista del alumno) capture la nota.
-                emitirNota(id, 'down');
+                // Incluimos el TONO ya resuelto → un cliente remoto (mundo multijugador) reproduce
+                // EXACTAMENTE el mismo sonido sin depender de su propia tonalidad/instrumento.
+                emitirNota(id, 'down', resolverTono(id));
             }
         } else {
             if (!botonesActivosRef.current[id]) return;
@@ -427,7 +429,7 @@ export const useLogicaAcordeon = (props: AcordeonSimuladorProps = {}) => {
                 emitirNota(id, 'up');
             }
         }
-    }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono]);
+    }, [onNotaPresionada, onNotaLiberada, reproducirTono, detenerTono, resolverTono]);
 
     const limpiarTodasLasNotas = useCallback(() => {
         motorAudioPro.detenerTodo(0.02);
