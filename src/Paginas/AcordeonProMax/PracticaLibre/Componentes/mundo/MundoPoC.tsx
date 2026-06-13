@@ -58,13 +58,13 @@ function Escena() {
     const rnd = prng(7)
     const enAnillo = (min: number) => { const a = rnd() * Math.PI * 2, r = min + rnd() * (LIMITE - min - 2); return [Math.cos(a) * r, Math.sin(a) * r] as [number, number] }
     const arboles: { p: [number, number]; h: number; r: number; c: number }[] = []
-    for (let i = 0; i < 90; i++) arboles.push({ p: enAnillo(8), h: 2.4 + rnd() * 3.4, r: 0.9 + rnd() * 1.1, c: rnd() })
+    for (let i = 0; i < 50; i++) arboles.push({ p: enAnillo(8), h: 2.4 + rnd() * 3.4, r: 0.9 + rnd() * 1.1, c: rnd() })
     const rocas: { p: [number, number]; s: number }[] = []
-    for (let i = 0; i < 30; i++) rocas.push({ p: enAnillo(6), s: 0.4 + rnd() * 1.2 })
+    for (let i = 0; i < 16; i++) rocas.push({ p: enAnillo(6), s: 0.4 + rnd() * 1.2 })
     const arbustos: { p: [number, number]; s: number; c: number }[] = []
-    for (let i = 0; i < 40; i++) arbustos.push({ p: enAnillo(5), s: 0.5 + rnd() * 0.7, c: rnd() })
+    for (let i = 0; i < 22; i++) arbustos.push({ p: enAnillo(5), s: 0.5 + rnd() * 0.7, c: rnd() })
     const flores: { p: [number, number]; c: number }[] = []
-    for (let i = 0; i < 70; i++) flores.push({ p: enAnillo(3), c: rnd() })
+    for (let i = 0; i < 30; i++) flores.push({ p: enAnillo(3), c: rnd() })
     return { arboles, rocas, arbustos, flores }
   }, [])
   const FLOR = ['#e85d75', '#f2c14e', '#7b8cde', '#e8743b', '#d36bd8']
@@ -391,7 +391,7 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef }: { suscribir: (cb: N
 
 // Joystick en pantalla (móvil): el pulgar lo arrastra y escribe un vector analógico {fwd, side} en
 // moveRef, que el PlayerController suma al teclado. Pointer events → sirve con dedo y con mouse.
-function Joystick({ moveRef }: { moveRef: React.MutableRefObject<{ fwd: number; side: number }> }) {
+function Joystick({ moveRef, bottom = 24 }: { moveRef: React.MutableRefObject<{ fwd: number; side: number }>; bottom?: number }) {
   const base = React.useRef<HTMLDivElement>(null)
   const [knob, setKnob] = React.useState({ x: 0, y: 0 })
   const activo = React.useRef(false)
@@ -414,7 +414,7 @@ function Joystick({ moveRef }: { moveRef: React.MutableRefObject<{ fwd: number; 
       onPointerMove={mover}
       onPointerUp={fin}
       onPointerCancel={fin}
-      style={{ position: 'absolute', left: 24, bottom: 24, width: 116, height: 116, borderRadius: '50%', background: 'rgba(0,0,0,.22)', border: '2px solid rgba(255,255,255,.3)', touchAction: 'none', zIndex: 30 }}
+      style={{ position: 'absolute', left: 24, bottom, width: 116, height: 116, borderRadius: '50%', background: 'rgba(0,0,0,.22)', border: '2px solid rgba(255,255,255,.3)', touchAction: 'none', zIndex: 30 }}
     >
       <div style={{ position: 'absolute', left: '50%', top: '50%', width: 50, height: 50, marginLeft: -25, marginTop: -25, transform: `translate(${knob.x}px, ${knob.y}px)`, borderRadius: '50%', background: 'rgba(255,255,255,.5)', pointerEvents: 'none' }} />
     </div>
@@ -432,7 +432,8 @@ const EnvMundo: React.FC = () => {
   return null
 }
 
-export default function MundoPoC() {
+export default function MundoPoC({ compacto = false }: { compacto?: boolean } = {}) {
+  const bottomBase = compacto ? 78 : 16 // deja libre el menú inferior de la app en móvil
   const { personajeId, skin, baile } = usePersonajeEstudio()
   const { usuario } = useUsuario()
   const [vistaModo, setVistaModo] = React.useState('tercera')
@@ -473,7 +474,7 @@ export default function MundoPoC() {
     <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'linear-gradient(#add0e6, #cfe6d0)' }}>
       {/* Motor de audio oyente (fuera del Canvas; reproduce lo que tocan los jugadores elegidos). */}
       {escuchando.size > 0 && <OyenteRemoto suscribir={suscribirNotasRemotas} volumen={volumen} escuchandoRef={escuchandoRef} />}
-      <Canvas camera={{ position: [0, 2, 5], fov: 48 }} dpr={[1, 1.25]}>
+      <Canvas camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
         <React.Suspense fallback={null}>
           <EnvMundo />
           <fog attach="fog" args={['#bcd9d2', 38, 120]} />
@@ -511,10 +512,10 @@ export default function MundoPoC() {
       </div>
 
       {/* Joystick táctil (móvil) */}
-      {tactil && <Joystick moveRef={moveRef} />}
+      {tactil && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
 
       {/* HUD inferior: instrucciones + selector de vistas */}
-      <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: 16, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif', maxWidth: 'calc(100% - 180px)' }}>
         <div style={{ color: '#fff', background: 'rgba(0,0,0,.5)', padding: '7px 12px', borderRadius: 9, fontSize: 13, width: 'fit-content' }}>
           {tactil
             ? <><b>Joystick</b> caminar · <b>arrastra</b> para mirar · <b>pellizca</b> zoom · <b>tap</b> a un jugador para oírlo</>
