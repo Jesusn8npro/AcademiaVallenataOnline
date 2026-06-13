@@ -262,6 +262,70 @@
   justify-content: center;
 }
 
+/* ===== Reproductor de grabaciones (en el panel derecho) ===== */
+.replay-3d-panel { display: flex; flex-direction: column; gap: 8px; }
+
+.replay-3d-activa {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(79, 107, 255, 0.4);
+  background: rgba(79, 107, 255, 0.08);
+}
+.replay-3d-activa-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.replay-3d-activa-titulo { font-size: 13px; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.replay-3d-transporte { display: flex; align-items: center; gap: 8px; }
+
+.replay-3d-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 12, 24, 0.6); color: #e8ecff;
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.replay-3d-btn:hover { background: rgba(24, 28, 48, 0.85); border-color: rgba(255, 255, 255, 0.26); }
+.replay-3d-btn.primaria { background: #4f6bff; border-color: #4f6bff; color: #fff; }
+.replay-3d-btn.primaria:hover { background: #3f5bf0; }
+.replay-3d-btn:disabled { opacity: 0.45; cursor: default; }
+
+.replay-3d-tiempo { font-variant-numeric: tabular-nums; font-size: 11px; color: #b9c2e6; min-width: 30px; text-align: center; }
+.replay-3d-slider { flex: 1; min-width: 40px; accent-color: #6d8bff; cursor: pointer; }
+
+.replay-3d-lista-panel {
+  display: flex; flex-direction: column; gap: 3px;
+  max-height: 260px; overflow-y: auto; padding-right: 2px;
+}
+
+.replay-3d-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px solid transparent; background: rgba(255, 255, 255, 0.03);
+  color: #e8ecff; text-align: left; cursor: pointer;
+}
+.replay-3d-item:hover { background: rgba(255, 255, 255, 0.07); }
+.replay-3d-item.activo { background: rgba(79, 107, 255, 0.2); border-color: rgba(79, 107, 255, 0.5); }
+.replay-3d-item-titulo { font-size: 13px; font-weight: 600; }
+.replay-3d-item-meta { font-size: 11px; color: #9aa3cc; }
+
+.replay-3d-lista-vacia { display: flex; align-items: center; gap: 8px; padding: 14px; color: #9aa3cc; font-size: 12.5px; }
+
+.replay-3d-barra-progreso { width: 100%; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.replay-3d-barra-progreso span { display: block; height: 100%; background: linear-gradient(90deg, #4f6bff, #8a6dff); transition: width 0.2s linear; }
+
+/* Controles del personaje dentro del panel angosto de la derecha */
+.seccion-pl-personaje { display: flex; flex-direction: column; gap: 14px; }
+.seccion-pl-personaje .visor-personaje-cards.en-panel { gap: 6px; }
+.seccion-pl-personaje .visor-personaje-bailes.en-panel,
+.seccion-pl-personaje .visor-personaje-pieles-dock.en-panel {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  background: none; border: none; padding: 0; backdrop-filter: none;
+}
+.seccion-pl-personaje .visor-personaje-fuelle-btn { width: 100%; justify-content: center; margin-bottom: 8px; }
+
 .estudio-practica-libre-footer {
   position: absolute;
   inset: auto 16px 16px 16px;
@@ -1105,6 +1169,55 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Fila de bailes (pack de animaciones): segunda fila del dock, chips como las pieles. */
+.visor-personaje-bailes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-basis: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.visor-baile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.16s, border-color 0.16s, transform 0.1s;
+}
+
+.visor-baile-btn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.visor-baile-btn:active { transform: scale(0.96); }
+
+.visor-baile-btn.activo {
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  border-color: #fbbf24;
+  color: #1a1206;
+}
+
+.visor-baile-btn.bloqueado {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.visor-baile-btn.bloqueado:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* El área del estudio reserva 120px de margen para otros modos; en Personaje

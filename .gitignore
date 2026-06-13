@@ -56,3 +56,4 @@ android/.gradle/
 android/local.properties
 android/captures/
 android/.idea/
+.refactor-backup/
