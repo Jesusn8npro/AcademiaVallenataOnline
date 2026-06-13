@@ -695,7 +695,11 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
     <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative', background: 'linear-gradient(#add0e6, #cfe6d0)' }}>
       {/* Motor de audio oyente (fuera del Canvas; reproduce lo que tocan los jugadores elegidos). */}
       {escuchando.size > 0 && <OyenteRemoto suscribir={suscribirNotasRemotas} volumen={volumen} escuchandoRef={escuchandoRef} />}
-      <Canvas camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
+      {/* Mientras tocas en móvil (SimuladorApp overlay tapa el mundo), PAUSAMOS el render 3D
+          (frameloop=never) → libera CPU/GPU del teléfono para que las notas se transmitan SIN latencia.
+          La conexión y el broadcast de notas (emisor → useMultijugador) NO dependen del Canvas, siguen
+          vivos; los demás te oyen al instante. Al cerrar, el render se reanuda. */}
+      <Canvas frameloop={tocarAbierto && tactil ? 'never' : 'always'} camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
         <React.Suspense fallback={null}>
           <EnvMundo />
           <fog attach="fog" args={['#bcd9d2', 38, 120]} />
