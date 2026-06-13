@@ -29,6 +29,9 @@ const DIST_MIN = 0.5, DIST_MAX = 11, DIST_DEF = 4.6
 const TARGET_H = 1.35     // altura del punto que mira la cámara (pecho/cabeza)
 const SEP = 0.85          // distancia mínima entre jugadores (separación suave, no bloquea)
 const LIMITE = 70
+const HEAD_LIMITE = 1.2   // tope del head-look (~69°); igual al de useHeadLook
+const BODY_TURN_RATE = 6  // qué tan rápido el cuerpo se endereza cuando miras más allá del tope
+const INTERP_RATE = 13    // suavizado de interpolación de remotos (más alto = más responsivo, menos lag)
 
 // Modos de cámara seleccionables. tercera/lejana = orbital 3ª persona; primera = ojos del personaje;
 // cenital = picado desde arriba. Cada uno fija distancia/ángulo base (el mouse y la rueda ajustan encima).
@@ -190,10 +193,10 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { i
     const ent = remotosRef.current.get(id)
     const g = grupo.current
     if (!ent || !g) return
-    const k = 1 - Math.exp(-10 * dt)
+    const k = 1 - Math.exp(-INTERP_RATE * dt)
     g.position.x += (ent.target.x - g.position.x) * k
     g.position.z += (ent.target.z - g.position.z) * k
-    g.rotation.y = dampAngle(g.rotation.y, ent.target.ry, 10, dt)
+    g.rotation.y = dampAngle(g.rotation.y, ent.target.ry, INTERP_RATE, dt)
     // Head-look: desfase entre hacia dónde mira (cámara del dueño, 'mira') y su cuerpo.
     headYawRef.current = normAngle((typeof ent.target.mira === 'number' ? ent.target.mira : g.rotation.y) - g.rotation.y)
     if (ent.target.anim !== anim) setAnim(ent.target.anim)
@@ -378,6 +381,14 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const speed = Math.hypot(vel.current.x, vel.current.z)
     const moviendo = speed > 0.25
     if (moviendo) g.rotation.y = dampAngle(g.rotation.y, Math.atan2(vel.current.x, vel.current.z), FACE_RATE, dt)
+    else {
+      // Quieto: si miras (cámara) más allá del límite del cuello, el CUERPO se endereza hacia allá
+      // (como en los juegos). Así el desfase cabeza↔cuerpo nunca supera el tope → la cabeza no "salta"
+      // al cruzar la espalda (era el bug del head-look: normAngle volteaba el signo en ±π).
+      const d = normAngle(yaw.current - g.rotation.y)
+      const exceso = Math.abs(d) - HEAD_LIMITE
+      if (exceso > 0) g.rotation.y += Math.sign(d) * exceso * (1 - Math.exp(-BODY_TURN_RATE * dt))
+    }
     if (moviendo !== caminando) setCaminando(moviendo)
 
     // Recentrar la cámara detrás del personaje (tecla C).
@@ -424,9 +435,14 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   return (
     <group ref={grupo}>
       <Etiqueta nombre={nombre} tocando={tocando} />
-      <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} />
-      </AnclaPies>
+      {/* Suspense PROPIO del personaje local: al cambiar de personaje (glb nuevo) suspende SOLO la
+          malla mientras carga; el controlador (cámara, teclas, caminar) sigue VIVO → ya no se reinicia
+          ni se rompe la caminata al cambiar seguido. */}
+      <React.Suspense fallback={null}>
+        <AnclaPies claveMedicion={glb}>
+          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} />
+        </AnclaPies>
+      </React.Suspense>
     </group>
   )
 }
