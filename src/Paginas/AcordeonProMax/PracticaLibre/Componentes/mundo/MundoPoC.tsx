@@ -383,8 +383,10 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef }: { suscribir: (cb: N
   const logica = useLogicaAcordeon({ deshabilitarInteraccion: false })
   React.useEffect(() => { try { motorAudioPro.setVolumenMaestro(volumen) } catch {} }, [volumen])
   React.useEffect(() => suscribir((idBoton, accion, deId) => {
-    // Solo suena lo de los jugadores que ELEGISTE escuchar (clic en su avatar).
-    if (accion === 'down' && escuchandoRef.current.has(deId)) { try { logica.reproduceTono(idBoton) } catch {} }
+    // Solo suena lo de los jugadores que ELEGISTE escuchar (clic en su avatar). Se pasa una DURACIÓN
+    // (3er arg) para que la nota se AUTO-SUELTE: sin esto el acordeón sostiene el tono para siempre
+    // (notas pegadas), porque solo broadcasteamos 'down' (no 'up').
+    if (accion === 'down' && escuchandoRef.current.has(deId)) { try { logica.reproduceTono(idBoton, undefined, 1.5) } catch {} }
   }), [suscribir, logica, escuchandoRef])
   return null
 }

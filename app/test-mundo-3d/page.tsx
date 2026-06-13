@@ -10,11 +10,11 @@ const Mundo = dynamic(
   { ssr: false, loading: () => <div style={{ padding: 24, color: '#fff' }}>Cargando…</div> },
 )
 
-// Sandbox del MUNDO responsivo. En PANTALLA ANGOSTA (móvil) el panel del acordeón es un CAJÓN que
-// sale/entra (no aplasta el mundo). Por defecto NO inmersivo (se ve el menú de la app); P oculta la
-// interfaz, F pantalla completa. Botón "Panel" para mostrar/ocultar el panel cuantas veces quieras.
+// Sandbox del MUNDO responsivo. Por defecto INMERSIVO (overlay fijo que TAPA sidebar + menú superior +
+// menú inferior de la app, en desktop y móvil). Botón "← Volver" para salir. En pantalla angosta el
+// panel del acordeón es un CAJÓN que sale/entra (no aplasta el mundo). P alterna la interfaz, F fullscreen.
 export default function P() {
-  const [inmersivo, setInmersivo] = React.useState(false)
+  const [inmersivo, setInmersivo] = React.useState(true)
   const [panel, setPanel] = React.useState(true)
   const [compacto, setCompacto] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
@@ -62,8 +62,11 @@ export default function P() {
           <SeccionPLPersonaje />
         </aside>
 
-        {/* Controles de página: panel + interfaz + pantalla completa */}
+        {/* Controles de página: volver + panel + interfaz + pantalla completa */}
         <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 60, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button type="button" style={{ ...btn, background: '#c0392b' }} onClick={() => { if (typeof window !== 'undefined') { if (window.history.length > 1) window.history.back(); else window.location.href = '/' } }}>
+            ← Volver
+          </button>
           <button type="button" style={{ ...btn, background: panel ? '#ff7a18' : 'rgba(0,0,0,.6)' }} onClick={() => setPanel((p) => !p)}>
             {panel ? '✕ Panel' : '☰ Panel'}
           </button>
