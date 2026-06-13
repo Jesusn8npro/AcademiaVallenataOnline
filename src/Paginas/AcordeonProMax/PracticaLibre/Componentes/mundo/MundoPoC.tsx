@@ -13,6 +13,7 @@ import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
 import TocarEnVivo from './TocarEnVivo'
+import PanelAcordeonEnClase from '../../../../../componentes/VisualizadorDeLeccionesDeCursos/PanelAcordeonEnClase'
 
 // Mundo multijugador con MODO CAMINANTE profesional. Controlador desacoplado (PlayerController) que
 // SOLO mueve/gira la cámara cuando isNavigationMode está activo (pointer-lock) → no choca con la
@@ -547,6 +548,12 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const moveRef = React.useRef({ fwd: 0, side: 0 }) // joystick analógico (móvil)
   const [tactil, setTactil] = React.useState(false)
   React.useEffect(() => { setTactil(typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) }, [])
+  // Ancho del acordeón a pantalla completa en móvil (encaja al ancho del teléfono).
+  const [anchoSim, setAnchoSim] = React.useState(360)
+  React.useEffect(() => {
+    const f = () => setAnchoSim(Math.min(window.innerWidth - 16, 520))
+    f(); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f)
+  }, [])
 
   // Teclas 1-4 cambian de vista (si el foco no está en un input).
   React.useEffect(() => {
@@ -637,12 +644,30 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         🎹 {tocarAbierto ? 'Cerrar' : 'Tocar'}
       </button>
 
-      {/* Panel "Tocar en vivo": acordeón jugable. Centrado abajo, sobre el HUD. */}
-      {tocarAbierto && (
-        <div style={{ position: 'absolute', left: '50%', bottom: bottomBase, transform: 'translateX(-50%)', zIndex: 50, maxWidth: 'calc(100% - 16px)' }}>
-          <TocarEnVivo onCerrar={() => setTocarAbierto(false)} ancho={compacto ? 320 : 460} />
+      {/* Panel "Tocar en vivo".
+          - MÓVIL (compacto): acordeón a PANTALLA COMPLETA (PanelAcordeonEnClase, el mismo de las clases)
+            con botón "← Volver al mundo" — igual que en las clases. Las notas se transmiten igual.
+          - DESKTOP: panel pequeño flotante (TocarEnVivo) sobre el HUD. */}
+      {tocarAbierto && (compacto ? (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#0b0e16', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flexShrink: 0, padding: '8px 10px', display: 'flex' }}>
+            <button
+              type="button"
+              onClick={() => setTocarAbierto(false)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#c0392b', color: '#fff', border: 'none', borderRadius: 9, padding: '9px 16px', fontFamily: 'system-ui, sans-serif', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
+            >
+              ← Volver al mundo
+            </button>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+            <PanelAcordeonEnClase onCerrar={() => setTocarAbierto(false)} anchoInicial={anchoSim} />
+          </div>
         </div>
-      )}
+      ) : (
+        <div style={{ position: 'absolute', left: '50%', bottom: bottomBase, transform: 'translateX(-50%)', zIndex: 50, maxWidth: 'calc(100% - 16px)' }}>
+          <TocarEnVivo onCerrar={() => setTocarAbierto(false)} ancho={460} />
+        </div>
+      ))}
 
       {/* Joystick táctil (móvil) */}
       {tactil && !tocarAbierto && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
