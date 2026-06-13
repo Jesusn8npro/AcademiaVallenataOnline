@@ -80,7 +80,10 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     // TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO, sin que su propia
     // tonalidad/instrumento le cambie el tono.
     const offNotas = subscribirNotas((e) => {
-      ch.send({ type: 'broadcast', event: 'nota', payload: { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined } })
+      // DIFERIDO (queueMicrotask): el envío por red NO debe bloquear el camino de la nota (audio + hit del
+      // simulador) → así el duelo no siente retardo al tocar. El audio local ya sonó antes de este callback.
+      const payload = { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined }
+      queueMicrotask(() => { try { ch.send({ type: 'broadcast', event: 'nota', payload }) } catch {} })
     })
 
     // Limpieza de remotos que dejaron de emitir (= se fueron).
