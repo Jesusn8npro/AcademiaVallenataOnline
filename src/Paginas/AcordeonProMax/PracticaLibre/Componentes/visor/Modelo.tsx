@@ -15,6 +15,7 @@ import { useBailes } from './useBailes'
 import { usePielesAcordeon } from './usePielesAcordeon'
 import { useNotasSuscripcion, FuenteNotas } from './useNotasSuscripcion'
 import { usePersonajeFrame } from './usePersonajeFrame'
+import { useHeadLook } from './useHeadLook'
 
 // Arquitectura: personaje (GLB liviano, rig mixamorig:, acción 'Cierre' horneada con el brazo
 // izquierdo siguiendo la tapa) + acordeón COMPARTIDO (acordeon-fino-v1, morph 'Cerrar' horneado
@@ -26,7 +27,7 @@ import { usePersonajeFrame } from './usePersonajeFrame'
 
 useGLTF.setDecoderPath('/draco/')
 
-export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas }) {
+export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYawRef }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas; headYawRef?: React.MutableRefObject<number> }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const { scene: sceneCacheada, animations } = useGLTF(glb) as any
   // useGLTF cachea y devuelve la MISMA escena por URL. En el mundo multijugador varios avatares pueden
@@ -101,6 +102,8 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas }: { fu
   usePielesAcordeon(refs, acordeon, skin)
   useNotasSuscripcion(refs, fuenteNotas)
   usePersonajeFrame(refs, fuelleAbiertoRef, mixer)
+  // DESPUÉS de usePersonajeFrame (que hace mixer.update): la cabeza gira hacia donde mira el jugador.
+  useHeadLook(scene, headYawRef)
 
   return <primitive ref={grupo} object={scene} />
 }

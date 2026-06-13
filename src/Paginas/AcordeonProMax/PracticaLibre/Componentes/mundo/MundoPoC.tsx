@@ -53,6 +53,13 @@ function dampAngle(cur: number, target: number, lambda: number, dt: number) {
   return cur + d * (1 - Math.exp(-lambda * dt))
 }
 
+// Normaliza un ángulo a (-π, π]. Para el desfase cabeza↔cuerpo del head-look.
+function normAngle(a: number) {
+  while (a > Math.PI) a -= Math.PI * 2
+  while (a < -Math.PI) a += Math.PI * 2
+  return a
+}
+
 // Posición de aparición DETERMINISTA a partir de un identificador estable (id de usuario): el mismo
 // usuario cae SIEMPRE en el mismo punto del mapa (en cualquier dispositivo / al recargar), y usuarios
 // distintos se reparten en un anillo (ángulo áureo) sin amontonarse en el centro. Antes era
@@ -143,6 +150,7 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
 function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
+  const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look), calculado desde 'mira' de la red
   const ent0 = remotosRef.current.get(id)
   const [personajeId, setPersonajeId] = React.useState(ent0?.target.personajeId ?? PERSONAJES[0].id)
   const [anim, setAnim] = React.useState<string | null>(ent0?.target.anim ?? null)
@@ -186,6 +194,8 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { i
     g.position.x += (ent.target.x - g.position.x) * k
     g.position.z += (ent.target.z - g.position.z) * k
     g.rotation.y = dampAngle(g.rotation.y, ent.target.ry, 10, dt)
+    // Head-look: desfase entre hacia dónde mira (cámara del dueño, 'mira') y su cuerpo.
+    headYawRef.current = normAngle((typeof ent.target.mira === 'number' ? ent.target.mira : g.rotation.y) - g.rotation.y)
     if (ent.target.anim !== anim) setAnim(ent.target.anim)
     if (ent.target.personajeId && ent.target.personajeId !== personajeId) setPersonajeId(ent.target.personajeId)
     if (ent.target.nombre !== nombre) setNombre(ent.target.nombre)
@@ -196,7 +206,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas }: { i
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} />
       </AnclaPies>
     </group>
   )
@@ -216,6 +226,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
+  const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look): cámara - orientación del cuerpo
   const teclas = React.useRef<Record<string, boolean>>({})
   const vel = React.useRef(new THREE.Vector3())
   const yaw = React.useRef(0)   // cámara DETRÁS del personaje al inicio (vista de juego, ves a dónde vas)
@@ -376,11 +387,14 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const tocandoAhora = performance.now() - lastNoteRef.current < 500
     if (tocandoAhora !== tocando) setTocando(tocandoAhora)
 
+    // Head-look: la cabeza apunta hacia donde mira la cámara (yaw), limitado respecto al cuerpo.
+    headYawRef.current = normAngle(yaw.current - g.rotation.y)
+
     // Publicar estado a la red.
     const est = estadoLocalRef.current
     est.x = g.position.x; est.z = g.position.z; est.ry = g.rotation.y
     est.personajeId = personajeId; est.anim = moviendo ? 'Caminata' : baile
-    est.nombre = nombre; est.tocando = tocandoAhora
+    est.nombre = nombre; est.tocando = tocandoAhora; est.mira = yaw.current
 
     // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch).
     const P = g.position
@@ -411,7 +425,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     <group ref={grupo}>
       <Etiqueta nombre={nombre} tocando={tocando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} />
       </AnclaPies>
     </group>
   )
@@ -538,7 +552,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const lastNoteRef = React.useRef(0)
   React.useEffect(() => subscribirNotas((e) => { if (e.accion === 'down') lastNoteRef.current = performance.now() }), [])
 
-  const estadoLocalRef = React.useRef<EstadoJugador>({ x: 0, z: 0, ry: 0, personajeId, anim: null, nombre, tocando: false })
+  const estadoLocalRef = React.useRef<EstadoJugador>({ x: 0, z: 0, ry: 0, personajeId, anim: null, nombre, tocando: false, mira: 0 })
   const { remotos, remotosRef, suscribirNotasRemotas } = useMultijugador(estadoLocalRef)
 
   // Audio de los demás POR JUGADOR: clic en un avatar → lo escuchas (toggle). + volumen.

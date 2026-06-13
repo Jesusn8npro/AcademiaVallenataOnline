@@ -17,6 +17,7 @@ export interface EstadoJugador {
   anim: string | null      // clip que está reproduciendo ahora ('Caminata' | baile | null) → se replica
   nombre: string           // etiqueta visible sobre el avatar
   tocando: boolean         // está reproduciendo una canción/notas → muestra 🎵
+  mira: number             // yaw (mundo) hacia donde mira (cámara) → head-look del avatar remoto
 }
 
 export interface RemotoEntry {
@@ -56,7 +57,7 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     ch.on('broadcast', { event: 'estado' }, ({ payload }: { payload: any }) => {
       if (!payload || payload.id === miId) return
       const id: string = payload.id
-      const target: EstadoJugador = { x: payload.x, z: payload.z, ry: payload.ry, personajeId: payload.personajeId, anim: payload.anim ?? null, nombre: payload.nombre ?? '', tocando: !!payload.tocando }
+      const target: EstadoJugador = { x: payload.x, z: payload.z, ry: payload.ry, personajeId: payload.personajeId, anim: payload.anim ?? null, nombre: payload.nombre ?? '', tocando: !!payload.tocando, mira: typeof payload.mira === 'number' ? payload.mira : payload.ry }
       const ex = remotosRef.current.get(id)
       if (ex) { ex.target = target; ex.visto = performance.now() }
       else {
