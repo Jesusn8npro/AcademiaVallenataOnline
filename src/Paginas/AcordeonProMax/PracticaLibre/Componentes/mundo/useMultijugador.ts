@@ -26,7 +26,7 @@ export interface RemotoEntry {
 }
 
 const SALA = 'mundo-bosque'
-const HZ_MS = 90      // cada cuánto emito mi estado
+const HZ_MS = 60      // cada cuánto emito mi estado (~16Hz; más bajo = menos latencia, más mensajes)
 // Sin recibir nada de un remoto → desconectado. Generoso (6s) para que el lag o una pestaña en
 // segundo plano (que throttlea el emisor a ~1s) NO haga desaparecer a los demás jugadores.
 const TIMEOUT_MS = 6000
