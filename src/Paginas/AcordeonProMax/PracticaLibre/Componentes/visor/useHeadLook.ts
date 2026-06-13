@@ -17,6 +17,7 @@ const RATE = 9
 
 export function useHeadLook(scene: THREE.Object3D, headYawRef?: React.MutableRefObject<number>) {
   const head = React.useRef<THREE.Object3D | null>(null)
+  const base = React.useRef<THREE.Quaternion | null>(null) // pose local NEUTRAL de la cabeza (1 captura)
   const suave = React.useRef(0)
   const _qP = React.useRef(new THREE.Quaternion())
   const _qD = React.useRef(new THREE.Quaternion())
@@ -26,19 +27,26 @@ export function useHeadLook(scene: THREE.Object3D, headYawRef?: React.MutableRef
     let h: THREE.Object3D | null = null
     scene.traverse((o: any) => { if (!h && o.isBone && /Head$/.test(o.name || '')) h = o })
     head.current = h
+    base.current = null // recapturar para el nuevo personaje
   }, [scene])
 
   useFrame((_, dt) => {
     const h = head.current
     if (!h || !headYawRef) return
+    // Captura la pose neutral UNA vez (primer frame, antes de tocar nada).
+    if (!base.current) base.current = h.quaternion.clone()
     const objetivo = THREE.MathUtils.clamp(headYawRef.current, -LIMITE, LIMITE)
     suave.current = THREE.MathUtils.damp(suave.current, objetivo, RATE, dt)
+    // CLAVE: partir SIEMPRE de la pose neutral → NO acumula. Antes, si la animación activa no keyea
+    // la cabeza (varios bailes/caminata no traen huesos de cabeza), mixer.update no la reseteaba y el
+    // giro se sumaba frame a frame → la cabeza giraba sola hasta dar vueltas. (bug "se voltea sola").
+    h.quaternion.copy(base.current)
     const a = suave.current
     if (Math.abs(a) < 1e-4) return
     const padre = h.parent
     if (!padre) return
-    // Aplica un giro `a` sobre el eje Y de MUNDO encima de la pose animada local del hueso:
-    // local_new = (qPadreInv · qYaw · qPadre) · local_animada  →  worldQuat_new = qYaw · worldQuat_old.
+    // Aplica un giro `a` sobre el eje Y de MUNDO encima de la pose neutral:
+    // local_new = (qPadreInv · qYaw · qPadre) · local_base  →  worldQuat_new = qYaw · worldQuat_old.
     padre.getWorldQuaternion(_qP.current)
     _qY.current.setFromAxisAngle(UP, a)
     _qD.current.copy(_qP.current).invert().multiply(_qY.current).multiply(_qP.current)

@@ -10,9 +10,6 @@ import './PanelAcordeonEnClase.css';
 
 interface PanelAcordeonEnClaseProps {
   onCerrar: () => void;
-  /** Ancho inicial del panel en px (para encajar en pantallas angostas, ej. el mundo 3D en móvil).
-   *  Por defecto ANCHO_DEFAULT — las clases no lo pasan, así su comportamiento no cambia. */
-  anchoInicial?: number;
 }
 
 const IMAGEN_ACORDEON_DEFAULT = '/Acordeon PRO MAX.webp';
@@ -29,10 +26,10 @@ const ANCHO_MIN = 560;
 const ANCHO_MAX = 920;
 const ANCHO_DEFAULT = 760;
 
-const PanelAcordeonEnClase: React.FC<PanelAcordeonEnClaseProps> = ({ onCerrar, anchoInicial }) => {
+const PanelAcordeonEnClase: React.FC<PanelAcordeonEnClaseProps> = ({ onCerrar }) => {
   const logica = useLogicaAcordeon();
   const [pestanaActiva, setPestanaActiva] = useState<'acordeon' | 'sonido'>('acordeon');
-  const [anchoPanel, setAnchoPanel] = useState(anchoInicial ?? ANCHO_DEFAULT);
+  const [anchoPanel, setAnchoPanel] = useState(ANCHO_DEFAULT);
 
   // El acordeón virtual usa porcentajes internos basados en `--sim-tamano`. Si el
   // tamaño es porcentaje (`100%`), --unit termina siendo `1%` y los botones se
