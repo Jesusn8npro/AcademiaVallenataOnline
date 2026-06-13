@@ -11,6 +11,8 @@ import SeccionPLEfectos from './SeccionPLEfectos';
 import PanelEfectosSimulador from '@/Paginas/SimuladorApp/Componentes/PanelEfectosSimulador';
 import SeccionPLLibreria from './SeccionPLLibreria';
 import SeccionPL3D, { type VarianteId } from './SeccionPL3D';
+import SeccionPLPersonaje from './SeccionPLPersonaje';
+import ReplayGrabacionEn3D from './ReplayGrabacionEn3D';
 import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza } from './VisorAcordeon3D';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
@@ -75,6 +77,7 @@ const TITULO_SECCION: Partial<Record<SeccionPanelPracticaLibre, string>> = {
   sonido: 'Sonido y lectura', modelos: 'Modelos visuales',
   pistas: 'Pistas y Estudio', teoria: 'Teoria musical', efectos: 'Efectos y mezcla',
   libreria: 'Librería de canciones', visor3d: 'Visor 3D del acordeón',
+  personaje3d: 'Personaje 3D',
 };
 
 const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
@@ -95,7 +98,7 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
   logica,
 }) => {
   if (!visible || !seccionActiva) return null;
-  if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria', 'visor3d'].includes(seccionActiva)) return null;
+  if (!['sonido', 'modelos', 'pistas', 'efectos', 'libreria', 'visor3d', 'personaje3d'].includes(seccionActiva)) return null;
 
   return (
     <aside className="estudio-practica-libre-panel">
@@ -201,19 +204,27 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
       )}
 
       {seccionActiva === 'visor3d' && (
-        <SeccionPL3D
-          piezaSeleccionada={visor3dPiezaSeleccionada}
-          piezasDisponibles={visor3dPiezas}
-          grupoActivo={visor3dGrupoActivo}
-          onCambiarGrupoActivo={onCambiarVisor3DGrupo}
-          onAplicarTinta={onAplicarVisor3DTinta}
-          onAplicarVariante={onAplicarVisor3DVariante}
-          onDispararShapeKey={onDispararVisor3DShapeKey}
-          onDispararProgramatica={onDispararVisor3DProgramatica}
-          onDetenerProgramatica={onDetenerVisor3DProgramatica}
-          programaticaActiva={visor3dProgramaticaActiva}
-        />
+        <>
+          <SeccionPL3D
+            piezaSeleccionada={visor3dPiezaSeleccionada}
+            piezasDisponibles={visor3dPiezas}
+            grupoActivo={visor3dGrupoActivo}
+            onCambiarGrupoActivo={onCambiarVisor3DGrupo}
+            onAplicarTinta={onAplicarVisor3DTinta}
+            onAplicarVariante={onAplicarVisor3DVariante}
+            onDispararShapeKey={onDispararVisor3DShapeKey}
+            onDispararProgramatica={onDispararVisor3DProgramatica}
+            onDetenerProgramatica={onDetenerVisor3DProgramatica}
+            programaticaActiva={visor3dProgramaticaActiva}
+          />
+          <div className="estudio-practica-libre-bloque">
+            <div className="estudio-practica-libre-bloque-titulo">Mis grabaciones</div>
+            <ReplayGrabacionEn3D />
+          </div>
+        </>
       )}
+
+      {seccionActiva === 'personaje3d' && <SeccionPLPersonaje />}
     </aside>
   );
 };

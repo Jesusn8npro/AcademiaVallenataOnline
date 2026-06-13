@@ -1,0 +1,7908 @@
+{
+ "_nota": "Poses Blender Pelao mixamorig9. rotation_quaternion w,x,y,z rel rest.",
+ "armature": "Pelao armature moreno",
+ "poses_hilera": [
+  "hilera adentro superior",
+  "hilera adentro inferior",
+  "hilera medio superior",
+  "hilera medio inferior",
+  "hilera afuera superior",
+  "hilera afuera inferior"
+ ],
+ "poses_acorde": [
+  "adentro quinta mayor abriendo",
+  "adentro quinta disonante cerrando",
+  "adentro tonica abriendo",
+  "medio quinta zuleta",
+  "adentro tonica decima cerrando"
+ ],
+ "poses": {
+  "hilera adentro superior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.905087,
+     0.409642,
+     0.114032,
+     0.002885
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.453201,
+     0.253777,
+     -0.188319,
+     -0.833512
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.878449,
+     -0.022244,
+     0.472735,
+     -0.065988
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.987825,
+     0.099043,
+     -0.032827,
+     0.115385
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.858067,
+     0.454556,
+     -0.00401,
+     0.238923
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.989681,
+     -0.104403,
+     -0.030453,
+     0.093297
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.768402,
+     0.625535,
+     0.100176,
+     0.090713
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.995542,
+     -0.024403,
+     -0.046396,
+     0.078411
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.826081,
+     0.546968,
+     0.118481,
+     0.066171
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.964525,
+     0.245395,
+     0.078451,
+     0.057603
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.971571,
+     0.204313,
+     0.10443,
+     0.05811
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.969799,
+     0.142184,
+     -0.195914,
+     -0.027423
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "hilera adentro inferior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.919709,
+     0.391637,
+     0.00417,
+     -0.027168
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.509151,
+     0.177186,
+     -0.246786,
+     -0.805275
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.857051,
+     -0.137124,
+     0.47056,
+     -0.158855
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.987825,
+     0.099043,
+     -0.032827,
+     0.115385
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.858067,
+     0.454556,
+     -0.00401,
+     0.238923
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.989681,
+     -0.104403,
+     -0.030453,
+     0.093297
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.768402,
+     0.625535,
+     0.100176,
+     0.090713
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.995542,
+     -0.024403,
+     -0.046396,
+     0.078411
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.826081,
+     0.546968,
+     0.118481,
+     0.066171
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.964525,
+     0.245395,
+     0.078451,
+     0.057603
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.971571,
+     0.204313,
+     0.10443,
+     0.05811
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.969799,
+     0.142184,
+     -0.195914,
+     -0.027423
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "hilera medio superior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.969497,
+     -0.189424,
+     -0.110051,
+     -0.109923
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.967582,
+     -0.056985,
+     -0.231361,
+     0.083732
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.996877,
+     -0.062981,
+     -0.017745,
+     0.044212
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.986971,
+     0.000596,
+     -0.106427,
+     0.120674
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.993019,
+     0.059213,
+     0.017961,
+     0.100418
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.622441,
+     0.7709,
+     -0.042532,
+     -0.128342
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.997422,
+     -0.013348,
+     0.024698,
+     0.066042
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.897883,
+     0.425884,
+     0.111237,
+     0.007532
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.450708,
+     0.253392,
+     -0.179673,
+     -0.836883
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.884281,
+     -0.01436,
+     0.46309,
+     -0.058217
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.987825,
+     0.099043,
+     -0.032827,
+     0.115385
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.858067,
+     0.454556,
+     -0.00401,
+     0.238923
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.989681,
+     -0.104403,
+     -0.030453,
+     0.093297
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.768402,
+     0.625535,
+     0.100176,
+     0.090713
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.994234,
+     -0.069384,
+     -0.040063,
+     0.071267
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.784131,
+     0.607729,
+     0.109553,
+     0.061667
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.964525,
+     0.245395,
+     0.078451,
+     0.057603
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.971571,
+     0.204313,
+     0.10443,
+     0.05811
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.969799,
+     0.142184,
+     -0.195914,
+     -0.027423
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "hilera medio inferior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.969497,
+     -0.189424,
+     -0.110051,
+     -0.109923
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.967582,
+     -0.056985,
+     -0.231361,
+     0.083732
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.996877,
+     -0.062981,
+     -0.017745,
+     0.044212
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.986971,
+     0.000596,
+     -0.106427,
+     0.120674
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.993019,
+     0.059213,
+     0.017961,
+     0.100418
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.622441,
+     0.7709,
+     -0.042532,
+     -0.128342
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.997422,
+     -0.013348,
+     0.024698,
+     0.066042
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.896607,
+     0.410823,
+     0.165228,
+     0.00459
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.426657,
+     0.213263,
+     -0.378643,
+     -0.793166
+    ],
+    "location": [
+     2e-06,
+     0.0,
+     1e-06
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.746115,
+     -0.109561,
+     0.630558,
+     -0.183592
+    ],
+    "location": [
+     -7e-06,
+     -5e-06,
+     -8e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.986216,
+     0.110787,
+     -0.032622,
+     0.118488
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.858067,
+     0.454556,
+     -0.00401,
+     0.238923
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.98851,
+     -0.107609,
+     -0.037648,
+     0.09926
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.758687,
+     0.637246,
+     0.099945,
+     0.091232
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.988706,
+     -0.133854,
+     -0.036929,
+     0.056384
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.748279,
+     0.651273,
+     0.108674,
+     0.064124
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.991751,
+     0.109179,
+     0.065488,
+     0.014876
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.941798,
+     0.305765,
+     0.120277,
+     0.07084
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.9203,
+     0.353745,
+     -0.165487,
+     -0.020657
+    ],
+    "location": [
+     -0.0,
+     2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "hilera afuera superior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.979413,
+     -0.17894,
+     -0.090605,
+     -0.022826
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.967469,
+     -0.078954,
+     -0.237181,
+     0.038925
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.997189,
+     -0.021148,
+     -0.064787,
+     0.031129
+    ],
+    "location": [
+     -0.006224,
+     0.0516,
+     -0.060683
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.997759,
+     0.030111,
+     -0.014164,
+     -0.058056
+    ],
+    "location": [
+     -0.014626,
+     0.039599,
+     0.06729
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.625176,
+     0.73372,
+     -0.041223,
+     -0.26289
+    ],
+    "location": [
+     -0.041287,
+     0.428842,
+     -0.165698
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.983128,
+     -0.011999,
+     -0.131238,
+     0.126856
+    ],
+    "location": [
+     0.010929,
+     -0.048533,
+     0.062521
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.997703,
+     -0.02441,
+     0.06114,
+     -0.015974
+    ],
+    "location": [
+     -0.002808,
+     -0.057441,
+     -0.076661
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.642788,
+     0.742903,
+     -0.043415,
+     -0.181752
+    ],
+    "location": [
+     0.031228,
+     -0.478389,
+     0.111696
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.993019,
+     0.059213,
+     0.017961,
+     0.100418
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.622441,
+     0.7709,
+     -0.042532,
+     -0.128342
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.998143,
+     -0.012836,
+     0.021102,
+     0.055687
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.882718,
+     0.449886,
+     0.134295,
+     -0.019436
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.310356,
+     0.201893,
+     -0.322867,
+     -0.87102
+    ],
+    "location": [
+     2e-06,
+     0.0,
+     1e-06
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.730219,
+     -0.488899,
+     0.454123,
+     0.146734
+    ],
+    "location": [
+     -6e-06,
+     -6e-06,
+     -8e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.972067,
+     0.233707,
+     0.01789,
+     0.012175
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.959418,
+     0.193118,
+     -0.012352,
+     0.20511
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.845939,
+     0.497336,
+     0.146473,
+     0.124867
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.800164,
+     0.546466,
+     -0.034798,
+     0.244747
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.984818,
+     0.092392,
+     0.019651,
+     0.145643
+    ],
+    "location": [
+     -0.052665,
+     0.203844,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.676313,
+     0.723461,
+     0.114583,
+     0.077922
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.993304,
+     0.098062,
+     0.001174,
+     0.06108
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.685712,
+     0.717152,
+     0.1221,
+     0.023286
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.925661,
+     0.354029,
+     0.125776,
+     0.044701
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.879483,
+     0.444659,
+     0.159878,
+     0.055783
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.9203,
+     0.353745,
+     -0.165487,
+     -0.020657
+    ],
+    "location": [
+     -0.0,
+     2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "hilera afuera inferior": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.979413,
+     -0.17894,
+     -0.090605,
+     -0.022826
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.967469,
+     -0.078954,
+     -0.237181,
+     0.038925
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.997189,
+     -0.021148,
+     -0.064787,
+     0.031129
+    ],
+    "location": [
+     -0.006224,
+     0.0516,
+     -0.060683
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.997759,
+     0.030111,
+     -0.014164,
+     -0.058056
+    ],
+    "location": [
+     -0.014626,
+     0.039599,
+     0.06729
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.625176,
+     0.73372,
+     -0.041223,
+     -0.26289
+    ],
+    "location": [
+     -0.041287,
+     0.428842,
+     -0.165698
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.983128,
+     -0.011999,
+     -0.131238,
+     0.126856
+    ],
+    "location": [
+     0.010929,
+     -0.048533,
+     0.062521
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.997703,
+     -0.02441,
+     0.06114,
+     -0.015974
+    ],
+    "location": [
+     -0.002808,
+     -0.057441,
+     -0.076661
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.642788,
+     0.742903,
+     -0.043415,
+     -0.181752
+    ],
+    "location": [
+     0.031228,
+     -0.478389,
+     0.111696
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.993019,
+     0.059213,
+     0.017961,
+     0.100418
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.622441,
+     0.7709,
+     -0.042532,
+     -0.128342
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.998143,
+     -0.012836,
+     0.021102,
+     0.055687
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.882718,
+     0.449886,
+     0.134295,
+     -0.019436
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.316572,
+     0.133135,
+     -0.466275,
+     -0.815258
+    ],
+    "location": [
+     2e-06,
+     0.0,
+     1e-06
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.652675,
+     -0.52257,
+     0.53983,
+     0.09757
+    ],
+    "location": [
+     -6e-06,
+     -6e-06,
+     -8e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.963269,
+     0.261656,
+     0.058863,
+     -0.013565
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.932036,
+     0.303714,
+     -0.011072,
+     0.197342
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.845939,
+     0.497336,
+     0.146473,
+     0.124867
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.800164,
+     0.546466,
+     -0.034798,
+     0.244747
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.977609,
+     0.144481,
+     -0.019211,
+     0.151782
+    ],
+    "location": [
+     -0.052665,
+     0.203844,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.68562,
+     0.714275,
+     0.115811,
+     0.079491
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.896442,
+     0.431658,
+     0.056686,
+     0.082713
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.95316,
+     0.299613,
+     0.003862,
+     0.041284
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.727117,
+     0.673713,
+     0.126773,
+     0.035894
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.934213,
+     0.34742,
+     0.008811,
+     0.080114
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.896925,
+     0.427432,
+     0.065082,
+     0.092705
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.879483,
+     0.444659,
+     0.159878,
+     0.055783
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.9203,
+     0.353745,
+     -0.165487,
+     -0.020657
+    ],
+    "location": [
+     -0.0,
+     2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "adentro quinta mayor abriendo": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.922537,
+     0.367209,
+     0.118507,
+     -0.006336
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.437591,
+     0.264078,
+     -0.192193,
+     -0.837758
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.824517,
+     -0.012699,
+     0.564747,
+     -0.03273
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977187,
+     0.157649,
+     -0.109471,
+     0.090931
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.988074,
+     0.10152,
+     0.111279,
+     -0.03196
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.923245,
+     0.314403,
+     -0.005495,
+     0.220768
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.985902,
+     -0.026042,
+     0.110556,
+     -0.122874
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.872208,
+     0.480437,
+     0.044497,
+     0.080334
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.956165,
+     -0.222871,
+     -0.077312,
+     0.173492
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.787789,
+     0.603886,
+     0.092499,
+     0.078452
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.895563,
+     -0.443529,
+     -0.004098,
+     0.035107
+    ],
+    "location": [
+     0.072906,
+     -0.337796,
+     -0.063791
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.55495,
+     0.830356,
+     -0.034455,
+     0.036452
+    ],
+    "location": [
+     0.195841,
+     -0.376875,
+     -0.530209
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.936545,
+     0.285554,
+     -0.197107,
+     -0.048511
+    ],
+    "location": [
+     0.0,
+     2e-06,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "adentro quinta disonante cerrando": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.922537,
+     0.367209,
+     0.118507,
+     -0.006336
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.437591,
+     0.264078,
+     -0.192193,
+     -0.837758
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.824517,
+     -0.012699,
+     0.564747,
+     -0.03273
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977187,
+     0.157649,
+     -0.109471,
+     0.090931
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.93453,
+     0.241784,
+     0.245583,
+     -0.088787
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.972752,
+     0.194791,
+     0.076944,
+     0.099456
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.923245,
+     0.314403,
+     -0.005495,
+     0.220768
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.961735,
+     -0.150417,
+     0.102082,
+     -0.204991
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.941818,
+     0.330191,
+     -0.030505,
+     0.054984
+    ],
+    "location": [
+     -0.113705,
+     0.085618,
+     0.394144
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.939646,
+     -0.288979,
+     -0.132168,
+     -0.126842
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.585636,
+     0.776853,
+     0.225805,
+     -0.050431
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.91964,
+     0.380656,
+     0.078193,
+     0.057004
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.979825,
+     -0.1743,
+     0.087649,
+     -0.043376
+    ],
+    "location": [
+     0.072907,
+     -0.3378,
+     -0.063792
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.819353,
+     0.562977,
+     0.00806,
+     0.107842
+    ],
+    "location": [
+     0.19584,
+     -0.376875,
+     -0.530209
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.936545,
+     0.285554,
+     -0.197107,
+     -0.048511
+    ],
+    "location": [
+     0.0,
+     2e-06,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "adentro tonica abriendo": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.922537,
+     0.367209,
+     0.118507,
+     -0.006336
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.437591,
+     0.264078,
+     -0.192193,
+     -0.837758
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.814994,
+     -0.0274,
+     0.576079,
+     -0.056285
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977187,
+     0.157649,
+     -0.109471,
+     0.090931
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.994033,
+     -0.087389,
+     0.004297,
+     -0.065149
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.543738,
+     0.626921,
+     0.408527,
+     0.380034
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.902068,
+     0.260746,
+     -0.033992,
+     0.342241
+    ],
+    "location": [
+     -2e-06,
+     3e-06,
+     1e-06
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.94542,
+     -0.270126,
+     0.121732,
+     -0.135634
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.574164,
+     0.80678,
+     0.122421,
+     0.06674
+    ],
+    "location": [
+     -0.113703,
+     0.085613,
+     0.394144
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.896068,
+     0.354647,
+     0.200237,
+     0.175688
+    ],
+    "location": [
+     -3e-06,
+     4e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.98034,
+     -0.131911,
+     0.010963,
+     -0.146341
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.749477,
+     0.627811,
+     0.205791,
+     -0.042278
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.3377
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.91964,
+     0.380656,
+     0.078193,
+     0.057004
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.979825,
+     -0.1743,
+     0.087649,
+     -0.043376
+    ],
+    "location": [
+     0.072907,
+     -0.3378,
+     -0.063792
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.989395,
+     0.038745,
+     -0.138112,
+     0.022331
+    ],
+    "location": [
+     0.195841,
+     -0.376878,
+     -0.530209
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.936545,
+     0.285554,
+     -0.197107,
+     -0.048511
+    ],
+    "location": [
+     0.0,
+     2e-06,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "medio quinta zuleta": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.969497,
+     -0.189424,
+     -0.110051,
+     -0.109923
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.967582,
+     -0.056985,
+     -0.231361,
+     0.083732
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.996877,
+     -0.062981,
+     -0.017745,
+     0.044212
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.986971,
+     0.000596,
+     -0.106427,
+     0.120674
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.993019,
+     0.059213,
+     0.017961,
+     0.100418
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.622441,
+     0.7709,
+     -0.042532,
+     -0.128342
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.997422,
+     -0.013348,
+     0.024698,
+     0.066042
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.897883,
+     0.425884,
+     0.111237,
+     0.007532
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.450708,
+     0.253392,
+     -0.179673,
+     -0.836883
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.881392,
+     0.003651,
+     0.467288,
+     -0.069115
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.964866,
+     0.15201,
+     0.004935,
+     0.214249
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.942478,
+     0.249887,
+     0.166192,
+     0.147218
+    ],
+    "location": [
+     -0.0956,
+     0.504264,
+     -0.218682
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.944385,
+     0.272615,
+     0.079587,
+     0.165782
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.98577,
+     -0.092894,
+     0.008387,
+     0.139853
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.768402,
+     0.625535,
+     0.100176,
+     0.090713
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.937743,
+     -0.185564,
+     -0.162246,
+     0.244706
+    ],
+    "location": [
+     -0.213988,
+     0.154109,
+     0.542137
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.75162,
+     0.652456,
+     0.07979,
+     0.054798
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.951131,
+     0.242098,
+     0.018673,
+     0.19076
+    ],
+    "location": [
+     0.26632,
+     -0.55983,
+     -0.294096
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.976673,
+     0.173803,
+     0.106044,
+     0.068076
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.969799,
+     0.142184,
+     -0.195914,
+     -0.027423
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "adentro tonica decima cerrando": {
+   "mixamorig9:Hips": {
+    "rotation_quaternion": [
+     1.0,
+     2e-06,
+     1e-05,
+     -5.6e-05
+    ],
+    "location": [
+     0.000574,
+     0.019859,
+     -0.256283
+    ]
+   },
+   "mixamorig9:Spine": {
+    "rotation_quaternion": [
+     1.0,
+     -2e-06,
+     -1.2e-05,
+     5.6e-05
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Spine1": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:Spine2": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Neck": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:Head": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:HeadTop_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftShoulder": {
+    "rotation_quaternion": [
+     0.998787,
+     0.039806,
+     0.012271,
+     0.02625
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftArm": {
+    "rotation_quaternion": [
+     0.793522,
+     0.599888,
+     0.102236,
+     -0.002266
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftForeArm": {
+    "rotation_quaternion": [
+     0.585817,
+     0.170017,
+     -0.069079,
+     0.789393
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftHand": {
+    "rotation_quaternion": [
+     0.949165,
+     -0.199264,
+     -0.130616,
+     -0.205718
+    ],
+    "location": [
+     -3.8e-05,
+     1.9e-05,
+     2.7e-05
+    ]
+   },
+   "mixamorig9:LeftHandThumb1": {
+    "rotation_quaternion": [
+     0.953291,
+     0.009573,
+     -0.21046,
+     0.216452
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb2": {
+    "rotation_quaternion": [
+     0.992033,
+     -0.120253,
+     0.000794,
+     0.037551
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandThumb3": {
+    "rotation_quaternion": [
+     0.998448,
+     -0.044819,
+     -0.005012,
+     -0.032682
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandIndex1": {
+    "rotation_quaternion": [
+     0.998676,
+     -0.028067,
+     -0.024439,
+     0.035513
+    ],
+    "location": [
+     0.00419,
+     0.056921,
+     0.009733
+    ]
+   },
+   "mixamorig9:LeftHandIndex2": {
+    "rotation_quaternion": [
+     0.974693,
+     0.187169,
+     -0.078363,
+     -0.093812
+    ],
+    "location": [
+     -0.007156,
+     0.114756,
+     -0.049563
+    ]
+   },
+   "mixamorig9:LeftHandIndex3": {
+    "rotation_quaternion": [
+     0.555562,
+     0.763525,
+     0.001321,
+     -0.329208
+    ],
+    "location": [
+     0.008436,
+     0.439707,
+     0.012212
+    ]
+   },
+   "mixamorig9:LeftHandMiddle1": {
+    "rotation_quaternion": [
+     0.991486,
+     0.04609,
+     -0.072943,
+     0.097521
+    ],
+    "location": [
+     0.000891,
+     -0.057392,
+     -0.007593
+    ]
+   },
+   "mixamorig9:LeftHandMiddle2": {
+    "rotation_quaternion": [
+     0.99842,
+     0.041121,
+     0.022647,
+     -0.030904
+    ],
+    "location": [
+     0.0076,
+     -0.114648,
+     0.049744
+    ]
+   },
+   "mixamorig9:LeftHandMiddle3": {
+    "rotation_quaternion": [
+     0.567312,
+     0.79147,
+     -0.001001,
+     -0.227448
+    ],
+    "location": [
+     -0.007789,
+     -0.43521,
+     -0.063964
+    ]
+   },
+   "mixamorig9:LeftHandRing1": {
+    "rotation_quaternion": [
+     0.996372,
+     -0.079942,
+     -0.002408,
+     0.029106
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing2": {
+    "rotation_quaternion": [
+     0.999356,
+     0.032735,
+     -0.001965,
+     -0.014535
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandRing3": {
+    "rotation_quaternion": [
+     0.835729,
+     0.425441,
+     0.309593,
+     -0.15719
+    ],
+    "location": [
+     -1e-06,
+     4e-06,
+     -3e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky1": {
+    "rotation_quaternion": [
+     0.930806,
+     -0.148747,
+     -0.030118,
+     -0.332517
+    ],
+    "location": [
+     0.0,
+     9e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:LeftHandPinky2": {
+    "rotation_quaternion": [
+     0.999471,
+     0.005704,
+     0.023792,
+     -0.021438
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftHandPinky3": {
+    "rotation_quaternion": [
+     0.974249,
+     0.041171,
+     0.221673,
+     -0.00208
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     4e-06
+    ]
+   },
+   "mixamorig9:RightShoulder": {
+    "rotation_quaternion": [
+     0.999397,
+     -0.001251,
+     0.011716,
+     0.032656
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightArm": {
+    "rotation_quaternion": [
+     0.905087,
+     0.409642,
+     0.114032,
+     0.002885
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightForeArm": {
+    "rotation_quaternion": [
+     0.453201,
+     0.253777,
+     -0.188319,
+     -0.833512
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHand": {
+    "rotation_quaternion": [
+     0.878449,
+     -0.022244,
+     0.472735,
+     -0.065988
+    ],
+    "location": [
+     -4e-06,
+     -3e-06,
+     -7e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb1": {
+    "rotation_quaternion": [
+     0.977828,
+     0.11401,
+     -0.139345,
+     0.106952
+    ],
+    "location": [
+     -0.0,
+     -1e-06,
+     -2e-06
+    ]
+   },
+   "mixamorig9:RightHandThumb2": {
+    "rotation_quaternion": [
+     0.999475,
+     -0.023567,
+     0.01411,
+     -0.017199
+    ],
+    "location": [
+     0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandThumb3": {
+    "rotation_quaternion": [
+     0.876752,
+     0.186927,
+     -0.430664,
+     0.104364
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandIndex1": {
+    "rotation_quaternion": [
+     0.987825,
+     0.099043,
+     -0.032827,
+     0.115385
+    ],
+    "location": [
+     -0.031547,
+     0.247634,
+     -0.249775
+    ]
+   },
+   "mixamorig9:RightHandIndex2": {
+    "rotation_quaternion": [
+     0.894583,
+     0.400597,
+     0.140528,
+     0.139626
+    ],
+    "location": [
+     -0.0956,
+     0.504263,
+     -0.218683
+    ]
+   },
+   "mixamorig9:RightHandIndex3": {
+    "rotation_quaternion": [
+     0.858067,
+     0.454556,
+     -0.00401,
+     0.238923
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightHandMiddle1": {
+    "rotation_quaternion": [
+     0.992928,
+     -0.035107,
+     -0.034911,
+     0.107909
+    ],
+    "location": [
+     -0.052664,
+     0.203842,
+     0.021055
+    ]
+   },
+   "mixamorig9:RightHandMiddle2": {
+    "rotation_quaternion": [
+     0.811802,
+     0.566493,
+     0.105351,
+     0.094682
+    ],
+    "location": [
+     -0.113705,
+     0.085619,
+     0.394145
+    ]
+   },
+   "mixamorig9:RightHandMiddle3": {
+    "rotation_quaternion": [
+     0.868851,
+     0.483489,
+     0.047222,
+     0.095434
+    ],
+    "location": [
+     -1e-06,
+     1e-06,
+     2e-06
+    ]
+   },
+   "mixamorig9:RightHandRing1": {
+    "rotation_quaternion": [
+     0.964447,
+     -0.012646,
+     -0.140573,
+     0.223431
+    ],
+    "location": [
+     -0.028836,
+     -0.086067,
+     0.323535
+    ]
+   },
+   "mixamorig9:RightHandRing2": {
+    "rotation_quaternion": [
+     0.830137,
+     0.539763,
+     0.122835,
+     0.066633
+    ],
+    "location": [
+     0.019502,
+     -0.252025,
+     0.337701
+    ]
+   },
+   "mixamorig9:RightHandRing3": {
+    "rotation_quaternion": [
+     0.889939,
+     0.447883,
+     -0.014317,
+     0.084876
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightHandPinky1": {
+    "rotation_quaternion": [
+     0.861878,
+     0.400556,
+     -0.115789,
+     0.288643
+    ],
+    "location": [
+     0.072906,
+     -0.337791,
+     -0.063788
+    ]
+   },
+   "mixamorig9:RightHandPinky2": {
+    "rotation_quaternion": [
+     0.980989,
+     0.005186,
+     0.191339,
+     0.031613
+    ],
+    "location": [
+     0.19584,
+     -0.376876,
+     -0.530211
+    ]
+   },
+   "mixamorig9:RightHandPinky3": {
+    "rotation_quaternion": [
+     0.975383,
+     0.121996,
+     -0.181302,
+     -0.027112
+    ],
+    "location": [
+     -0.0,
+     1e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftUpLeg": {
+    "rotation_quaternion": [
+     0.997992,
+     0.054616,
+     -7.7e-05,
+     -0.032077
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftLeg": {
+    "rotation_quaternion": [
+     0.993459,
+     -0.114187,
+     -0.000956,
+     -0.000304
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:LeftFoot": {
+    "rotation_quaternion": [
+     0.997685,
+     0.061644,
+     0.020953,
+     0.019645
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     0.0,
+     -0.0
+    ],
+    "location": [
+     0.0,
+     -0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:LeftToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     0.0,
+     -2e-06,
+     0.0
+    ]
+   },
+   "mixamorig9:RightUpLeg": {
+    "rotation_quaternion": [
+     0.998054,
+     0.053377,
+     0.000362,
+     0.032236
+    ],
+    "location": [
+     -0.0,
+     -0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightLeg": {
+    "rotation_quaternion": [
+     0.993713,
+     -0.11195,
+     0.000948,
+     0.000226
+    ],
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightFoot": {
+    "rotation_quaternion": [
+     0.997747,
+     0.060571,
+     -0.021417,
+     -0.019349
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     -0.0
+    ]
+   },
+   "mixamorig9:RightToeBase": {
+    "rotation_quaternion": [
+     1.0,
+     0.0,
+     -0.0,
+     -0.0
+    ],
+    "location": [
+     -0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "mixamorig9:RightToe_End": {
+    "rotation_quaternion": [
+     1.0,
+     -0.0,
+     -0.0,
+     0.0
+    ],
+    "location": [
+     1e-06,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ }
+}

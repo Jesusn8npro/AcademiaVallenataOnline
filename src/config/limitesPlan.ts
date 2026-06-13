@@ -51,6 +51,27 @@ export async function obtenerLimitePistas(userId: string): Promise<ResultadoLimi
 }
 
 /**
+ * Mismo criterio de membresía (membresia_activa_id + vencimiento) sin límite asociado.
+ * Lo usan features con gating binario gratis/premium (ej: bailes del visor 3D).
+ */
+export async function esUsuarioPremium(userId: string | undefined | null): Promise<boolean> {
+  if (!userId) return false;
+
+  const { data, error } = await (supabase
+    .from('perfiles')
+    .select('membresia_activa_id, fecha_vencimiento_membresia')
+    .eq('id', userId)
+    .maybeSingle() as any);
+
+  if (error || !data || !data.membresia_activa_id) return false;
+
+  const fechaVenc = data.fecha_vencimiento_membresia;
+  if (fechaVenc && fechaVenc < new Date().toISOString().slice(0, 10)) return false;
+
+  return true;
+}
+
+/**
  * Mismo criterio que pistas pero para grabaciones del alumno.
  * Cuando definas planes, podés diferenciar (ej: free=3 pistas + 3 grabaciones, premium=20+50, etc).
  */
