@@ -13,9 +13,10 @@ export function useBailes(
     scene: THREE.Object3D
     baile: string | null
     clipsBaile: Record<string, THREE.AnimationClip>
+    velocidad?: number // timeScale del baile; default VELOCIDAD_BAILE. El salto lo sube (pose sincronizada al arco).
   },
 ) {
-  const { mixer, scene, baile, clipsBaile } = deps
+  const { mixer, scene, baile, clipsBaile, velocidad } = deps
   const { baileAccion, accionesBaile, cuerpoAction } = refs
 
   React.useEffect(() => {
@@ -25,7 +26,7 @@ export function useBailes(
     if (clip) {
       const acc = (accionesBaile.current[clip.name] ||= mixer.clipAction(clip, scene))
       if (acc === prev) return
-      acc.timeScale = VELOCIDAD_BAILE
+      acc.timeScale = velocidad ?? VELOCIDAD_BAILE
       acc.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(CROSSFADE_BAILE).play()
       if (prev) prev.fadeOut(CROSSFADE_BAILE)
       else cuerpoAction.current?.fadeOut(CROSSFADE_BAILE)

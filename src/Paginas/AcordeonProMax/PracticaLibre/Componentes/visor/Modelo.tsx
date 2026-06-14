@@ -28,7 +28,7 @@ import { useBalanceoTocando } from './useBalanceoTocando'
 
 useGLTF.setDecoderPath('/draco/')
 
-export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYawRef, tocandoRef, ligero }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas; headYawRef?: React.MutableRefObject<number>; tocandoRef?: React.MutableRefObject<boolean>; ligero?: boolean }) {
+export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYawRef, tocandoRef, ligero, velocidadBaile }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas; headYawRef?: React.MutableRefObject<number>; tocandoRef?: React.MutableRefObject<boolean>; ligero?: boolean; velocidadBaile?: number }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const { scene: sceneCacheada, animations } = useGLTF(glb) as any
   // useGLTF cachea y devuelve la MISMA escena por URL. En el mundo multijugador varios avatares pueden
@@ -99,7 +99,7 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYa
 
   useAcopleAcordeon(scene, acordeon, mixer, clipBrazos, clipCuerpo)
   useSetupPersonaje(refs, { scene, acordeon, mixer, clipBrazos, clipCuerpo, camera, ligero })
-  useBailes(refs, { mixer, scene, baile, clipsBaile })
+  useBailes(refs, { mixer, scene, baile, clipsBaile, velocidad: velocidadBaile })
   usePielesAcordeon(refs, acordeon, skin)
   useNotasSuscripcion(refs, fuenteNotas)
   usePersonajeFrame(refs, fuelleAbiertoRef, mixer, ligero)

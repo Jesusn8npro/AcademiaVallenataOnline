@@ -10,6 +10,7 @@
 #     --python scripts/agregar-bailes-y-exportar.py
 # Luego: node scripts/comprimir-bailes.mjs public/modelos3d/_export/bailes-pack-raw.glb public/modelos3d/bailes-pack-v1.glb
 import bpy, os, re, json
+from mathutils import Vector
 
 RIG = "AnimRig"
 BRAZOS = ("Shoulder", "Arm", "Hand")
@@ -61,6 +62,35 @@ def agregar_baile(filepath, nombre, rig):
     pref_src = _pref(src)
     pref_rig = _pref(rig)
     huesos_rig = set(b.name for b in rig.data.bones)
+
+    # --- Transferir el MOVIMIENTO VERTICAL REAL del clip (idéntico a Blender) a la cadera del AnimRig.
+    #     Se lee la altura MUNDO de la cadera del source frame a frame (en metros, Z arriba) y se
+    #     convierte al espacio LOCAL del hueso Hips del AnimRig (la cadera tiene ejes propios → hay que
+    #     usar M = rig_world·rest_hueso para no torcer/escalar mal). Resultado: salto exacto, anclado al
+    #     rest (en pie = offset 0 → no flota), SOLO vertical (el desplazamiento horizontal lo da el juego). ---
+    hips_src = pref_src + "Hips"
+    rb = rig.data.bones[pref_rig + "Hips"]
+    M3 = rig.matrix_world.to_3x3() @ rb.matrix_local.to_3x3()  # dirección bone-local → mundo
+    Minv = M3.inverted()
+    frames = sorted({int(k.co[0]) for cb in _bags(raw) for fc in cb.fcurves
+                     if _hueso(fc.data_path) == hips_src and fc.data_path.endswith('.location')
+                     for k in fc.keyframe_points})
+    computedLoc = {}
+    if frames:
+        src.animation_data_create().action = raw
+        try:
+            if raw.slots: src.animation_data.action_slot = raw.slots[0]
+        except Exception: pass
+        sphb = src.pose.bones.get(hips_src)
+        worldz = {}
+        for f in frames:
+            bpy.context.scene.frame_set(f)
+            bpy.context.view_layer.update()
+            worldz[f] = (src.matrix_world @ sphb.head).z
+        stand = worldz[frames[0]]
+        # offset vertical en mundo (metros) → vector de location en el espacio local del Hips del rig
+        computedLoc = {f: (Minv @ Vector((0.0, 0.0, worldz[f] - stand))) for f in frames}
+
     if nombre in bpy.data.actions:
         bpy.data.actions.remove(bpy.data.actions[nombre])
     act = raw.copy(); act.name = nombre; act.use_fake_user = True
@@ -77,17 +107,30 @@ def agregar_baile(filepath, nombre, rig):
                 cb.fcurves.remove(fc); continue
             if any(t in b for t in BRAZOS):
                 cb.fcurves.remove(fc); continue
-            # Quitar TODA la traslación de Hips (no solo X,Z). Estos FBX importaron con la cadera a
-            # otra escala que el AnimRig → el rebaseo del visor (t_clip - t_restA) dejaba el cuerpo a
-            # mala altura (flotando/hundido) y Salto se iba del piso. Sin traslación de Hips el baile
-            # queda anclado por el rest del personaje (como las demás) y NO se sale de su posición.
+            # Hips: reescribir las 3 location con el desplazamiento SOLO vertical (mundo) convertido a
+            # local del hueso → salto idéntico a Blender, anclado al rest (no flota), sin moverse en
+            # horizontal (eso lo da el controlador del juego).
             if b.endswith("Hips") and fc.data_path.endswith(".location"):
-                cb.fcurves.remove(fc); continue
+                if not computedLoc:
+                    cb.fcurves.remove(fc); continue
+                ax = fc.array_index
+                for kp in fc.keyframe_points:
+                    f = int(round(kp.co[0]))
+                    loc = computedLoc.get(f) or computedLoc[min(computedLoc, key=lambda x: abs(x - f))]
+                    kp.co[1] = loc[ax]
+                    kp.handle_left_type = 'AUTO_CLAMPED'
+                    kp.handle_right_type = 'AUTO_CLAMPED'
+                fc.update()
+                continue
+    # limpiar el import: soltar la acción cruda del source ANTES de borrar (si no, queda referenciada
+    # y sobrevive → se colaba "Salsa para personaje" como baile fantasma).
+    if src.animation_data:
+        src.animation_data.action = None
     for o in nuevos:
         try: bpy.data.objects.remove(o, do_unlink=True)
         except Exception: pass
     for a in acts:
-        try: bpy.data.actions.remove(a)
+        try: a.use_fake_user = False; bpy.data.actions.remove(a)
         except Exception: pass
     return (True, nombre + " (" + str(int(act.frame_range[1])) + " frames)")
 
@@ -95,6 +138,13 @@ def agregar_baile(filepath, nombre, rig):
 # ---------- 1) Importar + filtrar los 4 bailes nuevos ----------
 rig = bpy.data.objects.get(RIG)
 assert rig and rig.type == 'ARMATURE', "AnimRig no encontrado"
+# Limpiar acciones crudas fantasma que quedaron de corridas previas (nombre del FBX, no del baile).
+for _nm in ("Salsa para personaje",):
+    _a = bpy.data.actions.get(_nm)
+    if _a:
+        _a.use_fake_user = False
+        try: bpy.data.actions.remove(_a)
+        except Exception: pass
 log_add = []
 for fname, nombre in NUEVOS:
     ok, msg = agregar_baile(os.path.join(FBX_DIR, fname), nombre, rig)

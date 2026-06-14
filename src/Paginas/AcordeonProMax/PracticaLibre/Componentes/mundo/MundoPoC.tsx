@@ -31,8 +31,9 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
-const JUMP_MS = 850       // duración del arco del salto (ms)
-const JUMP_H = 1.15       // altura del salto (m) — arco vertical por código (vuelve exacto al piso)
+const SALTO_SPEED = 1.0   // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
+const JUMP_MS = 1300      // dura agacharse→salto→aterrizaje (ápex ≈471ms); luego vuelve a caminar/idle
+// El salto vertical lo da el CLIP (su cadera real, horneada en Blender), NO código → arco idéntico a Blender.
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
 const MOUSE_SENS = 0.0024 // sensibilidad del mouse (pointer-lock)
@@ -47,10 +48,11 @@ const INTERP_RATE = 13    // suavizado de interpolación de remotos (más alto =
 
 // Modos de cámara seleccionables. tercera/lejana = orbital 3ª persona; primera = ojos del personaje;
 // cenital = picado desde arriba. Cada uno fija distancia/ángulo base (el mouse y la rueda ajustan encima).
-export interface ModoVista { id: string; nombre: string; dist: number; pitch: number; cenital: boolean; primera: boolean }
+export interface ModoVista { id: string; nombre: string; dist: number; pitch: number; cenital: boolean; primera: boolean; frontal?: boolean }
 export const VISTAS: ModoVista[] = [
   { id: 'tercera', nombre: '3ª persona', dist: 4.6, pitch: 0.32, cenital: false, primera: false },
   { id: 'lejana', nombre: 'Lejana', dist: 8.5, pitch: 0.45, cenital: false, primera: false },
+  { id: 'frontal', nombre: 'Frontal', dist: 4.2, pitch: 0.26, cenital: false, primera: false, frontal: true },
   { id: 'primera', nombre: '1ª persona', dist: 0.5, pitch: 0.45, cenital: false, primera: true },
   { id: 'cenital', nombre: 'Cenital', dist: 11, pitch: 0.9, cenital: true, primera: false },
 ]
@@ -288,7 +290,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} fuenteNotas={fuenteNotas} headYawRef={headYawRef} tocandoRef={tocandoRef} ligero />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} fuenteNotas={fuenteNotas} headYawRef={headYawRef} tocandoRef={tocandoRef} ligero />
       </AnclaPies>
     </group>
   )
@@ -319,6 +321,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const dist = React.useRef(DIST_DEF)
   const cenital = React.useRef(false)
   const primera = React.useRef(false)
+  const frontal = React.useRef(false)
   const arrastrando = React.useRef(false) // rotando la cámara con el clic mantenido
   const recentrar = React.useRef(false)   // tecla C → recentrar la cámara detrás del personaje
   const saltarHastaRef = React.useRef(0)  // performance.now() hasta cuando dura el salto en curso
@@ -330,7 +333,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   // Aplicar el modo de vista elegido (distancia/ángulo base). El mouse y la rueda ajustan encima.
   React.useEffect(() => {
     const v = VISTAS.find((x) => x.id === vistaModo) ?? VISTAS[0]
-    dist.current = v.dist; pitch.current = v.pitch; cenital.current = v.cenital; primera.current = v.primera
+    dist.current = v.dist; pitch.current = v.pitch; cenital.current = v.cenital; primera.current = v.primera; frontal.current = !!v.frontal
   }, [vistaModo])
   const [anim, setAnim] = React.useState<string | null>(null) // clip actual (caminar/correr/saltar/baile)
   const [tocando, setTocando] = React.useState(false)
@@ -472,12 +475,9 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       if (dd > 1e-3 && dd < SEP) { const push = (SEP - dd) * 0.5; g.position.x += (dx / dd) * push; g.position.z += (dz / dd) * push }
     }
 
-    // SALTO = arco vertical del grupo (sube y vuelve EXACTO al piso). El clip 'Salto vacano' pone la
-    // pose; este arco da el despegue real, sin cambiar la posición horizontal ni dejar al personaje flotando.
-    let jumpOffset = 0
-    if (saltando) { const p = 1 - (saltarHastaRef.current - ahora) / JUMP_MS; jumpOffset = Math.sin(Math.PI * Math.min(1, Math.max(0, p))) * JUMP_H }
-    g.position.y = jumpOffset
-
+    // El salto NO mueve el grupo: el despegue lo da la cadera del CLIP 'Salto vacano' (vertical real de
+    // Blender) → el cuerpo sube dentro del grupo y la cámara (que sigue al grupo) NO sube con él, así el
+    // salto se ve. El grupo queda siempre en el piso (y=0).
     const speed = Math.hypot(vel.current.x, vel.current.z)
     const moviendo = speed > 0.25
     if (moviendo) g.rotation.y = dampAngle(g.rotation.y, Math.atan2(vel.current.x, vel.current.z), FACE_RATE, dt)
@@ -510,28 +510,36 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     est.personajeId = personajeId; est.anim = animActual
     est.nombre = nombre; est.tocando = tocandoAhora; est.mira = yaw.current
 
-    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). En 3ª persona/cenital la
-    // cámara sigue la altura del PISO (P.y − jumpOffset), no el salto → el salto se VE (antes la cámara
-    // subía con el personaje y parecía que no saltaba). En 1ª persona sí sube (vas montado en él).
+    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). El grupo está SIEMPRE en el
+    // piso (el salto sube la cadera DENTRO del grupo), así que la cámara no salta con el personaje.
     const P = g.position
-    const py = P.y - jumpOffset
     if (cenital.current) {
       // Picado desde arriba, centrado en el personaje.
-      camera.position.set(P.x, py + dist.current, P.z + 0.01)
-      _tgt.current.set(P.x, py, P.z)
+      camera.position.set(P.x, P.y + dist.current, P.z + 0.01)
+      _tgt.current.set(P.x, P.y, P.z)
     } else if (primera.current) {
       // Ojos del personaje, mirando hacia adelante (yaw) con tilt vertical por el pitch.
       const hx = Math.sin(yaw.current), hz = Math.cos(yaw.current)
       camera.position.set(P.x + hx * 0.15, P.y + 1.6, P.z + hz * 0.15)
       const v = (pitch.current - 0.45) * 3
       _tgt.current.set(P.x + hx * 3, P.y + 1.6 + v, P.z + hz * 3)
+    } else if (frontal.current) {
+      // FRONTAL: cámara DELANTE del personaje (lo ves de frente, su cara), siguiendo su orientación.
+      const fx = Math.sin(g.rotation.y), fz = Math.cos(g.rotation.y)
+      const cp = Math.cos(pitch.current), sp = Math.sin(pitch.current)
+      _tgt.current.set(P.x, P.y + TARGET_H, P.z)
+      camera.position.set(
+        P.x + fx * dist.current * cp,
+        P.y + TARGET_H + dist.current * sp,
+        P.z + fz * dist.current * cp,
+      )
     } else {
       // Orbital 3ª persona: detrás/encima según yaw/pitch/dist.
       const cp = Math.cos(pitch.current), sp = Math.sin(pitch.current)
-      _tgt.current.set(P.x, py + TARGET_H, P.z)
+      _tgt.current.set(P.x, P.y + TARGET_H, P.z)
       camera.position.set(
         P.x - Math.sin(yaw.current) * dist.current * cp,
-        py + TARGET_H + dist.current * sp,
+        P.y + TARGET_H + dist.current * sp,
         P.z - Math.cos(yaw.current) * dist.current * cp,
       )
     }
@@ -546,7 +554,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
           ni se rompe la caminata al cambiar seguido. */}
       <React.Suspense fallback={null}>
         <AnclaPies claveMedicion={glb}>
-          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} headYawRef={headYawRef} tocandoRef={tocandoRef} />
+          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} headYawRef={headYawRef} tocandoRef={tocandoRef} />
         </AnclaPies>
       </React.Suspense>
     </group>
@@ -670,12 +678,12 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const saltarRef = React.useRef(0)
   const saltar = React.useCallback(() => { saltarRef.current += 1 }, [])
 
-  // Teclas 1-4 cambian de vista (si el foco no está en un input).
+  // Teclas 1-5 cambian de vista (si el foco no está en un input).
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const a = document.activeElement
       if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return
-      const i = ['1', '2', '3', '4'].indexOf(e.key)
+      const i = ['1', '2', '3', '4', '5'].indexOf(e.key)
       if (i >= 0 && VISTAS[i]) setVistaModo(VISTAS[i].id)
     }
     window.addEventListener('keydown', h)
@@ -924,7 +932,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         <div style={{ color: '#fff', background: 'rgba(0,0,0,.5)', padding: '7px 12px', borderRadius: 9, fontSize: 13, width: 'fit-content' }}>
           {tactil
             ? <><b>Joystick</b> caminar · <b>arrastra</b> mirar · <b>Correr</b>/<b>Saltar</b> a la derecha · <b>tap</b> a un jugador para oírlo</>
-            : <><b>WASD</b>/flechas caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-4</b> vistas · <b>clic</b> a un jugador para oírlo</>}
+            : <><b>WASD</b>/flechas caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-5</b> vistas · <b>clic</b> a un jugador para oírlo</>}
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {VISTAS.map((v, i) => (
