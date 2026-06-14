@@ -32,6 +32,23 @@ interface Props {
   miPuntaje: number | null
   rivalPuntaje: number | null
   empezarDuelo: () => void
+  revancha: () => void
+}
+
+// Confeti ligero (sin dependencias): N piezas cayendo con colores/retraso aleatorios. Se muestra al ganar.
+const Confeti: React.FC = () => {
+  const piezas = React.useMemo(() => Array.from({ length: 70 }, (_, i) => ({
+    i, left: Math.random() * 100, delay: Math.random() * 0.6, dur: 1.8 + Math.random() * 1.4,
+    color: ['#ffd54a', '#ff7a18', '#39d353', '#2d6cdf', '#e85d75', '#7b8cde'][i % 6], rot: Math.random() * 360,
+  })), [])
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 250, pointerEvents: 'none', overflow: 'hidden' }}>
+      <style>{`@keyframes duelo-confeti-caer{0%{transform:translateY(-12vh) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:.9}}`}</style>
+      {piezas.map((p) => (
+        <span key={p.i} style={{ position: 'absolute', top: 0, left: `${p.left}%`, width: 9, height: 14, background: p.color, borderRadius: 2, transform: `rotate(${p.rot}deg)`, animation: `duelo-confeti-caer ${p.dur}s linear ${p.delay}s forwards` }} />
+      ))}
+    </div>
+  )
 }
 
 const PANEL: React.CSSProperties = {
@@ -67,13 +84,17 @@ function useCanciones(activo: boolean) {
 const PanelReto: React.FC<Props> = (props) => {
   const { estado, oponente, cancion, chat, miListo, suListo, ambosListos, aviso, limpiarAviso,
     aceptar, rechazar, cancelar, enviarChat, proponerCancion, marcarListo,
-    soyRetador, dueloIniciado, meTocaJugar, terminado, ganador, miPuntaje, rivalPuntaje, empezarDuelo } = props
+    soyRetador, dueloIniciado, meTocaJugar, terminado, ganador, miPuntaje, rivalPuntaje, empezarDuelo, revancha } = props
   const [texto, setTexto] = React.useState('')
   const canciones = useCanciones(estado === 'negociando')
   const finChat = React.useRef<HTMLDivElement>(null)
   React.useEffect(() => { finChat.current?.scrollIntoView({ block: 'end' }) }, [chat.length])
   // El aviso ("rechazó el reto") se auto-oculta a los 4 s.
   React.useEffect(() => { if (!aviso) return; const t = setTimeout(limpiarAviso, 4000); return () => clearTimeout(t) }, [aviso, limpiarAviso])
+  // Sonido de victoria al ganar el duelo (mismo efecto que usa el simulador al terminar bien).
+  React.useEffect(() => {
+    if (terminado && ganador === 'yo') { try { const a = new Audio('/audio/effects/success.mp3'); a.volume = 0.8; a.play().catch(() => {}) } catch {} }
+  }, [terminado, ganador])
 
   const enviar = () => { enviarChat(texto); setTexto('') }
 
@@ -208,25 +229,40 @@ const PanelReto: React.FC<Props> = (props) => {
       )}
 
       {/* RESULTADO FINAL del duelo */}
-      {terminado && oponente && (
-        <div style={PANEL}>
-          <div style={{ fontSize: 22, fontWeight: 900, textAlign: 'center', marginBottom: 10 }}>
-            {ganador === 'yo' ? '🏆 ¡Ganaste!' : ganador === 'rival' ? '😞 Perdiste' : '🤝 ¡Empate!'}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>Tú</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: ganador === 'yo' ? '#ffd54a' : '#fff' }}>{(miPuntaje ?? 0).toLocaleString()}</div>
+      {terminado && oponente && (() => {
+        const mp = miPuntaje ?? 0, rp = rivalPuntaje ?? 0, total = mp + rp
+        const miFrac = total > 0 ? (mp / total) * 100 : 50
+        return (
+          <>
+            {ganador === 'yo' && <Confeti />}
+            <div style={PANEL}>
+              <div style={{ fontSize: 26, fontWeight: 900, textAlign: 'center', marginBottom: 12 }}>
+                {ganador === 'yo' ? '🏆 ¡Ganaste!' : ganador === 'rival' ? '😞 Perdiste' : '🤝 ¡Empate!'}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>Tú</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: ganador === 'yo' ? '#ffd54a' : '#fff' }}>{mp.toLocaleString()}</div>
+                </div>
+                <div style={{ fontSize: 18, opacity: 0.5 }}>vs</div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>{oponente.nombre}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, color: ganador === 'rival' ? '#ffd54a' : '#fff' }}>{rp.toLocaleString()}</div>
+                </div>
+              </div>
+              {/* Barra comparativa de puntajes */}
+              <div style={{ display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden', marginBottom: 18, background: '#333b48' }}>
+                <div style={{ width: `${miFrac}%`, background: 'linear-gradient(90deg,#2d6cdf,#5a8cff)', transition: 'width .6s ease' }} />
+                <div style={{ width: `${100 - miFrac}%`, background: 'linear-gradient(90deg,#ff7a18,#ffb347)', transition: 'width .6s ease' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" style={{ ...BTN('linear-gradient(90deg,#ff7a18,#ffb347)'), color: '#1a1100', flex: 1 }} onClick={revancha}>🔁 Revancha</button>
+                <button type="button" style={{ ...BTN('#444b57'), flex: 1 }} onClick={cancelar}>Cerrar</button>
+              </div>
             </div>
-            <div style={{ fontSize: 18, opacity: 0.5 }}>vs</div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>{oponente.nombre}</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: ganador === 'rival' ? '#ffd54a' : '#fff' }}>{(rivalPuntaje ?? 0).toLocaleString()}</div>
-            </div>
-          </div>
-          <button type="button" style={{ ...BTN('#ff7a18'), width: '100%' }} onClick={cancelar}>Cerrar</button>
-        </div>
-      )}
+          </>
+        )
+      })()}
     </>
   )
 }

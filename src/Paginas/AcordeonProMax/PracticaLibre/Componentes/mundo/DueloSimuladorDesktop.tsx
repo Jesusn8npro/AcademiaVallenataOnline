@@ -8,15 +8,16 @@ import AcordeonProMaxSimulador from '../../../Pantallas/AcordeonProMaxSimulador'
 // doble acordeón), directo en la sección acordada. "Volver" se queda en el mundo (onSalir); al terminar
 // reporta el puntaje (onResultado).
 
-export default function DueloSimuladorDesktop({ cancionId, seccionId, onResultado, onAbandonar }: {
+export default function DueloSimuladorDesktop({ cancionId, seccionId, metaRival, onResultado, onAbandonar }: {
   cancionId: string
   seccionId?: string | null
+  metaRival?: number | null
   onResultado: (puntos: number) => void
   onAbandonar: () => void
 }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#0a0d14' }}>
-      <AcordeonProMaxSimulador idDirecto={cancionId} seccionId={seccionId} autoIniciar onResultado={onResultado} onSalir={onAbandonar} />
+      <AcordeonProMaxSimulador idDirecto={cancionId} seccionId={seccionId} metaRival={metaRival} autoIniciar onResultado={onResultado} onSalir={onAbandonar} />
     </div>
   )
 }

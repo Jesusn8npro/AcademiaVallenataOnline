@@ -11,9 +11,10 @@ import type { ConfigCancion } from '../../../../SimuladorApp/Juego/Hooks/useConf
 
 const JuegoSimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Juego/JuegoSimuladorApp'))
 
-export default function DueloSimulador({ cancionId, seccionId, onResultado, onAbandonar }: {
+export default function DueloSimulador({ cancionId, seccionId, metaRival, onResultado, onAbandonar }: {
   cancionId: string
   seccionId?: string | null
+  metaRival?: number | null
   onResultado: (puntos: number) => void
   onAbandonar: () => void
 }) {
@@ -49,6 +50,7 @@ export default function DueloSimulador({ cancionId, seccionId, onResultado, onAb
         <React.Suspense fallback={<div style={{ color: '#fff', padding: 24, fontFamily: 'system-ui' }}>Cargando simulador…</div>}>
           <JuegoSimuladorApp
             config={config}
+            metaRival={metaRival}
             onResultado={(est: any) => onResultado(est?.puntos ?? 0)}
             onSalir={onAbandonar}
           />

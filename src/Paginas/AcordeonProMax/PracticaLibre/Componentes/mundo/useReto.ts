@@ -94,6 +94,11 @@ export function useReto(miId: string, miNombre: string) {
         case 'resultado':
           if (op && payload.de === op.id) setRivalPuntaje(typeof payload.puntos === 'number' ? payload.puntos : 0)
           break
+        case 'revancha':
+          // El rival pidió revancha → reseteamos los puntajes (mismo oponente/canción/sección) y
+          // vuelve a arrancar el duelo desde el turno 1. Idempotente (si ambos piden, da igual).
+          if (op && payload.de === op.id) { setMiPuntaje(null); setRivalPuntaje(null); setDueloIniciado(true) }
+          break
       }
     })
     ch.subscribe()
@@ -167,6 +172,14 @@ export function useReto(miId: string, miNombre: string) {
     if (op) enviar({ tipo: 'resultado', de: miId, para: op.id, puntos })
   }, [enviar, miId])
 
+  // Revancha: resetea puntajes (mismo oponente/canción/sección) y reinicia el duelo desde el turno 1.
+  const revancha = React.useCallback(() => {
+    const op = oponenteRef.current
+    if (!op) return
+    setMiPuntaje(null); setRivalPuntaje(null); setDueloIniciado(true)
+    enviar({ tipo: 'revancha', de: miId, para: op.id })
+  }, [enviar, miId])
+
   // --- Derivaciones del turno (deterministas a partir de los 2 puntajes) ---
   // Turno 1 = retador; turno 2 = retado. Se calcula igual en ambos clientes.
   const retadorPuntaje = soyRetador ? miPuntaje : rivalPuntaje
@@ -188,6 +201,6 @@ export function useReto(miId: string, miNombre: string) {
     estado, oponente, cancion, chat, miListo, suListo, ambosListos, aviso, limpiarAviso,
     invitar, aceptar, rechazar, cancelar, enviarChat, proponerCancion, marcarListo,
     soyRetador, dueloIniciado, miPuntaje, rivalPuntaje, turno, meTocaJugar, terminado, ganador,
-    empezarDuelo, reportarPuntaje,
+    empezarDuelo, reportarPuntaje, revancha,
   }
 }
