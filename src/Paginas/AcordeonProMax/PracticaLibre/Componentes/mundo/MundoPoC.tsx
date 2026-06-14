@@ -32,8 +32,9 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
 const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
-const JUMP_MS_QUIETO = 1800 // QUIETO: salto COMPLETO (despegue→ápex→aterrizaje→pararse) y vuelve a idle
-const JUMP_MS_MOV = 900     // EN MOVIMIENTO: solo el brinco (despegue→ápex→bajar) → sigue caminando/corriendo sin cortarse
+const JUMP_MS_QUIETO = 1800 // QUIETO: salto COMPLETO (clip Salto vacano: despegue→ápex→aterrizaje→pararse) → idle
+const HOP_MS = 650          // EN MOVIMIENTO: brinco por CÓDIGO manteniendo la caminata/carrera (sin cambiar de anim → fluido)
+const HOP_H = 0.7           // altura del brinco en movimiento (m)
 // El salto vertical lo da el CLIP (su cadera real, horneada en Blender), NO código → arco idéntico a Blender.
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
@@ -326,6 +327,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const arrastrando = React.useRef(false) // rotando la cámara con el clic mantenido
   const recentrar = React.useRef(false)   // tecla C → recentrar la cámara detrás del personaje
   const saltarHastaRef = React.useRef(0)  // performance.now() hasta cuando dura el salto en curso
+  const saltoEsMovRef = React.useRef(false) // el salto actual se disparó EN MOVIMIENTO (brinco) vs QUIETO (clip)
   const ultSaltoRef = React.useRef(0)     // último valor visto de saltarRef (edge del botón Saltar)
   const prevEspacioRef = React.useRef(false) // edge de la barra espaciadora (saltar en PC)
   const _ray = React.useRef(new THREE.Raycaster())
@@ -454,11 +456,16 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const ahora = performance.now()
     const espacio = kb === 1 && !!t[' ']
     const enMovimiento = Math.abs(iz) > 0.1 || Math.abs(ix) > 0.1
-    const durSalto = enMovimiento ? JUMP_MS_MOV : JUMP_MS_QUIETO
-    if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; if (ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + durSalto }
-    if (espacio && !prevEspacioRef.current && ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + durSalto
+    const dispararSalto = () => {
+      if (ahora < saltarHastaRef.current) return // ya hay un salto en curso
+      saltoEsMovRef.current = enMovimiento
+      saltarHastaRef.current = ahora + (enMovimiento ? HOP_MS : JUMP_MS_QUIETO)
+    }
+    if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; dispararSalto() }
+    if (espacio && !prevEspacioRef.current) dispararSalto()
     prevEspacioRef.current = espacio
     const saltando = ahora < saltarHastaRef.current
+    const brincando = saltando && saltoEsMovRef.current // brinco en movimiento (arco por código, anim = caminar/correr)
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)
     const mag = desired.length() // analógico: joystick a medias = camina más lento; clamp a 1 = full
     if (mag > 1e-4) desired.multiplyScalar(((mag > 1 ? 1 / mag : 1)) * VEL * (correr ? RUN_MULT : 1))
@@ -480,9 +487,14 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       if (dd > 1e-3 && dd < SEP) { const push = (SEP - dd) * 0.5; g.position.x += (dx / dd) * push; g.position.z += (dz / dd) * push }
     }
 
-    // El salto NO mueve el grupo: el despegue lo da la cadera del CLIP 'Salto vacano' (vertical real de
-    // Blender) → el cuerpo sube dentro del grupo y la cámara (que sigue al grupo) NO sube con él, así el
-    // salto se ve. El grupo queda siempre en el piso (y=0).
+    // BRINCO EN MOVIMIENTO = arco vertical por código sobre el grupo (la caminata/carrera NO se interrumpe).
+    // El SALTO QUIETO no usa esto: su vertical lo da la cadera del CLIP 'Salto vacano' dentro del grupo (grupo y=0).
+    // La cámara resta jumpOffset (sigue el piso) → el brinco se ve sin que la cámara suba con él.
+    const jumpOffset = brincando
+      ? Math.sin(Math.PI * Math.min(1, Math.max(0, 1 - (saltarHastaRef.current - ahora) / HOP_MS))) * HOP_H
+      : 0
+    g.position.y = jumpOffset
+
     const speed = Math.hypot(vel.current.x, vel.current.z)
     const moviendo = speed > 0.25
     if (moviendo) g.rotation.y = dampAngle(g.rotation.y, Math.atan2(vel.current.x, vel.current.z), FACE_RATE, dt)
@@ -494,8 +506,10 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       const exceso = Math.abs(d) - HEAD_LIMITE
       if (exceso > 0) g.rotation.y += Math.sign(d) * exceso * (1 - Math.exp(-BODY_TURN_RATE * dt))
     }
-    // Clip por prioridad: saltar > correr/caminar > baile elegido en el panel > nada.
-    const animActual = saltando ? 'Salto vacano' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)
+    // Anim por prioridad: salto QUIETO (clip) > correr/caminar > baile del panel > nada. El BRINCO en
+    // movimiento NO cambia de anim: mantiene caminar/correr (la fluidez la da el arco por código) → al
+    // aterrizar sigue caminando al instante, sin pose intermedia.
+    const animActual = (saltando && !saltoEsMovRef.current) ? 'Salto vacano' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)
     if (animActual !== anim) setAnim(animActual)
 
     // Recentrar la cámara detrás del personaje (tecla C).
@@ -515,13 +529,15 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     est.personajeId = personajeId; est.anim = animActual
     est.nombre = nombre; est.tocando = tocandoAhora; est.mira = yaw.current
 
-    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). El grupo está SIEMPRE en el
-    // piso (el salto sube la cadera DENTRO del grupo), así que la cámara no salta con el personaje.
+    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). Se usa la altura del PISO
+    // (py = P.y − jumpOffset) en 3ª/frontal/cenital → durante el brinco en movimiento el personaje sube en
+    // pantalla y la cámara NO sube con él (se ve el brinco). En 1ª persona sí sube (vas montado).
     const P = g.position
+    const py = P.y - jumpOffset
     if (cenital.current) {
       // Picado desde arriba, centrado en el personaje.
-      camera.position.set(P.x, P.y + dist.current, P.z + 0.01)
-      _tgt.current.set(P.x, P.y, P.z)
+      camera.position.set(P.x, py + dist.current, P.z + 0.01)
+      _tgt.current.set(P.x, py, P.z)
     } else if (primera.current) {
       // Ojos del personaje, mirando hacia adelante (yaw) con tilt vertical por el pitch.
       const hx = Math.sin(yaw.current), hz = Math.cos(yaw.current)
@@ -532,19 +548,19 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       // FRONTAL: cámara DELANTE del personaje (lo ves de frente, su cara), siguiendo su orientación.
       const fx = Math.sin(g.rotation.y), fz = Math.cos(g.rotation.y)
       const cp = Math.cos(pitch.current), sp = Math.sin(pitch.current)
-      _tgt.current.set(P.x, P.y + TARGET_H, P.z)
+      _tgt.current.set(P.x, py + TARGET_H, P.z)
       camera.position.set(
         P.x + fx * dist.current * cp,
-        P.y + TARGET_H + dist.current * sp,
+        py + TARGET_H + dist.current * sp,
         P.z + fz * dist.current * cp,
       )
     } else {
       // Orbital 3ª persona: detrás/encima según yaw/pitch/dist.
       const cp = Math.cos(pitch.current), sp = Math.sin(pitch.current)
-      _tgt.current.set(P.x, P.y + TARGET_H, P.z)
+      _tgt.current.set(P.x, py + TARGET_H, P.z)
       camera.position.set(
         P.x - Math.sin(yaw.current) * dist.current * cp,
-        P.y + TARGET_H + dist.current * sp,
+        py + TARGET_H + dist.current * sp,
         P.z - Math.cos(yaw.current) * dist.current * cp,
       )
     }
