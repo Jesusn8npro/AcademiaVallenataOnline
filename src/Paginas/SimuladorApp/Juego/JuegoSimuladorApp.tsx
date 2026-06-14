@@ -31,6 +31,8 @@ interface JuegoSimuladorAppProps {
     // Opcional (Modo Competencia del Mundo 3D): se dispara UNA vez cuando la partida termina
     // (estadoJuego 'resultados' o 'gameOver') con las estadísticas finales → el duelo captura el puntaje.
     onResultado?: (estadisticas: any) => void;
+    // Opcional (duelo, turno 2): puntaje del rival a SUPERAR → se muestra como meta.
+    metaRival?: number | null;
 }
 
 const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro_solo'> = {
@@ -40,7 +42,7 @@ const MAPA_MODO: Record<ModoConfig, 'ninguno' | 'libre' | 'synthesia' | 'maestro
     maestro_solo: 'maestro_solo',
 };
 
-const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir, onResultado }) => {
+const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir, onResultado, metaRival }) => {
     const hero: any = useLogicaProMax();
     const inicializadoRef = useRef(false);
 
@@ -263,6 +265,13 @@ const JuegoSimuladorApp: React.FC<JuegoSimuladorAppProps> = ({ config, onSalir, 
                 onPausa={onPausarClick}
                 modoEtiqueta={modoEtiqueta}
             />
+
+            {/* META del rival (duelo, turno 2): el puntaje a superar. */}
+            {typeof metaRival === 'number' && (
+                <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: 'rgba(255,122,24,.92)', color: '#1a1100', padding: '5px 12px', borderRadius: 20, fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 800 }}>
+                    🎯 Meta: {metaRival.toLocaleString()}
+                </div>
+            )}
 
             {hero.estadoJuego === 'contando' && hero.cuenta !== null && (
                 <div className="juego-sim-cuenta-overlay">

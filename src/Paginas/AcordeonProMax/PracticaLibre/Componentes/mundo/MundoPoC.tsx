@@ -817,7 +817,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         enviarChat={reto.enviarChat} proponerCancion={reto.proponerCancion} marcarListo={reto.marcarListo}
         soyRetador={reto.soyRetador} dueloIniciado={reto.dueloIniciado} meTocaJugar={reto.meTocaJugar}
         terminado={reto.terminado} ganador={reto.ganador} miPuntaje={reto.miPuntaje} rivalPuntaje={reto.rivalPuntaje}
-        empezarDuelo={reto.empezarDuelo}
+        empezarDuelo={reto.empezarDuelo} revancha={reto.revancha}
       />
 
       {/* DUELO: cuando es MI turno, el simulador real ocupa la pantalla con la canción acordada. En
@@ -825,8 +825,8 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           (ModoJuego). Al terminar reporta el puntaje (el turno avanza solo). Salir antes = forfeit (0). */}
       {reto.meTocaJugar && reto.cancion && (
         tactil
-          ? <DueloSimulador cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
-          : <DueloSimuladorDesktop cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
+          ? <DueloSimulador cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} metaRival={reto.rivalPuntaje} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
+          : <DueloSimuladorDesktop cancionId={reto.cancion.id} seccionId={reto.cancion.seccionId} metaRival={reto.rivalPuntaje} onResultado={reto.reportarPuntaje} onAbandonar={() => reto.reportarPuntaje(0)} />
       )}
 
       {/* Botón Tocar. En táctil abre el SimuladorApp real como OVERLAY (sin salir del mundo); en

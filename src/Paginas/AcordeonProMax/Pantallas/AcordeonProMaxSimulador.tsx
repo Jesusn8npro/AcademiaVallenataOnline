@@ -28,9 +28,10 @@ interface AcordeonProMaxSimuladorProps {
   onResultado?: (puntos: number) => void;
   autoIniciar?: boolean;
   seccionId?: string | null;
+  metaRival?: number | null;
 }
 
-const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDirecto, onSalir, onResultado, autoIniciar, seccionId } = {}) => {
+const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDirecto, onSalir, onResultado, autoIniciar, seccionId, metaRival } = {}) => {
   const {
     hero,
     metronomoVisible, setMetronomoVisible,
@@ -60,6 +61,13 @@ const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDir
           <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#39d353', display: 'inline-block', animation: 'duelo-pista-pulso 1s ease-in-out infinite' }} />
           🎵 Pista de fondo
           <style>{`@keyframes duelo-pista-pulso{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.5)}}`}</style>
+        </div>
+      )}
+
+      {/* META del rival (turno 2): el puntaje a SUPERAR. Solo en el duelo embebido si el rival ya jugó. */}
+      {autoIniciar && typeof metaRival === 'number' && (
+        <div style={{ position: 'absolute', top: 'calc(var(--promax-header-height, 0px) + 12px)', right: 12, zIndex: 60, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,122,24,.92)', color: '#1a1100', padding: '6px 12px', borderRadius: 20, fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 800 }}>
+          🎯 Meta: {metaRival.toLocaleString()}
         </div>
       )}
 
