@@ -31,8 +31,9 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
-const SALTO_SPEED = 1.0   // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
-const JUMP_MS = 900       // = duración del clip recortado (27f@30fps): UN solo arco despegue→ápex→bajar
+const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
+const JUMP_MS_QUIETO = 1800 // QUIETO: salto COMPLETO (despegue→ápex→aterrizaje→pararse) y vuelve a idle
+const JUMP_MS_MOV = 900     // EN MOVIMIENTO: solo el brinco (despegue→ápex→bajar) → sigue caminando/corriendo sin cortarse
 // El salto vertical lo da el CLIP (su cadera real, horneada en Blender), NO código → arco idéntico a Blender.
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
@@ -446,12 +447,16 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const iz = kb * ((t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0)) + moveRef.current.fwd
     const ix = kb * ((t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0)) + moveRef.current.side
     // CORRER: botón sostenido en móvil (correrRef) o Shift en PC. SALTAR: edge del botón (saltarRef) o
-    // de la barra espaciadora → dura JUMP_MS y no se vuelve a disparar hasta terminar.
+    // de la barra espaciadora. LÓGICA ESTILO VIDEOJUEGO: si viene en MOVIMIENTO al disparar el salto, dura
+    // poco (solo el brinco) → sigue caminando/corriendo fluido; si está QUIETO, dura el salto COMPLETO
+    // (con aterrizaje) y vuelve a idle. La duración se fija al disparar (no se vuelve a disparar hasta terminar).
     const correr = kb === 1 && (correrRef.current || !!t['shift'])
     const ahora = performance.now()
     const espacio = kb === 1 && !!t[' ']
-    if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; if (ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + JUMP_MS }
-    if (espacio && !prevEspacioRef.current && ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + JUMP_MS
+    const enMovimiento = Math.abs(iz) > 0.1 || Math.abs(ix) > 0.1
+    const durSalto = enMovimiento ? JUMP_MS_MOV : JUMP_MS_QUIETO
+    if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; if (ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + durSalto }
+    if (espacio && !prevEspacioRef.current && ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + durSalto
     prevEspacioRef.current = espacio
     const saltando = ahora < saltarHastaRef.current
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)

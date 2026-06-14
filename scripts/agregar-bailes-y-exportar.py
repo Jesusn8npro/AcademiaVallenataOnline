@@ -21,12 +21,11 @@ NUEVOS = [
     ("Corriendo.fbx", "Corriendo"),
     ("Salto vacano.fbx", "Salto vacano"),
 ]
-# Recorte por clip (frames del FBX original) → quitar lo que sobra y dejar SOLO la acción útil.
-# 'Salto vacano': el clip de Mixamo es despegue→ápex→TUCK(cadera se hunde a 0.15)→aterrizaje en cuclillas
-# →pararse. Eso son DOS subidas de cadera = se ve como DOS saltos. Recortamos a 14-40 = UN solo arco
-# limpio (despegue 0.85 → ápex 1.72 → de vuelta a 0.85), sin la carrerilla (1-13), sin el tuck/cuclillas
-# /pararse (41-67). El aterrizaje suave lo da el crossfade a idle/caminar. El clip se re-inicia en frame 1.
-TRIM = {"Salto vacano": (14, 40)}
+# Recorte por clip (frames del FBX original) → quitar lo que sobra y dejar la acción COMPLETA útil.
+# 'Salto vacano': 14-67 = la secuencia COMPLETA del salto (despegue→ápex→aterrizaje→pararse), SIN la
+# carrerilla del inicio (1-13) ni el paso final (68-72), que eran los "pasos rápidos". Se reproduce
+# COMPLETA y UNA sola vez (LoopOnce, ver animaciones.ts unaVez) → no se repite/dobla. Re-inicia en frame 1.
+TRIM = {"Salto vacano": (14, 67)}
 RUTA_GLB = r"C:\PROGRAMACION\AcademiaNext\public\modelos3d\_export\bailes-pack-raw.glb"
 RE_BRAZOS = re.compile(r'(Arm|Hand|Shoulder)')
 

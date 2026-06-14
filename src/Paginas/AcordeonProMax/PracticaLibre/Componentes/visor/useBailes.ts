@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import { RigRefs } from './useRigRefs'
-import { CROSSFADE_BAILE, VELOCIDAD_BAILE } from '../../animaciones'
+import { CROSSFADE_BAILE, VELOCIDAD_BAILE, BAILES } from '../../animaciones'
 
 // Entrar/salir/cambiar de baile con crossfade: el baile (capa cuerpo del pack, ya rebasada al
 // esqueleto de ESTE personaje) se cruza con la capa CUERPO del cierre — los BRAZOS no se tocan,
@@ -23,25 +23,39 @@ export function useBailes(
     if (!mixer) return
     const prev = baileAccion.current
     const clip = baile ? clipsBaile[baile] : null
+    // Vuelve suave a la pose de PIE (capa cuerpo del cierre): cruza el baile a la izquierda y reactiva
+    // el idle. Se usa al salir de un baile (baile=null) y al TERMINAR un clip de una-vez (salto).
+    const volverAlIdle = (acc: THREE.AnimationAction) => {
+      acc.fadeOut(CROSSFADE_BAILE)
+      const c = cuerpoAction.current
+      if (c) { c.enabled = true; c.paused = true; c.fadeIn(CROSSFADE_BAILE) }
+      if (baileAccion.current === acc) baileAccion.current = null
+    }
     if (clip) {
       const acc = (accionesBaile.current[clip.name] ||= mixer.clipAction(clip, scene))
       if (acc === prev) return
       acc.timeScale = velocidad ?? VELOCIDAD_BAILE
-      acc.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(CROSSFADE_BAILE).play()
+      // Clips de UNA sola vez (p. ej. el salto): se reproducen COMPLETOS una sola vez (LoopOnce) y, al
+      // terminar, VUELVEN a la pose de pie (no se quedan congelados en el último frame = pose rara, ni
+      // se repiten/doblan). clampWhenFinished mantiene la última pose SOLO hasta que el crossfade al idle
+      // toma el control (sin esto el mixer la resetea al frame 0 = brinco). El resto de bailes va en loop.
+      const unaVez = BAILES.some((b) => b.clip === clip.name && b.unaVez)
+      acc.clampWhenFinished = unaVez
+      acc.reset().setLoop(unaVez ? THREE.LoopOnce : THREE.LoopRepeat, unaVez ? 1 : Infinity).fadeIn(CROSSFADE_BAILE).play()
       if (prev) prev.fadeOut(CROSSFADE_BAILE)
       else cuerpoAction.current?.fadeOut(CROSSFADE_BAILE)
       baileAccion.current = acc
-    } else if (prev) {
-      prev.fadeOut(CROSSFADE_BAILE)
-      const c = cuerpoAction.current
-      if (c) {
-        // al terminar su fadeOut el mixer la deshabilitó (enabled=false) → re-habilitar
-        // SIN reset() (reset des-pausa y esta capa vive pausada/escrubada con Q)
-        c.enabled = true
-        c.paused = true
-        c.fadeIn(CROSSFADE_BAILE)
+      if (unaVez) {
+        const onFin = (e: { action: THREE.AnimationAction }) => {
+          if (e.action !== acc) return
+          mixer.removeEventListener('finished', onFin as any)
+          volverAlIdle(acc)
+        }
+        mixer.addEventListener('finished', onFin as any)
+        return () => mixer.removeEventListener('finished', onFin as any)
       }
-      baileAccion.current = null
+    } else if (prev) {
+      volverAlIdle(prev)
     }
   }, [baile, clipsBaile, mixer, scene])
 }

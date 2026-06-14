@@ -26,6 +26,7 @@ export interface BaileDef {
   nombre: string // etiqueta del botón
   clip: string // nombre EXACTO de la animación dentro de BAILES_GLB
   premium: boolean
+  unaVez?: boolean // true = se reproduce UNA sola vez y se queda en el último frame (no loop). Para acciones como el salto.
 }
 
 // Paso de una secuencia de animaciones (playlist ordenada): qué clip y cuántos segundos dura antes
@@ -44,7 +45,7 @@ export const BAILES: BaileDef[] = [
   { id: 'salsa', nombre: 'Salsa', clip: 'Salsa', premium: false },
   { id: 'afarizado', nombre: 'Afarizado', clip: 'Baile Afarizado', premium: false },
   { id: 'corriendo', nombre: 'Corriendo', clip: 'Corriendo', premium: false },
-  { id: 'salto', nombre: 'Salto vacano', clip: 'Salto vacano', premium: false },
+  { id: 'salto', nombre: 'Salto vacano', clip: 'Salto vacano', premium: false, unaVez: true },
   { id: 'baile2', nombre: 'Baile 2', clip: 'Baile 2', premium: true },
   { id: 'hiphop', nombre: 'Hip Hop', clip: 'Hip Hop', premium: true },
   { id: 'breakdance', nombre: 'Breakdance', clip: 'Breakdance 1990', premium: true },
