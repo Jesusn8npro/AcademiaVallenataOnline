@@ -92,14 +92,36 @@ interface ModeloProps {
   animShapeKey: { id: AnimShapeKeyId; epoch: number } | null
   animProgramatica: { id: AnimProgramaticaId; epoch: number } | null
   pulseEpoch: { mesh: string; epoch: number } | null
+  // Tocar: al pisar un botón 3D suena la nota real. idLogico = "fila-col-direccion"
+  // (melodía) o "fila-col-direccion-bajo" (bajos). direccion = fuelle actual.
+  onTocarBoton?: (idLogico: string, accion: 'down' | 'up') => void
+  direccion?: 'halar' | 'empujar'
+  // ── Modo juego (Maestro/Alumno) ──────────────────────────────────────────────
+  // Piel: 'original' = mapas del GLB; '1'..'7' = /public/texturas-acordeon (por material acc_*).
+  skin?: string
+  // Drive del hundimiento desde fuera (botones activos del maestro o del alumno). Si se
+  // pasa, el visor NO se suscribe al emisor global (evita cross-talk entre maestro y alumno).
+  botonesActivosExternos?: Record<string, any>
+  // Fuelle siempre cerrado (los acordeones del juego se muestran cerrados).
+  fuelleCerradoFijo?: boolean
+  // Reporta cada frame la posición en pantalla (px de viewport) de cada botón, clave = id
+  // lógico sin dirección ("1-5", "bajo-1-3"). El PuenteNotas lo usa para apuntar las notas.
+  onPosicionesBotones?: (mapa: Record<string, { x: number; y: number }>) => void
 }
 
 function Modelo({
   materialPorMesh, piezaSeleccionada, onClickPieza, onMallasDetectadas,
   fuelleCerrandoRef, animShapeKey, animProgramatica, pulseEpoch,
+  onTocarBoton, direccion,
+  skin, botonesActivosExternos, fuelleCerradoFijo, onPosicionesBotones,
 }: ModeloProps) {
   const grupo = React.useRef<THREE.Group>(null!)
-  const { scene } = useGLTF(GLB_PATH) as any
+  // useGLTF cachea y DEVUELVE LA MISMA escena. Un Object3D solo puede tener un padre, así que
+  // si dos visores (maestro/alumno en el juego) montan <primitive object={scene}> con la misma
+  // instancia, el segundo se la roba al primero → un acordeón desaparece. Clonamos por instancia
+  // (la geometría se comparte; morphs y, tras la detección, los materiales quedan independientes).
+  const { scene: sceneOriginal } = useGLTF(GLB_PATH) as any
+  const scene = React.useMemo(() => sceneOriginal.clone(true), [sceneOriginal])
   const three = useThree()
 
   const [meshes, setMeshes] = React.useState<THREE.Mesh[]>([])
@@ -137,7 +159,25 @@ function Modelo({
   // se aplica a TODAS a la vez (como el tab Personaje) → el acordeón se cierra como un
   // bloque coherente y NADA se despega. Reemplaza la antigua "persecución" del lado bajos.
   const cerrarMeshesRef = React.useRef<Array<{ infl: number[]; dict: Record<string, number> }>>([])
-  const valorQRef = React.useRef(0)
+  const valorQRef = React.useRef(fuelleCerradoFijo ? 1 : 0)
+
+  // ── Tocar: mapa inverso mesh→clave lógica + punteros presionados ──────────────────
+  // notaAMeshRef va lógico→mesh (para hundir); aquí guardamos mesh→clave (ej. "Boton_D_07"
+  // → "1-5", "Boton_I_02" → "bajo-1-3") para resolver qué nota tocar al pisar un botón 3D.
+  const meshANotaRef = React.useRef<Record<string, string>>({})
+  // clave lógica → mesh del botón (para proyectar su posición a pantalla en modo juego).
+  const notaMeshObjRef = React.useRef<Record<string, THREE.Mesh>>({})
+  // pointerId → idLogico que está sonando (soporta acordes multitáctil + release seguro).
+  const presionadosRef = React.useRef<Map<number, string>>(new Map())
+  // direccion/callback leídos en handlers via ref para no recrear los listeners ni
+  // capturar valores viejos.
+  const direccionRef = React.useRef<'halar' | 'empujar'>(direccion ?? 'halar')
+  React.useEffect(() => { direccionRef.current = direccion ?? 'halar' }, [direccion])
+  const onTocarRef = React.useRef(onTocarBoton)
+  React.useEffect(() => { onTocarRef.current = onTocarBoton }, [onTocarBoton])
+  // Fuelle "respirando" mientras se toca (da vida al acordeón como el del personaje).
+  const playFuelleRef = React.useRef(0)
+  const playPhaseRef = React.useRef(0)
 
   React.useEffect(() => {
     const lista: THREE.Mesh[] = []
@@ -291,6 +331,16 @@ function Modelo({
       })
     })
     notaAMeshRef.current = mapa
+    // Inverso mesh→clave para tocar al pisar el botón.
+    const reverso: Record<string, string> = {}
+    for (const [k, v] of Object.entries(mapa)) reverso[v] = k
+    meshANotaRef.current = reverso
+    // clave lógica → objeto mesh (para proyectar posiciones de botón en modo juego).
+    const objPorNombre: Record<string, THREE.Mesh> = {}
+    for (const m of lista) objPorNombre[m.name] = m
+    const idAObj: Record<string, THREE.Mesh> = {}
+    for (const [id, name] of Object.entries(mapa)) { const o = objPorNombre[name]; if (o) idAObj[id] = o }
+    notaMeshObjRef.current = idAObj
 
     // Desplazamiento REAL del extremo del fuelle (cara del lado bajos) por cada morph,
     // medido directamente de la geometria del GLB. Los morphs de glTF son DELTAS relativos,
@@ -386,6 +436,7 @@ function Modelo({
   // sin custom del usuario), restauramos las texturas baked del GLB. Si el usuario
   // aplico un color/acabado, quitamos los mapas para que el cambio se vea limpio.
   React.useEffect(() => {
+    if (skin) return // modo juego: la piel gobierna los materiales (ver efecto de skin abajo)
     meshes.forEach((mesh) => {
       const cfg = materialPorMesh[mesh.name]
                 ?? materialPorMesh[grupoDePieza(mesh.name)]
@@ -435,7 +486,44 @@ function Modelo({
       }
       mat.needsUpdate = true
     })
-  }, [materialPorMesh, piezaSeleccionada, meshes])
+  }, [materialPorMesh, piezaSeleccionada, meshes, skin])
+
+  // ── Piel (modo juego) ─────────────────────────────────────────────────────────────
+  // Aplica una textura PBR de /texturas-acordeon/{skin}/ por material acc_* (cuerpo/botones/
+  // fuelle/pack), igual que usePielesAcordeon en el personaje (el fino comparte ese asset).
+  React.useEffect(() => {
+    if (!skin || meshes.length === 0) return
+    const PARTES = new Set(['cuerpo', 'botones', 'fuelle', 'pack', 'parte botones'])
+    const loader = new THREE.TextureLoader()
+    const cache: Record<string, THREE.Texture> = {}
+    const cargar = (url: string, srgb: boolean) => {
+      if (cache[url]) return cache[url]
+      const t = loader.load(url)
+      t.flipY = false
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace
+      cache[url] = t
+      return t
+    }
+    meshes.forEach((mesh) => {
+      const mat = mesh.material as THREE.MeshStandardMaterial
+      if (!mat || !(mat as any).isMeshStandardMaterial) return
+      const part = (mat.name || '').replace(/\.\d+$/, '').replace(/^acc_/, '')
+      if (!PARTES.has(part)) return
+      if (skin === 'original') {
+        const o = mesh.userData.texOrig
+        if (o) { mat.map = o.map; mat.roughnessMap = o.roughnessMap; mat.metalnessMap = o.metalnessMap }
+      } else {
+        const dir = `/texturas-acordeon/${skin}/${part.replace(/\s+/g, '-')}`
+        mat.map = cargar(`${dir}_base.webp`, true)
+        const mr = cargar(`${dir}_mr.webp`, false)
+        mat.roughnessMap = mr; mat.metalnessMap = mr; mat.roughness = 1; mat.metalness = 1
+        mat.normalMap = cargar(`${dir}_normal.webp`, false)
+      }
+      mat.color.set('#ffffff')
+      mat.needsUpdate = true
+    })
+    return () => { Object.values(cache).forEach((t) => t.dispose()) }
+  }, [skin, meshes])
 
   // Animaciones de shape keys (Cerrar uniforme/abajo/arriba) — controladas MANUALMENTE.
   // NO usamos las actions del GLB porque useAnimations las deja con valores residuales
@@ -468,7 +556,11 @@ function Modelo({
 
   // Suscripción a las notas reales del acordeón: cuando se pisa/suelta un botón (teclado,
   // click 2D, MIDI, pista) marcamos/desmarcamos su mesh 3D para que se hunda en useFrame.
+  // Modo juego: el hundimiento viene de botonesActivosExternos (maestro/alumno), NO del
+  // emisor global — así el visor del maestro no reacciona a lo que toca el alumno.
+  const usaBotonesExternos = botonesActivosExternos !== undefined
   React.useEffect(() => {
+    if (usaBotonesExternos) return
     const off = subscribirNotas((e) => {
       const nombreMesh = notaAMeshRef.current[keyDeId(e.idBoton)]
       if (!nombreMesh) return
@@ -476,7 +568,19 @@ function Modelo({
       else notasActivasRef.current.delete(nombreMesh)
     })
     return off
-  }, [])
+  }, [usaBotonesExternos])
+
+  // Sincroniza el set de meshes hundidos desde los botones activos externos.
+  React.useEffect(() => {
+    if (!botonesActivosExternos) return
+    const set = notasActivasRef.current
+    set.clear()
+    for (const [id, v] of Object.entries(botonesActivosExternos)) {
+      if (!v) continue
+      const nombreMesh = notaAMeshRef.current[keyDeId(id)]
+      if (nombreMesh) set.add(nombreMesh)
+    }
+  }, [botonesActivosExternos])
 
   useFrame((_, delta) => {
     // El fuelle NUNCA se traslada ni se escala. Solo se DEFORMA via shape keys.
@@ -524,12 +628,18 @@ function Modelo({
     //    despega. (Antes solo el fuelle tenía morph y la caja de bajos lo "perseguía" con
     //    una medición, lo que despegaba las piezas al usar la geometría nueva.)
     const SNAP_EPS = 0.002
-    const targetQ = fuelleCerrandoRef.current ? 1 : 0
+    const targetQ = (fuelleCerradoFijo || fuelleCerrandoRef.current) ? 1 : 0
     let valorQ = THREE.MathUtils.damp(valorQRef.current, targetQ, 12, delta)
     if (Math.abs(valorQ - targetQ) < SNAP_EPS) valorQ = targetQ
     valorQRef.current = valorQ
     const snap = (v: number) => (Math.abs(v) < SNAP_EPS ? 0 : v)
-    const valUniforme = snap(Math.max(valorQ, influPrograma, influShapeUniforme))
+    // Fuelle "respira" mientras se toca: target oscilante suave; sin notas relaja a 0.
+    // Da vida al acordeón (como el del personaje) sin depender de la dirección.
+    const hayNota = notasActivasRef.current.size > 0
+    if (hayNota) playPhaseRef.current += delta
+    const pump = hayNota ? 0.10 + 0.10 * Math.sin(playPhaseRef.current * 2.4) : 0
+    playFuelleRef.current = THREE.MathUtils.damp(playFuelleRef.current, pump, 6, delta)
+    const valUniforme = snap(Math.max(valorQ, influPrograma, influShapeUniforme, playFuelleRef.current))
     const valAbajo = snap(influShapeAbajo)
     const valArriba = snap(influShapeArriba)
     for (const { infl, dict } of cerrarMeshesRef.current) {
@@ -571,6 +681,23 @@ function Modelo({
       return f
     }
 
+    // Glow de la tecla pisada: emissive cyan proporcional al hundimiento → indica
+    // visualmente qué nota está sonando. Al soltar, vuelve a su estado (selección o nada).
+    const aplicarGlowBoton = (m: THREE.Mesh, factor: number) => {
+      const mat = m.material as THREE.MeshStandardMaterial
+      if (!mat || !(mat as any).isMeshStandardMaterial) return
+      if (factor > 0.002) {
+        mat.emissive.set('#22d3ee')
+        mat.emissiveIntensity = 0.3 + factor * 1.1
+      } else if (m.name === piezaSeleccionada) {
+        mat.emissive.set('#3b82f6')
+        mat.emissiveIntensity = 0.45
+      } else {
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+      }
+    }
+
     // Hundir botones de bajos (Boton_I) en su sitio cuando suena su nota. Ya NO se mueven
     // con el fuelle (de eso se encarga el morph global); solo se hunden como los de melodía.
     for (const m of botonesIRef.current) {
@@ -583,6 +710,7 @@ function Modelo({
         origPos.y + offset.y * factor,
         origPos.z + offset.z * factor,
       )
+      aplicarGlowBoton(m, factor)
     }
 
     // Hundir botones de melodía (Boton_D): no se mueven con el fuelle, sólo se hunden.
@@ -597,6 +725,7 @@ function Modelo({
         origPos.y + offset.y * factor,
         origPos.z + offset.z * factor,
       )
+      aplicarGlowBoton(m, factor)
     }
 
     // Pulse del click para piezas GENÉRICAS (caja, marco, fuelle): mini-flash emissive azul.
@@ -631,14 +760,77 @@ function Modelo({
       }
       pulse.current = null
     }
+
+    // ── Modo juego: proyectar la posición de cada botón a px de viewport para el PuenteNotas.
+    // Cámara fija + fuelle cerrado → posiciones estables; se reportan cada frame (barato).
+    if (onPosicionesBotones) {
+      const rect = three.gl.domElement.getBoundingClientRect()
+      const v = new THREE.Vector3()
+      const mapa: Record<string, { x: number; y: number }> = {}
+      for (const id in notaMeshObjRef.current) {
+        notaMeshObjRef.current[id].getWorldPosition(v)
+        v.project(three.camera)
+        mapa[id] = {
+          x: rect.left + (v.x * 0.5 + 0.5) * rect.width,
+          y: rect.top + (-v.y * 0.5 + 0.5) * rect.height,
+        }
+      }
+      onPosicionesBotones(mapa)
+    }
   })
 
+  // idLogico de la nota a tocar desde el mesh pisado: clave inversa + dirección del fuelle.
+  const idLogicoDeMesh = React.useCallback((meshName: string): string | null => {
+    const key = meshANotaRef.current[meshName]
+    if (!key) return null
+    const dir = direccionRef.current
+    if (key.startsWith('bajo-')) return `${key.slice(5)}-${dir}-bajo`
+    return `${key}-${dir}`
+  }, [])
+
+  // Soltar la nota asociada a un puntero. Garantiza que ninguna nota quede pegada.
+  const soltarPuntero = React.useCallback((pointerId: number) => {
+    const id = presionadosRef.current.get(pointerId)
+    if (id == null) return
+    presionadosRef.current.delete(pointerId)
+    onTocarRef.current?.(id, 'up')
+  }, [])
+
+  // pointerup/cancel a nivel window: aunque sueltes fuera del botón, la nota se libera.
+  React.useEffect(() => {
+    const onUp = (e: PointerEvent) => soltarPuntero(e.pointerId)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      // Al desmontar (cambiar de pestaña mientras se toca) soltar todo lo que sonara.
+      presionadosRef.current.forEach((id) => onTocarRef.current?.(id, 'up'))
+      presionadosRef.current.clear()
+    }
+  }, [soltarPuntero])
+
+  const onPointerDownMesh = React.useCallback((e: ThreeEvent<PointerEvent>) => {
+    const name = (e.object as any)?.name as string | undefined
+    if (!name) return
+    const id = idLogicoDeMesh(name)
+    if (!id) return // no es un botón → dejar pasar (selección de pieza para pintar)
+    e.stopPropagation()
+    soltarPuntero(e.pointerId) // por si el puntero traía una nota previa
+    presionadosRef.current.set(e.pointerId, id)
+    onTocarRef.current?.(id, 'down')
+  }, [idLogicoDeMesh, soltarPuntero])
+
+  // Click solo selecciona piezas que NO son botones (para pintarlas). Los botones son
+  // para tocar; seleccionarlos dejaría un highlight azul molesto tras cada nota.
   const onClickMesh = React.useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
-    if ((e.object as any)?.name) onClickPieza((e.object as any).name)
+    const name = (e.object as any)?.name as string | undefined
+    if (!name || meshANotaRef.current[name]) return
+    onClickPieza(name)
   }, [onClickPieza])
 
-  return <primitive ref={grupo} object={scene} onClick={onClickMesh} />
+  return <primitive ref={grupo} object={scene} onClick={onClickMesh} onPointerDown={onPointerDownMesh} />
 }
 
 useGLTF.preload(GLB_PATH)
@@ -671,12 +863,23 @@ interface VisorAcordeon3DProps {
   animShapeKey: { id: AnimShapeKeyId; epoch: number } | null
   animProgramatica: { id: AnimProgramaticaId; epoch: number } | null
   pulseEpoch: { mesh: string; epoch: number } | null
+  onTocarBoton?: (idLogico: string, accion: 'down' | 'up') => void
+  direccion?: 'halar' | 'empujar'
+  skin?: string
+  botonesActivosExternos?: Record<string, any>
+  fuelleCerradoFijo?: boolean
+  // Modo juego: cámara fija de frente (sin orbitar) para que las posiciones de los botones
+  // se mantengan alineadas con el PuenteNotas.
+  camaraFija?: boolean
+  onPosicionesBotones?: (mapa: Record<string, { x: number; y: number }>) => void
+  className?: string
 }
 
 const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
   return (
-    <div className="visor-acordeon-3d-stage">
-      <Canvas camera={{ position: [0, 1.2, 6], fov: 32 }} dpr={[1, 1.25]}>
+    <div className={`visor-acordeon-3d-stage${props.className ? ` ${props.className}` : ''}`}>
+      {/* Juego: cámara recta de frente (centrado limpio). Estudio: ligero picado. */}
+      <Canvas camera={{ position: props.camaraFija ? [0, 0, 6] : [0, 1.2, 6], fov: 32 }} dpr={[1, 1.25]}>
         <React.Suspense fallback={null}>
           {/* Envmap procedural local — indispensable para que el acabado "Cromo" /
               metalness alto se vea como un metal real (sin esto se ven negros porque
@@ -701,7 +904,14 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
               </group>
             </Center>
           </Bounds>
-          <OrbitControls makeDefault enablePan={false} minDistance={2.5} maxDistance={12} />
+          {/* En modo juego la cámara va fija (no orbitable) para no desalinear las notas. Dejamos
+              OrbitControls DESHABILITADO (no removido) para que <Bounds> tenga su controls de
+              referencia y encuadre/centre bien el acordeón. */}
+          {props.camaraFija ? (
+            <OrbitControls makeDefault enabled={false} target={[0, 0, 0]} />
+          ) : (
+            <OrbitControls makeDefault enablePan={false} minDistance={2.5} maxDistance={12} />
+          )}
         </React.Suspense>
       </Canvas>
     </div>

@@ -30,6 +30,9 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 // suave con otros usuarios (se encuentran sin bloquearse). URL: /test-mundo-3d.
 
 const VEL = 4.2           // m/s objetivo al caminar
+const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
+const JUMP_MS = 850       // duración del arco del salto (ms)
+const JUMP_H = 1.15       // altura del salto (m) — arco vertical por código (vuelve exacto al piso)
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
 const MOUSE_SENS = 0.0024 // sensibilidad del mouse (pointer-lock)
@@ -295,12 +298,14 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
 // (pointer-lock): WASD/flechas mueven con velocidad amortiguada, el mouse orbita la cámara 360°, la
 // rueda acerca/aleja (hasta 1ª persona). Fuera del modo, no mueve nada y la cámara queda quieta
 // detrás del personaje (cursor libre para la interfaz). Colisión suave con remotos (no bloquea).
-function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef, semillaSpawn, bloquearTecladoRef }: {
+function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef, semillaSpawn, bloquearTecladoRef, correrRef, saltarRef }: {
   personajeId: string; skin: string; baile: string | null; nombre: string; vistaModo: string
   lastNoteRef: React.MutableRefObject<number>; estadoLocalRef: React.MutableRefObject<EstadoJugador>
   remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; onSeleccionarJugador?: (id: string) => void
   moveRef: React.MutableRefObject<{ fwd: number; side: number }>; semillaSpawn: string
   bloquearTecladoRef: React.MutableRefObject<boolean>
+  correrRef: React.MutableRefObject<boolean>   // correr sostenido (botón móvil); en PC también Shift
+  saltarRef: React.MutableRefObject<number>    // contador: al cambiar dispara un salto (botón / Espacio)
 }) {
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
@@ -316,6 +321,9 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const primera = React.useRef(false)
   const arrastrando = React.useRef(false) // rotando la cámara con el clic mantenido
   const recentrar = React.useRef(false)   // tecla C → recentrar la cámara detrás del personaje
+  const saltarHastaRef = React.useRef(0)  // performance.now() hasta cuando dura el salto en curso
+  const ultSaltoRef = React.useRef(0)     // último valor visto de saltarRef (edge del botón Saltar)
+  const prevEspacioRef = React.useRef(false) // edge de la barra espaciadora (saltar en PC)
   const _ray = React.useRef(new THREE.Raycaster())
   const _ndc = React.useRef(new THREE.Vector2())
 
@@ -324,7 +332,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const v = VISTAS.find((x) => x.id === vistaModo) ?? VISTAS[0]
     dist.current = v.dist; pitch.current = v.pitch; cenital.current = v.cenital; primera.current = v.primera
   }, [vistaModo])
-  const [caminando, setCaminando] = React.useState(false)
+  const [anim, setAnim] = React.useState<string | null>(null) // clip actual (caminar/correr/saltar/baile)
   const [tocando, setTocando] = React.useState(false)
   const { gl, camera, scene } = useThree()
   const _f = React.useRef(new THREE.Vector3())
@@ -394,7 +402,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     }
     // No mover si el foco está en un input (ej. duración del secuenciador).
     const enInput = () => { const a = document.activeElement; return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') }
-    const onKeyDn = (e: KeyboardEvent) => { if (enInput()) return; if (e.key.toLowerCase() === 'c') recentrar.current = true; if (e.key.startsWith('Arrow')) e.preventDefault(); teclas.current[e.key.toLowerCase()] = true }
+    const onKeyDn = (e: KeyboardEvent) => { if (enInput()) return; if (e.key.toLowerCase() === 'c') recentrar.current = true; if (e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault(); teclas.current[e.key.toLowerCase()] = true }
     const onKeyUp = (e: KeyboardEvent) => { teclas.current[e.key.toLowerCase()] = false }
     dom.style.cursor = 'grab'
     dom.style.touchAction = 'none'
@@ -434,9 +442,18 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     const kb = bloquearTecladoRef.current ? 0 : 1
     const iz = kb * ((t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0)) + moveRef.current.fwd
     const ix = kb * ((t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0)) + moveRef.current.side
+    // CORRER: botón sostenido en móvil (correrRef) o Shift en PC. SALTAR: edge del botón (saltarRef) o
+    // de la barra espaciadora → dura JUMP_MS y no se vuelve a disparar hasta terminar.
+    const correr = kb === 1 && (correrRef.current || !!t['shift'])
+    const ahora = performance.now()
+    const espacio = kb === 1 && !!t[' ']
+    if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; if (ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + JUMP_MS }
+    if (espacio && !prevEspacioRef.current && ahora >= saltarHastaRef.current) saltarHastaRef.current = ahora + JUMP_MS
+    prevEspacioRef.current = espacio
+    const saltando = ahora < saltarHastaRef.current
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)
     const mag = desired.length() // analógico: joystick a medias = camina más lento; clamp a 1 = full
-    if (mag > 1e-4) desired.multiplyScalar(((mag > 1 ? 1 / mag : 1)) * VEL)
+    if (mag > 1e-4) desired.multiplyScalar(((mag > 1 ? 1 / mag : 1)) * VEL * (correr ? RUN_MULT : 1))
 
     // Velocidad AMORTIGUADA → aceleración/desaceleración suaves (sin saltos).
     vel.current.x = THREE.MathUtils.damp(vel.current.x, desired.x, ACCEL, dt)
@@ -455,6 +472,12 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       if (dd > 1e-3 && dd < SEP) { const push = (SEP - dd) * 0.5; g.position.x += (dx / dd) * push; g.position.z += (dz / dd) * push }
     }
 
+    // SALTO = arco vertical del grupo (sube y vuelve EXACTO al piso). El clip 'Salto vacano' pone la
+    // pose; este arco da el despegue real, sin cambiar la posición horizontal ni dejar al personaje flotando.
+    let jumpOffset = 0
+    if (saltando) { const p = 1 - (saltarHastaRef.current - ahora) / JUMP_MS; jumpOffset = Math.sin(Math.PI * Math.min(1, Math.max(0, p))) * JUMP_H }
+    g.position.y = jumpOffset
+
     const speed = Math.hypot(vel.current.x, vel.current.z)
     const moviendo = speed > 0.25
     if (moviendo) g.rotation.y = dampAngle(g.rotation.y, Math.atan2(vel.current.x, vel.current.z), FACE_RATE, dt)
@@ -466,7 +489,9 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       const exceso = Math.abs(d) - HEAD_LIMITE
       if (exceso > 0) g.rotation.y += Math.sign(d) * exceso * (1 - Math.exp(-BODY_TURN_RATE * dt))
     }
-    if (moviendo !== caminando) setCaminando(moviendo)
+    // Clip por prioridad: saltar > correr/caminar > baile elegido en el panel > nada.
+    const animActual = saltando ? 'Salto vacano' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)
+    if (animActual !== anim) setAnim(animActual)
 
     // Recentrar la cámara detrás del personaje (tecla C).
     if (recentrar.current) { yaw.current = g.rotation.y; recentrar.current = false }
@@ -482,15 +507,18 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     // Publicar estado a la red.
     const est = estadoLocalRef.current
     est.x = g.position.x; est.z = g.position.z; est.ry = g.rotation.y
-    est.personajeId = personajeId; est.anim = moviendo ? 'Caminata' : baile
+    est.personajeId = personajeId; est.anim = animActual
     est.nombre = nombre; est.tocando = tocandoAhora; est.mira = yaw.current
 
-    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch).
+    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). En 3ª persona/cenital la
+    // cámara sigue la altura del PISO (P.y − jumpOffset), no el salto → el salto se VE (antes la cámara
+    // subía con el personaje y parecía que no saltaba). En 1ª persona sí sube (vas montado en él).
     const P = g.position
+    const py = P.y - jumpOffset
     if (cenital.current) {
       // Picado desde arriba, centrado en el personaje.
-      camera.position.set(P.x, P.y + dist.current, P.z + 0.01)
-      _tgt.current.set(P.x, P.y, P.z)
+      camera.position.set(P.x, py + dist.current, P.z + 0.01)
+      _tgt.current.set(P.x, py, P.z)
     } else if (primera.current) {
       // Ojos del personaje, mirando hacia adelante (yaw) con tilt vertical por el pitch.
       const hx = Math.sin(yaw.current), hz = Math.cos(yaw.current)
@@ -500,10 +528,10 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     } else {
       // Orbital 3ª persona: detrás/encima según yaw/pitch/dist.
       const cp = Math.cos(pitch.current), sp = Math.sin(pitch.current)
-      _tgt.current.set(P.x, P.y + TARGET_H, P.z)
+      _tgt.current.set(P.x, py + TARGET_H, P.z)
       camera.position.set(
         P.x - Math.sin(yaw.current) * dist.current * cp,
-        P.y + TARGET_H + dist.current * sp,
+        py + TARGET_H + dist.current * sp,
         P.z - Math.cos(yaw.current) * dist.current * cp,
       )
     }
@@ -518,7 +546,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
           ni se rompe la caminata al cambiar seguido. */}
       <React.Suspense fallback={null}>
         <AnclaPies claveMedicion={glb}>
-          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={caminando ? 'Caminata' : baile} headYawRef={headYawRef} tocandoRef={tocandoRef} />
+          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} headYawRef={headYawRef} tocandoRef={tocandoRef} />
         </AnclaPies>
       </React.Suspense>
     </group>
@@ -633,6 +661,14 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const moveRef = React.useRef({ fwd: 0, side: 0 }) // joystick analógico (móvil)
   const [tactil, setTactil] = React.useState(false)
   React.useEffect(() => { setTactil(typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) }, [])
+
+  // Controles de juego: CORRER (PC: Shift; móvil: botón sostenido) y SALTAR (PC: Espacio; móvil: botón).
+  // No son bailes (los bailes se eligen en el panel); son mecánicas del mundo.
+  const [corriendo, setCorriendo] = React.useState(false)
+  const correrRef = React.useRef(false)
+  React.useEffect(() => { correrRef.current = corriendo }, [corriendo])
+  const saltarRef = React.useRef(0)
+  const saltar = React.useCallback(() => { saltarRef.current += 1 }, [])
 
   // Teclas 1-4 cambian de vista (si el foco no está en un input).
   React.useEffect(() => {
@@ -755,7 +791,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           <ambientLight intensity={0.65} />
           <directionalLight position={[10, 16, 8]} intensity={1.2} />
           <Escena />
-          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} />
+          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} correrRef={correrRef} saltarRef={saltarRef} />
           {/* Cada avatar remoto en su PROPIO Suspense: si uno nuevo entra con un personaje aún no
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
@@ -868,12 +904,27 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
       {/* Joystick táctil (móvil) */}
       {tactil && !tocarAbierto && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
 
+      {/* CONTROLES de juego en móvil: Correr (toggle) + Saltar (pulso). En PC son Shift y Espacio.
+          Abajo-derecha (zona del pulgar derecho), no son botones de baile. Ocultos al tocar. */}
+      {tactil && !tocarAbierto && (
+        <div style={{ position: 'absolute', right: 18, bottom: bottomBase + 4, zIndex: 32, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+          <button type="button" onPointerDown={(e) => { e.preventDefault(); saltar() }}
+            style={{ width: 74, height: 74, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', background: 'rgba(0,0,0,.45)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
+            ⤴️<br />Saltar
+          </button>
+          <button type="button" onClick={() => setCorriendo((v) => !v)}
+            style={{ width: 74, height: 74, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', background: corriendo ? '#27ae60' : 'rgba(0,0,0,.45)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
+            🏃<br />Correr
+          </button>
+        </div>
+      )}
+
       {/* HUD inferior: instrucciones + selector de vistas */}
-      <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif', maxWidth: 'calc(100% - 180px)' }}>
+      <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif', maxWidth: tactil ? 'calc(100% - 280px)' : 'calc(100% - 180px)' }}>
         <div style={{ color: '#fff', background: 'rgba(0,0,0,.5)', padding: '7px 12px', borderRadius: 9, fontSize: 13, width: 'fit-content' }}>
           {tactil
-            ? <><b>Joystick</b> caminar · <b>arrastra</b> para mirar · <b>pellizca</b> zoom · <b>tap</b> a un jugador para oírlo</>
-            : <><b>WASD</b>/flechas caminar · <b>arrastra</b> para mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-4</b> vistas · <b>clic</b> a un jugador para oírlo</>}
+            ? <><b>Joystick</b> caminar · <b>arrastra</b> mirar · <b>Correr</b>/<b>Saltar</b> a la derecha · <b>tap</b> a un jugador para oírlo</>
+            : <><b>WASD</b>/flechas caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-4</b> vistas · <b>clic</b> a un jugador para oírlo</>}
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {VISTAS.map((v, i) => (

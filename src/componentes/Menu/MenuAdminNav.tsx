@@ -46,16 +46,6 @@ const MenuAdminNav: React.FC<Props> = ({ navegarA }) => {
           </div>
           <span>Pagos</span>
         </button>
-        <button className="menu-lateral-enlace" onClick={() => navegarA('/simulador-gaming')}>
-          <div className="menu-lateral-icono">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" /><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="7" cy="7" r="1.5" /><circle cx="17" cy="7" r="1.5" />
-              <line x1="7" y1="10" x2="7" y2="12" /><line x1="17" y1="10" x2="17" y2="12" />
-            </svg>
-          </div>
-          <span>Simulador Gaming</span>
-        </button>
         <button className="menu-lateral-enlace" onClick={() => navegarA('/simulador-app')}>
           <div className="menu-lateral-icono">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

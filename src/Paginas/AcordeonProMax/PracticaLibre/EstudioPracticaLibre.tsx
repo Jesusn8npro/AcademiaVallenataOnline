@@ -1,11 +1,8 @@
 import * as React from 'react'
 import dynamic from 'next/dynamic';
 import PanelAjustes from '../../../Core/componentes/PanelAjustes/PanelAjustes';
-import CuerpoAcordeonBase from '../../../Core/componentes/CuerpoAcordeon';
-
-const CuerpoAcordeon = React.memo(CuerpoAcordeonBase);
 import { TONALIDADES } from '../../../Core/acordeon/notasAcordeonDiatonico';
-import { obtenerModeloVisualPorId, resolverImagenModeloAcordeon } from './Datos/modelosVisualesAcordeon';
+import { obtenerModeloVisualPorId } from './Datos/modelosVisualesAcordeon';
 import { useEstudioPracticaLibre } from './Hooks/useEstudioPracticaLibre';
 import { useMetronomoEstudiante } from './Hooks/useMetronomoEstudiante';
 import BarraSuperiorPracticaLibre from './Componentes/BarraSuperiorPracticaLibre';
@@ -61,7 +58,7 @@ interface EstudioPracticaLibreProps {
 
 const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
   logica, modoAjuste, setModoAjuste, pestanaActiva, setPestanaActiva,
-  imagenFondo, modosVista, grabando, tiempoGrabacionMs,
+  modosVista, grabando, tiempoGrabacionMs,
   mostrarModalGuardar, guardandoGrabacion, errorGuardadoGrabacion,
   tituloSugeridoGrabacion, resumenGrabacionPendiente, ultimaGrabacionGuardada,
   onIniciarGrabacion, onDetenerGrabacion, onGuardarGrabacion, onCancelarGuardado,
@@ -186,22 +183,10 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
     [estudio.preferencias.modeloVisualId]
   );
 
-  const ajustesPractica = React.useMemo(() => ({
-    ...logica.ajustes,
-    tamano: 'var(--estudio-acordeon-tamano)',
-    x: 'var(--estudio-acordeon-x)',
-    y: 'var(--estudio-acordeon-y)',
-  }), [logica.ajustes]);
-
   const nombreInstrumento = React.useMemo(() => {
     const actual = logica.listaInstrumentos?.find((i: any) => i.id === logica.instrumentoId);
     return actual?.nombre || 'Acordeon original';
   }, [logica.instrumentoId, logica.listaInstrumentos]);
-
-  const imagenFondoAcordeon = React.useMemo(
-    () => resolverImagenModeloAcordeon(estudio.preferencias.modeloVisualId, imagenFondo),
-    [estudio.preferencias.modeloVisualId, imagenFondo]
-  );
 
   React.useEffect(() => {
     if (typeof logica.guardarAjustes !== 'function') return;
@@ -301,7 +286,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
             <div className="estudio-practica-libre-acordeon">
               {estudio.panelActivo === 'personaje3d' ? (
                 <VisorPersonaje3D />
-              ) : estudio.panelActivo === 'visor3d' ? (
+              ) : (
+                // El acordeón 3D es el principal de siempre: tocable (clic/tap suena la
+                // nota real), con teclas que se hunden y glow de la nota pisada.
                 <VisorAcordeon3D
                   materialPorMesh={materialPorMesh}
                   piezaSeleccionada={piezaSeleccionada}
@@ -311,24 +298,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
                   animShapeKey={visor3dShapeKey}
                   animProgramatica={visor3dProgramatica}
                   pulseEpoch={pulseEpoch}
+                  onTocarBoton={(id, accion) => logica.actualizarBotonActivo(id, accion === 'down' ? 'add' : 'remove')}
+                  direccion={logica.direccion}
                 />
-              ) : (
-                logica.disenoCargado && (
-                  <CuerpoAcordeon
-                    imagenFondo={imagenFondoAcordeon}
-                    ajustes={ajustesPractica as any}
-                    direccion={logica.direccion}
-                    configTonalidad={logica.configTonalidad}
-                    botonesActivos={logica.botonesActivos}
-                    modoAjuste={modoAjuste}
-                    botonSeleccionado={logica.botonSeleccionado}
-                    modoVista={logica.modoVista}
-                    vistaDoble={false}
-                    setBotonSeleccionado={logica.setBotonSeleccionado}
-                    actualizarBotonActivo={logica.actualizarBotonActivo}
-                    listo
-                  />
-                )
               )}
             </div>
           </div>

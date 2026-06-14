@@ -73,16 +73,6 @@ const NavCentralAutenticado: React.FC<Props> = ({ esAdmin }) => {
             </span>
             <span>Blog</span>
           </Link>
-          <Link href="/simulador-gaming" className="nav-auth-link">
-            <span className="nav-auth-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3" /><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="7" cy="7" r="1.5" /><circle cx="17" cy="7" r="1.5" />
-                <line x1="7" y1="10" x2="7" y2="12" /><line x1="17" y1="10" x2="17" y2="12" />
-              </svg>
-            </span>
-            <span>Simulador</span>
-          </Link>
           <Link href="/acordeon-pro-max" className="nav-auth-link">
             <span className="nav-auth-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" strokeWidth="2">

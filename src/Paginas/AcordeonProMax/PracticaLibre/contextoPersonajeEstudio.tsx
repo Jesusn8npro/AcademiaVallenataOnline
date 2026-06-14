@@ -44,6 +44,16 @@ export function usePersonajeEstudio(): PersonajeEstudioCtx {
 export const PersonajeEstudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [personajeId, setPersonajeId] = React.useState(PERSONAJES[0].id)
   const [skin, setSkin] = React.useState('original')
+  // La elección de personaje/piel persiste (localStorage) para que sea LA MISMA en el estudio
+  // y en el modo juego. Se lee tras montar (evita desajuste SSR) y se guarda al cambiar.
+  React.useEffect(() => {
+    const id = localStorage.getItem('personaje3d:id')
+    if (id && PERSONAJES.some((p) => p.id === id)) setPersonajeId(id)
+    const sk = localStorage.getItem('personaje3d:skin')
+    if (sk) setSkin(sk)
+  }, [])
+  React.useEffect(() => { localStorage.setItem('personaje3d:id', personajeId) }, [personajeId])
+  React.useEffect(() => { localStorage.setItem('personaje3d:skin', skin) }, [skin])
   const [baile, setBaile] = React.useState<string | null>(null)
   const [escenarioId, setEscenarioId] = React.useState(ESCENARIO_DEFAULT)
   const [tomaCamara, setTomaCamara] = React.useState(TOMA_DEFAULT)

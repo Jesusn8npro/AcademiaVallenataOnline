@@ -1,19 +1,71 @@
 import * as React from 'react';
-import { useMemo, useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import PuenteNotas from '../Componentes/PuenteNotas';
 import JuicioOverlay from '../Componentes/JuicioOverlay';
-import { usePosicionProMax } from '../Hooks/usePosicionProMax';
+import { PersonajeEstudioProvider, usePersonajeEstudio } from '../PracticaLibre/contextoPersonajeEstudio';
+import { PERSONAJES } from '../PracticaLibre/personajes';
 import type { CancionHeroConTonalidad, EstadisticasPartida, EfectoGolpe } from '../TiposProMax';
 import './ModoCompetitivo.css';
 import './ModoLibre.css';
 
-// Referencias estables: el Maestro es read-only (no responde a clicks). Pasar `() => {}` inline
-// crearia una funcion nueva en cada render y rompe React.memo en CuerpoAcordeon.
-const NOOP_SET_BOTON: (id: string) => void = () => {};
-const NOOP_ACTUALIZAR: (id: string, accion: 'add' | 'remove', inst?: any[] | null) => void = () => {};
+// Acordeón 3D (three.js ~500KB) — sólo se carga al entrar al juego.
+const VisorAcordeon3D = dynamic(
+  () => import('../PracticaLibre/Componentes/VisorAcordeon3D'),
+  { ssr: false, loading: () => <div className="acordeon-3d-juego-cargando">Cargando acordeón 3D…</div> }
+);
+
+// Personaje 3D (GLB pesado) — sólo se carga si el alumno activa "Mi personaje".
+const VisorPersonaje3D = dynamic(
+  () => import('../PracticaLibre/Componentes/VisorPersonaje3D'),
+  { ssr: false, loading: () => <div className="acordeon-3d-juego-cargando">Cargando personaje…</div> }
+);
+
+// Control flotante: alterna el avatar del alumno (acordeón ↔ personaje) y, si está en personaje,
+// permite elegir cuál. Vive dentro del PersonajeEstudioProvider para leer/escribir la elección.
+const ControlAvatarAlumno: React.FC<{ usarPersonaje: boolean; onToggle: () => void }> = ({ usarPersonaje, onToggle }) => {
+  const { personajeId, setPersonajeId } = usePersonajeEstudio();
+  return (
+    <div className="juego-avatar-control">
+      <button className={`juego-avatar-btn ${usarPersonaje ? 'modo-personaje' : ''}`} onClick={onToggle}>
+        {usarPersonaje ? '🕺 Mi personaje' : '🪗 Acordeón 3D'}
+      </button>
+      {usarPersonaje && (
+        <div className="juego-avatar-selector">
+          {PERSONAJES.map((p) => (
+            <button
+              key={p.id}
+              className={`juego-avatar-foto ${personajeId === p.id ? 'activo' : ''}`}
+              onClick={() => setPersonajeId(p.id)}
+              title={p.nombre}
+              style={{ backgroundImage: `url("${p.foto}")` }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Motivos (pieles) distintos para diferenciar Maestro y Alumno. Cambiables aquí.
+const SKIN_MAESTRO = '3';
+const SKIN_ALUMNO = '5';
+
+// Props que el visor exige pero el juego no usa (sin paneo de pieza ni detección de mallas).
+const NOOP_CLICK_PIEZA: (n: string) => void = () => {};
+const NOOP_MALLAS: (p: any) => void = () => {};
+
+// strip dirección → clave espacial del botón (idéntico a keyDeId del visor 3D): el PuenteNotas
+// pregunta por "1-5-halar" y el visor reporta posiciones por "1-5" / "bajo-1-3".
+function claveBoton(idBoton: string): string {
+  let s = idBoton;
+  let bajo = false;
+  if (s.endsWith('-bajo')) { bajo = true; s = s.slice(0, -5); }
+  s = s.replace(/-halar$/, '').replace(/-empujar$/, '');
+  return bajo ? `bajo-${s}` : s;
+}
 
 interface ModoJuegoProps {
   conPenalizacion: boolean;
@@ -44,18 +96,33 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   estadisticas,
   efectosVisuales,
   notasImpactadas,
-  imagenFondo,
   actualizarBotonActivo,
   registrarPosicionGolpe,
   rangoSeccion,
 }) => {
-  const { refMaestro, refAlumno, obtenerPosicionMaestro, obtenerPosicionAlumno } = usePosicionProMax();
-  const ajustesDuelo = useMemo(() => ({
-    ...logica.ajustes,
-    tamano: 'var(--duelo-acordeon-tamano, min(70vh, 32vw))',
-    x: 'var(--duelo-acordeon-x, 50%)',
-    y: 'var(--duelo-acordeon-y, 50%)',
-  }), [logica.ajustes]);
+  // Posiciones en pantalla de los botones, proyectadas desde cada acordeón 3D (cámara fija).
+  // Reemplazan al cálculo por DOM de usePosicionProMax (los botones 3D no son elementos DOM).
+  const posMaestroRef = useRef<Record<string, { x: number; y: number }>>({});
+  const posAlumnoRef = useRef<Record<string, { x: number; y: number }>>({});
+  const obtenerPosicionMaestro = useCallback((id: string) => posMaestroRef.current[claveBoton(id)] ?? null, []);
+  const obtenerPosicionAlumno = useCallback((id: string) => posAlumnoRef.current[claveBoton(id)] ?? null, []);
+  // El visor exige un ref de fuelle (control con tecla Q en el estudio); en el juego el fuelle
+  // va cerrado fijo, así que este ref dummy nunca se activa.
+  const fuelleDummyRef = useRef(false);
+
+  // Avatar del alumno: acordeón 3D (default) o el personaje elegido. Se persiste en localStorage.
+  const [usarPersonaje, setUsarPersonaje] = useState(false);
+  useEffect(() => { setUsarPersonaje(localStorage.getItem('juego:usarPersonaje') === '1'); }, []);
+  const toggleAvatar = useCallback(() => {
+    setUsarPersonaje((v) => {
+      const n = !v;
+      localStorage.setItem('juego:usarPersonaje', n ? '1' : '0');
+      return n;
+    });
+  }, []);
+  // En modo personaje no hay botones de acordeón que proyectar → limpiamos las posiciones del
+  // alumno para que el PuenteNotas no dibuje notas sobre coordenadas viejas.
+  useEffect(() => { if (usarPersonaje) posAlumnoRef.current = {}; }, [usarPersonaje]);
 
   // — Competitivo: flash de pantalla al recibir daño
   const vidaPreviaRef = useRef(estadisticas.vida);
@@ -86,6 +153,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   };
 
   return (
+    <PersonajeEstudioProvider>
     <div className={conPenalizacion ? 'competitivo-modo' : 'libre-modo'}>
 
       {conPenalizacion ? (
@@ -231,47 +299,58 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
         </>
       )}
 
-      {/* ── Escenario Maestro / Alumno (compartido) ── */}
+      {/* ── Escenario Maestro / Alumno (acordeón 3D) ── */}
       <div className="hero-escenario">
-        <div className="hero-acordeon-wrap maestro" ref={refMaestro}>
+        <div className="hero-acordeon-wrap maestro">
           <span className="hero-acordeon-label">Maestro</span>
-          {logica.disenoCargado && (
-            <CuerpoAcordeon
-              imagenFondo={'/Acordeon Jugador.webp'}
-              ajustes={ajustesDuelo}
-              direccion={direccionMaestro}
-              configTonalidad={configTonalidad}
-              botonesActivos={botonesActivosMaestro}
-              modoAjuste={false}
-              botonSeleccionado={null}
-              modoVista={logica.modoVista}
-              vistaDoble={false}
-              setBotonSeleccionado={NOOP_SET_BOTON}
-              actualizarBotonActivo={NOOP_ACTUALIZAR}
-              listo={true}
-            />
-          )}
+          {/* Maestro: read-only (sin onTocarBoton), hundimiento driveado por botonesActivosMaestro. */}
+          <VisorAcordeon3D
+            materialPorMesh={{}}
+            piezaSeleccionada={null}
+            onClickPieza={NOOP_CLICK_PIEZA}
+            onMallasDetectadas={NOOP_MALLAS}
+            fuelleCerrandoRef={fuelleDummyRef}
+            animShapeKey={null}
+            animProgramatica={null}
+            pulseEpoch={null}
+            skin={SKIN_MAESTRO}
+            fuelleCerradoFijo
+            camaraFija
+            botonesActivosExternos={botonesActivosMaestro}
+            direccion={direccionMaestro}
+            onPosicionesBotones={(m) => { posMaestroRef.current = m; }}
+            className="acordeon-3d-juego"
+          />
         </div>
         <div
           className="hero-acordeon-wrap alumno"
-          ref={refAlumno}
           onPointerMove={(e) => registrarPosicionGolpe(e.clientX, e.clientY)}
         >
           <span className="hero-acordeon-label">Alumno</span>
-          {logica.disenoCargado && (
-            <CuerpoAcordeon
-              imagenFondo={imagenFondo}
-              ajustes={ajustesDuelo}
+          <ControlAvatarAlumno usarPersonaje={usarPersonaje} onToggle={toggleAvatar} />
+          {usarPersonaje ? (
+            /* El personaje elegido toca/recibe las notas en vivo (useNotasSuscripcion ← emisor
+               global; el alumno toca vía actualizarBotonActivo, que emite). */
+            <VisorPersonaje3D />
+          ) : (
+            /* Alumno: tocable (clic/tap suena) + hundimiento driveado por logica.botonesActivos. */
+            <VisorAcordeon3D
+              materialPorMesh={{}}
+              piezaSeleccionada={null}
+              onClickPieza={NOOP_CLICK_PIEZA}
+              onMallasDetectadas={NOOP_MALLAS}
+              fuelleCerrandoRef={fuelleDummyRef}
+              animShapeKey={null}
+              animProgramatica={null}
+              pulseEpoch={null}
+              skin={SKIN_ALUMNO}
+              fuelleCerradoFijo
+              camaraFija
+              botonesActivosExternos={logica.botonesActivos}
               direccion={logica.direccion}
-              configTonalidad={configTonalidad}
-              botonesActivos={logica.botonesActivos}
-              modoAjuste={false}
-              botonSeleccionado={null}
-              modoVista={logica.modoVista}
-              vistaDoble={false}
-              setBotonSeleccionado={NOOP_SET_BOTON}
-              actualizarBotonActivo={actualizarBotonActivo}
-              listo={true}
+              onTocarBoton={(id, accion) => actualizarBotonActivo(id, accion === 'down' ? 'add' : 'remove')}
+              onPosicionesBotones={(m) => { posAlumnoRef.current = m; }}
+              className="acordeon-3d-juego"
             />
           )}
         </div>
@@ -290,6 +369,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
 
       <JuicioOverlay estadisticas={estadisticas} efectosVisuales={efectosVisuales} />
     </div>
+    </PersonajeEstudioProvider>
   );
 };
 
