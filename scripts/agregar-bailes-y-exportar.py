@@ -21,6 +21,12 @@ NUEVOS = [
     ("Corriendo.fbx", "Corriendo"),
     ("Salto vacano.fbx", "Salto vacano"),
 ]
+# Recorte por clip (frames del FBX original) → quitar lo que sobra y dejar SOLO la acción útil.
+# 'Salto vacano': el clip de Mixamo es despegue→ápex→TUCK(cadera se hunde a 0.15)→aterrizaje en cuclillas
+# →pararse. Eso son DOS subidas de cadera = se ve como DOS saltos. Recortamos a 14-40 = UN solo arco
+# limpio (despegue 0.85 → ápex 1.72 → de vuelta a 0.85), sin la carrerilla (1-13), sin el tuck/cuclillas
+# /pararse (41-67). El aterrizaje suave lo da el crossfade a idle/caminar. El clip se re-inicia en frame 1.
+TRIM = {"Salto vacano": (14, 40)}
 RUTA_GLB = r"C:\PROGRAMACION\AcademiaNext\public\modelos3d\_export\bailes-pack-raw.glb"
 RE_BRAZOS = re.compile(r'(Arm|Hand|Shoulder)')
 
@@ -122,6 +128,24 @@ def agregar_baile(filepath, nombre, rig):
                     kp.handle_right_type = 'AUTO_CLAMPED'
                 fc.update()
                 continue
+    # Recortar el clip a su ventana útil (quita carrerilla/pasos extra) y re-iniciarlo en el frame 1.
+    rango = TRIM.get(nombre)
+    if rango:
+        a, b = rango
+        d = a - 1
+        for cb in _bags(act):
+            for fc in list(cb.fcurves):
+                # borrar en REVERSA y SIN fast (borrar en cadena hacia adelante corrompe la colección
+                # → "Keyframe not in F-Curve"); luego desplazar los que quedan.
+                for kp in reversed(list(fc.keyframe_points)):
+                    if kp.co[0] < a - 0.5 or kp.co[0] > b + 0.5:
+                        fc.keyframe_points.remove(kp)
+                for kp in fc.keyframe_points:
+                    kp.co[0] -= d
+                    kp.handle_left[0] -= d
+                    kp.handle_right[0] -= d
+                fc.update()
+
     # limpiar el import: soltar la acción cruda del source ANTES de borrar (si no, queda referenciada
     # y sobrevive → se colaba "Salsa para personaje" como baile fantasma).
     if src.animation_data:

@@ -32,7 +32,7 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
 const SALTO_SPEED = 1.0   // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
-const JUMP_MS = 1300      // dura agacharse→salto→aterrizaje (ápex ≈471ms); luego vuelve a caminar/idle
+const JUMP_MS = 900       // = duración del clip recortado (27f@30fps): UN solo arco despegue→ápex→bajar
 // El salto vertical lo da el CLIP (su cadera real, horneada en Blender), NO código → arco idéntico a Blender.
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
