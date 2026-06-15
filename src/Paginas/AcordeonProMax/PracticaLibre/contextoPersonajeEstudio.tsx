@@ -46,6 +46,7 @@ interface PersonajeEstudioCtx {
   setPosLocal: (id: string, patch: Partial<PosEscenario>) => void
   guardarPos: (id: string) => Promise<{ ok: boolean; error?: string }>
   guardandoPos: boolean
+  posCargado: boolean // true cuando ya se cargaron las posiciones guardadas (evita el "salto" inicial)
 }
 
 // Config por defecto (del código) de un escenario .glb, como PosEscenario; null si no es .glb.
@@ -129,7 +130,10 @@ export const PersonajeEstudioProvider: React.FC<{ children: React.ReactNode }> =
   // ─── Posición fija del personaje por escenario (global, editable por admin) ──────────────────────
   const [posOverrides, setPosOverrides] = React.useState<Record<string, PosEscenario>>({})
   const [guardandoPos, setGuardandoPos] = React.useState(false)
-  React.useEffect(() => { cargarPosicionesEscenario().then(setPosOverrides) }, [])
+  const [posCargado, setPosCargado] = React.useState(false)
+  React.useEffect(() => {
+    cargarPosicionesEscenario().then(setPosOverrides).finally(() => setPosCargado(true))
+  }, [])
   const posEscenario = React.useCallback(
     (id: string): PosEscenario | null => posOverrides[id] ?? posPorDefecto(id),
     [posOverrides],
@@ -154,8 +158,8 @@ export const PersonajeEstudioProvider: React.FC<{ children: React.ReactNode }> =
     personajeId, setPersonajeId, skin, setSkin, baile, setBaile, escenarioId, setEscenarioId,
     tomaCamara, setTomaCamara, directorAuto, setDirectorAuto, secuencia, setSecuencia, secuenciaActiva, setSecuenciaActiva,
     premium, esAdmin, abierto, fuelleAbiertoRef, setFuelle,
-    posEscenario, setPosLocal, guardarPos, guardandoPos,
-  }), [personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, secuencia, secuenciaActiva, premium, esAdmin, abierto, setFuelle, posEscenario, setPosLocal, guardarPos, guardandoPos])
+    posEscenario, setPosLocal, guardarPos, guardandoPos, posCargado,
+  }), [personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, secuencia, secuenciaActiva, premium, esAdmin, abierto, setFuelle, posEscenario, setPosLocal, guardarPos, guardandoPos, posCargado])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

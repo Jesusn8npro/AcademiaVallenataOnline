@@ -8,6 +8,7 @@ import { PERSONAJES } from '../personajes'
 import { usePersonajeEstudio } from '../contextoPersonajeEstudio'
 import { Modelo } from './visor/Modelo'
 import { Escenario } from './visor/Escenario'
+import { esEscenarioGLB } from './visor/escenarios'
 import { DirectorCamara } from './visor/DirectorCamara'
 
 const EnvmapLocal: React.FC = () => {
@@ -60,9 +61,12 @@ const PersonajePiso: React.FC<{ claveMedicion: string; children: React.ReactNode
 const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = false }) => {
   // Estado compartido (selector, skin, baile, escenario, fuelle) vive en el contexto: los controles
   // están en el panel de la derecha. Acá solo se dibuja la escena, limpia, sin dock que tape al personaje.
-  const { personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, fuelleAbiertoRef, setFuelle, posEscenario } = usePersonajeEstudio()
+  const { personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, fuelleAbiertoRef, setFuelle, posEscenario, posCargado } = usePersonajeEstudio()
   const glbActual = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const posActual = posEscenario(escenarioId)
+  // Para escenarios .glb esperamos a que carguen las posiciones guardadas antes de dibujar → así
+  // aparece YA en la posición fija (sin el "salto" de la posición por defecto a la guardada).
+  const mostrarEscenario = !esEscenarioGLB(escenarioId) || posCargado
 
   // La tecla Q cierra el fuelle (mismo control que el botón del panel). Sólo activa mientras el
   // visor está montado (= pestaña Personaje abierta).
@@ -105,7 +109,7 @@ const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = fal
             <pointLight position={[0, 2.0, -2.4]} intensity={2.6} distance={8} decay={2} color="#ff9540" />
             {/* Escenario en su PROPIO Suspense → carga asíncrona: el personaje no espera por él. */}
             <React.Suspense fallback={null}>
-              <Escenario id={escenarioId} pos={posActual} />
+              {mostrarEscenario && <Escenario id={escenarioId} pos={posActual} />}
             </React.Suspense>
             {/* Piso receptor de sombra (transparente, solo oscurece donde cae la sombra). El personaje
                 siempre está anclado a y=0, así que esta sombra de contacto cae justo a sus pies en

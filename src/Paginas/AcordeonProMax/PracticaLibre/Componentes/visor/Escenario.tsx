@@ -70,8 +70,9 @@ function EscenarioGLBNorm({ glb, escala = 1, offset = [0, 0, 0], rotY = 0, autoP
     if (autoPiso) {
       const surfY = superficiePisable(g, box.max.y - box.min.y + 5)
       if (surfY !== null) g.position.y -= surfY
+    } else {
+      g.position.y += offset[1] // altura MANUAL: solo cuando el aterrizaje automático está apagado
     }
-    g.position.y += offset[1]
   }, [obj, escala, rotY, offset, autoPiso])
   return <group ref={ref}><primitive object={obj} /></group>
 }

@@ -47,9 +47,12 @@ const EditorPosEscenario: React.FC = () => {
       <Fila label="Atrás / Frente" valor={pos.z.toFixed(2)}>
         <input type="range" min={-6} max={6} step={0.05} value={pos.z} onChange={(e) => set({ z: +e.target.value })} style={{ width: '100%' }} />
       </Fila>
-      <Fila label="Altura" valor={pos.y.toFixed(2)}>
-        <input type="range" min={-4} max={4} step={0.05} value={pos.y} onChange={(e) => set({ y: +e.target.value })} style={{ width: '100%' }} />
-      </Fila>
+      {/* La Altura SOLO aplica con el aterrizaje automático apagado (si no, el auto la ignora y flota). */}
+      {!pos.autoPiso && (
+        <Fila label="Altura" valor={pos.y.toFixed(2)}>
+          <input type="range" min={-4} max={4} step={0.05} value={pos.y} onChange={(e) => set({ y: +e.target.value })} style={{ width: '100%' }} />
+        </Fila>
+      )}
       <Fila label="Rotación" valor={`${grados(pos.rotY)}°`}>
         <input type="range" min={-180} max={180} step={1} value={grados(pos.rotY)} onChange={(e) => set({ rotY: aRad(+e.target.value) })} style={{ width: '100%' }} />
       </Fila>
