@@ -26,10 +26,6 @@ const PanelOpciones: React.FC = () => {
     baile, setBaile, escenarioId, setEscenarioId, premium,
     skin, setSkin, tomaCamara, setTomaCamara, directorAuto, setDirectorAuto,
   } = usePersonajeEstudio()
-  // Gating premium se resuelve async → gateamos por `montado` (mismo patrón que SeccionPLPersonaje)
-  // para que el primer render coincida con el SSR y no haya error de hidratación.
-  const [montado, setMontado] = React.useState(false)
-  React.useEffect(() => { setMontado(true) }, [])
 
   return (
     <div className="rp3d-panel">
@@ -68,7 +64,7 @@ const PanelOpciones: React.FC = () => {
             Quieto
           </button>
           {BAILES.map((b) => {
-            const bloqueado = montado && b.premium && !premium
+            const bloqueado = b.premium && !premium
             return (
               <button
                 key={b.id}
@@ -130,7 +126,10 @@ const ReplayPersonaje3DSimulador: React.FC<Props> = ({ onCerrar }) => {
   // Giramos la vista (roll de cámara) SOLO en pantallas anchas (landscape): ahí el personaje vertical
   // quedaba chico con espacio a los lados → girado llena la pantalla. En portrait (teléfono vertical)
   // NO se gira: ya se ve completo de arriba a abajo.
-  const [esLandscape, setEsLandscape] = React.useState(true)
+  // Init perezoso desde matchMedia (no `true` fijo) → en portrait no monta girado para luego re-montar.
+  const [esLandscape, setEsLandscape] = React.useState(
+    () => typeof window === 'undefined' || window.matchMedia('(orientation: landscape)').matches
+  )
   React.useEffect(() => {
     const mq = window.matchMedia('(orientation: landscape)')
     const actualizar = () => setEsLandscape(mq.matches)

@@ -65,6 +65,9 @@ export const PersonajeEstudioProvider: React.FC<{ children: React.ReactNode }> =
   const hidratadoRef = React.useRef(false)
   React.useEffect(() => {
     let vivo = true
+    // Al (re)hidratar —incluido el login— bloqueamos el guardado hasta terminar, para no escribir los
+    // valores actuales (p.ej. los anónimos) encima del personaje guardado del usuario antes de cargarlo.
+    hidratadoRef.current = false
     const aplicar = (d: Personaje3DGuardado) => {
       if (d.personajeId && PERSONAJES.some((p) => p.id === d.personajeId)) setPersonajeId(d.personajeId)
       if (d.skin) setSkin(d.skin)
