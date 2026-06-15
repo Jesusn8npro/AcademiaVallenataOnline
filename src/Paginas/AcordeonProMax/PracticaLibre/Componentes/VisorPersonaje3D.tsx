@@ -46,7 +46,10 @@ const PersonajePiso: React.FC<{ claveMedicion: string; children: React.ReactNode
   return <group ref={ref}>{children}</group>
 }
 
-const VisorPersonaje3D: React.FC = () => {
+// rotarVista: gira la VISTA 90° (roll de cámara) sin deformar — útil en el Simulador App para ver al
+// personaje de cuerpo entero llenando pantallas anchas. Opcional, por defecto false → Pro Max intacto.
+// El roll se hace por el vector `up` de la cámara (no por CSS, que deformaría el render 3D).
+const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = false }) => {
   // Estado compartido (selector, skin, baile, escenario, fuelle) vive en el contexto: los controles
   // están en el panel de la derecha. Acá solo se dibuja la escena, limpia, sin dock que tape al personaje.
   const { personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, fuelleAbiertoRef, setFuelle } = usePersonajeEstudio()
@@ -70,7 +73,7 @@ const VisorPersonaje3D: React.FC = () => {
     <div className="visor-personaje-stage">
       <div className="visor-personaje-lienzo">
         {/* Cámara deliberada (ya no auto-Bounds): enmarca al personaje de cuerpo entero sobre el piso. */}
-        <Canvas camera={{ position: [0, 1.15, 4.2], fov: 35 }} dpr={[1, 1.25]}>
+        <Canvas camera={{ position: [0, 1.15, 4.2], fov: 35, up: rotarVista ? [1, 0, 0] : [0, 1, 0] }} dpr={[1, 1.25]}>
           <React.Suspense fallback={null}>
             <EnvmapLocal />
             {/* Rig de estudio 3-point en tiempo real (ilumina el cove Y al personaje animado).

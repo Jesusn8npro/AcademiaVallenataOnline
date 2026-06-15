@@ -518,3 +518,148 @@
     border-color: transparent;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
 }
+
+/* ═══════════════ Overlay 3D del replay (ReplayPersonaje3DSimulador) ═══════════════
+   Estos estilos viven AQUÍ (CSS cargado siempre, no lazy) y no en el componente lazy, porque el HMR
+   de Next con chunks dinámicos no carga su CSS de forma confiable (salía todo sin estilo). */
+
+/* z-index 900: por ENCIMA del acordeón (.contenedor-acordeon-completo = 500) y la toolbar (800),
+   pero por DEBAJO de la barra de grabación flotante (980) → transporte + toggle siguen accesibles. */
+.rp3d-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    background: #06070f;
+}
+
+/* El giro de la vista NO se hace por CSS (deformaba el render: react-three-fiber mide el bounding box
+   girado y estira el 3D). Se hace girando la CÁMARA en el 3D (roll 90°) vía la prop `rotarVista` de
+   VisorPersonaje3D → el lienzo queda recto (sin deformar) pero la vista aparece rotada. */
+
+.rp3d-visor {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+/* El layout flex de .visor-personaje-stage/lienzo vive en EstudioPracticaLibre.css (NO se carga en el
+   simulador) → lo REPLICAMOS acá, si no el Canvas se queda en su alto por defecto (~150px) y el resto
+   queda negro. Con esto el personaje llena TODA la pantalla (de cuerpo entero). */
+.rp3d-visor .visor-personaje-stage {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    gap: 0;
+}
+.rp3d-visor .visor-personaje-lienzo {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+.rp3d-visor .visor-personaje-lienzo canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Barra superior izquierda: botones "Teclas" (volver) + "Opciones" (desplegar panel), uno al lado del
+   otro. Flotan sobre la vista → el personaje queda a pantalla completa detrás. */
+.rp3d-topbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 902;
+    display: flex;
+    gap: 8px;
+}
+.rp3d-btn-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(15, 18, 26, 0.82);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease;
+}
+.rp3d-btn-top:hover { background: rgba(30, 35, 50, 0.92); }
+.rp3d-btn-top.activo {
+    background: linear-gradient(135deg, #4f7cff, #7b5bff);
+    border-color: transparent;
+}
+
+/* Panel desplegable de opciones: tarjeta oscura flotante bajo los botones. Secciones apiladas y
+   limpias (etiqueta + chips que envuelven), scroll si no caben. No tapa al personaje (ancho acotado). */
+.rp3d-panel {
+    position: absolute;
+    top: 56px;
+    left: 10px;
+    z-index: 901;
+    width: min(340px, calc(100vw - 20px));
+    max-height: calc(100% - 76px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(12, 14, 22, 0.92);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+}
+
+.rp3d-seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.rp3d-seccion-tit {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+.rp3d-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.rp3d-chip {
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: #e8edf6;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+.rp3d-chip:hover { background: rgba(255, 255, 255, 0.12); }
+.rp3d-chip.activo {
+    background: linear-gradient(135deg, #4f7cff, #7b5bff);
+    border-color: transparent;
+    color: #fff;
+}
+.rp3d-chip.bloqueado { opacity: 0.55; }

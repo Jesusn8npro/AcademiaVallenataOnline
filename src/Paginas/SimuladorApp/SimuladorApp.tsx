@@ -35,6 +35,9 @@ import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
 const JuegoSimuladorApp = lazy(() => import('./Juego/JuegoSimuladorApp'));
 import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
 import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
+// Visor 3D del replay: carga bajo demanda (trae three.js) → solo pesa cuando el usuario
+// pulsa "Ver personaje" durante una reproducción.
+const ReplayPersonaje3DSimulador = lazy(() => import('./Componentes/ReplayPersonaje3DSimulador'));
 
 import './SimuladorApp.css';
 
@@ -386,6 +389,12 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const abrirListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(true), []);
     const cerrarListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(false), []);
 
+    // Toggle de vista del replay: teclas (default) ↔ personaje 3D. El personaje toca lo MISMO que ya
+    // está sonando (useReplaySimulador sigue conduciendo; el visor solo escucha el emisor global).
+    // Solo aplica mientras hay una reproducción; al terminar volvemos a la vista de teclas.
+    const [verPersonaje3D, setVerPersonaje3D] = useState(false);
+    useEffect(() => { if (!replay.enReproduccion) setVerPersonaje3D(false); }, [replay.enReproduccion]);
+
     // Solo admins ven el modal expandido con opción de publicar como Canción Hero
     // y subir MP3 de fondo. El resto de roles ve el modal normal de Práctica Libre.
     const { usuario, esAdmin } = useUsuario();
@@ -493,7 +502,10 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onPreviewMetronomoDetener={previewMetronomoDetener}
             />
 
-            {!isLandscape && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
+            {/* El acordeón de teclas necesita horizontal, PERO la vista de personaje se ve mejor con el
+                teléfono vertical (el personaje de cuerpo entero llena la pantalla). Por eso, mientras se
+                ve el personaje, NO pedimos rotar: dejamos usar el celular en su posición normal. */}
+            {!isLandscape && !verPersonaje3D && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
 
             {!audioListo && (
                 <div className="overlay-audio-inicio" aria-hidden="true">
@@ -516,7 +528,17 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onDetenerReproduccion={replay.detenerReproduccion}
                 onRetroceder={replay.retrocederReproduccion}
                 onAdelantar={replay.adelantarReproduccion}
+                verPersonaje3D={verPersonaje3D}
+                onAlternarPersonaje3D={() => setVerPersonaje3D((v) => !v)}
             />
+
+            {/* Overlay 3D: el personaje fichado toca la grabación en su escenario.
+                El toggle teclas/personaje vive en la BarraGrabacionFlotante (siempre visible en replay). */}
+            {replay.enReproduccion && verPersonaje3D && (
+                <Suspense fallback={null}>
+                    <ReplayPersonaje3DSimulador onCerrar={() => setVerPersonaje3D(false)} />
+                </Suspense>
+            )}
 
             <PopupListaGrabaciones
                 visible={popupGrabacionesAbierto}

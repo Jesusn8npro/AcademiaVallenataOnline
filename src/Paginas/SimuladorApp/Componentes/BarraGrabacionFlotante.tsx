@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Play, Square, Circle, Pause, Rewind, FastForward } from 'lucide-react';
+import { Play, Square, Circle, Pause, Rewind, FastForward, User, Grid3x3 } from 'lucide-react';
 import './BarraGrabacionFlotante.css';
 
 interface Props {
@@ -20,6 +20,9 @@ interface Props {
     onDetenerReproduccion?: () => void;
     onRetroceder?: () => void;
     onAdelantar?: () => void;
+    // Toggle vista del replay: teclas (false) ↔ personaje 3D (true). Solo se muestra si se pasa el handler.
+    verPersonaje3D?: boolean;
+    onAlternarPersonaje3D?: () => void;
 }
 
 function formatearTiempo(ms: number): string {
@@ -47,6 +50,7 @@ const BarraGrabacionFlotante: React.FC<Props> = ({
     bpmReproduccion = 120, resolucionReproduccion = 192,
     onAlternarPausa, onDetenerReproduccion,
     onRetroceder, onAdelantar,
+    verPersonaje3D = false, onAlternarPersonaje3D,
 }) => {
     if (enReproduccion) {
         const progreso = totalTicks > 0
@@ -56,6 +60,20 @@ const BarraGrabacionFlotante: React.FC<Props> = ({
         const tiempoTotalMs = tickASegundosMs(totalTicks, bpmReproduccion, resolucionReproduccion);
         return (
             <div className="sim-grab-flotante reproduciendo" data-touch-allow>
+                {onAlternarPersonaje3D && (
+                    <button
+                        type="button"
+                        className={`sim-grab-toggle3d ${verPersonaje3D ? 'activo' : ''}`}
+                        onClick={onAlternarPersonaje3D}
+                        aria-label={verPersonaje3D ? 'Ver teclas' : 'Ver personaje 3D'}
+                        title={verPersonaje3D ? 'Ver teclas' : 'Ver personaje 3D'}
+                    >
+                        {verPersonaje3D
+                            ? <><Grid3x3 size={13} /> Teclas</>
+                            : <><User size={13} /> Personaje</>}
+                    </button>
+                )}
+
                 {onRetroceder && (
                     <button
                         type="button"
