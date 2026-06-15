@@ -730,10 +730,11 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
     // ¿Hay un SOFÁ enfrente? Detección SIN coordenadas, por RAYCAST: un rayo hacia abajo desde un punto
     // justo adelante del avatar; si pega en una superficie a ALTURA DE ASIENTO (piso+0.25..0.85 m), hay un
     // sofá/banco delante → se puede sentar. (Las coordenadas calculadas no servían en este modelo multinivel.)
+    const col = colliderRef.current // collider del escenario (se usa para sofás + colisión de cápsula)
     let cerca = false
     if (col && asientos) {
       const fwx = Math.sin(g.rotation.y), fwz = Math.cos(g.rotation.y)
-      const by = pisoYRef.current
+      const by = g.position.y
       _colO.set(g.position.x + fwx * 0.55, by + 1.5, g.position.z + fwz * 0.55)
       _colD.set(0, -1, 0); _rayCol.set(_colO, _colD); _rayCol.far = 1.7
       const hit = _rayCol.intersectObject(col, false)[0]
@@ -749,7 +750,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
       g.position.x += fwx * 0.45; g.position.z += fwz * 0.45
       g.rotation.y += Math.PI; yaw.current = g.rotation.y
       sentadoEnRef.current = { x: g.position.x, z: g.position.z, ry: g.rotation.y }
-      pisoSentadoRef.current = pisoYRef.current
+      pisoSentadoRef.current = g.position.y
     } else if (!sentado && sentadoEnRef.current) {
       sentadoEnRef.current = null
     }
@@ -779,7 +780,6 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
     vel.current.x = THREE.MathUtils.damp(vel.current.x, desired.x, ACCEL, dt)
     vel.current.z = THREE.MathUtils.damp(vel.current.z, desired.z, ACCEL, dt)
     // Movimiento horizontal LIBRE (la cápsula resuelve la colisión más abajo, tras la gravedad).
-    const col = colliderRef.current
     const xPrev = g.position.x, zPrev = g.position.z
     g.position.x += vel.current.x * dt
     g.position.z += vel.current.z * dt
