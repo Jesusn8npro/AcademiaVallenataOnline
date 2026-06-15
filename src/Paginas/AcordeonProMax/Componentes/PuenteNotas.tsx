@@ -101,8 +101,8 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
         const opacidad = datos.progreso < 0.05 ? datos.progreso / 0.05 :
                          (datos.impactada && datos.progreso >= 1.0) ? Math.max(0, 1 - (datos.progreso - 1.0) / 0.08) :
                          datos.progreso > 1.1 ? Math.max(0, 1 - (datos.progreso - 1.1) / 0.05) : 1;
-        const radioComp = datos.impactada ? 28 :
-                         (datos.progreso > 0.8 && datos.progreso <= 1.0) ? 20 + (datos.progreso - 0.8) * 40 : 20;
+        const radioComp = datos.impactada ? 22 :
+                         (datos.progreso > 0.8 && datos.progreso <= 1.0) ? 16 + (datos.progreso - 0.8) * 30 : 16;
         const esFallada = datos.progreso > 1.0 && !datos.impactada;
         const colorFuelle = esFallada ? '#444' : (datos.fuelle === 'abriendo' ? COLOR_ABRIENDO : COLOR_CERRANDO);
         const colorSombra = COLORES_SOMBRA_HILERA[datos.hilera] || '#ffffff';
@@ -113,6 +113,9 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
         const d_progress = datos.progreso - datos.progresoFinal;
         const dashLen = d_progress * L;
         const dashOffset = (1 - datos.progreso) * L;
+        // Anticipación 0→1 en el botón OBJETIVO del alumno: arranca temprano (progreso 0.3) para
+        // dar tiempo a ubicar el botón. Alimenta el anillo que se cierra (cue de timing) + etiqueta.
+        const ant = Math.min(Math.max((datos.progreso - 0.3) / 0.7, 0), 1);
 
         return (
           <g key={datos.id} style={{ opacity: opacidad }}>
@@ -141,8 +144,8 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
                 d={construirPath(datos.posMaestro, p1, p2, datos.posAlumno)}
                 fill="none"
                 stroke={colorFuelle}
-                strokeWidth={3}
-                strokeOpacity={0.25}
+                strokeWidth={2}
+                strokeOpacity={0.16}
                 strokeDasharray="6 8"
             />
             {tieneSustain && (
@@ -150,40 +153,32 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
                     d={construirPath(datos.posMaestro, p1, p2, datos.posAlumno)}
                     fill="none"
                     stroke={colorFuelle}
-                    strokeWidth={radioComp * 0.9}
+                    strokeWidth={radioComp * 0.5}
                     strokeLinecap="round"
-                    strokeOpacity={0.4}
+                    strokeOpacity={0.24}
                     strokeDasharray={`${dashLen} ${L}`}
                     strokeDashoffset={-dashOffset}
                     className={datos.progreso >= 1.0 && !datos.impactada ? 'activo' : ''}
-                    style={{ filter: `drop-shadow(0 0 8px ${colorFuelle})` }}
+                    style={{ filter: `drop-shadow(0 0 3px ${colorFuelle})` }}
                 />
             )}
-            {datos.progreso > 0.6 && !esFallada && (
+            {datos.progreso > 0.3 && !esFallada && (
                 <g transform={`translate(${datos.posAlumno.x}, ${datos.posAlumno.y})`}>
-                    {datos.progreso > 0.6 && datos.progreso < 1.0 && !datos.impactada && (
-                        <circle
-                            r={26}
-                            fill={colorFuelle}
-                            fillOpacity={0.15 * (datos.progreso - 0.6) / 0.4}
-                            stroke={colorFuelle}
-                            strokeWidth={2}
-                            strokeOpacity={0.4 * (datos.progreso - 0.6) / 0.4}
-                        />
-                    )}
-                    {datos.progreso < 1.0 && !datos.impactada && (
-                        <>
-                            <circle
-                                r={24 + Math.sin(tickActual * 0.05) * 5}
-                                fill="none"
-                                stroke={colorFuelle}
-                                strokeWidth={4}
-                                strokeOpacity={0.4}
-                            />
-                            {datos.progreso > 0.9 && (
-                                <circle r={28} fill="none" stroke={colorFuelle} strokeWidth={2} strokeOpacity={0.8} />
-                            )}
-                        </>
+                    {/* Sin anillo ni diana sobre el botón (estorbaban y se cruzaban con muchas notas).
+                        La indicación es el BOTÓN que CRECE+brilla en el acordeón 3D. Aquí solo el
+                        nombre de la nota, ARRIBA del botón (sin taparlo), cuando ya está cerca. */}
+                    {datos.progreso < 1.0 && !datos.impactada && ant > 0.5 && (
+                        <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            y={-34}
+                            fontSize={13}
+                            fontWeight={900}
+                            fill="#fff"
+                            style={{ textShadow: '0 0 5px #000, 0 0 3px #000', userSelect: 'none', pointerEvents: 'none', fontFamily: '"Raleway", sans-serif' }}
+                        >
+                            {datos.etiqueta}
+                        </text>
                     )}
                     {datos.impactada && tieneSustain && datos.progreso >= 1.0 && (() => {
                         const ticksRestantes = (datos.tick + datos.duracion) - tickActual;
@@ -220,7 +215,7 @@ const PuenteNotas: React.FC<PropsPuenteNotas> = ({ cancion, tickActual, obtenerP
                 </g>
             )}
             <g transform={`translate(${pos頭.x}, ${pos頭.y})`} filter={datos.impactada ? 'url(#brillo-impacto)' : (esFallada ? 'none' : `url(#brillo-hilera-${datos.hilera})`)}>
-              {!esFallada && <circle r={radioComp + 12} fill={colorFuelle} fillOpacity={0.15} />}
+              {!esFallada && <circle r={radioComp + 8} fill={colorFuelle} fillOpacity={0.1} />}
               <circle r={radioComp} fill={datos.impactada ? '#fff' : (esFallada ? '#222' : colorFuelle)} stroke={esFallada ? '#444' : '#fff'} strokeWidth={2.5} />
               {!datos.impactada && !esFallada && (
                 <circle

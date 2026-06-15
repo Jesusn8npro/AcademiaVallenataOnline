@@ -5,12 +5,15 @@ import { useGLTF, OrbitControls, Bounds, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { subscribirNotas } from '../../../../Core/audio/emisorNotasAcordeon'
+import { Escenario } from './visor/Escenario'
 
 // v3 — re-exportado con export_yup=False (mantener Z-up de Blender) para evitar que
 // el exporter agregue rotaciones residuales en los nodos. La conversion Z-up→Y-up la
 // hacemos en three.js con un <group rotation={[-Math.PI/2, 0, 0]}> alrededor del modelo.
 // Cache-buster ?v=N — bumpear cada vez que se re-exporta el GLB.
 const GLB_PATH = '/modelos3d/acordeon-fino-v1.glb?v=1'
+// Diagnóstico del visor (window.__visor + console.log de posiciones). Apagado en producción.
+const DEBUG_VISOR3D = false
 
 useGLTF.setDecoderPath('/draco/')
 
@@ -83,6 +86,15 @@ const PROG_CONFIG: Record<AnimProgramaticaId, { duracion: number; influMax: numb
   Respira:      { duracion: 2.80, influMax: 0.25, loop: true  },
 }
 
+// Colores del feedback de tecla (reutilizados cada frame, sin alocar): glow cyan sostenido
+// mientras la nota suena + chispazo BLANCO al momento de pisar (destello tipo videojuego).
+const _COLOR_GLOW = new THREE.Color('#22d3ee')
+const _COLOR_FLASH = new THREE.Color('#ffffff')
+// Colores por dirección del fuelle (mismos que las notas y que SimuladorApp): el botón activo
+// se ilumina AZUL al halar / ROJO al empujar, para que se entienda igual en todos lados.
+const _COLOR_HALAR = new THREE.Color('#3b82f6')
+const _COLOR_EMPUJAR = new THREE.Color('#ef4444')
+
 interface ModeloProps {
   materialPorMesh: Record<string, MaterialPieza>
   piezaSeleccionada: string | null
@@ -107,6 +119,17 @@ interface ModeloProps {
   // Reporta cada frame la posición en pantalla (px de viewport) de cada botón, clave = id
   // lógico sin dirección ("1-5", "bajo-1-3"). El PuenteNotas lo usa para apuntar las notas.
   onPosicionesBotones?: (mapa: Record<string, { x: number; y: number }>) => void
+  // Calibración del mapeo posicional para que coincida con la convención de la canción.
+  invFilasModelo?: boolean
+  invColsModelo?: boolean
+  // Botones OBJETIVO (próximos a pisar) → proximidad 0..1 (0 = recién aparece con todo el aviso,
+  // 1 = pisarlo AHORA). El visor los ILUMINA con anticipación (pulso que crece) para que se vea
+  // clarísimo cuál es el próximo botón, estilo Guitar Hero / SimuladorApp.
+  objetivosRef?: React.MutableRefObject<Record<string, number>>
+  // Modo juego: ACTIVIDAD del fuelle 0..1 (cuántas notas suenan). Si se pasa, el fuelle se mueve
+  // CONTINUO en la dirección (fuelleCerrandoRef) a velocidad ∝ actividad (muchas notas = rápido, una
+  // sola = lento), simétrico al abrir/cerrar. Sin esto, comportamiento de estudio (toggle + damping).
+  fuelleActividadRef?: React.MutableRefObject<number>
 }
 
 function Modelo({
@@ -114,6 +137,7 @@ function Modelo({
   fuelleCerrandoRef, animShapeKey, animProgramatica, pulseEpoch,
   onTocarBoton, direccion,
   skin, botonesActivosExternos, fuelleCerradoFijo, onPosicionesBotones,
+  invFilasModelo, invColsModelo, objetivosRef, fuelleActividadRef,
 }: ModeloProps) {
   const grupo = React.useRef<THREE.Group>(null!)
   // useGLTF cachea y DEVUELVE LA MISMA escena. Un Object3D solo puede tener un padre, así que
@@ -178,6 +202,10 @@ function Modelo({
   // Fuelle "respirando" mientras se toca (da vida al acordeón como el del personaje).
   const playFuelleRef = React.useRef(0)
   const playPhaseRef = React.useRef(0)
+  // Fuelle del JUEGO: actividad y dirección SUAVIZADAS (damping) para que el movimiento sea fluido
+  // (sin saltos "por partes" cuando las notas prenden/apagan o cambia la dirección de golpe).
+  const fuelleActSuaveRef = React.useRef(0)
+  const fuelleDirSuaveRef = React.useRef(-1)
 
   React.useEffect(() => {
     const lista: THREE.Mesh[] = []
@@ -237,15 +265,45 @@ function Modelo({
     const centrarMesh = (m: THREE.Mesh) => box.setFromObject(m).getCenter(new THREE.Vector3())
     const tamMesh = (m: THREE.Mesh) => box.setFromObject(m).getSize(new THREE.Vector3())
 
+    // Centro de un botón en el espacio de su PADRE directo (m.matrix = matriz LOCAL, no world).
+    // CLAVE: en el modo juego EncuadreJuego rota el modelo en 3D, y además el GLB trae rotaciones
+    // de nodos intermedios (conversión Z-up→Y-up). box.setFromObject() devuelve WORLD, donde el
+    // eje X queda inclinado y el clustering "por filas" (que agrupa por X) mezclaba botones de
+    // filas distintas → solo ~16/43 coincidían con la canción. Usando m.matrix (relativa al padre)
+    // ignoramos TODAS las rotaciones ancestrales y recuperamos el layout de diseño: las filas
+    // vuelven a separarse limpio en X (10/11/10 + 6/6 = 43).
+    // OJO: cada nodo de botón trae su PROPIA rotación (cada botón se inclina para seguir la
+    // superficie curva del teclado). Si aplicamos esa rotación (m.matrix), el centro queda
+    // "torcido" y las filas se vuelven diagonales en todos los ejes (no clusterizan). La
+    // POSICIÓN en la rejilla vive en la TRASLACIÓN del nodo (+ el centro de la geometría, igual
+    // para todos): sumándolos SIN rotar recuperamos la rejilla de diseño (filas limpias en X).
+    const _cl = new THREE.Vector3()
+    const centroLocal = (m: THREE.Mesh) => {
+      const g = m.geometry as THREE.BufferGeometry
+      if (!g.boundingBox) g.computeBoundingBox()
+      return g.boundingBox!.getCenter(_cl).clone().add(m.position)
+    }
+    // Y del botón PROYECTADA en pantalla (NDC, arriba = +1). Para ORDENAR las columnas igual que
+    // las imágenes (columna 1 = la de más ARRIBA). No usamos el eje Z local porque su sentido es
+    // OPUESTO entre melodía y bajos (están en lados distintos del acordeón) → con Z una de las dos
+    // quedaba invertida. La pantalla es el único marco común a ambos lados. El orden se preserva
+    // aunque EncuadreJuego aún no haya aplicado escala/offset (son traslación + escala uniforme).
+    const _sv = new THREE.Vector3()
+    const pantallaY = (m: THREE.Mesh) => {
+      box.setFromObject(m).getCenter(_sv)
+      _sv.project(three.camera)
+      return _sv.y
+    }
+
     const centroCajaD = cajaBotonesPrincipalesRef.current
       ? centrarMesh(cajaBotonesPrincipalesRef.current as THREE.Mesh) : null
     const centroCajaI = cajaBajosCentroRef.current
       ? centrarMesh(cajaBajosCentroRef.current as THREE.Mesh) : null
 
-    // Agrupar botones por X (cada fila comparte X). El primer cluster SIEMPRE se crea.
-    const clusterPorX = (items: Array<{ m: THREE.Mesh; c: THREE.Vector3 }>) => {
+    // Agrupar botones por X LOCAL (cada fila comparte X). El primer cluster SIEMPRE se crea.
+    const clusterPorX = <T extends { c: THREE.Vector3 }>(items: T[]) => {
       const ordenados = [...items].sort((a, b) => a.c.x - b.c.x)
-      const clusters: Array<Array<{ m: THREE.Mesh; c: THREE.Vector3 }>> = []
+      const clusters: T[][] = []
       let prevX = -Infinity
       for (const it of ordenados) {
         if (clusters.length === 0 || it.c.x - prevX > 0.05) clusters.push([])
@@ -258,8 +316,10 @@ function Modelo({
     const iMeshes = lista.filter((m) => /^Boton_I_\d+$/.test(m.name))
     botonesDRef.current = dMeshes
     botonesIRef.current = iMeshes
-    const filasMel = clusterPorX(dMeshes.map((m) => ({ m, c: centrarMesh(m) })))
-    const filasBajo = clusterPorX(iMeshes.map((m) => ({ m, c: centrarMesh(m) })))
+    // c = centro LOCAL (para clustering de FILAS por X); cw = centro WORLD (para la normal de
+    // hundimiento); sy = Y en pantalla (para ORDENAR las COLUMNAS como en las imágenes).
+    const filasMel = clusterPorX(dMeshes.map((m) => ({ m, c: centroLocal(m), cw: centrarMesh(m), sy: pantallaY(m) })))
+    const filasBajo = clusterPorX(iMeshes.map((m) => ({ m, c: centroLocal(m), cw: centrarMesh(m), sy: pantallaY(m) })))
 
     // NORMAL del teclado = dirección de hundimiento real (perpendicular a la superficie de
     // botones). Antes promediábamos "boton→centro caja", que da una diagonal y hacía que los
@@ -291,8 +351,12 @@ function Modelo({
       if (normal.dot(haciaCaja) > 0) normal.negate()
       return normal
     }
-    const normalD = normalDeFilas(filasMel, centroCajaD)
-    const normalI = normalDeFilas(filasBajo, centroCajaI)
+    // La normal/hundimiento se calcula en WORLD (como siempre): convertimos las filas ya
+    // agrupadas a su centro world (cw). La AGRUPACIÓN es la correcta (vino del clustering local).
+    const aWorld = (filas: Array<Array<{ m: THREE.Mesh; cw: THREE.Vector3 }>>) =>
+      filas.map((f) => f.map((it) => ({ m: it.m, c: it.cw })))
+    const normalD = normalDeFilas(aWorld(filasMel), centroCajaD)
+    const normalI = normalDeFilas(aWorld(filasBajo), centroCajaI)
 
     // Pasar la normal world → local del padre de los botones (sólo rotación inversa: el GLB
     // viene apply-transformed, mesh.position=(0,0,0) y el hundimiento es un DELTA de posición).
@@ -305,9 +369,11 @@ function Modelo({
       if (!normalLocal) return
       meshes.forEach((m) => {
         const s = tamMesh(m)
-        // Magnitud = 50% de la altura del botón (lado más chico del bbox): se mete hasta
-        // la mitad en su agujero durante el pulse/nota.
-        const mag = Math.min(s.x, s.y, s.z) * 0.5
+        // Magnitud = 0: el botón NO se mueve. Antes se hundía dentro del cuerpo y se OCULTABA
+        // (parecía "desaparecer"). Como en SimuladorApp, el feedback es por LUZ (glow), no por
+        // movimiento → siempre visible y más fácil de entender. (queda el offset por si se quiere
+        // reactivar un hundimiento sutil a futuro, pero a 0 no afecta la posición.)
+        const mag = Math.min(s.x, s.y, s.z) * 0
         m.userData.hundirOffset = normalLocal.clone().multiplyScalar(mag)
       })
     }
@@ -315,18 +381,24 @@ function Modelo({
     asignarHundir(iMeshes, normalILocal)
 
     // Mapeo POSICIONAL nota→mesh. Conteos 3D = filas lógicas: melodía 10/11/10 =
-    // primeraFila/segundaFila/terceraFila, bajos 6/6 = una/dos. Filas por X ascendente →
-    // prefijos "1","2","3"; índice dentro de la fila por Y descendente.
+    // primeraFila/segundaFila/terceraFila, bajos 6/6 = una/dos. Filas por X (local) ascendente →
+    // prefijos "1","2","3". Columnas por Y EN PANTALLA: columna 1 = la de más ARRIBA (sy mayor en
+    // NDC), igual que en las imágenes (donde el botón 1 de cada hilera está arriba). invFilas
+    // invierte el orden de filas; invCols invierte el de columnas. Calibran el mapeo vs la canción.
+    const ordenarCol = (fila: Array<{ m: THREE.Mesh; sy: number }>) =>
+      [...fila].sort((a, b) => (invColsModelo ? a.sy - b.sy : b.sy - a.sy))
     const mapa: Record<string, string> = {}
     filasMel.forEach((fila, iFila) => {
-      const pre = String(iFila + 1)
-      ;[...fila].sort((a, b) => b.c.y - a.c.y).forEach((it, i) => {
+      const idx = invFilasModelo ? filasMel.length - 1 - iFila : iFila
+      const pre = String(idx + 1)
+      ordenarCol(fila).forEach((it, i) => {
         mapa[`${pre}-${i + 1}`] = it.m.name
       })
     })
     filasBajo.forEach((fila, iFila) => {
-      const pre = String(iFila + 1)
-      ;[...fila].sort((a, b) => b.c.y - a.c.y).forEach((it, i) => {
+      const idx = invFilasModelo ? filasBajo.length - 1 - iFila : iFila
+      const pre = String(idx + 1)
+      ordenarCol(fila).forEach((it, i) => {
         mapa[`bajo-${pre}-${i + 1}`] = it.m.name
       })
     })
@@ -407,8 +479,9 @@ function Modelo({
 
     onMallasDetectadas(lista.map((m) => ({ nombre: m.name, grupo: grupoDePieza(m.name) })))
 
-    // DEBUG TEMPORAL: volcar posiciones WORLD reales de las piezas clave.
-    if (typeof window !== 'undefined') {
+    // DEBUG (apagado en prod): volcar posiciones WORLD reales + exponer window.__visor. Poner
+    // DEBUG_VISOR3D=true para reactivarlo al depurar.
+    if (DEBUG_VISOR3D && typeof window !== 'undefined') {
       ;(window as any).__visor = { scene, fuelle: fuelleMesh.current, ladoBajos: ladoBajosObjects.current, ed: fuelleEdgeDeltasRef.current, notaAMesh: notaAMeshRef.current, notasActivas: notasActivasRef.current, cam: three.camera, gl: three.gl, ctrls: (three as any).controls }
       const bb = new THREE.Box3()
       const nombres = ['Fuelle', 'marco Fuelle 2', 'Caja izquierda del acordeon, bajos',
@@ -429,7 +502,7 @@ function Modelo({
         + `\nr t=${ed?.r.t.toArray().map((x) => +x.toFixed(3))} w=${ed?.r.w.toArray().map((x) => +x.toFixed(4))}`
         + `\nladoBajos detectados (${ladoBajosObjects.current.length}): ${ladoBajosObjects.current.map((o) => o.name).join(', ')}`)
     }
-  }, [scene, onMallasDetectadas])
+  }, [scene, onMallasDetectadas, invFilasModelo, invColsModelo])
 
   // UN SOLO useEffect que aplica TODO: color, roughness, metalness, mapas y emissive
   // del highlight. Si la cfg tiene usarTexturaOriginal !== false (o sea: estado default
@@ -628,18 +701,41 @@ function Modelo({
     //    despega. (Antes solo el fuelle tenía morph y la caja de bajos lo "perseguía" con
     //    una medición, lo que despegaba las piezas al usar la geometría nueva.)
     const SNAP_EPS = 0.002
-    const targetQ = (fuelleCerradoFijo || fuelleCerrandoRef.current) ? 1 : 0
-    let valorQ = THREE.MathUtils.damp(valorQRef.current, targetQ, 12, delta)
-    if (Math.abs(valorQ - targetQ) < SNAP_EPS) valorQ = targetQ
-    valorQRef.current = valorQ
     const snap = (v: number) => (Math.abs(v) < SNAP_EPS ? 0 : v)
-    // Fuelle "respira" mientras se toca: target oscilante suave; sin notas relaja a 0.
-    // Da vida al acordeón (como el del personaje) sin depender de la dirección.
-    const hayNota = notasActivasRef.current.size > 0
-    if (hayNota) playPhaseRef.current += delta
-    const pump = hayNota ? 0.10 + 0.10 * Math.sin(playPhaseRef.current * 2.4) : 0
-    playFuelleRef.current = THREE.MathUtils.damp(playFuelleRef.current, pump, 6, delta)
-    const valUniforme = snap(Math.max(valorQ, influPrograma, influShapeUniforme, playFuelleRef.current))
+    let valorQ: number
+    let pump = 0
+    if (fuelleActividadRef) {
+      // JUEGO: el fuelle se mueve en la dirección actual a velocidad ∝ actividad (cuántas notas
+      // suenan). CLAVE para que sea FLUIDO (no "por partes"): suavizamos con damping tanto la
+      // ACTIVIDAD (acelera/desacelera gradual, no salta al prender/apagar notas) como la DIRECCIÓN
+      // (−1..1: al invertir cruza 0 suave, no rebota brusco). + una respiración mínima para que el
+      // fuelle siempre fluya un poquito y no se "congele" en seco entre notas.
+      const act = Math.min(Math.max(fuelleActividadRef.current, 0), 1)
+      // actividad y dirección SUAVES (la actividad decae lento → notas cercanas dan movimiento
+      // CONTINUO, no a pulsos; la dirección cruza 0 al invertir → sin rebote brusco).
+      fuelleActSuaveRef.current = THREE.MathUtils.damp(fuelleActSuaveRef.current, act, 2.2, delta)
+      const dirObj = fuelleCerrandoRef.current ? 1 : -1
+      fuelleDirSuaveRef.current = THREE.MathUtils.damp(fuelleDirSuaveRef.current, dirObj, 3.2, delta)
+      // movimiento direccional (solo con actividad → entre frases NO deriva a un extremo).
+      const baseQ = THREE.MathUtils.clamp(
+        valorQRef.current + fuelleDirSuaveRef.current * fuelleActSuaveRef.current * 1.0 * delta, 0, 1)
+      valorQRef.current = baseQ
+      // respiración: oscilación TENUE sobre el valor (no deriva) → nunca queda en seco, da vida.
+      playPhaseRef.current += delta
+      valorQ = THREE.MathUtils.clamp(baseQ + 0.022 * Math.sin(playPhaseRef.current * 1.4), 0, 1)
+    } else {
+      // ESTUDIO/replay: toggle abrir/cerrar con damping (tecla Q / fuelleCerradoFijo) + "respira".
+      const targetQ = (fuelleCerradoFijo || fuelleCerrandoRef.current) ? 1 : 0
+      valorQ = THREE.MathUtils.damp(valorQRef.current, targetQ, 12, delta)
+      if (Math.abs(valorQ - targetQ) < SNAP_EPS) valorQ = targetQ
+      valorQRef.current = valorQ
+      const hayNota = notasActivasRef.current.size > 0
+      if (hayNota) playPhaseRef.current += delta
+      const pumpT = hayNota ? 0.10 + 0.10 * Math.sin(playPhaseRef.current * 2.4) : 0
+      playFuelleRef.current = THREE.MathUtils.damp(playFuelleRef.current, pumpT, 6, delta)
+      pump = playFuelleRef.current
+    }
+    const valUniforme = snap(Math.max(valorQ, influPrograma, influShapeUniforme, pump))
     const valAbajo = snap(influShapeAbajo)
     const valArriba = snap(influShapeArriba)
     for (const { infl, dict } of cerrarMeshesRef.current) {
@@ -668,6 +764,12 @@ function Modelo({
     // pisada, vuelve a 0 al soltarla. Se guarda por mesh en userData.hundirFactor.
     const sinkFactor = (obj: THREE.Object3D) => {
       const activo = notasActivasRef.current.has(obj.name)
+      // Destello (flanco de subida): chispazo al MOMENTO exacto de pisar la tecla; decae rápido.
+      // Da la "indicación tipo videojuego" pedida, encima del hundimiento. (no engancha en sostenido)
+      if (activo && !obj.userData.eraActivo) obj.userData.flash = 1
+      obj.userData.eraActivo = activo
+      const fl = (obj.userData.flash as number | undefined) ?? 0
+      obj.userData.flash = fl > 0.002 ? THREE.MathUtils.damp(fl, 0, 9, delta) : 0
       // Ataque INSTANTÁNEO al pisar (cero latencia: salta a 1 en el frame de la nota) y
       // release suave al soltar (damping). Así el botón reacciona en el momento exacto.
       let f: number
@@ -681,14 +783,27 @@ function Modelo({
       return f
     }
 
-    // Glow de la tecla pisada: emissive cyan proporcional al hundimiento → indica
-    // visualmente qué nota está sonando. Al soltar, vuelve a su estado (selección o nada).
-    const aplicarGlowBoton = (m: THREE.Mesh, factor: number) => {
+    // Feedback de la tecla: glow claro coloreado por dirección. Tres estados:
+    //  • PISADO/sonando → glow fuerte.
+    //  • OBJETIVO próximo (prox>0) → pulso que CRECE con la cercanía = guía clara de cuál pisar
+    //    (anticipación estilo Guitar Hero: el botón se enciende ANTES, con tiempo).
+    //  • nada → apagado. Sin movimiento ni pico blanco (no satura, no desaparece).
+    const tGlow = performance.now() * 0.001
+    const latido = 0.6 + 0.4 * Math.sin(tGlow * 7) // pulso para el objetivo
+    const colorDir = direccionRef.current === 'empujar' ? _COLOR_EMPUJAR : _COLOR_HALAR
+    const objetivos = objetivosRef?.current
+    const aplicarGlowBoton = (m: THREE.Mesh, factor: number, prox: number) => {
       const mat = m.material as THREE.MeshStandardMaterial
       if (!mat || !(mat as any).isMeshStandardMaterial) return
-      if (factor > 0.002) {
-        mat.emissive.set('#22d3ee')
-        mat.emissiveIntensity = 0.3 + factor * 1.1
+      const flash = (m.userData.flash as number | undefined) ?? 0
+      if (factor > 0.002 || flash > 0.002) {
+        mat.emissive.copy(colorDir)
+        mat.emissiveIntensity = 0.3 + factor * 0.8 + flash * 0.35
+      } else if (prox > 0.01) {
+        // prox² → los lejanos apenas un indicio, el INMINENTE bien brillante (foco claro en el
+        // próximo botón, sin saturar con muchos a la vez).
+        mat.emissive.copy(colorDir)
+        mat.emissiveIntensity = (0.12 + prox * prox * 1.5) * latido
       } else if (m.name === piezaSeleccionada) {
         mat.emissive.set('#3b82f6')
         mat.emissiveIntensity = 0.45
@@ -697,35 +812,42 @@ function Modelo({
         mat.emissiveIntensity = 0
       }
     }
+    const proxDe = (m: THREE.Mesh) => (objetivos ? (objetivos[meshANotaRef.current[m.name]] ?? 0) : 0)
 
-    // Hundir botones de bajos (Boton_I) en su sitio cuando suena su nota. Ya NO se mueven
-    // con el fuelle (de eso se encarga el morph global); solo se hunden como los de melodía.
-    for (const m of botonesIRef.current) {
-      const offset = m.userData.hundirOffset as THREE.Vector3 | undefined
+    const _rsc = new THREE.Vector3()
+    // ANIMACIÓN del botón = CRECE sobre su PROPIO centro (no se mueve, no se hunde, no desaparece).
+    // Escalar un mesh lo agranda respecto a su origen de nodo (que NO es el centro del botón, porque
+    // la geometría está desplazada) → para que crezca EN SITIO, compensamos la posición: al escalar
+    // por k, el centro se iría a R·S·cg·k; lo devolvemos sumando R·S·cg·(1−k). Así el centro queda
+    // CLAVADO (la proyección/puntería de notas no se mueve) y el botón solo se hace más grande.
+    const animarBoton = (m: THREE.Mesh, realce: number) => {
       const origPos = m.userData.originalPos as THREE.Vector3 | undefined
-      if (!offset || !origPos) continue
-      const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
-      m.position.set(
-        origPos.x + offset.x * factor,
-        origPos.y + offset.y * factor,
-        origPos.z + offset.z * factor,
-      )
-      aplicarGlowBoton(m, factor)
+      const origScale = m.userData.originalScale as THREE.Vector3 | undefined
+      if (!origPos || !origScale) return
+      let cg = m.userData.centroGeo as THREE.Vector3 | undefined
+      if (!cg) {
+        const g = m.geometry as THREE.BufferGeometry
+        if (!g.boundingBox) g.computeBoundingBox()
+        cg = g.boundingBox!.getCenter(new THREE.Vector3())
+        m.userData.centroGeo = cg
+      }
+      const k = 1 + realce * 0.85 // hasta ~1.85× cuando es el objetivo inminente / está pisado
+      _rsc.copy(cg).multiply(origScale).applyQuaternion(m.quaternion).multiplyScalar(1 - k)
+      m.scale.copy(origScale).multiplyScalar(k)
+      m.position.copy(origPos).add(_rsc)
     }
 
-    // Hundir botones de melodía (Boton_D): no se mueven con el fuelle, sólo se hunden.
-    // factor = max(nota sostenida, pulse del click). Al soltar, el damping los devuelve.
-    for (const m of botonesDRef.current) {
-      const offset = m.userData.hundirOffset as THREE.Vector3 | undefined
-      const origPos = m.userData.originalPos as THREE.Vector3 | undefined
-      if (!offset || !origPos) continue
+    for (const m of botonesIRef.current) {
       const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
-      m.position.set(
-        origPos.x + offset.x * factor,
-        origPos.y + offset.y * factor,
-        origPos.z + offset.z * factor,
-      )
-      aplicarGlowBoton(m, factor)
+      const prox = proxDe(m)
+      animarBoton(m, Math.max(factor, prox))
+      aplicarGlowBoton(m, factor, prox)
+    }
+    for (const m of botonesDRef.current) {
+      const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
+      const prox = proxDe(m)
+      animarBoton(m, Math.max(factor, prox))
+      aplicarGlowBoton(m, factor, prox)
     }
 
     // Pulse del click para piezas GENÉRICAS (caja, marco, fuelle): mini-flash emissive azul.
@@ -768,8 +890,21 @@ function Modelo({
       const v = new THREE.Vector3()
       const mapa: Record<string, { x: number; y: number }> = {}
       for (const id in notaMeshObjRef.current) {
-        notaMeshObjRef.current[id].getWorldPosition(v)
-        v.project(three.camera)
+        const m = notaMeshObjRef.current[id]
+        // OJO: en el GLB los botones de una hilera comparten el mismo NODO; lo que los distingue
+        // son los VÉRTICES → proyectamos el CENTRO de geometría, no la posición del nodo.
+        // OPTIMIZACIÓN: ese centro local es constante → se cachea (m.userData.centroGeo, mismo que
+        // usa animarBoton) y cada frame sólo se lleva a world (matrixWorld) y se proyecta, en vez de
+        // `box.setFromObject` (que recorre toda la geometría) por 43 botones × 2 acordeones/frame.
+        // El botón escala SOBRE su centro, así que el centro world NO se mueve → la nota apunta exacto.
+        let cg = m.userData.centroGeo as THREE.Vector3 | undefined
+        if (!cg) {
+          const g = m.geometry as THREE.BufferGeometry
+          if (!g.boundingBox) g.computeBoundingBox()
+          cg = g.boundingBox!.getCenter(new THREE.Vector3())
+          m.userData.centroGeo = cg
+        }
+        v.copy(cg).applyMatrix4(m.matrixWorld).project(three.camera)
         mapa[id] = {
           x: rect.left + (v.x * 0.5 + 0.5) * rect.width,
           y: rect.top + (-v.y * 0.5 + 0.5) * rect.height,
@@ -872,7 +1007,87 @@ interface VisorAcordeon3DProps {
   // se mantengan alineadas con el PuenteNotas.
   camaraFija?: boolean
   onPosicionesBotones?: (mapa: Record<string, { x: number; y: number }>) => void
+  // Modo juego: rotación (radianes) aplicada al modelo para encararlo de frente a la cámara fija.
+  rotacionModelo?: [number, number, number]
+  // Modo juego (encuadre AUTO, responsive): `fill` = fracción del ANCHO del lienzo que ocupa el
+  // acordeón (1 = todo el ancho; >1 = se acerca y recorta las correas). `offsetRelY` = nudge
+  // vertical como fracción de la altura del modelo. Así se centra solo en cualquier pantalla.
+  fillModelo?: number
+  offsetRelXModelo?: number
+  offsetRelYModelo?: number
+  invFilasModelo?: boolean
+  invColsModelo?: boolean
+  // Modo juego: botones objetivo próximos a pisar (clave→proximidad 0..1) para iluminarlos con
+  // anticipación. Lo arma el padre desde la canción + tick; se pasa al acordeón del ALUMNO.
+  objetivosRef?: React.MutableRefObject<Record<string, number>>
+  // Modo juego: actividad del fuelle 0..1 (cuántas notas suenan) → velocidad del movimiento del
+  // fuelle. Se pasa a AMBOS acordeones para que ambos animen con la canción.
+  fuelleActividadRef?: React.MutableRefObject<number>
+  // Modo juego: permite ROTAR la cámara (orbitar) para explorar el acordeón en 3D. Sólo rotación
+  // (sin zoom ni pan): EncuadreJuego escala según la distancia de cámara, así que el zoom pelearía
+  // con el auto-fit; rotando a distancia constante el modelo queda fijo de tamaño y las notas
+  // siguen alineadas (las posiciones se reproyectan cada frame).
+  navegable?: boolean
+  // Modo juego: escenario 3D detrás del acordeón (mismo `<Escenario>` que la pestaña Personaje / Mundo:
+  // estudio cove .glb, tarima, plaza). Se renderiza como TELÓN (fuera de EncuadreJuego, con transform
+  // propio) porque el acordeón flota escalado. 'ninguno'/undefined → sin escenario (fondo original).
+  escenarioId?: string
   className?: string
+}
+
+// Encuadre AUTO para el modo juego: mide la caja del modelo una vez, lo centra en el origen y
+// calcula la escala para llenar `fill` del ANCHO visible del lienzo (responsive: usa el aspect
+// y el fov reales de la cámara). Reemplaza a Bounds/Center (que centran por la caja completa,
+// incluidas las correas) y a los valores absolutos (que no se trasladaban entre pantallas).
+const EncuadreJuego: React.FC<{
+  rotacion: [number, number, number]
+  fill: number
+  offsetRelX: number
+  offsetRelY: number
+  children: React.ReactNode
+}> = ({ rotacion, fill, offsetRelX, offsetRelY, children }) => {
+  const { camera } = useThree()
+  const outer = React.useRef<THREE.Group>(null!)
+  const centro = React.useRef<THREE.Group>(null!)
+  const rot = React.useRef<THREE.Group>(null!)
+  // El CENTRADO se mide una sola vez (con outer en identidad). El TAMAÑO y el desplazamiento
+  // se aplican cada frame, así responden a los sliders en vivo.
+  const medido = React.useRef<{ size: THREE.Vector3 } | null>(null)
+  // Valores ANIMADOS (lerp) hacia fill/offset objetivo: cambiar de "toma" de cámara (zoom/encuadre)
+  // se ve suave. En reposo convergen a los props → idéntico al encuadre fijo (no rompe nada).
+  const cur = React.useRef<{ fill: number; offX: number; offY: number } | null>(null)
+  useFrame((_, dt) => {
+    if (!rot.current || !outer.current || !centro.current) return
+    if (!medido.current) {
+      const box = new THREE.Box3().setFromObject(rot.current)
+      if (box.isEmpty()) return
+      const size = box.getSize(new THREE.Vector3())
+      const center = box.getCenter(new THREE.Vector3())
+      centro.current.position.set(-center.x, -center.y, -center.z) // centra el modelo en el origen
+      medido.current = { size }
+    }
+    if (!cur.current) cur.current = { fill, offX: offsetRelX, offY: offsetRelY }
+    const k = 1 - Math.exp(-5 * (dt || 0.016)) // tween suave hacia la toma
+    cur.current.fill += (fill - cur.current.fill) * k
+    cur.current.offX += (offsetRelX - cur.current.offX) * k
+    cur.current.offY += (offsetRelY - cur.current.offY) * k
+    const { size } = medido.current
+    const cam = camera as THREE.PerspectiveCamera
+    const dist = cam.position.length() // cámara mira al origen → distancia = |pos|
+    const visH = 2 * Math.tan((cam.fov * Math.PI) / 180 / 2) * dist
+    const visW = visH * cam.aspect
+    // Escala para que el ANCHO del acordeón ocupe `fill` del ancho visible.
+    const s = (cur.current.fill * visW) / (size.x || 1)
+    outer.current.scale.setScalar(s)
+    outer.current.position.set(cur.current.offX * size.x * s, cur.current.offY * size.y * s, 0)
+  })
+  return (
+    <group ref={outer}>
+      <group ref={centro}>
+        <group ref={rot} rotation={rotacion}>{children}</group>
+      </group>
+    </group>
+  )
 }
 
 const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
@@ -889,26 +1104,58 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
           <directionalLight position={[5, 6, 5]} intensity={0.9} />
           <directionalLight position={[-5, 3, -3]} intensity={0.35} />
           <directionalLight position={[0, -4, 4]} intensity={0.2} />
+          {/* Escenario 3D como TELÓN detrás del acordeón (mismo `<Escenario>` que Personaje/Mundo).
+              Va FUERA de EncuadreJuego (a escala mundo) y con su propio transform: bajado (el piso
+              queda debajo del acordeón flotante) + escalado y atrás. 'ninguno'/undefined → nada. */}
+          {props.camaraFija && props.escenarioId && props.escenarioId !== 'ninguno' && (
+            <group position={[0, -2.0, -2.2]} scale={1.7}>
+              <React.Suspense fallback={null}>
+                <Escenario id={props.escenarioId} />
+              </React.Suspense>
+            </group>
+          )}
           {/* Bounds SIN `observe`: fit/center se aplican una sola vez al cargar. Si dejamos
               observe, cada vez que un boton se hunde y vuelve, Bounds re-fitea el modelo
               entero y reorganiza las piezas — el usuario lo vio como "se daña todo al
               presionar un boton tras hacer zoom". */}
-          <Bounds fit clip margin={1.15}>
-            <Center>
-              {/* Conversion Z-up (Blender) → Y-up (three.js): rotacion -90° X.
-                  El GLB v3 fue exportado con export_yup=False para que no metiera
-                  rotaciones residuales por nodo (que rompian al marco Fuelle 2). */}
-              {/* acordeon-solo extraído del personaje = Y-up nativo → SIN rotación -90X. */}
-              <group>
-                <Modelo {...props} />
-              </group>
-            </Center>
-          </Bounds>
-          {/* En modo juego la cámara va fija (no orbitable) para no desalinear las notas. Dejamos
-              OrbitControls DESHABILITADO (no removido) para que <Bounds> tenga su controls de
-              referencia y encuadre/centre bien el acordeón. */}
           {props.camaraFija ? (
-            <OrbitControls makeDefault enabled={false} target={[0, 0, 0]} />
+            // Modo juego: encuadre AUTO (responsive) + orientación.
+            <EncuadreJuego
+              rotacion={props.rotacionModelo ?? [0, 0, 0]}
+              fill={props.fillModelo ?? 0.95}
+              offsetRelX={props.offsetRelXModelo ?? 0}
+              offsetRelY={props.offsetRelYModelo ?? 0}
+            >
+              <Modelo {...props} />
+            </EncuadreJuego>
+          ) : (
+            <Bounds fit clip margin={1.15}>
+              <Center>
+                {/* Conversion Z-up (Blender) → Y-up (three.js): rotacion -90° X.
+                    El GLB v3 fue exportado con export_yup=False para que no metiera
+                    rotaciones residuales por nodo (que rompian al marco Fuelle 2). */}
+                {/* acordeon-solo extraído del personaje = Y-up nativo → SIN rotación -90X. */}
+                <group>
+                  <Modelo {...props} />
+                </group>
+              </Center>
+            </Bounds>
+          )}
+          {/* Modo juego: cámara fija por defecto (no desalinea notas). Si `navegable`, se puede
+              ORBITAR (sólo rotar, sin zoom/pan → no pelea con el auto-fit de EncuadreJuego). Las
+              notas siguen pegadas porque las posiciones se reproyectan cada frame. Límite polar
+              para no voltear el acordeón boca abajo. */}
+          {props.camaraFija ? (
+            <OrbitControls
+              makeDefault
+              enabled={props.navegable ?? false}
+              enableZoom={false}
+              enablePan={false}
+              rotateSpeed={0.6}
+              minPolarAngle={Math.PI * 0.18}
+              maxPolarAngle={Math.PI * 0.82}
+              target={[0, 0, 0]}
+            />
           ) : (
             <OrbitControls makeDefault enablePan={false} minDistance={2.5} maxDistance={12} />
           )}

@@ -487,57 +487,67 @@
     letter-spacing: 1px;
 }
 
-/* ── Control de avatar del alumno (acordeón ↔ personaje) ── */
-.juego-avatar-control {
-    position: absolute;
-    top: 32px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 6;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-}
-
-.juego-avatar-btn {
-    pointer-events: auto;
-    background: rgba(20, 24, 40, 0.72);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+/* Toggle Imágenes ↔ Acordeón 3D (abajo-izquierda, sobre la escena). */
+.juego-toggle-3d {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    z-index: 50;
+    padding: 8px 16px;
     border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(20, 24, 40, 0.78);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     backdrop-filter: blur(6px);
     transition: background 0.2s, border-color 0.2s;
 }
 
-.juego-avatar-btn.modo-personaje {
-    background: rgba(99, 102, 241, 0.55);
-    border-color: rgba(129, 140, 248, 0.65);
+.juego-toggle-3d:hover {
+    background: rgba(40, 46, 70, 0.9);
+    border-color: rgba(129, 140, 248, 0.6);
 }
 
-.juego-avatar-selector {
+/* Panel temporal de ajuste del encuadre 3D (abajo-centro). */
+.juego-controles-3d {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
     display: flex;
+    flex-direction: column;
     gap: 6px;
-    pointer-events: auto;
+    min-width: 320px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(10, 12, 24, 0.9);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    backdrop-filter: blur(6px);
 }
 
-.juego-avatar-foto {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    cursor: pointer;
-    padding: 0;
+.juego-controles-3d-fila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.juego-avatar-foto.activo {
-    border-color: #fbbf24;
-    box-shadow: 0 0 10px rgba(251, 191, 36, 0.7);
+.juego-controles-3d-fila.titulo {
+    font-weight: 700;
+    justify-content: center;
 }
+
+.juego-controles-3d-fila span {
+    width: 110px;
+}
+
+.juego-controles-3d-fila input[type='range'] {
+    flex: 1;
+}
+

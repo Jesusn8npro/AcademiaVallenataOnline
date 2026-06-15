@@ -36,6 +36,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
   const esLandingVenta = pathname === '/curso-acordeon-desde-cero'
   const esSimuladorApp = pathname.startsWith('/simulador-app')
   const esMundo3D = pathname.startsWith('/test-mundo-3d') // mundo multijugador: pantalla completa, sin chrome
+  const esModoCompetitivoMuestra = pathname.startsWith('/modo-competitivo-muestra') // sandbox 3D: pantalla completa, sin chrome
   const esRecuperarContrasena = pathname === '/recuperar-contrasena'
   const esAcordeonProMax =
     pathname.startsWith('/acordeon-pro-max') ||
@@ -52,6 +53,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     esLandingVenta ||
     esSimuladorApp ||
     esMundo3D ||
+    esModoCompetitivoMuestra ||
     esAcordeonProMax ||
     esRecuperarContrasena
 

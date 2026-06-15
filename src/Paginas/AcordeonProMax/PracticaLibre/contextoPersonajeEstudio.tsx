@@ -2,10 +2,11 @@
 import * as React from 'react'
 import { PERSONAJES } from './personajes'
 import type { PasoSecuencia } from './animaciones'
-import { ESCENARIO_DEFAULT } from './Componentes/visor/escenarios'
+import { ESCENARIO_DEFAULT, ESCENARIOS_GLB } from './Componentes/visor/escenarios'
 import { TOMA_DEFAULT } from './Componentes/visor/camaras'
 import { esUsuarioPremium } from '../../../config/limitesPlan'
 import { useUsuario } from '../../../contextos/UsuarioContext'
+import { cargarPosicionesEscenario, guardarPosicionEscenario, type PosEscenario } from './Servicios/servicioEscenarioPos'
 import {
   leerPersonaje3DLocal,
   guardarPersonaje3DLocal,
@@ -35,9 +36,23 @@ interface PersonajeEstudioCtx {
   secuenciaActiva: boolean
   setSecuenciaActiva: (v: boolean) => void
   premium: boolean
+  esAdmin: boolean
   abierto: boolean
   fuelleAbiertoRef: React.MutableRefObject<boolean>
   setFuelle: (v: boolean) => void
+  // Posición fija del personaje por escenario (editor admin). posEscenario = config efectiva (override
+  // guardado o default del código); setPosLocal = edición en vivo; guardarPos = persistir en Supabase.
+  posEscenario: (id: string) => PosEscenario | null
+  setPosLocal: (id: string, patch: Partial<PosEscenario>) => void
+  guardarPos: (id: string) => Promise<{ ok: boolean; error?: string }>
+  guardandoPos: boolean
+}
+
+// Config por defecto (del código) de un escenario .glb, como PosEscenario; null si no es .glb.
+function posPorDefecto(id: string): PosEscenario | null {
+  const d = ESCENARIOS_GLB[id]
+  if (!d) return null
+  return { x: d.offset[0], y: d.offset[1], z: d.offset[2], rotY: d.rotY, escala: d.escala, autoPiso: d.autoPiso }
 }
 
 const Ctx = React.createContext<PersonajeEstudioCtx | null>(null)
@@ -111,11 +126,36 @@ export const PersonajeEstudioProvider: React.FC<{ children: React.ReactNode }> =
 
   const setFuelle = React.useCallback((v: boolean) => { fuelleAbiertoRef.current = v; setAbierto(v) }, [])
 
+  // ─── Posición fija del personaje por escenario (global, editable por admin) ──────────────────────
+  const [posOverrides, setPosOverrides] = React.useState<Record<string, PosEscenario>>({})
+  const [guardandoPos, setGuardandoPos] = React.useState(false)
+  React.useEffect(() => { cargarPosicionesEscenario().then(setPosOverrides) }, [])
+  const posEscenario = React.useCallback(
+    (id: string): PosEscenario | null => posOverrides[id] ?? posPorDefecto(id),
+    [posOverrides],
+  )
+  const setPosLocal = React.useCallback((id: string, patch: Partial<PosEscenario>) => {
+    setPosOverrides((prev) => {
+      const base = prev[id] ?? posPorDefecto(id)
+      if (!base) return prev
+      return { ...prev, [id]: { ...base, ...patch } }
+    })
+  }, [])
+  const guardarPos = React.useCallback(async (id: string) => {
+    const p = posOverrides[id] ?? posPorDefecto(id)
+    if (!p) return { ok: false, error: 'sin configuración' }
+    setGuardandoPos(true)
+    const r = await guardarPosicionEscenario(id, p)
+    setGuardandoPos(false)
+    return r
+  }, [posOverrides])
+
   const value = React.useMemo<PersonajeEstudioCtx>(() => ({
     personajeId, setPersonajeId, skin, setSkin, baile, setBaile, escenarioId, setEscenarioId,
     tomaCamara, setTomaCamara, directorAuto, setDirectorAuto, secuencia, setSecuencia, secuenciaActiva, setSecuenciaActiva,
-    premium, abierto, fuelleAbiertoRef, setFuelle,
-  }), [personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, secuencia, secuenciaActiva, premium, abierto, setFuelle])
+    premium, esAdmin, abierto, fuelleAbiertoRef, setFuelle,
+    posEscenario, setPosLocal, guardarPos, guardandoPos,
+  }), [personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, secuencia, secuenciaActiva, premium, esAdmin, abierto, setFuelle, posEscenario, setPosLocal, guardarPos, guardandoPos])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

@@ -1,9 +1,17 @@
 'use client'
 import * as React from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
+import { Html, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh'
+
+// BVH: acelera el raycast de colisiones contra la malla del escenario (~100× más rápido). Se parchea
+// una sola vez a nivel de módulo. El collider se construye al cargar el escenario (ver EscenarioGLB).
+;(THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree
+;(THREE.BufferGeometry.prototype as any).disposeBoundsTree = disposeBoundsTree
+;(THREE.Mesh.prototype as any).raycast = acceleratedRaycast
 import { PERSONAJES } from '../../personajes'
 import { Modelo } from '../visor/Modelo'
 import { usePersonajeEstudio } from '../../contextoPersonajeEstudio'
@@ -13,6 +21,7 @@ import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
 import { useReto } from './useReto'
+import { ESCENARIOS_MUNDO, ESCENARIO_MUNDO_DEFAULT, escenarioMundoPorId, EscenarioMundoDef, AsientoDef } from './escenariosMundo'
 import PanelReto from './PanelReto'
 import DueloSimulador from './DueloSimulador'
 import DueloSimuladorDesktop from './DueloSimuladorDesktop'
@@ -31,11 +40,12 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
-const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps) = timing idéntico a Blender
-const JUMP_MS_QUIETO = 1800 // QUIETO: salto COMPLETO (clip Salto vacano: despegue→ápex→aterrizaje→pararse) → idle
-const HOP_MS = 650          // EN MOVIMIENTO: brinco por CÓDIGO manteniendo la caminata/carrera (sin cambiar de anim → fluido)
-const HOP_H = 0.7           // altura del brinco en movimiento (m)
-// El salto vertical lo da el CLIP (su cadera real, horneada en Blender), NO código → arco idéntico a Blender.
+const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps)
+// SALTO FUNCIONAL: el vertical lo da el CÓDIGO (gravedad) → el avatar SUBE de verdad y ATERRIZA ENCIMA de
+// los elementos saltables (la detección de piso lo posa sobre lo que quede debajo al descender). El clip
+// 'Salto vacano' es solo la POSE. JUMP_VEL define la altura del salto (pico ≈ JUMP_VEL²/(2·GRAVITY)).
+const JUMP_VEL = 4.6        // velocidad vertical inicial del salto (m/s) → pico ≈ 0.88 m (supera bordillos/escalones)
+const GRAVITY = 12          // gravedad (m/s²)
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
 const MOUSE_SENS = 0.0024 // sensibilidad del mouse (pointer-lock)
@@ -47,6 +57,74 @@ const LIMITE = 70
 const HEAD_LIMITE = 1.2   // tope del head-look (~69°); igual al de useHeadLook
 const BODY_TURN_RATE = 6  // qué tan rápido el cuerpo se endereza cuando miras más allá del tope
 const INTERP_RATE = 13    // suavizado de interpolación de remotos (más alto = más responsivo, menos lag)
+const PLAYER_RAD = 0.34   // radio de la CÁPSULA de colisión del avatar (m)
+const PLAYER_ALTURA = 1.7 // alto de la cápsula del avatar (m)
+const STEP_UP = 0.4       // (detección de piso de remotos) escalón que se sube sin caer
+const MAX_DROP = 6        // (detección de piso de remotos) caída máxima que sigue el piso
+// Raycaster compartido (detección de piso de remotos + anti-vacío). firstHitOnly = primer impacto (rápido con BVH).
+const _rayCol = new THREE.Raycaster()
+;(_rayCol as any).firstHitOnly = true
+const _colO = new THREE.Vector3()
+const _colD = new THREE.Vector3()
+
+// Altura del piso bajo (px,pz): raycast hacia ABAJO desde bien arriba contra el collider. El avatar se
+// para sobre el primer suelo que encuentre (a cualquier altura → rampas/escalones/pisos elevados). null
+// si no hay nada debajo (borde/hueco).
+function alturaPiso(col: THREE.Mesh, px: number, pz: number, fromY: number, far: number): number | null {
+  _colO.set(px, fromY, pz)
+  _colD.set(0, -1, 0)
+  _rayCol.set(_colO, _colD)
+  _rayCol.far = far
+  const hit = _rayCol.intersectObject(col, false)[0]
+  return hit ? hit.point.y : null
+}
+
+// Altura del piso bajo el avatar: primero CERCA DE LOS PIES (desde la cabeza hacia abajo, con tolerancia
+// de escalón) → sigue el suelo sin saltar a los techos cuando estás bajo cubierta. Si ahí no hay nada
+// (recién apareció bajo el suelo, o borde), REUBICA desde muy arriba (encuentra el piso superior). null
+// solo si no hay piso en ninguno de los dos.
+function pisoBajoAvatar(col: THREE.Mesh, px: number, pz: number, yActual: number): number | null {
+  const cerca = alturaPiso(col, px, pz, yActual + STEP_UP, STEP_UP + MAX_DROP)
+  if (cerca !== null) return cerca
+  return alturaPiso(col, px, pz, 300, 600)
+}
+
+// --- COLISIÓN POR CÁPSULA (robusta: el avatar NO atraviesa NADA, ni barandas ni elementos delgados) ---
+const _capSeg = new THREE.Line3()
+const _capBox = new THREE.Box3()
+const _triPt = new THREE.Vector3()
+const _capPt = new THREE.Vector3()
+const _pushDir = new THREE.Vector3()
+// Empuja la cápsula del avatar FUERA de toda penetración con la geometría del escenario (paredes, barandas,
+// muebles, suelo). Recorre los triángulos cercanos por el BVH y, por cada uno que penetre, desplaza la
+// cápsula la profundidad necesaria. Devuelve los pies corregidos + si quedó APOYADO (empuje hacia arriba=piso).
+function resolverCapsula(col: THREE.Mesh, px: number, py: number, pz: number) {
+  const bt = (col.geometry as any).boundsTree
+  if (!bt) return { x: px, y: py, z: pz, apoyado: false }
+  _capSeg.start.set(px, py + PLAYER_RAD, pz)
+  _capSeg.end.set(px, py + PLAYER_ALTURA - PLAYER_RAD, pz)
+  _capBox.makeEmpty()
+  _capBox.expandByPoint(_capSeg.start); _capBox.expandByPoint(_capSeg.end); _capBox.expandByScalar(PLAYER_RAD)
+  let apoyado = false
+  bt.shapecast({
+    intersectsBounds: (b: THREE.Box3) => b.intersectsBox(_capBox),
+    intersectsTriangle: (tri: any) => {
+      const dist = tri.closestPointToSegment(_capSeg, _triPt, _capPt)
+      if (dist < PLAYER_RAD) {
+        const depth = PLAYER_RAD - dist
+        _pushDir.copy(_capPt).sub(_triPt)
+        const len = _pushDir.length()
+        if (len > 1e-6) {
+          _pushDir.multiplyScalar(1 / len)
+          _capSeg.start.addScaledVector(_pushDir, depth)
+          _capSeg.end.addScaledVector(_pushDir, depth)
+          if (_pushDir.y > 0.3) apoyado = true // empuje con componente hacia arriba = está sobre un piso
+        }
+      }
+    },
+  })
+  return { x: _capSeg.start.x, y: _capSeg.start.y - PLAYER_RAD, z: _capSeg.start.z, apoyado }
+}
 
 // Modos de cámara seleccionables. tercera/lejana = orbital 3ª persona; primera = ojos del personaje;
 // cenital = picado desde arriba. Cada uno fija distancia/ángulo base (el mouse y la rueda ajustan encima).
@@ -130,6 +208,168 @@ function Escena() {
   )
 }
 
+// Escenario seleccionado: si tiene .glb lo carga (useGLTF + Draco), si no, el bosque procedural.
+// El GLB ya viene con el piso en y=0 y centrado, a escala de metros (calza con el avatar de 1.7 m).
+// Si construirColisiones, arma un único collider (geometría fusionada en espacio mundo + BVH) y lo
+// publica en colliderRef → el PlayerController lo usa para que las paredes/muebles frenen al avatar.
+interface PuertaCfg { pivot: THREE.Object3D; cx: number; cz: number; abierta: number }
+function EscenarioGLB({ glb, escala = 1, construirColisiones, colliderRef, puertas, radioPuerta = 5, jugadorRef }: { glb: string; escala?: number; construirColisiones?: boolean; colliderRef?: React.MutableRefObject<THREE.Mesh | null>; puertas?: string[]; radioPuerta?: number; jugadorRef?: React.MutableRefObject<EstadoJugador> }) {
+  const { scene } = useGLTF(glb)
+  // Clon para no mutar la escena cacheada por URL (mismo patrón que el estudio). Marca las mallas para
+  // RECIBIR (y proyectar) sombra, y SUAVIZA el material: el modelo trae muchos paneles/displays EMISSIVE
+  // que brillan blanco muy fuerte + mármol muy reflectivo → bajamos emissiveIntensity y envMapIntensity
+  // (valores fijos = idempotente). Da el look más calmado sin re-exportar el .glb.
+  const obj = React.useMemo(() => {
+    const c = scene.clone(true)
+    const calido = new THREE.Color('#c9a978') // beige cálido (estilo madera) para suavizar los blancos fuertes
+    c.traverse((o: any) => {
+      if (!o.isMesh) return
+      o.receiveShadow = true; o.castShadow = true
+      // Clonar los materiales: así NO mutamos los del caché de useGLTF (el tinte no se acumula al recargar).
+      o.material = Array.isArray(o.material) ? o.material.map((m: any) => m.clone()) : o.material.clone()
+      const mats = Array.isArray(o.material) ? o.material : [o.material]
+      for (const m of mats) {
+        if (!m) continue
+        // APAGAR casi del todo los paneles/displays EMISSIVE (eran las "muchas luces" blancas muy fuertes).
+        if (m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > 0.02) m.emissiveIntensity = Math.min(m.emissiveIntensity ?? 1, 0.06)
+        if ('envMapIntensity' in m) m.envMapIntensity = 0.4 // menos reflejo del entorno (blanco menos quemado)
+        // Suavizar los blancos MUY fuertes hacia un tono cálido tipo madera (no toca vidrio/metal).
+        if (m.color && (m.metalness === undefined || m.metalness < 0.5) && !m.transparent) {
+          const lum = (m.color.r + m.color.g + m.color.b) / 3
+          if (lum > 0.72) m.color.lerp(calido, 0.4)
+        }
+        m.needsUpdate = true
+      }
+    })
+    return c
+  }, [scene])
+  const puertasRef = React.useRef<PuertaCfg[]>([])
+  // ¿una malla pertenece a una hoja de puerta? (su nombre empieza por el nodo de la puerta) → se excluye
+  // del collider para que el UMBRAL sea pasable (la puerta es solo visual, se abre al acercarse).
+  const esPuerta = React.useCallback((nombre: string) => !!puertas && puertas.some((p) => nombre.startsWith(p)), [puertas])
+
+  React.useEffect(() => {
+    if (!construirColisiones || !colliderRef) return
+    obj.scale.setScalar(escala)
+    obj.updateWorldMatrix(true, true)
+    const geos: THREE.BufferGeometry[] = []
+    obj.traverse((o: any) => {
+      if (!o.isMesh || !o.geometry) return
+      if (esPuerta(o.name) || (o.parent && esPuerta(o.parent.name))) return // puerta = fuera del collider (umbral pasable)
+      const g = o.geometry.clone() as THREE.BufferGeometry
+      for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k) // colisión = solo posición
+      const ng = g.index ? g.toNonIndexed() : g
+      ng.applyMatrix4(o.matrixWorld) // a espacio MUNDO (incluye la escala del escenario)
+      geos.push(ng)
+    })
+    if (!geos.length) return
+    const merged = BufferGeometryUtils.mergeGeometries(geos, false)
+    geos.forEach((g) => g.dispose())
+    ;(merged as any).computeBoundsTree()
+    // DoubleSide: los rayos de colisión y de PISO golpean sin importar la orientación de las normales.
+    const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+    mesh.updateMatrixWorld() // matriz identidad: la geometría ya está en mundo
+    colliderRef.current = mesh
+    return () => {
+      ;(merged as any).disposeBoundsTree?.()
+      merged.dispose()
+      if (colliderRef.current === mesh) colliderRef.current = null
+    }
+  }, [obj, escala, construirColisiones, colliderRef, esPuerta])
+
+  // PUERTAS: monta un PIVOTE en el borde-bisagra de cada hoja y la re-parenta → rotar el pivote la abre.
+  React.useEffect(() => {
+    puertasRef.current = []
+    if (!puertas || !puertas.length) return
+    obj.scale.setScalar(escala)
+    obj.updateWorldMatrix(true, true)
+    const hojas = puertas.map((n) => obj.getObjectByName(n)).filter(Boolean) as THREE.Object3D[]
+    if (!hojas.length) return
+    // centro del vano = promedio de los centros de las hojas (para decidir el lado de la bisagra)
+    const centros = hojas.map((h) => new THREE.Box3().setFromObject(h).getCenter(new THREE.Vector3()))
+    const vanoX = centros.reduce((s, c) => s + c.x, 0) / centros.length
+    hojas.forEach((hoja, i) => {
+      const box = new THREE.Box3().setFromObject(hoja)
+      const c = centros[i]
+      const haciaMas = c.x >= vanoX // hoja del lado +X → bisagra en su borde +X, abre hacia afuera (signo -)
+      const hingeX = haciaMas ? box.max.x : box.min.x
+      const hingeMundo = new THREE.Vector3(hingeX, c.y, c.z)
+      const parent = hoja.parent!
+      const pivot = new THREE.Group()
+      parent.add(pivot)
+      pivot.position.copy(parent.worldToLocal(hingeMundo.clone()))
+      pivot.updateWorldMatrix(true, false)
+      pivot.attach(hoja) // re-parenta preservando el transform mundo → rotar pivot.rotation.y gira en bisagra
+      puertasRef.current.push({ pivot, cx: c.x, cz: c.z, abierta: (haciaMas ? -1 : 1) * Math.PI * 0.55 })
+    })
+  }, [obj, puertas, escala])
+
+  // Abrir/cerrar por proximidad del jugador (lerp suave).
+  useFrame((_, dt) => {
+    const cfgs = puertasRef.current
+    if (!cfgs.length || !jugadorRef) return
+    const px = jugadorRef.current.x, pz = jugadorRef.current.z
+    const k = 1 - Math.exp(-6 * dt)
+    for (const d of cfgs) {
+      const cerca = Math.hypot(px - d.cx, pz - d.cz) < radioPuerta
+      const objetivo = cerca ? d.abierta : 0
+      d.pivot.rotation.y += (objetivo - d.pivot.rotation.y) * k
+    }
+  })
+
+  return <primitive object={obj} scale={escala} />
+}
+
+function EscenarioMundo({ def, colliderRef, jugadorRef }: { def: EscenarioMundoDef; colliderRef: React.MutableRefObject<THREE.Mesh | null>; jugadorRef: React.MutableRefObject<EstadoJugador> }) {
+  // Sin glb (bosque) o sin colisiones → no hay collider.
+  React.useEffect(() => { if (!def.glb || !def.colisiones) colliderRef.current = null }, [def, colliderRef])
+  if (def.glb) return <EscenarioGLB glb={def.glb} escala={def.escala} construirColisiones={def.colisiones} colliderRef={colliderRef} puertas={def.puertas} radioPuerta={def.radioPuerta} jugadorRef={jugadorRef} />
+  return <Escena />
+}
+// Precargar los .glb de escenarios para cambio instantáneo.
+ESCENARIOS_MUNDO.forEach((e) => { if (e.glb) useGLTF.preload(e.glb) })
+
+// Cielo: domo gigante con degradado (no se ve el "vacío azul plano" del fondo; envuelve toda la escena).
+// No le afecta la niebla (fog:false) → el degradado se ve limpio; la niebla difumina los BORDES del
+// escenario hacia el color del horizonte → sin cortes feos donde termina el modelo.
+function CieloDomo() {
+  const mat = React.useMemo(() => new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { arriba: { value: new THREE.Color('#5b93cc') }, abajo: { value: new THREE.Color('#d4e4ee') } },
+    vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'varying vec3 vP; uniform vec3 arriba; uniform vec3 abajo; void main(){ float h = clamp(normalize(vP).y * 0.5 + 0.5, 0.0, 1.0); gl_FragColor = vec4(mix(abajo, arriba, smoothstep(0.0, 1.0, h)), 1.0); }',
+  }), [])
+  return <mesh scale={500} renderOrder={-1}><sphereGeometry args={[1, 32, 16]} /><primitive object={mat} attach="material" /></mesh>
+}
+
+// Luz "solar" direccional que SIGUE al jugador local → proyecta una sombra REALISTA con un frustum
+// ajustado (no enorme) = sombra nítida. El target apunta a los pies del jugador. Sin esto, una sola luz
+// fija sobre un mundo grande daría sombras borrosas o fuera de cuadro.
+function LuzSol({ estadoLocalRef }: { estadoLocalRef: React.MutableRefObject<EstadoJugador> }) {
+  const ref = React.useRef<THREE.DirectionalLight>(null!)
+  const tgt = React.useMemo(() => new THREE.Object3D(), [])
+  useFrame(() => {
+    const l = ref.current
+    if (!l) return
+    const s = estadoLocalRef.current
+    l.position.set(s.x + 14, 26, s.z + 10) // sol en diagonal alta
+    tgt.position.set(s.x, 0, s.z)
+    tgt.updateMatrixWorld()
+  })
+  return (
+    <>
+      <primitive object={tgt} />
+      <directionalLight
+        ref={ref} target={tgt} intensity={1.25} color="#fff6e8" castShadow
+        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
+        shadow-camera-near={1} shadow-camera-far={90}
+        shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={18} shadow-camera-bottom={-18}
+        shadow-bias={-0.0004} shadow-normalBias={0.03}
+      />
+    </>
+  )
+}
+
 // Ancla los pies del personaje a y=0 (mide su bbox una vez).
 function AnclaPies({ claveMedicion, children }: { claveMedicion: string; children: React.ReactNode }) {
   const ref = React.useRef<THREE.Group>(null!)
@@ -148,7 +388,7 @@ function AnclaPies({ claveMedicion, children }: { claveMedicion: string; childre
       // independiente de la rotación del cuerpo (antes el offset de mundo aplicado como local se torcía
       // al cambiar de personaje con el cuerpo girado).
       let hips: THREE.Object3D | null = null
-      g.traverse((o: any) => { if (!hips && o.isBone && /Hips$/.test(o.name || '')) hips = o })
+      g.traverse((o: any) => { if (!hips && o.isBone && /Hips$/.test(o.name || '')) hips = o; if (o.isMesh) o.castShadow = true })
       const eje = new THREE.Vector3()
       if (hips) (hips as THREE.Object3D).getWorldPosition(eje)
       else box.getCenter(eje)
@@ -222,7 +462,7 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
 
 // Avatar de OTRO usuario: interpola pos/rot y replica personaje + animación + nombre + 🎵 + ANIMA
 // los dedos/fuelle de lo que ESE jugador está tocando (notas de la red filtradas por su id).
-function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>> }) {
+function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef, colliderRef }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>>; colliderRef: React.MutableRefObject<THREE.Mesh | null> }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const fuelleRef = React.useRef(false)
   const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
@@ -285,6 +525,9 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     if (ent.target.nombre !== nombre) setNombre(ent.target.nombre)
     if (ent.target.tocando !== tocando) setTocando(ent.target.tocando)
     tocandoRef.current = performance.now() - ultimaNotaRef.current < 650 // balanceo por actividad de notas
+    // PISO: el remoto también se para sobre el suelo real del escenario (mismo collider compartido).
+    const colR = colliderRef.current
+    if (colR) { const yp = pisoBajoAvatar(colR, g.position.x, g.position.z, g.position.y); if (yp !== null) g.position.y = yp }
     posRemotosRef.current.set(id, [g.position.x, g.position.z]) // última posición → efecto al irse
   })
 
@@ -302,14 +545,20 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
 // (pointer-lock): WASD/flechas mueven con velocidad amortiguada, el mouse orbita la cámara 360°, la
 // rueda acerca/aleja (hasta 1ª persona). Fuera del modo, no mueve nada y la cámara queda quieta
 // detrás del personaje (cursor libre para la interfaz). Colisión suave con remotos (no bloquea).
-function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef, semillaSpawn, bloquearTecladoRef, correrRef, saltarRef }: {
-  personajeId: string; skin: string; baile: string | null; nombre: string; vistaModo: string
+function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite, lastNoteRef, estadoLocalRef, remotosRef, onSeleccionarJugador, moveRef, semillaSpawn, bloquearTecladoRef, correrRef, saltarRef, colliderRef, spawnFijo, mirarFijo, sentadoRef, asientos, onCercaAsiento }: {
+  personajeId: string; skin: string; baile: string | null; nombre: string; vistaModo: string; limite: number
   lastNoteRef: React.MutableRefObject<number>; estadoLocalRef: React.MutableRefObject<EstadoJugador>
   remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; onSeleccionarJugador?: (id: string) => void
   moveRef: React.MutableRefObject<{ fwd: number; side: number }>; semillaSpawn: string
   bloquearTecladoRef: React.MutableRefObject<boolean>
   correrRef: React.MutableRefObject<boolean>   // correr sostenido (botón móvil); en PC también Shift
   saltarRef: React.MutableRefObject<number>    // contador: al cambiar dispara un salto (botón / Espacio)
+  colliderRef: React.MutableRefObject<THREE.Mesh | null> // collider del escenario (null = sin colisiones)
+  spawnFijo?: [number, number] // punto de aparición del escenario (si falta → determinista en anillo)
+  mirarFijo?: number           // orientación inicial del cuerpo (rotation.y, rad)
+  sentadoRef: React.MutableRefObject<boolean> // true = el usuario pidió sentarse (botón)
+  asientos?: AsientoDef[]       // sofás donde sentarse (se engancha al más cercano)
+  onCercaAsiento?: (cerca: boolean) => void // avisa si hay un sofá al alcance (para mostrar el botón)
 }) {
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
@@ -326,10 +575,17 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const frontal = React.useRef(false)
   const arrastrando = React.useRef(false) // rotando la cámara con el clic mantenido
   const recentrar = React.useRef(false)   // tecla C → recentrar la cámara detrás del personaje
-  const saltarHastaRef = React.useRef(0)  // performance.now() hasta cuando dura el salto en curso
-  const saltoEsMovRef = React.useRef(false) // el salto actual se disparó EN MOVIMIENTO (brinco) vs QUIETO (clip)
+  const vyRef = React.useRef(0)              // velocidad vertical (gravedad)
+  const enAireRef = React.useRef(false)      // true mientras el avatar NO está apoyado en el piso
+  const saltoActivoRef = React.useRef(false) // true SOLO durante un salto real (espacio) → muestra la anim de salto
+  const yAnteriorRef = React.useRef(0)       // altura del frame anterior (para detectar que SUBE escaleras)
+  const subVelRef = React.useRef(0)          // velocidad vertical SUAVIZADA (sin spikes del raycast)
+  const subiendoHastaRef = React.useRef(0)   // mientras el piso sube al caminar → anim 'Subiendo escaleras'
   const ultSaltoRef = React.useRef(0)     // último valor visto de saltarRef (edge del botón Saltar)
   const prevEspacioRef = React.useRef(false) // edge de la barra espaciadora (saltar en PC)
+  const sentadoEnRef = React.useRef<AsientoDef | null>(null) // asiento donde está sentado (null = de pie)
+  const pisoSentadoRef = React.useRef(0)  // altura del PISO al sentarse (pies en el suelo, no sobre el cojín)
+  const cercaAsientoRef = React.useRef(false) // ¿hay un sofá al alcance? (para mostrar el botón Sentarse)
   const _ray = React.useRef(new THREE.Raycaster())
   const _ndc = React.useRef(new THREE.Vector2())
 
@@ -346,11 +602,29 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
   const _d = React.useRef(new THREE.Vector3())
   const _tgt = React.useRef(new THREE.Vector3())
 
-  const spawn = React.useMemo(() => spawnDeterminista(semillaSpawn), [semillaSpawn])
+  // Spawn: si el escenario define un punto fijo, aparecer ahí (con un jitter determinista pequeño para
+  // que varios jugadores no se apilen exacto); si no, spawn determinista en anillo (bosque).
+  const spawn = React.useMemo<readonly [number, number]>(() => {
+    if (spawnFijo) {
+      let h = 2166136261
+      for (let i = 0; i < semillaSpawn.length; i++) { h ^= semillaSpawn.charCodeAt(i); h = Math.imul(h, 16777619) }
+      h >>>= 0
+      const a = (h % 100000) / 100000 * Math.PI * 2, r = ((h >>> 13) % 400) / 100 // 0..4 m
+      return [spawnFijo[0] + Math.cos(a) * r, spawnFijo[1] + Math.sin(a) * r] as const
+    }
+    return spawnDeterminista(semillaSpawn)
+  }, [spawnFijo, semillaSpawn])
   React.useEffect(() => {
-    if (grupo.current) grupo.current.position.set(spawn[0], 0, spawn[1])
+    if (grupo.current) {
+      grupo.current.position.set(spawn[0], 0, spawn[1])
+      if (typeof mirarFijo === 'number') {
+        grupo.current.rotation.y = mirarFijo
+        yaw.current = mirarFijo // alinear la cámara DETRÁS mirando lo mismo (si no, la lógica de "el cuerpo
+                                // se endereza hacia la cámara" gira al avatar hacia yaw=0 y mira a otro lado)
+      }
+    }
     estadoLocalRef.current.x = spawn[0]; estadoLocalRef.current.z = spawn[1]
-  }, [spawn, estadoLocalRef])
+  }, [spawn, estadoLocalRef, mirarFijo])
 
   // Pointer-lock + mouse (rotación) + rueda (zoom) + teclado. navRef refleja si el pointer está bloqueado.
   React.useEffect(() => {
@@ -434,9 +708,13 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     }
   }, [gl, camera, scene, onSeleccionarJugador])
 
-  useFrame((_, dt) => {
+  useFrame((_, dtReal) => {
     const g = grupo.current
     if (!g) return
+    // CLAMP del dt de física: un frame lento (FPS bajo / lag spike) daría un paso de gravedad gigante que
+    // mataría el salto (vy se vuelve muy negativo de golpe) o teletransportaría al avatar. Se limita a 1/20 s
+    // → la física es ESTABLE a cualquier FPS (en FPS bajo el mundo va un poco más lento, pero no se rompe).
+    const dt = Math.min(dtReal, 0.05)
     const t = teclas.current
 
     // Direcciones relativas al yaw de la cámara. (right invertido → A/D en el sentido natural.)
@@ -446,26 +724,53 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     // teclado toca el acordeón (W/A/S/D son notas) → ignoramos las teclas de movimiento (el joystick
     // móvil sigue funcionando). Es el "modo tocar": para caminar de nuevo se cierra el panel.
     const kb = bloquearTecladoRef.current ? 0 : 1
-    const iz = kb * ((t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0)) + moveRef.current.fwd
-    const ix = kb * ((t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0)) + moveRef.current.side
+    // SENTARSE: al pedir sentarse, se engancha UNA vez al sofá más cercano (snap a su posición + orientación)
+    // y queda quieto (sin caminar) hasta pararse. El clip 'Sentarse' anima la pose. Si no hay sofá cerca,
+    // se sienta en el sitio. Al pararse (sentado=false) se suelta.
+    // ¿Hay un SOFÁ enfrente? Detección SIN coordenadas, por RAYCAST: un rayo hacia abajo desde un punto
+    // justo adelante del avatar; si pega en una superficie a ALTURA DE ASIENTO (piso+0.25..0.85 m), hay un
+    // sofá/banco delante → se puede sentar. (Las coordenadas calculadas no servían en este modelo multinivel.)
+    let cerca = false
+    if (col && asientos) {
+      const fwx = Math.sin(g.rotation.y), fwz = Math.cos(g.rotation.y)
+      const by = pisoYRef.current
+      _colO.set(g.position.x + fwx * 0.55, by + 1.5, g.position.z + fwz * 0.55)
+      _colD.set(0, -1, 0); _rayCol.set(_colO, _colD); _rayCol.far = 1.7
+      const hit = _rayCol.intersectObject(col, false)[0]
+      if (hit) { const h = hit.point.y - by; if (h > 0.22 && h < 0.85) cerca = true }
+    }
+    if (cerca !== cercaAsientoRef.current) { cercaAsientoRef.current = cerca; onCercaAsiento?.(cerca) }
+
+    const sentado = sentadoRef.current
+    if (sentado && !sentadoEnRef.current && cerca) {
+      // Sentarse sobre el sofá de enfrente: avanzar un poco para quedar sobre el cojín y girar 180° (sentarse
+      // de espaldas al respaldo, mirando hacia afuera). Anclar al PISO actual (el clip 'Sentarse' baja el cuerpo).
+      const fwx = Math.sin(g.rotation.y), fwz = Math.cos(g.rotation.y)
+      g.position.x += fwx * 0.45; g.position.z += fwz * 0.45
+      g.rotation.y += Math.PI; yaw.current = g.rotation.y
+      sentadoEnRef.current = { x: g.position.x, z: g.position.z, ry: g.rotation.y }
+      pisoSentadoRef.current = pisoYRef.current
+    } else if (!sentado && sentadoEnRef.current) {
+      sentadoEnRef.current = null
+    }
+    const enSofa = !!sentadoEnRef.current // sentado de verdad en un sofá
+    const mov = enSofa ? 0 : 1 // sentado = sin desplazamiento
+    const iz = mov * (kb * ((t['w'] || t['arrowup'] ? 1 : 0) - (t['s'] || t['arrowdown'] ? 1 : 0)) + moveRef.current.fwd)
+    const ix = mov * (kb * ((t['d'] || t['arrowright'] ? 1 : 0) - (t['a'] || t['arrowleft'] ? 1 : 0)) + moveRef.current.side)
     // CORRER: botón sostenido en móvil (correrRef) o Shift en PC. SALTAR: edge del botón (saltarRef) o
     // de la barra espaciadora. LÓGICA ESTILO VIDEOJUEGO: si viene en MOVIMIENTO al disparar el salto, dura
     // poco (solo el brinco) → sigue caminando/corriendo fluido; si está QUIETO, dura el salto COMPLETO
     // (con aterrizaje) y vuelve a idle. La duración se fija al disparar (no se vuelve a disparar hasta terminar).
     const correr = kb === 1 && (correrRef.current || !!t['shift'])
-    const ahora = performance.now()
     const espacio = kb === 1 && !!t[' ']
-    const enMovimiento = Math.abs(iz) > 0.1 || Math.abs(ix) > 0.1
-    const dispararSalto = () => {
-      if (ahora < saltarHastaRef.current) return // ya hay un salto en curso
-      saltoEsMovRef.current = enMovimiento
-      saltarHastaRef.current = ahora + (enMovimiento ? HOP_MS : JUMP_MS_QUIETO)
-    }
+    // SALTO FUNCIONAL: solo se puede saltar desde el PISO (no doble salto en el aire). Da velocidad vertical
+    // hacia arriba; la gravedad y la detección de piso (más abajo) hacen el arco y el aterrizaje ENCIMA.
+    const dispararSalto = () => { if (!enAireRef.current && !enSofa) { vyRef.current = JUMP_VEL; enAireRef.current = true; saltoActivoRef.current = true } }
     if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; dispararSalto() }
     if (espacio && !prevEspacioRef.current) dispararSalto()
     prevEspacioRef.current = espacio
-    const saltando = ahora < saltarHastaRef.current
-    const brincando = saltando && saltoEsMovRef.current // brinco en movimiento (arco por código, anim = caminar/correr)
+    // La anim de salto se muestra SOLO en un salto real (no al bajar un escaloncito): saltoActivoRef.
+    const saltando = saltoActivoRef.current
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)
     const mag = desired.length() // analógico: joystick a medias = camina más lento; clamp a 1 = full
     if (mag > 1e-4) desired.multiplyScalar(((mag > 1 ? 1 / mag : 1)) * VEL * (correr ? RUN_MULT : 1))
@@ -473,12 +778,15 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     // Velocidad AMORTIGUADA → aceleración/desaceleración suaves (sin saltos).
     vel.current.x = THREE.MathUtils.damp(vel.current.x, desired.x, ACCEL, dt)
     vel.current.z = THREE.MathUtils.damp(vel.current.z, desired.z, ACCEL, dt)
+    // Movimiento horizontal LIBRE (la cápsula resuelve la colisión más abajo, tras la gravedad).
+    const col = colliderRef.current
+    const xPrev = g.position.x, zPrev = g.position.z
     g.position.x += vel.current.x * dt
     g.position.z += vel.current.z * dt
 
-    // Límite del mundo.
+    // Límite del mundo (radio de navegación del escenario actual).
     const rad = Math.hypot(g.position.x, g.position.z)
-    if (rad > LIMITE) { g.position.x *= LIMITE / rad; g.position.z *= LIMITE / rad }
+    if (rad > limite) { g.position.x *= limite / rad; g.position.z *= limite / rad }
 
     // Colisión SUAVE con remotos: si se solapan, se separan un poco (no bloquea el movimiento).
     for (const [, ent] of remotosRef.current) {
@@ -487,13 +795,39 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       if (dd > 1e-3 && dd < SEP) { const push = (SEP - dd) * 0.5; g.position.x += (dx / dd) * push; g.position.z += (dz / dd) * push }
     }
 
-    // BRINCO EN MOVIMIENTO = arco vertical por código sobre el grupo (la caminata/carrera NO se interrumpe).
-    // El SALTO QUIETO no usa esto: su vertical lo da la cadera del CLIP 'Salto vacano' dentro del grupo (grupo y=0).
-    // La cámara resta jumpOffset (sigue el piso) → el brinco se ve sin que la cámara suba con él.
-    const jumpOffset = brincando
-      ? Math.sin(Math.PI * Math.min(1, Math.max(0, 1 - (saltarHastaRef.current - ahora) / HOP_MS))) * HOP_H
-      : 0
-    g.position.y = jumpOffset
+    // GRAVEDAD + COLISIÓN POR CÁPSULA: la cápsula del avatar se empuja FUERA de TODA la geometría
+    // (paredes, barandas, muebles, suelo) → NO atraviesa nada. La gravedad lo posa en el piso; el salto
+    // sube de verdad y ATERRIZA ENCIMA. Bajar un escaloncito NO dispara la anim de salto (saltoActivoRef).
+    if (col && enSofa) {
+      // SENTADO EN UN SOFÁ: pies anclados al PISO real (guardado al sentarse), NO al cojín (si raycasteara
+      // hacia abajo pegaría sobre el sofá = se para encima). El clip 'Sentarse' baja el cuerpo al asiento.
+      g.position.y = THREE.MathUtils.damp(g.position.y, pisoSentadoRef.current, 16, dt)
+    } else if (col) {
+      // VERTICAL por RAYCAST (confiable, sin tunneling): el avatar se para sobre el piso real y nunca lo
+      // atraviesa, sin importar la velocidad de caída. floorY=null = no hay piso debajo (borde/vacío).
+      const floorY = pisoBajoAvatar(col, g.position.x, g.position.z, g.position.y)
+      // Anti-vacío (en el piso): si te moviste a un XZ sin piso debajo (borde del mundo), revertir.
+      if (!enAireRef.current && floorY === null) { g.position.x = xPrev; g.position.z = zPrev }
+      // Gravedad + aterrizaje: cae hasta el piso y se queda ahí (el salto sube de verdad y aterriza ENCIMA).
+      vyRef.current = Math.max(-30, vyRef.current - GRAVITY * dt)
+      const ny = g.position.y + vyRef.current * dt
+      if (floorY !== null && ny <= floorY) {
+        // EN EL PISO: sigue el suelo SUAVE (damp) → SIN tirón vertical por el jitter del raycast al correr,
+        // y aterrizaje suave (antes ny=floorY de golpe daba el "movimiento brusco hacia arriba/abajo").
+        g.position.y = THREE.MathUtils.damp(g.position.y, floorY, 16, dt)
+        vyRef.current = 0; enAireRef.current = false; saltoActivoRef.current = false; subVelRef.current = 0 // reset: el salto no debe dejar estado "subiendo"
+      } else {
+        // EN EL AIRE: gravedad directa (salto/caída suaves por la física).
+        g.position.y = ny
+        enAireRef.current = true
+      }
+      // HORIZONTAL por CÁPSULA: empuja al avatar FUERA de paredes/barandas/elementos delgados → NO atraviesa
+      // NADA. Solo se aplica la corrección XZ (el vertical ya lo maneja el raycast, sin tunneling).
+      const r = resolverCapsula(col, g.position.x, g.position.y, g.position.z)
+      g.position.x = r.x; g.position.z = r.z
+    } else {
+      g.position.y = 0; vyRef.current = 0; enAireRef.current = false; saltoActivoRef.current = false
+    }
 
     const speed = Math.hypot(vel.current.x, vel.current.z)
     const moviendo = speed > 0.25
@@ -506,10 +840,18 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
       const exceso = Math.abs(d) - HEAD_LIMITE
       if (exceso > 0) g.rotation.y += Math.sign(d) * exceso * (1 - Math.exp(-BODY_TURN_RATE * dt))
     }
-    // Anim por prioridad: salto QUIETO (clip) > correr/caminar > baile del panel > nada. El BRINCO en
-    // movimiento NO cambia de anim: mantiene caminar/correr (la fluidez la da el arco por código) → al
-    // aterrizar sigue caminando al instante, sin pose intermedia.
-    const animActual = (saltando && !saltoEsMovRef.current) ? 'Salto vacano' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)
+    // ¿SUBIENDO ESCALERAS? = el piso sube SOSTENIDO al caminar. La velocidad vertical se SUAVIZA (low-pass)
+    // → el jitter del raycast NO la dispara (solo un ascenso real y sostenido de escalera). Histéresis 250ms.
+    const subVel = dt > 1e-4 ? (g.position.y - yAnteriorRef.current) / dt : 0
+    yAnteriorRef.current = g.position.y
+    subVelRef.current += (subVel - subVelRef.current) * (1 - Math.exp(-7 * dt))
+    if (!enAireRef.current && moviendo && subVelRef.current > 0.8) subiendoHastaRef.current = performance.now() + 250
+    const subiendo = !enAireRef.current && moviendo && performance.now() < subiendoHastaRef.current
+    // Anim por prioridad: SALTO > SUBIENDO ESCALERAS > correr/caminar > baile del panel > nada.
+    // Anim por prioridad: SALTO > SUBIENDO ESCALERAS > correr/caminar > baile del panel > nada. El clip
+    // 'Subiendo escaleras' YA existe en el pack (agregado de su FBX, sin desplazamiento vertical: la física
+    // del piso sube al avatar y el clip pone el paso de escalera). subiendo = el piso sube sostenido al caminar.
+    const animActual = enSofa ? 'Sentarse' : (saltando ? 'Salto vacano' : (subiendo ? 'Subiendo escaleras' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)))
     if (animActual !== anim) setAnim(animActual)
 
     // Recentrar la cámara detrás del personaje (tecla C).
@@ -529,11 +871,10 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
     est.personajeId = personajeId; est.anim = animActual
     est.nombre = nombre; est.tocando = tocandoAhora; est.mira = yaw.current
 
-    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). Se usa la altura del PISO
-    // (py = P.y − jumpOffset) en 3ª/frontal/cenital → durante el brinco en movimiento el personaje sube en
-    // pantalla y la cámara NO sube con él (se ve el brinco). En 1ª persona sí sube (vas montado).
+    // Cámara según el modo de vista. Rotación 1:1 con el mouse (yaw/pitch). El grupo está SIEMPRE en el piso
+    // (el salto sube la cadera DENTRO del grupo vía el clip), así que la cámara no sube con el salto.
     const P = g.position
-    const py = P.y - jumpOffset
+    const py = P.y
     if (cenital.current) {
       // Picado desde arriba, centrado en el personaje.
       camera.position.set(P.x, py + dist.current, P.z + 0.01)
@@ -563,6 +904,19 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, lastNot
         py + TARGET_H + dist.current * sp,
         P.z - Math.cos(yaw.current) * dist.current * cp,
       )
+    }
+    // Colisión de CÁMARA: si una pared queda entre el personaje y la cámara, acercar la cámara hasta el
+    // muro (no atravesarlo). Solo en vistas orbitales (no 1ª persona ni cenital).
+    if (col && !primera.current && !cenital.current) {
+      _colD.subVectors(camera.position, _tgt.current)
+      const len = _colD.length()
+      if (len > 1e-3) {
+        _colD.multiplyScalar(1 / len)
+        _rayCol.set(_colO.copy(_tgt.current), _colD)
+        _rayCol.far = len
+        const hit = _rayCol.intersectObject(col, false)[0]
+        if (hit) camera.position.copy(_tgt.current).addScaledVector(_colD, Math.max(0.4, hit.distance - 0.2))
+      }
     }
     camera.lookAt(_tgt.current)
   })
@@ -687,6 +1041,16 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   const { personajeId, skin, baile } = usePersonajeEstudio()
   const { usuario } = useUsuario()
   const [vistaModo, setVistaModo] = React.useState('tercera')
+  const [escenarioId, setEscenarioId] = React.useState(ESCENARIO_MUNDO_DEFAULT)
+  const escenarioDef = React.useMemo(() => escenarioMundoPorId(escenarioId), [escenarioId])
+  const colliderRef = React.useRef<THREE.Mesh | null>(null) // collider del escenario (lo llena EscenarioMundo)
+  const [sentado, setSentado] = React.useState(false) // el usuario pidió sentarse (en un sofá cercano)
+  const sentadoRef = React.useRef(false)
+  React.useEffect(() => { sentadoRef.current = sentado }, [sentado])
+  const [cercaAsiento, setCercaAsiento] = React.useState(false) // hay un sofá al alcance → mostrar botón
+  // Al alejarse del sofá (o cambiar de escenario), levantarse / ocultar el botón.
+  React.useEffect(() => { if (!cercaAsiento) setSentado(false) }, [cercaAsiento])
+  React.useEffect(() => { setSentado(false) }, [escenarioId])
   const moveRef = React.useRef({ fwd: 0, side: 0 }) // joystick analógico (móvil)
   const [tactil, setTactil] = React.useState(false)
   React.useEffect(() => { setTactil(typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) }, [])
@@ -813,19 +1177,20 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           (frameloop=never) → libera CPU/GPU del teléfono para que las notas se transmitan SIN latencia.
           La conexión y el broadcast de notas (emisor → useMultijugador) NO dependen del Canvas, siguen
           vivos; los demás te oyen al instante. Al cerrar, el render se reanuda. */}
-      <Canvas frameloop={(tocarAbierto && tactil) || reto.meTocaJugar ? 'never' : 'always'} camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
+      <Canvas shadows={compacto ? false : 'soft'} frameloop={(tocarAbierto && tactil) || reto.meTocaJugar ? 'never' : 'always'} camera={{ position: [0, 2, 5], fov: 48 }} dpr={compacto ? 1 : [1, 1.25]}>
         <React.Suspense fallback={null}>
           <EnvMundo />
-          <fog attach="fog" args={['#bcd9d2', 38, 120]} />
-          <ambientLight intensity={0.65} />
-          <directionalLight position={[10, 16, 8]} intensity={1.2} />
-          <Escena />
-          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} correrRef={correrRef} saltarRef={saltarRef} />
+          <CieloDomo />
+          <fog attach="fog" args={['#d4e4ee', 45, 160]} />
+          <ambientLight intensity={0.5} />
+          <LuzSol estadoLocalRef={estadoLocalRef} />
+          <EscenarioMundo def={escenarioDef} colliderRef={colliderRef} jugadorRef={estadoLocalRef} />
+          <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} limite={escenarioDef.limite} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} correrRef={correrRef} saltarRef={saltarRef} colliderRef={colliderRef} spawnFijo={escenarioDef.spawn} mirarFijo={escenarioDef.mirar} sentadoRef={sentadoRef} asientos={escenarioDef.asientos} onCercaAsiento={setCercaAsiento} />
           {/* Cada avatar remoto en su PROPIO Suspense: si uno nuevo entra con un personaje aún no
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
             <React.Suspense key={id} fallback={null}>
-              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} posRemotosRef={posRemotosRef} />
+              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} posRemotosRef={posRemotosRef} colliderRef={colliderRef} />
             </React.Suspense>
           ))}
           {/* Efectos de partículas al entrar/salir un jugador (efímeros, se auto-desmontan). */}
@@ -905,6 +1270,19 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         🎹 {tocarAbierto ? 'Cerrar' : 'Tocar'}
       </button>
 
+      {/* Botón SENTARSE: aparece SOLO cuando hay un sofá al alcance (o ya estás sentado). Click = sentarse en
+          el sofá más cercano; otra vez = pararse. */}
+      {(cercaAsiento || sentado) && (
+        <button
+          type="button"
+          onClick={() => setSentado((v) => !v)}
+          style={{ position: 'absolute', top: 128, right: 16, display: 'flex', alignItems: 'center', gap: 6, background: sentado ? '#27ae60' : 'rgba(0,0,0,.5)', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 14px', fontFamily: 'system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          title="Sentarse en el sofá más cercano"
+        >
+          {sentado ? '🧍 Pararse' : '🪑 Sentarse'}
+        </button>
+      )}
+
       {/* TÁCTIL (móvil/tablet): SimuladorApp REAL como overlay a pantalla completa, SIN salir del mundo
           → la sesión multijugador sigue viva y los demás te oyen/ven tocar. Trae su propio aviso de
           "gira el teléfono a horizontal". Botón "Volver al mundo" arriba-izquierda (donde iría su volver). */}
@@ -954,6 +1332,15 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           {tactil
             ? <><b>Joystick</b> caminar · <b>arrastra</b> mirar · <b>Correr</b>/<b>Saltar</b> a la derecha · <b>tap</b> a un jugador para oírlo</>
             : <><b>WASD</b>/flechas caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-5</b> vistas · <b>clic</b> a un jugador para oírlo</>}
+        </div>
+        {/* Selector de ESCENARIO (lugar). Cambia el .glb cargado + el radio de navegación. */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          {ESCENARIOS_MUNDO.map((e) => (
+            <button key={e.id} type="button" onClick={() => setEscenarioId(e.id)} style={{ padding: '6px 11px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, background: escenarioId === e.id ? '#2e86de' : 'rgba(0,0,0,.5)', color: '#fff', fontWeight: escenarioId === e.id ? 700 : 400 }}>
+              {e.nombre}
+            </button>
+          ))}
+          {escenarioDef.credito && <span style={{ color: 'rgba(255,255,255,.55)', fontSize: 11 }}>Modelo: {escenarioDef.credito}</span>}
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {VISTAS.map((v, i) => (

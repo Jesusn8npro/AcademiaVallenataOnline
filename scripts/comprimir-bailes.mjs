@@ -15,19 +15,26 @@ import fs from 'node:fs'
 const IN = process.argv[2]
 const OUT = process.argv[3]
 const RE_BRAZOS = /(Shoulder|Arm|Hand)/
+// Clips EN SITIO: se les quita TODA la traslación de la cadera (incluida la vertical). En el MUNDO 3D el
+// vertical lo maneja el CÓDIGO (gravedad del salto / detección de piso al subir escaleras) → si el clip
+// también moviera la cadera hacia arriba, se SUMARÍA y el personaje "se elevaría" el doble (perdía realismo).
+const EN_SITIO = new Set(['Salto vacano', 'Subiendo escaleras', 'Corriendo'])
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
 const doc = await io.read(IN)
 const root = doc.getRoot()
 
 for (const anim of root.listAnimations()) {
+  const enSitio = EN_SITIO.has(anim.getName())
   for (const ch of anim.listChannels()) {
     const nombre = ch.getTargetNode()?.getName() || ''
     const path = ch.getTargetPath()
+    const esHips = /Hips$/.test(nombre)
     const fuera =
       RE_BRAZOS.test(nombre) ||
       path === 'scale' ||
-      (path === 'translation' && !/Hips$/.test(nombre))
+      (path === 'translation' && !esHips) ||
+      (path === 'translation' && esHips && enSitio) // clip en sitio → fuera también la cadera (el código pone el alto)
     if (fuera) ch.dispose()
   }
 }

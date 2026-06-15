@@ -16,6 +16,10 @@ export const BAILES_GLB = '/modelos3d/bailes-pack-v1.glb'
 // Crossfade entre animaciones (entrar/salir de un baile o cambiar de baile), en segundos.
 export const CROSSFADE_BAILE = 0.5
 
+// Crossfade CORTO para clips de UNA-VEZ (el salto): entra casi de golpe (como en Blender, que arranca
+// en el frame 0 sin mezcla) → evita el "salto antes" que daba el crossfade largo al prepararse suave.
+export const CROSSFADE_SALTO = 0.06
+
 // Velocidad de reproducción de los bailes (timeScale del AnimationAction). Los clips traen su
 // velocidad real de Mixamo (30fps); bajar este valor los hace más lentos/naturales para el show.
 // 1 = velocidad original; 0.5 = mitad de velocidad. Ajustable en vivo.
@@ -26,7 +30,9 @@ export interface BaileDef {
   nombre: string // etiqueta del botón
   clip: string // nombre EXACTO de la animación dentro de BAILES_GLB
   premium: boolean
-  unaVez?: boolean // true = se reproduce UNA sola vez y se queda en el último frame (no loop). Para acciones como el salto.
+  unaVez?: boolean // true = se reproduce UNA sola vez y al terminar VUELVE a estar de pie. Para el salto.
+  mantener?: boolean // true = se reproduce UNA sola vez y MANTIENE la pose final (no vuelve a estar de pie ni
+                     // hace loop) hasta que se elija otra anim. Para sentarse (se queda sentado).
 }
 
 // Paso de una secuencia de animaciones (playlist ordenada): qué clip y cuántos segundos dura antes
@@ -46,6 +52,7 @@ export const BAILES: BaileDef[] = [
   { id: 'afarizado', nombre: 'Afarizado', clip: 'Baile Afarizado', premium: false },
   { id: 'corriendo', nombre: 'Corriendo', clip: 'Corriendo', premium: false },
   { id: 'salto', nombre: 'Salto vacano', clip: 'Salto vacano', premium: false, unaVez: true },
+  { id: 'sentarse', nombre: 'Sentarse', clip: 'Sentarse', premium: false, mantener: true },
   { id: 'baile2', nombre: 'Baile 2', clip: 'Baile 2', premium: true },
   { id: 'hiphop', nombre: 'Hip Hop', clip: 'Hip Hop', premium: true },
   { id: 'breakdance', nombre: 'Breakdance', clip: 'Breakdance 1990', premium: true },

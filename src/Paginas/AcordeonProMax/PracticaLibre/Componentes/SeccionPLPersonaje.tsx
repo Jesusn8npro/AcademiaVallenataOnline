@@ -7,6 +7,7 @@ import { TOMAS } from './visor/camaras'
 import { usePersonajeEstudio } from '../contextoPersonajeEstudio'
 import ReplayGrabacionEn3D from './ReplayGrabacionEn3D'
 import SecuenciadorBailes from './SecuenciadorBailes'
+import EditorPosEscenario from './EditorPosEscenario'
 
 // Panel derecho de la pestaña Personaje: selector de personaje + skins del acordeón + bailes +
 // control del fuelle + reproductor de grabaciones. Vive en PanelLateralEstudiante (no tapa la vista).
@@ -111,6 +112,8 @@ const SeccionPLPersonaje: React.FC = () => {
             </button>
           ))}
         </div>
+        {/* Editor de posición fija del personaje (solo admin, solo escenarios .glb) */}
+        <EditorPosEscenario />
       </div>
 
       {/* Secuencia de animaciones (orden + duración) */}
