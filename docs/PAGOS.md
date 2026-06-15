@@ -60,7 +60,7 @@ nombre_producto  TEXT
 VITE_EPAYCO_PUBLIC_KEY=a04d60e2e678d5bd89a58d26f3413fdb
 VITE_EPAYCO_CUSTOMER_ID=37257
 VITE_EPAYCO_TEST_MODE=true
-EPAYCO_PRIVATE_KEY=***EPAYCO_PRIVATE_KEY_REMOVIDA***   # solo servidor
+EPAYCO_PRIVATE_KEY=<tu-llave-privada-epayco>   # solo servidor — NUNCA comitear el valor real
 ```
 
 > **Pendiente P7 del audit:** mover hardcoded keys a env (`src/componentes/Pagos/Hooks/useModalPago.ts:199` y `src/servicios/pagos/crearPago.ts:168-170`). Son llaves PÚBLICAS por diseño (Checkout) pero hardcoded dificulta rotación.
