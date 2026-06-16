@@ -66,50 +66,38 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
       }
     })
 
-    // CRÍTICO: ch.send() ANTES de que el canal esté UNIDO cae a REST (un POST HTTP por mensaje). Antes
-    // el setInterval emitía desde el primer frame (subscribe es asíncrono) → con muchos jugadores eran
-    // miles de POSTs/s = saturación. Ahora: emitimos SOLO con el canal 'SUBSCRIBED' (broadcast por
-    // WebSocket) y, si se cae la conexión, dejamos de enviar hasta reconectar (sin más fallbacks a REST).
-    let unido = false
-    let emisor: ReturnType<typeof setInterval> | null = null
-    // Anti-sobrecarga: SOLO emito mi estado cuando CAMBIA (me muevo/giro/animo), no a 16Hz fijo. Quieto =
-    // casi cero tráfico. Heartbeat cada 2s (< TIMEOUT_MS) para que los demás no me den por desconectado.
-    // Resultado: moverse se ve en vivo (16Hz al cambiar) pero con 50 personas quietas no se satura el server.
+    // Suscripción WebSocket SOLO para RECIBIR a los demás. Para EMITIR usamos channel.httpSend (REST): es
+    // el camino que en esta red/región llega EN VIVO de verdad (el WebSocket send quedó con latencia) y es
+    // el método EXPLÍCITO no-deprecado para REST (sin el warning de send→REST). httpSend NO necesita que el
+    // canal esté unido. (realtime-js 2.100.1 no tiene throttle de cliente.)
+    ch.subscribe()
+
+    // EMITIR mi estado: SOLO cuando CAMBIA (me muevo/giro/animo) + heartbeat cada 2s (< TIMEOUT_MS). Así se
+    // ve EN VIVO al moverse pero con 50 personas QUIETAS casi no hay solicitudes (lo que saturaba antes era
+    // mandar a 16Hz SIEMPRE aunque nadie se moviera; ahora quieto ≈ 1 envío cada 2s).
     let ultimaFirma = ''
     let ultimoEnvio = 0
-    ch.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        unido = true
-        if (!emisor) {
-          emisor = setInterval(() => {
-            if (!unido) return
-            const s = estadoLocalRef.current
-            const ahora = performance.now()
-            // Firma con resolución perceptible (1 cm / ~0.01 rad): por debajo no vale la pena emitir.
-            const firma = `${s.x.toFixed(2)},${s.z.toFixed(2)},${s.ry.toFixed(2)},${s.anim},${s.tocando ? 1 : 0},${s.mira.toFixed(2)}`
-            if (firma !== ultimaFirma || ahora - ultimoEnvio > 2000) {
-              ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
-              ultimaFirma = firma
-              ultimoEnvio = ahora
-            }
-          }, HZ_MS)
-        }
-      } else {
-        unido = false // CLOSED / CHANNEL_ERROR / TIMED_OUT → no enviar (evita el fallback a REST)
+    const emisor = setInterval(() => {
+      const s = estadoLocalRef.current
+      const ahora = performance.now()
+      // Firma con resolución perceptible (1 cm / ~0.01 rad): por debajo no vale la pena emitir.
+      const firma = `${s.x.toFixed(2)},${s.z.toFixed(2)},${s.ry.toFixed(2)},${s.anim},${s.tocando ? 1 : 0},${s.mira.toFixed(2)}`
+      if (firma !== ultimaFirma || ahora - ultimoEnvio > 2000) {
+        ch.httpSend('estado', { id: miId, ...s }).catch(() => {})
+        ultimaFirma = firma
+        ultimoEnvio = ahora
       }
-    })
+    }, HZ_MS)
 
     // Reenviar MIS notas (cuando toco una canción) para que los demás puedan oírlas. Mandamos 'down'
-    // Y 'up': así el oyente suelta la nota EXACTO cuando yo la solté → suena fluido, sin notas pegadas
-    // (antes solo iba 'down' y el oyente la sostenía 1.5 s fijos → se amontonaban). En 'down' va el
-    // TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO, sin que su propia
-    // tonalidad/instrumento le cambie el tono.
+    // Y 'up': así el oyente suelta la nota EXACTO cuando yo la solté → suena fluido, sin notas pegadas.
+    // En 'down' va el TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO. httpSend
+    // (REST) = entrega en vivo; las notas son eventos puntuales, no saturan.
     const offNotas = subscribirNotas((e) => {
-      if (!unido) return // canal aún no unido / caído → no enviar (evita el fallback a REST)
       // DIFERIDO (queueMicrotask): el envío por red NO debe bloquear el camino de la nota (audio + hit del
       // simulador) → así el duelo no siente retardo al tocar. El audio local ya sonó antes de este callback.
       const payload = { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined }
-      queueMicrotask(() => { try { ch.send({ type: 'broadcast', event: 'nota', payload }) } catch {} })
+      queueMicrotask(() => { ch.httpSend('nota', payload).catch(() => {}) })
     })
 
     // Limpieza de remotos que dejaron de emitir (= se fueron).
@@ -123,7 +111,7 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     }, 1000)
 
     return () => {
-      if (emisor) clearInterval(emisor)
+      clearInterval(emisor)
       clearInterval(limpiador)
       offNotas()
       supabase.removeChannel(ch)
