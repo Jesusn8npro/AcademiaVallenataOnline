@@ -41,11 +41,11 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 const VEL = 4.2           // m/s objetivo al caminar
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
 const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps)
-// SALTO FUNCIONAL: el vertical lo da el CÓDIGO (gravedad) → el avatar SUBE de verdad y ATERRIZA ENCIMA de
-// los elementos saltables (la detección de piso lo posa sobre lo que quede debajo al descender). El clip
-// 'Salto vacano' es solo la POSE. JUMP_VEL define la altura del salto (pico ≈ JUMP_VEL²/(2·GRAVITY)).
-const JUMP_VEL = 4.6        // velocidad vertical inicial del salto (m/s) → pico ≈ 0.88 m (supera bordillos/escalones)
-const GRAVITY = 12          // gravedad (m/s²)
+// SALTO = SOLO ANIMACIÓN, EN EL SITIO: al pulsar Saltar se reproduce el clip 'Salto vacano' tal cual (como
+// en Blender), SIN lanzar al avatar hacia arriba con gravedad (antes ese "saltico" de gravedad se veía poco
+// natural). Dura SALTO_DUR_MS y vuelve a idle. La GRAVEDAD se mantiene SOLO para CAER por bordes/escalones.
+const SALTO_DUR_MS = 1300   // largo del clip 'Salto vacano' a velocidad nativa 1.0 (la cadera sube 0.97→1.79m horneado en Blender)
+const GRAVITY = 12          // gravedad (m/s²) — solo para caídas por bordes, NO para saltar
 const ACCEL = 11          // lambda de damp de la velocidad (aceleración/desaceleración suave)
 const FACE_RATE = 9       // suavizado del giro del cuerpo hacia el movimiento (más bajo = giro más natural)
 const MOUSE_SENS = 0.0024 // sensibilidad del mouse (pointer-lock)
@@ -572,7 +572,8 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
   const recentrar = React.useRef(false)   // tecla C → recentrar la cámara detrás del personaje
   const vyRef = React.useRef(0)              // velocidad vertical (gravedad)
   const enAireRef = React.useRef(false)      // true mientras el avatar NO está apoyado en el piso
-  const saltoActivoRef = React.useRef(false) // true SOLO durante un salto real (espacio) → muestra la anim de salto
+  const saltoActivoRef = React.useRef(false) // true mientras se reproduce la anim de salto (en el sitio)
+  const saltoHastaRef = React.useRef(0)      // performance.now() hasta cuándo dura la anim de salto
   const yAnteriorRef = React.useRef(0)       // altura del frame anterior (para detectar que SUBE escaleras)
   const subVelRef = React.useRef(0)          // velocidad vertical SUAVIZADA (sin spikes del raycast)
   const subiendoHastaRef = React.useRef(0)   // mientras el piso sube al caminar → anim 'Subiendo escaleras'
@@ -759,13 +760,19 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
     // (con aterrizaje) y vuelve a idle. La duración se fija al disparar (no se vuelve a disparar hasta terminar).
     const correr = kb === 1 && (correrRef.current || !!t['shift'])
     const espacio = kb === 1 && !!t[' ']
-    // SALTO FUNCIONAL: solo se puede saltar desde el PISO (no doble salto en el aire). Da velocidad vertical
-    // hacia arriba; la gravedad y la detección de piso (más abajo) hacen el arco y el aterrizaje ENCIMA.
-    const dispararSalto = () => { if (!enAireRef.current && !enSofa) { vyRef.current = JUMP_VEL; enAireRef.current = true; saltoActivoRef.current = true } }
+    // SALTO = SOLO ANIMACIÓN EN EL SITIO: reproduce 'Salto vacano' por SALTO_DUR_MS SIN mover al avatar en
+    // vertical (sin gravedad de salto). Solo desde el piso; no se re-dispara hasta que termina la anim.
+    const dispararSalto = () => {
+      if (!enAireRef.current && !enSofa && performance.now() >= saltoHastaRef.current) {
+        saltoActivoRef.current = true
+        saltoHastaRef.current = performance.now() + SALTO_DUR_MS
+      }
+    }
     if (saltarRef.current !== ultSaltoRef.current) { ultSaltoRef.current = saltarRef.current; dispararSalto() }
     if (espacio && !prevEspacioRef.current) dispararSalto()
     prevEspacioRef.current = espacio
-    // La anim de salto se muestra SOLO en un salto real (no al bajar un escaloncito): saltoActivoRef.
+    // La anim de salto dura SALTO_DUR_MS y luego vuelve a idle/caminar (gobernada por el temporizador).
+    if (saltoActivoRef.current && performance.now() >= saltoHastaRef.current) saltoActivoRef.current = false
     const saltando = saltoActivoRef.current
     const desired = _d.current.set(0, 0, 0).addScaledVector(fwd, iz).addScaledVector(right, ix)
     const mag = desired.length() // analógico: joystick a medias = camina más lento; clamp a 1 = full
@@ -810,7 +817,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
         // EN EL PISO: sigue el suelo SUAVE (damp) → SIN tirón vertical por el jitter del raycast al correr,
         // y aterrizaje suave (antes ny=floorY de golpe daba el "movimiento brusco hacia arriba/abajo").
         g.position.y = THREE.MathUtils.damp(g.position.y, floorY, 16, dt)
-        vyRef.current = 0; enAireRef.current = false; saltoActivoRef.current = false; subVelRef.current = 0 // reset: el salto no debe dejar estado "subiendo"
+        vyRef.current = 0; enAireRef.current = false; subVelRef.current = 0 // en piso (la anim de salto la gobierna su temporizador)
       } else {
         // EN EL AIRE: gravedad directa (salto/caída suaves por la física).
         g.position.y = ny
@@ -821,7 +828,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
       const r = resolverCapsula(col, g.position.x, g.position.y, g.position.z)
       g.position.x = r.x; g.position.z = r.z
     } else {
-      g.position.y = 0; vyRef.current = 0; enAireRef.current = false; saltoActivoRef.current = false
+      g.position.y = 0; vyRef.current = 0; enAireRef.current = false
     }
 
     const speed = Math.hypot(vel.current.x, vel.current.z)

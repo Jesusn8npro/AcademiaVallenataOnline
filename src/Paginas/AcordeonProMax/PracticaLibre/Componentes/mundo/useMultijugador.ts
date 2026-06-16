@@ -72,6 +72,11 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     // WebSocket) y, si se cae la conexión, dejamos de enviar hasta reconectar (sin más fallbacks a REST).
     let unido = false
     let emisor: ReturnType<typeof setInterval> | null = null
+    // Anti-sobrecarga: SOLO emito mi estado cuando CAMBIA (me muevo/giro/animo), no a 16Hz fijo. Quieto =
+    // casi cero tráfico. Heartbeat cada 2s (< TIMEOUT_MS) para que los demás no me den por desconectado.
+    // Resultado: moverse se ve en vivo (16Hz al cambiar) pero con 50 personas quietas no se satura el server.
+    let ultimaFirma = ''
+    let ultimoEnvio = 0
     ch.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         unido = true
@@ -79,7 +84,14 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
           emisor = setInterval(() => {
             if (!unido) return
             const s = estadoLocalRef.current
-            ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
+            const ahora = performance.now()
+            // Firma con resolución perceptible (1 cm / ~0.01 rad): por debajo no vale la pena emitir.
+            const firma = `${s.x.toFixed(2)},${s.z.toFixed(2)},${s.ry.toFixed(2)},${s.anim},${s.tocando ? 1 : 0},${s.mira.toFixed(2)}`
+            if (firma !== ultimaFirma || ahora - ultimoEnvio > 2000) {
+              ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
+              ultimaFirma = firma
+              ultimoEnvio = ahora
+            }
           }, HZ_MS)
         }
       } else {

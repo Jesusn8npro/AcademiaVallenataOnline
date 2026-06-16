@@ -19,7 +19,13 @@ if (!globalAny.__INSTANCIA_SUPABASE) {
             autoRefreshToken: true,
             detectSessionInUrl: true,
             storageKey: 'supabase.auth.token',
-        }
+        },
+        // Realtime: el cliente throttlea los broadcasts SALIENTES a `eventsPerSecond` (default 10). El
+        // mundo 3D emite posición ~16 Hz + notas → con 10 se ENCOLABAN = latencia. (Antes "funcionaba"
+        // porque caía a REST, que no respeta este límite, pero saturaba el server.) Subimos el tope para
+        // que el ritmo real fluya por WebSocket SIN throttle. No sube la carga: el ritmo lo fija el código
+        // (no se envía más por tener el tope alto), solo deja de encolar. Ver [[realtime-send-antes-de-subscribe]].
+        realtime: { params: { eventsPerSecond: 40 } },
     });
 }
 
