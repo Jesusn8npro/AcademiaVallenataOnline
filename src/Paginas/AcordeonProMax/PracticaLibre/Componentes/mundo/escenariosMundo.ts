@@ -38,3 +38,15 @@ export const ESCENARIO_MUNDO_DEFAULT = 'coffee'
 export function escenarioMundoPorId(id: string): EscenarioMundoDef {
   return ESCENARIOS_MUNDO.find((e) => e.id === id) ?? ESCENARIOS_MUNDO[0]
 }
+
+// Modos de cámara seleccionables (vive acá, archivo liviano, para que la página los importe sin
+// arrastrar three.js de MundoPoC). tercera/lejana = orbital 3ª persona; primera = ojos del personaje;
+// cenital = picado desde arriba. Cada uno fija distancia/ángulo base (el mouse y la rueda ajustan encima).
+export interface ModoVista { id: string; nombre: string; dist: number; pitch: number; cenital: boolean; primera: boolean; frontal?: boolean }
+export const VISTAS: ModoVista[] = [
+  { id: 'tercera', nombre: '3ª persona', dist: 4.6, pitch: 0.32, cenital: false, primera: false },
+  { id: 'lejana', nombre: 'Lejana', dist: 8.5, pitch: 0.45, cenital: false, primera: false },
+  { id: 'frontal', nombre: 'Frontal', dist: 4.2, pitch: 0.26, cenital: false, primera: false, frontal: true },
+  { id: 'primera', nombre: '1ª persona', dist: 0.5, pitch: 0.45, cenital: false, primera: true },
+  { id: 'cenital', nombre: 'Cenital', dist: 11, pitch: 0.9, cenital: true, primera: false },
+]

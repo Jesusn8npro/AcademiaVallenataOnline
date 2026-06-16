@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Play, Square, Circle, Pause, Rewind, FastForward, User, Grid3x3 } from 'lucide-react';
+import { Play, Square, Circle, Pause, Rewind, FastForward, User, Grid3x3, Boxes } from 'lucide-react';
 import './BarraGrabacionFlotante.css';
 
 interface Props {
@@ -20,9 +20,9 @@ interface Props {
     onDetenerReproduccion?: () => void;
     onRetroceder?: () => void;
     onAdelantar?: () => void;
-    // Toggle vista del replay: teclas (false) ↔ personaje 3D (true). Solo se muestra si se pasa el handler.
-    verPersonaje3D?: boolean;
-    onAlternarPersonaje3D?: () => void;
+    // Vista del replay: teclas ↔ acordeón 3D (solo el acordeón) ↔ personaje 3D. Solo se muestra si se pasa el handler.
+    vista3D?: 'teclas' | 'acordeon' | 'personaje';
+    onCambiarVista3D?: (v: 'teclas' | 'acordeon' | 'personaje') => void;
 }
 
 function formatearTiempo(ms: number): string {
@@ -50,7 +50,7 @@ const BarraGrabacionFlotante: React.FC<Props> = ({
     bpmReproduccion = 120, resolucionReproduccion = 192,
     onAlternarPausa, onDetenerReproduccion,
     onRetroceder, onAdelantar,
-    verPersonaje3D = false, onAlternarPersonaje3D,
+    vista3D = 'teclas', onCambiarVista3D,
 }) => {
     if (enReproduccion) {
         const progreso = totalTicks > 0
@@ -60,18 +60,39 @@ const BarraGrabacionFlotante: React.FC<Props> = ({
         const tiempoTotalMs = tickASegundosMs(totalTicks, bpmReproduccion, resolucionReproduccion);
         return (
             <div className="sim-grab-flotante reproduciendo" data-touch-allow>
-                {onAlternarPersonaje3D && (
-                    <button
-                        type="button"
-                        className={`sim-grab-toggle3d ${verPersonaje3D ? 'activo' : ''}`}
-                        onClick={onAlternarPersonaje3D}
-                        aria-label={verPersonaje3D ? 'Ver teclas' : 'Ver personaje 3D'}
-                        title={verPersonaje3D ? 'Ver teclas' : 'Ver personaje 3D'}
-                    >
-                        {verPersonaje3D
-                            ? <><Grid3x3 size={13} /> Teclas</>
-                            : <><User size={13} /> Personaje</>}
-                    </button>
+                {onCambiarVista3D && (
+                    vista3D === 'teclas' ? (
+                        <>
+                            <button
+                                type="button"
+                                className="sim-grab-toggle3d"
+                                onClick={() => onCambiarVista3D('acordeon')}
+                                aria-label="Ver acordeón 3D"
+                                title="Reproducir con el acordeón 3D"
+                            >
+                                <Boxes size={13} /> 3D
+                            </button>
+                            <button
+                                type="button"
+                                className="sim-grab-toggle3d"
+                                onClick={() => onCambiarVista3D('personaje')}
+                                aria-label="Ver personaje 3D"
+                                title="Reproducir con el personaje 3D"
+                            >
+                                <User size={13} /> Personaje
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            className="sim-grab-toggle3d activo"
+                            onClick={() => onCambiarVista3D('teclas')}
+                            aria-label="Ver teclas"
+                            title="Volver a las teclas"
+                        >
+                            <Grid3x3 size={13} /> Teclas
+                        </button>
+                    )
                 )}
 
                 {onRetroceder && (

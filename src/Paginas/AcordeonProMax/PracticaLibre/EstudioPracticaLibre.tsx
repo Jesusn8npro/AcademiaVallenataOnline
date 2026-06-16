@@ -13,7 +13,7 @@ import { VARIANTES_3D, type VarianteId } from './Componentes/SeccionPL3D';
 import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza, MaterialPieza } from './Componentes/VisorAcordeon3D';
 import { formatearDuracion } from './Utilidades/SecuenciaLogic';
 import { LogicaAcordeonProvider } from './contextoLogicaAcordeon';
-import { PersonajeEstudioProvider } from './contextoPersonajeEstudio';
+import { PersonajeEstudioProvider, usePersonajeEstudio } from './contextoPersonajeEstudio';
 import './EstudioPracticaLibre.css';
 
 // Three.js es pesado (~500KB) — cargar solo cuando el alumno abre la pestaña 3D.
@@ -21,6 +21,15 @@ const VisorAcordeon3D = dynamic(
   () => import('./Componentes/VisorAcordeon3D'),
   { ssr: false, loading: () => <div className="visor-acordeon-3d-cargando">Cargando visor 3D…</div> }
 );
+
+// El acordeón principal de Práctica Libre se renderiza con la PIEL que el usuario eligió (misma que el
+// Mundo 3D / Personaje / modos de juego). Vive dentro de PersonajeEstudioProvider → lee el skin del
+// contexto y se actualiza en vivo al cambiarlo en la pestaña Personaje. Con `skin` puesto, el visor
+// gobierna los materiales por piel (las texturas de /texturas-acordeon/{skin}/).
+const AcordeonPrincipal3D: React.FC<React.ComponentProps<typeof VisorAcordeon3D>> = (props) => {
+  const { skin } = usePersonajeEstudio();
+  return <VisorAcordeon3D {...props} skin={skin} />;
+};
 
 // Personaje 3D con acordeón: GLB pesado, cargar solo al abrir la pestaña Personaje.
 const VisorPersonaje3D = dynamic(
@@ -288,8 +297,9 @@ const EstudioPracticaLibre: React.FC<EstudioPracticaLibreProps> = ({
                 <VisorPersonaje3D />
               ) : (
                 // El acordeón 3D es el principal de siempre: tocable (clic/tap suena la
-                // nota real), con teclas que se hunden y glow de la nota pisada.
-                <VisorAcordeon3D
+                // nota real), con teclas que se hunden y glow de la nota pisada. Muestra la PIEL
+                // que el usuario eligió (AcordeonPrincipal3D lee el skin del contexto).
+                <AcordeonPrincipal3D
                   materialPorMesh={materialPorMesh}
                   piezaSeleccionada={piezaSeleccionada}
                   onClickPieza={onClickPieza}

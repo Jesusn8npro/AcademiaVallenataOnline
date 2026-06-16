@@ -45,6 +45,10 @@ src/referencias_migracion
 # Exports crudos de Blender (intermedios, ~50-120MB c/u; el GLB final comprimido sí se versiona)
 public/modelos3d/_export/
 
+# Renders intermedios (inputs de los scripts optimizar-*; el resultado optimizado en public/ sí se versiona)
+scripts/_renders-diapason/
+scripts/_renders-pieles/
+
 # Lighthouse outputs (generados localmente)
 lh-*.json
 lh-*.html

@@ -265,7 +265,7 @@ export const useReplaySimulador = ({
 
                     // Notas arrancan SINCRONO con la fuente -> tick 0 == offset.
                     replayStartTimeRef.current = performance.now();
-                    reproductor.reproducirSecuencia(cancionFake);
+                    reproductor.reproducirSecuencia(cancionFake, { audioAutoRelease: true });
                     setEnReproduccion(true);
                     return;
                 } catch {
@@ -275,7 +275,7 @@ export const useReplaySimulador = ({
 
             // Sin audio de fondo: arrancar las notas directamente.
             replayStartTimeRef.current = performance.now();
-            reproductor.reproducirSecuencia(cancionFake);
+            reproductor.reproducirSecuencia(cancionFake, { audioAutoRelease: true });
             setEnReproduccion(true);
         } catch { /* error al cargar grabacion */ }
     }, [logica, reproductor, loops, metronomoVivo, metronomoReplay, detenerAudioFondoReplay]);

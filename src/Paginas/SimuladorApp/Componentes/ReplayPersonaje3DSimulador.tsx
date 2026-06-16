@@ -1,6 +1,6 @@
 'use client'
 import * as React from 'react'
-import { X, SlidersHorizontal } from 'lucide-react'
+import { X, SlidersHorizontal, RotateCw } from 'lucide-react'
 import {
   PersonajeEstudioProvider,
   usePersonajeEstudio,
@@ -138,6 +138,11 @@ const ReplayPersonaje3DSimulador: React.FC<Props> = ({ onCerrar }) => {
     return () => mq.removeEventListener('change', actualizar)
   }, [])
 
+  // Orientación de la vista: arranca según el dispositivo (landscape → girada) y sigue al rotar el
+  // teléfono, PERO el usuario puede invertirla a mano con el botón "Orientación" (se veía "al revés").
+  const [rotar, setRotar] = React.useState(esLandscape)
+  React.useEffect(() => { setRotar(esLandscape) }, [esLandscape])
+
   return (
     // Provider propio (self-contained): hidrata el MISMO personaje fichado (localStorage + DB) que el
     // Mundo 3D y Pro Max.
@@ -156,6 +161,14 @@ const ReplayPersonaje3DSimulador: React.FC<Props> = ({ onCerrar }) => {
           >
             <SlidersHorizontal size={15} /> Opciones
           </button>
+          <button
+            type="button"
+            className="rp3d-btn-top"
+            onClick={() => setRotar((v) => !v)}
+            title="Cambiar la orientación de la vista"
+          >
+            <RotateCw size={15} /> Orientación
+          </button>
         </div>
 
         {opcionesAbiertas && <PanelOpciones />}
@@ -163,7 +176,7 @@ const ReplayPersonaje3DSimulador: React.FC<Props> = ({ onCerrar }) => {
         <div className="rp3d-visor">
           {/* key: al cambiar orientación remonta el visor para que OrbitControls re-inicialice con el
               vector `up` rotado correcto (su quaternion interno se fija al construirse). */}
-          <VisorPersonaje3D key={esLandscape ? 'rot' : 'norm'} rotarVista={esLandscape} />
+          <VisorPersonaje3D key={rotar ? 'rot' : 'norm'} rotarVista={rotar} />
         </div>
       </div>
     </PersonajeEstudioProvider>

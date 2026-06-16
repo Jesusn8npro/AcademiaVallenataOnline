@@ -6,7 +6,8 @@ import {
     MoreVertical,
     Timer,
     GraduationCap,
-    SlidersHorizontal
+    SlidersHorizontal,
+    Palette
 } from 'lucide-react';
 import { motion, MotionValue, animate } from 'framer-motion';
 import BannerEcosistemaHero from '../BannerEcosistemaHero';
@@ -40,6 +41,8 @@ interface BarraHerramientasProps {
     onToggleAprende: () => void;
     onToggleLoops?: () => void;
     onToggleEfectos?: () => void;
+    onToggleDisenos?: () => void;
+    disenosAbierto?: boolean;
     loopActivo?: boolean;
     refs?: {
         menu?: React.RefObject<HTMLDivElement>;
@@ -74,7 +77,7 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
     x, escala, setEscala,
     grabando, toggleGrabacion,
     onToggleMenu, onToggleTonalidades, onToggleMetronomo, onToggleInstrumentos, onToggleVista, onToggleAprende,
-    onToggleLoops, onToggleEfectos, loopActivo,
+    onToggleLoops, onToggleEfectos, onToggleDisenos, disenosAbierto, loopActivo,
     modalesVisibles,
     bpmMetronomo,
     refs,
@@ -163,6 +166,17 @@ const BarraHerramientas: React.FC<BarraHerramientasProps> = ({
                     <div style={{ fontSize: '20px' }}>🪗</div>
                     {logica.cargandoCloud && <div className="loader-mini"></div>}
                 </div>
+
+                {onToggleDisenos && (
+                    <div
+                        className={`boton-herramienta ${disenosAbierto ? 'activo' : ''}`}
+                        onClick={onToggleDisenos}
+                        title="Diseños del acordeón"
+                    >
+                        <Palette size={20} />
+                        <span>DISEÑOS</span>
+                    </div>
+                )}
 
                 <div
                     ref={refs?.tonalidades}

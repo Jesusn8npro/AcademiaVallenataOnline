@@ -2,24 +2,27 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
 import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
-import CuerpoAcordeon from '../../../../../Core/componentes/CuerpoAcordeon'
+import VisorAcordeon3D from '../VisorAcordeon3D'
+import { usePersonajeEstudio } from '../../contextoPersonajeEstudio'
 import { TONALIDADES } from '../../../../../Core/acordeon/notasAcordeonDiatonico'
 
-// Acordeón JUGABLE dentro del mundo. Crea UN useLogicaAcordeon REAL (interacción ON): al tocar
-// (clic/tap en los botones o teclado QWERTY) suena localmente y, como actualizarBotonActivo emite al
-// emisor global de notas (no silencioso), useMultijugador lo BROADCASTea con su tono → los jugadores
-// que te eligieron (clic en tu avatar) te oyen, y tu avatar (local y remoto) anima dedos/fuelle.
+// Acordeón JUGABLE 3D dentro del mundo (desktop). Crea UN useLogicaAcordeon REAL (interacción ON): al
+// tocar (tap en los botones 3D o teclado QWERTY) suena localmente y, como actualizarBotonActivo emite al
+// emisor global de notas, useMultijugador lo BROADCASTea → los jugadores que te eligieron te oyen y tu
+// avatar (local y remoto) anima dedos/fuelle. El VisorAcordeon3D (sin botonesActivosExternos) escucha ese
+// mismo emisor global → hunde las teclas y mueve el fuelle en sincronía. Muestra la PIEL del usuario.
 //
-// OJO: el teclado físico mapea W/A/S/D a notas (= mover en el mundo). Por eso, mientras este panel
-// está abierto, MundoPoC desactiva el movimiento por teclado (modo "tocar"); el mouse/joystick siguen.
-// Reusa el cableado mínimo de PanelAcordeonEnClase (ajustesEmbed en px + CuerpoAcordeon).
+// OJO: el teclado físico mapea W/A/S/D a notas (= mover en el mundo). Por eso, mientras este panel está
+// abierto, MundoPoC desactiva el movimiento por teclado (modo "tocar"); el mouse/joystick siguen.
 
-const IMAGEN_ACORDEON = '/Acordeon PRO MAX.webp'
 const TONALIDAD_DEFAULT = 'BES' // afinación vallenata estándar
+const ENC_ROT: [number, number, number] = [-0.05, 0.10, 0.12] // 3/4 ligero, de frente a la cámara
 
 export default function TocarEnVivo({ onCerrar, ancho }: { onCerrar: () => void; ancho: number }) {
   const logica = useLogicaAcordeon()
-  const tamano = ancho - 24 // descuenta el padding del cuerpo (px, no %: clave para el --unit del CSS)
+  const { skin } = usePersonajeEstudio()
+  const fuelleCerrandoRef = React.useRef(false)
+  fuelleCerrandoRef.current = logica.direccion === 'empujar'
 
   const tonalidadInit = React.useRef(false)
   React.useEffect(() => {
@@ -33,13 +36,12 @@ export default function TocarEnVivo({ onCerrar, ancho }: { onCerrar: () => void;
     [logica.listaTonalidades],
   )
 
-  const ajustesEmbed = React.useMemo(
-    () => ({ ...logica.ajustes, tamano: `${tamano}px`, x: '50%', y: '50%' }),
-    [logica.ajustes, tamano],
-  )
-
   return (
-    <div style={{ background: 'rgba(15,18,26,.92)', border: '1px solid #2a3346', borderRadius: 14, padding: 12, boxShadow: '0 12px 40px rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ background: 'rgba(15,18,26,.92)', border: '1px solid #2a3346', borderRadius: 14, padding: 12, boxShadow: '0 12px 40px rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', fontFamily: 'system-ui, sans-serif', width: ancho }}>
+      {/* El stage base (.visor-acordeon-3d-stage) viene de EstudioPracticaLibre.css con alto clamp(360..720);
+          acá lo fijamos más bajo (cabe en el panel). 2 clases → más específico → gana sobre la base. */}
+      <style>{`.tocarvivo-3d.visor-acordeon-3d-stage{height:300px;border-radius:12px;background:radial-gradient(ellipse at center,rgba(40,50,80,.35) 0%,rgba(8,10,22,.9) 80%)}`}</style>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>🎹 Tocar en vivo</span>
         <select
@@ -64,22 +66,25 @@ export default function TocarEnVivo({ onCerrar, ancho }: { onCerrar: () => void;
         </button>
       </div>
 
-      <div style={{ width: tamano, height: tamano, margin: '0 auto', position: 'relative' }}>
-        <CuerpoAcordeon
-          imagenFondo={IMAGEN_ACORDEON}
-          ajustes={ajustesEmbed as any}
-          direccion={logica.direccion}
-          configTonalidad={logica.configTonalidad}
-          botonesActivos={logica.botonesActivos}
-          modoAjuste={false}
-          botonSeleccionado={null}
-          modoVista={logica.modoVista}
-          vistaDoble={false}
-          setBotonSeleccionado={() => {}}
-          actualizarBotonActivo={logica.actualizarBotonActivo}
-          listo
-        />
-      </div>
+      <VisorAcordeon3D
+        materialPorMesh={{}}
+        piezaSeleccionada={null}
+        onClickPieza={() => {}}
+        onMallasDetectadas={() => {}}
+        fuelleCerrandoRef={fuelleCerrandoRef}
+        animShapeKey={null}
+        animProgramatica={null}
+        pulseEpoch={null}
+        skin={skin}
+        camaraFija
+        direccion={logica.direccion}
+        rotacionModelo={ENC_ROT}
+        fillModelo={0.95}
+        offsetRelXModelo={0}
+        offsetRelYModelo={0.05}
+        onTocarBoton={(id, accion) => logica.actualizarBotonActivo(id, accion === 'down' ? 'add' : 'remove')}
+        className="tocarvivo-3d"
+      />
 
       <p style={{ color: '#8a93a6', fontSize: 11, textAlign: 'center', margin: '8px 0 0' }}>
         Toca los botones o usa el teclado · <b>Q</b> cambia el fuelle · mientras tocas no caminas

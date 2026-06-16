@@ -19,6 +19,8 @@ import { usePreviewsEfectos } from './Hooks/usePreviewsEfectos';
 import { useFullscreenAndroid } from './Hooks/useFullscreenAndroid';
 import ModalGuardarGrabacionWrapper from './Componentes/ModalGuardarGrabacionWrapper';
 import { obtenerTemaPorId, leerTemaGuardado, guardarTemaElegido } from './Datos/temasAcordeon';
+import GaleriaDisenos from './Componentes/GaleriaDisenos';
+import { leerPersonaje3DLocal, guardarPersonaje3DLocal } from '../AcordeonProMax/PracticaLibre/Servicios/servicioPersonaje3D';
 import { useUsuario } from '../../contextos/UsuarioContext';
 import PopupListaGrabaciones from './Componentes/PopupListaGrabaciones';
 import PanelEfectosOverlay from './Componentes/PanelEfectosOverlay';
@@ -35,9 +37,10 @@ import type { ConfigCancion } from './Juego/Hooks/useConfigCancion';
 const JuegoSimuladorApp = lazy(() => import('./Juego/JuegoSimuladorApp'));
 import BarraGrabacionFlotante from './Componentes/BarraGrabacionFlotante';
 import ToastGrabacionGuardada from './Componentes/ToastGrabacionGuardada';
-// Visor 3D del replay: carga bajo demanda (trae three.js) → solo pesa cuando el usuario
-// pulsa "Ver personaje" durante una reproducción.
+// Visores 3D del replay: carga bajo demanda (traen three.js) → solo pesan cuando el usuario
+// pulsa "Personaje" o "Acordeón 3D" durante una reproducción.
 const ReplayPersonaje3DSimulador = lazy(() => import('./Componentes/ReplayPersonaje3DSimulador'));
+const ReplayAcordeon3DSimulador = lazy(() => import('./Componentes/ReplayAcordeon3DSimulador'));
 
 import './SimuladorApp.css';
 
@@ -121,6 +124,17 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
         setTemaAcordeonId(id);
         guardarTemaElegido(id);
         setGaleriaAbierta(false);
+    }, []);
+
+    // Galería de DISEÑOS del acordeón (los mismos diseños que Pro Max: pieles original/1..7).
+    // La elección es GLOBAL: se guarda en el mismo localStorage del personaje fichado, así Pro
+    // Max y el Mundo 3D la heredan. Por ahora solo se elige/recuerda; el enganche al acordeón 2D
+    // del simulador se cuadra más adelante.
+    const [disenosAbierto, setDisenosAbierto] = useState(false);
+    const [disenoAcordeon, setDisenoAcordeon] = useState<string>(() => leerPersonaje3DLocal().skin || 'original');
+    const seleccionarDiseno = useCallback((skin: string) => {
+        setDisenoAcordeon(skin);
+        guardarPersonaje3DLocal({ skin });
     }, []);
 
     // ─── Panel de Efectos de Audio ──────────────────────────────────────────
@@ -389,11 +403,21 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
     const abrirListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(true), []);
     const cerrarListaGrabaciones = useCallback(() => setPopupGrabacionesAbierto(false), []);
 
-    // Toggle de vista del replay: teclas (default) ↔ personaje 3D. El personaje toca lo MISMO que ya
-    // está sonando (useReplaySimulador sigue conduciendo; el visor solo escucha el emisor global).
-    // Solo aplica mientras hay una reproducción; al terminar volvemos a la vista de teclas.
-    const [verPersonaje3D, setVerPersonaje3D] = useState(false);
-    useEffect(() => { if (!replay.enReproduccion) setVerPersonaje3D(false); }, [replay.enReproduccion]);
+    // Vista del replay: teclas (default) ↔ acordeón 3D (solo el acordeón) ↔ personaje 3D. Los visores 3D
+    // tocan lo MISMO que ya está sonando (useReplaySimulador conduce; el visor solo escucha el emisor
+    // global). Solo aplica mientras hay reproducción; al terminar volvemos a teclas.
+    const [vista3D, setVista3D] = useState<'teclas' | 'acordeon' | 'personaje'>('teclas');
+    useEffect(() => { if (!replay.enReproduccion) setVista3D('teclas'); }, [replay.enReproduccion]);
+    // Cambiar de vista DURANTE el replay monta/desmonta un Canvas 3D, que bloquea el hilo un instante. Las
+    // notas del replay no tienen duración programada (suenan hasta que el RAF las apaga) → durante ese
+    // bloqueo se quedarían "pegadas". Cortamos las notas activas justo ANTES de cambiar (buscarTick a la
+    // posición actual = flush de notas, sin mover el playhead; el audio de fondo del replay no se toca).
+    const cambiarVista3D = useCallback((v: 'teclas' | 'acordeon' | 'personaje') => {
+        if (replay.enReproduccion) {
+            try { replay.reproductor.buscarTick(replay.reproductor.tickActual); } catch { /* noop */ }
+        }
+        setVista3D(v);
+    }, [replay.enReproduccion, replay.reproductor]);
 
     // Solo admins ven el modal expandido con opción de publicar como Canción Hero
     // y subir MP3 de fondo. El resto de roles ve el modal normal de Práctica Libre.
@@ -435,6 +459,8 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                         onToggleVista={() => toggleModal('vista')} onToggleAprende={() => toggleModal('aprende')}
                         onToggleLoops={() => toggleModal('loops')}
                         onToggleEfectos={() => toggleModal('efectos')}
+                        onToggleDisenos={() => setDisenosAbierto((v) => !v)}
+                        disenosAbierto={disenosAbierto}
                         loopActivo={!!loops.pistaActiva}
                         refs={refsModales as any}
                         modoFoco={modoFoco}
@@ -505,7 +531,7 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
             {/* El acordeón de teclas necesita horizontal, PERO la vista de personaje se ve mejor con el
                 teléfono vertical (el personaje de cuerpo entero llena la pantalla). Por eso, mientras se
                 ve el personaje, NO pedimos rotar: dejamos usar el celular en su posición normal. */}
-            {!isLandscape && !verPersonaje3D && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
+            {!isLandscape && vista3D === 'teclas' && (<div className="overlay-rotacion"><div className="icono-rotar"><RotateCw size={80} /></div><h2>HORIZONTAL</h2></div>)}
 
             {!audioListo && (
                 <div className="overlay-audio-inicio" aria-hidden="true">
@@ -528,15 +554,33 @@ const SimuladorAppNormal: React.FC<SimuladorAppNormalProps> = ({ onIniciarJuego 
                 onDetenerReproduccion={replay.detenerReproduccion}
                 onRetroceder={replay.retrocederReproduccion}
                 onAdelantar={replay.adelantarReproduccion}
-                verPersonaje3D={verPersonaje3D}
-                onAlternarPersonaje3D={() => setVerPersonaje3D((v) => !v)}
+                vista3D={vista3D}
+                onCambiarVista3D={cambiarVista3D}
             />
 
-            {/* Overlay 3D: el personaje fichado toca la grabación en su escenario.
-                El toggle teclas/personaje vive en la BarraGrabacionFlotante (siempre visible en replay). */}
-            {replay.enReproduccion && verPersonaje3D && (
+            {/* Galería de DISEÑOS: elige el modelo del acordeón (mismos que Pro Max). La elección
+                es global (localStorage del personaje fichado); el enganche al acordeón 2D va luego. */}
+            <GaleriaDisenos
+                visible={disenosAbierto}
+                disenoActivoId={disenoAcordeon}
+                onCerrar={() => setDisenosAbierto(false)}
+                onSeleccionar={seleccionarDiseno}
+            />
+
+            {/* Overlay 3D del replay (toggle en BarraGrabacionFlotante, siempre visible en replay):
+                'acordeon' = SOLO el acordeón con la piel del usuario; 'personaje' = el personaje fichado. */}
+            {replay.enReproduccion && vista3D === 'acordeon' && (
                 <Suspense fallback={null}>
-                    <ReplayPersonaje3DSimulador onCerrar={() => setVerPersonaje3D(false)} />
+                    <ReplayAcordeon3DSimulador
+                        skin={disenoAcordeon}
+                        direccion={logica.direccion}
+                        onCerrar={() => cambiarVista3D('teclas')}
+                    />
+                </Suspense>
+            )}
+            {replay.enReproduccion && vista3D === 'personaje' && (
+                <Suspense fallback={null}>
+                    <ReplayPersonaje3DSimulador onCerrar={() => cambiarVista3D('teclas')} />
                 </Suspense>
             )}
 

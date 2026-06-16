@@ -91,9 +91,13 @@ const PROG_CONFIG: Record<AnimProgramaticaId, { duracion: number; influMax: numb
 const _COLOR_GLOW = new THREE.Color('#22d3ee')
 const _COLOR_FLASH = new THREE.Color('#ffffff')
 // Colores por dirección del fuelle (mismos que las notas y que SimuladorApp): el botón activo
-// se ilumina AZUL al halar / ROJO al empujar, para que se entienda igual en todos lados.
+// se ilumina AZUL al halar (abriendo) / ROJO al empujar (cerrando), para que se entienda igual en todos lados.
 const _COLOR_HALAR = new THREE.Color('#3b82f6')
 const _COLOR_EMPUJAR = new THREE.Color('#ef4444')
+// Cuánto CRECE el botón al PISARLO. Antes el realce de pisado usaba el mismo factor que la guía
+// anticipada (hasta ~1.85×) y se sentía exagerado; ahora el pisado es SUTIL: factor·este valor → k≈1.15.
+// La guía anticipada (prox) conserva su realce completo.
+const REALCE_PISADO = 0.18
 
 interface ModeloProps {
   materialPorMesh: Record<string, MaterialPieza>
@@ -797,8 +801,9 @@ function Modelo({
       if (!mat || !(mat as any).isMeshStandardMaterial) return
       const flash = (m.userData.flash as number | undefined) ?? 0
       if (factor > 0.002 || flash > 0.002) {
+        // Glow direccional (azul=abriendo / rojo=cerrando) CONTENIDO: realza la tecla pisada sin saturar.
         mat.emissive.copy(colorDir)
-        mat.emissiveIntensity = 0.3 + factor * 0.8 + flash * 0.35
+        mat.emissiveIntensity = 0.22 + factor * 0.55 + flash * 0.25
       } else if (prox > 0.01) {
         // prox² → los lejanos apenas un indicio, el INMINENTE bien brillante (foco claro en el
         // próximo botón, sin saturar con muchos a la vez).
@@ -840,13 +845,14 @@ function Modelo({
     for (const m of botonesIRef.current) {
       const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
       const prox = proxDe(m)
-      animarBoton(m, Math.max(factor, prox))
+      // El GROW al pisar es sutil (factor·REALCE_PISADO); la guía anticipada (prox) conserva su realce.
+      animarBoton(m, Math.max(factor * REALCE_PISADO, prox))
       aplicarGlowBoton(m, factor, prox)
     }
     for (const m of botonesDRef.current) {
       const factor = Math.max(sinkFactor(m), pulseMeshName === m.name ? pulseFactor : 0)
       const prox = proxDe(m)
-      animarBoton(m, Math.max(factor, prox))
+      animarBoton(m, Math.max(factor * REALCE_PISADO, prox))
       aplicarGlowBoton(m, factor, prox)
     }
 

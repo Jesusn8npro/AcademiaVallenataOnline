@@ -66,13 +66,26 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
       }
     })
 
-    ch.subscribe()
-
-    // Emisión de mi estado a ritmo fijo.
-    const emisor = setInterval(() => {
-      const s = estadoLocalRef.current
-      ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
-    }, HZ_MS)
+    // CRÍTICO: ch.send() ANTES de que el canal esté UNIDO cae a REST (un POST HTTP por mensaje). Antes
+    // el setInterval emitía desde el primer frame (subscribe es asíncrono) → con muchos jugadores eran
+    // miles de POSTs/s = saturación. Ahora: emitimos SOLO con el canal 'SUBSCRIBED' (broadcast por
+    // WebSocket) y, si se cae la conexión, dejamos de enviar hasta reconectar (sin más fallbacks a REST).
+    let unido = false
+    let emisor: ReturnType<typeof setInterval> | null = null
+    ch.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        unido = true
+        if (!emisor) {
+          emisor = setInterval(() => {
+            if (!unido) return
+            const s = estadoLocalRef.current
+            ch.send({ type: 'broadcast', event: 'estado', payload: { id: miId, ...s } })
+          }, HZ_MS)
+        }
+      } else {
+        unido = false // CLOSED / CHANNEL_ERROR / TIMED_OUT → no enviar (evita el fallback a REST)
+      }
+    })
 
     // Reenviar MIS notas (cuando toco una canción) para que los demás puedan oírlas. Mandamos 'down'
     // Y 'up': así el oyente suelta la nota EXACTO cuando yo la solté → suena fluido, sin notas pegadas
@@ -80,6 +93,7 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     // TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO, sin que su propia
     // tonalidad/instrumento le cambie el tono.
     const offNotas = subscribirNotas((e) => {
+      if (!unido) return // canal aún no unido / caído → no enviar (evita el fallback a REST)
       // DIFERIDO (queueMicrotask): el envío por red NO debe bloquear el camino de la nota (audio + hit del
       // simulador) → así el duelo no siente retardo al tocar. El audio local ya sonó antes de este callback.
       const payload = { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined }
@@ -97,7 +111,7 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     }, 1000)
 
     return () => {
-      clearInterval(emisor)
+      if (emisor) clearInterval(emisor)
       clearInterval(limpiador)
       offNotas()
       supabase.removeChannel(ch)

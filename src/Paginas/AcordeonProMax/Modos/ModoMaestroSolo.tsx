@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Crosshair, AlertCircle } from 'lucide-react';
 import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import BarraTransporte from './BarraTransporte';
+import AcordeonModo3D, { SKIN_ALUMNO } from './acordeon3dCompartido';
+import { usePersonaje3DGuardado } from '../PracticaLibre/Servicios/usePersonaje3DGuardado';
 import './ModoMaestroSolo.css';
 
 interface ModoMaestroSoloProps {
@@ -63,6 +65,20 @@ const ModoMaestroSolo: React.FC<ModoMaestroSoloProps> = ({
 }) => {
     const [mostrarBanner, setMostrarBanner] = useState(true);
     const { ajustes } = logica;
+
+    // ── Acordeón 3D (por defecto) ↔ imagen. El acordeón único usa la PIEL que el usuario eligió. ──
+    const { skin } = usePersonaje3DGuardado(SKIN_ALUMNO);
+    const [use3D, setUse3D] = useState(true);
+    useEffect(() => { setUse3D(localStorage.getItem('maestro:use3D') !== '0'); }, []);
+    const toggle3D = useCallback(() => {
+        setUse3D((v) => { const n = !v; localStorage.setItem('maestro:use3D', n ? '1' : '0'); return n; });
+    }, []);
+    // Fuelle del 3D: dirección = la del maestro; actividad = cuántas notas suenan (maestro + alumno).
+    const botones3D = { ...botonesActivosMaestro, ...logica.botonesActivos };
+    const fuelleDirRef = useRef(false);
+    const fuelleActRef = useRef(0);
+    fuelleDirRef.current = direccionMaestro === 'empujar';
+    fuelleActRef.current = Math.min(Object.values(botones3D).filter(Boolean).length / 2, 1);
 
     useEffect(() => {
         if (!mostrarBanner) return;
@@ -204,14 +220,46 @@ const ModoMaestroSolo: React.FC<ModoMaestroSoloProps> = ({
                             <strong>El acordeon queda centrado y libre</strong>
                         </div>
 
+                        {/* Toggle acordeón 3D ↔ imagen */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+                            <button
+                                type="button"
+                                onClick={toggle3D}
+                                title="Cambiar entre acordeón 3D y de imagen"
+                                style={{
+                                    background: 'rgba(0,0,0,0.55)', color: '#fff', border: '1px solid rgba(255,255,255,0.18)',
+                                    padding: '6px 12px', borderRadius: 18, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                                }}
+                            >
+                                {use3D ? '🪗 Acordeón 3D' : '🖼️ Imágenes'}
+                            </button>
+                        </div>
+
                         <div className="hero-maestro-solo-acordeon">
-                            {logica.disenoCargado && (
+                            {use3D ? (
+                                // El stage 3D es position:absolute inset:0 → necesita un padre relativo con tamaño.
+                                <div style={{ position: 'relative', width: '100%', height: 'clamp(380px, 54vh, 560px)' }}>
+                                    <AcordeonModo3D
+                                        skin={skin}
+                                        botonesActivos={botones3D}
+                                        direccion={direccionMaestro}
+                                        fuelleCerrandoRef={fuelleDirRef}
+                                        fuelleActividadRef={fuelleActRef}
+                                        onTocarBoton={(id, accion) => logica.actualizarBotonActivo(id, accion === 'down' ? 'add' : 'remove')}
+                                        // Acordeón ÚNICO centrado a ancho completo → fill bajo (el del juego, 1.23, es
+                                        // para los recuadros de 48% lado a lado). Centrado (offset X=0).
+                                        fill={0.62}
+                                        offsetRelX={0}
+                                        offsetRelY={0.02}
+                                    />
+                                </div>
+                            ) : logica.disenoCargado ? (
                                 <CuerpoAcordeon
                                     imagenFondo={'/Acordeon Jugador.webp'}
                                     ajustes={ajustesMaestroSolo}
                                     direccion={direccionMaestro}
                                     configTonalidad={logica.configTonalidad}
-                                    botonesActivos={{ ...botonesActivosMaestro, ...logica.botonesActivos }}
+                                    botonesActivos={botones3D}
                                     modoAjuste={false}
                                     botonSeleccionado={null}
                                     modoVista={logica.modoVista}
@@ -220,7 +268,7 @@ const ModoMaestroSolo: React.FC<ModoMaestroSoloProps> = ({
                                     actualizarBotonActivo={logica.actualizarBotonActivo}
                                     listo={true}
                                 />
-                            )}
+                            ) : null}
                         </div>
                     </div>
 

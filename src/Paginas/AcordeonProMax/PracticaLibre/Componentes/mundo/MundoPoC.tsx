@@ -21,7 +21,7 @@ import { useLogicaAcordeon } from '../../../../../Core/hooks/useLogicaAcordeon'
 import { motorAudioPro } from '../../../../../Core/audio/AudioEnginePro'
 import { useMultijugador, EstadoJugador, RemotoEntry, NotaRemotaCb } from './useMultijugador'
 import { useReto } from './useReto'
-import { ESCENARIOS_MUNDO, ESCENARIO_MUNDO_DEFAULT, escenarioMundoPorId, EscenarioMundoDef, AsientoDef } from './escenariosMundo'
+import { ESCENARIOS_MUNDO, ESCENARIO_MUNDO_DEFAULT, escenarioMundoPorId, EscenarioMundoDef, AsientoDef, VISTAS } from './escenariosMundo'
 import PanelReto from './PanelReto'
 import DueloSimulador from './DueloSimulador'
 import DueloSimuladorDesktop from './DueloSimuladorDesktop'
@@ -126,17 +126,6 @@ function resolverCapsula(col: THREE.Mesh, px: number, py: number, pz: number) {
   return { x: _capSeg.start.x, y: _capSeg.start.y - PLAYER_RAD, z: _capSeg.start.z, apoyado }
 }
 
-// Modos de cámara seleccionables. tercera/lejana = orbital 3ª persona; primera = ojos del personaje;
-// cenital = picado desde arriba. Cada uno fija distancia/ángulo base (el mouse y la rueda ajustan encima).
-export interface ModoVista { id: string; nombre: string; dist: number; pitch: number; cenital: boolean; primera: boolean; frontal?: boolean }
-export const VISTAS: ModoVista[] = [
-  { id: 'tercera', nombre: '3ª persona', dist: 4.6, pitch: 0.32, cenital: false, primera: false },
-  { id: 'lejana', nombre: 'Lejana', dist: 8.5, pitch: 0.45, cenital: false, primera: false },
-  { id: 'frontal', nombre: 'Frontal', dist: 4.2, pitch: 0.26, cenital: false, primera: false, frontal: true },
-  { id: 'primera', nombre: '1ª persona', dist: 0.5, pitch: 0.45, cenital: false, primera: true },
-  { id: 'cenital', nombre: 'Cenital', dist: 11, pitch: 0.9, cenital: true, primera: false },
-]
-
 // PRNG determinista (mulberry32).
 function prng(seed: number) {
   let s = seed
@@ -213,7 +202,7 @@ function Escena() {
 // Si construirColisiones, arma un único collider (geometría fusionada en espacio mundo + BVH) y lo
 // publica en colliderRef → el PlayerController lo usa para que las paredes/muebles frenen al avatar.
 interface PuertaCfg { pivot: THREE.Object3D; cx: number; cz: number; abierta: number }
-function EscenarioGLB({ glb, escala = 1, construirColisiones, colliderRef, puertas, radioPuerta = 5, jugadorRef }: { glb: string; escala?: number; construirColisiones?: boolean; colliderRef?: React.MutableRefObject<THREE.Mesh | null>; puertas?: string[]; radioPuerta?: number; jugadorRef?: React.MutableRefObject<EstadoJugador> }) {
+function EscenarioGLB({ glb, escala = 1, construirColisiones, colliderRef, puertas, radioPuerta = 5, jugadorRef, onListo }: { glb: string; escala?: number; construirColisiones?: boolean; colliderRef?: React.MutableRefObject<THREE.Mesh | null>; puertas?: string[]; radioPuerta?: number; jugadorRef?: React.MutableRefObject<EstadoJugador>; onListo?: () => void }) {
   const { scene } = useGLTF(glb)
   // Clon para no mutar la escena cacheada por URL (mismo patrón que el estudio). Marca las mallas para
   // RECIBIR (y proyectar) sombra, y SUAVIZA el material: el modelo trae muchos paneles/displays EMISSIVE
@@ -317,13 +306,19 @@ function EscenarioGLB({ glb, escala = 1, construirColisiones, colliderRef, puert
     }
   })
 
+  // Avisa "escenario listo" una vez cargado el GLB (+ construido el collider, que corre en el efecto de
+  // arriba antes que éste). El avatar ya puede pararse sobre el piso → la página oculta el "Cargando".
+  React.useEffect(() => { onListo?.() }, [obj, onListo])
+
   return <primitive object={obj} scale={escala} />
 }
 
-function EscenarioMundo({ def, colliderRef, jugadorRef }: { def: EscenarioMundoDef; colliderRef: React.MutableRefObject<THREE.Mesh | null>; jugadorRef: React.MutableRefObject<EstadoJugador> }) {
+function EscenarioMundo({ def, colliderRef, jugadorRef, onListo }: { def: EscenarioMundoDef; colliderRef: React.MutableRefObject<THREE.Mesh | null>; jugadorRef: React.MutableRefObject<EstadoJugador>; onListo?: () => void }) {
   // Sin glb (bosque) o sin colisiones → no hay collider.
   React.useEffect(() => { if (!def.glb || !def.colisiones) colliderRef.current = null }, [def, colliderRef])
-  if (def.glb) return <EscenarioGLB glb={def.glb} escala={def.escala} construirColisiones={def.colisiones} colliderRef={colliderRef} puertas={def.puertas} radioPuerta={def.radioPuerta} jugadorRef={jugadorRef} />
+  // Bosque (sin glb): listo de inmediato (no hay GLB que esperar).
+  React.useEffect(() => { if (!def.glb) onListo?.() }, [def.glb, onListo])
+  if (def.glb) return <EscenarioGLB glb={def.glb} escala={def.escala} construirColisiones={def.colisiones} colliderRef={colliderRef} puertas={def.puertas} radioPuerta={def.radioPuerta} jugadorRef={jugadorRef} onListo={onListo} />
   return <Escena />
 }
 // Precargar los .glb de escenarios para cambio instantáneo.
@@ -452,7 +447,7 @@ function EfectoJugador({ pos, tipo, onDone }: { pos: [number, number, number]; t
 // Etiqueta flotante (nombre + 🎵) de tamaño constante sobre la cabeza.
 function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: boolean; escuchando?: boolean }) {
   return (
-    <Html position={[0, 2.05, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none', transform: 'translateY(-50%)' }}>
+    <Html position={[0, 1.88, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none', transform: 'translateY(-50%)' }}>
       <div style={{ whiteSpace: 'nowrap', padding: '1px 8px', borderRadius: 10, background: 'rgba(15,18,26,.7)', color: '#fff', fontSize: 12, fontFamily: 'system-ui, sans-serif', display: 'flex', gap: 4, alignItems: 'center', border: escuchando ? '1px solid #39d353' : tocando ? '1px solid #ffd54a' : '1px solid transparent' }}>
         {nombre || 'Jugador'}{tocando && <span style={{ fontSize: 13 }}>🎵</span>}{escuchando && <span style={{ fontSize: 12 }}>🔊</span>}
       </div>
@@ -1036,14 +1031,33 @@ const EnvMundo: React.FC = () => {
   return null
 }
 
-export default function MundoPoC({ compacto = false }: { compacto?: boolean } = {}) {
+export default function MundoPoC({
+  compacto = false, onTocandoChange,
+  escenarioId = ESCENARIO_MUNDO_DEFAULT, onEscenarioId,
+  vistaModo = 'tercera', onVistaModo,
+}: {
+  compacto?: boolean; onTocandoChange?: (tocando: boolean) => void;
+  // Escenario y vista los gobierna la PÁGINA (botones al lado de "Panel") → llegan como props.
+  escenarioId?: string; onEscenarioId?: (id: string) => void;
+  vistaModo?: string; onVistaModo?: (id: string) => void;
+} = {}) {
   const bottomBase = compacto ? 78 : 16 // deja libre el menú inferior de la app en móvil
   const { personajeId, skin, baile } = usePersonajeEstudio()
   const { usuario } = useUsuario()
-  const [vistaModo, setVistaModo] = React.useState('tercera')
-  const [escenarioId, setEscenarioId] = React.useState(ESCENARIO_MUNDO_DEFAULT)
   const escenarioDef = React.useMemo(() => escenarioMundoPorId(escenarioId), [escenarioId])
   const colliderRef = React.useRef<THREE.Mesh | null>(null) // collider del escenario (lo llena EscenarioMundo)
+
+  // "Cargando mundo abierto": overlay que cubre hasta que el escenario carga Y el avatar se posa sobre el
+  // piso. Sin esto, al cargar se veía el personaje METIDO EN EL SUELO (el collider/medición de pies tardan
+  // un instante) + la pantalla fea. Se re-muestra al cambiar de escenario.
+  const [cargandoMundo, setCargandoMundo] = React.useState(true)
+  React.useEffect(() => { setCargandoMundo(true) }, [escenarioId])
+  const listoTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const marcarMundoListo = React.useCallback(() => {
+    if (listoTimerRef.current) clearTimeout(listoTimerRef.current)
+    listoTimerRef.current = setTimeout(() => setCargandoMundo(false), 700)
+  }, [])
+  React.useEffect(() => () => { if (listoTimerRef.current) clearTimeout(listoTimerRef.current) }, [])
   const [sentado, setSentado] = React.useState(false) // el usuario pidió sentarse (en un sofá cercano)
   const sentadoRef = React.useRef(false)
   React.useEffect(() => { sentadoRef.current = sentado }, [sentado])
@@ -1057,9 +1071,24 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
 
   // Controles de juego: CORRER (PC: Shift; móvil: botón sostenido) y SALTAR (PC: Espacio; móvil: botón).
   // No son bailes (los bailes se eligen en el panel); son mecánicas del mundo.
-  const [corriendo, setCorriendo] = React.useState(false)
+  // CORRER (móvil): mantener presionado = corre mientras sostienes; DOBLE-TAP = lo deja FIJO (lock,
+  // corre sin sostener). correrRef (lo lee el PlayerController) = fijo || presionado.
+  const [corriendo, setCorriendo] = React.useState(false) // fijo (lock por doble-tap) → resalta verde
+  const correrFijoRef = React.useRef(false)
+  const correrPulsadoRef = React.useRef(false)
   const correrRef = React.useRef(false)
-  React.useEffect(() => { correrRef.current = corriendo }, [corriendo])
+  const sincCorrer = React.useCallback(() => { correrRef.current = correrFijoRef.current || correrPulsadoRef.current }, [])
+  React.useEffect(() => { correrFijoRef.current = corriendo; sincCorrer() }, [corriendo, sincCorrer])
+  const ultTapCorrerRef = React.useRef(0)
+  const correrDown = React.useCallback((e: React.PointerEvent) => {
+    e.preventDefault()
+    const now = performance.now()
+    const esDoble = now - ultTapCorrerRef.current < 320
+    ultTapCorrerRef.current = now
+    if (esDoble) setCorriendo((v) => !v) // doble-tap = fija / quita el correr
+    correrPulsadoRef.current = true; sincCorrer()
+  }, [sincCorrer])
+  const correrUp = React.useCallback(() => { correrPulsadoRef.current = false; sincCorrer() }, [sincCorrer])
   const saltarRef = React.useRef(0)
   const saltar = React.useCallback(() => { saltarRef.current += 1 }, [])
 
@@ -1069,7 +1098,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
       const a = document.activeElement
       if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return
       const i = ['1', '2', '3', '4', '5'].indexOf(e.key)
-      if (i >= 0 && VISTAS[i]) setVistaModo(VISTAS[i].id)
+      if (i >= 0 && VISTAS[i]) onVistaModo?.(VISTAS[i].id)
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
@@ -1158,6 +1187,8 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
   // Bloquear el movimiento por teclado mientras tocas en vivo O juegas tu turno del duelo (las teclas
   // son notas del acordeón, no caminar).
   React.useEffect(() => { bloquearTecladoRef.current = tocarAbierto || reto.meTocaJugar }, [tocarAbierto, reto.meTocaJugar])
+  // Avisar a la página (para ocultar los botones P/F y demás chrome mientras se toca → vista limpia).
+  React.useEffect(() => { onTocandoChange?.(tocarAbierto || reto.meTocaJugar) }, [tocarAbierto, reto.meTocaJugar, onTocandoChange])
   // Cerrar el acordeón: también sale de pantalla completa (el SimuladorApp embebido la pide en Android).
   const cerrarTocar = React.useCallback(() => {
     setTocarAbierto(false)
@@ -1184,7 +1215,7 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           <fog attach="fog" args={['#d4e4ee', 45, 160]} />
           <ambientLight intensity={0.5} />
           <LuzSol estadoLocalRef={estadoLocalRef} />
-          <EscenarioMundo def={escenarioDef} colliderRef={colliderRef} jugadorRef={estadoLocalRef} />
+          <EscenarioMundo def={escenarioDef} colliderRef={colliderRef} jugadorRef={estadoLocalRef} onListo={marcarMundoListo} />
           <PlayerController personajeId={personajeId} skin={skin} baile={baile} nombre={nombre} vistaModo={vistaModo} limite={escenarioDef.limite} lastNoteRef={lastNoteRef} estadoLocalRef={estadoLocalRef} remotosRef={remotosRef} onSeleccionarJugador={seleccionarJugador} moveRef={moveRef} semillaSpawn={semillaSpawn} bloquearTecladoRef={bloquearTecladoRef} correrRef={correrRef} saltarRef={saltarRef} colliderRef={colliderRef} spawnFijo={escenarioDef.spawn} mirarFijo={escenarioDef.mirar} sentadoRef={sentadoRef} asientos={escenarioDef.asientos} onCercaAsiento={setCercaAsiento} />
           {/* Cada avatar remoto en su PROPIO Suspense: si uno nuevo entra con un personaje aún no
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
@@ -1199,6 +1230,17 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
           ))}
         </React.Suspense>
       </Canvas>
+
+      {/* "Cargando mundo abierto": cubre la vista hasta que el escenario carga y el avatar se posa sobre el
+          piso (evita ver al personaje metido en el suelo + la pantalla fea inicial). */}
+      {cargandoMundo && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'radial-gradient(ellipse at center, #1a2740 0%, #0a0e1a 78%)', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+          <style>{`@keyframes mundoSpin{to{transform:rotate(360deg)}}@keyframes mundoPulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
+          <div style={{ width: 62, height: 62, borderRadius: '50%', border: '4px solid rgba(255,255,255,.14)', borderTopColor: '#ff7a18', animation: 'mundoSpin .9s linear infinite' }} />
+          <div style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, letterSpacing: '.5px' }}>🌍 Cargando mundo abierto</div>
+          <div style={{ fontSize: 14, opacity: .85, animation: 'mundoPulse 1.5s ease-in-out infinite' }}>¡Prepárate para disfrutar!</div>
+        </div>
+      )}
 
       {/* Contador */}
       <div style={{ position: 'absolute', top: 16, right: 16, color: '#fff', background: 'rgba(0,0,0,.5)', padding: '6px 12px', borderRadius: 20, fontFamily: 'system-ui, sans-serif', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1308,48 +1350,36 @@ export default function MundoPoC({ compacto = false }: { compacto?: boolean } = 
         </div>
       )}
 
-      {/* Joystick táctil (móvil) */}
-      {tactil && !tocarAbierto && <Joystick moveRef={moveRef} bottom={bottomBase + 4} />}
+      {/* Joystick táctil (móvil) — bien abajo a la izquierda (no tapa al personaje). */}
+      {tactil && !tocarAbierto && <Joystick moveRef={moveRef} bottom={16} />}
 
-      {/* CONTROLES de juego en móvil: Correr (toggle) + Saltar (pulso). En PC son Shift y Espacio.
-          Abajo-derecha (zona del pulgar derecho), no son botones de baile. Ocultos al tocar. */}
+      {/* CONTROLES de juego en móvil: Saltar (pulso) + Correr (mantener = corre; DOBLE-TAP = fijo/lock).
+          Más abajo y más chicos que antes para NO tapar al personaje. En PC son Shift y Espacio. */}
       {tactil && !tocarAbierto && (
-        <div style={{ position: 'absolute', right: 18, bottom: bottomBase + 4, zIndex: 32, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+        <div style={{ position: 'absolute', right: 16, bottom: 20, zIndex: 32, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
           <button type="button" onPointerDown={(e) => { e.preventDefault(); saltar() }}
-            style={{ width: 74, height: 74, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', background: 'rgba(0,0,0,.45)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
+            style={{ width: 60, height: 60, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', background: 'rgba(0,0,0,.45)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
             ⤴️<br />Saltar
           </button>
-          <button type="button" onClick={() => setCorriendo((v) => !v)}
-            style={{ width: 74, height: 74, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', background: corriendo ? '#27ae60' : 'rgba(0,0,0,.45)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
-            🏃<br />Correr
+          <button type="button" onPointerDown={correrDown} onPointerUp={correrUp} onPointerLeave={correrUp} onPointerCancel={correrUp}
+            title="Mantener para correr · doble-tap para fijar"
+            style={{ width: 60, height: 60, borderRadius: '50%', border: corriendo ? '2px solid #6ee7a0' : '2px solid rgba(255,255,255,.35)', background: corriendo ? '#27ae60' : 'rgba(0,0,0,.45)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}>
+            🏃<br />{corriendo ? 'Fijo' : 'Correr'}
           </button>
         </div>
       )}
 
-      {/* HUD inferior: instrucciones + selector de vistas */}
-      <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'system-ui, sans-serif', maxWidth: tactil ? 'calc(100% - 280px)' : 'calc(100% - 180px)' }}>
-        <div style={{ color: '#fff', background: 'rgba(0,0,0,.5)', padding: '7px 12px', borderRadius: 9, fontSize: 13, width: 'fit-content' }}>
-          {tactil
-            ? <><b>Joystick</b> caminar · <b>arrastra</b> mirar · <b>Correr</b>/<b>Saltar</b> a la derecha · <b>tap</b> a un jugador para oírlo</>
-            : <><b>WASD</b>/flechas caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>C</b> recentrar · <b>1-5</b> vistas · <b>clic</b> a un jugador para oírlo</>}
+      {/* HUD inferior: SOLO una línea de ayuda compacta (los selectores de escenario/vista se movieron a
+          los menús de arriba para no tapar la pantalla). Se oculta mientras tocas. */}
+      {!tocarAbierto && (
+        <div style={{ position: 'absolute', left: tactil ? 160 : 16, bottom: bottomBase, fontFamily: 'system-ui, sans-serif', maxWidth: tactil ? 'calc(100% - 300px)' : 'calc(100% - 180px)' }}>
+          <div style={{ color: '#fff', background: 'rgba(0,0,0,.42)', padding: '6px 11px', borderRadius: 9, fontSize: 12, width: 'fit-content' }}>
+            {tactil
+              ? <><b>Joystick</b> caminar · <b>arrastra</b> mirar · <b>tap</b> a un jugador para oírlo</>
+              : <><b>WASD</b> caminar · <b>Shift</b> correr · <b>Espacio</b> saltar · <b>arrastra</b> mirar · <b>rueda</b> zoom · <b>1-5</b> vistas</>}
+          </div>
         </div>
-        {/* Selector de ESCENARIO (lugar). Cambia el .glb cargado + el radio de navegación. */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          {ESCENARIOS_MUNDO.map((e) => (
-            <button key={e.id} type="button" onClick={() => setEscenarioId(e.id)} style={{ padding: '6px 11px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, background: escenarioId === e.id ? '#2e86de' : 'rgba(0,0,0,.5)', color: '#fff', fontWeight: escenarioId === e.id ? 700 : 400 }}>
-              {e.nombre}
-            </button>
-          ))}
-          {escenarioDef.credito && <span style={{ color: 'rgba(255,255,255,.55)', fontSize: 11 }}>Modelo: {escenarioDef.credito}</span>}
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {VISTAS.map((v, i) => (
-            <button key={v.id} type="button" onClick={() => setVistaModo(v.id)} style={{ padding: '6px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, background: vistaModo === v.id ? '#ff7a18' : 'rgba(0,0,0,.5)', color: '#fff', fontWeight: vistaModo === v.id ? 700 : 400 }}>
-              <span style={{ opacity: 0.6, marginRight: 4 }}>{i + 1}</span>{v.nombre}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }

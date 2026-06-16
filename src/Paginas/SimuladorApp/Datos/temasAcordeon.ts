@@ -51,8 +51,10 @@ export const TEMAS_ACORDEON: TemaAcordeon[] = [
         id: 'rojo',
         nombre: 'Rojo Clásico',
         categoria: 'originales',
-        diapason: '/acordeones/rojo/diapason.jpg',
-        bajos: '/acordeones/rojo/bajos.jpg',
+        // Diapasón y bajos reales renderizados del acordeón 3D (CORONA/HOHNER) —
+        // scripts/render-diapason.py y scripts/render-bajos.py.
+        diapason: '/acordeones/rojo/diapason-3d.jpg',
+        bajos: '/acordeones/rojo/bajos-3d-cerrado.jpg',
         preview: '/acordeones/rojo/preview.webp',
         descripcion: 'Look rojo con detalles dorados — vallenato puro.',
     },

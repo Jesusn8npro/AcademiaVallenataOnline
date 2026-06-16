@@ -9,32 +9,13 @@ import JuicioOverlay from '../Componentes/JuicioOverlay';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import type { CancionHeroConTonalidad, EstadisticasPartida, EfectoGolpe } from '../TiposProMax';
 import { TICKS_VIAJE } from '../TiposProMax';
-import { useUsuario } from '../../../contextos/UsuarioContext';
-import { leerPersonaje3DLocal, cargarPersonaje3DDB } from '../PracticaLibre/Servicios/servicioPersonaje3D';
+import { usePersonaje3DGuardado } from '../PracticaLibre/Servicios/usePersonaje3DGuardado';
+import {
+  SKIN_MAESTRO, SKIN_ALUMNO, ENC_ROTACION, ENC_FILL, ENC_OFFSET_REL_X, ENC_OFFSET_REL_Y,
+  ENC_ANCHO_WRAP, ENC_GAP, ENC_INV_FILAS, ENC_INV_COLS, claveBoton,
+} from './acordeon3dCompartido';
 import './ModoCompetitivo.css';
 import './ModoLibre.css';
-
-// Elección 3D del usuario (skin del ACORDEÓN + ESCENARIO) — la MISMA que muestran el Mundo 3D y la
-// pestaña Personaje (localStorage + columna perfiles.personaje_3d vía servicioPersonaje3D). Lee local
-// (instantáneo, cubre anónimos) y luego confirma con la DB (multi-dispositivo). El acordeón del ALUMNO
-// usa el skin; el duelo usa el escenario (mismo `<Escenario>` 3D que Personaje/Mundo) detrás.
-function usePersonaje3DGuardado(skinFallback: string): { skin: string; escenario: string } {
-  const { usuario } = useUsuario();
-  const [val, setVal] = useState<{ skin: string; escenario: string }>(() => {
-    const l = leerPersonaje3DLocal();
-    return { skin: l.skin || skinFallback, escenario: l.escenarioId || 'estudio' };
-  });
-  useEffect(() => {
-    const uid = usuario?.id;
-    if (!uid) return;
-    let vivo = true;
-    cargarPersonaje3DDB(uid).then((d) => {
-      if (vivo && d) setVal((p) => ({ skin: d.skin || p.skin, escenario: d.escenarioId || p.escenario }));
-    });
-    return () => { vivo = false; };
-  }, [usuario?.id]);
-  return val;
-}
 
 // Acordeón 3D (three.js ~500KB) — sólo se carga si el usuario activa la vista 3D.
 const VisorAcordeon3D = dynamic(
@@ -50,20 +31,8 @@ const NOOP_CLICK_PIEZA: (n: string) => void = () => {};
 const NOOP_MALLAS: (p: any) => void = () => {};
 
 // ── Vista 3D del modo juego ─────────────────────────────────────────────────────────
-// Pieles distintas para diferenciar Maestro y Alumno.
-const SKIN_MAESTRO = '3';
-const SKIN_ALUMNO = '5';
-// Encuadre del acordeón 3D. La orientación se afinó en /modo-competitivo-muestra; el tamaño y
-// centrado son AUTO (responsive) para verse igual en cualquier pantalla.
-const ENC_ROTACION: [number, number, number] = [-0.0775, 0.1260, 0.1638]; // base + (rotX=6°, rotY=14°)
-const ENC_FILL = 1.23;        // fracción del ancho del recuadro que ocupa el acordeón (guardado por el usuario)
-const ENC_OFFSET_REL_X = 0.13; // nudge horizontal (fracción del ancho del modelo)
-const ENC_OFFSET_REL_Y = 0.17; // nudge vertical (fracción de la altura del modelo)
-const ENC_ANCHO_WRAP = '48%';
-const ENC_GAP = '0vw';
-// Calibración del mapeo del 3D vs la convención de la canción (se afina en el sandbox).
-const ENC_INV_FILAS = false;
-const ENC_INV_COLS = false;
+// Pieles (SKIN_*), encuadre (ENC_*) y claveBoton viven en ./acordeon3dCompartido (los reusan
+// también Maestro y Synthesia vía <AcordeonModo3D>).
 // Poner en true para mostrar el panel de ajuste del encuadre 3D (sliders) sobre la página real.
 // Ya afinado y guardado en ENC_FILL/ENC_OFFSET_* → queda en false (sin sliders de debug).
 const CONTROLES_3D = false;
@@ -82,16 +51,6 @@ const TOMAS_CAMARA: TomaCamara[] = [
   { id: 'melodia', nombre: 'Melodía', icono: '🎵', fill: 1.70, offX: 0.39, offY: 0.21 },
   { id: 'bajos',   nombre: 'Bajos',   icono: '🪗', fill: 1.70, offX: -0.18, offY: 0.25 },
 ];
-
-// strip dirección → clave espacial del botón (idéntico a keyDeId del visor 3D): el PuenteNotas
-// pregunta por "1-5-halar" y el visor reporta posiciones por "1-5" / "bajo-1-3".
-function claveBoton(idBoton: string): string {
-  let s = idBoton;
-  let bajo = false;
-  if (s.endsWith('-bajo')) { bajo = true; s = s.slice(0, -5); }
-  s = s.replace(/-halar$/, '').replace(/-empujar$/, '');
-  return bajo ? `bajo-${s}` : s;
-}
 
 interface ModoJuegoProps {
   conPenalizacion: boolean;

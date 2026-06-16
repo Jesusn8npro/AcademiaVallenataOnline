@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {
-  Box, Palette, Sparkles, ArrowDownToLine, ArrowUpToLine, Combine,
+  Box, ArrowDownToLine, ArrowUpToLine, Combine,
   MousePointerClick, Keyboard, Wind, Activity, Square, Music2,
 } from 'lucide-react'
 import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza } from './VisorAcordeon3D'
@@ -68,10 +68,6 @@ const SeccionPL3D: React.FC<SeccionPL3DProps> = ({
   onAplicarTinta, onAplicarVariante, onDispararShapeKey, onDispararProgramatica,
   onDetenerProgramatica, programaticaActiva,
 }) => {
-  const targetLabel = piezaSeleccionada
-    ? `pieza: ${piezaSeleccionada}`
-    : `grupo: ${GRUPOS_3D.find((g) => g.id === grupoActivo)?.label ?? grupoActivo}`
-
   return (
     <div className="estudio-practica-libre-seccion">
       <div className="visor3d-ayuda">
@@ -83,65 +79,8 @@ const SeccionPL3D: React.FC<SeccionPL3DProps> = ({
         </div>
       </div>
 
-      <div className="estudio-practica-libre-bloque">
-        <div className="estudio-practica-libre-bloque-titulo">Aplicar a</div>
-        <div className="visor3d-grupos">
-          {GRUPOS_3D.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              className={`visor3d-grupo-btn ${!piezaSeleccionada && grupoActivo === g.id ? 'activo' : ''}`}
-              onClick={() => onCambiarGrupoActivo(g.id)}
-              disabled={!!piezaSeleccionada}
-              title={piezaSeleccionada ? 'Hay una pieza individual seleccionada por click' : g.label}
-            >
-              {g.label}
-            </button>
-          ))}
-        </div>
-        <div className="visor3d-target">
-          Cambios van a <strong>{targetLabel}</strong>
-          {piezasDisponibles.length > 0 && !piezaSeleccionada && (
-            <span className="visor3d-target-meta"> · {piezasDisponibles.length} mallas detectadas</span>
-          )}
-        </div>
-      </div>
-
-      <div className="estudio-practica-libre-bloque">
-        <div className="estudio-practica-libre-bloque-titulo">
-          <Palette size={14} /> Color
-        </div>
-        <div className="visor3d-colores">
-          {COLORES_3D.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="visor3d-color-chip"
-              style={{ background: c.hex }}
-              title={c.label}
-              onClick={() => onAplicarTinta(c.hex)}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="estudio-practica-libre-bloque">
-        <div className="estudio-practica-libre-bloque-titulo">
-          <Sparkles size={14} /> Acabado
-        </div>
-        <div className="visor3d-variantes">
-          {VARIANTES_3D.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              className="visor3d-variante-btn"
-              onClick={() => onAplicarVariante(v.id)}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* El acordeón muestra la PIEL que el usuario eligió (pestaña Personaje). El panel de pintar
+          colores/acabado se retiró: se rehará más adelante de forma profesional (estilo Substance). */}
 
       <div className="estudio-practica-libre-bloque">
         <div className="estudio-practica-libre-bloque-titulo">

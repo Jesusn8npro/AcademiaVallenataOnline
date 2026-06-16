@@ -1278,6 +1278,59 @@
   border-color: #3b82f6;
 }
 
+/* Card de piel con FOTO (render del acordeón con esa textura). Misma estética que las
+   cards de personaje, pero la miniatura es cuadrada y transparente. */
+.visor-piel-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 60px;
+  padding: 5px 4px 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.16s;
+}
+
+.visor-piel-card > img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.14), rgba(255, 255, 255, 0.03) 72%);
+  transition: transform 0.18s;
+}
+
+.visor-piel-card > span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.visor-piel-card:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.55);
+  transform: translateY(-2px);
+}
+
+.visor-piel-card:hover > img { transform: scale(1.06); }
+.visor-piel-card:active { transform: scale(0.96); }
+
+.visor-piel-card.activo {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.28), 0 6px 18px rgba(251, 191, 36, 0.12);
+}
+
+.visor-piel-card.activo > span { color: #fde68a; }
+
 .visor3d-anim-btn.detener:hover {
   background: linear-gradient(135deg, #991b1b, #b91c1c);
 }

@@ -133,6 +133,12 @@ export const useReproductorHero = (
 
     const notasOriginalesRef = useRef<NotaHero[]>([]);
     const notasActivasRef = useRef<Map<string, { endTimeTick: number, instancias: any[], botonId: string }>>(new Map());
+    // AUTO-RELEASE del audio: cuando true (REPLAY), cada nota se dispara con DURACIÓN programada → el motor
+    // de audio la apaga solo, aunque el RAF se congele (p.ej. al montar un Canvas 3D pesado al cambiar de
+    // vista). Sin esto la nota seguía sonando "pegada" durante el bloqueo. El RAF igual hace su note-off
+    // (redundante, no-op si ya se liberó). NO se usa en competencia/maestro (ahí el BPM puede cambiar
+    // a mitad de nota y la duración fija la cortaría — esos siguen apagando solo por RAF).
+    const audioAutoReleaseRef = useRef(false);
 
     const detenerReproduccion = useCallback(() => {
         setReproduciendo(false);
@@ -311,8 +317,12 @@ export const useReproductorHero = (
                 const llaveUnica = `${nota.botonId}_${nota.tick}`;
                 if (!notasActivasRef.current.has(llaveUnica)) {
                     setDireccionSinSwap(nota.fuelle === 'abriendo' ? 'halar' : 'empujar');
-                    // Disparo sin duración programada: la nota dura mientras el BPM fluya, hasta su tick de cierre.
-                    const result = logica_reproduceTono(nota.botonId);
+                    // Replay (audioAutoRelease): duración programada en segundos → el motor apaga la nota solo
+                    // aunque el RAF se congele. Normal (competencia/maestro): sin duración, la apaga el RAF.
+                    const durSec = audioAutoReleaseRef.current && nota.duracion > 0
+                        ? (nota.duracion / resolucion) * (60 / bpmRef.current)
+                        : undefined;
+                    const result = logica_reproduceTono(nota.botonId, undefined, durSec);
                     const instancias = result?.instances || [];
                     actualizarBoton(nota.botonId, 'add', instancias, false);
                     notasActivasRef.current.set(llaveUnica, {
@@ -367,9 +377,12 @@ export const useReproductorHero = (
             // real del audio (audio.currentTime * factor). Si se pasa, sustituye
             // a rango.inicio como punto de arranque, pero rango.fin sigue activo.
             tickInicialOverride?: number | null;
+            // REPLAY: dispara el audio con duración programada (se auto-libera aunque el RAF se congele).
+            audioAutoRelease?: boolean;
         }
     ) => {
         detenerReproduccion();
+        audioAutoReleaseRef.current = !!opciones?.audioAutoRelease;
 
         let secuencia = cancion.secuencia || (cancion as any).secuencia_json;
         if (typeof secuencia === 'string') {

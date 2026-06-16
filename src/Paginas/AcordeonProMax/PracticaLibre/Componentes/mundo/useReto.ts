@@ -34,6 +34,7 @@ export function useReto(miId: string, miNombre: string) {
   const [rivalPuntaje, setRivalPuntaje] = React.useState<number | null>(null)
 
   const chRef = React.useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const unidoRef = React.useRef(false) // canal UNIDO (SUBSCRIBED) → enviar por WebSocket, no por REST
   // Espejo del estado para los handlers del canal (que se registran una sola vez).
   const estadoRef = React.useRef(estado)
   const oponenteRef = React.useRef(oponente)
@@ -49,6 +50,7 @@ export function useReto(miId: string, miNombre: string) {
   React.useEffect(() => { soyRetadorRef.current = soyRetador }, [soyRetador])
 
   const enviar = React.useCallback((payload: PayloadBase) => {
+    if (!unidoRef.current) return // canal aún no unido → no enviar (evita el fallback a REST)
     chRef.current?.send({ type: 'broadcast', event: 'reto', payload })
   }, [])
 
@@ -101,8 +103,8 @@ export function useReto(miId: string, miNombre: string) {
           break
       }
     })
-    ch.subscribe()
-    return () => { chRef.current = null; supabase.removeChannel(ch) }
+    ch.subscribe((status) => { unidoRef.current = status === 'SUBSCRIBED' })
+    return () => { unidoRef.current = false; chRef.current = null; supabase.removeChannel(ch) }
   }, [miId, reset])
 
   // --- API pública ---

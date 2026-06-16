@@ -59,10 +59,12 @@ const SeccionPLPersonaje: React.FC = () => {
             <button
               key={p}
               type="button"
-              className={`visor-piel-btn ${skin === p ? 'activo' : ''}`}
+              className={`visor-piel-card ${skin === p ? 'activo' : ''}`}
               onClick={() => setSkin(p)}
+              title={p === 'original' ? 'Original' : `Piel ${p}`}
             >
-              {p === 'original' ? 'Original' : p}
+              <img src={`/pieles-acordeon/${p}.webp`} alt={p === 'original' ? 'Original' : `Piel ${p}`} loading="lazy" />
+              <span>{p === 'original' ? 'Original' : p}</span>
             </button>
           ))}
         </div>

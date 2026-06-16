@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { useMemo } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import CuerpoAcordeon from '../../../Core/componentes/CuerpoAcordeon';
 import PuenteNotas from '../Componentes/PuenteNotas';
 import JuicioOverlay from '../Componentes/JuicioOverlay';
+import AcordeonModo3D, { SKIN_MAESTRO, SKIN_ALUMNO, ENC_ANCHO_WRAP, ENC_GAP, claveBoton } from './acordeon3dCompartido';
+import { usePersonaje3DGuardado } from '../PracticaLibre/Servicios/usePersonaje3DGuardado';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import type {
   CancionHeroConTonalidad,
@@ -63,6 +65,28 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
         y: 'var(--duelo-acordeon-y, 50%)',
     }), [logica.ajustes]);
     const botonesAlumno = useMemo(() => ({ ...botonesGuiaAlumno, ...logica.botonesActivos }), [botonesGuiaAlumno, logica.botonesActivos]);
+
+    // ── Acordeón 3D (por defecto) ↔ imagen. Maestro = piel fija (profesor); Alumno = piel del usuario. ──
+    const { skin: skinAlumno, escenario } = usePersonaje3DGuardado(SKIN_ALUMNO);
+    const [use3D, setUse3D] = useState(true);
+    useEffect(() => { setUse3D(localStorage.getItem('synthesia:use3D') !== '0'); }, []);
+    const toggle3D = useCallback(() => {
+        setUse3D((v) => { const n = !v; localStorage.setItem('synthesia:use3D', n ? '1' : '0'); return n; });
+    }, []);
+    // Posiciones de botones proyectadas por cada acordeón 3D (reemplazan a usePosicionProMax en 3D).
+    const posMaestroRef = useRef<Record<string, { x: number; y: number }>>({});
+    const posAlumnoRef = useRef<Record<string, { x: number; y: number }>>({});
+    const obtenerPosMaestro3D = useCallback((id: string) => posMaestroRef.current[claveBoton(id)] ?? null, []);
+    const obtenerPosAlumno3D = useCallback((id: string) => posAlumnoRef.current[claveBoton(id)] ?? null, []);
+    // Fuelle: dirección + actividad (cuántas notas suenan) por acordeón.
+    const fuelleDirMaestroRef = useRef(false);
+    const fuelleActMaestroRef = useRef(0);
+    const fuelleDirAlumnoRef = useRef(false);
+    const fuelleActAlumnoRef = useRef(0);
+    fuelleDirMaestroRef.current = direccionMaestro === 'empujar';
+    fuelleActMaestroRef.current = Math.min(Object.values(botonesActivosMaestro).filter(Boolean).length / 2, 1);
+    fuelleDirAlumnoRef.current = logica.direccion === 'empujar';
+    fuelleActAlumnoRef.current = Math.min(Object.values(botonesAlumno).filter(Boolean).length / 2, 1);
     const fraseMano = useMemo(() => {
         if (notasEsperando.length === 0) return 'Tu mano manda la siguiente nota';
         const frases = [
@@ -210,10 +234,34 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
                 </AnimatePresence>
             </div>
 
-            <div className="hero-escenario">
-                <div className="hero-acordeon-wrap maestro" ref={refMaestro}>
+            {/* Toggle acordeón 3D ↔ imagen */}
+            <button
+                type="button"
+                onClick={toggle3D}
+                title="Cambiar entre acordeón 3D y de imagen"
+                style={{
+                    position: 'absolute', bottom: 16, left: 16, zIndex: 40,
+                    background: 'rgba(0,0,0,0.55)', color: '#fff', border: '1px solid rgba(255,255,255,0.18)',
+                    padding: '6px 12px', borderRadius: 18, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                }}
+            >
+                {use3D ? '🪗 Acordeón 3D' : '🖼️ Imágenes'}
+            </button>
+
+            <div className="hero-escenario" style={use3D ? { gap: ENC_GAP } : undefined}>
+                <div className="hero-acordeon-wrap maestro" ref={refMaestro} style={use3D ? { width: ENC_ANCHO_WRAP } : undefined}>
                     <span className="hero-acordeon-label">Maestro</span>
-                    {logica.disenoCargado && (
+                    {use3D ? (
+                        <AcordeonModo3D
+                            skin={SKIN_MAESTRO}
+                            botonesActivos={botonesActivosMaestro}
+                            direccion={direccionMaestro}
+                            fuelleCerrandoRef={fuelleDirMaestroRef}
+                            fuelleActividadRef={fuelleActMaestroRef}
+                            escenarioId={escenario}
+                            onPosicionesBotones={(m) => { posMaestroRef.current = m; }}
+                        />
+                    ) : logica.disenoCargado ? (
                         <CuerpoAcordeon
                             imagenFondo={'/Acordeon Jugador.webp'}
                             ajustes={ajustesDuelo}
@@ -228,19 +276,31 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
                             actualizarBotonActivo={() => {}}
                             listo={true}
                         />
-                    )}
+                    ) : null}
                 </div>
 
                 <div
                     className={`hero-acordeon-wrap alumno ${notasEsperando.length > 0 ? 'guia-visible' : ''}`}
                     ref={refAlumno}
                     onPointerMove={(e) => registrarPosicionGolpe(e.clientX, e.clientY)}
+                    style={use3D ? { width: ENC_ANCHO_WRAP } : undefined}
                 >
                     <span className="hero-acordeon-label">Alumno</span>
                     {notasEsperando.length > 0 && (
                         <div className="synthesia-guia-alumno">PISALO AQUI</div>
                     )}
-                    {logica.disenoCargado && (
+                    {use3D ? (
+                        <AcordeonModo3D
+                            skin={skinAlumno}
+                            botonesActivos={botonesAlumno}
+                            direccion={logica.direccion}
+                            fuelleCerrandoRef={fuelleDirAlumnoRef}
+                            fuelleActividadRef={fuelleActAlumnoRef}
+                            escenarioId={escenario}
+                            onTocarBoton={(id, accion) => actualizarBotonActivo(id, accion === 'down' ? 'add' : 'remove')}
+                            onPosicionesBotones={(m) => { posAlumnoRef.current = m; }}
+                        />
+                    ) : logica.disenoCargado ? (
                         <CuerpoAcordeon
                             imagenFondo={imagenFondo}
                             ajustes={ajustesDuelo}
@@ -255,15 +315,15 @@ const ModoSynthesia: React.FC<ModoSynthesiaProps> = ({
                             actualizarBotonActivo={actualizarBotonActivo}
                             listo={true}
                         />
-                    )}
+                    ) : null}
                 </div>
             </div>
 
             <PuenteNotas
                 cancion={cancion}
                 tickActual={tickActual}
-                obtenerPosicionMaestro={obtenerPosicionMaestro}
-                obtenerPosicionAlumno={obtenerPosicionAlumno}
+                obtenerPosicionMaestro={use3D ? obtenerPosMaestro3D : obtenerPosicionMaestro}
+                obtenerPosicionAlumno={use3D ? obtenerPosAlumno3D : obtenerPosicionAlumno}
                 modoVista={logica.modoVista}
                 configTonalidad={configTonalidad}
                 notasImpactadas={notasImpactadas}
