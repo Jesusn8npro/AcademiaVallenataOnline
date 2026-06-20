@@ -197,12 +197,42 @@ if ('serviceWorker' in navigator) {
 }
 `
 
+// Red de seguridad anti "carga infinita" del PWA: si un chunk JS dinámico falla (el HTML quedó
+// huérfano apuntando a chunks de un build viejo ya borrado del servidor), limpiamos caché + SW y
+// recargamos UNA sola vez por sesión. Cura a los usuarios que ya quedaron atascados antes de este
+// fix; las visitas sanas nunca lo disparan. El guard en sessionStorage evita bucles de recarga.
+const chunkRecoveryScript = `
+(function () {
+  function esChunkError(m) {
+    return /ChunkLoadError|Loading chunk|Importing a module script failed|error loading dynamically imported module|dynamically imported module/i.test(m || '');
+  }
+  function recuperar() {
+    try { if (sessionStorage.getItem('__chunk_recover')) return; sessionStorage.setItem('__chunk_recover', '1'); } catch (e) {}
+    var limpiarCache = (window.caches && caches.keys)
+      ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
+      : Promise.resolve();
+    var quitarSW = (navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
+      ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+      : Promise.resolve();
+    Promise.all([limpiarCache, quitarSW]).then(function () { location.reload(); }).catch(function () { location.reload(); });
+  }
+  window.addEventListener('error', function (e) {
+    if (esChunkError(e && (e.message || (e.error && e.error.message)))) recuperar();
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e && e.reason;
+    if (esChunkError(r && (r.message || r.name) || String(r || ''))) recuperar();
+  });
+})();
+`
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" translate="no" suppressHydrationWarning className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: authHideScript }} />
         <script dangerouslySetInnerHTML={{ __html: swKillScript }} />
+        <script dangerouslySetInnerHTML={{ __html: chunkRecoveryScript }} />
         <link rel="preload" as="image" href="/logo-175.webp" fetchPriority="high" />
         <link rel="dns-prefetch" href="https://tbijzvtyyewhtwgakgka.supabase.co" />
         <link rel="dns-prefetch" href="https://iframe.mediadelivery.net" />

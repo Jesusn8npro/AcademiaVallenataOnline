@@ -1,6 +1,6 @@
 // Academia Vallenata Online — Service Worker
 // La versión de caché se actualiza automáticamente en cada `npm run build`
-const CACHE = 'ava-F3at_L2xW5Gq5IXermyP4';
+const CACHE = 'ava--D3uH-ef3pgRQ3hbS3r5i';
 
 const PRECACHE = [
   '/logo-175.webp',
@@ -17,11 +17,13 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
@@ -34,19 +36,43 @@ self.addEventListener('fetch', (e) => {
   if (isDev) return;
 
   if (request.method !== 'GET') return;
+
+  // DOCUMENTO HTML (navegaciones): SIEMPRE network-first, ignorando la caché del navegador
+  // (cache: 'reload'). Esto cura el bug del PWA instalado: el navegador guardaba el HTML de un
+  // build viejo, que pedía chunks JS ya borrados del servidor tras el siguiente deploy → 404 →
+  // el import() del Simulador (u otra ruta lazy) nunca resolvía → "carga infinita". Ahora el HTML
+  // siempre llega fresco y referencia los chunks del build actual. Si no hay red, cae a una copia
+  // cacheada del documento (o a '/') para mantener algo de soporte offline.
+  if (request.mode === 'navigate') {
+    e.respondWith(
+      fetch(request, { cache: 'reload' })
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, clone));
+          return res;
+        })
+        .catch(() => caches.match(request).then((c) => c || caches.match('/')))
+    );
+    return;
+  }
+
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
+  // Chunks/estáticos de Next (nombre con hash → contenido inmutable): cache-first es seguro y
+  // rápido. Añadimos .catch para que un fallo de red NO rechace el respondWith (evita disparar
+  // un ChunkLoadError espurio cuando hay caché que sí sirve).
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((res) => {
+      caches.match(request).then((cached) =>
+        cached ||
+        fetch(request)
+          .then((res) => {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(request, clone));
             return res;
           })
+          .catch(() => cached)
       )
     );
     return;
