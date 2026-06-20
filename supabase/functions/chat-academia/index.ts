@@ -186,12 +186,29 @@ Deno.serve(async (req: Request) => {
     const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!
     const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini"
 
-    const { chat_id, mensaje, usuario_id, pagina_origen = "web" } = await req.json()
+    const { chat_id, mensaje, pagina_origen = "web" } = await req.json()
 
     if (!chat_id || !mensaje?.trim()) {
       return new Response(JSON.stringify({ error: "chat_id y mensaje requeridos" }), {
         status: 400, headers: { ...CORS, "Content-Type": "application/json" }
       })
+    }
+
+    // usuario_id se DERIVA del JWT, NUNCA del body: antes el body traía usuario_id y con él se leía el
+    // perfil de ESE id (incl. correo) → un visitante podía pasar el id de OTRO y leer su PII (IDOR). Ahora
+    // solo un token de usuario válido define usuario_id; anónimo (anon key) o sin token → null (flujo lead).
+    let usuario_id: string | null = null
+    const authHeader = req.headers.get("Authorization")
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7)
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || ""
+      if (token && token !== anonKey && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+        try {
+          const sbUser = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } })
+          const { data: { user } } = await sbUser.auth.getUser()
+          usuario_id = user?.id ?? null
+        } catch { usuario_id = null }
+      }
     }
 
     const permitido = await checkRateLimit(sb, chat_id)

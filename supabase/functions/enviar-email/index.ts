@@ -138,6 +138,28 @@ function plantillaPagoAbandonado(nombre, extra = {}) {
   return { subject: "⏳ ¿Olvidaste completar tu compra? — Academia Vallenata", html: emailLujo({ emoji: "⏳", titulo: "¡Casi lo tienes!", cuerpoHtml: cuerpo, ctaText: "Completar mi compra →", ctaHref: "https://academiavallenataonline.com/membresias" }) };
 }
 
+// ¿el llamador es admin o un servicio (service-role)? Solo ellos pueden mandar correos 'personalizado'
+// (asunto + cuerpo ARBITRARIOS) → cierra el relay de phishing/spam desde el dominio. Los correos con
+// PLANTILLA fija (bienvenida, pago, etc.) siguen abiertos para no romper el envío del registro (anon key).
+async function esAdminOServicio(req) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice(7);
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (token && token === serviceKey) return true; // llamada server-to-server
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  if (!url || !token || token === anonKey) return false; // anon key no basta
+  try {
+    const sbUser = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } });
+    const { data: { user } } = await sbUser.auth.getUser();
+    if (!user) return false;
+    const sbAdmin = createClient(url, serviceKey, { auth: { persistSession: false } });
+    const { data: perfil } = await sbAdmin.from("perfiles").select("rol").eq("id", user.id).single();
+    return perfil?.rol === "admin";
+  } catch { return false; }
+}
+
 const CORS_HEADERS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const J = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 
@@ -160,6 +182,7 @@ Deno.serve(async (req) => {
     else if (tipo === "inscripcion_evento") plantilla = plantillaInscripcionEvento(nombre || "", extra);
     else if (tipo === "recordatorio_evento") plantilla = plantillaRecordatorioEvento(nombre || "", extra);
     else if (tipo === "personalizado") {
+      if (!(await esAdminOServicio(req))) return J({ error: "No autorizado: solo admin" }, 403);
       if (!extra.asunto || !extra.mensaje) return J({ error: "asunto y mensaje son requeridos" }, 400);
       plantilla = { subject: extra.asunto, html: emailLujo({ emoji: "💌", titulo: nombre ? `¡Hola, ${nombre}!` : "Academia Vallenata Online", cuerpoHtml: `<div style="color:#e9d5ff;line-height:1.8;font-size:15px;white-space:pre-line">${extra.mensaje}</div>` }) };
     } else return J({ error: `tipo invalido: ${tipo}` }, 400);
