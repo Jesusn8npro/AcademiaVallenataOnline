@@ -66,15 +66,22 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
       }
     })
 
-    // Suscripción WebSocket SOLO para RECIBIR a los demás. Para EMITIR usamos channel.httpSend (REST): es
-    // el camino que en esta red/región llega EN VIVO de verdad (el WebSocket send quedó con latencia) y es
-    // el método EXPLÍCITO no-deprecado para REST (sin el warning de send→REST). httpSend NO necesita que el
-    // canal esté unido. (realtime-js 2.100.1 no tiene throttle de cliente.)
-    ch.subscribe()
+    // Suscripción WebSocket. RECIBIR a los demás va por aquí. Para EMITIR:
+    //  - ESTADO (posición, ~16Hz): httpSend (REST) → no satura cuando hay muchos quietos.
+    //  - NOTAS (en vivo, sensibles a latencia/orden): WebSocket send una vez UNIDO (ver más abajo).
+    // unido = el canal terminó el JOIN; antes de eso ch.send() caería a REST igual → por eso lo gateamos.
+    let unido = false
+    ch.subscribe((status) => { unido = status === 'SUBSCRIBED' })
 
     // EMITIR mi estado: SOLO cuando CAMBIA (me muevo/giro/animo) + heartbeat cada 2s (< TIMEOUT_MS). Así se
     // ve EN VIVO al moverse pero con 50 personas QUIETAS casi no hay solicitudes (lo que saturaba antes era
     // mandar a 16Hz SIEMPRE aunque nadie se moviera; ahora quieto ≈ 1 envío cada 2s).
+    //
+    // POR WEBSOCKET (ch.send), no REST (httpSend): el WS es push, baja latencia y en orden → la POSICIÓN del
+    // remoto llega EN VIVO y el avatar se ve caminando de verdad (con httpSend/REST la posición llegaba tarde y
+    // a saltos mientras la animación de caminata sí corría → parecía "flotar"/deslizarse). La saturación que
+    // antes obligó a REST era por emitir a 16Hz SIEMPRE; con "solo al cambiar" la cola WS se mantiene chica y no
+    // satura. httpSend queda SOLO como respaldo mientras el canal aún no termina el JOIN (primer instante).
     let ultimaFirma = ''
     let ultimoEnvio = 0
     const emisor = setInterval(() => {
@@ -83,7 +90,9 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
       // Firma con resolución perceptible (1 cm / ~0.01 rad): por debajo no vale la pena emitir.
       const firma = `${s.x.toFixed(2)},${s.z.toFixed(2)},${s.ry.toFixed(2)},${s.anim},${s.tocando ? 1 : 0},${s.mira.toFixed(2)}`
       if (firma !== ultimaFirma || ahora - ultimoEnvio > 2000) {
-        ch.httpSend('estado', { id: miId, ...s }).catch(() => {})
+        const payload = { id: miId, ...s }
+        if (unido) ch.send({ type: 'broadcast', event: 'estado', payload }).catch(() => {})
+        else ch.httpSend('estado', payload).catch(() => {})
         ultimaFirma = firma
         ultimoEnvio = ahora
       }
@@ -91,13 +100,19 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
 
     // Reenviar MIS notas (cuando toco una canción) para que los demás puedan oírlas. Mandamos 'down'
     // Y 'up': así el oyente suelta la nota EXACTO cuando yo la solté → suena fluido, sin notas pegadas.
-    // En 'down' va el TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO. httpSend
-    // (REST) = entrega en vivo; las notas son eventos puntuales, no saturan.
+    // En 'down' va el TONO ya resuelto (muestra + semitonos) → el oyente lo reproduce IDÉNTICO.
+    //
+    // EMISIÓN POR WEBSOCKET (no REST): una sola conexión persistente → llega EN VIVO y EN ORDEN. Antes iba
+    // por httpSend (REST = un POST por nota): en una red con REST lento, TUS notas llegaban tarde/desordenadas
+    // al otro (sonaban mal / pegadas) aunque tú sí oyeras las suyas (esas las RECIBES por WS, que es push).
+    // El WS sí preserva orden y latencia baja para eventos sueltos como las notas (no saturan como el estado).
+    // Mientras el canal aún no está UNIDO (primer instante tras entrar), cae a httpSend como respaldo.
     const offNotas = subscribirNotas((e) => {
-      // DIFERIDO (queueMicrotask): el envío por red NO debe bloquear el camino de la nota (audio + hit del
-      // simulador) → así el duelo no siente retardo al tocar. El audio local ya sonó antes de este callback.
+      // El envío NO debe bloquear el camino de la nota (audio + hit del simulador): ch.send es no-bloqueante
+      // (encola en el WS) y el audio local ya sonó antes de este callback.
       const payload = { id: miId, idBoton: e.idBoton, accion: e.accion, tono: e.accion === 'down' ? e.tono : undefined }
-      queueMicrotask(() => { ch.httpSend('nota', payload).catch(() => {}) })
+      if (unido) ch.send({ type: 'broadcast', event: 'nota', payload }).catch(() => {})
+      else queueMicrotask(() => { ch.httpSend('nota', payload).catch(() => {}) })
     })
 
     // Limpieza de remotos que dejaron de emitir (= se fueron).

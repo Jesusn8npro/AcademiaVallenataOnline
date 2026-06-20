@@ -239,30 +239,52 @@ function EscenarioGLB({ glb, escala = 1, construirColisiones, colliderRef, puert
 
   React.useEffect(() => {
     if (!construirColisiones || !colliderRef) return
-    obj.scale.setScalar(escala)
-    obj.updateWorldMatrix(true, true)
-    const geos: THREE.BufferGeometry[] = []
-    obj.traverse((o: any) => {
-      if (!o.isMesh || !o.geometry) return
-      if (esPuerta(o.name) || (o.parent && esPuerta(o.parent.name))) return // puerta = fuera del collider (umbral pasable)
-      const g = o.geometry.clone() as THREE.BufferGeometry
-      for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k) // colisión = solo posición
-      const ng = g.index ? g.toNonIndexed() : g
-      ng.applyMatrix4(o.matrixWorld) // a espacio MUNDO (incluye la escala del escenario)
-      geos.push(ng)
+    // El collider (merge + BVH de toda la malla) se arma en un requestAnimationFrame: deja que el mundo
+    // PINTE primero (el overlay se oculta y el avatar aparece en y=0 sin gravedad) y un frame después
+    // construye todo de una. Así el BVH NO bloquea la carga; entra a regir la gravedad/colisión al instante.
+    let mesh: THREE.Mesh | null = null
+    let cancelado = false
+    const raf = requestAnimationFrame(() => {
+      if (cancelado) return
+      obj.scale.setScalar(escala)
+      obj.updateWorldMatrix(true, true)
+      const geos: THREE.BufferGeometry[] = []
+      obj.traverse((o: any) => {
+        if (!o.isMesh || !o.geometry) return
+        if (esPuerta(o.name) || (o.parent && esPuerta(o.parent.name))) return // puerta = fuera del collider (umbral pasable)
+        const g = o.geometry.clone() as THREE.BufferGeometry
+        for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k) // colisión = solo posición
+        g.applyMatrix4(o.matrixWorld) // a espacio MUNDO (incluye la escala del escenario)
+        geos.push(g)
+      })
+      if (!geos.length) return
+      // mergeGeometries exige que TODAS estén indexadas o ninguna. Antes se des-indexaba todo (toNonIndexed
+      // multiplicaba ×3-6 los vértices y la memoria); en su lugar añadimos un índice trivial solo a las que
+      // falten → merge INDEXADO liviano (el BVH se construye igual de rápido pero gasta mucha menos memoria).
+      for (const g of geos) {
+        if (!g.index) {
+          const n = g.getAttribute('position').count
+          const idx = new (n > 65535 ? Uint32Array : Uint16Array)(n)
+          for (let i = 0; i < n; i++) idx[i] = i
+          g.setIndex(new THREE.BufferAttribute(idx, 1))
+        }
+      }
+      const merged = BufferGeometryUtils.mergeGeometries(geos, false)
+      geos.forEach((g) => g.dispose())
+      ;(merged as any).computeBoundsTree()
+      // DoubleSide: los rayos de colisión y de PISO golpean sin importar la orientación de las normales.
+      mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+      mesh.updateMatrixWorld() // matriz identidad: la geometría ya está en mundo
+      colliderRef.current = mesh
     })
-    if (!geos.length) return
-    const merged = BufferGeometryUtils.mergeGeometries(geos, false)
-    geos.forEach((g) => g.dispose())
-    ;(merged as any).computeBoundsTree()
-    // DoubleSide: los rayos de colisión y de PISO golpean sin importar la orientación de las normales.
-    const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
-    mesh.updateMatrixWorld() // matriz identidad: la geometría ya está en mundo
-    colliderRef.current = mesh
     return () => {
-      ;(merged as any).disposeBoundsTree?.()
-      merged.dispose()
-      if (colliderRef.current === mesh) colliderRef.current = null
+      cancelado = true
+      cancelAnimationFrame(raf)
+      if (mesh) {
+        ;(mesh.geometry as any).disposeBoundsTree?.()
+        mesh.geometry.dispose()
+        if (colliderRef.current === mesh) colliderRef.current = null
+      }
     }
   }, [obj, escala, construirColisiones, colliderRef, esPuerta])
 

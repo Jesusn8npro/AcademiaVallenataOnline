@@ -21,7 +21,7 @@ export interface EscenarioMundoDef {
 export interface AsientoDef { x: number; z: number; ry: number }
 
 export const ESCENARIOS_MUNDO: EscenarioMundoDef[] = [
-  { id: 'coffee', nombre: '☕ Cafetería', glb: '/modelos3d/mundo-coffeeshop-v1.glb', escala: 1, limite: 60, credito: 'shawky.sherif1 (CC-BY)', spawn: [30, 33], mirar: Math.PI, colisiones: true, puertas: ['Cube008', 'Cube009'], radioPuerta: 5,
+  { id: 'coffee', nombre: '☕ Cafetería', glb: '/modelos3d/mundo-coffeeshop-v2.glb', escala: 1, limite: 60, credito: 'shawky.sherif1 (CC-BY)', spawn: [30, 33], mirar: Math.PI, colisiones: true, puertas: ['Cube008', 'Cube009'], radioPuerta: 5,
     asientos: [ // sofás del lounge (coords del mundo, calculadas en Blender); ry mira hacia el centro del lounge
       { x: 27.3, z: 24.8, ry: 2.79 },
       { x: 23.5, z: 17.6, ry: 2.04 },
