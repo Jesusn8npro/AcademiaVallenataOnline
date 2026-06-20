@@ -33,9 +33,6 @@ const NOOP_MALLAS: (p: any) => void = () => {};
 // ── Vista 3D del modo juego ─────────────────────────────────────────────────────────
 // Pieles (SKIN_*), encuadre (ENC_*) y claveBoton viven en ./acordeon3dCompartido (los reusan
 // también Maestro y Synthesia vía <AcordeonModo3D>).
-// Poner en true para mostrar el panel de ajuste del encuadre 3D (sliders) sobre la página real.
-// Ya afinado y guardado en ENC_FILL/ENC_OFFSET_* → queda en false (sin sliders de debug).
-const CONTROLES_3D = false;
 
 // ── Director multicámara (opcional) ──────────────────────────────────────────────────
 // "Tomas" = presets de ENCUADRE (zoom + desplazamiento). Al elegir una, EncuadreJuego interpola
@@ -145,7 +142,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   fuelleActMaestroRef.current = Math.min(_leadCount / 2, 1);
   const direccionMaestroLead: 'halar' | 'empujar' = _leadEmpujar ? 'empujar' : 'halar';
 
-  // Ajuste en vivo del encuadre 3D (solo si CONTROLES_3D). Arrancan en los valores fijos.
+  // Encuadre 3D: arrancan en los valores fijos; el director multicámara (aplicarToma) los mueve.
   const [fill3D, setFill3D] = useState(ENC_FILL);
   const [offX3D, setOffX3D] = useState(ENC_OFFSET_REL_X);
   const [offY3D, setOffY3D] = useState(ENC_OFFSET_REL_Y);
@@ -458,28 +455,6 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
             </div>
           )}
         </>
-      )}
-
-      {/* Panel de ajuste del encuadre 3D (temporal). Cuando demos con los valores, se ponen
-          en ENC_FILL/ENC_OFFSET_REL_Y y se pone CONTROLES_3D = false. */}
-      {use3D && CONTROLES_3D && (
-        <div className="juego-controles-3d">
-          <div className="juego-controles-3d-fila titulo">
-            Botones → M: {Object.keys(posMaestroRef.current).length} · A: {Object.keys(posAlumnoRef.current).length}
-          </div>
-          <label className="juego-controles-3d-fila">
-            <span>Tamaño: {fill3D.toFixed(2)}</span>
-            <input type="range" min={0.3} max={2} step={0.01} value={fill3D} onChange={(e) => setFill3D(+e.target.value)} />
-          </label>
-          <label className="juego-controles-3d-fila">
-            <span>Mover X: {offX3D.toFixed(2)}</span>
-            <input type="range" min={-1.5} max={1.5} step={0.01} value={offX3D} onChange={(e) => setOffX3D(+e.target.value)} />
-          </label>
-          <label className="juego-controles-3d-fila">
-            <span>Subir/Bajar: {offY3D.toFixed(2)}</span>
-            <input type="range" min={-1} max={1} step={0.01} value={offY3D} onChange={(e) => setOffY3D(+e.target.value)} />
-          </label>
-        </div>
       )}
 
       {/* ── Escenario Maestro / Alumno (compartido) ── */}
