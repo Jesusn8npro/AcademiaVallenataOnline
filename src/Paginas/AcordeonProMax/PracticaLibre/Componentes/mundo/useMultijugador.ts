@@ -57,7 +57,10 @@ export function useMultijugador(estadoLocalRef: React.MutableRefObject<EstadoJug
     ch.on('broadcast', { event: 'estado' }, ({ payload }: { payload: any }) => {
       if (!payload || payload.id === miId) return
       const id: string = payload.id
-      const target: EstadoJugador = { x: payload.x, z: payload.z, ry: payload.ry, personajeId: payload.personajeId, anim: payload.anim ?? null, nombre: payload.nombre ?? '', tocando: !!payload.tocando, mira: typeof payload.mira === 'number' ? payload.mira : payload.ry }
+      // SANEAR lo que llega de la red (un cliente custom puede mandar basura/payloads enormes): números
+      // finitos y nombre acotado. Evita NaN propagándose por el visor y nombres gigantes en la etiqueta.
+      const num = (v: any, def = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : def)
+      const target: EstadoJugador = { x: num(payload.x), z: num(payload.z), ry: num(payload.ry), personajeId: typeof payload.personajeId === 'string' ? payload.personajeId : '', anim: typeof payload.anim === 'string' ? payload.anim : null, nombre: String(payload.nombre ?? '').slice(0, 40), tocando: !!payload.tocando, mira: num(payload.mira, num(payload.ry)) }
       const ex = remotosRef.current.get(id)
       if (ex) { ex.target = target; ex.visto = performance.now() }
       else {
