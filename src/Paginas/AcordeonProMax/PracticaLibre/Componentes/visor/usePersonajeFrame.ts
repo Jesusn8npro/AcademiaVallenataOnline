@@ -21,11 +21,15 @@ export function usePersonajeFrame(
   fuelleAbiertoRef: React.MutableRefObject<boolean>,
   mixer: THREE.AnimationMixer | undefined,
   ligero: boolean = false,
+  // Velocidad (timeScale) de la animación de LOCOMOCIÓN (caminar/correr), sincronizada por quien usa el
+  // Modelo con el desplazamiento real → los pies no patinan ("flotar"). null/undefined = no es locomoción
+  // (un baile del panel) → se respeta el timeScale que puso useBailes.
+  velocidadLocoRef?: React.MutableRefObject<number | undefined>,
 ) {
   const {
     qRef, notasSonandoRef, ultimaNotaMsRef, fuelleNotaRef, aAccumRef, closeAction, cuerpoAction,
     morphCerrar, restW, brazoIzq, cajaGrip, melodiaSonandoRef, ultimaMelodiaMsRef, melodyPoseRef,
-    drivenDer, botones, ringSprites, botonGlow, notasActivas,
+    drivenDer, botones, ringSprites, botonGlow, notasActivas, baileAccion,
   } = refs
 
   useFrame((_, delta) => {
@@ -56,6 +60,8 @@ export function usePersonajeFrame(
     // hard-copy. cuerpoAction en 0 = base idle que se cruza con los bailes.
     if (closeAction.current) closeAction.current.time = 0
     if (cuerpoAction.current) cuerpoAction.current.time = 0
+    // Locomoción: el ritmo de las piernas sigue la velocidad real de avance (antifloat/antipatinaje).
+    if (velocidadLocoRef && velocidadLocoRef.current != null && baileAccion.current) baileAccion.current.timeScale = velocidadLocoRef.current
     if (mixer) mixer.update(delta)
     // Morphs: 'Cerrar' al cerrar (desde restW); 'Abrir' al abrir (estirado por FUELLE_ESTIRA).
     const wCerrar = restW.current * (1 - abrir) + (1 - restW.current) * cierre

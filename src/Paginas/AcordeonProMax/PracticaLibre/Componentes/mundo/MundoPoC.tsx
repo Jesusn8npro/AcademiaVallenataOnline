@@ -38,9 +38,14 @@ const SimuladorApp = React.lazy(() => import('../../../../SimuladorApp/Simulador
 // orbital 3ª persona controlada por el mouse (360°), con rueda para acercar hasta 1ª persona. Colisión
 // suave con otros usuarios (se encuentran sin bloquearse). URL: /test-mundo-3d.
 
-const VEL = 4.2           // m/s objetivo al caminar
+const VEL = 3.0           // m/s objetivo al caminar (bajado de 4.2: caminata más natural y cómoda; con la
+                          // cadencia proporcional (PASO_POR_VEL) a esta velocidad las piernas van a ~1.0 = paso natural)
 const RUN_MULT = 1.9      // multiplicador de velocidad al CORRER (Shift en PC / botón en móvil)
 const SALTO_SPEED = 1.0     // velocidad NATIVA del clip 'Salto vacano' (30fps)
+// timeScale de la anim de caminar/correr POR cada m/s de avance real → las piernas siguen el desplazamiento
+// y los pies NO patinan ("flotar"). Ajuste VISUAL: subir = piernas más rápidas. A VEL(4.2) da ~1.4.
+const PASO_POR_VEL = 0.33
+const PASO_MIN = 0.5, PASO_MAX = 3.0 // límites del timeScale de locomoción (ni congelado ni frenético)
 // SALTO = SOLO ANIMACIÓN, EN EL SITIO: al pulsar Saltar se reproduce el clip 'Salto vacano' tal cual (como
 // en Blender), SIN lanzar al avatar hacia arriba con gravedad (antes ese "saltico" de gravedad se veía poco
 // natural). Dura SALTO_DUR_MS y vuelve a idle. La GRAVEDAD se mantiene SOLO para CAER por bordes/escalones.
@@ -483,6 +488,8 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
   const grupo = React.useRef<THREE.Group>(null!)
   const montadoRef = React.useRef(performance.now()) // para no disparar destello en la resolución inicial del personaje
   const fuelleRef = React.useRef(false)
+  const velocidadLocoRef = React.useRef<number | undefined>(undefined) // ritmo de piernas ∝ su velocidad real (antipatinaje)
+  const prevPosRef = React.useRef<[number, number] | null>(null)
   const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look), calculado desde 'mira' de la red
   const ent0 = remotosRef.current.get(id)
@@ -550,6 +557,13 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     // PISO: el remoto también se para sobre el suelo real del escenario (mismo collider compartido).
     const colR = colliderRef.current
     if (colR) { const yp = pisoBajoAvatar(colR, g.position.x, g.position.z, g.position.y); if (yp !== null) g.position.y = yp }
+    // Ritmo de las piernas del remoto ∝ su velocidad real (delta de posición interpolada) → no patina al caminar.
+    if (anim === 'Caminata' || anim === 'Corriendo') {
+      const pp = prevPosRef.current
+      const spd = pp && dt > 1e-4 ? Math.hypot(g.position.x - pp[0], g.position.z - pp[1]) / dt : 0
+      velocidadLocoRef.current = THREE.MathUtils.clamp(spd * PASO_POR_VEL, PASO_MIN, PASO_MAX)
+    } else velocidadLocoRef.current = undefined
+    prevPosRef.current = [g.position.x, g.position.z]
     posRemotosRef.current.set(id, [g.position.x, g.position.z]) // última posición → efecto al irse
   })
 
@@ -557,7 +571,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     <group ref={grupo} userData={{ idJugador: id }}>
       <Etiqueta nombre={nombre} tocando={tocando} escuchando={escuchando} />
       <AnclaPies claveMedicion={glb}>
-        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} fuenteNotas={fuenteNotas} headYawRef={headYawRef} tocandoRef={tocandoRef} ligero />
+        <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin="original" glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} velocidadLocoRef={velocidadLocoRef} fuenteNotas={fuenteNotas} headYawRef={headYawRef} tocandoRef={tocandoRef} ligero />
       </AnclaPies>
     </group>
   )
@@ -584,6 +598,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
 }) {
   const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
   const grupo = React.useRef<THREE.Group>(null!)
+  const velocidadLocoRef = React.useRef<number | undefined>(undefined) // timeScale de caminar/correr ∝ velocidad real
   const fuelleRef = React.useRef(false)
   const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look): cámara - orientación del cuerpo
@@ -882,6 +897,10 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
     // del piso sube al avatar y el clip pone el paso de escalera). subiendo = el piso sube sostenido al caminar.
     const animActual = enSofa ? 'Sentarse' : (saltando ? 'Salto vacano' : (subiendo ? 'Subiendo escaleras' : (moviendo ? (correr ? 'Corriendo' : 'Caminata') : baile)))
     if (animActual !== anim) setAnim(animActual)
+    // Ritmo de las piernas ∝ velocidad real (caminar/correr) → pies sin patinar. Fuera de locomoción
+    // (bailes del panel/salto/sentarse) = undefined → respeta la velocidad propia de ese clip.
+    velocidadLocoRef.current = (animActual === 'Caminata' || animActual === 'Corriendo')
+      ? THREE.MathUtils.clamp(speed * PASO_POR_VEL, PASO_MIN, PASO_MAX) : undefined
 
     // Recentrar la cámara detrás del personaje (tecla C).
     if (recentrar.current) { yaw.current = g.rotation.y; recentrar.current = false }
@@ -962,7 +981,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
       <group visible={vistaModo !== 'primera'}>
         <React.Suspense fallback={null}>
           <AnclaPies claveMedicion={glb}>
-            <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} headYawRef={headYawRef} tocandoRef={tocandoRef} />
+            <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} velocidadLocoRef={velocidadLocoRef} headYawRef={headYawRef} tocandoRef={tocandoRef} />
           </AnclaPies>
         </React.Suspense>
       </group>

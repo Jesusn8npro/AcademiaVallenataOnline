@@ -28,7 +28,7 @@ import { useBalanceoTocando } from './useBalanceoTocando'
 
 useGLTF.setDecoderPath('/draco/')
 
-export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYawRef, tocandoRef, ligero, velocidadBaile }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas; headYawRef?: React.MutableRefObject<number>; tocandoRef?: React.MutableRefObject<boolean>; ligero?: boolean; velocidadBaile?: number }) {
+export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYawRef, tocandoRef, ligero, velocidadBaile, velocidadLocoRef }: { fuelleAbiertoRef: React.MutableRefObject<boolean>; skin: string; glb: string; baile: string | null; fuenteNotas?: FuenteNotas; headYawRef?: React.MutableRefObject<number>; tocandoRef?: React.MutableRefObject<boolean>; ligero?: boolean; velocidadBaile?: number; velocidadLocoRef?: React.MutableRefObject<number | undefined> }) {
   const grupo = React.useRef<THREE.Group>(null!)
   const { scene: sceneCacheada, animations } = useGLTF(glb) as any
   // useGLTF cachea y devuelve la MISMA escena por URL. En el mundo multijugador varios avatares pueden
@@ -105,7 +105,7 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYa
   useBailes(refs, { mixer, scene, baile, clipsBaile, velocidad: velocidadBaile })
   usePielesAcordeon(refs, acordeon, skin)
   useNotasSuscripcion(refs, fuenteNotas)
-  usePersonajeFrame(refs, fuelleAbiertoRef, mixer, ligero)
+  usePersonajeFrame(refs, fuelleAbiertoRef, mixer, ligero, velocidadLocoRef)
   // DESPUÉS de usePersonajeFrame (que hace mixer.update): la cabeza gira hacia donde mira el jugador.
   useHeadLook(scene, headYawRef)
   // Balanceo musical del torso mientras toca (encima de la pose de agarre; no acumula).
