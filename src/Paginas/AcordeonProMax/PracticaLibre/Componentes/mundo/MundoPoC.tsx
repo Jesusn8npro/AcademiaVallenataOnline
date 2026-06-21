@@ -395,6 +395,9 @@ function LuzSol({ estadoLocalRef }: { estadoLocalRef: React.MutableRefObject<Est
 // Ancla los pies del personaje a y=0 (mide su bbox una vez).
 function AnclaPies({ claveMedicion, children }: { claveMedicion: string; children: React.ReactNode }) {
   const ref = React.useRef<THREE.Group>(null!)
+  // Oculto hasta MEDIR los pies: si se muestra antes, el avatar aparece "enterrado" en el suelo un instante
+  // (el bbox/anclaje tardan 1 frame). Se hace visible recién anclado → aparición limpia, sin flash.
+  const [medido, setMedido] = React.useState(false)
   React.useEffect(() => {
     let raf = 0
     const medir = () => {
@@ -419,11 +422,12 @@ function AnclaPies({ claveMedicion, children }: { claveMedicion: string; childre
       const ejeLocal = eje.clone().applyMatrix4(invP)                                  // caderas en frame del grupo
       const piesLocalY = new THREE.Vector3(eje.x, box.min.y, eje.z).applyMatrix4(invP).y // pies en frame del grupo
       g.position.set(-ejeLocal.x, -piesLocalY, -ejeLocal.z)
+      setMedido(true) // ya anclado a sus pies → mostrar (sin el flash de "enterrado")
     }
     raf = requestAnimationFrame(medir)
     return () => cancelAnimationFrame(raf)
   }, [claveMedicion])
-  return <group ref={ref}>{children}</group>
+  return <group ref={ref} visible={medido}>{children}</group>
 }
 
 // Efecto de aparición/desaparición de un jugador: ráfaga de partículas brillantes (chispas) que suben

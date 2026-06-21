@@ -9,9 +9,23 @@ import { ESCENARIOS_MUNDO, ESCENARIO_MUNDO_DEFAULT, escenarioMundoPorId, VISTAS 
 import '../../src/Paginas/AcordeonProMax/PracticaLibre/EstudioPracticaLibre.css'
 // (El CSS del simulador del duelo se importa en ./layout.tsx — server component, carga fiable por ruta.)
 
+// Fallback del import dinámico = MISMA pantalla que el overlay "Cargando mundo abierto" de MundoPoC, a
+// pantalla completa (flex:1) → la carga se ve como UNA sola pantalla limpia (sin el flash negro/layout roto
+// previo) que transiciona sin costuras al overlay interno y luego al mundo.
+function CargandoMundo() {
+  return (
+    <div style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'radial-gradient(ellipse at center, #1a2740 0%, #0a0e1a 78%)', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+      <style>{`@keyframes mundoSpin{to{transform:rotate(360deg)}}@keyframes mundoPulse{0%,100%{opacity:.55}50%{opacity:1}}`}</style>
+      <div style={{ width: 62, height: 62, borderRadius: '50%', border: '4px solid rgba(255,255,255,.14)', borderTopColor: '#ff7a18', animation: 'mundoSpin .9s linear infinite' }} />
+      <div style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, letterSpacing: '.5px' }}>🌍 Cargando mundo abierto</div>
+      <div style={{ fontSize: 14, opacity: .85, animation: 'mundoPulse 1.5s ease-in-out infinite' }}>¡Prepárate para disfrutar!</div>
+    </div>
+  )
+}
+
 const Mundo = dynamic(
   () => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/mundo/MundoPoC'),
-  { ssr: false, loading: () => <div style={{ padding: 24, color: '#fff' }}>Cargando…</div> },
+  { ssr: false, loading: () => <CargandoMundo /> },
 )
 
 // Sandbox del MUNDO responsivo. Por defecto INMERSIVO (overlay fijo que TAPA sidebar + menú superior +
