@@ -56,6 +56,18 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Cache INMUTABLE (1 año) para los assets estáticos pesados de /public: modelos 3D, audio,
+        // texturas, videos, decoder Draco e imágenes. Son archivos versionados por commit (al cambiar
+        // uno se sube con nombre nuevo, p.ej. acordeon-...-v2), así que el navegador puede cachearlos
+        // para siempre → cero round-trips de revalidación en recargas y sesiones nuevas (clave a escala
+        // de lanzamiento: ~180MB de estáticos no se re-validan en cada visita). NO incluye el HTML ni
+        // sw.js (quedan con la regla /(.*) sin Cache-Control → revalidan, como deben para la PWA).
+        source: '/:dir(modelos3d|audio|texturas-acordeon|videos|acordeones|draco|personajes|pieles-acordeon|efectos|assets|iconos-pwa)/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },

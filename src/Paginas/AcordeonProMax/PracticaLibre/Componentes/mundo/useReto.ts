@@ -3,11 +3,12 @@ import * as React from 'react'
 import { supabase } from '../../../../../servicios/clienteSupabase'
 
 // Modo Competencia — Rebanada 1: HANDSHAKE + ACUERDO del reto, sincronizado por Supabase Realtime.
-// Canal PROPIO ('mundo-retos', aparte del de movimiento) para no mezclar el tráfico de posiciones con
-// el del reto. Cada evento va DIRIGIDO a un jugador (campo `para` = su miId) y el receptor ignora lo que
-// no es para él. self:false → no me llegan mis propios eventos. Es efímero (sin tabla): si recargas, el
-// reto se pierde — suficiente para acordar el duelo en vivo. El DUELO en sí (tocar/puntaje/ganador) es la
-// Rebanada 2; aquí paramos cuando AMBOS marcan "Listo".
+// Canal PROPIO (`${sala}:retos`, aparte del de movimiento) para no mezclar el tráfico de posiciones con
+// el del reto. La `sala` es la MISMA instancia sharded que eligió useMultijugador → solo retas a quien
+// comparte tu sala (escala igual que el mundo). Cada evento va DIRIGIDO a un jugador (campo `para` = su
+// miId) y el receptor ignora lo que no es para él. self:false → no me llegan mis propios eventos. Es
+// efímero (sin tabla): si recargas, el reto se pierde — suficiente para acordar el duelo en vivo. El DUELO
+// en sí (tocar/puntaje/ganador) es la Rebanada 2; aquí paramos cuando AMBOS marcan "Listo".
 
 export type EstadoReto = 'libre' | 'invitando' | 'invitado' | 'negociando'
 
@@ -15,11 +16,9 @@ export interface CancionReto { id: string; titulo: string; autor: string; slug: 
 export interface MensajeChat { de: 'yo' | 'el'; texto: string; t: number }
 export interface Oponente { id: string; nombre: string }
 
-const SALA = 'mundo-retos'
-
 interface PayloadBase { tipo: string; de: string; deNombre?: string; para?: string; [k: string]: any }
 
-export function useReto(miId: string, miNombre: string) {
+export function useReto(miId: string, miNombre: string, sala: string | null) {
   const [estado, setEstado] = React.useState<EstadoReto>('libre')
   const [oponente, setOponente] = React.useState<Oponente | null>(null)
   const [cancion, setCancion] = React.useState<CancionReto | null>(null)
@@ -55,7 +54,8 @@ export function useReto(miId: string, miNombre: string) {
   }, [])
 
   React.useEffect(() => {
-    const ch = supabase.channel(SALA, { config: { broadcast: { self: false } } })
+    if (!sala) return // aún sin instancia resuelta (useMultijugador todavía elige) → no abrir canal
+    const ch = supabase.channel(`${sala}:retos`, { config: { broadcast: { self: false } } })
     chRef.current = ch
 
     ch.on('broadcast', { event: 'reto' }, ({ payload }: { payload: PayloadBase }) => {
@@ -105,7 +105,7 @@ export function useReto(miId: string, miNombre: string) {
     })
     ch.subscribe() // suscripción WebSocket para RECIBIR; emitir va por httpSend (REST)
     return () => { chRef.current = null; supabase.removeChannel(ch) }
-  }, [miId, reset])
+  }, [miId, reset, sala])
 
   // --- API pública ---
   const invitar = React.useCallback((idObjetivo: string, nombreObjetivo: string) => {

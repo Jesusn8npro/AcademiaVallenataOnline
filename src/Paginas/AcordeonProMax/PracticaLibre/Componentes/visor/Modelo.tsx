@@ -90,6 +90,9 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYa
     return esc
   }, [acordeonGltf.scene])
 
+  // Tras montar: calienta los otros personajes en segundo plano (idle) → cambio de personaje sin freeze.
+  React.useEffect(() => { calentarPersonajesEnIdle() }, [])
+
   // Handle de medición/tuneo de poses. SOLO en desarrollo: en producción no se expone el estado
   // interno (escena, refs, cámara) al objeto global window (hardening).
   React.useEffect(() => {
@@ -111,6 +114,27 @@ export function Modelo({ fuelleAbiertoRef, skin, glb, baile, fuenteNotas, headYa
   return <primitive ref={grupo} object={scene} />
 }
 
+// Precarga del primer render: SOLO lo imprescindible (personaje por defecto + acordeón + bailes). Los
+// otros 5 personajes (~2.7MB) NO se cargan acá: harían competir 2.7MB en paralelo con el primer render
+// y en móvil/red lenta lo harían tartamudear.
 useGLTF.preload(PERSONAJES[0].archivo)
 useGLTF.preload(ACORDEON_GLB)
 useGLTF.preload(BAILES_GLB)
+
+// Calienta los OTROS personajes en segundo plano, cuando el navegador está OCIOSO (tras el primer render),
+// de a uno por tick para no saturar la red. Así el arranque es fluido Y el cambio en el selector es
+// instantáneo (el GLB ya está en caché). Una sola vez por sesión, aunque se monten varios <Modelo>.
+let personajesCalentados = false
+function calentarPersonajesEnIdle(): void {
+  if (personajesCalentados || typeof window === 'undefined') return
+  personajesCalentados = true
+  const idle: (cb: () => void) => void = (window as any).requestIdleCallback || ((cb: () => void) => setTimeout(cb, 1200))
+  const pendientes = PERSONAJES.slice(1).map((p) => p.archivo) // el [0] ya se precargó arriba
+  const siguiente = () => {
+    const url = pendientes.shift()
+    if (!url) return
+    useGLTF.preload(url)
+    idle(siguiente)
+  }
+  idle(siguiente)
+}

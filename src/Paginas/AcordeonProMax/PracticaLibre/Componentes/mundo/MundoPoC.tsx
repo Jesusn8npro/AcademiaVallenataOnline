@@ -479,8 +479,9 @@ function Etiqueta({ nombre, tocando, escuchando }: { nombre: string; tocando: bo
 
 // Avatar de OTRO usuario: interpola pos/rot y replica personaje + animación + nombre + 🎵 + ANIMA
 // los dedos/fuelle de lo que ESE jugador está tocando (notas de la red filtradas por su id).
-function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef, colliderRef }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>>; colliderRef: React.MutableRefObject<THREE.Mesh | null> }) {
+function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRemotosRef, colliderRef, onCambioPersonaje }: { id: string; remotosRef: React.MutableRefObject<Map<string, RemotoEntry>>; escuchando?: boolean; suscribirNotasRemotas: (cb: NotaRemotaCb) => () => void; posRemotosRef: React.MutableRefObject<Map<string, [number, number]>>; colliderRef: React.MutableRefObject<THREE.Mesh | null>; onCambioPersonaje?: (pos: [number, number, number]) => void }) {
   const grupo = React.useRef<THREE.Group>(null!)
+  const montadoRef = React.useRef(performance.now()) // para no disparar destello en la resolución inicial del personaje
   const fuelleRef = React.useRef(false)
   const tocandoRef = React.useRef(false) // está tocando → balanceo del torso
   const headYawRef = React.useRef(0) // desfase cabeza↔cuerpo (head-look), calculado desde 'mira' de la red
@@ -504,7 +505,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
         const prev = safety.get(idBoton)
         if (prev) { clearTimeout(prev); emitir(idBoton, 'up') } // re-trigger limpio
         emitir(idBoton, 'down')
-        safety.set(idBoton, setTimeout(() => { safety.delete(idBoton); emitir(idBoton, 'up') }, 3000))
+        safety.set(idBoton, setTimeout(() => { safety.delete(idBoton); emitir(idBoton, 'up') }, 1200))
       } else {
         const prev = safety.get(idBoton)
         if (!prev) return // ya soltada (p.ej. por el safety) → no doble 'up'
@@ -538,7 +539,11 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
     // Head-look: desfase entre hacia dónde mira (cámara del dueño, 'mira') y su cuerpo.
     headYawRef.current = normAngle((typeof ent.target.mira === 'number' ? ent.target.mira : g.rotation.y) - g.rotation.y)
     if (ent.target.anim !== anim) setAnim(ent.target.anim)
-    if (ent.target.personajeId && ent.target.personajeId !== personajeId) setPersonajeId(ent.target.personajeId)
+    if (ent.target.personajeId && ent.target.personajeId !== personajeId) {
+      setPersonajeId(ent.target.personajeId)
+      // Destello en vivo cuando ESTE remoto cambia de personaje (no en la resolución inicial tras entrar).
+      if (performance.now() - montadoRef.current > 1500) onCambioPersonaje?.([g.position.x, 0, g.position.z])
+    }
     if (ent.target.nombre !== nombre) setNombre(ent.target.nombre)
     if (ent.target.tocando !== tocando) setTocando(ent.target.tocando)
     tocandoRef.current = performance.now() - ultimaNotaRef.current < 650 // balanceo por actividad de notas
@@ -950,12 +955,17 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
       <Etiqueta nombre={nombre} tocando={tocando} />
       {/* Suspense PROPIO del personaje local: al cambiar de personaje (glb nuevo) suspende SOLO la
           malla mientras carga; el controlador (cámara, teclas, caminar) sigue VIVO → ya no se reinicia
-          ni se rompe la caminata al cambiar seguido. */}
-      <React.Suspense fallback={null}>
-        <AnclaPies claveMedicion={glb}>
-          <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} headYawRef={headYawRef} tocandoRef={tocandoRef} />
-        </AnclaPies>
-      </React.Suspense>
+          ni se rompe la caminata al cambiar seguido.
+          1ª PERSONA → cuerpo OCULTO (visible=false): la cámara va a la altura de los ojos y, al bailar, el
+          mesh de la cabeza la tapaba (se veía el interior de la cara). Sin cuerpo = vista limpia. No se
+          desmonta (solo se oculta) → al volver a 3ª persona reaparece al instante sin recargar. */}
+      <group visible={vistaModo !== 'primera'}>
+        <React.Suspense fallback={null}>
+          <AnclaPies claveMedicion={glb}>
+            <Modelo key={glb} fuelleAbiertoRef={fuelleRef} skin={skin} glb={glb} baile={anim} velocidadBaile={anim === 'Salto vacano' ? SALTO_SPEED : undefined} headYawRef={headYawRef} tocandoRef={tocandoRef} />
+          </AnclaPies>
+        </React.Suspense>
+      </group>
     </group>
   )
 }
@@ -970,6 +980,9 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: {
   // este motor también dispararía/broadcastearía notas). Igual reproduce audio: reproduceTono y
   // motorAudioPro.reproducir NO miran ese flag.
   const logica = useLogicaAcordeon({ deshabilitarInteraccion: true })
+  // Ref estable de `logica` → el efecto de notas NO depende de su identidad (si dependiera, se re-suscribiría
+  // en cada render y cortaría/pegaría notas en vuelo).
+  const logicaRef = React.useRef(logica); logicaRef.current = logica
   React.useEffect(() => { try { motorAudioPro.setVolumenMaestro(volumen) } catch {} }, [volumen])
   // En un DUELO forzamos la tonalidad de la CANCIÓN en el oyente → las notas remotas suenan en el tono
   // correcto (y el fallback también), sin cruzarse con la tonalidad personal del que escucha. GUARD
@@ -982,8 +995,12 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: {
   React.useEffect(() => {
     // Notas SONANDO ahora mismo, indexadas por (jugador:botón). 'down' arranca el tono igual que al
     // tocar en vivo (sin duración fija) y guarda sus instancias; 'up' las detiene → la nota dura
-    // EXACTO lo que el otro la sostuvo, fluido y sin pegarse. Temporizador de seguridad por si un 'up'
-    // se pierde en la red (broadcast no es fiable): suelta la nota a los 3 s como tope.
+    // EXACTO lo que el otro la sostuvo, fluido y sin pegarse. Dos defensas contra notas pegadas/acumuladas:
+    //  - SAFETY (1.2s): si un 'up' se pierde en la red, suelta la nota igual (antes 3s = pegada demasiado).
+    //  - MAX_VOCES: tope de notas simultáneas; si llega una nueva con todo lleno, suelta la MÁS VIEJA → la
+    //    música del otro nunca se "acumula" en un muro de voces que no para.
+    const SAFETY_MS = 1200
+    const MAX_VOCES = 12
     const activas = new Map<string, { instances: any[]; safety: ReturnType<typeof setTimeout> }>()
     const soltar = (clave: string) => {
       const v = activas.get(clave)
@@ -997,6 +1014,7 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: {
       const clave = deId + ':' + idBoton
       if (accion === 'down') {
         soltar(clave) // re-trigger limpio: corta la anterior si seguía sonando
+        if (activas.size >= MAX_VOCES) soltar(activas.keys().next().value as string) // libera la más vieja (orden de inserción)
         // Reproducir el TONO EXACTO que tocó el otro (muestra + semitonos que viajaron en el evento) →
         // suena en el MISMO tono sin importar la tonalidad/instrumento de ESTE cliente. Si no llegó el
         // tono (o el banco no está cargado aquí), caemos a la resolución local (puede sonar transpuesto).
@@ -1006,14 +1024,14 @@ function OyenteRemoto({ suscribir, volumen, escuchandoRef, tonalidadForzada }: {
             .map((s) => motorAudioPro.reproducir(s.idSonido, tono.bancoId, tono.volumen, s.semitonos, false))
             .filter(Boolean)
         }
-        if (instances.length === 0) { try { instances = logica.reproduceTono(idBoton).instances || [] } catch {} }
-        activas.set(clave, { instances, safety: setTimeout(() => soltar(clave), 3000) })
+        if (instances.length === 0) { try { instances = logicaRef.current.reproduceTono(idBoton).instances || [] } catch {} }
+        activas.set(clave, { instances, safety: setTimeout(() => soltar(clave), SAFETY_MS) })
       } else {
         soltar(clave)
       }
     })
     return () => { off(); Array.from(activas.keys()).forEach(soltar) }
-  }, [suscribir, logica, escuchandoRef])
+  }, [suscribir])
   return null
 }
 
@@ -1075,6 +1093,17 @@ export default function MundoPoC({
   const { usuario } = useUsuario()
   const escenarioDef = React.useMemo(() => escenarioMundoPorId(escenarioId), [escenarioId])
   const colliderRef = React.useRef<THREE.Mesh | null>(null) // collider del escenario (lo llena EscenarioMundo)
+
+  // Calienta los OTROS escenarios en segundo plano cuando el navegador está OCIOSO (tras el primer render),
+  // de a uno → cambiar de escenario después es instantáneo (ya en caché), SIN robarle ancho de banda a la
+  // carga inicial (que solo baja el escenario actual + el avatar).
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const idle: (cb: () => void) => void = (window as any).requestIdleCallback || ((cb: () => void) => setTimeout(cb, 1500))
+    const otros = ESCENARIOS_MUNDO.filter((e) => e.glb && e.id !== escenarioId).map((e) => e.glb as string)
+    const sig = () => { const u = otros.shift(); if (!u) return; useGLTF.preload(u); idle(sig) }
+    idle(sig)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- una sola vez al montar (escenarioId inicial)
 
   // "Cargando mundo abierto": overlay que cubre hasta que el escenario carga Y el avatar se posa sobre el
   // piso. Sin esto, al cargar se veía el personaje METIDO EN EL SUELO (el collider/medición de pies tardan
@@ -1142,9 +1171,9 @@ export default function MundoPoC({
   React.useEffect(() => subscribirNotas((e) => { if (e.accion === 'down') lastNoteRef.current = performance.now() }), [])
 
   const estadoLocalRef = React.useRef<EstadoJugador>({ x: 0, z: 0, ry: 0, personajeId, anim: null, nombre, tocando: false, mira: 0 })
-  const { remotos, remotosRef, miId, suscribirNotasRemotas } = useMultijugador(estadoLocalRef)
-  // Modo Competencia (Rebanada 1): handshake + acuerdo del reto.
-  const reto = useReto(miId, nombre)
+  const { remotos, remotosRef, miId, suscribirNotasRemotas, sala } = useMultijugador(estadoLocalRef)
+  // Modo Competencia (Rebanada 1): handshake + acuerdo del reto. Usa la MISMA instancia sharded.
+  const reto = useReto(miId, nombre, sala)
 
   // Efectos de aparición/desaparición de jugadores (partículas). Diff de la lista de remotos: el que
   // ENTRA → chispas doradas en su spawn; el que SALE → chispas celestes en su última posición.
@@ -1169,6 +1198,10 @@ export default function MundoPoC({
     prevRemotosRef.current = remotos
   }, [remotos, remotosRef])
   const quitarEfecto = React.useCallback((key: number) => setEfectos((es) => es.filter((e) => e.key !== key)), [])
+  // Chispas doradas en una posición del mundo (destello de cambio de personaje, local o remoto).
+  const agregarDestello = React.useCallback((pos: [number, number, number]) => {
+    setEfectos((es) => [...es, { key: keyEfectoRef.current++, pos, tipo: 'aparecer' }])
+  }, [])
 
   // Efecto de partículas cuando TÚ cambias de personaje (chispas doradas en tu posición actual) →
   // la transición se siente menos brusca. Salta el primer montaje (no es un cambio).
@@ -1176,10 +1209,10 @@ export default function MundoPoC({
   React.useEffect(() => {
     if (prevPersonajeLocalRef.current !== null && prevPersonajeLocalRef.current !== personajeId) {
       const s = estadoLocalRef.current
-      setEfectos((es) => [...es, { key: keyEfectoRef.current++, pos: [s.x, 0, s.z], tipo: 'aparecer' }])
+      agregarDestello([s.x, 0, s.z])
     }
     prevPersonajeLocalRef.current = personajeId
-  }, [personajeId])
+  }, [personajeId, agregarDestello])
 
   // Audio de los demás POR JUGADOR: clic en un avatar → lo escuchas (toggle). + volumen.
   const [escuchando, setEscuchando] = React.useState<Set<string>>(new Set())
@@ -1250,7 +1283,7 @@ export default function MundoPoC({
               cargado, solo se carga él mismo SIN borrar/recargar la escena de los demás. */}
           {remotos.map((id) => (
             <React.Suspense key={id} fallback={null}>
-              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} posRemotosRef={posRemotosRef} colliderRef={colliderRef} />
+              <AvatarRemoto id={id} remotosRef={remotosRef} escuchando={escuchando.has(id)} suscribirNotasRemotas={suscribirNotasRemotas} posRemotosRef={posRemotosRef} colliderRef={colliderRef} onCambioPersonaje={agregarDestello} />
             </React.Suspense>
           ))}
           {/* Efectos de partículas al entrar/salir un jugador (efímeros, se auto-desmontan). */}
