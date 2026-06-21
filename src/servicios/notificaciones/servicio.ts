@@ -1,109 +1,110 @@
-import { supabase } from '../clienteSupabase';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Notificacion } from '../../tipos/notificaciones';
 import { NotificacionesCRUDBase } from './_crudBase';
 
 class NotificacionesService extends NotificacionesCRUDBase {
-    private channel: RealtimeChannel | null = null;
     private callbacks: ((notificacion: Notificacion) => void)[] = [];
     private contadorCallbacks: ((contador: number) => void)[] = [];
-    private usuarioActual: string | null = null;
+    private pollTimer: ReturnType<typeof setInterval> | null = null;
+    private idsVistos: Set<string> | null = null; // null = aún no se sembró el primer sondeo
 
-    private async iniciarCanalRealtime() {
-        if (this.channel) return;
-
+    // POLLING en vez de una conexión Realtime persistente por usuario. Una conexión Realtime por
+    // cada logueado toparía el sitio en ~500 usuarios (tope de conexiones del plan Pro); el badge y
+    // la lista de notificaciones no necesitan tiempo real estricto. Sondea cada 45s (pausa si la
+    // pestaña está oculta) → el sitio escala a MILES de sesiones independientes sin tocar ese tope, y
+    // deja las conexiones Realtime libres para el chat y el mundo, donde el tiempo real sí importa.
+    private async sondear(): Promise<void> {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            this.usuarioActual = user.id;
-
-            this.channel = supabase
-                .channel(`notificaciones_${user.id}`)
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'notificaciones',
-                        filter: `usuario_id=eq.${user.id}`
-                    },
-                    (payload: any) => {
-                        const nuevaNotificacion: Notificacion = {
-                            id: payload.new.id,
-                            usuario_id: payload.new.usuario_id,
-                            tipo: payload.new.tipo,
-                            titulo: payload.new.titulo,
-                            mensaje: payload.new.mensaje,
-                            icono: payload.new.icono,
-                            categoria: payload.new.categoria,
-                            prioridad: payload.new.prioridad,
-                            leida: payload.new.leida,
-                            archivada: payload.new.archivada,
-                            url_accion: payload.new.url_accion,
-                            entidad_id: payload.new.entidad_id,
-                            entidad_tipo: payload.new.entidad_tipo,
-                            datos_adicionales: payload.new.datos_adicionales,
-                            fecha_creacion: payload.new.fecha_creacion,
-                            fecha_lectura: payload.new.fecha_lectura,
-                            fecha_expiracion: payload.new.fecha_expiracion
-                        };
-
-                        this.callbacks.forEach(cb => cb(nuevaNotificacion));
-                        this.actualizarContador();
-                        this.mostrarNotificacionNativa(nuevaNotificacion);
+            if (this.contadorCallbacks.length) {
+                const c = await this.obtenerContadorNoLeidas();
+                this.contadorCallbacks.forEach(cb => cb(c));
+            }
+            if (this.callbacks.length) {
+                const { notificaciones } = await this.obtenerNotificaciones({ limite: 20 });
+                if (this.idsVistos === null) {
+                    this.idsVistos = new Set(notificaciones.map(n => n.id)); // 1er sondeo: sembrar sin emitir
+                } else {
+                    for (const n of [...notificaciones].reverse()) { // de más vieja a más nueva
+                        if (this.idsVistos.has(n.id)) continue;
+                        this.idsVistos.add(n.id);
+                        this.callbacks.forEach(cb => cb(n));
+                        this.mostrarNotificacionNativa(n);
                     }
-                )
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'notificaciones',
-                        filter: `usuario_id=eq.${user.id}`
-                    },
-                    () => {
-                        this.actualizarContador();
-                    }
-                )
-                .subscribe(() => {});
+                }
+            }
+        } catch { /* silencioso: el siguiente sondeo reintenta */ }
+    }
 
-        } catch (error) {
+    private asegurarPolling(): void {
+        if (this.pollTimer) return;
+        this.sondear();
+        this.pollTimer = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return; // no sondear en segundo plano
+            this.sondear();
+        }, 45000);
+    }
+
+    private detenerPollingSiVacio(): void {
+        if (this.pollTimer && this.callbacks.length === 0 && this.contadorCallbacks.length === 0) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
+            this.idsVistos = null;
         }
+    }
+
+    // Refresco inmediato del contador (tras marcar leída / archivar) → el badge no espera al sondeo.
+    private async emitirContador(): Promise<void> {
+        if (!this.contadorCallbacks.length) return;
+        const c = await this.obtenerContadorNoLeidas();
+        this.contadorCallbacks.forEach(cb => cb(c));
     }
 
     async suscribirseANotificaciones(callback: (notificacion: Notificacion) => void): Promise<() => void> {
         this.callbacks.push(callback);
-        await this.iniciarCanalRealtime();
+        this.asegurarPolling();
 
         return () => {
             this.callbacks = this.callbacks.filter(cb => cb !== callback);
+            this.detenerPollingSiVacio();
         };
     }
 
     suscribirseAContador(callback: (contador: number) => void): () => void {
         this.contadorCallbacks.push(callback);
-        this.actualizarContador();
-        this.iniciarCanalRealtime();
+        this.asegurarPolling();
 
         return () => {
             this.contadorCallbacks = this.contadorCallbacks.filter(cb => cb !== callback);
+            this.detenerPollingSiVacio();
         };
     }
 
-    private async actualizarContador(): Promise<void> {
-        const contador = await this.obtenerContadorNoLeidas();
-        this.contadorCallbacks.forEach(callback => callback(contador));
-    }
-
     desuscribirseDeNotificaciones(): void {
-        if (this.channel) {
-            this.channel.unsubscribe();
-            this.channel = null;
+        if (this.pollTimer) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
         }
         this.callbacks = [];
         this.contadorCallbacks = [];
-        this.usuarioActual = null;
+        this.idsVistos = null;
+    }
+
+    // Sobrescribir las mutaciones para refrescar el badge AL INSTANTE (sin esperar el sondeo de 45s).
+    async marcarComoLeida(ids: string[]) {
+        const r = await super.marcarComoLeida(ids);
+        if (r.exito) this.emitirContador();
+        return r;
+    }
+
+    async marcarTodasComoLeidas() {
+        const r = await super.marcarTodasComoLeidas();
+        if (r.exito) this.emitirContador();
+        return r;
+    }
+
+    async archivarNotificacion(id: string) {
+        const r = await super.archivarNotificacion(id);
+        if (r.exito) this.emitirContador();
+        return r;
     }
 
     private async mostrarNotificacionNativa(notificacion: Notificacion): Promise<void> {
