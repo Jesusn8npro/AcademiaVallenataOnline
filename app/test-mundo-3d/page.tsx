@@ -2,7 +2,6 @@
 import * as React from 'react'
 import dynamic from 'next/dynamic'
 import { PersonajeEstudioProvider } from '../../src/Paginas/AcordeonProMax/PracticaLibre/contextoPersonajeEstudio'
-import SeccionPLPersonaje from '../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/SeccionPLPersonaje'
 // Catálogo de escenarios + vistas: archivo LIVIANO (solo datos), NO arrastra three.js → seguro importarlo
 // estático en la página (el Mundo pesado sigue siendo dynamic).
 import { ESCENARIOS_MUNDO, ESCENARIO_MUNDO_DEFAULT, escenarioMundoPorId, VISTAS } from '../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/mundo/escenariosMundo'
@@ -26,6 +25,14 @@ function CargandoMundo() {
 const Mundo = dynamic(
   () => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/mundo/MundoPoC'),
   { ssr: false, loading: () => <CargandoMundo /> },
+)
+
+// El panel lateral arrastra el motor de audio + replay (useLogicaAcordeon, etc.). Cargarlo ESTÁTICO metía
+// todo eso en el bundle inicial de la página → retrasaba hasta la pantalla de carga del mundo. Dinámico
+// (ssr:false) → la página y el "Cargando mundo" aparecen de inmediato; el panel se hidrata aparte.
+const SeccionPLPersonaje = dynamic(
+  () => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/SeccionPLPersonaje'),
+  { ssr: false, loading: () => <div style={{ padding: 16, color: 'rgba(255,255,255,.5)', fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>Cargando panel…</div> },
 )
 
 // Sandbox del MUNDO responsivo. Por defecto INMERSIVO (overlay fijo que TAPA sidebar + menú superior +
