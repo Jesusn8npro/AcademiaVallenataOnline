@@ -4,12 +4,34 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { PERSONAJES } from '../personajes'
+import { glbDePersonaje } from '../personajes'
 import { usePersonajeEstudio } from '../contextoPersonajeEstudio'
 import { Modelo } from './visor/Modelo'
 import { Escenario } from './visor/Escenario'
 import { esEscenarioGLB } from './visor/escenarios'
 import { DirectorCamara } from './visor/DirectorCamara'
+import GizmoDedos from './visor/GizmoDedos'
+
+// Navegación tipo Blender: mantener CONTROL o SHIFT cambia el clic IZQUIERDO de orbitar → DESPLAZAR
+// (pan), como en Blender. Al soltar, vuelve a orbitar. (Vive dentro del Canvas para leer el
+// OrbitControls `makeDefault`.)
+const ControlesBlender: React.FC = () => {
+  const controls = useThree((s) => s.controls) as any
+  React.useEffect(() => {
+    if (!controls || !controls.mouseButtons) return
+    const esMod = (e: KeyboardEvent) => e.key === 'Control' || e.key === 'Shift'
+    const onDown = (e: KeyboardEvent) => { if (esMod(e)) controls.mouseButtons.LEFT = THREE.MOUSE.PAN }
+    const onUp = (e: KeyboardEvent) => { if (esMod(e)) controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
+    return () => {
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup', onUp)
+      controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE
+    }
+  }, [controls])
+  return null
+}
 
 const EnvmapLocal: React.FC = () => {
   const { gl, scene } = useThree()
@@ -61,12 +83,24 @@ const PersonajePiso: React.FC<{ claveMedicion: string; children: React.ReactNode
 const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = false }) => {
   // Estado compartido (selector, skin, baile, escenario, fuelle) vive en el contexto: los controles
   // están en el panel de la derecha. Acá solo se dibuja la escena, limpia, sin dock que tape al personaje.
-  const { personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, fuelleAbiertoRef, setFuelle, posEscenario, posCargado } = usePersonajeEstudio()
-  const glbActual = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
+  const { personajeId, skin, baile, escenarioId, tomaCamara, directorAuto, fuelleAbiertoRef, setFuelle, fuellePosRef, posEscenario, posCargado,
+    posesDedosRef, adminPoseRef, editandoDedosRef, edicionPoseRef, bonesDedosRef, botonEditandoRef, dedosBotonRef, guiaPorBotonRef, guiaAnclaRef, posesListaRef, editandoDedos, huesoSelDedo, marcarHistorial } = usePersonajeEstudio()
+  // Refs compartidas con el panel/gizmo para el editor admin de poses de dedos (estables → memo vacío).
+  const edicionDedos = React.useMemo(() => ({ posesDedosRef, adminPoseRef, editandoDedosRef, edicionPoseRef, bonesDedosRef, botonEditandoRef, dedosBotonRef, guiaPorBotonRef, guiaAnclaRef, posesListaRef }), [])
+  const glbActual = glbDePersonaje(personajeId)
   const posActual = posEscenario(escenarioId)
   // Para escenarios .glb esperamos a que carguen las posiciones guardadas antes de dibujar → así
   // aparece YA en la posición fija (sin el "salto" de la posición por defecto a la guardada).
   const mostrarEscenario = !esEscenarioGLB(escenarioId) || posCargado
+
+  // Mientras EDITAS una pose de dedos, bloquea el scroll de la página (el panel no se desplaza al usar
+  // la rueda) → te concentras en el visor/gizmo sin que la pantalla se mueva.
+  React.useEffect(() => {
+    if (!editandoDedos) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [editandoDedos])
 
   // La tecla Q cierra el fuelle (mismo control que el botón del panel). Sólo activa mientras el
   // visor está montado (= pestaña Personaje abierta).
@@ -119,8 +153,9 @@ const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = fal
               <shadowMaterial transparent opacity={0.3} />
             </mesh>
             <PersonajePiso claveMedicion={personajeId}>
-              <Modelo key={personajeId} fuelleAbiertoRef={fuelleAbiertoRef} skin={skin} glb={glbActual} baile={baile} />
+              <Modelo key={personajeId} fuelleAbiertoRef={fuelleAbiertoRef} fuellePosRef={fuellePosRef} skin={skin} glb={glbActual} baile={baile} edicionDedos={edicionDedos} />
             </PersonajePiso>
+            <GizmoDedos editando={editandoDedos} huesoSel={huesoSelDedo} bonesDedosRef={bonesDedosRef} edicionPoseRef={edicionPoseRef} onAntesDeMover={marcarHistorial} />
             {/* Control tipo Blender: orbitar (clic izq), encuadrar/pan (clic der), zoom (scroll). */}
             <OrbitControls
               makeDefault
@@ -133,6 +168,7 @@ const VisorPersonaje3D: React.FC<{ rotarVista?: boolean }> = ({ rotarVista = fal
               zoomSpeed={0.9}
               panSpeed={0.8}
             />
+            <ControlesBlender />
             <DirectorCamara toma={tomaCamara} auto={directorAuto} />
           </React.Suspense>
         </Canvas>

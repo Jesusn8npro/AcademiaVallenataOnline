@@ -1,12 +1,10 @@
 'use client'
 import dynamic from 'next/dynamic'
-import { PersonajeEstudioProvider } from '../../src/Paginas/AcordeonProMax/PracticaLibre/contextoPersonajeEstudio'
-import '../../src/Paginas/AcordeonProMax/PracticaLibre/EstudioPracticaLibre.css'
-const V = dynamic(() => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/VisorPersonaje3D'), { ssr: false, loading: () => <div>Cargando…</div> })
+// /test-personaje-3d — Pelao + acordeon horneados JUNTOS (cuerpo skinned + fuelle por morph),
+// un solo recorrido cerrado<->abierto escrubado por arrastre. Sin IK/welds en la web.
+const V = dynamic(() => import('../../src/Paginas/AcordeonProMax/PracticaLibre/Componentes/VisorPelaoFuelleLibre'), { ssr: false, loading: () => <div>Cargando…</div> })
 export default function P() {
   return (
-    <PersonajeEstudioProvider>
-      <div style={{ width: '100vw', height: '100vh', padding: 24, background: '#0b0e16' }}><V /></div>
-    </PersonajeEstudioProvider>
+    <div style={{ width: '100vw', height: '100vh', background: '#0b0e16' }}><V /></div>
   )
 }

@@ -36,10 +36,10 @@ export interface EscenarioGLBCfg {
 }
 
 export const ESCENARIOS_GLB: Record<string, EscenarioGLBCfg> = {
-  concierto: { glb: '/modelos3d/esc-concierto-v1.glb', escala: 0.08, offset: [0, 0, 0], rotY: 0, autoPiso: true },
-  neon: { glb: '/modelos3d/esc-neon-v1.glb', escala: 0.16, offset: [0.08, 0, -0.42], rotY: 0, autoPiso: true },
-  'tarima-led': { glb: '/modelos3d/esc-tarima2-v1.glb', escala: 0.007, offset: [0, -1.4, -0.8], rotY: 0, autoPiso: false },
-  playa: { glb: '/modelos3d/esc-playa-v1.glb', escala: 0.7, offset: [-1.05, 0, -3.92], rotY: 0, autoPiso: true },
+  concierto: { glb: '/modelos3d/escenarios/esc-concierto-v1.glb', escala: 0.08, offset: [0, 0, 0], rotY: 0, autoPiso: true },
+  neon: { glb: '/modelos3d/escenarios/esc-neon-v1.glb', escala: 0.16, offset: [0.08, 0, -0.42], rotY: 0, autoPiso: true },
+  'tarima-led': { glb: '/modelos3d/escenarios/esc-tarima2-v1.glb', escala: 0.007, offset: [0, -1.4, -0.8], rotY: 0, autoPiso: false },
+  playa: { glb: '/modelos3d/escenarios/esc-playa-v1.glb', escala: 0.7, offset: [-1.05, 0, -3.92], rotY: 0, autoPiso: true },
 }
 
 // ¿este escenario es un .glb posicionable (admite el editor de posición)?

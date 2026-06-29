@@ -1,0 +1,27 @@
+{
+  "_nota": "Puntos de referencia del fuelle capturados en Blender (panel 'Fuelle: Puntos de referencia', fuelle_refs.py). caja_loc = caja.location LOCAL de 'Caja de los bajos, izquierda' (mismo rot_euler en todas las instancias -> el delta es transferible entre personajes). fuelle_span = tamano real del bbox del Fuelle20. El export del acordeon compartido (exportar-acordeon-personaje-v10.py) usa estos 3 puntos: AGARRE = base/reposo (morph 0, donde la mano agarra), CERRADO = morph 'Cerrar' (compresion maxima), ABIERTO = morph 'Abrir' (extension maxima).",
+  "instancia_capturada": "Pelao (.007 / Fuelle20.006)",
+  "puntos": {
+    "agarre": {
+      "ref_name": "Posicion correcta mano BAJOS",
+      "caja_loc": [-0.250545, -0.321913, 1.37156],
+      "fuelle_span": 32.997
+    },
+    "cerrado": {
+      "ref_name": "Fuelle cerrado",
+      "caja_loc": [-0.382521, -0.321987, 1.37598],
+      "fuelle_span": 31.207
+    },
+    "abierto": {
+      "ref_name": "Fuelle normal",
+      "caja_loc": [-0.084248, -0.316395, 1.349512],
+      "fuelle_span": 40.99,
+      "dist_cajas": 7.556
+    }
+  },
+  "deltas_desde_agarre": {
+    "_nota": "delta = caja_loc(extremo) - caja_loc(agarre). Asimetrico: cerrar es un recorrido corto, abrir es mas largo.",
+    "cerrar": [-0.131976, -0.000074, 0.00442],
+    "abrir": [0.166297, 0.005518, -0.022048]
+  }
+}

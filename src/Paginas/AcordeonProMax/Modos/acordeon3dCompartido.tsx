@@ -15,14 +15,51 @@ export const SKIN_ALUMNO = '5';
 
 // ── Encuadre 3D (afinado en /modo-competitivo-muestra) ────────────────────────────────
 // Orientación fija; tamaño/centrado AUTO (responsive) para verse igual en cualquier pantalla.
-export const ENC_ROTACION: [number, number, number] = [-0.0775, 0.1260, 0.1638];
-export const ENC_FILL = 1.23;          // fracción del ancho del recuadro que ocupa el acordeón
-export const ENC_OFFSET_REL_X = 0.13;  // nudge horizontal (fracción del ancho del modelo)
-export const ENC_OFFSET_REL_Y = 0.17;  // nudge vertical (fracción de la altura del modelo)
+// Rotación de ENCUADRE como la imagen 2D: picado fuerte en X (-79°) que mira la CARA del teclado de
+// frente → melodía a la izquierda, fuelle al centro (pliegues verticales), bajos a la derecha, nivelado.
+// (-1.3788 = -79°, -0.0698 = -4° de ajuste fino en Y, sin ladeo en Z). Afinado en /modo-competitivo-muestra.
+export const ENC_ROTACION: [number, number, number] = [-1.3788, -0.0698, 0];
+// Encuadre CENTRADO: el cuerpo del acordeón (melodía + fuelle + bajos) queda centrado en cada recuadro
+// Maestro/Alumno. El centrado no desalinea las notas: las posiciones se reproyectan cada frame.
+export const ENC_FILL = 1.15;          // fracción del ancho del recuadro que ocupa el acordeón
+export const ENC_OFFSET_REL_X = 0.06;  // nudge horizontal (centra el cuerpo)
+export const ENC_OFFSET_REL_Y = 0;     // nudge vertical (ya centrado con la vista picada)
 export const ENC_ANCHO_WRAP = '48%';
 export const ENC_GAP = '0vw';
 export const ENC_INV_FILAS = false;
 export const ENC_INV_COLS = false;
+
+// ── Encuadre GLOBAL editable por admin (store externo) ────────────────────────────────
+// El admin "cuadra" el acordeón desde la página de la canción (botón Posición) y se guarda en
+// Supabase (acordeon_encuadre). Para que TODOS los modos (Maestro/Synthesia/Competitivo) reaccionen
+// en vivo sin pasar props por todos lados, los valores viven en un store externo: el editor lo
+// actualiza, los visores lo leen con useEncuadreAcordeon(). Arranca con los defaults afinados (ENC_*).
+export interface EncuadreAcordeonValores {
+  rotacion: [number, number, number];
+  fill: number;
+  offX: number;
+  offY: number;
+}
+// Hay DOS encuadres independientes: 'global' (modos de juego, acordeones lado a lado) y 'estudio'
+// (pestaña Acordeón de Práctica Libre, un solo acordeón en un lienzo más ancho → fill propio).
+export type EncuadreId = 'global' | 'estudio';
+const _encuadres: Record<EncuadreId, EncuadreAcordeonValores> = {
+  global: { rotacion: ENC_ROTACION, fill: ENC_FILL, offX: ENC_OFFSET_REL_X, offY: ENC_OFFSET_REL_Y },
+  estudio: { rotacion: ENC_ROTACION, fill: 0.55, offX: 0, offY: 0 },
+};
+const _encuadreSubs = new Set<() => void>();
+export function getEncuadreAcordeon(id: EncuadreId = 'global'): EncuadreAcordeonValores { return _encuadres[id]; }
+export function setEncuadreAcordeon(id: EncuadreId, e: EncuadreAcordeonValores): void {
+  _encuadres[id] = e;
+  _encuadreSubs.forEach((f) => f());
+}
+export function useEncuadreAcordeon(id: EncuadreId = 'global'): EncuadreAcordeonValores {
+  return React.useSyncExternalStore(
+    (cb) => { _encuadreSubs.add(cb); return () => { _encuadreSubs.delete(cb); }; },
+    () => _encuadres[id],
+    () => _encuadres[id],
+  );
+}
 
 // strip dirección → clave espacial del botón (idéntico a keyDeId del visor 3D): el PuenteNotas
 // pregunta por "1-5-halar" y el visor reporta posiciones por "1-5" / "bajo-1-3".
@@ -63,8 +100,11 @@ interface AcordeonModo3DProps {
 const AcordeonModo3D: React.FC<AcordeonModo3DProps> = ({
   skin, botonesActivos, direccion, fuelleCerrandoRef, fuelleActividadRef,
   onTocarBoton, objetivosRef, onPosicionesBotones, navegable, escenarioId,
-  fill = ENC_FILL, offsetRelX = ENC_OFFSET_REL_X, offsetRelY = ENC_OFFSET_REL_Y, className,
-}) => (
+  fill, offsetRelX, offsetRelY, className,
+}) => {
+  // Encuadre global (lo fija el admin); si el modo pasa fill/offset propios (p.ej. tomas de cámara) ganan.
+  const enc = useEncuadreAcordeon();
+  return (
   <VisorAcordeon3D
     materialPorMesh={{}}
     piezaSeleccionada={null}
@@ -79,10 +119,10 @@ const AcordeonModo3D: React.FC<AcordeonModo3DProps> = ({
     camaraFija
     botonesActivosExternos={botonesActivos}
     direccion={direccion}
-    rotacionModelo={ENC_ROTACION}
-    fillModelo={fill}
-    offsetRelXModelo={offsetRelX}
-    offsetRelYModelo={offsetRelY}
+    rotacionModelo={enc.rotacion}
+    fillModelo={fill ?? enc.fill}
+    offsetRelXModelo={offsetRelX ?? enc.offX}
+    offsetRelYModelo={offsetRelY ?? enc.offY}
     invFilasModelo={ENC_INV_FILAS}
     invColsModelo={ENC_INV_COLS}
     navegable={navegable}
@@ -92,6 +132,7 @@ const AcordeonModo3D: React.FC<AcordeonModo3DProps> = ({
     onPosicionesBotones={onPosicionesBotones}
     className={className ?? 'acordeon-3d-juego'}
   />
-);
+  );
+};
 
 export default AcordeonModo3D;

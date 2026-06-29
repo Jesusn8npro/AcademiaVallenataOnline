@@ -83,10 +83,10 @@ function EscenarioGLBNorm({ glb, escala = 1, offset = [0, 0, 0], rotY = 0, autoP
 // y las luces de piso son emissive (KHR_materials_emissive_strength), y el rig 3-point en tiempo
 // real del visor ilumina al personaje. Hecho en Estudio-Personaje.blend.
 function EstudioCove() {
-  const { scene } = useGLTF('/modelos3d/estudio-domo-v1.glb')
+  const { scene } = useGLTF('/modelos3d/escenarios/estudio-domo-v1.glb')
   return <primitive object={scene} />
 }
-useGLTF.preload('/modelos3d/estudio-domo-v1.glb')
+useGLTF.preload('/modelos3d/escenarios/estudio-domo-v1.glb')
 
 // Tarima de concierto: piso de madera (top en y=0) + telón cálido de fondo + dos paneles laterales.
 function Tarima() {

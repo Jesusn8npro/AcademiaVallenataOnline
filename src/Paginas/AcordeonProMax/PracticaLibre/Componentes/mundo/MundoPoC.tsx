@@ -12,7 +12,7 @@ import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-
 ;(THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree
 ;(THREE.BufferGeometry.prototype as any).disposeBoundsTree = disposeBoundsTree
 ;(THREE.Mesh.prototype as any).raycast = acceleratedRaycast
-import { PERSONAJES } from '../../personajes'
+import { PERSONAJES, glbDePersonaje } from '../../personajes'
 import { Modelo } from '../visor/Modelo'
 import { usePersonajeEstudio } from '../../contextoPersonajeEstudio'
 import { useUsuario } from '../../../../../contextos/UsuarioContext'
@@ -501,7 +501,7 @@ function AvatarRemoto({ id, remotosRef, escuchando, suscribirNotasRemotas, posRe
   const [anim, setAnim] = React.useState<string | null>(ent0?.target.anim ?? null)
   const [nombre, setNombre] = React.useState(ent0?.target.nombre ?? '')
   const [tocando, setTocando] = React.useState(false)
-  const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
+  const glb = glbDePersonaje(personajeId)
 
   // Fuente de notas SOLO de este jugador → el Modelo anima sus dedos/fuelle. Reconstruye el evento que
   // espera useNotasSuscripcion (fuelle según el id) y AUTO-SUELTA a los 3 s si un 'up' se pierde en la
@@ -600,7 +600,7 @@ function PlayerController({ personajeId, skin, baile, nombre, vistaModo, limite,
   asientos?: AsientoDef[]       // sofás donde sentarse (se engancha al más cercano)
   onCercaAsiento?: (cerca: boolean) => void // avisa si hay un sofá al alcance (para mostrar el botón)
 }) {
-  const glb = (PERSONAJES.find((p) => p.id === personajeId) ?? PERSONAJES[0]).archivo
+  const glb = glbDePersonaje(personajeId)
   const grupo = React.useRef<THREE.Group>(null!)
   const velocidadLocoRef = React.useRef<number | undefined>(undefined) // timeScale de caminar/correr ∝ velocidad real
   const fuelleRef = React.useRef(false)

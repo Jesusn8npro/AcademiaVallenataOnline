@@ -33,14 +33,23 @@ export function usePielesAcordeon(refs: RigRefs, acordeon: THREE.Object3D, skin:
   React.useEffect(() => {
     if (!accMats.current.length) return
     const loader = new THREE.TextureLoader()
+    // Cache por URL: ahora los materiales del acordeón se clonan POR MALLA (para el diseño por partes),
+    // así que muchas mallas comparten la misma piel → cargamos cada textura UNA sola vez (no por malla).
+    const cache = new Map<string, THREE.Texture>()
     const cargar = (url: string, srgb: boolean) => {
+      const k = srgb ? `s|${url}` : url
+      const hit = cache.get(k)
+      if (hit) return hit
       const t = loader.load(url, () => {})
       t.flipY = false
       if (srgb) t.colorSpace = THREE.SRGBColorSpace
+      cache.set(k, t)
       return t
     }
     for (const { part, mat } of accMats.current) {
-      if (skin === 'original') {
+      // 'original' y los DISEÑOS propios ('preset:<id>') usan las texturas baked como base; el preset
+      // luego se tinta encima (useDisenoEnAcordeon). Las pieles '1'..'7' cargan sus texturas.
+      if (skin === 'original' || skin.startsWith('preset:')) {
         const o = mat.userData.orig
         if (o) { mat.map = o.map; mat.roughnessMap = o.roughnessMap; mat.metalnessMap = o.metalnessMap; mat.normalMap = o.normalMap }
       } else {
@@ -50,6 +59,9 @@ export function usePielesAcordeon(refs: RigRefs, acordeon: THREE.Object3D, skin:
         mat.roughnessMap = mr; mat.metalnessMap = mr; mat.roughness = 1; mat.metalness = 1
         mat.normalMap = cargar(`${dir}_normal.webp`, false)
       }
+      // Color a blanco SIEMPRE: limpia cualquier tinte de un diseño anterior. Si el modelo elegido es
+      // un preset, useDisenoEnAcordeon vuelve a tintar encima (después de este efecto).
+      mat.color.set('#ffffff')
       mat.needsUpdate = true
     }
   }, [skin, listo])

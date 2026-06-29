@@ -37,6 +37,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
   const esSimuladorApp = pathname.startsWith('/simulador-app')
   const esMundo3D = pathname.startsWith('/test-mundo-3d') // mundo multijugador: pantalla completa, sin chrome
   const esModoCompetitivoMuestra = pathname.startsWith('/modo-competitivo-muestra') // sandbox 3D: pantalla completa, sin chrome
+  const esPrueba3D = pathname.startsWith('/prueba-3d') // sala de pruebas fuelle por huesos: pantalla completa, sin chrome
   const esRecuperarContrasena = pathname === '/recuperar-contrasena'
   const esAcordeonProMax =
     pathname.startsWith('/acordeon-pro-max') ||
@@ -54,6 +55,7 @@ export default function ArmazonApp({ children }: { children: React.ReactNode }) 
     esSimuladorApp ||
     esMundo3D ||
     esModoCompetitivoMuestra ||
+    esPrueba3D ||
     esAcordeonProMax ||
     esRecuperarContrasena
 

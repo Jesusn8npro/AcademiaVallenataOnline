@@ -9,10 +9,11 @@ import JuicioOverlay from '../Componentes/JuicioOverlay';
 import { usePosicionProMax } from '../Hooks/usePosicionProMax';
 import type { CancionHeroConTonalidad, EstadisticasPartida, EfectoGolpe } from '../TiposProMax';
 import { TICKS_VIAJE } from '../TiposProMax';
-import { usePersonaje3DGuardado } from '../PracticaLibre/Servicios/usePersonaje3DGuardado';
+import { useDisenoAcordeon } from '../PracticaLibre/Servicios/useDisenoAcordeon';
 import {
-  SKIN_MAESTRO, SKIN_ALUMNO, ENC_ROTACION, ENC_FILL, ENC_OFFSET_REL_X, ENC_OFFSET_REL_Y,
+  SKIN_MAESTRO, ENC_FILL, ENC_OFFSET_REL_X, ENC_OFFSET_REL_Y,
   ENC_ANCHO_WRAP, ENC_GAP, ENC_INV_FILAS, ENC_INV_COLS, claveBoton,
+  useEncuadreAcordeon, getEncuadreAcordeon,
 } from './acordeon3dCompartido';
 import './ModoCompetitivo.css';
 import './ModoLibre.css';
@@ -84,12 +85,16 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   rangoSeccion,
 }) => {
   const { refMaestro, refAlumno, obtenerPosicionMaestro, obtenerPosicionAlumno } = usePosicionProMax();
+  // Encuadre 3D global (orientación + tamaño/centrado) que fija el admin desde la página de la canción.
+  const enc = useEncuadreAcordeon();
   // El acordeón del ALUMNO muestra el DISEÑO que el usuario eligió (mismo que Mundo 3D / Personaje).
-  // El maestro queda con su acordeón "de profesor" fijo (SKIN_MAESTRO). El ESCENARIO 3D del usuario
-  // va detrás de AMBOS acordeones (global), con selector para cambiarlo.
-  const { skin: skinAlumno, escenario: escenarioGuardado } = usePersonaje3DGuardado(SKIN_ALUMNO);
-  const [escenarioDuelo, setEscenarioDuelo] = useState(escenarioGuardado);
-  useEffect(() => { setEscenarioDuelo(escenarioGuardado); }, [escenarioGuardado]);
+  // El maestro queda con su acordeón "de profesor" fijo (SKIN_MAESTRO). El ESCENARIO 3D va apagado por
+  // defecto en esta página (NO se carga el escenario guardado del usuario detrás de los acordeones); el
+  // selector queda disponible por si el usuario quiere activar uno manualmente.
+  // El acordeón del ALUMNO muestra el DISEÑO guardado del usuario (color por parte + nombres en las
+  // cajas), el MISMO que se editó en la pestaña Acordeón. El maestro mantiene su piel de "profesor".
+  const diseno = useDisenoAcordeon();
+  const [escenarioDuelo, setEscenarioDuelo] = useState('ninguno');
   const [mostrarEscenarios, setMostrarEscenarios] = useState(false);
 
   // ── Toggle Imágenes ↔ Acordeón 3D (persistido). Default = imágenes (no cambia nada). ──
@@ -114,6 +119,12 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   // LLEGAR (en `nota.tick`). Antes el maestro encendía en `nota.tick` = justo cuando la nota
   // llegaba al alumno → ambos se animaban al mismo tiempo. El ALUMNO se queda en `nota.tick`.
   // Fuelle (empujar=cerrando→cierra, halar=abriendo→abre; actividad=cuántas notas suenan = velocidad).
+  // FUELLE FIJO ABIERTO (alineado): el morph 'Cerrar' de acordeon-fino-nuevo-v2.glb comprime SOLO el
+  // fuelle pero NO arrastra la caja de bajos → al cerrarlo se despega y el acordeón se ve torcido. En
+  // reposo (morph 0) las cajas quedan perfectamente alineadas (igual que la pestaña Acordeón Pro Max),
+  // así que en los modos competencia mantenemos el fuelle SIN cerrar (ref siempre false, sin actividad).
+  // (Cerrarlo "de verdad" alineado requeriría re-exportar el GLB con el morph moviendo también la caja.)
+  const fuelleAbiertoFijoRef = useRef(false);
   const fuelleDirAlumnoRef = useRef(false);
   const fuelleActAlumnoRef = useRef(0);
   fuelleDirAlumnoRef.current = direccionMaestro === 'empujar';
@@ -142,10 +153,10 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   fuelleActMaestroRef.current = Math.min(_leadCount / 2, 1);
   const direccionMaestroLead: 'halar' | 'empujar' = _leadEmpujar ? 'empujar' : 'halar';
 
-  // Encuadre 3D: arrancan en los valores fijos; el director multicámara (aplicarToma) los mueve.
-  const [fill3D, setFill3D] = useState(ENC_FILL);
-  const [offX3D, setOffX3D] = useState(ENC_OFFSET_REL_X);
-  const [offY3D, setOffY3D] = useState(ENC_OFFSET_REL_Y);
+  // Encuadre 3D: arrancan en el encuadre global del admin; el director multicámara (aplicarToma) los mueve.
+  const [fill3D, setFill3D] = useState(enc.fill);
+  const [offX3D, setOffX3D] = useState(enc.offX);
+  const [offY3D, setOffY3D] = useState(enc.offY);
   // Navegar (orbitar) el acordeón 3D para explorarlo en el espacio.
   const [navegar3D, setNavegar3D] = useState(false);
   // Director multicámara: toma activa + panel de tomas. Elegir una mueve el encuadre (EncuadreJuego
@@ -153,8 +164,19 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
   const [tomaActual, setTomaActual] = useState('general');
   const [mostrarCamaras, setMostrarCamaras] = useState(false);
   const aplicarToma = useCallback((t: TomaCamara) => {
-    setTomaActual(t.id); setFill3D(t.fill); setOffX3D(t.offX); setOffY3D(t.offY);
+    setTomaActual(t.id);
+    // La toma "General" usa el encuadre global del admin (no los valores fijos del módulo).
+    if (t.id === 'general') {
+      const e = getEncuadreAcordeon();
+      setFill3D(e.fill); setOffX3D(e.offX); setOffY3D(e.offY);
+    } else {
+      setFill3D(t.fill); setOffX3D(t.offX); setOffY3D(t.offY);
+    }
   }, []);
+  // Si el admin ajusta el encuadre en vivo y estamos en la toma "General", reflejarlo al instante.
+  useEffect(() => {
+    if (tomaActual === 'general') { setFill3D(enc.fill); setOffX3D(enc.offX); setOffY3D(enc.offY); }
+  }, [enc, tomaActual]);
   // Modo AUTO: el director va cambiando de toma solo cada pocos segundos (vista cinematográfica).
   const [autoCamara, setAutoCamara] = useState(false);
   const autoIdxRef = useRef(0);
@@ -468,8 +490,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
               piezaSeleccionada={null}
               onClickPieza={NOOP_CLICK_PIEZA}
               onMallasDetectadas={NOOP_MALLAS}
-              fuelleCerrandoRef={fuelleDirMaestroRef}
-              fuelleActividadRef={fuelleActMaestroRef}
+              fuelleCerrandoRef={fuelleAbiertoFijoRef}
               animShapeKey={null}
               animProgramatica={null}
               pulseEpoch={null}
@@ -477,7 +498,7 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
               camaraFija
               botonesActivosExternos={botonesMaestroLead}
               direccion={direccionMaestroLead}
-              rotacionModelo={ENC_ROTACION}
+              rotacionModelo={enc.rotacion}
               fillModelo={fill3D}
               offsetRelXModelo={offX3D}
               offsetRelYModelo={offY3D}
@@ -513,22 +534,22 @@ const ModoJuego: React.FC<ModoJuegoProps> = ({
         >
           <span className="hero-acordeon-label">Alumno</span>
           {use3D ? (
-            /* Alumno: tocable (clic/tap suena vía actualizarBotonActivo, el motor real). */
+            /* Alumno: tocable (clic/tap suena vía actualizarBotonActivo, el motor real). Muestra el
+               diseño guardado del usuario (sin `skin` → manda materialPorMesh). */
             <VisorAcordeon3D
-              materialPorMesh={{}}
+              materialPorMesh={diseno.materiales}
+              nombresCajas={diseno.nombres}
               piezaSeleccionada={null}
               onClickPieza={NOOP_CLICK_PIEZA}
               onMallasDetectadas={NOOP_MALLAS}
-              fuelleCerrandoRef={fuelleDirAlumnoRef}
-              fuelleActividadRef={fuelleActAlumnoRef}
+              fuelleCerrandoRef={fuelleAbiertoFijoRef}
               animShapeKey={null}
               animProgramatica={null}
               pulseEpoch={null}
-              skin={skinAlumno}
               camaraFija
               botonesActivosExternos={logica.botonesActivos}
               direccion={logica.direccion}
-              rotacionModelo={ENC_ROTACION}
+              rotacionModelo={enc.rotacion}
               fillModelo={fill3D}
               offsetRelXModelo={offX3D}
               offsetRelYModelo={offY3D}

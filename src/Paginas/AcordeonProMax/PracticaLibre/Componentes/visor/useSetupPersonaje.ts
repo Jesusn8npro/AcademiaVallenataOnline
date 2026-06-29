@@ -24,7 +24,7 @@ export function useSetupPersonaje(
   const {
     fingerData, fingerPress, botones, morphCerrar, closeAction, cuerpoAction, closeDur,
     brazoIzq, brazoDer, curForeDelta, curHandDelta, drivenDer, restW, handFactor, cajaGrip,
-    botonHome, ringSprites, botonGlow, botonRegion, notaAMesh,
+    botonHome, ringSprites, botonGlow, botonRegion, botonCoordRef, notaAMesh,
   } = refs
 
   // Setup: acción de cierre + huesos de dedos + botones + morphs del acordeón.
@@ -57,10 +57,12 @@ export function useSetupPersonaje(
     if (a && bonesIzq.length) {
       a.time = 0; mixer!.update(0)
       const qAg = bonesIzq.map((b: any) => b.quaternion.clone())
+      const pAg = bonesIzq.map((b: any) => b.position.clone())  // posición LOCAL de agarre (para traslado rígido)
       a.time = closeDur.current; mixer!.update(0)
       const qCl = bonesIzq.map((b: any) => b.quaternion.clone())
+      const pCl = bonesIzq.map((b: any) => b.position.clone())  // posición LOCAL en cerrado
       a.time = 0; mixer!.update(0)
-      brazoIzq.current = { bones: bonesIzq, qAgarre: qAg, qClosed: qCl }
+      brazoIzq.current = { bones: bonesIzq, qAgarre: qAg, qClosed: qCl, posAgarre: pAg, posClosed: pCl }
     }
 
     // Capturar el AGARRE del brazo derecho (melodía): codo (RightForeArm) + muñeca (RightHand). En
@@ -173,7 +175,20 @@ export function useSetupPersonaje(
         const localCenter = new THREE.Vector3()
         if (!m.geometry.boundingBox) m.geometry.computeBoundingBox()
         m.geometry.boundingBox!.getCenter(localCenter)
-        botones.current[(m.userData as any).botonBase] = { mesh: m, orig: m.position.clone(), sink, mat, emisivoBase, localCenter }
+        // Punto de SUPERFICIE del botón (cara exterior, por donde entra el dedo), en geometría-local: el
+        // centro corrido hacia AFUERA (−normal del teclado) media altura del botón. El contacto del dedo
+        // apunta AQUÍ y no al centro (que está DENTRO) → la yema descansa SOBRE el botón y la mano no
+        // atraviesa el teclado/diapasón. SURF_CLEAR>1 deja un pelín de aire para que la pisada lo cubra.
+        const SURF_CLEAR = 1.2
+        const halfThick = ((Math.min(ws.x, ws.y, ws.z) || 0.01) / 2) * SURF_CLEAR
+        const surfaceW = localCenter.clone().applyMatrix4(m.matrixWorld).add(normal.clone().multiplyScalar(-halfThick))
+        const surfaceLocal = m.worldToLocal(surfaceW)
+        // salida = normal del teclado HACIA AFUERA (lejos del diapasón, hacia la cámara) en mundo, y radio
+        // = tamaño del botón. El alcance del codo apunta a un punto AFUERA (surface + salida·radio·STANDOFF)
+        // → la mano queda al frente sin traspasar; el dedo presiona hacia adentro lo último.
+        const salida = normal.clone().negate()
+        const radio = Math.max(ws.x, ws.y, ws.z) || 0.01
+        botones.current[(m.userData as any).botonBase] = { mesh: m, orig: m.position.clone(), sink, mat, emisivoBase, localCenter, surfaceLocal, salida, radio }
       })
     }
     setupGrupo(dMeshes); setupGrupo(iMeshes)
@@ -197,6 +212,24 @@ export function useSetupPersonaje(
       const yMin = Math.min(...ys), yMax = Math.max(...ys)
       const t1 = yMin + (yMax - yMin) / 3, t2 = yMin + (2 * (yMax - yMin)) / 3
       for (const { base, y } of dCentros) botonRegion.current[base] = y < t1 ? 'baja' : y < t2 ? 'media' : 'alta'
+    }
+
+    // Coord [hilera, COLUMNA] por GEOMETRÍA: hilera por número (1-10/11-21/22-31); columna = altura Y
+    // CUANTIZADA al paso real entre botones → capta el escalonado del teclado. Así una misma FIGURA de
+    // acorde se reconoce igual aunque esté desplazada arriba/abajo o cruce filas (ej. tercera con décima).
+    botonCoordRef.current = {}
+    if (dCentros.length > 1) {
+      const ysOrden = dCentros.map((d) => d.y).slice().sort((a, b) => a - b)
+      const gaps: number[] = []
+      for (let i = 1; i < ysOrden.length; i++) { const g = ysOrden[i] - ysOrden[i - 1]; if (g > 1e-5) gaps.push(g) }
+      gaps.sort((a, b) => a - b)
+      const paso = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 1   // mediana = paso vertical típico
+      const yMin2 = ysOrden[0]
+      for (const { base, y } of dCentros) {
+        const n = +base.replace('Boton_D_', '')
+        const hil = n <= 10 ? 0 : n <= 21 ? 1 : 2
+        botonCoordRef.current[base] = [hil, Math.round((y - yMin2) / (paso || 1))]
+      }
     }
 
     // Sprites de ANILLOS (efecto de pisada, imagen ref): uno por botón de melodía, hijo de su malla
@@ -285,12 +318,36 @@ export function useSetupPersonaje(
       const g: any = cajaCal.mesh.geometry
       const delta = g.morphAttributes?.position?.[cajaCal.idx]
       if (delta) {
-        // D = deslizamiento total de la caja (promedio del delta del morph) en MUNDO
-        const dLocal = new THREE.Vector3()
-        const n = Math.min(delta.count, 300)
-        for (let i = 0; i < n; i++) dLocal.add(new THREE.Vector3(delta.getX(i), delta.getY(i), delta.getZ(i)))
-        dLocal.multiplyScalar(1 / n)
+        // D = deslizamiento del morph que debe seguir la mano. NO se usa el promedio de la CAJA: su
+        // malla incluye vértices del lado del fuelle que se deslizan distinto (en +Z) y "ensucian" el
+        // promedio → la mano deriva y se sale de los botones al cerrar. Se usa el promedio de los
+        // BOTONES de bajos (Boton_I), que es donde van los dedos → la mano queda PEGADA a los botones
+        // en todo el recorrido (igual que en Blender, mano CHILD_OF de la caja).
         a.time = 0; mixer!.update(0); scene.updateMatrixWorld(true)
+        // dLocal = desplazamiento del morph que sigue la mano, en el marco LOCAL de la caja. Se calcula
+        // el desplazamiento MUNDIAL real de los BOTONES de bajos (cada uno con SU matrixWorld — su
+        // escala/orientación puede diferir de la caja) y se convierte a local de la caja. Así el "weld"
+        // de la mano (que aplica dLocal·caja.matrixWorld) reproduce EXACTO el viaje de los botones en
+        // todo el recorrido (sin deriva en el cierre fuerte). Se evita el promedio de la CAJA (incluye
+        // vértices del fuelle que van en +Z y ensucian) → la mano queda pegada a los botones, como el
+        // CHILD_OF de Blender.
+        const botonesBajos = morphCerrar.current.filter(({ mesh }) => /Boton_I/.test(mesh.name))
+        const fuente = botonesBajos.length ? botonesBajos : [cajaCal]
+        const dWorld = new THREE.Vector3()
+        const _nm = new THREE.Matrix3()
+        for (const b of fuente) {
+          const db = (b.mesh.geometry as any).morphAttributes?.position?.[b.idx]
+          if (!db) continue
+          const db1 = new THREE.Vector3()
+          const nb = Math.min(db.count, 300)
+          for (let i = 0; i < nb; i++) db1.add(new THREE.Vector3(db.getX(i), db.getY(i), db.getZ(i)))
+          db1.multiplyScalar(1 / nb)
+          b.mesh.updateWorldMatrix(true, false)
+          dWorld.add(db1.applyMatrix3(_nm.setFromMatrix4(b.mesh.matrixWorld)))
+        }
+        dWorld.multiplyScalar(1 / fuente.length)
+        cajaCal.mesh.updateWorldMatrix(true, false)
+        const dLocal = dWorld.clone().applyMatrix3(_nm.setFromMatrix4(cajaCal.mesh.matrixWorld).invert())
         const e = cajaCal.mesh.matrixWorld.elements
         const D = new THREE.Vector3(
           e[0] * dLocal.x + e[4] * dLocal.y + e[8] * dLocal.z,
@@ -320,24 +377,47 @@ export function useSetupPersonaje(
           // al cerrar (q=1) la caja viaja (1-restW)×|D|; la mano debe viajar lo mismo
           if (viajeMano > 1e-4) handFactor.current = Math.min(1, ((1 - restW.current) * Math.sqrt(dd)) / viajeMano)
         }
+        // El REPOSO del fuelle = estado ABIERTO (basis del morph, morph=0): es como se ve recién
+        // cargado, con los pliegues limpios. La proyección de arriba daba ~0.265 (reposo 26% cerrado),
+        // pero el morph 'Cerrar' es LINEAL → a la mínima influencia ya deforma los pliegues (picos). Al
+        // forzar restW=0 el reposo queda abierto y limpio; la mano sigue pegada porque handLocalBind se
+        // mide en el marco local de la caja (independiente del morph) y al cerrar la mano sigue dCerrar.
+        restW.current = 0
 
         // Objetivo de la caja: la mano en local de la caja (agarre) + delta promedio del morph 'Abrir',
         // para que el seguimiento del useFrame mantenga la mano sobre los botones al abrir/cerrar.
         a.time = 0; mixer!.update(0); scene.updateMatrixWorld(true)
-        const dAbrirLocal = new THREE.Vector3()
-        const deltaA = cajaCal.idxAbrir >= 0 ? g.morphAttributes?.position?.[cajaCal.idxAbrir] : null
-        if (deltaA) {
-          const nA = Math.min(deltaA.count, 300)
-          for (let i = 0; i < nA; i++) dAbrirLocal.add(new THREE.Vector3(deltaA.getX(i), deltaA.getY(i), deltaA.getZ(i)))
-          dAbrirLocal.multiplyScalar(1 / nA)
+        // MISMO método robusto que dCerrar (promedio de los BOTONES de bajos vía su matrixWorld, NO el
+        // promedio crudo de la CAJA que incluye vértices del fuelle), pero con el morph 'Abrir'. Antes
+        // usaba el promedio de la caja → la mano se DESPEGABA al arquear.
+        const dWorldA = new THREE.Vector3(); let nFuenteA = 0
+        for (const b of fuente) {
+          if (b.idxAbrir < 0) continue
+          const dbA = (b.mesh.geometry as any).morphAttributes?.position?.[b.idxAbrir]
+          if (!dbA) continue
+          const d1 = new THREE.Vector3(); const nb = Math.min(dbA.count, 300)
+          for (let i = 0; i < nb; i++) d1.add(new THREE.Vector3(dbA.getX(i), dbA.getY(i), dbA.getZ(i)))
+          d1.multiplyScalar(1 / nb)
+          b.mesh.updateWorldMatrix(true, false)
+          dWorldA.add(d1.applyMatrix3(_nm.setFromMatrix4(b.mesh.matrixWorld))); nFuenteA++
         }
+        if (nFuenteA) dWorldA.multiplyScalar(1 / nFuenteA)
+        cajaCal.mesh.updateWorldMatrix(true, false)
+        const dAbrirLocal = dWorldA.clone().applyMatrix3(_nm.setFromMatrix4(cajaCal.mesh.matrixWorld).invert())
         const handW = new THREE.Vector3(); (manoBone as THREE.Object3D).getWorldPosition(handW)
+        // Orientación de la mano RELATIVA a la caja (réplica del COPY_ROTATION de Blender): constante.
+        // hand_world = caja_world · handQ. Como la caja (nodo) no rota en la web, esto fija la
+        // orientación de la mano sin importar cómo se aime el antebrazo → los dedos no se tuercen.
+        const _cq = new THREE.Quaternion(), _hq = new THREE.Quaternion()
+        cajaCal.mesh.getWorldQuaternion(_cq)
+        ;(manoBone as THREE.Object3D).getWorldQuaternion(_hq)
         cajaGrip.current = {
           caja: cajaCal.mesh,
           handLocalBind: cajaCal.mesh.worldToLocal(handW.clone()),
           dCerrar: dLocal.clone(),
           dAbrir: dAbrirLocal,
           restW: restW.current,
+          handQ: _cq.invert().multiply(_hq),
         }
       }
     }

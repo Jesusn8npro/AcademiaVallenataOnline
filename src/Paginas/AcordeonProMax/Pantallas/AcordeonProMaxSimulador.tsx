@@ -13,6 +13,9 @@ import PantallaResultados from '../Componentes/PantallaResultados';
 import PantallaGameOverProMax from '../Componentes/PantallaGameOverProMax';
 import MenuPausaProMax from '../Componentes/MenuPausaProMax';
 import { useAcordeonProMaxSimulador } from '../Hooks/useAcordeonProMaxSimulador';
+import EditorEncuadreAcordeon from '../Componentes/EditorEncuadreAcordeon';
+import { setEncuadreAcordeon } from '../Modos/acordeon3dCompartido';
+import { cargarEncuadreAcordeon } from '../PracticaLibre/Servicios/servicioEncuadreAcordeon';
 import '../Modos/_BaseSimulador.css';
 import '../Componentes/PantallaPreJuegoProMax.css';
 import { MODOS_VISTA } from '../../../Core/constantes/modosVista';
@@ -49,6 +52,14 @@ const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDir
     mostrarEscenario,
     mostrarVideoFondo,
   } = useAcordeonProMaxSimulador({ idDirecto, onSalir, onResultado, autoIniciar, seccionId });
+
+  // Encuadre 3D del acordeón (lo fija el admin con el botón "Posición"). Se carga una vez al entrar y
+  // alimenta el store: 'global' = modos de juego (Maestro/Alumno/Synthesia/Competitivo); 'estudio' =
+  // pestaña Acordeón de Práctica Libre (un solo acordeón, fill propio).
+  React.useEffect(() => {
+    cargarEncuadreAcordeon('global').then((e) => { if (e) setEncuadreAcordeon('global', e); });
+    cargarEncuadreAcordeon('estudio').then((e) => { if (e) setEncuadreAcordeon('estudio', e); });
+  }, []);
 
   return (
     <div className="promax-simulador-container" style={{ ['--promax-header-height' as any]: `${headerHeight}px` }}>
@@ -290,6 +301,10 @@ const AcordeonProMaxSimulador: React.FC<AcordeonProMaxSimuladorProps> = ({ idDir
           onVolverSeleccion={volverAlMenu}
         />
       )}
+
+      {/* Editor de POSICIÓN del acordeón 3D (solo admin). Aparece en los modos con acordeón 3D
+          (Maestro/Competitivo/Libre/Synthesia); ajusta el encuadre global en vivo y lo guarda. */}
+      {mostrarEscenario && hero.estadoJuego !== 'practica_libre' && <EditorEncuadreAcordeon />}
 
       <ModalMetronomoAny
         visible={mostrarHeaderHero && metronomoVisible}

@@ -8,18 +8,32 @@ import { usePersonajeEstudio } from '../contextoPersonajeEstudio'
 import ReplayGrabacionEn3D from './ReplayGrabacionEn3D'
 import SecuenciadorBailes from './SecuenciadorBailes'
 import EditorPosEscenario from './EditorPosEscenario'
+import EditorDedos from './EditorDedos'
 
 // Panel derecho de la pestaña Personaje: selector de personaje + skins del acordeón + bailes +
 // control del fuelle + reproductor de grabaciones. Vive en PanelLateralEstudiante (no tapa la vista).
 const PIELES = ['original', '1', '2', '3', '4', '5', '6', '7']
 
 const SeccionPLPersonaje: React.FC = () => {
-  const { personajeId, setPersonajeId, skin, setSkin, baile, setBaile, escenarioId, setEscenarioId, tomaCamara, setTomaCamara, directorAuto, setDirectorAuto, premium, abierto, setFuelle } = usePersonajeEstudio()
+  const { personajeId, setPersonajeId, skin, setSkin, presetsAcordeon, baile, setBaile, escenarioId, setEscenarioId, tomaCamara, setTomaCamara, directorAuto, setDirectorAuto, premium, abierto, setFuelle, fuellePos, setFuellePos } = usePersonajeEstudio()
   // `premium` se resuelve async (esUsuarioPremium) → el SSR y el primer render del cliente difieren y
   // disparan un error de hidratación en el gating de bailes. Gateamos por `montado` para que el primer
   // render coincida con el servidor (sin bloqueo) y el estado real se aplique tras montar.
   const [montado, setMontado] = React.useState(false)
   React.useEffect(() => { setMontado(true) }, [])
+
+  // Detecta que el diseño del acordeón cambió (se editó/guardó en la pestaña Acordeón, incluso en OTRA
+  // pestaña del navegador) → muestra el botón "Actualizar" resaltado. Al pulsarlo, el acordeón re-aplica
+  // el diseño más reciente (evento 'acordeon-actualizar' que escucha useDisenoEnAcordeon).
+  const [hayActualizacion, setHayActualizacion] = React.useState(false)
+  React.useEffect(() => {
+    const marcar = () => setHayActualizacion(true)
+    const onStorage = (e: StorageEvent) => { if (!e.key || e.key.includes('acordeon3d:materiales')) marcar() }
+    window.addEventListener('acordeon-presets-cambio', marcar)
+    window.addEventListener('storage', onStorage)
+    return () => { window.removeEventListener('acordeon-presets-cambio', marcar); window.removeEventListener('storage', onStorage) }
+  }, [])
+  const actualizarDiseno = () => { window.dispatchEvent(new Event('acordeon-actualizar')); setHayActualizacion(false) }
 
   return (
     <div className="estudio-practica-libre-seccion seccion-pl-personaje">
@@ -31,12 +45,12 @@ const SeccionPLPersonaje: React.FC = () => {
             <button
               key={p.id}
               type="button"
-              className={`visor-personaje-card ${personajeId === p.id ? 'activo' : ''}`}
-              onClick={() => setPersonajeId(p.id)}
-              title={p.nombre}
+              className={`visor-personaje-card ${personajeId === p.id ? 'activo' : ''} ${p.bloqueado ? 'bloqueado' : ''}`}
+              onClick={() => { if (!p.bloqueado) setPersonajeId(p.id) }}
+              title={p.bloqueado ? `${p.nombre} — próximamente` : p.nombre}
             >
               <img src={p.foto} alt={p.nombre} loading="lazy" />
-              <span>{p.nombre}</span>
+              <span>{p.bloqueado && <span aria-hidden="true">🔒 </span>}{p.nombre}</span>
             </button>
           ))}
         </div>
@@ -44,7 +58,23 @@ const SeccionPLPersonaje: React.FC = () => {
 
       {/* Fuelle + skins del acordeón */}
       <div className="estudio-practica-libre-bloque">
-        <div className="estudio-practica-libre-bloque-titulo">Acordeón</div>
+        <div className="estudio-practica-libre-bloque-titulo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span>Acordeón</span>
+          <button
+            type="button"
+            onClick={actualizarDiseno}
+            title="Trae el último diseño que editaste en la pestaña Acordeón"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
+              padding: '4px 9px', borderRadius: 999, cursor: 'pointer',
+              border: '1px solid ' + (hayActualizacion ? '#f59e0b' : 'rgba(255,255,255,0.2)'),
+              background: hayActualizacion ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.06)',
+              color: hayActualizacion ? '#fbbf24' : 'rgba(255,255,255,0.8)',
+            }}
+          >
+            🔄 Actualizar{hayActualizacion ? ' •' : ''}
+          </button>
+        </div>
         <button
           type="button"
           className={`visor-personaje-fuelle-btn ${abierto ? 'activo' : ''}`}
@@ -54,6 +84,19 @@ const SeccionPLPersonaje: React.FC = () => {
         >
           <kbd>Q</kbd> Cerrar fuelle
         </button>
+        {/* Slider para mover la caja de bajos a cualquier apertura (la mano sigue pegada a los botones). */}
+        <label className="visor-personaje-fuelle-slider">
+          <span>Abrir</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(fuellePos * 100)}
+            onChange={(e) => setFuellePos(Number(e.target.value) / 100)}
+            aria-label="Mover caja de bajos (abrir/cerrar fuelle)"
+          />
+          <span>Cerrar</span>
+        </label>
         <div className="visor-personaje-pieles-dock en-panel">
           {PIELES.map((p) => (
             <button
@@ -67,8 +110,26 @@ const SeccionPLPersonaje: React.FC = () => {
               <span>{p === 'original' ? 'Original' : p}</span>
             </button>
           ))}
+          {/* Mis diseños guardados (presets) como modelos extra, seleccionables igual que las pieles. */}
+          {presetsAcordeon.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className={`visor-piel-card ${skin === `preset:${preset.id}` ? 'activo' : ''}`}
+              onClick={() => setSkin(`preset:${preset.id}`)}
+              title={preset.nombre}
+            >
+              {preset.thumbnail
+                ? <img src={preset.thumbnail} alt={preset.nombre} loading="lazy" />
+                : <span style={{ display: 'block', width: '100%', aspectRatio: '3 / 2', background: 'rgba(255,255,255,0.08)', borderRadius: 6 }} />}
+              <span>{preset.nombre}</span>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Editor de poses de dedos (solo admin) */}
+      <EditorDedos />
 
       {/* Bailes */}
       <div className="estudio-practica-libre-bloque">

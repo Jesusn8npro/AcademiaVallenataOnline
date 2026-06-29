@@ -11,9 +11,9 @@ import SeccionPLEfectos from './SeccionPLEfectos';
 import PanelEfectosSimulador from '@/Paginas/SimuladorApp/Componentes/PanelEfectosSimulador';
 import SeccionPLLibreria from './SeccionPLLibreria';
 import SeccionPL3D, { type VarianteId } from './SeccionPL3D';
+import type { PresetAcordeon } from '../Servicios/servicioPresetsAcordeon';
 import SeccionPLPersonaje from './SeccionPLPersonaje';
-import ReplayGrabacionEn3D from './ReplayGrabacionEn3D';
-import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza } from './VisorAcordeon3D';
+import type { AnimShapeKeyId, AnimProgramaticaId, InfoPieza, NombresCajasConfig, NombreCajaConfig } from './VisorAcordeon3D';
 import type { CancionHeroConTonalidad } from '../../TiposProMax';
 import type { MetronomoComun } from '../../../../Core/audio/metronomoSonidos';
 
@@ -69,6 +69,19 @@ interface PanelLateralEstudianteProps {
   onDispararVisor3DProgramatica: (id: AnimProgramaticaId) => void;
   onDetenerVisor3DProgramatica: () => void;
   visor3dProgramaticaActiva: AnimProgramaticaId | null;
+  onCopiarVisor3DColor: () => void;
+  onPegarVisor3DColor: () => void;
+  hayVisor3DColorCopiado: boolean;
+  visor3dNombresCajas: NombresCajasConfig;
+  onCambiarVisor3DNombreCaja: (caja: 'melodia' | 'bajos', patch: Partial<NombreCajaConfig>) => void;
+  visor3dColoresBase: Record<string, string>;
+  visor3dPresets: PresetAcordeon[];
+  onGuardarVisor3DPreset: (nombre: string) => Promise<{ ok: boolean; error?: string }>;
+  onAplicarVisor3DPreset: (preset: PresetAcordeon) => void;
+  onEliminarVisor3DPreset: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  visor3dSkinSeleccionado: string;
+  visor3dPresetAplicadoId: string | null;
+  onSeleccionarVisor3DModelo: (skin: string) => void;
   // Grabador de pistas (dentro de "Pistas y Estudio" → Mis pistas): usa la lógica compartida.
   logica: any;
 }
@@ -95,6 +108,11 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
   onCambiarVisor3DGrupo, onAplicarVisor3DTinta, onAplicarVisor3DVariante,
   onDispararVisor3DShapeKey, onDispararVisor3DProgramatica,
   onDetenerVisor3DProgramatica, visor3dProgramaticaActiva,
+  onCopiarVisor3DColor, onPegarVisor3DColor, hayVisor3DColorCopiado,
+  visor3dNombresCajas, onCambiarVisor3DNombreCaja,
+  visor3dColoresBase, visor3dPresets,
+  onGuardarVisor3DPreset, onAplicarVisor3DPreset, onEliminarVisor3DPreset,
+  visor3dSkinSeleccionado, visor3dPresetAplicadoId, onSeleccionarVisor3DModelo,
   logica,
 }) => {
   if (!visible || !seccionActiva) return null;
@@ -204,24 +222,31 @@ const PanelLateralEstudiante: React.FC<PanelLateralEstudianteProps> = ({
       )}
 
       {seccionActiva === 'visor3d' && (
-        <>
-          <SeccionPL3D
-            piezaSeleccionada={visor3dPiezaSeleccionada}
-            piezasDisponibles={visor3dPiezas}
-            grupoActivo={visor3dGrupoActivo}
-            onCambiarGrupoActivo={onCambiarVisor3DGrupo}
-            onAplicarTinta={onAplicarVisor3DTinta}
-            onAplicarVariante={onAplicarVisor3DVariante}
-            onDispararShapeKey={onDispararVisor3DShapeKey}
-            onDispararProgramatica={onDispararVisor3DProgramatica}
-            onDetenerProgramatica={onDetenerVisor3DProgramatica}
-            programaticaActiva={visor3dProgramaticaActiva}
-          />
-          <div className="estudio-practica-libre-bloque">
-            <div className="estudio-practica-libre-bloque-titulo">Mis grabaciones</div>
-            <ReplayGrabacionEn3D />
-          </div>
-        </>
+        <SeccionPL3D
+          piezaSeleccionada={visor3dPiezaSeleccionada}
+          piezasDisponibles={visor3dPiezas}
+          grupoActivo={visor3dGrupoActivo}
+          onCambiarGrupoActivo={onCambiarVisor3DGrupo}
+          onAplicarTinta={onAplicarVisor3DTinta}
+          onAplicarVariante={onAplicarVisor3DVariante}
+          onDispararShapeKey={onDispararVisor3DShapeKey}
+          onDispararProgramatica={onDispararVisor3DProgramatica}
+          onDetenerProgramatica={onDetenerVisor3DProgramatica}
+          programaticaActiva={visor3dProgramaticaActiva}
+          onCopiarColor={onCopiarVisor3DColor}
+          onPegarColor={onPegarVisor3DColor}
+          hayColorCopiado={hayVisor3DColorCopiado}
+          nombresCajas={visor3dNombresCajas}
+          onCambiarNombreCaja={onCambiarVisor3DNombreCaja}
+          coloresBase={visor3dColoresBase}
+          presets={visor3dPresets}
+          onGuardarPreset={onGuardarVisor3DPreset}
+          onAplicarPreset={onAplicarVisor3DPreset}
+          onEliminarPreset={onEliminarVisor3DPreset}
+          skinSeleccionado={visor3dSkinSeleccionado}
+          presetAplicadoId={visor3dPresetAplicadoId}
+          onSeleccionarModelo={onSeleccionarVisor3DModelo}
+        />
       )}
 
       {seccionActiva === 'personaje3d' && <SeccionPLPersonaje />}

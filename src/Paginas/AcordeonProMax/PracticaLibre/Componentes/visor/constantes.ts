@@ -58,10 +58,37 @@ export const POSE_RATE = 8          // velocidad del slerp de la mano hacia la p
 export const POSE_HOLD_MS = 300     // ventana tras la última nota: mantiene la pose entre notas seguidas
 export const _tmpQ = new THREE.Quaternion()
 
-// Cuánto BAJA el dedo asignado (Y local) para PISAR su botón, ENCIMA de la pose.
-export const PRESS_DIP = 0.18       // rad del click del dedo (pequeño: la pose ya lo tiene sobre el botón)
+// Cuánto BAJA el dedo asignado para PISAR su botón, ENCIMA de la pose. La mezcla de poses ya deja la
+// punta SOBRE el botón → esto es solo una flexión PEQUEÑA del hueso base (presión), sin aimar/estirar.
+// rad del click del dedo. PEQUEÑO a propósito: el giro es en el hueso BASE, así que la yema describe un
+// arco grande (medido en Blender: 0.18 rad ≈ 0.77 u de recorrido de la punta) → con poco ángulo ya se
+// ve la presión SIN traspasar el botón. Subir con cuidado (≤0.14) si se quiere un click más marcado.
+export const PRESS_DIP = 0.10
 export const FINGER_PRESS_RATE = 18 // qué tan rápido baja/sube el dedo al pisar/soltar
+// Eje LOCAL de flexión del hueso base del dedo (mixamorig RightHand{Index/Middle/Ring/Pinky}1). Medido
+// en Blender: rotar +Z local BAJA la yema hacia el teclado (presión); +X la curva hacia la palma. El
+// rig mixamo es consistente → el mismo eje sirve para los 4 dedos. (Ver handoff-dedos-pisada-botones.)
+export const PRESS_AXIS = new THREE.Vector3(0, 0, 1)
 export const _dipQ = new THREE.Quaternion()
+// Pisada SOLO-dedo: IK de 2 falanges (Index1+Index2) para que la PUNTA del dedo asignado caiga EXACTO
+// sobre el botón (no solo cerca). Cada paso es una rotación de arco mínimo (sin twist, sin garra),
+// clampeada por hueso y suavizada por peso de pisada. La MANO NO se mueve. Ajustable en vivo: subir
+// PRESS_JOINT_MAX si el dedo no llega; subir PRESS_IK_ITERS si no aterriza fino.
+export const PRESS_IK_ITERS = 4      // iteraciones de CCD (converge la punta al botón)
+export const PRESS_JOINT_MAX = 0.5   // rad MÁX por hueso y por iteración (evita sobre-flexión/garra)
+// ALCANCE del antebrazo (codo): rota el codo para BAJAR la mano cerca de los botones ANTES de la presión
+// del dedo → la mano queda pegada y el dedo no se estira (no se deforma). Ajustable: subir FORE_MAX si la
+// mano no baja lo suficiente al botón; bajar si se pasa.
+export const FORE_ITERS = 3          // iteraciones del alcance del codo
+export const FORE_MAX = 0.6          // rad MÁX por iteración del codo
+// El codo lleva la MUÑECA a un punto al FRENTE de los botones, a "un largo de mano" (yema↔muñeca) de
+// distancia → la palma queda AFUERA del diapasón y solo los dedos entran (no traspasa). Factor sobre ese
+// largo: 1 = muñeca a un largo de mano; subir si la mano aún traspasa; bajar si queda lejos del botón.
+export const REACH_STANDOFF = 0.6
+// Largo estimado de la yema MÁS ALLÁ de Index3 (en múltiplos de la falange media). El hueso Index3
+// llega al nudillo distal, no a la punta de carne; este factor extiende el efector hasta la yema real
+// para que el CCD aterrice la CARNE sobre el botón (no el nudillo). Bajar si la punta se pasa del botón.
+export const TIP_EXT = 0.7
 
 // Temporales del fuelle/seguimiento de la caja (CCD + weld) que mantiene la mano sobre los botones.
 export const _qOpen = new THREE.Quaternion()

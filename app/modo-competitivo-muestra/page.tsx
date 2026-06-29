@@ -92,13 +92,15 @@ export default function ModoCompetitivoMuestra() {
   // ── Encuadre del acordeón 3D (valores fijos, afinados en vivo) ──────────────────────
   // Poner en true para volver a mostrar el panel de sliders y reajustar el encuadre.
   const MOSTRAR_CONTROLES = true
-  // Rotación base de corrección, calculada de la geometría del GLB (venía posado ~10°).
-  const ROT_BASE: [number, number, number] = [-0.1822, -0.1183, 0.1638]
-  const [rotX, setRotX] = React.useState(-2)
-  const [rotY, setRotY] = React.useState(9)
+  // Rotación TUNEABLE en grados (X/Y/Z). Arranca en la rotación de producción (ENC_ROTACION) para
+  // afinar desde ahí. Z = LADEO (roll): bájalo a ~0 para nivelar el acordeón como en la imagen 2D.
+  const ROT_BASE: [number, number, number] = [0, 0, 0]
+  const [rotX, setRotX] = React.useState(-79)
+  const [rotY, setRotY] = React.useState(-4)
+  const [rotZ, setRotZ] = React.useState(0)
   // Encuadre AUTO (responsive): fill = fracción del ancho que ocupa; offsetRelX/Y = nudge.
-  const [fill, setFill] = React.useState(0.95)
-  const [offsetRelX, setOffsetRelX] = React.useState(0)
+  const [fill, setFill] = React.useState(1.15)
+  const [offsetRelX, setOffsetRelX] = React.useState(0.06)
   const [offsetRelY, setOffsetRelY] = React.useState(0)
   // Layout: ancho del recuadro de cada acordeón (%) y separación entre ambos (vw).
   const [ancho, setAncho] = React.useState(48)
@@ -110,7 +112,7 @@ export default function ModoCompetitivoMuestra() {
   // Navegar (orbitar) el acordeón 3D para explorarlo.
   const [navegar, setNavegar] = React.useState(false)
   const rad = (g: number) => (g * Math.PI) / 180
-  const rotacionModelo: [number, number, number] = [ROT_BASE[0] + rad(rotX), ROT_BASE[1] + rad(rotY), ROT_BASE[2]]
+  const rotacionModelo: [number, number, number] = [ROT_BASE[0] + rad(rotX), ROT_BASE[1] + rad(rotY), ROT_BASE[2] + rad(rotZ)]
 
   const tickRef = React.useRef(0)
 
@@ -296,9 +298,10 @@ export default function ModoCompetitivoMuestra() {
           {([
             ['Rot X', rotX, setRotX, -180, 180, 1] as const,
             ['Rot Y', rotY, setRotY, -180, 180, 1] as const,
+            ['Rot Z (ladeo)', rotZ, setRotZ, -180, 180, 1] as const,
             ['Fill (tamaño)', fill, setFill, 0.3, 2, 0.01] as const,
-            ['Offset X', offsetRelX, setOffsetRelX, -1.5, 1.5, 0.01] as const,
-            ['Offset Y', offsetRelY, setOffsetRelY, -1, 1, 0.01] as const,
+            ['Offset X', offsetRelX, setOffsetRelX, -3, 3, 0.01] as const,
+            ['Offset Y', offsetRelY, setOffsetRelY, -3, 3, 0.01] as const,
             ['Ancho recuadro', ancho, setAncho, 25, 60, 1] as const,
             ['Separación', sep, setSep, 0, 20, 0.5] as const,
           ]).map(([label, val, set, min, max, step]) => (
@@ -330,7 +333,7 @@ export default function ModoCompetitivoMuestra() {
             <button
               type="button"
               onClick={() => {
-                const v = `rotX=${rotX} rotY=${rotY} fill=${fill} offsetX=${offsetRelX} offsetY=${offsetRelY} ancho=${ancho} sep=${sep} invFilas=${invFilas} invCols=${invCols}`
+                const v = `rotX=${rotX} rotY=${rotY} rotZ=${rotZ} fill=${fill} offsetX=${offsetRelX} offsetY=${offsetRelY} ancho=${ancho} sep=${sep} invFilas=${invFilas} invCols=${invCols}`
                 setValoresGuardados(v)
                 if (typeof navigator !== 'undefined' && navigator.clipboard) navigator.clipboard.writeText(v).catch(() => {})
                 // eslint-disable-next-line no-console
@@ -342,7 +345,7 @@ export default function ModoCompetitivoMuestra() {
             </button>
             <button
               type="button"
-              onClick={() => { setRotX(0); setRotY(0); setFill(0.95); setOffsetRelX(0); setOffsetRelY(0); setAncho(48); setSep(1) }}
+              onClick={() => { setRotX(0); setRotY(0); setRotZ(0); setFill(0.95); setOffsetRelX(0); setOffsetRelY(0); setAncho(48); setSep(1) }}
               style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.3)', background: 'transparent', color: '#fff', cursor: 'pointer' }}
             >
               Reset
@@ -370,7 +373,7 @@ export default function ModoCompetitivoMuestra() {
               animProgramatica={null}
               pulseEpoch={null}
               skin={SKIN_MAESTRO}
-              fuelleCerradoFijo
+              fuelleCerradoFijo={false}
               camaraFija
               botonesActivosExternos={maestroActivos}
               direccion="halar"
@@ -415,7 +418,7 @@ export default function ModoCompetitivoMuestra() {
               animProgramatica={null}
               pulseEpoch={null}
               skin={SKIN_ALUMNO}
-              fuelleCerradoFijo
+              fuelleCerradoFijo={false}
               camaraFija
               botonesActivosExternos={botonesAlumno}
               direccion="halar"

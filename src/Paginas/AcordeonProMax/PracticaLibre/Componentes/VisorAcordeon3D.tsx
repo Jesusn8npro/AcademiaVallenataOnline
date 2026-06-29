@@ -1,7 +1,7 @@
 'use client'
 import * as React from 'react'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { useGLTF, OrbitControls, Bounds, Center } from '@react-three/drei'
+import { useGLTF, OrbitControls, Bounds, Center, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { subscribirNotas } from '../../../../Core/audio/emisorNotasAcordeon'
@@ -11,7 +11,9 @@ import { Escenario } from './visor/Escenario'
 // el exporter agregue rotaciones residuales en los nodos. La conversion Z-up→Y-up la
 // hacemos en three.js con un <group rotation={[-Math.PI/2, 0, 0]}> alrededor del modelo.
 // Cache-buster ?v=N — bumpear cada vez que se re-exporta el GLB.
-const GLB_PATH = '/modelos3d/acordeon-fino-v1.glb?v=1'
+// NUEVO acordeón (fuelle nuevo) con el MISMO contrato del fino: pose de agarre (dist cajas ~9.3),
+// morph 'Cerrar', nombres planos, Z-up, sin skins. Drop-in. Anterior: '/modelos3d/acordeon-fino-v1.glb?v=1'
+const GLB_PATH = '/modelos3d/acordeon-fino-nuevo-v2.glb?v=2'
 // Diagnóstico del visor (window.__visor + console.log de posiciones). Apagado en producción.
 const DEBUG_VISOR3D = false
 
@@ -34,13 +36,25 @@ export interface MaterialPieza {
   usarTexturaOriginal?: boolean
 }
 
-export function grupoDePieza(nombre: string): string {
+export function grupoDePieza(nombre: string, material?: string): string {
+  // El acordeón del PERSONAJE (acordeon-personaje-v12) prefija TODAS las mallas con 'ACC_'
+  // (ej. 'ACC_Boton_D_01', 'ACC_Diapason Acrden'). Lo quitamos para que el match por nombre
+  // funcione igual que en el acordeón del tab (sin prefijo) → el diseño mapea botones/diapasón/etc.
+  nombre = nombre.replace(/^ACC_/i, '')
   // Nombres del GLB "acordeon-fino" (extraído del personaje). three.js sanea los espacios
   // a '_', así que normalizamos a minúsculas con espacios para hacer match robusto.
+  // Las partes del FUELLE (146 mallas "Aro 16.xxx") comparten nombre y SOLO se distinguen por
+  // MATERIAL: acc_aro_cuero = cueritos del medio, acc_aro_metal = codos de acero. acc_fuelle = cintas,
+  // acc_axe = broches/puntas. Por eso clasificamos por material primero.
+  const mat = (material || '').toLowerCase()
+  if (mat.includes('aro_cuero')) return 'fuelle-cueros'
+  if (mat.includes('aro_metal')) return 'fuelle-codos'
+  if (mat.includes('acc_axe')) return 'puntas'
+  if (mat.includes('acc_fuelle')) return 'fuelle-cintas'
   if (/^Boton_D_\d+/i.test(nombre)) return 'botones-melodia'
   if (/^Boton_I_\d+/i.test(nombre)) return 'botones-bajos'
   const n = nombre.toLowerCase().replace(/_/g, ' ').trim()
-  if (n === 'fuelle') return 'fuelle'
+  if (n === 'fuelle') return 'fuelle-cintas'
   if (n.startsWith('marco')) return 'marcos'
   if (n.includes('caja de los bajos')) return 'caja-bajos'
   if (n.includes('caja de parrilla')) return 'caja-melodia'
@@ -54,7 +68,67 @@ export function grupoDePieza(nombre: string): string {
   return 'otros'
 }
 
+// Quita el prefijo ACC_ (acordeón del personaje) y el SUFIJO DE VERSIÓN de Blender (".006"/".007"/".008"
+// que three.js sanea a "006"/"007"/"008") → nombre BASE estable entre exports distintos. Conserva los
+// índices de 1-2 dígitos (Boton_D_05) que SÍ identifican la pieza. Esto es lo que hace que el diseño se
+// resuelva IGUAL aunque el GLB del tab y el del personaje numeren las mismas mallas con sufijos distintos.
+// Blender numera las instancias con ".001".."008" (3 dígitos), que three.js sanea a "001".."008".
+// Quitamos EXACTAMENTE esos 3 dígitos finales (no más): así "cuerpo1_2.012" → base "cuerpo1_2" (conserva
+// el "_2" que identifica la pieza) y "Boton_D_05" (índice de 2 dígitos) queda intacto.
+const SUFIJO_VERSION = /\d{3}$/
+export function baseDePieza(nombre: string): string {
+  return nombre.replace(/^ACC_/i, '').replace(SUFIJO_VERSION, '')
+}
+
+// Construye un resolvedor que, dada una malla, devuelve su config de material del diseño. Se usa IGUAL en
+// el tab (VisorAcordeon3D) y en el personaje/mundo (useDisenoEnAcordeon) → mismo resultado en todos lados.
+// Precedencia: nombre EXACTO → nombre BASE (sin sufijo, robusto entre GLBs) → grupo explícito → grupo
+// derivado de una clave por-pieza (ej. pintaste el diapasón suelto) → 'todos'.
+export function construirResolutorMateriales(
+  materiales: Record<string, MaterialPieza>,
+  opts?: { sinTodos?: boolean },
+): (nombreMalla: string, nombreMaterial?: string) => MaterialPieza | undefined {
+  const baseCfg: Record<string, MaterialPieza> = {}
+  const baseCount: Record<string, number> = {}
+  const porGrupo: Record<string, MaterialPieza> = {}
+  for (const [clave, cfg] of Object.entries(materiales)) {
+    if (clave.startsWith('_')) continue // claves internas (ej. '_piel') no son partes
+    const b = baseDePieza(clave)
+    if (b) { baseCount[b] = (baseCount[b] ?? 0) + 1; baseCfg[b] = cfg }
+    const g = grupoDePieza(clave)
+    if (g !== 'otros' && !(g in porGrupo)) porGrupo[g] = cfg
+  }
+  // El match por BASE solo vale cuando la base identifica UNA sola pieza. Si varias claves comparten base
+  // (ej. los 146 anillos del fuelle quedan todos en base 'Aro_16'), es AMBIGUO → no lo usamos y deja que
+  // mande el GRUPO. Sin esto, un solo anillo pintado teñiría los 146 del acordeón del personaje.
+  const porBase: Record<string, MaterialPieza> = {}
+  for (const b in baseCount) if (baseCount[b] === 1) porBase[b] = baseCfg[b]
+  // `sinTodos` = devolver undefined si la parte NO tiene override explícito (en vez de caer a 'todos').
+  // Sirve para saber qué partes pintó el usuario (las demás las gobierna la PIEL de fábrica de base).
+  return (nombreMalla, nombreMaterial) => {
+    if (materiales[nombreMalla]) return materiales[nombreMalla]
+    const b = baseDePieza(nombreMalla)
+    if (porBase[b]) return porBase[b]
+    const g = grupoDePieza(nombreMalla, nombreMaterial)
+    return materiales[g] ?? porGrupo[g] ?? (opts?.sinTodos ? undefined : materiales['todos'])
+  }
+}
+
 export interface InfoPieza { nombre: string; grupo: string }
+
+// Nombre personalizado que el usuario pone sobre una caja (como el nombre del dueño en un acordeón real).
+export interface NombreCajaConfig {
+  texto: string
+  offX: number; offY: number; offZ: number // nudge respecto al centro de la caja (unidades del modelo)
+  tam: number                              // tamaño de letra
+  giro: number                             // rotación (radianes) para alinear el texto sobre la cara
+  color: string
+}
+export interface NombresCajasConfig { melodia: NombreCajaConfig; bajos: NombreCajaConfig }
+export const NOMBRES_CAJAS_DEFAULT: NombresCajasConfig = {
+  melodia: { texto: '', offX: 0, offY: 0, offZ: 0.6, tam: 0.7, giro: 0, color: '#e8c14a' },
+  bajos:   { texto: '', offX: 0, offY: 0, offZ: 0.6, tam: 0.7, giro: 0, color: '#e8c14a' },
+}
 
 // three.js GLTFLoader SANEA los nombres de nodo (PropertyBinding.sanitizeNodeName):
 // reemplaza espacios por '_' y elimina los chars reservados de animación [].:/ — así
@@ -134,6 +208,11 @@ interface ModeloProps {
   // CONTINUO en la dirección (fuelleCerrandoRef) a velocidad ∝ actividad (muchas notas = rápido, una
   // sola = lento), simétrico al abrir/cerrar. Sin esto, comportamiento de estudio (toggle + damping).
   fuelleActividadRef?: React.MutableRefObject<number>
+  // Nombres sobre las cajas (melodía/bajos), adheridos al acordeón.
+  nombresCajas?: NombresCajasConfig
+  // Reporta el COLOR PROMEDIO real de la textura de cada grupo → el panel lo usa para que el usuario
+  // empiece a editar desde el color verdadero de esa parte (ej. el cuero, el metal).
+  onColoresBase?: (map: Record<string, string>) => void
 }
 
 function Modelo({
@@ -141,7 +220,7 @@ function Modelo({
   fuelleCerrandoRef, animShapeKey, animProgramatica, pulseEpoch,
   onTocarBoton, direccion,
   skin, botonesActivosExternos, fuelleCerradoFijo, onPosicionesBotones,
-  invFilasModelo, invColsModelo, objetivosRef, fuelleActividadRef,
+  invFilasModelo, invColsModelo, objetivosRef, fuelleActividadRef, nombresCajas, onColoresBase,
 }: ModeloProps) {
   const grupo = React.useRef<THREE.Group>(null!)
   // useGLTF cachea y DEVUELVE LA MISMA escena. Un Object3D solo puede tener un padre, así que
@@ -153,6 +232,8 @@ function Modelo({
   const three = useThree()
 
   const [meshes, setMeshes] = React.useState<THREE.Mesh[]>([])
+  // Centros (en coords del modelo) de la caja de melodía y la de bajos → para anclar los nombres.
+  const [centrosCajas, setCentrosCajas] = React.useState<{ melodia: THREE.Vector3; bajos: THREE.Vector3 } | null>(null)
 
   // Refs a piezas que se mueven con el fuelle (busqueda flexible por substring).
   const fuelleMesh = React.useRef<THREE.Mesh | null>(null)
@@ -481,7 +562,20 @@ function Modelo({
       }
     }
 
-    onMallasDetectadas(lista.map((m) => ({ nombre: m.name, grupo: grupoDePieza(m.name) })))
+    // Centros de las cajas (en coords del modelo) para anclar los nombres personalizados.
+    if (grupo.current) {
+      const wc = new THREE.Vector3()
+      const centroEnModelo = (o: THREE.Object3D | null) => {
+        if (!o) return null
+        new THREE.Box3().setFromObject(o).getCenter(wc)
+        return grupo.current.worldToLocal(wc.clone())
+      }
+      const cm = centroEnModelo(cajaBotonesPrincipalesRef.current)
+      const cb = centroEnModelo(cajaBajosCentroRef.current)
+      if (cm && cb) setCentrosCajas({ melodia: cm, bajos: cb })
+    }
+
+    onMallasDetectadas(lista.map((m) => ({ nombre: m.name, grupo: grupoDePieza(m.name, (m.material as any)?.name) })))
 
     // DEBUG (apagado en prod): volcar posiciones WORLD reales + exponer window.__visor. Poner
     // DEBUG_VISOR3D=true para reactivarlo al depurar.
@@ -513,13 +607,22 @@ function Modelo({
   // sin custom del usuario), restauramos las texturas baked del GLB. Si el usuario
   // aplico un color/acabado, quitamos los mapas para que el cambio se vea limpio.
   React.useEffect(() => {
-    if (skin) return // modo juego: la piel gobierna los materiales (ver efecto de skin abajo)
+    // SIN piel (skin=''): el diseño pintado gobierna TODO (las partes sin pintar caen a 'todos').
+    // CON piel: la piel es la BASE (efecto de abajo) y acá solo pintamos ENCIMA las partes que el usuario
+    // tocó (override explícito). Las no pintadas se saltan → quedan con la textura de la piel.
+    const resolver = construirResolutorMateriales(materialPorMesh, { sinTodos: !!skin })
+    const todos = materialPorMesh['todos']
     meshes.forEach((mesh) => {
-      const cfg = materialPorMesh[mesh.name]
-                ?? materialPorMesh[grupoDePieza(mesh.name)]
-                ?? materialPorMesh['todos']
       const mat = mesh.material as THREE.MeshStandardMaterial
       if (!mat || !(mat as any).isMeshStandardMaterial) return
+      const cfgExpl = resolver(mesh.name, (mesh.material as any)?.name)
+      if (skin && !cfgExpl) {
+        // Parte NO pintada con una piel puesta → la gobierna la piel; solo limpiamos el emissive.
+        const enPulseX = pulse.current?.mesh === mesh.name
+        if (!enPulseX) { mat.emissive.set('#000000'); mat.emissiveIntensity = 0 }
+        return
+      }
+      const cfg = cfgExpl ?? todos
       const orig = mesh.userData.texOrig as {
         map: THREE.Texture | null
         metalnessMap: THREE.Texture | null
@@ -541,25 +644,26 @@ function Modelo({
         mat.roughness = cfg?.roughness ?? orig.baseRoughness
         mat.metalness = cfg?.metalness ?? orig.baseMetalness
       } else if (cfg) {
-        // Estado "Custom": quitamos los mapas para que el color y el acabado pegados
-        // desde el panel se vean sin filtrar por la textura baked.
+        // Estado "Custom" REALISTA: cambiamos el COLOR pero conservamos el relieve y el
+        // micro-acabado horneados — normalMap intacto (no se toca aquí) + roughnessMap/
+        // metalnessMap del GLB. Así el cuero/metal/celuloide siguen reaccionando a la luz
+        // como en Blender (no como plástico plano). Sólo quitamos el albedo baked (map) para
+        // que el color elegido se vea puro, y roughness/metalness del panel actúan como
+        // MULTIPLICADOR del mapa (el acabado Mate/Perlado/Cromo conserva la variación real).
         mat.map = null
-        mat.metalnessMap = null
-        mat.roughnessMap = null
+        mat.metalnessMap = orig?.metalnessMap ?? null
+        mat.roughnessMap = orig?.roughnessMap ?? null
         mat.color.set(cfg.tinta)
         mat.roughness = cfg.roughness
         mat.metalness = cfg.metalness
       }
-      // Highlight de pieza seleccionada via emissive azul tenue (a menos que haya pulse activo).
+      // La pieza seleccionada NO se recolorea (antes un emissive azul la teñía y no dejaba ver el color
+      // real que pintabas). La selección se indica solo en el panel ("Editando: X") y en el botón de la
+      // parte. El click sí da un pulse breve de feedback (más abajo).
       const enPulse = pulse.current?.mesh === mesh.name
       if (!enPulse) {
-        if (mesh.name === piezaSeleccionada) {
-          mat.emissive.set('#3b82f6')
-          mat.emissiveIntensity = 0.45
-        } else {
-          mat.emissive.set('#000000')
-          mat.emissiveIntensity = 0
-        }
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
       }
       mat.needsUpdate = true
     })
@@ -570,6 +674,9 @@ function Modelo({
   // fuelle/pack), igual que usePielesAcordeon en el personaje (el fino comparte ese asset).
   React.useEffect(() => {
     if (!skin || meshes.length === 0) return
+    // Resolvedor de overrides explícitos: las partes que el usuario PINTÓ no reciben la piel (las pinta
+    // el efecto de arriba) → coexisten piel de base + pintura encima.
+    const resolverExpl = construirResolutorMateriales(materialPorMesh, { sinTodos: true })
     const PARTES = new Set(['cuerpo', 'botones', 'fuelle', 'pack', 'parte botones'])
     const loader = new THREE.TextureLoader()
     const cache: Record<string, THREE.Texture> = {}
@@ -584,6 +691,7 @@ function Modelo({
     meshes.forEach((mesh) => {
       const mat = mesh.material as THREE.MeshStandardMaterial
       if (!mat || !(mat as any).isMeshStandardMaterial) return
+      if (resolverExpl(mesh.name, (mesh.material as any)?.name)) return // pieza pintada → no aplicar piel
       const part = (mat.name || '').replace(/\.\d+$/, '').replace(/^acc_/, '')
       if (!PARTES.has(part)) return
       if (skin === 'original') {
@@ -600,7 +708,48 @@ function Modelo({
       mat.needsUpdate = true
     })
     return () => { Object.values(cache).forEach((t) => t.dispose()) }
+    // materialPorMesh NO va en deps a propósito: la piel se aplica al elegirla; las partes que pintes
+    // después las sobreescribe el efecto de pintura de arriba (sin recargar las texturas en cada clic).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skin, meshes])
+
+  // Color promedio REAL de la textura baked de cada grupo (cuero, metal, cajas…). Se muestrea cuando
+  // las imágenes ya decodificaron (se reintenta unos frames) y se reporta progresivamente → el panel
+  // arranca el editor desde el color verdadero de cada parte. Sin coste continuo (para al completar).
+  React.useEffect(() => {
+    if (!onColoresBase || meshes.length === 0) return
+    const colorPromedio = (tex: any): string | null => {
+      const img = tex?.image
+      if (!img || !(img.width || img.videoWidth)) return null
+      try {
+        const cv = document.createElement('canvas'); cv.width = 8; cv.height = 8
+        const ctx = cv.getContext('2d'); if (!ctx) return null
+        ctx.drawImage(img, 0, 0, 8, 8)
+        const d = ctx.getImageData(0, 0, 8, 8).data
+        let r = 0, g = 0, b = 0, n = 0
+        for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++ }
+        const h = (x: number) => Math.round(x / n).toString(16).padStart(2, '0')
+        return `#${h(r)}${h(g)}${h(b)}`
+      } catch { return null }
+    }
+    const acc: Record<string, string> = {}
+    let raf = 0, intentos = 0
+    const intentar = () => {
+      let creció = false
+      for (const m of meshes) {
+        const grupo = grupoDePieza(m.name, (m.material as any)?.name)
+        if (acc[grupo]) continue
+        const mat = m.material as any
+        const tex = mat?.userData?.texOrig?.map ?? mat?.map
+        const c = colorPromedio(tex)
+        if (c) { acc[grupo] = c; creció = true }
+      }
+      if (creció) onColoresBase({ ...acc })
+      if (intentos++ < 60) raf = requestAnimationFrame(intentar)
+    }
+    raf = requestAnimationFrame(intentar)
+    return () => cancelAnimationFrame(raf)
+  }, [meshes, onColoresBase])
 
   // Animaciones de shape keys (Cerrar uniforme/abajo/arriba) — controladas MANUALMENTE.
   // NO usamos las actions del GLB porque useAnimations las deja con valores residuales
@@ -809,10 +958,8 @@ function Modelo({
         // próximo botón, sin saturar con muchos a la vez).
         mat.emissive.copy(colorDir)
         mat.emissiveIntensity = (0.12 + prox * prox * 1.5) * latido
-      } else if (m.name === piezaSeleccionada) {
-        mat.emissive.set('#3b82f6')
-        mat.emissiveIntensity = 0.45
       } else {
+        // Sin recolor por selección: ver el color real que se pinta (la selección vive en el panel).
         mat.emissive.set('#000000')
         mat.emissiveIntensity = 0
       }
@@ -877,13 +1024,9 @@ function Modelo({
       if (mesh) {
         const mat = mesh.material as THREE.MeshStandardMaterial | undefined
         if (mat && (mat as any).isMeshStandardMaterial) {
-          if (mesh.name === piezaSeleccionada) {
-            mat.emissive.set('#3b82f6')
-            mat.emissiveIntensity = 0.45
-          } else {
-            mat.emissive.set('#000000')
-            mat.emissiveIntensity = 0
-          }
+          // Al terminar el pulse, emissive a 0 (sin recolor por selección).
+          mat.emissive.set('#000000')
+          mat.emissiveIntensity = 0
         }
       }
       pulse.current = null
@@ -971,7 +1114,32 @@ function Modelo({
     onClickPieza(name)
   }, [onClickPieza])
 
-  return <primitive ref={grupo} object={scene} onClick={onClickMesh} onPointerDown={onPointerDownMesh} />
+  // Render de un nombre sobre una caja (anclado al centro + nudge del usuario; rota con el acordeón).
+  const renderNombre = (cfg: NombreCajaConfig | undefined, centro: THREE.Vector3 | undefined) => {
+    if (!cfg || !centro || !cfg.texto.trim()) return null
+    return (
+      <Text
+        position={[centro.x + cfg.offX, centro.y + cfg.offY, centro.z + cfg.offZ]}
+        rotation={[0, cfg.giro, 0]}
+        fontSize={cfg.tam}
+        color={cfg.color}
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={cfg.tam * 0.04}
+        outlineColor="#1a1206"
+      >
+        {cfg.texto}
+      </Text>
+    )
+  }
+
+  return (
+    <>
+      <primitive ref={grupo} object={scene} onClick={onClickMesh} onPointerDown={onPointerDownMesh} />
+      {nombresCajas && centrosCajas && renderNombre(nombresCajas.melodia, centrosCajas.melodia)}
+      {nombresCajas && centrosCajas && renderNombre(nombresCajas.bajos, centrosCajas.bajos)}
+    </>
+  )
 }
 
 useGLTF.preload(GLB_PATH)
@@ -1034,6 +1202,13 @@ interface VisorAcordeon3DProps {
   // con el auto-fit; rotando a distancia constante el modelo queda fijo de tamaño y las notas
   // siguen alineadas (las posiciones se reproyectan cada frame).
   navegable?: boolean
+  // Permite ZOOM con la rueda del mouse (acercar/alejar) en modo cámara fija. EncuadreJuego usa la
+  // distancia inicial para el fit, así el zoom sí agranda. Se usa en la pestaña Acordeón.
+  zoomLibre?: boolean
+  // Nombres personalizados sobre las cajas (melodía/bajos), adheridos al acordeón.
+  nombresCajas?: NombresCajasConfig
+  // Reporta el color promedio real de la textura de cada grupo (para sembrar el editor de color).
+  onColoresBase?: (map: Record<string, string>) => void
   // Modo juego: escenario 3D detrás del acordeón (mismo `<Escenario>` que la pestaña Personaje / Mundo:
   // estudio cove .glb, tarima, plaza). Se renderiza como TELÓN (fuera de EncuadreJuego, con transform
   // propio) porque el acordeón flota escalado. 'ninguno'/undefined → sin escenario (fondo original).
@@ -1050,12 +1225,17 @@ const EncuadreJuego: React.FC<{
   fill: number
   offsetRelX: number
   offsetRelY: number
+  zoomLibre?: boolean
   children: React.ReactNode
-}> = ({ rotacion, fill, offsetRelX, offsetRelY, children }) => {
+}> = ({ rotacion, fill, offsetRelX, offsetRelY, zoomLibre, children }) => {
   const { camera } = useThree()
   const outer = React.useRef<THREE.Group>(null!)
   const centro = React.useRef<THREE.Group>(null!)
   const rot = React.useRef<THREE.Group>(null!)
+  // Con zoom libre (rueda del mouse) la cámara se acerca/aleja; capturamos la distancia INICIAL una vez
+  // y la usamos para el auto-fit, así el zoom SÍ agranda (si usáramos la distancia viva, el fit lo
+  // compensaría y el zoom no haría nada). Sin zoom libre = comportamiento de siempre (distancia viva).
+  const distRef = React.useRef<number | null>(null)
   // El CENTRADO se mide una sola vez (con outer en identidad). El TAMAÑO y el desplazamiento
   // se aplican cada frame, así responden a los sliders en vivo.
   const medido = React.useRef<{ size: THREE.Vector3 } | null>(null)
@@ -1079,7 +1259,8 @@ const EncuadreJuego: React.FC<{
     cur.current.offY += (offsetRelY - cur.current.offY) * k
     const { size } = medido.current
     const cam = camera as THREE.PerspectiveCamera
-    const dist = cam.position.length() // cámara mira al origen → distancia = |pos|
+    if (zoomLibre && distRef.current == null) distRef.current = cam.position.length()
+    const dist = zoomLibre ? distRef.current! : cam.position.length() // |pos| (o fija si hay zoom libre)
     const visH = 2 * Math.tan((cam.fov * Math.PI) / 180 / 2) * dist
     const visW = visH * cam.aspect
     // Escala para que el ANCHO del acordeón ocupe `fill` del ancho visible.
@@ -1100,7 +1281,7 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
   return (
     <div className={`visor-acordeon-3d-stage${props.className ? ` ${props.className}` : ''}`}>
       {/* Juego: cámara recta de frente (centrado limpio). Estudio: ligero picado. */}
-      <Canvas camera={{ position: props.camaraFija ? [0, 0, 6] : [0, 1.2, 6], fov: 32 }} dpr={[1, 1.25]}>
+      <Canvas camera={{ position: props.camaraFija ? [0, 0, 6] : [0, 1.2, 6], fov: 32 }} dpr={[1, 1.25]} gl={{ preserveDrawingBuffer: true }}>
         <React.Suspense fallback={null}>
           {/* Envmap procedural local — indispensable para que el acabado "Cromo" /
               metalness alto se vea como un metal real (sin esto se ven negros porque
@@ -1131,11 +1312,12 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
               fill={props.fillModelo ?? 0.95}
               offsetRelX={props.offsetRelXModelo ?? 0}
               offsetRelY={props.offsetRelYModelo ?? 0}
+              zoomLibre={props.zoomLibre}
             >
               <Modelo {...props} />
             </EncuadreJuego>
           ) : (
-            <Bounds fit clip margin={1.15}>
+            <Bounds fit clip margin={1.8}>
               <Center>
                 {/* Conversion Z-up (Blender) → Y-up (three.js): rotacion -90° X.
                     El GLB v3 fue exportado con export_yup=False para que no metiera
@@ -1154,10 +1336,13 @@ const VisorAcordeon3D: React.FC<VisorAcordeon3DProps> = (props) => {
           {props.camaraFija ? (
             <OrbitControls
               makeDefault
-              enabled={props.navegable ?? false}
-              enableZoom={false}
+              enabled={(props.navegable ?? false) || (props.zoomLibre ?? false)}
+              enableRotate={props.navegable ?? false}
+              enableZoom={props.zoomLibre ?? false}
               enablePan={false}
               rotateSpeed={0.6}
+              minDistance={2}
+              maxDistance={10}
               minPolarAngle={Math.PI * 0.18}
               maxPolarAngle={Math.PI * 0.82}
               target={[0, 0, 0]}
